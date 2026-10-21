@@ -203,12 +203,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     }
 
     if (!description.trim()) {
-      toast.warning("Execution Notes (Remark) is mandatory.");
+      toast.warning("Execution notes (remark) is mandatory.");
       return;
     }
 
     if (!startDate || !endDate) {
-      toast.warning("Start Date and Target Due Date are mandatory.");
+      toast.warning("Start date and target due date are mandatory.");
       return;
     }
 
@@ -228,12 +228,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     }
 
     if (!priorityId) {
-      toast.warning("You must select a Priority for this task.");
+      toast.warning("You must select a priority for this task.");
       return;
     }
 
     if (!statusId) {
-      toast.warning("Task Status is mandatory. Please select a status.");
+      toast.warning("Task status is mandatory. Please select a status.");
       return;
     }
 
@@ -288,7 +288,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
   return (
     <SidePeekDrawer
       isOpen={true}
-      title={initialParentTaskId ? "New Sub-Task" : "Create New Task"}
+      title={initialParentTaskId ? "New Sub-Task" : "Create new task"}
       onClose={onClose}
       width="xl"
     >
@@ -299,23 +299,23 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-border/40 pb-2">
               <LayoutTemplate className="h-4 w-4 text-theme-icon" />
-              <h3 className="text-sm font-semibold tracking-tight text-foreground">Basic Information</h3>
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Basic information</h3>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Task Title *</label>
-                <AppInput placeholder="e.g. Audit API Endpoints" value={title} onChange={e => setTitle(e.target.value)} required className={"bg-surface"} />
+                <label className="text-xs font-semibold text-muted">Task title *</label>
+                <AppInput placeholder="e.g. Audit API endpoints" value={title} onChange={e => setTitle(e.target.value)} required className={"bg-surface"} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Task Code</label>
+                <label className="text-xs font-semibold text-muted">Task code</label>
                 <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" className={"bg-elevated"} />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center justify-between">
+                <label className="text-xs font-semibold text-muted flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <span>Parent Task</span>
+                    <span>Parent task</span>
                     {initialParentTaskId ? (
                       <span className="text-danger font-bold">*</span>
                     ) : (
@@ -323,7 +323,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     )}
                   </span>
                   {initialParentTaskId && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
                       Sub-Task
                     </span>
                   )}
@@ -335,7 +335,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   disabled={!!initialParentTaskId}
                   required={!!initialParentTaskId}
                 >
-                  {!initialParentTaskId && <option value="">-- No Parent (Independent Task) --</option>}
+                  {!initialParentTaskId && <option value="">-- No parent (independent task) --</option>}
                   {availableParentTasks.map(t => (
                     <option key={t.id} value={t.id}>
                       {t.code ? `[${t.code}] ` : ""}{t.title || t.subject}
@@ -344,7 +344,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Assign to Sprint</label>
+                <label className="text-xs font-semibold text-muted">Assign to sprint</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={sprintId}
@@ -359,13 +359,13 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             </div>
             <div className="mt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
                 <AlignLeft className="h-3 w-3" /> Description <span className="text-danger">*</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Detailed instructions, requirements, or context..."
+                placeholder="Detailed instructions, requirements, or context…"
                 className={`w-full min-h-[100px] p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y theme-input-structural theme-card-structural text-foreground placeholder-muted`}
               />
             </div>
@@ -378,12 +378,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-border/40 pb-2">
               <CalendarDays className="h-4 w-4 text-theme-icon" />
-              <h3 className="text-sm font-semibold tracking-tight text-foreground">Schedule & Priority</h3>
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Schedule & priority</h3>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Duration (Days)</label>
+                <label className="text-xs font-semibold text-muted">Duration (Days)</label>
                 <AppInput 
                   type="number" 
                   min="1"
@@ -394,7 +394,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Start Date <span className="text-danger">*</span></label>
+                <label className="text-xs font-semibold text-muted">Start date <span className="text-danger">*</span></label>
                 <AppInput 
                   type="date" 
                   min={localTodayString} 
@@ -404,7 +404,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Due Date <span className="text-danger">*</span></label>
+                <label className="text-xs font-semibold text-muted">Due date <span className="text-danger">*</span></label>
                 <AppInput 
                   type="date" 
                   min={startDate || localTodayString} 
@@ -414,14 +414,14 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">External Link (Optional)</label>
+                <label className="text-xs font-semibold text-muted">External link (optional)</label>
                 <AppInput placeholder="https://..." value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className={"bg-surface"} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                <label className="text-xs font-semibold text-muted">
                   Priority <span className="text-danger">*</span>
                 </label>
                 <select
@@ -430,27 +430,27 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   onChange={e => setPriorityId(e.target.value)}
                   required
                 >
-                  <option value="" disabled>-- Select Priority --</option>
+                  <option value="" disabled>-- Select priority --</option>
                   {priorities.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Department</label>
+                <label className="text-xs font-semibold text-muted">Department</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={departmentId}
                   onChange={e => setDepartmentId(e.target.value)}
                 >
-                  <option value="">-- No Department --</option>
+                  <option value="">-- No department --</option>
                   {departments.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                <label className="text-xs font-semibold text-muted">
                   Status <span className="text-danger">*</span>
                 </label>
                 <select
@@ -459,7 +459,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   onChange={e => setStatusId(e.target.value)}
                   required
                 >
-                  <option value="" disabled>-- Select Status --</option>
+                  <option value="" disabled>-- Select status --</option>
                   {statuses.map(s => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
@@ -473,15 +473,15 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-border/40 pb-2">
               <Users className="h-4 w-4 text-theme-icon" />
-              <h3 className="text-sm font-semibold tracking-tight text-foreground">Ownership & Team</h3>
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Ownership & team</h3>
             </div>
 
             {/* Category 1: Primary Assignee */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
                   <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
-                  Primary Assignee (Owner) *
+                  Primary assignee (owner) *
                 </label>
               </div>
               <select
@@ -501,7 +501,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   }
                 }}
               >
-                <option value="">-- Select Primary Assignee --</option>
+                <option value="">-- Select primary assignee --</option>
                 {stakeholders.map(s => (
                   <option key={s.id} value={s.id}>
                     {s.full_name} ({s.role || 'Member'})
@@ -514,7 +514,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             <div className="space-y-1.5 mb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5 text-theme-icon" />
                     Executors
                   </label>
@@ -522,7 +522,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     <Search className="h-3 w-3 text-muted" />
                     <input 
                       type="text" 
-                      placeholder="Search users..." 
+                      placeholder="Search users…" 
                       className={`bg-transparent text-xs focus:outline-none w-32 text-foreground placeholder:text-muted`}
                       value={executorSearchTerm}
                       onChange={e => setExecutorSearchTerm(e.target.value)}
@@ -570,7 +570,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                       />
                       <span className="truncate font-medium">{s.full_name}</span>
                       {s.id === primaryAssignee && (
-                        <span className="text-[10px] bg-theme-btn-primary/10 text-theme-icon px-1 py-0.5 rounded font-semibold">Owner</span>
+                        <span className="text-[11px] bg-accent-soft text-theme-icon px-1 py-0.5 rounded font-semibold">Owner</span>
                       )}
                     </label>
                   ))}
@@ -583,7 +583,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             <div className="space-y-1.5 mb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5 text-theme-icon" />
                     Watchers
                   </label>
@@ -591,7 +591,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     <Search className="h-3 w-3 text-muted" />
                     <input 
                       type="text" 
-                      placeholder="Search users..." 
+                      placeholder="Search users…" 
                       className={`bg-transparent text-xs focus:outline-none w-32 text-foreground placeholder:text-muted`}
                       value={watcherSearchTerm}
                       onChange={e => setWatcherSearchTerm(e.target.value)}
@@ -645,8 +645,8 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               {/* Top Left: Tags & Labels */}
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center h-7">
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
-                    Tags & Labels
+                  <label className="text-xs font-semibold text-muted flex items-center gap-1.5">
+                    Tags & labels
                   </label>
                 </div>
                 <div className="flex gap-2 items-center">
@@ -662,7 +662,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         }
                       }
                     }}
-                    placeholder="Type a tag..." 
+                    placeholder="Type a tag…" 
                     className={`h-9 flex-1 bg-surface`}
                   />
                   <AppButton type="button" variant="primary" size="sm" className="h-9 px-3 shrink-0" onClick={() => {
@@ -674,9 +674,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {tags.map((tag, idx) => (
-                    <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20`}>
+                    <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-accent-soft text-theme-icon border border-theme-btn-primary/20`}>
                       {tag}
-                      <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-danger ml-0.5"><X className="h-3 w-3" /></button>
+                      <button aria-label="Close" type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-danger ml-0.5"><X className="h-3 w-3" /></button>
                     </span>
                   ))}
                 </div>
@@ -687,9 +687,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <LayoutList className="h-4 w-4 text-theme-icon" />
-                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">Checklist</h3>
+                    <h3 className="text-xs font-semibold text-muted">Checklist</h3>
                   </div>
-                  <span className="text-[10px] font-medium text-muted bg-surface px-2 py-0.5 rounded-full border border-border/40">{checklistItems.length} items</span>
+                  <span className="text-[11px] font-medium text-muted bg-surface px-2 py-0.5 rounded-full border border-border/40">{checklistItems.length} items</span>
                 </div>
                 
                 <div className="flex gap-2 items-start">
@@ -705,7 +705,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                           setNewChecklistItem("");
                         }
                       }}
-                      placeholder="Add checklist item..." 
+                      placeholder="Add checklist item…" 
                       className={`h-9 bg-surface`}
                     />
                   </div>
@@ -723,7 +723,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         <div className="shrink-0 h-3.5 w-3.5 rounded border border-border" />
                         <span className="text-xs truncate text-foreground">{item}</span>
                       </div>
-                      <button
+                      <button aria-label="Close"
                         type="button"
                         onClick={() => setChecklistItems(checklistItems.filter((_, i) => i !== index))}
                         className="shrink-0 p-1 rounded text-muted hover:text-danger transition-colors"
@@ -738,7 +738,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               {/* Bottom Left: Attachments */}
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center justify-between w-full">
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">Attachments</label>
+                  <label className="text-xs font-semibold text-muted">Attachments</label>
                   
                   <div>
                     <input 
@@ -764,27 +764,27 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                       className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border border-dashed border-border cursor-pointer transition-colors text-muted hover:text-foreground hover:border-theme-btn-primary`}
                     >
                       <Paperclip className="h-3 w-3" />
-                      <span>Attach File</span>
+                      <span>Attach file</span>
                     </label>
                   </div>
 
-                  <span className="text-[10px] font-medium text-muted bg-surface px-2 py-0.5 rounded-full border border-border/40">{attachments.length} files</span>
+                  <span className="text-[11px] font-medium text-muted bg-surface px-2 py-0.5 rounded-full border border-border/40">{attachments.length} files</span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-2 max-h-36 overflow-y-auto">
                   {attachments.map((item, index) => (
                     <div key={`${item.file_url}-${index}`} className="group flex items-center justify-between gap-2 p-2 rounded-lg bg-surface/50 border border-border/40 transition-colors">
                       <div className="flex items-center gap-2 overflow-hidden flex-1">
-                        <div className="shrink-0 h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold bg-theme-btn-primary/10 text-theme-icon">
+                        <div className="shrink-0 h-6 w-6 rounded flex items-center justify-center text-[11px] font-bold bg-accent-soft text-theme-icon">
                           {item.file_type.substring(0,3).toUpperCase()}
                         </div>
                         <div className="flex flex-col min-w-0">
                           <span className="text-xs font-medium truncate text-foreground">{item.file_name}</span>
-                          <span className="text-[10px] text-muted">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Attached"}</span>
+                          <span className="text-[11px] text-muted">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Attached"}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        <AppButton variant="ghost"
+                        <AppButton aria-label="View" variant="ghost"
                           size="sm"
                           type="button"
                           onClick={() => window.open(item.file_url, '_blank')}
@@ -793,7 +793,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </AppButton>
-                        <AppButton variant="ghost"
+                        <AppButton aria-label="Download" variant="ghost"
                           size="sm"
                           type="button"
                           onClick={() => {
@@ -809,7 +809,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         >
                           <Download className="h-3.5 w-3.5" />
                         </AppButton>
-                        <AppButton variant="ghost"
+                        <AppButton aria-label="Remove" variant="ghost"
                           size="sm"
                           type="button"
                           onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
@@ -829,24 +829,24 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <div className="flex items-center justify-between border-b border-border/40 pb-2">
                   <div className="flex items-center gap-2">
                     <Activity className="h-4 w-4 text-theme-icon" />
-                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">Custom Fields</h3>
+                    <h3 className="text-xs font-semibold text-muted">Custom fields</h3>
                   </div>
                   <AppButton variant="ghost" 
                     size="sm"
                     type="button" 
                     onClick={() => setIsAddingField(!isAddingField)}
-                    className="p-1 h-auto text-xs font-semibold text-theme-icon hover:bg-theme-btn-primary/10"
+                    className="p-1 h-auto text-xs font-semibold text-theme-icon hover:bg-accent-soft"
                   >
-                    <Plus className="h-3 w-3 mr-1" /> New Field
+                    <Plus className="h-3 w-3 mr-1" /> New field
                   </AppButton>
                 </div>
 
                 {isAddingField && (
                   <div className="p-3 rounded-lg border border-border/60 bg-surface/50 flex flex-col sm:flex-row items-end gap-2">
                     <div className="w-full sm:flex-1 space-y-1">
-                      <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Field Name</label>
+                      <label className="text-[11px] font-semibold text-muted">Field name</label>
                       <AppInput 
-                        placeholder="e.g. Jira Ticket URL" 
+                        placeholder="e.g. Jira ticket URL" 
                         value={newFieldName} 
                         onChange={e => setNewFieldName(e.target.value)} 
                         onKeyDown={e => {
@@ -859,7 +859,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                       />
                     </div>
                     <div className="w-full sm:flex-1 space-y-1">
-                      <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Data Type</label>
+                      <label className="text-[11px] font-semibold text-muted">Data type</label>
                       <select 
                         className="w-full h-8 px-2 rounded-md text-xs bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
                         value={newFieldType}
@@ -877,7 +877,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <div className="grid grid-cols-1 gap-2 max-h-36 overflow-y-auto">
                   {customFields.map(f => (
                     <div key={f.field_key} className="space-y-1">
-                      <label className="text-xs font-semibold text-muted uppercase tracking-wider">{f.field_name}</label>
+                      <label className="text-xs font-semibold text-muted">{f.field_name}</label>
                       <AppInput 
                         type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
                         value={fieldValues[f.field_key] || ""} 

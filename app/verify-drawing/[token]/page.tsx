@@ -53,7 +53,7 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
           setData({
             isValid: true,
             drawingNumber: "TA-STR-F08-01",
-            title: "Tower A - 8th Floor Typical Slab Structural Layout",
+            title: "Tower a - 8th floor typical slab structural layout",
             discipline: "Structural Engineering",
             projectName: "Tower A (G+10)",
             buildingName: "Tower A",
@@ -76,29 +76,29 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 antialiased">
       {/* Top Branding */}
       <div className="w-full max-w-md text-center space-y-2 mb-6">
-        <div className="h-12 w-12 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary font-black mx-auto">
+        <div className="h-12 w-12 rounded-xl bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary font-semibold mx-auto">
           C
         </div>
-        <h1 className="text-sm font-bold uppercase tracking-wider text-foreground">
-          Chandak Group • Site Execution QR Validation
+        <h1 className="text-sm font-bold text-foreground">
+          Chandak Group • site execution QR validation
         </h1>
         <p className="text-xs text-muted-foreground font-mono">
-          ISO 9001:2015 Drawing Integrity Verification Portal
+          ISO 9001:2015 drawing integrity verification portal
         </p>
       </div>
 
       {loading ? (
         <div className="w-full max-w-md bg-surface border border-border rounded-2xl p-8 text-center space-y-3 shadow-xl animate-pulse">
           <ShieldCheck className="h-10 w-10 mx-auto text-theme-btn-primary stroke-1" />
-          <p className="text-xs font-semibold text-muted-foreground">Verifying digital QR token with registry...</p>
+          <p className="text-xs font-semibold text-muted-foreground">Verifying digital QR token with registry…</p>
         </div>
       ) : !data?.isValid ? (
-        <div className="w-full max-w-md bg-surface border border-rose-500/30 rounded-2xl p-6 text-center space-y-4 shadow-xl">
-          <div className="h-12 w-12 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/25 flex items-center justify-center mx-auto">
+        <div className="w-full max-w-md bg-surface border border-danger-border rounded-2xl p-6 text-center space-y-4 shadow-xl">
+          <div className="h-12 w-12 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center mx-auto">
             <XCircle className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">Invalid QR Code Token</h2>
+            <h2 className="text-base font-bold text-foreground">Invalid QR code token</h2>
             <p className="text-xs text-muted-foreground mt-1">
               This drawing token is not recognized in the Chandak DMAC central registry. Do not use this drawing for site execution.
             </p>
@@ -106,16 +106,16 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
         </div>
       ) : data.status === "ACTIVE_GFC" ? (
         /* 1. ACTIVE GFC (GREEN PASS) */
-        <div className="w-full max-w-md bg-surface border-2 border-emerald-500 rounded-2xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+        <div className="w-full max-w-md bg-surface border-2 border-success-border rounded-2xl p-6 shadow-lg space-y-5 animate-in zoom-in-95">
           <div className="text-center space-y-2">
-            <div className="h-14 w-14 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto ring-4 ring-emerald-500/10">
+            <div className="h-14 w-14 rounded-full bg-success-soft text-success-text border border-success-border flex items-center justify-center mx-auto ring-4 ring-success-border">
               <CheckCircle2 className="h-8 w-8" />
             </div>
             <div>
-              <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500 text-white shadow-xs">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-success text-white shadow-xs">
                 ACTIVE GFC • APPROVED FOR SITE
               </span>
-              <h2 className="text-lg font-black text-foreground mt-3">{data.drawingNumber}</h2>
+              <h2 className="text-lg font-semibold text-foreground mt-3">{data.drawingNumber}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{data.title}</p>
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
           <div className="p-4 bg-surface rounded-xl border border-border space-y-2.5 text-xs">
             <div className="flex justify-between pb-2 border-b border-border">
               <span className="text-muted-foreground">Revision Status:</span>
-              <strong className="font-mono text-emerald-600 dark:text-emerald-400">{data.revisionNumber} (Active GFC)</strong>
+              <strong className="font-mono text-success-text">{data.revisionNumber} (Active GFC)</strong>
             </div>
             <div className="flex justify-between pb-2 border-b border-border">
               <span className="text-muted-foreground">Discipline:</span>
@@ -134,7 +134,7 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
               <strong className="text-foreground">{data.projectName} • {data.buildingName}</strong>
             </div>
             <div className="flex justify-between pb-2 border-b border-border">
-              <span className="text-muted-foreground">GFC Certified Date:</span>
+              <span className="text-muted-foreground">GFC certified date:</span>
               <strong className="text-foreground">{data.gfcReleasedAt}</strong>
             </div>
             <div className="flex justify-between">
@@ -149,24 +149,24 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
         </div>
       ) : (
         /* 2. SUPERSEDED REVISION (RED DANGER ALERT) */
-        <div className="w-full max-w-md bg-surface border-2 border-rose-500 rounded-2xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+        <div className="w-full max-w-md bg-surface border-2 border-danger-border rounded-2xl p-6 shadow-lg space-y-5 animate-in zoom-in-95">
           <div className="text-center space-y-2">
-            <div className="h-14 w-14 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center justify-center mx-auto ring-4 ring-rose-500/10">
+            <div className="h-14 w-14 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center mx-auto ring-4 ring-danger-border">
               <ShieldAlert className="h-8 w-8" />
             </div>
             <div>
-              <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-danger-solid text-white shadow-xs">
                 SUPERSEDED • DO NOT EXECUTE ON SITE
               </span>
-              <h2 className="text-lg font-black text-foreground mt-3">{data.drawingNumber}</h2>
+              <h2 className="text-lg font-semibold text-foreground mt-3">{data.drawingNumber}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{data.title}</p>
             </div>
           </div>
 
-          <div className="p-4 bg-rose-500/10 border border-rose-500/25 rounded-xl text-xs space-y-2 text-rose-900 dark:text-rose-200">
+          <div className="p-4 bg-danger-soft border border-danger-border rounded-xl text-xs space-y-2 text-danger-text">
             <p className="font-bold flex items-center gap-1.5">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
-              <span>WARNING: This revision ({data.revisionNumber}) has been superseded.</span>
+              <AlertTriangle className="h-4 w-4 shrink-0 text-danger-text" />
+              <span>WARNING: this revision ({data.revisionNumber}) has been superseded.</span>
             </p>
             <p className="text-[11px] leading-relaxed">
               Construction using this drawing is strictly prohibited. An updated revision{" "}

@@ -55,7 +55,7 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, init
       ) : (
         <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
       )}
-      <span className="text-[10px] text-muted font-medium tracking-wider">
+      <span className="text-[11px] text-muted font-medium tracking-wider">
         {isFetching ? "SYNCING" : "LIVE"}
       </span>
     </button>
@@ -64,7 +64,7 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, init
   // If initial metrics are loading on first client mount, show a sleek in-context skeleton
   if (!data && isLoading) {
     return (
-      <div className="w-full p-4 md:p-6 space-y-6 animate-pulse" aria-label="Loading dashboard deliverables...">
+      <div className="w-full p-4 md:p-6 space-y-6 animate-pulse" aria-label="Loading dashboard deliverables…">
         <div className="flex justify-between items-center pb-4 border-b border-border/40">
           <div className="flex gap-2">
             <div className="h-9 w-32 bg-muted/20 rounded-xl"></div>

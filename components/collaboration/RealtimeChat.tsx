@@ -79,12 +79,12 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
   return (
     <div className="flex flex-col h-full relative">
       {degradationStage >= DegradationStage.STAGE_1_MILD && (
-        <div className="bg-amber-900/30 text-warning text-[10px] uppercase font-bold py-1 px-3 text-center border-b border-amber-500/20">
-          Governance: Presence & Typing Indicators Paused
+        <div className="bg-warning-soft text-warning text-[11px] font-bold py-1 px-3 text-center border-b border-warning-border">
+          Governance: presence & typing indicators paused
         </div>
       )}
       {degradationStage >= DegradationStage.STAGE_3_SEVERE && (
-        <div className="bg-red-900/30 text-danger text-[10px] uppercase font-bold py-1 px-3 text-center border-b border-red-500/20">
+        <div className="bg-danger-soft text-danger text-[11px] font-bold py-1 px-3 text-center border-b border-danger-border">
           Governance: Live Chat Stream Paused. Force Refresh to load new.
         </div>
       )}
@@ -92,7 +92,7 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
         {messages.map((msg, i) => {
           const isChat = msg.event_type === 'CHAT' || msg.event_type === 'COMMENT';
           return (
-            <div key={msg.id || i} className={`text-sm ${isChat ? 'bg-indigo-900/30 border-theme-btn-primary/30' : 'theme-card-structural /40 /30'} rounded-xl p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>
+            <div key={msg.id || i} className={`text-sm ${isChat ? 'bg-accent-soft border-theme-btn-primary/30' : 'theme-card-structural'} rounded-xl p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-bold text-xs text-muted">
                   {msg.performed_by?.full_name || 'System User'}
@@ -118,8 +118,8 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message or @mention someone..."
-          className="flex-1 theme-card-structural /40 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-theme-btn-primary"
+          placeholder="Type a message or @mention someone…"
+          className="flex-1 theme-card-structural rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-theme-btn-primary"
         />
         <AppButton type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
           Send

@@ -95,11 +95,11 @@ export default function TicketAutomationsBuilder() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Ticket Automations (IFTTT)"
-        badge={<AppBadge variant="warning">Workflow Engine</AppBadge>}
+        title="Ticket automations (IFTTT)"
+        badge={<AppBadge variant="warning">Workflow engine</AppBadge>}
         actions={
           <AppButton variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>
-            Create Rule
+            Create rule
           </AppButton>
         }
       />
@@ -155,7 +155,7 @@ export default function TicketAutomationsBuilder() {
                     value={form.name} 
                     onChange={e => setForm({...form, name: e.target.value})} 
                     className="text-lg font-bold py-2 mt-1 bg-transparent border-transparent focus:bg-surface" 
-                    placeholder="Enter Rule Name"
+                    placeholder="Enter rule name"
                   />
                 </div>
                 <div className="flex items-center gap-4">
@@ -171,11 +171,11 @@ export default function TicketAutomationsBuilder() {
                       onChange={e => setForm({...form, isActive: e.target.checked})}
                     />
                   </label>
-                  <AppButton variant="outline" className="text-danger border-danger-border hover:bg-danger-soft" onClick={() => setRuleToDelete(form.id)}>
+                  <AppButton aria-label="Delete" variant="outline" className="text-danger border-danger-border hover:bg-danger-soft" onClick={() => setRuleToDelete(form.id)}>
                     <Trash2 className="w-4 h-4" />
                   </AppButton>
                   <AppButton variant="primary" onClick={handleSave} leftIcon={<Save className="w-4 h-4" />}>
-                    Save Rule
+                    Save rule
                   </AppButton>
                 </div>
               </div>
@@ -206,7 +206,7 @@ export default function TicketAutomationsBuilder() {
                           <option>Category</option>
                           <option>Status</option>
                           <option>Department</option>
-                          <option>Ticket Source</option>
+                          <option>Ticket source</option>
                         </select>
                         
                         <select 
@@ -226,7 +226,7 @@ export default function TicketAutomationsBuilder() {
                         <input 
                           type="text" 
                           className="flex-1 p-2 bg-transparent border-b border-border focus:outline-none focus:border-primary text-sm text-foreground"
-                          placeholder="Value..."
+                          placeholder="Value…"
                           value={cond.value}
                           onChange={e => {
                             const c = [...form.conditions];
@@ -235,13 +235,13 @@ export default function TicketAutomationsBuilder() {
                           }}
                         />
                         
-                        <AppButton variant="ghost" size="sm" onClick={() => removeCondition(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AppButton aria-label="Delete" variant="ghost" size="sm" onClick={() => removeCondition(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       </div>
                     ))}
                     <AppButton variant="outline" size="sm" onClick={addCondition} className="mt-2 text-xs" leftIcon={<Plus className="w-3 h-3" />}>
-                      Add Condition
+                      Add condition
                     </AppButton>
                   </div>
                 </div>
@@ -264,13 +264,13 @@ export default function TicketAutomationsBuilder() {
                             setForm({...form, actions: a});
                           }}
                         >
-                          <option>Assign to Group</option>
-                          <option>Assign to User</option>
+                          <option>Assign to group</option>
+                          <option>Assign to user</option>
                           <option>Set SLA</option>
-                          <option>Change Status</option>
-                          <option>Add Tag</option>
-                          <option>Send Email Notification</option>
-                          <option>Trigger Webhook</option>
+                          <option>Change status</option>
+                          <option>Add tag</option>
+                          <option>Send email notification</option>
+                          <option>Trigger webhook</option>
                         </select>
                         
                         <ArrowRight className="w-4 h-4 text-muted mx-2" />
@@ -278,7 +278,7 @@ export default function TicketAutomationsBuilder() {
                         <input 
                           type="text" 
                           className="flex-1 p-2 bg-transparent border-b border-border focus:outline-none focus:border-success text-sm font-mono text-success"
-                          placeholder="Action parameter..."
+                          placeholder="Action parameter…"
                           value={act.value}
                           onChange={e => {
                             const a = [...form.actions];
@@ -287,13 +287,13 @@ export default function TicketAutomationsBuilder() {
                           }}
                         />
                         
-                        <AppButton variant="ghost" size="sm" onClick={() => removeAction(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AppButton aria-label="Delete" variant="ghost" size="sm" onClick={() => removeAction(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       </div>
                     ))}
                     <AppButton variant="outline" size="sm" onClick={addAction} className="mt-2 text-xs text-success border-success-border hover:bg-success-soft" leftIcon={<Plus className="w-3 h-3" />}>
-                      Add Action
+                      Add action
                     </AppButton>
                   </div>
                 </div>
@@ -303,9 +303,9 @@ export default function TicketAutomationsBuilder() {
           ) : (
             <div className="flex flex-col items-center justify-center h-full bg-surface rounded-2xl border border-border p-12 text-muted">
               <Zap className="w-16 h-16 text-muted mb-4" />
-              <h3 className="text-xl font-bold text-foreground">Automation Builder</h3>
+              <h3 className="text-xl font-bold text-foreground">Automation builder</h3>
               <p className="mt-2 max-w-md text-center">Select an existing rule to edit its workflow, or create a new automation to streamline your ticket processing.</p>
-              <AppButton variant="primary" className="mt-6" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>Create New Rule</AppButton>
+              <AppButton variant="primary" className="mt-6" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>Create new rule</AppButton>
             </div>
           )}
         </div>

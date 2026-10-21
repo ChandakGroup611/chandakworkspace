@@ -353,14 +353,14 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         <div className="flex items-center gap-2">
           <MessageSquare className={`h-4 w-4 text-theme-icon`} />
           <h3 className={`text-sm font-bold ${"text-foreground"}`}>
-            Realtime Collaboration
+            Realtime collaboration
           </h3>
         </div>
         {/* Connection Status Indicator */}
         <div className="flex items-center gap-1.5">
           {connected === null && (
             <span className="flex items-center gap-1 text-xs text-warning font-bold animate-pulse">
-              <Loader2 className="h-3 w-3 animate-spin" /> Connecting...
+              <Loader2 className="h-3 w-3 animate-spin" /> Connecting…
             </span>
           )}
           {connected === true && (
@@ -378,9 +378,9 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
 
       {/* Error Banner */}
       {error && (
-        <div className="p-3 bg-rose-500/10 border-b border-rose-500/30 text-rose-950 dark:text-rose-100 text-xs shrink-0 font-semibold flex items-center justify-between animate-in slide-in-from-top-1">
+        <div className="p-3 bg-danger-soft border-b border-danger-border text-danger-text text-xs shrink-0 font-semibold flex items-center justify-between animate-in slide-in-from-top-1">
           <span>{sanitizeErrorMessage(error)}</span>
-          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-rose-700 hover:text-rose-900 dark:text-rose-300 font-bold px-1.5">
+          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-danger-text hover:text-danger-text font-bold px-1.5">
             Dismiss
           </AppButton>
         </div>
@@ -394,7 +394,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         {loading ? (
           <div className="flex items-center justify-center py-10 gap-2 text-muted">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-xs font-bold">Loading messages...</span>
+            <span className="text-xs font-bold">Loading messages…</span>
           </div>
         ) : messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted space-y-2 opacity-50 py-8">
@@ -410,7 +410,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
             return (
               <div key={m.id || idx} className={`flex gap-3 animate-in fade-in slide-in-from-bottom-2 ${isSender ? "flex-row-reverse" : ""}`}>
                 {!isSender && (
-                  <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-accent to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-accent to-primary flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
                     {m.user?.profile_photo ? (
                       <img src={m.user.profile_photo} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -447,7 +447,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                     </div>
                   )}
                   
-                  <div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${ isSender ? "bg-theme-btn-primary text-theme-btn-primary-text rounded-tr-sm border border-theme-btn-primary/30" : isMention ? ("bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-foreground rounded-tl-sm") : ("bg-surface text-foreground border border-border rounded-tl-sm") }`}>
+                  <div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${ isSender ? "bg-theme-btn-primary text-theme-btn-primary-text rounded-tr-sm border border-theme-btn-primary/30" : isMention ? ("bg-accent-soft border border-theme-btn-primary/20 text-foreground rounded-tl-sm") : ("bg-surface text-foreground border border-border rounded-tl-sm") }`}>
                     {(() => {
                       const parts = m.message.split("|||ATTACHMENTS|||");
                       let text = parts[0];
@@ -459,40 +459,40 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                         <div className="flex flex-col gap-2">
                           {text && <SafeHtml html={text} />}
                           {attachments.length > 0 && (
-                            <div className="flex flex-col gap-1.5 mt-1 border-t border-white/20 pt-2">
+                            <div className="flex flex-col gap-1.5 mt-1 border-t border-border pt-2">
                               {attachments.map((att, i) => (
                                 att.type?.startsWith('image/') ? (
-                                  <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-black/10 dark:border-border">
-                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-surface/5 dark:bg-surface/5 transition-transform duration-300 group-hover:scale-105" />
+                                  <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-border dark:border-border">
+                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-surface/5 dark:bg-surface/5 transition-transform duration-300" />
                                     <div className="absolute inset-0 bg-surface/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
-                                      <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="View Full Image">
+                                      <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="View full image">
                                         <div className="p-2 bg-surface/20 rounded-full shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                         </div>
-                                        <span className="text-[10px] font-semibold uppercase tracking-wider">View</span>
+                                        <span className="text-[11px] font-semibold">View</span>
                                       </a>
-                                      <a href={`${att.url}${att.url.includes('?') ? '&' : '?'}download=1`} download={att.name} className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="Download Image">
+                                      <a href={`${att.url}${att.url.includes('?') ? '&' : '?'}download=1`} download={att.name} className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="Download image">
                                         <div className="p-2 bg-surface/20 rounded-full shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                         </div>
-                                        <span className="text-[10px] font-semibold uppercase tracking-wider">Download</span>
+                                        <span className="text-[11px] font-semibold">Download</span>
                                       </a>
                                     </div>
                                   </div>
                                 ) : (
-                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-surface/10 border-black/10' : 'bg-surface/5 dark:bg-surface/10 border-black/5 dark:border-border'}`}>
+                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-surface/10 border-border' : 'bg-surface/5 dark:bg-surface/10 border-border dark:border-border'}`}>
                                   <div className="flex items-center gap-2 overflow-hidden mr-3">
                                     <Paperclip className="h-4 w-4 shrink-0 opacity-70" />
                                     <span className="truncate text-[11px] font-medium" title={att.name}>{att.name}</span>
                                   </div>
                                   <div className="flex items-center gap-1.5 shrink-0">
-                                    <a href={att.name.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i) ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(att.url.startsWith('http') ? att.url : `https://chandakgroup.tech${att.url}`)}` : att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-surface/10 hover:bg-surface/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="View Document">
+                                    <a href={att.name.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i) ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(att.url.startsWith('http') ? att.url : `https://chandakgroup.tech${att.url}`)}` : att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[11px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-surface/10 hover:bg-surface/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="View document">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                      <span>VIEW</span>
+                                      <span>View</span>
                                     </a>
-                                    <a href={`${att.url}${att.url.includes('?') ? '&' : '?'}download=1`} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-surface/10 hover:bg-surface/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="Download Document">
+                                    <a href={`${att.url}${att.url.includes('?') ? '&' : '?'}download=1`} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[11px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-surface/10 hover:bg-surface/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="Download document">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                      <span>DOWNLOAD</span>
+                                      <span>Download</span>
                                     </a>
                                   </div>
                                 </div>
@@ -512,7 +512,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
       </div>
 
       {/* Chat Input Area */}
-      <div className={`p-3 border-t shrink-0 relative theme-card-structural /50`}>
+      <div className={`p-3 border-t shrink-0 relative theme-card-structural`}>
         
         {/* Mentions Dropdown */}
         {showMentions && (
@@ -524,13 +524,13 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                   type="button"
                   onClick={() => insertMention('ALL')}
                   className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-colors ${
-                    "hover:opacity-90/10 text-theme-icon font-bold"
+                    "hover:bg-surface-hover text-theme-icon font-bold"
                   }`}
                 >
-                  <div className="h-6 w-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center">
+                  <div className="h-6 w-6 rounded-full bg-accent-soft flex items-center justify-center">
                     <Users className="h-3 w-3" />
                   </div>
-                  Notify Everyone (@All)
+                  Notify everyone (@all)
                 </AppButton>
               )}
               
@@ -546,7 +546,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                       "hover:bg-elevated text-muted"
                     }`}
                   >
-                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-accent to-indigo-600 flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden">
+                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-accent to-primary flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden">
                       {u.profile_photo ? <img src={u.profile_photo} alt="" className="h-full w-full object-cover" /> : u.full_name.substring(0, 2).toUpperCase()}
                     </div>
                     {u.full_name}
@@ -577,8 +577,8 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         {/* Macros Dropdown */}
         {showMacros && macros.length > 0 && (
           <div className={`absolute bottom-full mb-2 left-16 w-64 rounded-xl  overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
-            <div className="theme-card-structural dark:/20 p-2 border-b dark: text-xs font-bold uppercase text-muted">
-              Quick Responses (Macros)
+            <div className="theme-card-structural p-2 border-b text-xs font-bold text-muted">
+              Quick responses (macros)
             </div>
             <div className="max-h-48 overflow-y-auto py-1">
               {macros.map(m => (
@@ -590,7 +590,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                     setShowMacros(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-xs flex flex-col gap-1 transition-colors ${
-                    "hover:opacity-90/10 text-muted"
+                    "hover:bg-surface-hover text-muted"
                   }`}
                 >
                   <span className="font-bold text-theme-icon">{m.title}</span>
@@ -608,10 +608,10 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                 <div className="flex items-center gap-1.5 min-w-0">
                   <Paperclip className="h-3.5 w-3.5 text-theme-icon shrink-0" />
                   <span className="truncate max-w-[140px] font-medium text-foreground" title={file.name}>{file.name}</span>
-                  <span className="text-[10px] text-muted font-mono">({(file.size / 1024).toFixed(0)} KB)</span>
+                  <span className="text-[11px] text-muted font-mono">({(file.size / 1024).toFixed(0)} KB)</span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0 ml-1 border-l border-border pl-1.5">
-                  <AppButton
+                  <AppButton aria-label="View document"
                     variant="ghost"
                     size="sm"
                     type="button"
@@ -619,12 +619,12 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                       const url = URL.createObjectURL(file);
                       window.open(url, '_blank');
                     }}
-                    className="p-1 h-6 w-6 text-accent hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
-                    title="View Document"
+                    className="p-1 h-6 w-6 text-accent hover:bg-accent-soft rounded flex items-center justify-center"
+                    title="View document"
                   >
                     <Eye className="h-3.5 w-3.5" />
                   </AppButton>
-                  <AppButton
+                  <AppButton aria-label="Download document"
                     variant="ghost"
                     size="sm"
                     type="button"
@@ -638,18 +638,18 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
                     }}
-                    className="p-1 h-6 w-6 text-theme-icon hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
-                    title="Download Document"
+                    className="p-1 h-6 w-6 text-theme-icon hover:bg-accent-soft rounded flex items-center justify-center"
+                    title="Download document"
                   >
                     <Download className="h-3.5 w-3.5" />
                   </AppButton>
-                  <AppButton
+                  <AppButton aria-label="Remove file"
                     variant="ghost"
                     size="sm"
                     type="button"
                     onClick={() => removeFile(idx)}
                     className="p-1 h-6 w-6 text-muted hover:text-danger hover:bg-danger/10 rounded flex items-center justify-center"
-                    title="Remove File"
+                    title="Remove file"
                   >
                     <X className="h-3.5 w-3.5" />
                   </AppButton>
@@ -665,30 +665,30 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         >
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
           
-          <AppButton variant="secondary" type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-muted hover:text-theme-icon transition-colors shrink-0" tabIndex={-1}>
+          <AppButton aria-label="Attach file" variant="secondary" type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-muted hover:text-theme-icon transition-colors shrink-0" tabIndex={-1}>
             <Paperclip className="h-4 w-4" />
           </AppButton>
           
           <input
             type="text"
-            className="flex-1 min-w-0 bg-transparent border-0 border-transparent shadow-none text-sm focus:outline-none focus:ring-0 focus:border-transparent placeholder-gray-500 dark:text-white px-0 m-0"
-            placeholder="Type a message or use @ to mention someone..."
+            className="flex-1 min-w-0 bg-transparent border-0 border-transparent shadow-none text-sm focus:outline-none focus:ring-0 focus:border-transparent px-0 m-0"
+            placeholder="Type a message or use @ to mention someone…"
             value={newMessage}
             onChange={handleInputChange}
             disabled={sending}
           />
           
-          <AppButton variant="secondary" 
+          <AppButton aria-label="Use canned response" variant="secondary" 
             type="button" 
             onClick={() => setShowMacros(!showMacros)}
             className={`p-2 transition-colors shrink-0 ${showMacros ? 'text-theme-icon' : 'text-muted hover:text-theme-icon'}`} 
             tabIndex={-1}
-            title="Use Canned Response"
+            title="Use canned response"
           >
             <Zap className="h-4 w-4" />
           </AppButton>
           
-          <AppButton variant="secondary" type="button" className="p-2 text-muted hover:text-warning transition-colors shrink-0" tabIndex={-1}>
+          <AppButton aria-label="Add emoji" variant="secondary" type="button" className="p-2 text-muted hover:text-warning transition-colors shrink-0" tabIndex={-1}>
             <Smile className="h-4 w-4" />
           </AppButton>
           

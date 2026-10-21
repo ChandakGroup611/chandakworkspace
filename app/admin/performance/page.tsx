@@ -66,7 +66,7 @@ export default function PerformanceCommandCenter() {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
           <p className="text-muted">Super Admin privileges are required to view the Performance Command Center.</p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function PerformanceCommandCenter() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Enterprise Performance Command Center</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Enterprise performance command center</h1>
         <div className="flex items-center gap-4">
           <AppButton 
             onClick={toggleKillSwitch}
@@ -105,10 +105,10 @@ export default function PerformanceCommandCenter() {
         <div className="bg-surface text-white rounded-xl p-6 shadow-xl border border-border">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-xl font-bold text-muted">Weighted Enterprise Health Score</h2>
-              <p className="text-sm text-muted">Aggregated via Passive Governance Engine</p>
+              <h2 className="text-xl font-bold text-muted">Weighted enterprise health score</h2>
+              <p className="text-sm text-muted">Aggregated via passive governance engine</p>
             </div>
-            <div className={`text-4xl font-black ${govMetrics.totalEnterpriseScore > 90 ? 'text-success' : govMetrics.totalEnterpriseScore > 75 ? 'text-warning' : 'text-danger'}`}>
+            <div className={`text-4xl font-semibold ${govMetrics.totalEnterpriseScore > 90 ? 'text-success' : govMetrics.totalEnterpriseScore > 75 ? 'text-warning' : 'text-danger'}`}>
               {govMetrics.totalEnterpriseScore.toFixed(1)} / 100
             </div>
           </div>
@@ -124,64 +124,64 @@ export default function PerformanceCommandCenter() {
 
           <div className="mt-6 p-4 rounded-lg bg-surface/50 border border-border flex items-center justify-between">
             <div>
-              <div className="font-bold text-muted">Degradation Stage</div>
-              <div className="text-sm text-muted">Current Self-Protection Level</div>
+              <div className="font-bold text-muted">Degradation stage</div>
+              <div className="text-sm text-muted">Current self-protection level</div>
             </div>
             <div className="text-lg font-bold text-warning">
-              {govMetrics.currentStage === DegradationStage.STAGE_0_NORMAL && <span className="text-success">STAGE 0: NORMAL</span>}
-              {govMetrics.currentStage === DegradationStage.STAGE_1_MILD && <span>STAGE 1: MILD</span>}
-              {govMetrics.currentStage === DegradationStage.STAGE_2_MODERATE && <span>STAGE 2: MODERATE</span>}
-              {govMetrics.currentStage === DegradationStage.STAGE_3_SEVERE && <span className="text-orange-500">STAGE 3: SEVERE</span>}
-              {govMetrics.currentStage === DegradationStage.STAGE_4_CRITICAL && <span className="text-danger">STAGE 4: CRITICAL</span>}
+              {govMetrics.currentStage === DegradationStage.STAGE_0_NORMAL && <span className="text-success">Stage 0: normal</span>}
+              {govMetrics.currentStage === DegradationStage.STAGE_1_MILD && <span>Stage 1: mild</span>}
+              {govMetrics.currentStage === DegradationStage.STAGE_2_MODERATE && <span>Stage 2: moderate</span>}
+              {govMetrics.currentStage === DegradationStage.STAGE_3_SEVERE && <span className="text-warning-text">Stage 3: severe</span>}
+              {govMetrics.currentStage === DegradationStage.STAGE_4_CRITICAL && <span className="text-danger">Stage 4: critical</span>}
             </div>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Queries" value={totalQueries} />
-        <MetricCard title="Duplicate Queries" value={duplicateQueries} isWarning={duplicateQueries > 5} />
-        <MetricCard title="Critical Queries" value={criticalQueries} isCritical={criticalQueries > 0} />
-        <MetricCard title="Active Websockets" value={activeChannels} isWarning={activeChannels > 15} isCritical={activeChannels > 30} />
+        <MetricCard title="Total queries" value={totalQueries} />
+        <MetricCard title="Duplicate queries" value={duplicateQueries} isWarning={duplicateQueries > 5} />
+        <MetricCard title="Critical queries" value={criticalQueries} isCritical={criticalQueries > 0} />
+        <MetricCard title="Active websockets" value={activeChannels} isWarning={activeChannels > 15} isCritical={activeChannels > 30} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard title="First Contentful Paint (FCP)" value={`${hydrationData.fcp.toFixed(0)} ms`} />
-        <MetricCard title="Largest Contentful Paint (LCP)" value={`${hydrationData.lcp.toFixed(0)} ms`} />
-        <MetricCard title="Time to First Byte (TTFB)" value={`${hydrationData.ttqb.toFixed(0)} ms`} />
+        <MetricCard title="First contentful paint (FCP)" value={`${hydrationData.fcp.toFixed(0)} ms`} />
+        <MetricCard title="Largest contentful paint (LCP)" value={`${hydrationData.lcp.toFixed(0)} ms`} />
+        <MetricCard title="Time to first byte (TTFB)" value={`${hydrationData.ttqb.toFixed(0)} ms`} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border pt-6 mt-6">
-        <MetricCard title="Total JSON Payload" value={`${totalPayloadKB.toFixed(1)} KB`} isWarning={totalPayloadKB > 1024} isCritical={totalPayloadKB > 5120} />
-        <MetricCard title="Total Rows Hydrated" value={totalRowsReturned} isWarning={totalRowsReturned > 1000} />
-        <MetricCard title="Master Cache Hits" value={serverMetrics.cacheHits} />
+        <MetricCard title="Total JSON payload" value={`${totalPayloadKB.toFixed(1)} KB`} isWarning={totalPayloadKB > 1024} isCritical={totalPayloadKB > 5120} />
+        <MetricCard title="Total rows hydrated" value={totalRowsReturned} isWarning={totalRowsReturned > 1000} />
+        <MetricCard title="Master cache hits" value={serverMetrics.cacheHits} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard title="Master Cache Misses" value={serverMetrics.cacheMisses} isWarning={serverMetrics.cacheMisses > 10} />
-        <MetricCard title="Cache Hit Ratio" value={`${serverMetrics.cacheRatio.toFixed(1)}%`} isCritical={serverMetrics.cacheRatio < 80} />
+        <MetricCard title="Master cache misses" value={serverMetrics.cacheMisses} isWarning={serverMetrics.cacheMisses > 10} />
+        <MetricCard title="Cache hit ratio" value={`${serverMetrics.cacheRatio.toFixed(1)}%`} isCritical={serverMetrics.cacheRatio < 80} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border pt-6 mt-6">
-        <MetricCard title="Queue Depth (Pending)" value={serverMetrics.queue.pending} isWarning={serverMetrics.queue.pending > 50} isCritical={serverMetrics.queue.pending > 200} />
-        <MetricCard title="Processing Events" value={serverMetrics.queue.processing} />
-        <MetricCard title="Failed/Dead-letter Events" value={serverMetrics.queue.failed} isCritical={serverMetrics.queue.failed > 0} />
+        <MetricCard title="Queue depth (pending)" value={serverMetrics.queue.pending} isWarning={serverMetrics.queue.pending > 50} isCritical={serverMetrics.queue.pending > 200} />
+        <MetricCard title="Processing events" value={serverMetrics.queue.processing} />
+        <MetricCard title="Failed/dead-letter events" value={serverMetrics.queue.failed} isCritical={serverMetrics.queue.failed > 0} />
       </div>
 
       {violations.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-danger">Soft Governance Budget Violations</h2>
+          <h2 className="text-xl font-semibold text-danger">Soft governance budget violations</h2>
           <div className="overflow-x-auto">
-            <AppTableContainer><AppTable className="min-w-full divide-y divide-red-200 text-base">
-              <AppTableHeader className="bg-red-50">
+            <AppTableContainer><AppTable className="min-w-full divide-y divide-danger-border text-base">
+              <AppTableHeader className="bg-danger-soft">
                 <AppTableRow>
                   <AppTableHead className="px-4 py-3 text-left">Route</AppTableHead>
-                  <AppTableHead className="px-4 py-3 text-right">Query Count</AppTableHead>
-                  <AppTableHead className="px-4 py-3 text-right">Allowed Budget</AppTableHead>
+                  <AppTableHead className="px-4 py-3 text-right">Query count</AppTableHead>
+                  <AppTableHead className="px-4 py-3 text-right">Allowed budget</AppTableHead>
                   <AppTableHead className="px-4 py-3 text-left">Time</AppTableHead>
                 </AppTableRow>
               </AppTableHeader>
-              <AppTableBody className="divide-y divide-red-100">
+              <AppTableBody className="divide-y divide-danger-border">
                 {violations.map((v, i) => (
                   <AppTableRow key={i} className="bg-surface">
                     <AppTableCell className="px-4 py-3 font-medium">{v.route}</AppTableCell>
@@ -197,9 +197,9 @@ export default function PerformanceCommandCenter() {
       )}
 
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Query Log</h2>
+        <h2 className="text-xl font-semibold">Query log</h2>
         <div className="overflow-x-auto">
-          <AppTableContainer><AppTable className="min-w-full divide-y divide-gray-200 text-base">
+          <AppTableContainer><AppTable className="min-w-full divide-y divide-border text-base">
             <AppTableHeader className="bg-surface">
               <AppTableRow>
                 <AppTableHead className="px-4 py-3 text-left">Time</AppTableHead>
@@ -212,9 +212,9 @@ export default function PerformanceCommandCenter() {
                 <AppTableHead className="px-4 py-3 text-left">Duplicate</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
-            <AppTableBody className="divide-y divide-gray-200">
+            <AppTableBody className="divide-y divide-border">
               {metrics.slice(0, 50).map((m) => (
-                <AppTableRow key={m.id} className={m.severity === 'critical' ? 'bg-red-50' : m.severity === 'slow' ? 'bg-orange-50' : m.severity === 'warning' ? 'bg-yellow-50' : ''}>
+                <AppTableRow key={m.id} className={m.severity === 'critical' ? 'bg-danger-soft' : m.severity === 'slow' ? 'bg-warning-soft' : m.severity === 'warning' ? 'bg-warning-soft' : ''}>
                   <AppTableCell className="px-4 py-3 text-muted">{new Date(m.timestamp).toLocaleTimeString()}</AppTableCell>
                   <AppTableCell className="px-4 py-3 font-medium">{m.queryType.toUpperCase()}</AppTableCell>
                   <AppTableCell className="px-4 py-3">{m.tableOrFunction}</AppTableCell>
@@ -223,10 +223,10 @@ export default function PerformanceCommandCenter() {
                   <AppTableCell className="px-4 py-3 text-right">{(m.payloadBytes / 1024).toFixed(1)} KB</AppTableCell>
                   <AppTableCell className="px-4 py-3">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      m.severity === 'critical' ? 'bg-red-200 text-red-800' :
-                      m.severity === 'slow' ? 'bg-orange-200 text-orange-800' :
-                      m.severity === 'warning' ? 'bg-yellow-200 text-yellow-800' :
-                      'bg-green-100 text-green-800'
+                      m.severity === 'critical' ? 'bg-danger-soft text-danger-text' :
+                      m.severity === 'slow' ? 'bg-warning-soft text-warning-text' :
+                      m.severity === 'warning' ? 'bg-warning-soft text-warning-text' :
+                      'bg-success-soft text-success-text'
                     }`}>
                       {m.severity.toUpperCase()}
                     </span>
@@ -248,13 +248,13 @@ function MetricCard({ title, value, isWarning, isCritical }: { title: string, va
   let borderColor = 'border-border';
 
   if (isCritical) {
-    bgColor = 'bg-red-50';
-    textColor = 'text-red-700';
-    borderColor = 'border-red-200';
+    bgColor = 'bg-danger-soft';
+    textColor = 'text-danger-text';
+    borderColor = 'border-danger-border';
   } else if (isWarning) {
-    bgColor = 'bg-yellow-50';
-    textColor = 'text-yellow-700';
-    borderColor = 'border-yellow-200';
+    bgColor = 'bg-warning-soft';
+    textColor = 'text-warning-text';
+    borderColor = 'border-warning-border';
   }
 
   return (

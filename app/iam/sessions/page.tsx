@@ -11,6 +11,8 @@ import { Shield, MonitorSmartphone, WifiOff, Globe, Loader2, Search, ShieldX } f
 import { fetchActiveSessions, killSession } from "@/lib/actions/iam";
 import { toast } from "react-toastify";
 import { formatDistanceToNow } from "date-fns";
+import { confirmAction } from "@/components/ui/feedback/confirm";
+import { formatDateTime } from "@/components/ui/data";
 
 export default function SessionManagement() {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -35,7 +37,7 @@ export default function SessionManagement() {
   };
 
   const handleKillSession = async (sessionId: string) => {
-    if (!confirm("Are you sure you want to terminate this session? The user will be logged out immediately.")) return;
+    if (!(await confirmAction("Are you sure you want to terminate this session? The user will be logged out immediately."))) return;
     setProcessingId(sessionId);
     try {
       await killSession(sessionId);
@@ -58,7 +60,7 @@ export default function SessionManagement() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Active Sessions"
+        title="Active sessions"
         badge={<AppBadge variant="info">Governance</AppBadge>}
         actions={
           <div className="relative w-72">
@@ -66,7 +68,7 @@ export default function SessionManagement() {
               <Search className="w-4 h-4 ml-3 text-muted" />
               <input 
                 type="text" 
-                placeholder="Search users or IP..." 
+                placeholder="Search users or IP…" 
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full pl-2 pr-4 py-2 bg-transparent text-sm placeholder:text-muted/70 focus:outline-none focus:ring-0 text-foreground"
@@ -82,10 +84,10 @@ export default function SessionManagement() {
             <AppTableHeader>
               <AppTableRow>
                 <AppTableHead>User</AppTableHead>
-                <AppTableHead>IP Address</AppTableHead>
-                <AppTableHead>Device & Browser</AppTableHead>
+                <AppTableHead>IP address</AppTableHead>
+                <AppTableHead>Device & browser</AppTableHead>
                 <AppTableHead>Started</AppTableHead>
-                <AppTableHead>Last Activity</AppTableHead>
+                <AppTableHead>Last activity</AppTableHead>
                 <AppTableHead className="text-right">Actions</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
@@ -133,7 +135,7 @@ export default function SessionManagement() {
                         </div>
                         <div>
                           <div className="font-bold text-foreground text-sm tracking-tight">{session.user?.full_name || 'Unknown User'}</div>
-                          <div className="text-[10px] uppercase tracking-wider text-muted font-mono">{session.user?.email || 'N/A'}</div>
+                          <div className="text-[11px] text-muted font-mono">{session.user?.email || 'N/A'}</div>
                         </div>
                       </div>
                     </AppTableCell>
@@ -153,7 +155,7 @@ export default function SessionManagement() {
                     </AppTableCell>
                     <AppTableCell>
                       <div className="text-xs text-subtle dark:text-muted">
-                        {new Date(session.login_time).toLocaleString()}
+                        {formatDateTime(session.login_time)}
                       </div>
                     </AppTableCell>
                     <AppTableCell>

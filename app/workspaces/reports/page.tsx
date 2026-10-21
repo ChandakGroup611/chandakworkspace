@@ -11,7 +11,7 @@ export default function ReportsPage() {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
           <p className="text-muted">You do not have permission to view workspace reports.</p>
         </div>
       </div>
@@ -21,7 +21,7 @@ export default function ReportsPage() {
   return (
     <div className="w-full space-y-3 animate-in fade-in-50 duration-500">
       <header className="pb-1">
-        <h1 className="text-xl font-bold">Reports & Analytics</h1>
+        <h1 className="text-xl font-bold">Reports & analytics</h1>
         
       </header>
 

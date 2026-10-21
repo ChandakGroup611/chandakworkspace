@@ -33,11 +33,11 @@ const DATE_TIME_FMT = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: 
 /** "16 Oct 2026" — or the fallback ("—") when empty/invalid. */
 export function formatDate(value: unknown, fallback = "—") {
   const d = parseDate(value);
-  return d ? DATE_FMT.format(d) : fallback;
+  return d ? DATE_FMT.format(d).replace("Sept", "Sep") : fallback;
 }
 export function formatDateTime(value: unknown, fallback = "—") {
   const d = parseDate(value);
-  return d ? DATE_TIME_FMT.format(d) : fallback;
+  return d ? DATE_TIME_FMT.format(d).replace("Sept", "Sep").replace(/\b(am|pm)\b/i, (m) => m.toLowerCase()) : fallback;
 }
 export function toIsoDate(value: unknown) {
   const d = parseDate(value);

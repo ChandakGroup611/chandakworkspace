@@ -8,6 +8,7 @@ import { Clock, Plus, Loader2 } from "lucide-react";
 import { logTaskTime, getTaskDetails } from "@/lib/actions/tasks";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
+import { formatDateTime } from "@/components/ui/data";
 
 export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; onLogAdded?: () => void }) {
   const { isLight: isLightMode } = useTheme();
@@ -48,7 +49,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canLogTime) {
-      toast.error("You are not authorized to log time on this task.");
+      toast.error("You are not authorised to log time on this task.");
       return;
     }
     if (!hours || isNaN(Number(hours))) return;
@@ -80,11 +81,11 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
       <div className={`p-4 rounded-xl ${"theme-card-structural "}`}>
         <div className="flex justify-between items-end mb-2">
           <div className="space-y-1">
-            <p className="text-xs font-bold text-muted uppercase tracking-wider">Total Logged</p>
-            <p className={`text-2xl font-bold text-foreground dark:text-slate-100`}>{totalLogged.toFixed(1)}h</p>
+            <p className="text-xs font-bold text-muted">Total logged</p>
+            <p className={`text-2xl font-bold text-foreground`}>{totalLogged.toFixed(1)}h</p>
           </div>
           <div className="space-y-1 text-right">
-            <p className="text-xs font-bold text-muted uppercase tracking-wider">Estimated</p>
+            <p className="text-xs font-bold text-muted">Estimated</p>
             <p className="text-sm font-bold text-muted">{estimatedHours > 0 ? `${estimatedHours}h` : "Not set"}</p>
           </div>
         </div>
@@ -101,8 +102,8 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
       {/* Log Form */}
       {canLogTime && (
         <form onSubmit={handleSubmit} className={`p-4 rounded-xl theme-card-structural`}>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
-            <Clock className="h-4 w-4" /> Log New Time
+          <h4 className="text-xs font-bold text-muted mb-3 flex items-center gap-2">
+            <Clock className="h-4 w-4" /> Log new time
           </h4>
           <div className="flex gap-2 mb-3">
             <AppInput 
@@ -124,14 +125,14 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
             />
           </div>
           <AppButton type="submit" disabled={isSubmitting} className="w-full bg-success hover:bg-success text-white border-0 h-9">
-            {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : <><Plus className="h-4 w-4 mr-1" /> Save Log</>}
+            {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : <><Plus className="h-4 w-4 mr-1" /> Save log</>}
           </AppButton>
         </form>
       )}
 
       {/* Log History */}
       <div className="space-y-3">
-        <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted">History</h4>
+        <h4 className="text-[11px] font-bold text-muted">History</h4>
         {logs.length === 0 ? (
           <p className="text-xs text-muted text-center py-4">No time logged yet.</p>
         ) : (
@@ -140,7 +141,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
               <div className="shrink-0 font-bold text-success dark:text-success w-12">{log.hours}h</div>
               <div className="flex-1 min-w-0">
                 <p className={`truncate text-foreground`}>{log.description}</p>
-                <p className="text-[10px] text-muted mt-1">{new Date(log.logged_at).toLocaleString()}</p>
+                <p className="text-[11px] text-muted mt-1">{formatDateTime(log.logged_at)}</p>
               </div>
             </div>
           ))

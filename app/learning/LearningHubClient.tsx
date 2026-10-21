@@ -68,13 +68,13 @@ export default function LearningHubClient() {
       
       {/* Top Hero Banner */}
       <div className="w-full text-center space-y-4 pt-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20 mb-1">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20 mb-1">
           <GraduationCap className="h-4 w-4" />
-          <span>Enterprise Platform Learning Hub & Knowledge Center</span>
+          <span>Enterprise platform learning hub & knowledge center</span>
         </div>
         
-        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-foreground">
-          System Architecture, Module Connections & CRUD Operations
+        <h1 className="text-2xl md:text-4xl font-semibold tracking-tight text-foreground">
+          System architecture, module connections & CRUD operations
         </h1>
         <p className="text-sm md:text-base max-w-3xl mx-auto text-muted-foreground leading-relaxed">
           Master how modules connect, understand downstream data flows and ripple impacts, and explore complete field-to-field specifications for every entity in the platform.
@@ -82,7 +82,7 @@ export default function LearningHubClient() {
 
         {/* Primary Navigation Tabs */}
         <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
-          <button
+          <button type="button"
             onClick={() => setActiveTopTab("DIAGRAM")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
               activeTopTab === "DIAGRAM"
@@ -91,10 +91,10 @@ export default function LearningHubClient() {
             }`}
           >
             <Workflow className="h-4 w-4" />
-            <span>1. Architecture & Module Diagram</span>
+            <span>1. Architecture & module diagram</span>
           </button>
 
-          <button
+          <button type="button"
             onClick={() => setActiveTopTab("MODULE_SPECS")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
               activeTopTab === "MODULE_SPECS"
@@ -103,10 +103,10 @@ export default function LearningHubClient() {
             }`}
           >
             <Layers className="h-4 w-4" />
-            <span>2. Module Deep-Dive & CRUD Playbooks</span>
+            <span>2. Module deep-dive & CRUD playbooks</span>
           </button>
 
-          <button
+          <button type="button"
             onClick={() => setActiveTopTab("GLOBAL_FIELDS")}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
               activeTopTab === "GLOBAL_FIELDS"
@@ -115,7 +115,7 @@ export default function LearningHubClient() {
             }`}
           >
             <Database className="h-4 w-4" />
-            <span>3. Global Field & Schema Index</span>
+            <span>3. Global field & schema index</span>
           </button>
         </div>
       </div>
@@ -140,13 +140,13 @@ export default function LearningHubClient() {
             {/* Module Picker Bar */}
             <div className="bg-surface rounded-2xl p-4 border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-muted-foreground uppercase">Select Module:</span>
+                <span className="text-xs font-bold text-muted-foreground">Select Module:</span>
                 <span className="font-bold text-sm text-foreground">{selectedModule.title}</span>
               </div>
 
               {/* Module Dropdown Selector */}
               <div className="relative w-full md:w-80">
-                <button
+                <button type="button"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-elevated text-left text-xs font-bold text-foreground hover:border-theme-btn-primary transition-all"
                 >
@@ -158,12 +158,12 @@ export default function LearningHubClient() {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 left-0 top-full mt-2 p-2 rounded-xl border border-border bg-surface shadow-2xl z-30 space-y-1">
+                  <div className="absolute right-0 left-0 top-full mt-2 p-2 rounded-xl border border-border bg-surface shadow-lg z-30 space-y-1">
                     {learningModules.map((m) => {
                       const Icon = m.icon;
                       const isCurr = m.id === selectedModuleId;
                       return (
-                        <button
+                        <button type="button"
                           key={m.id}
                           onClick={() => {
                             setSelectedModuleId(m.id);
@@ -171,14 +171,14 @@ export default function LearningHubClient() {
                           }}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs transition-colors ${
                             isCurr
-                              ? "bg-theme-btn-primary/10 text-theme-btn-primary font-bold"
+                              ? "bg-accent-soft text-theme-btn-primary font-bold"
                               : "hover:bg-elevated text-foreground"
                           }`}
                         >
                           <Icon className="h-4 w-4 shrink-0" />
                           <div className="truncate">
                             <div>{m.title}</div>
-                            <div className="text-[10px] text-muted-foreground font-mono">{m.code}</div>
+                            <div className="text-[11px] text-muted-foreground font-mono">{m.code}</div>
                           </div>
                         </button>
                       );
@@ -200,7 +200,7 @@ export default function LearningHubClient() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-bold text-foreground">
-                    Universal Field & Database Schema Index
+                    Universal field & database schema index
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Search and cross-reference all {allGlobalFields.length} documented fields across all enterprise modules.
@@ -211,7 +211,7 @@ export default function LearningHubClient() {
                   <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search across all fields, tables, or modules..."
+                    placeholder="Search across all fields, tables, or modules…"
                     value={globalFieldQuery}
                     onChange={(e) => setGlobalFieldQuery(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-elevated border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30"
@@ -222,22 +222,22 @@ export default function LearningHubClient() {
               <div className="rounded-xl overflow-hidden border border-border">
                 <AppTableContainer>
                   <AppTable className="w-full text-left text-xs">
-                    <AppTableHeader className="bg-elevated text-muted-foreground font-semibold uppercase text-[11px] border-b border-border">
+                    <AppTableHeader className="bg-elevated text-muted-foreground font-semibold text-[11px] border-b border-border">
                       <AppTableRow>
                         <AppTableHead className="px-4 py-3">Module</AppTableHead>
-                        <AppTableHead className="px-4 py-3">Field Label</AppTableHead>
-                        <AppTableHead className="px-4 py-3">DB Column</AppTableHead>
+                        <AppTableHead className="px-4 py-3">Field label</AppTableHead>
+                        <AppTableHead className="px-4 py-3">DB column</AppTableHead>
                         <AppTableHead className="px-4 py-3">Type</AppTableHead>
                         <AppTableHead className="px-4 py-3">Requirement</AppTableHead>
                         <AppTableHead className="px-4 py-3">Description</AppTableHead>
-                        <AppTableHead className="px-4 py-3">Business Purpose & FK</AppTableHead>
+                        <AppTableHead className="px-4 py-3">Business purpose & FK</AppTableHead>
                       </AppTableRow>
                     </AppTableHeader>
                     <AppTableBody className="divide-y divide-border">
                       {filteredGlobalFields.map((field, idx) => (
                         <AppTableRow key={idx} className="hover:bg-elevated/60 transition-colors">
                           <AppTableCell className="px-4 py-3.5 whitespace-nowrap">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-theme-btn-primary/10 text-theme-btn-primary">
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-accent-soft text-theme-btn-primary">
                               {field.moduleCode}
                             </span>
                           </AppTableCell>
@@ -248,17 +248,17 @@ export default function LearningHubClient() {
                             {field.dbColumn}
                           </AppTableCell>
                           <AppTableCell className="px-4 py-3.5">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-elevated text-muted-foreground">
+                            <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-elevated text-muted-foreground">
                               {field.type}
                             </span>
                           </AppTableCell>
                           <AppTableCell className="px-4 py-3.5">
                             {field.isRequired ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-danger-soft text-danger-text">
                                 Mandatory
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-muted-foreground">
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-sunken text-muted-foreground">
                                 Optional
                               </span>
                             )}
@@ -269,7 +269,7 @@ export default function LearningHubClient() {
                           <AppTableCell className="px-4 py-3.5 text-muted-foreground max-w-xs">
                             <div>{field.purpose}</div>
                             {field.foreignKeyRelation && (
-                              <div className="text-[10px] font-mono text-sky-600 dark:text-sky-400 mt-0.5 font-semibold">
+                              <div className="text-[11px] font-mono text-info-text mt-0.5 font-semibold">
                                 FK ➔ {field.foreignKeyRelation}
                               </div>
                             )}

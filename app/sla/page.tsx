@@ -114,8 +114,8 @@ export default function SLAPage() {
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${"border-border"}`}>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>SLA Governance & Surveillance Engine</h1>
-            <AppBadge variant="danger">Realtime Tracking</AppBadge>
+            <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>SLA governance & surveillance engine</h1>
+            <AppBadge variant="danger">Realtime tracking</AppBadge>
           </div>
           <p className="text-xs text-muted">
             Continuous timeout computation monitoring active workflow tuples to enforce multi-level escalation routing protocols.
@@ -128,7 +128,7 @@ export default function SLAPage() {
               onClick={() => setModuleFilter('ALL')}
               className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'ALL' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
             >
-              All Modules
+              All modules
             </AppButton>
             <AppButton variant="secondary"
               onClick={() => setModuleFilter('TICKET')}
@@ -158,7 +158,7 @@ export default function SLAPage() {
             leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
             className="bg-surface border-border text-foreground shadow-sm"
           >
-            Refresh Live Tracking
+            Refresh live tracking
           </AppButton>
         </div>
       </div>
@@ -169,7 +169,7 @@ export default function SLAPage() {
           onClick={() => setFilter('ALL')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-semibold text-muted mb-1">Total Records</span>
+            <span className="text-sm font-semibold text-muted mb-1">Total records</span>
             <span className="text-3xl font-bold text-theme-icon dark:text-theme-icon">
               {loading ? '-' : <AnimatedCounter value={totalRecords} />}
             </span>
@@ -209,7 +209,7 @@ export default function SLAPage() {
               <div className="space-y-0.5">
                 <AppCardTitle className={`flex items-center gap-2 text-danger`}>
                   <ShieldAlert className="h-4 w-4" />
-                  <span>Monitored Operational Timeouts</span>
+                  <span>Monitored operational timeouts</span>
                 </AppCardTitle>
                 <p className="text-[0.8rem] text-muted">Reactive task timers updating background worker task queue parameters.</p>
               </div>
@@ -224,10 +224,10 @@ export default function SLAPage() {
                 <AppTable>
                   <AppTableHeader>
                     <tr>
-                      <AppTableHead>SLA Target</AppTableHead>
-                      <AppTableHead>Interval Window</AppTableHead>
-                      <AppTableHead>Escalation State</AppTableHead>
-                      <AppTableHead className="text-right">Action Gate</AppTableHead>
+                      <AppTableHead>SLA target</AppTableHead>
+                      <AppTableHead>Interval window</AppTableHead>
+                      <AppTableHead>Escalation state</AppTableHead>
+                      <AppTableHead className="text-right">Action gate</AppTableHead>
                     </tr>
                   </AppTableHeader>
                   <AppTableBody>
@@ -266,11 +266,11 @@ export default function SLAPage() {
                             <div className="space-y-1 flex flex-col items-end">
                               <span className="text-xs text-muted italic block truncate max-w-[120px]">{item.actionRecipient}</span>
                               <div className="flex items-center gap-1 mt-1 justify-end">
-                                <AppButton 
+                                <AppButton aria-label="View record" 
                                   variant="ghost" 
                                   size="sm" 
-                                  className="h-6 w-6 p-0 text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg active:scale-95 transition-all" 
-                                  title="View Record"
+                                  className="h-6 w-6 p-0 text-theme-icon hover:bg-accent-soft rounded-lg transition-all" 
+                                  title="View record"
                                   onClick={() => {
                                     let url = "";
                                     if (item.module === "TICKET") url = `/tickets/${item.entityId}`;
@@ -282,12 +282,12 @@ export default function SLAPage() {
                                   <Eye className="h-3.5 w-3.5" />
                                 </AppButton>
                                 {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (
-                                  <AppButton variant="ghost" size="sm" onClick={() => { window.location.href = '/sla/rules'; }} className="h-6 w-6 p-0 text-warning hover:bg-warning/10 rounded-lg active:scale-95 transition-all" title="Update Thresholds / Configure SLA Rules">
+                                  <AppButton aria-label="Update thresholds / configure SLA rules" variant="ghost" size="sm" onClick={() => { window.location.href = '/sla/rules'; }} className="h-6 w-6 p-0 text-warning hover:bg-warning/10 rounded-lg transition-all" title="Update thresholds / configure SLA rules">
                                     <Edit2 className="h-3.5 w-3.5" />
                                   </AppButton>
                                 )}
                                 {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_DELETE")) && (
-                                  <AppButton variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-danger hover:bg-danger/10 rounded-lg active:scale-95 transition-all" title="Delete / Override Alert">
+                                  <AppButton aria-label="Delete / override alert" variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-danger hover:bg-danger/10 rounded-lg transition-all" title="Delete / override alert">
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </AppButton>
                                 )}
@@ -303,7 +303,7 @@ export default function SLAPage() {
             </div>
 
             <div className={`p-4 border-t text-[0.8rem] text-muted flex items-center justify-between bg-elevated border-border`}>
-              <span>Real-Time SLA Tracking</span>
+              <span>Real-time SLA tracking</span>
               <button type="button" className="cursor-pointer hover:underline text-danger font-semibold" onClick={refreshLiveTracking}>Force Re-sync</button>
             </div>
           </AppCard>
@@ -315,7 +315,7 @@ export default function SLAPage() {
             <div className={`pb-2 border-b ${"border-border"}`}>
               <span className="text-xs font-semibold flex items-center gap-2 text-muted">
                 <BellRing className={`h-3.5 w-3.5 text-warning`} />
-                <span>Escalation Level Routing Matrix</span>
+                <span>Escalation level routing matrix</span>
               </span>
             </div>
 
@@ -346,7 +346,7 @@ export default function SLAPage() {
           {/* Operational Trust Advisory Card */}
           <AppCard className="p-5 space-y-2 border bg-success-soft border-success/20">
             <span className="text-xs font-semibold block text-success">
-              SLA Trust Assurance
+              SLA trust assurance
             </span>
             <p className="text-xs text-muted leading-relaxed">
               Zero ticket leakage past allocated thresholds without strict activity entry logs appended to master audit trails.

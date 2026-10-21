@@ -10,6 +10,7 @@ import { fetchAssignees } from "@/lib/actions/users";
 import { updateTicketDetails, fetchTicketRelations, linkTicket, searchTickets, fetchTicketComments, addTicketRemark } from "@/lib/actions/tickets";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
 import { AppButton } from "@/components/ui/AppButton";
+import { formatDate, formatDateTime } from "@/components/ui/data";
 
 export function TicketWorkspaceConsole({
   ticket,
@@ -245,10 +246,10 @@ export function TicketWorkspaceConsole({
 
   const getPriorityColor = () => {
     const code = ticket.priorityObj?.code;
-    if (code === "PR_CRITICAL") return "bg-danger/10 text-danger border-red-500/20";
-    if (code === "PR_HIGH") return "bg-orange-500/10 text-orange-500 border-orange-500/20";
-    if (code === "PR_MEDIUM") return "bg-warning/10 text-warning border-yellow-500/20";
-    return "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20";
+    if (code === "PR_CRITICAL") return "bg-danger/10 text-danger border-danger-border";
+    if (code === "PR_HIGH") return "bg-warning-soft text-warning-text border-warning-border";
+    if (code === "PR_MEDIUM") return "bg-warning/10 text-warning border-warning-border";
+    return "bg-accent-soft text-theme-icon border-theme-btn-primary/20";
   };
 
   return (
@@ -263,8 +264,8 @@ export function TicketWorkspaceConsole({
           {/* Checklists / Subtasks */}
           <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4">
-               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <CheckCircle2 className="w-4 h-4 text-success" /> Checklist & Objectives
+               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
+                 <CheckCircle2 className="w-4 h-4 text-success" /> Checklist & objectives
                </h3>
             </div>
             <div className="p-6 space-y-4">
@@ -289,7 +290,7 @@ export function TicketWorkspaceConsole({
                         value={st.assignee_id || ""}
                         onChange={(e) => setSubTaskAssignee(st.id, e.target.value)}
                         disabled={!canEditFields}
-                        className="text-[10px] bg-transparent border-none text-muted-foreground outline-none font-semibold focus:ring-0 cursor-pointer w-24"
+                        className="text-[11px] bg-transparent border-none text-muted-foreground outline-none font-semibold focus:ring-0 cursor-pointer w-24"
                       >
                         <option value="">Unassigned</option>
                         {assigneesList.map(a => (
@@ -307,7 +308,7 @@ export function TicketWorkspaceConsole({
                     type="text"
                     value={newSubTask}
                     onChange={(e) => setNewSubTask(e.target.value)}
-                    placeholder="Add a new sub-task..."
+                    placeholder="Add a new sub-task…"
                     className="flex-1 border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all"
                   />
                   <AppButton type="submit" variant="primary" disabled={!newSubTask.trim()}>
@@ -321,8 +322,8 @@ export function TicketWorkspaceConsole({
           {/* TICKET RELATIONSHIPS */}
           <div className="rounded-3xl theme-card-structural shadow-sm flex flex-col relative z-50">
             <div className="bg-background border-b border-border p-4 rounded-t-3xl">
-               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <Paperclip className="w-4 h-4 text-pink-500" /> Ticket Relationships
+               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
+                 <Paperclip className="w-4 h-4 text-danger-text" /> Ticket relationships
                </h3>
             </div>
             <div className="p-6">
@@ -332,9 +333,9 @@ export function TicketWorkspaceConsole({
                   {relations.map((rel: any) => (
                     <div key={rel.id} className="flex items-center justify-between p-3 border rounded-lg bg-background text-xs">
                       <div className="flex items-center gap-3">
-                        <span className={`px-2 py-0.5 rounded font-bold uppercase ${
+                        <span className={`px-2 py-0.5 rounded font-bold ${
                           rel.relation_type === 'DUPLICATE' ? 'bg-warning/10 text-warning' :
-                          rel.relation_type === 'BLOCKS' ? 'bg-danger/10 text-danger' : 'bg-theme-btn-primary/10 text-theme-icon'
+                          rel.relation_type === 'BLOCKS' ? 'bg-danger/10 text-danger' : 'bg-accent-soft text-theme-icon'
                         }`}>
                           {rel.relation_type}
                         </span>
@@ -352,7 +353,7 @@ export function TicketWorkspaceConsole({
                     <select 
                       value={newRelationType}
                       onChange={(e) => setNewRelationType(e.target.value as any)}
-                      className="border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground outline-none w-32 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all"
+                      className="border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground outline-none w-32 focus:border-danger-border focus:ring-1 focus:ring-danger-border transition-all"
                     >
                       <option value="RELATED">Relates to</option>
                       <option value="BLOCKS">Blocks</option>
@@ -368,8 +369,8 @@ export function TicketWorkspaceConsole({
                           setShowSuggestions(true);
                         }}
                         onFocus={() => setShowSuggestions(true)}
-                        placeholder="Search by ticket code or subject..."
-                        className="w-full border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all"
+                        placeholder="Search by ticket code or subject…"
+                        className="w-full border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-danger-border focus:ring-1 focus:ring-danger-border outline-none transition-all"
                       />
                       {isSearching && (
                         <div className="absolute right-3 top-2.5">
@@ -397,11 +398,11 @@ export function TicketWorkspaceConsole({
                                   setIsLinking(false);
                                 }
                               }}
-                              className="p-3 border-b hover:theme-card-structural/5 dark:hover:theme-card-structural /5 cursor-pointer transition-colors"
+                              className="p-3 border-b hover:theme-card-structural/5 dark:hover:theme-card-structural cursor-pointer transition-colors"
                             >
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-bold text-pink-500">{t.code}</span>
-                                <span className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString()}</span>
+                                <span className="text-xs font-bold text-danger-text">{t.code}</span>
+                                <span className="text-[11px] text-muted-foreground">{formatDate(t.created_at)}</span>
                               </div>
                               <div className="text-xs text-foreground truncate">{t.title}</div>
                             </div>
@@ -423,17 +424,17 @@ export function TicketWorkspaceConsole({
           {/* TIMELINE & META (Shifted Down) */}
           <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
-               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <Clock className="w-4 h-4 text-theme-icon" /> Timeline & Meta
+               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
+                 <Clock className="w-4 h-4 text-theme-icon" /> Timeline & meta
                </h3>
-               <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${getPriorityColor()}`}>
+               <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getPriorityColor()}`}>
                  {ticket.priorityObj?.name || "STANDARD"}
                </span>
             </div>
             
             <div className="p-6 grid grid-cols-2 gap-4">
                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Target Due Date</div>
+                  <div className="text-[11px] font-bold text-muted-foreground mb-1">Target due date</div>
                   <div className="text-xs font-semibold text-foreground flex items-center">
                     {canEditFields ? (
                       <input 
@@ -446,24 +447,24 @@ export function TicketWorkspaceConsole({
                         className="bg-transparent border-b border-border/50 text-foreground outline-none focus:border-theme-btn-primary py-0.5 w-full cursor-pointer"
                       />
                     ) : (
-                      ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "Not Set"
+                      ticket.due_date ? formatDate(ticket.due_date) : "Not Set"
                     )}
                   </div>
                </div>
                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">SLA Status</div>
+                  <div className="text-[11px] font-bold text-muted-foreground mb-1">SLA status</div>
                   <div className={`text-xs font-semibold ${slaStatus === "BREACHED" ? "text-danger" : slaStatus === "MET" ? "text-success" : "text-theme-icon"}`}>
                     {slaTimeRemaining}
                   </div>
                </div>
                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Impact</div>
+                  <div className="text-[11px] font-bold text-muted-foreground mb-1">Impact</div>
                   <div className="text-xs font-semibold text-foreground">
                     {ticket.custom_fields?.impact || "Moderate"}
                   </div>
                </div>
                <div>
-                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Urgency</div>
+                  <div className="text-[11px] font-bold text-muted-foreground mb-1">Urgency</div>
                   <div className="text-xs font-semibold text-foreground">
                     {ticket.custom_fields?.urgency || "Moderate"}
                   </div>
@@ -471,10 +472,10 @@ export function TicketWorkspaceConsole({
             </div>
             
             <div className="bg-background/50 border-t border-border p-4 flex justify-between items-center">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> Total Time Logged
+              <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" /> Total time logged
               </span>
-              <span className="text-sm font-black text-theme-icon dark:text-theme-icon">
+              <span className="text-sm font-semibold text-theme-icon dark:text-theme-icon">
                 {Math.floor(timeLogged / 60)}h {timeLogged % 60}m
               </span>
             </div>
@@ -487,13 +488,13 @@ export function TicketWorkspaceConsole({
           {/* EXECUTION TEAM & ROUTING (Moved to Top) */}
           <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
-               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <Users className="w-4 h-4 text-theme-icon" /> Execution Team & Routing
+               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
+                 <Users className="w-4 h-4 text-theme-icon" /> Execution team & routing
                </h3>
             </div>
             <div className="p-6 space-y-6">
                <div>
-                <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Executive (Primary Assignee)</label>
+                <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Executive (Primary Assignee)</label>
                 <select 
                   value={pendingChanges.assignee_id !== undefined ? pendingChanges.assignee_id : (ticket.assignee_id || "")}
                   onChange={(e) => {
@@ -518,8 +519,8 @@ export function TicketWorkspaceConsole({
                </div>
                
                <div>
-                <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">
-                  Workflow Status <span className="text-danger">*</span>
+                <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">
+                  Workflow status <span className="text-danger">*</span>
                 </label>
                 <select 
                   value={pendingChanges.status_id !== undefined ? pendingChanges.status_id : (ticket.status_id || "")}
@@ -527,7 +528,7 @@ export function TicketWorkspaceConsole({
                   disabled={!canEditFields}
                   className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary theme-input-structural text-foreground"
                 >
-                  <option value="" disabled>Select Status</option>
+                  <option value="" disabled>Select status</option>
                   {states.map((s: any) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
@@ -536,7 +537,7 @@ export function TicketWorkspaceConsole({
                
                {canEditFields && (
                 <div className="pt-2">
-                 <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Log Time (Minutes)</label>
+                 <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Log time (minutes)</label>
                  <form onSubmit={handleLogTime} className="flex items-center gap-2">
                     <input 
                       type="number"
@@ -558,59 +559,59 @@ export function TicketWorkspaceConsole({
           {/* CLASSIFICATION BLOCK (Shifted Down) */}
           <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
-               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
                  <Network className="w-4 h-4 text-success" /> Classification
                </h3>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Department</label>
+                  <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Department</label>
                   <select 
                     value={pendingChanges.department_id !== undefined ? pendingChanges.department_id : defaultDeptId}
                     onChange={(e) => handleFieldUpdate({ department_id: e.target.value })}
                     disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 theme-input-structural text-foreground"
+                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-success-border focus:ring-1 focus:ring-success-border theme-input-structural text-foreground"
                   >
-                    <option value="">Select Department</option>
+                    <option value="">Select department</option>
                     {departments?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Issue Type</label>
+                  <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Issue type</label>
                   <select 
                     value={pendingChanges.issue_type_id !== undefined ? pendingChanges.issue_type_id : defaultIssueTypeId}
                     onChange={(e) => handleFieldUpdate({ issue_type_id: e.target.value })}
                     disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 theme-input-structural text-foreground"
+                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-success-border focus:ring-1 focus:ring-success-border theme-input-structural text-foreground"
                   >
-                    <option value="">Select Issue Type</option>
+                    <option value="">Select issue type</option>
                     {issueTypes?.map((it: any) => <option key={it.id} value={it.id}>{it.name}</option>)}
                   </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Category</label>
+                  <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Category</label>
                   <select 
                     value={pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId}
                     onChange={(e) => handleFieldUpdate({ category_id: e.target.value, sub_category_id: null })}
                     disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 theme-input-structural text-foreground"
+                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-success-border focus:ring-1 focus:ring-success-border theme-input-structural text-foreground"
                   >
-                    <option value="">Select Category</option>
+                    <option value="">Select category</option>
                     {categories?.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Subcategory</label>
+                  <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Subcategory</label>
                   <select 
                     value={pendingChanges.sub_category_id !== undefined ? pendingChanges.sub_category_id : defaultSubCategoryId}
                     onChange={(e) => handleFieldUpdate({ sub_category_id: e.target.value })}
                     disabled={isClassificationLocked || !(pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId)}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 theme-input-structural text-foreground"
+                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-success-border focus:ring-1 focus:ring-success-border theme-input-structural text-foreground"
                   >
-                    <option value="">Select Subcategory</option>
+                    <option value="">Select subcategory</option>
                     {subcategories?.filter((sc: any) => sc.category_id === (pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId)).map((sc: any) => (
                       <option key={sc.id} value={sc.id}>{sc.name}</option>
                     ))}
@@ -630,8 +631,8 @@ export function TicketWorkspaceConsole({
         <div className="space-y-6">
           <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4">
-               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <Paperclip className="w-4 h-4 text-warning" /> References & Artifacts
+               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
+                 <Paperclip className="w-4 h-4 text-warning" /> References & artifacts
                </h3>
             </div>
             <div className="p-4">
@@ -648,23 +649,23 @@ export function TicketWorkspaceConsole({
         {/* RIGHT: TICKET REMARKS */}
         <div className="space-y-3">
         {(Object.keys(pendingChanges).length > 0) && (
-          <div className="p-3.5 bg-red-500/15 dark:bg-red-950/40 border-l-4 border-l-red-600 border border-red-500/40 text-red-700 dark:text-red-300 text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mb-4 shadow-sm shadow-red-500/10">
+          <div className="p-3.5 bg-danger-soft border-l-4 border-l-danger-border border border-danger-border text-danger-text text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mb-4 shadow-sm">
             <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
-              <span>Ticket updates are pending. Write a mandatory remark below and click <strong className="font-extrabold text-red-900 dark:text-red-100 underline">"Commit Updates & Save Remark"</strong> to save.</span>
+              <AlertTriangle className="h-4 w-4 text-danger-text shrink-0" />
+              <span>Ticket updates are pending. Write a mandatory remark below and click <strong className="font-semibold text-danger-text underline">"Commit updates & save remark"</strong> to save.</span>
             </div>
             <button 
               type="button" 
               onClick={cancelChanges} 
-              className="text-xs text-red-700 dark:text-red-300 hover:text-red-950 dark:hover:text-red-100 font-bold px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors shrink-0 whitespace-nowrap"
+              className="text-xs text-danger-text hover:text-danger-text font-bold px-2.5 py-1 rounded-lg bg-danger-soft hover:bg-danger-soft border border-danger-border transition-colors shrink-0 whitespace-nowrap"
             >
-              Cancel Change
+              Cancel change
             </button>
           </div>
         )}
 
         <div className="flex items-center justify-between">
-          <label className="text-sm font-bold uppercase tracking-wider text-muted">Ticket Remarks <span className="text-danger">*</span></label>
+          <label className="text-sm font-bold text-muted">Ticket remarks <span className="text-danger">*</span></label>
           
           {/* Quick Actions */}
           {canEditFields && (
@@ -678,7 +679,7 @@ export function TicketWorkspaceConsole({
                     setUpdateRemark("Acknowledged and actively investigating.");
                   }
                 }}
-                className="text-[10px] font-bold px-2 py-1 rounded bg-theme-btn-primary/10 text-theme-icon hover:opacity-90/20 transition-colors border border-theme-btn-primary/20"
+                className="text-[11px] font-bold px-2 py-1 rounded bg-accent-soft text-theme-icon hover:opacity-90/20 transition-colors border border-theme-btn-primary/20"
               >
                 Acknowledge
               </AppButton>
@@ -691,9 +692,9 @@ export function TicketWorkspaceConsole({
                     setUpdateRemark("Issue has been resolved successfully.");
                   }
                 }}
-                className="text-[10px] font-bold px-2 py-1 rounded bg-success/10 text-success hover:bg-success/20 transition-colors border border-emerald-500/20"
+                className="text-[11px] font-bold px-2 py-1 rounded bg-success/10 text-success hover:bg-success/20 transition-colors border border-success-border"
               >
-                Mark Resolved
+                Mark resolved
               </AppButton>
             </div>
           )}
@@ -703,10 +704,10 @@ export function TicketWorkspaceConsole({
           onChange={e => setUpdateRemark(e.target.value)}
           disabled={!canEditFields}
           className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-theme-btn-primary transition-colors theme-input-structural text-foreground ${!canEditFields ? 'opacity-50 cursor-not-allowed' : ''}`}
-          placeholder={!canEditFields ? "Ticket is frozen/read-only." : "Add update notes or operational remarks..."}
+          placeholder={!canEditFields ? "Ticket is frozen/read-only." : "Add update notes or operational remarks…"}
         />
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-muted">Last updated: {ticket.updated_at ? new Date(ticket.updated_at).toLocaleString() : "Not yet"}</span>
+          <span className="text-xs text-muted">Last updated: {ticket.updated_at ? formatDateTime(ticket.updated_at) : "Not yet"}</span>
           {canEditFields && (
             <AppButton 
               type="button" 
@@ -714,7 +715,7 @@ export function TicketWorkspaceConsole({
               size="sm" 
               onClick={commitChanges} 
               disabled={isSaving || (Object.keys(pendingChanges).length > 0 && !updateRemark.trim())}
-              className={(Object.keys(pendingChanges).length > 0) ? "bg-red-600 hover:bg-red-700 text-white font-bold shadow-md shadow-red-500/25" : ""}
+              className={(Object.keys(pendingChanges).length > 0) ? "bg-danger-solid hover:bg-danger-solid text-white font-bold shadow-md" : ""}
             >
               {isSaving ? "Saving..." : (Object.keys(pendingChanges).length > 0) ? "Commit Updates & Save Remark" : "Save Remarks"}
             </AppButton>
@@ -730,11 +731,11 @@ export function TicketWorkspaceConsole({
           >
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-theme-icon" />
-              <span className="text-[11px] font-bold uppercase tracking-wider transition-colors text-muted-foreground group-hover:text-theme-icon">
-                Remarks History Queue
+              <span className="text-[11px] font-bold transition-colors text-muted-foreground group-hover:text-theme-icon">
+                Remarks history queue
               </span>
               {remarksHistory.length > 0 && (
-                <span className="text-xs py-0.5 px-2 font-extrabold rounded-full bg-theme-btn-primary/20 text-theme-icon border border-theme-btn-primary/30">
+                <span className="text-xs py-0.5 px-2 font-semibold rounded-full bg-accent-soft text-theme-icon border border-theme-btn-primary/30">
                   {remarksHistory.length}
                 </span>
               )}
@@ -758,7 +759,7 @@ export function TicketWorkspaceConsole({
               {loadingRemarksHistory ? (
                 <div className="flex items-center justify-center py-6 gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
-                  <span className="text-xs text-muted-foreground">Loading history queue...</span>
+                  <span className="text-xs text-muted-foreground">Loading history queue…</span>
                 </div>
               ) : remarksHistory.length === 0 ? (
                 <div className="text-center py-6 text-xs text-muted-foreground italic">
@@ -788,7 +789,7 @@ export function TicketWorkspaceConsole({
                               className="h-7 w-7 rounded-full border border-theme-btn-primary/20 object-cover"
                             />
                           ) : (
-                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-theme-btn-primary/20 shadow-md">
+                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center text-xs font-semibold text-white border border-theme-btn-primary/20 shadow-md">
                               {initials}
                             </div>
                           )}
@@ -799,9 +800,9 @@ export function TicketWorkspaceConsole({
                               <span className="text-xs font-bold transition-colors text-foreground group-hover/item:text-theme-icon">
                                 {item.author?.full_name || item.user?.full_name || "System Actor"}
                               </span>
-                              <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                              <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
                                 <Clock className="h-3 w-3" />
-                                <span>{new Date(item.created_at).toLocaleString()}</span>
+                                <span>{formatDateTime(item.created_at)}</span>
                               </div>
                             </div>
                             

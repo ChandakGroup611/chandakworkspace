@@ -52,10 +52,10 @@ export default function ApprovalActionPanel({
   };
 
   const actions = [
-    { id: "Approve", label: "Approve", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50 hover:bg-emerald-100" },
-    { id: "Reject", label: "Reject", icon: XCircle, color: "text-red-600 bg-red-50 hover:bg-red-100" },
-    { id: "Hold", label: "Hold", icon: PauseCircle, color: "text-amber-600 bg-amber-50 hover:bg-amber-100" },
-    { id: "Clarification", label: "Need Clarification", icon: MessageSquareWarning, color: "text-theme-icon bg-theme-btn-primary/10 hover:opacity-90/10" }
+    { id: "Approve", label: "Approve", icon: CheckCircle, color: "text-success-text bg-success-soft hover:bg-success-soft" },
+    { id: "Reject", label: "Reject", icon: XCircle, color: "text-danger-text bg-danger-soft hover:bg-danger-soft" },
+    { id: "Hold", label: "Hold", icon: PauseCircle, color: "text-warning-text bg-warning-soft hover:bg-warning-soft" },
+    { id: "Clarification", label: "Need clarification", icon: MessageSquareWarning, color: "text-theme-icon bg-accent-soft hover:bg-surface-hover" }
   ];
 
   return (
@@ -63,12 +63,12 @@ export default function ApprovalActionPanel({
       <AppCard className={`w-full overflow-hidden theme-card-structural`}>
         <div className={`px-4 py-3 border-b flex items-center justify-between bg-elevated border-border`}>
           <div className="flex items-center gap-3">
-            <div className={`p-1.5 rounded-full bg-theme-btn-primary/10 text-theme-icon`}>
+            <div className={`p-1.5 rounded-full bg-accent-soft text-theme-icon`}>
               <ArrowRight className="h-4 w-4" />
             </div>
             <div>
-              <h4 className={`text-sm font-bold text-foreground`}>Workflow Action Required</h4>
-              <p className={`text-[10px] uppercase tracking-wider text-muted`}>
+              <h4 className={`text-sm font-bold text-foreground`}>Workflow action required</h4>
+              <p className={`text-[11px] text-muted`}>
                 Level {currentLevel} • {departmentName}
                 {isSuperAdmin && <span className="ml-2 text-theme-icon font-bold">(Super Admin Override)</span>}
               </p>
@@ -78,7 +78,7 @@ export default function ApprovalActionPanel({
 
         <AppCardContent className="p-4 space-y-4">
           {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-950 dark:text-rose-100 text-xs font-semibold">
+            <div className="p-3 bg-danger-soft border border-danger-border rounded-lg text-danger-text text-xs font-semibold">
               {sanitizeErrorMessage(error)}
             </div>
           )}
@@ -102,7 +102,7 @@ export default function ApprovalActionPanel({
           ) : (
             <div className="space-y-3 animate-in fade-in slide-in-from-right-2">
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
+                <span className={`text-xs font-bold flex items-center gap-2 ${
                   actions.find(a => a.id === activeAction)?.color.split(' ')[0]
                 }`}>
                   {React.createElement(actions.find(a => a.id === activeAction)?.icon || ArrowRight, { className: "h-4 w-4" })}
@@ -110,16 +110,16 @@ export default function ApprovalActionPanel({
                 </span>
                 <AppButton variant="secondary" 
                   onClick={() => setActiveAction(null)}
-                  className={`text-[10px] font-bold uppercase hover:underline text-muted`}
+                  className={`text-[11px] font-bold hover:underline text-muted`}
                 >
-                  Change Action
+                  Change action
                 </AppButton>
               </div>
 
               <div>
                 <textarea
                   className={`w-full p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[80px] resize-none ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
-                  placeholder="Enter mandatory justification or remarks..."
+                  placeholder="Enter mandatory justification or remarks…"
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
                   disabled={loading}

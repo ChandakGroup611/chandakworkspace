@@ -16,13 +16,14 @@ import { CityManagerModal } from "@/components/shared/CityManagerModal";
 import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
 import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";
 import { SystemMasterBulkImportModal, MasterTableConfig } from "@/components/masters/SystemMasterBulkImportModal";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 const VENDOR_MASTER_CONFIG: MasterTableConfig[] = [
   {
     id: "vendor_master",
     table: "vendor_master",
     scopeId: null,
-    label: "Provider / Vendor Master",
+    label: "Provider / vendor master",
     category: "SUPPLIERS",
     icon: Building2,
     desc: "Service providers, contractors, OEMs and suppliers",
@@ -140,7 +141,7 @@ export default function VendorMasterPage() {
 
   const handleAddNewCity = async () => {
     if (!formState) {
-      toast.warning("Please select a State first.");
+      toast.warning("Please select a state first.");
       return;
     }
     const newCity = prompt(`Enter new city name for ${formState}:`);
@@ -185,7 +186,7 @@ export default function VendorMasterPage() {
 
   const handleAddNewBankCity = async () => {
     if (!formBankState) {
-      toast.warning("Please select a Bank State first.");
+      toast.warning("Please select a bank state first.");
       return;
     }
     const newCity = prompt(`Enter new city name for ${formBankState}:`);
@@ -348,7 +349,7 @@ export default function VendorMasterPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this vendor? This cannot be undone.")) return;
+    if (!(await confirmAction("Are you sure you want to delete this vendor? This cannot be undone."))) return;
     try {
       const res = await deleteMasterEntity("vendor_master", id, true);
       if (!res.success) throw new Error(res.error);
@@ -364,18 +365,18 @@ export default function VendorMasterPage() {
     <PageContainer>
       <div className="flex flex-col h-full gap-6 px-4 md:px-8 py-6">
         <PageHeader 
-          title="Provider / Vendor Master" 
+          title="Provider / vendor master" 
           icon={<Building2 className="h-6 w-6 text-theme-icon" />}
         />
 
         <AppCard className="flex-1 flex flex-col overflow-hidden">
           <AppCardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 shrink-0">
-            <AppCardTitle className="text-lg">Vendor Directory</AppCardTitle>
+            <AppCardTitle className="text-lg">Vendor directory</AppCardTitle>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                 <AppInput 
-                  placeholder="Search vendors..." 
+                  placeholder="Search vendors…" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-10 w-full"
@@ -384,18 +385,18 @@ export default function VendorMasterPage() {
               <AppButton 
                 variant="outline" 
                 size="sm" 
-                leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" />}
+                leftIcon={<FileSpreadsheet className="h-4 w-4 text-success-text" />}
                 onClick={() => setIsImportModalOpen(true)}
                 className="h-10 px-3"
               >
                 Import Excel
               </AppButton>
-              <AppButton variant="outline" size="sm" onClick={fetchVendors} className="h-10 px-3 hidden sm:flex">
+              <AppButton aria-label="Refresh" variant="outline" size="sm" onClick={fetchVendors} className="h-10 px-3 hidden sm:flex">
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </AppButton>
               <AppButton size="sm" className="h-10 shrink-0 shadow-md shadow-theme-btn-primary/20" onClick={handleOpenCreate}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Vendor
+                Add vendor
               </AppButton>
             </div>
           </AppCardHeader>
@@ -404,10 +405,10 @@ export default function VendorMasterPage() {
               <AppTable>
                 <AppTableHeader>
                   <AppTableRow>
-                    <AppTableHead>Vendor Name</AppTableHead>
-                    <AppTableHead>Contact Person</AppTableHead>
-                    <AppTableHead>Contact Info</AppTableHead>
-                    <AppTableHead>GSTIN / Tax</AppTableHead>
+                    <AppTableHead>Vendor name</AppTableHead>
+                    <AppTableHead>Contact person</AppTableHead>
+                    <AppTableHead>Contact info</AppTableHead>
+                    <AppTableHead>GSTIN / tax</AppTableHead>
                     <AppTableHead>City</AppTableHead>
                     <AppTableHead className="w-[100px] text-right">Actions</AppTableHead>
                   </AppTableRow>
@@ -416,7 +417,7 @@ export default function VendorMasterPage() {
                   {loading ? (
                     <AppTableRow>
                       <AppTableCell colSpan={6} className="h-40 text-center text-muted">
-                        Loading vendors...
+                        Loading vendors…
                       </AppTableCell>
                     </AppTableRow>
                   ) : filtered.length === 0 ? (
@@ -427,7 +428,7 @@ export default function VendorMasterPage() {
                     </AppTableRow>
                   ) : (
                     filtered.map(v => (
-                      <AppTableRow key={v.id} className="hover:bg-theme-btn-primary/5 group">
+                      <AppTableRow key={v.id} className="hover:bg-accent-soft group">
                         <AppTableCell className="font-bold text-foreground">{v.name}</AppTableCell>
                         <AppTableCell>{v.contact_name || '-'}</AppTableCell>
                         <AppTableCell>
@@ -437,15 +438,15 @@ export default function VendorMasterPage() {
                           </div>
                         </AppTableCell>
                         <AppTableCell>
-                          {v.tax_gstin ? <AppBadge variant="neutral" className="text-[10px]">{v.tax_gstin}</AppBadge> : '-'}
+                          {v.tax_gstin ? <AppBadge variant="neutral" className="text-[11px]">{v.tax_gstin}</AppBadge> : '-'}
                         </AppTableCell>
                         <AppTableCell>{v.city || '-'}</AppTableCell>
                         <AppTableCell className="text-right">
                           <div className="flex items-center justify-end gap-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                            <AppButton variant="secondary" onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-blue-50 text-accent hover:bg-blue-100 transition-colors">
+                            <AppButton aria-label="Edit" variant="secondary" onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-info-soft text-accent hover:bg-info-soft transition-colors">
                               <Edit className="h-4 w-4" />
                             </AppButton>
-                            <AppButton variant="secondary" onClick={() => handleDelete(v.id)} className="p-1.5 rounded bg-red-50 text-danger hover:bg-red-100 transition-colors">
+                            <AppButton aria-label="Delete" variant="secondary" onClick={() => handleDelete(v.id)} className="p-1.5 rounded bg-danger-soft text-danger hover:bg-danger-soft transition-colors">
                               <Trash2 className="h-4 w-4" />
                             </AppButton>
                           </div>
@@ -462,13 +463,13 @@ export default function VendorMasterPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-surface/40">
-          <div className="bg-surface border border-border shadow-2xl rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-surface border border-border shadow-lg rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
-              <h2 className="text-xl font-black text-foreground">
+              <h2 className="text-xl font-semibold text-foreground">
                 {editId ? "Edit Vendor Profile" : "Add New Vendor"}
               </h2>
-              <AppButton variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-surface/5 transition-colors">
+              <AppButton aria-label="Close" variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-surface/5 transition-colors">
                 <X className="h-5 w-5 text-muted" />
               </AppButton>
             </div>
@@ -476,7 +477,7 @@ export default function VendorMasterPage() {
             <div className="flex-1 overflow-y-auto">
               <form id="vendorForm" onSubmit={handleSave} className="p-6 md:p-8 space-y-10">
                 {errorMsg && (
-                  <div className="p-4 rounded-xl bg-red-50 text-danger border border-red-100 text-sm font-semibold">
+                  <div className="p-4 rounded-xl bg-danger-soft text-danger border border-danger-border text-sm font-semibold">
                     {errorMsg}
                   </div>
                 )}
@@ -484,15 +485,15 @@ export default function VendorMasterPage() {
                 {/* Section 1: General Info */}
                 <div className="space-y-6">
                   <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
-                    <Briefcase className="h-4 w-4" /> General & Contact Details
+                    <Briefcase className="h-4 w-4" /> General & contact details
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-muted uppercase">Vendor / Company Name <span className="text-danger">*</span></label>
-                      <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Microsoft Corporation" className="h-11 font-semibold" />
+                      <label className="text-sm font-bold text-muted">Vendor / company name <span className="text-danger">*</span></label>
+                      <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Microsoft corporation" className="h-11 font-semibold" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Industry Type (Multi-Select)</label>
+                      <label className="text-sm font-bold text-muted">Industry type (multi-select)</label>
                       <div className="flex gap-2">
                         <FormMultiSelect 
                           options={masterIndustryTypes.map(i => ({ value: i.name, label: i.name }))}
@@ -506,26 +507,26 @@ export default function VendorMasterPage() {
                               .map(v => v.name);
                             setFormVendorType(formVendorType.filter(vt => validVendorTypes.includes(vt)));
                           }}
-                          placeholder="Select Industries..."
+                          placeholder="Select Industries…"
                           className="flex-1"
                         />
-                        <AppButton type="button" variant="outline" onClick={async () => {
+                        <AppButton aria-label="Add new industry" type="button" variant="outline" onClick={async () => {
                           const newInd = prompt("Enter new Industry Type:");
                           if (newInd && newInd.trim()) {
                             await saveMasterEntity("master_industry_types", { name: newInd.trim() });
                             await fetchDependencies();
                             setFormIndustryType([...formIndustryType, newInd.trim()]);
                           }
-                        }} className="h-11 w-11 px-0 shrink-0" title="Add New Industry">
+                        }} className="h-11 w-11 px-0 shrink-0" title="Add new industry">
                           <Plus className="h-4 w-4" />
                         </AppButton>
-                        <AppButton type="button" variant="outline" onClick={() => setManageModalType("industry")} className="h-11 w-11 px-0 shrink-0 text-muted" title="Manage Industry Types">
+                        <AppButton aria-label="Manage industry types" type="button" variant="outline" onClick={() => setManageModalType("industry")} className="h-11 w-11 px-0 shrink-0 text-muted" title="Manage industry types">
                           <Settings className="h-4 w-4" />
                         </AppButton>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Vendor Type (Multi-Select)</label>
+                      <label className="text-sm font-bold text-muted">Vendor type (multi-select)</label>
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <FormMultiSelect 
@@ -534,12 +535,12 @@ export default function VendorMasterPage() {
                               .map(v => ({ value: v.name, label: `${v.name} (${v.industry_name})` }))}
                             selectedValues={formVendorType}
                             onChange={setFormVendorType}
-                            placeholder={formIndustryType.length > 0 ? "Select Vendor Types..." : "Select Industry First"}
+                            placeholder={formIndustryType.length > 0 ? "Select vendor types…" : "Select industry first"}
                             disabled={formIndustryType.length === 0}
                           />
                         </div>
                         {formIndustryType.length > 0 && (
-                          <AppButton type="button" variant="outline" onClick={async () => {
+                          <AppButton aria-label="Add new vendor type" type="button" variant="outline" onClick={async () => {
                             let targetIndustry = formIndustryType[0];
                             if (formIndustryType.length > 1) {
                                const choice = prompt(`Which industry does this new Vendor Type belong to?\nAvailable: ${formIndustryType.join(", ")}`);
@@ -555,29 +556,29 @@ export default function VendorMasterPage() {
                               await fetchDependencies();
                               setFormVendorType([...formVendorType, newVen.trim()]);
                             }
-                          }} className="h-11 w-11 px-0 shrink-0" title="Add New Vendor Type">
+                          }} className="h-11 w-11 px-0 shrink-0" title="Add new vendor type">
                             <Plus className="h-4 w-4" />
                           </AppButton>
                         )}
-                        <AppButton type="button" variant="outline" onClick={() => setManageModalType("vendor")} className="h-11 w-11 px-0 shrink-0 text-muted" title="Manage Vendor Types">
+                        <AppButton aria-label="Manage vendor types" type="button" variant="outline" onClick={() => setManageModalType("vendor")} className="h-11 w-11 px-0 shrink-0 text-muted" title="Manage vendor types">
                           <Settings className="h-4 w-4" />
                         </AppButton>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Contact Person Name <span className="text-danger">*</span></label>
-                      <AppInput value={formContactName} onChange={e => setFormContactName(e.target.value)} required placeholder="John Doe" className="h-11" />
+                      <label className="text-sm font-bold text-muted">Contact person name <span className="text-danger">*</span></label>
+                      <AppInput value={formContactName} onChange={e => setFormContactName(e.target.value)} required placeholder="John doe" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Contact Email <span className="text-danger">*</span></label>
+                      <label className="text-sm font-bold text-muted">Contact email <span className="text-danger">*</span></label>
                       <AppInput type="email" value={formContactEmail} onChange={e => setFormContactEmail(e.target.value)} required placeholder="john@example.com" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Phone Number <span className="text-danger">*</span></label>
+                      <label className="text-sm font-bold text-muted">Phone number <span className="text-danger">*</span></label>
                       <AppInput value={formPhone} onChange={e => setFormPhone(e.target.value)} required placeholder="+91 ..." className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Website</label>
+                      <label className="text-sm font-bold text-muted">Website</label>
                       <AppInput value={formWebsite} onChange={e => setFormWebsite(e.target.value)} placeholder="https://..." className="h-11" />
                     </div>
                   </div>
@@ -586,19 +587,19 @@ export default function VendorMasterPage() {
                 {/* Section 2: Address */}
                 <div className="space-y-6">
                   <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
-                    <Building2 className="h-4 w-4" /> Registered Address
+                    <Building2 className="h-4 w-4" /> Registered address
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-muted uppercase">Address Line 1</label>
-                      <AppInput value={formAddr1} onChange={e => setFormAddr1(e.target.value)} placeholder="Suite, Building" className="h-11" />
+                      <label className="text-sm font-bold text-muted">Address line 1</label>
+                      <AppInput value={formAddr1} onChange={e => setFormAddr1(e.target.value)} placeholder="Suite, building" className="h-11" />
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-muted uppercase">Address Line 2</label>
-                      <AppInput value={formAddr2} onChange={e => setFormAddr2(e.target.value)} placeholder="Street, Area" className="h-11" />
+                      <label className="text-sm font-bold text-muted">Address line 2</label>
+                      <AppInput value={formAddr2} onChange={e => setFormAddr2(e.target.value)} placeholder="Street, area" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">State</label>
+                      <label className="text-sm font-bold text-muted">State</label>
                       <select 
                         value={formState} 
                         onChange={e => {
@@ -607,14 +608,14 @@ export default function VendorMasterPage() {
                         }} 
                         className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                       >
-                        <option value="">-- Select State --</option>
+                        <option value="">-- Select state --</option>
                         {INDIAN_STATES.map(st => (
                           <option key={st} value={st}>{st}</option>
                         ))}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">City</label>
+                      <label className="text-sm font-bold text-muted">City</label>
                       <div className="flex gap-2">
                         <select 
                           value={formCity} 
@@ -622,7 +623,7 @@ export default function VendorMasterPage() {
                           className="flex-1 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                           disabled={!formState || loadingCities}
                         >
-                          <option value="">-- Select City --</option>
+                          <option value="">-- Select city --</option>
                           {cityOptions.map(c => (
                             <option key={c.city_name} value={c.city_name}>{c.city_name}</option>
                           ))}
@@ -630,17 +631,17 @@ export default function VendorMasterPage() {
                             <option value={formCity}>{formCity}</option>
                           )}
                         </select>
-                        <AppButton type="button" variant="outline" onClick={handleAddNewCity} className="h-11 w-11 px-0 shrink-0" title="Add New City">
+                        <AppButton aria-label="Add new city" type="button" variant="outline" onClick={handleAddNewCity} className="h-11 w-11 px-0 shrink-0" title="Add new city">
                           <Plus className="h-4 w-4" />
                         </AppButton>
-                        <AppButton type="button" variant="outline" onClick={() => { setManagingStateName(formState); setShowCityManager(true); }} className="h-11 w-11 px-0 shrink-0 text-muted" disabled={!formState} title="Manage Cities">
+                        <AppButton aria-label="Manage cities" type="button" variant="outline" onClick={() => { setManagingStateName(formState); setShowCityManager(true); }} className="h-11 w-11 px-0 shrink-0 text-muted" disabled={!formState} title="Manage cities">
                           <Settings className="h-4 w-4" />
                         </AppButton>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Pincode / Zip</label>
-                      <AppInput value={formPincode} onChange={e => setFormPincode(e.target.value)} placeholder="Postal Code" className="h-11" />
+                      <label className="text-sm font-bold text-muted">Pincode / zip</label>
+                      <AppInput value={formPincode} onChange={e => setFormPincode(e.target.value)} placeholder="Postal code" className="h-11" />
                     </div>
                   </div>
                 </div>
@@ -649,51 +650,51 @@ export default function VendorMasterPage() {
                 <div className="space-y-8">
                   <div className="space-y-6">
                     <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
-                      <FileText className="h-4 w-4" /> Financial & Taxation
+                      <FileText className="h-4 w-4" /> Financial & taxation
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">GSTIN Number</label>
-                        <AppInput value={formTaxGstin} onChange={e => setFormTaxGstin(e.target.value)} placeholder="22AAAAA0000A1Z5" className="h-11 uppercase" />
+                        <label className="text-sm font-bold text-muted">GSTIN number</label>
+                        <AppInput value={formTaxGstin} onChange={e => setFormTaxGstin(e.target.value)} placeholder="22Aaaaa0000a1z5" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">PAN Number</label>
-                        <AppInput value={formTaxPan} onChange={e => setFormTaxPan(e.target.value)} placeholder="ABCDE1234F" className="h-11 uppercase" />
+                        <label className="text-sm font-bold text-muted">PAN number</label>
+                        <AppInput value={formTaxPan} onChange={e => setFormTaxPan(e.target.value)} placeholder="Abcde1234f" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">Other Tax Code (MSME/LUT)</label>
-                        <AppInput value={formTaxCode} onChange={e => setFormTaxCode(e.target.value)} placeholder="Tax Code" className="h-11" />
+                        <label className="text-sm font-bold text-muted">Other tax code (MSME/LUT)</label>
+                        <AppInput value={formTaxCode} onChange={e => setFormTaxCode(e.target.value)} placeholder="Tax code" className="h-11" />
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-6">
                     <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
-                      <Landmark className="h-4 w-4" /> Bank Account Details
+                      <Landmark className="h-4 w-4" /> Bank account details
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">Bank Name</label>
-                        <AppInput value={formBankName} onChange={e => setFormBankName(e.target.value)} placeholder="HDFC Bank" className="h-11" />
+                        <label className="text-sm font-bold text-muted">Bank name</label>
+                        <AppInput value={formBankName} onChange={e => setFormBankName(e.target.value)} placeholder="HDFC bank" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">Account Name</label>
-                        <AppInput value={formBankAcctName} onChange={e => setFormBankAcctName(e.target.value)} placeholder="Beneficiary Name" className="h-11" />
+                        <label className="text-sm font-bold text-muted">Account name</label>
+                        <AppInput value={formBankAcctName} onChange={e => setFormBankAcctName(e.target.value)} placeholder="Beneficiary name" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">Account Number</label>
+                        <label className="text-sm font-bold text-muted">Account number</label>
                         <AppInput value={formBankAcctNo} onChange={e => setFormBankAcctNo(e.target.value)} placeholder="00000000000" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">IFSC Code / Swift</label>
-                        <AppInput value={formBankIfsc} onChange={e => setFormBankIfsc(e.target.value)} placeholder="HDFC0000001" className="h-11 uppercase" />
+                        <label className="text-sm font-bold text-muted">IFSC code / swift</label>
+                        <AppInput value={formBankIfsc} onChange={e => setFormBankIfsc(e.target.value)} placeholder="Hdfc0000001" className="h-11" />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-sm font-bold text-muted uppercase">Branch Name</label>
-                        <AppInput value={formBankBranch} onChange={e => setFormBankBranch(e.target.value)} placeholder="Branch Name" className="h-11" />
+                        <label className="text-sm font-bold text-muted">Branch name</label>
+                        <AppInput value={formBankBranch} onChange={e => setFormBankBranch(e.target.value)} placeholder="Branch name" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">Bank State</label>
+                        <label className="text-sm font-bold text-muted">Bank state</label>
                         <select 
                           value={formBankState} 
                           onChange={e => {
@@ -702,14 +703,14 @@ export default function VendorMasterPage() {
                           }} 
                           className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                         >
-                          <option value="">-- Select State --</option>
+                          <option value="">-- Select state --</option>
                           {INDIAN_STATES.map(st => (
                             <option key={st} value={st}>{st}</option>
                           ))}
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted uppercase">Bank City</label>
+                        <label className="text-sm font-bold text-muted">Bank city</label>
                         <div className="flex gap-2">
                           <select 
                             value={formBankCity} 
@@ -717,7 +718,7 @@ export default function VendorMasterPage() {
                             className="flex-1 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                             disabled={!formBankState || loadingBankCities}
                           >
-                            <option value="">-- Select City --</option>
+                            <option value="">-- Select city --</option>
                             {bankCityOptions.map(c => (
                               <option key={c.city_name} value={c.city_name}>{c.city_name}</option>
                             ))}
@@ -725,10 +726,10 @@ export default function VendorMasterPage() {
                               <option value={formBankCity}>{formBankCity}</option>
                             )}
                           </select>
-                          <AppButton type="button" variant="outline" onClick={handleAddNewBankCity} className="h-11 w-11 px-0 shrink-0" title="Add New Bank City">
+                          <AppButton aria-label="Add new bank city" type="button" variant="outline" onClick={handleAddNewBankCity} className="h-11 w-11 px-0 shrink-0" title="Add new bank city">
                             <Plus className="h-4 w-4" />
                           </AppButton>
-                          <AppButton type="button" variant="outline" onClick={() => { setManagingStateName(formBankState); setShowCityManager(true); }} className="h-11 w-11 px-0 shrink-0 text-muted" disabled={!formBankState} title="Manage Cities">
+                          <AppButton aria-label="Manage cities" type="button" variant="outline" onClick={() => { setManagingStateName(formBankState); setShowCityManager(true); }} className="h-11 w-11 px-0 shrink-0 text-muted" disabled={!formBankState} title="Manage cities">
                             <Settings className="h-4 w-4" />
                           </AppButton>
                         </div>
@@ -739,11 +740,11 @@ export default function VendorMasterPage() {
 
                 {/* Section 4: Notes */}
                 <div className="space-y-2 pt-4">
-                  <label className="text-sm font-bold text-muted uppercase">Internal Notes</label>
+                  <label className="text-sm font-bold text-muted">Internal notes</label>
                   <textarea 
                     value={formNotes} 
                     onChange={e => setFormNotes(e.target.value)} 
-                    placeholder="Any specific instructions or terms related to this vendor..." 
+                    placeholder="Any specific instructions or terms related to this vendor…" 
                     className="w-full min-h-[100px] p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border resize-y"
                   />
                 </div>
@@ -777,7 +778,7 @@ export default function VendorMasterPage() {
 
       {manageModalType && (
         <MasterOptionsManager 
-          title={manageModalType === "industry" ? "Industry Types" : "Vendor Types"}
+          title={manageModalType === "industry" ? "Industry types" : "Vendor types"}
           tableName={manageModalType === "industry" ? "master_industry_types" : "master_vendor_types"}
           options={manageModalType === "industry" ? masterIndustryTypes : masterVendorTypes}
           onClose={() => setManageModalType(null)}

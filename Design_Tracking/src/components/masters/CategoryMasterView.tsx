@@ -35,12 +35,12 @@ interface CategoryMasterViewProps {
 
 const COLOR_THEMES = [
   { id: "purple", label: "Purple", bg: "bg-surface", text: "text-theme-icon dark:text-muted-foreground", border: "border-border", dot: "bg-surface0" },
-  { id: "blue", label: "Blue", bg: "bg-blue-500/10", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/30", dot: "bg-blue-500" },
-  { id: "emerald", label: "Emerald", bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/30", dot: "bg-emerald-500" },
-  { id: "amber", label: "Amber", bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/30", dot: "bg-amber-500" },
-  { id: "teal", label: "Teal", bg: "bg-teal-500/10", text: "text-teal-600 dark:text-teal-400", border: "border-border", dot: "bg-teal-500" },
-  { id: "rose", label: "Rose", bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", border: "border-rose-500/30", dot: "bg-rose-500" },
-  { id: "slate", label: "Slate", bg: "bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", border: "border-slate-500/30", dot: "bg-slate-500" }
+  { id: "blue", label: "Blue", bg: "bg-info-soft", text: "text-info-text", border: "border-info-border", dot: "bg-info" },
+  { id: "emerald", label: "Emerald", bg: "bg-success-soft", text: "text-success-text", border: "border-success-border", dot: "bg-success" },
+  { id: "amber", label: "Amber", bg: "bg-warning-soft", text: "text-warning-text", border: "border-warning-border", dot: "bg-warning" },
+  { id: "teal", label: "Teal", bg: "bg-info-soft", text: "text-info-text", border: "border-border", dot: "bg-info" },
+  { id: "rose", label: "Rose", bg: "bg-danger-soft", text: "text-danger-text", border: "border-danger-border", dot: "bg-danger-solid" },
+  { id: "slate", label: "Slate", bg: "bg-sunken", text: "text-subtle", border: "border-border", dot: "bg-muted" }
 ];
 
 const PRESET_ICONS = ["🏛️", "🏗️", "⚡", "🧱", "🏢", "🌳", "🛋️", "⛰️", "🔥", "🌱", "🚗", "💻", "🔬", "📐", "📋", "⚙️"];
@@ -174,7 +174,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-bold text-foreground">
-              Package Master (Engineering Packages)
+              Package master (engineering packages)
             </h3>
           </div>
         </div>
@@ -183,18 +183,18 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
           <button
             type="button"
             onClick={() => setIsImportModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
           >
             <Upload className="h-3.5 w-3.5 text-theme-icon" />
-            <span>Import Packages (Excel)</span>
+            <span>Import packages (Excel)</span>
           </button>
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Add Package</span>
+            <span>Add package</span>
           </button>
         </div>
       </div>
@@ -203,37 +203,37 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Total Packages</span>
-            <span className="text-lg font-black text-foreground">{categories.length}</span>
+            <span className="text-[11px] font-semibold text-muted-foreground block">Total packages</span>
+            <span className="text-lg font-semibold text-foreground">{categories.length}</span>
           </div>
           <Tag className="h-4 w-4 text-theme-icon" />
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Mapped Consultants</span>
-            <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+            <span className="text-[11px] font-semibold text-muted-foreground block">Mapped consultants</span>
+            <span className="text-lg font-semibold text-success-text">
               {consultants.length}
             </span>
           </div>
-          <Users className="h-4 w-4 text-emerald-500" />
+          <Users className="h-4 w-4 text-success-text" />
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-muted-foreground block">Sub-Packages</span>
-            <span className="text-lg font-black text-blue-600 dark:text-blue-400">
+            <span className="text-lg font-semibold text-info-text">
               {packages.length}
             </span>
           </div>
-          <Layers className="h-4 w-4 text-blue-500" />
+          <Layers className="h-4 w-4 text-info-text" />
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Active Projects</span>
-            <span className="text-lg font-black text-amber-600 dark:text-amber-400">
+            <span className="text-[11px] font-semibold text-muted-foreground block">Active projects</span>
+            <span className="text-lg font-semibold text-warning-text">
               {store.projects.length}
             </span>
           </div>
-          <Building2 className="h-4 w-4 text-amber-500" />
+          <Building2 className="h-4 w-4 text-warning-text" />
         </div>
       </div>
 
@@ -245,11 +245,11 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search parent packages by name, code, description..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+            placeholder="Search parent packages by name, code, description…"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
           />
           {searchQuery && (
-            <button
+            <button aria-label="Close"
               type="button"
               onClick={() => setSearchQuery("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
@@ -293,7 +293,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                     </span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${theme.bg} ${theme.text} border ${theme.border}`}>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold ${theme.bg} ${theme.text} border ${theme.border}`}>
                           {cat.code}
                         </span>
                       </div>
@@ -305,19 +305,19 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0">
-                    <button
+                    <button aria-label="Edit package"
                       type="button"
                       onClick={() => handleOpenEdit(cat)}
-                      className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
-                      title="Edit Package"
+                      className="h-7 w-7 rounded-lg hover:bg-sunken text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+                      title="Edit package"
                     >
                       <Edit2 className="h-3 w-3" />
                     </button>
-                    <button
+                    <button aria-label="Delete package"
                       type="button"
                       onClick={() => handleTriggerDelete(cat)}
-                      className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                      title="Delete Package"
+                      className="h-7 w-7 rounded-lg hover:bg-danger-soft text-muted-foreground hover:text-danger-text flex items-center justify-center transition-colors cursor-pointer"
+                      title="Delete package"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -346,7 +346,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                   </span>
                   <span>•</span>
                   <span className="inline-flex items-center gap-1">
-                    <Layers className="h-3 w-3 text-blue-500" />
+                    <Layers className="h-3 w-3 text-info-text" />
                     <span className="font-semibold text-foreground">{linkedPackages.length}</span>
                     <span className="text-[11px]">Packages</span>
                   </span>
@@ -371,9 +371,9 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
       {/* Add / Edit Package Transaction Form Layout (Attached directly to sidebar) */}
       {isModalOpen && (
         <TransactionFormLayout
-          title={editingCategory ? `Edit Package: ${name || editingCategory.name}` : "Create New Package Master"}
+          title={editingCategory ? `Edit Package: ${name || editingCategory.name}` : "Create new package master"}
           icon={Tag}
-          description="Define parent engineering package scope, identification code, icon, and color theme"
+          description="Define parent engineering package scope, identification code, icon, and colour theme"
           onBack={() => setIsModalOpen(false)}
           backLabel="Back to Packages"
           breadcrumbs={[
@@ -387,7 +387,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
         >
           <div className="space-y-6">
             {formError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
@@ -398,21 +398,21 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Package Name <span className="text-rose-500">*</span>
+                    Package name <span className="text-danger-text">*</span>
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     required
-                    placeholder="e.g., Structural, Architectural, MEPF Services"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    placeholder="e.g., structural, architectural, MEPF services"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Package Code
+                    Package code
                   </label>
                   <input
                     type="text"
@@ -420,7 +420,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                     onChange={e => setCode(e.target.value.toUpperCase())}
                     maxLength={6}
                     placeholder="e.g., STR, ARCH, MEP"
-                    className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -428,9 +428,9 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
               {/* Icon Selector */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-foreground">
-                  Package Icon
+                  Package icon
                 </label>
-                <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border max-h-24 overflow-y-auto custom-scrollbar">
+                <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-sunken border border-border max-h-24 overflow-y-auto custom-scrollbar">
                   {PRESET_ICONS.map(icon => (
                     <button
                       key={icon}
@@ -439,7 +439,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                       className={`h-8 w-8 rounded-lg flex items-center justify-center text-base transition-all cursor-pointer ${
                         selectedIcon === icon
                           ? "bg-surface0 text-white shadow-xs scale-105"
-                          : "hover:bg-slate-200 dark:hover:bg-slate-800"
+                          : "hover:bg-sunken"
                       }`}
                     >
                       {icon}
@@ -451,7 +451,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
               {/* Color Theme Selector */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-foreground">
-                  Color Badge Theme
+                  Colour badge theme
                 </label>
                 <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
                   {COLOR_THEMES.map(theme => (
@@ -459,9 +459,9 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                       key={theme.id}
                       type="button"
                       onClick={() => setSelectedColor(theme.id)}
-                      className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      className={`px-2 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
                         selectedColor === theme.id
-                          ? `${theme.bg} ${theme.text} ${theme.border} ring-2 ring-purple-500`
+                          ? `${theme.bg} ${theme.text} ${theme.border} ring-2 ring-ring`
                           : "bg-background border-border text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -475,14 +475,14 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
               {/* Description */}
               <div className="space-y-1">
                 <label className="text-xs font-bold text-foreground">
-                  Scope / Description
+                  Scope / description
                 </label>
                 <textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   rows={2}
-                  placeholder="Overview of engineering deliverable scope, technical specifications, and milestones..."
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                  placeholder="Overview of engineering deliverable scope, technical specifications, and milestones…"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -491,13 +491,13 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer transition-colors"
+                  className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                  className="px-5 py-2 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                 >
                   {editingCategory ? "Save Changes" : "Create Package"}
                 </button>

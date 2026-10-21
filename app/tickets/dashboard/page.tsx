@@ -41,7 +41,7 @@ export default function TicketDashboardPage() {
       <div className="h-screen flex flex-col items-center justify-center bg-surface text-foreground">
         <ChandakLoader
           size="lg"
-          title="Verifying Permissions..."
+          title="Verifying Permissions…"
           subtitle="Securing ticket metrics gateway"
         />
       </div>
@@ -51,7 +51,7 @@ export default function TicketDashboardPage() {
   if (!hasPermission("TICKETS_VIEW")) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4 bg-surface text-foreground">
-        <h2 className="text-xl font-bold text-danger">Access Denied</h2>
+        <h2 className="text-xl font-bold text-danger">Access denied</h2>
         <p className="text-xs text-muted-foreground">You do not have capabilities to view Operations Tickets.</p>
       </div>
     );
@@ -60,12 +60,12 @@ export default function TicketDashboardPage() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Ticketing Operations Dashboard"
+        title="Ticketing operations dashboard"
         icon={<BarChart2 className="h-6 w-6" />}
         actions={
           <>
             <AppButton variant="outline" size="sm" onClick={() => router.push("/tickets")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
-              Back to Tickets
+              Back to tickets
             </AppButton>
             <AppButton 
               variant="outline" 
@@ -73,7 +73,7 @@ export default function TicketDashboardPage() {
               onClick={() => fetchMetrics()}
               leftIcon={<RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />}
             >
-              Sync Data
+              Sync data
             </AppButton>
           </>
         }
@@ -81,7 +81,7 @@ export default function TicketDashboardPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {loading && !metrics ? (
           <div className="flex items-center justify-center h-64">
-            <ChandakLoader size="md" title="Aggregating metrics..." />
+            <ChandakLoader size="md" title="Aggregating metrics…" />
           </div>
         ) : (
           <TicketsDashboard metrics={metrics} />

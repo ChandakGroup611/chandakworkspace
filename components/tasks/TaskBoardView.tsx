@@ -23,6 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { AppCard } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { Paperclip, MessageSquare, Clock, AlignLeft } from "lucide-react";
+import { formatDate } from "@/components/ui/data";
 
 interface TaskBoardViewProps {
   tasks: any[];
@@ -143,15 +144,15 @@ function BoardColumn({ column, onTaskClick, canUpdateTask }: { column: any, onTa
   });
 
   return (
-    <div className="flex flex-col w-[260px] sm:w-[300px] min-w-[260px] sm:min-w-[300px] shrink-0 bg-surface dark:theme-card-structural /[0.02] rounded-xl border border-border h-full max-h-full">
-      <div className="p-3 border-b border-border dark:border-border flex items-center justify-between theme-card-structural dark:bg-[#0B0F19] rounded-t-xl shrink-0">
+    <div className="flex flex-col w-[260px] sm:w-[300px] min-w-[260px] sm:min-w-[300px] shrink-0 bg-surface rounded-xl border border-border h-full max-h-full">
+      <div className="p-3 border-b border-border dark:border-border flex items-center justify-between theme-card-structural rounded-t-xl shrink-0">
         <div className="flex items-center gap-2">
           {column.color && (
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: column.color }} />
           )}
           <h3 className="font-bold text-sm text-foreground">{column.name}</h3>
         </div>
-        <AppBadge variant="neutral" className="text-[10px]">{column.tasks.length}</AppBadge>
+        <AppBadge variant="neutral" className="text-[11px]">{column.tasks.length}</AppBadge>
       </div>
       
       <div 
@@ -210,7 +211,7 @@ function SortableTaskCard({ task, onClick, canUpdateTask }: { task: any, onClick
       <div
         ref={setNodeRef}
         style={style}
-        className="opacity-30 border-2 border-theme-btn-primary border-dashed rounded-xl h-[120px] bg-theme-btn-primary/5"
+        className="opacity-30 border-2 border-theme-btn-primary border-dashed rounded-xl h-[120px] bg-accent-soft"
       />
     );
   }
@@ -244,11 +245,11 @@ function TaskCard({ task }: { task: any }) {
       )}
       <div className="p-3">
         <div className="flex justify-between items-start mb-2 gap-2">
-          <div className="font-mono text-[10px] font-bold text-muted">
+          <div className="font-mono text-[11px] font-bold text-muted">
             {task.code}
           </div>
           {task.department && (
-            <span className="text-[10px] font-semibold bg-surface text-subtle px-1.5 py-0.5 rounded truncate max-w-[80px]" title={task.department.name}>
+            <span className="text-[11px] font-semibold bg-surface text-subtle px-1.5 py-0.5 rounded truncate max-w-[80px]" title={task.department.name}>
               {task.department.name}
             </span>
           )}
@@ -263,7 +264,7 @@ function TaskCard({ task }: { task: any }) {
             <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden">
               <div className="h-full bg-success rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
             </div>
-            <span className="text-[10px] font-bold text-muted">{task.progress_percentage}%</span>
+            <span className="text-[11px] font-bold text-muted">{task.progress_percentage}%</span>
           </div>
         )}
 
@@ -275,36 +276,36 @@ function TaskCard({ task }: { task: any }) {
                   const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
                   if (!a) return null;
                   return a.profile_photo ? (
-                    <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-gray-200" title={a.full_name} />
+                    <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-border" title={a.full_name} />
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center text-[9px] font-bold ring-1 ring-theme-btn-primary/20" title={a.full_name}>
+                    <div className="w-5 h-5 rounded-full bg-accent-soft text-theme-icon flex items-center justify-center text-[11px] font-bold ring-1 ring-theme-btn-primary/20" title={a.full_name}>
                       {a.full_name?.substring(0, 2).toUpperCase() || "U"}
                     </div>
                   );
                 })()}
               </div>
             ) : (
-              <div className="w-5 h-5 rounded-full border border-dashed border-border flex items-center justify-center text-[9px] text-muted" title="Unassigned">?</div>
+              <div className="w-5 h-5 rounded-full border border-dashed border-border flex items-center justify-center text-[11px] text-muted" title="Unassigned">?</div>
             )}
             
             {task.end_date && (
-              <div className={`flex items-center gap-1 text-[10px] font-semibold ${isOverdue ? 'text-danger bg-red-50 px-1.5 py-0.5 rounded' : 'text-muted'}`}>
+              <div className={`flex items-center gap-1 text-[11px] font-semibold ${isOverdue ? 'text-danger bg-danger-soft px-1.5 py-0.5 rounded' : 'text-muted'}`}>
                 <Clock className="w-3 h-3" />
-                {new Date(task.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                {formatDate(task.end_date)}
               </div>
             )}
           </div>
           
           <div className="flex items-center gap-2 text-muted">
-            {task.description && <div title="Has Description"><AlignLeft className="w-3.5 h-3.5" /></div>}
+            {task.description && <div title="Has description"><AlignLeft className="w-3.5 h-3.5" /></div>}
             {task.attachmentCount > 0 && (
-              <div className="flex items-center gap-0.5 text-[10px] font-medium" title={`${task.attachmentCount} Attachment(s)`}>
+              <div className="flex items-center gap-0.5 text-[11px] font-medium" title={`${task.attachmentCount} Attachment(s)`}>
                 <Paperclip className="w-3.5 h-3.5" />
                 {task.attachmentCount}
               </div>
             )}
             {task.commentCount > 0 && (
-              <div className="flex items-center gap-0.5 text-[10px] font-medium" title={`${task.commentCount} Comment(s)`}>
+              <div className="flex items-center gap-0.5 text-[11px] font-medium" title={`${task.commentCount} Comment(s)`}>
                 <MessageSquare className="w-3.5 h-3.5" />
                 {task.commentCount}
               </div>

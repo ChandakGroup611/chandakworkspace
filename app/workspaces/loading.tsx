@@ -6,8 +6,8 @@ export default function WorkspacesLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="md"
-        title="Connecting to Gateway..."
-        subtitle="Synchronizing workspace matrix"
+        title="Loading workspaces…"
+        subtitle="Fetching workspaces and tasks"
       />
     </div>
   );

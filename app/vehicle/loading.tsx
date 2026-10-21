@@ -6,8 +6,8 @@ export default function VehicleLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Chandak Fleet & Vehicle Desk"
-        subtitle="Initializing fleet directory, allocations & compliance..."
+        title="Chandak fleet & Vehicle Desk"
+        subtitle="Initializing fleet directory, allocations & compliance…"
       />
     </div>
   );

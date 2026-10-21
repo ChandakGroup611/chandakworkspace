@@ -69,7 +69,7 @@ export function AMCHistoryModal({
   const getOperationColor = (op: string) => {
     switch (op) {
       case "INSERT": return "text-success bg-success/10";
-      case "UPDATE": return "text-theme-icon bg-theme-btn-primary/10";
+      case "UPDATE": return "text-theme-icon bg-accent-soft";
       case "DELETE": return "text-danger bg-danger/10";
       default: return "text-muted bg-sunken";
     }
@@ -86,7 +86,7 @@ export function AMCHistoryModal({
               <Clock className={`h-5 w-5 text-theme-icon`} />
             </div>
             <div>
-              <h2 className="text-lg font-bold">Audit History</h2>
+              <h2 className="text-lg font-bold">Audit history</h2>
               <p className="text-xs text-muted">Immutable changelog for this record</p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export function AMCHistoryModal({
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted">
               <Loader2 className="h-8 w-8 animate-spin mb-4 text-theme-icon" />
-              <p>Loading audit trail...</p>
+              <p>Loading audit trail…</p>
             </div>
           ) : logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted space-y-3">
@@ -139,7 +139,7 @@ export function AMCHistoryModal({
                     {/* Diff Viewer for Updates */}
                     {log.operation === 'UPDATE' && log.before_values && log.after_values && (
                       <div className="mt-4 space-y-3">
-                        <p className="text-xs font-semibold text-muted">Changes Detected</p>
+                        <p className="text-xs font-semibold text-muted">Changes detected</p>
                         <div className="space-y-2">
                           {Object.keys(log.after_values).map((key) => {
                             const before = log.before_values[key];

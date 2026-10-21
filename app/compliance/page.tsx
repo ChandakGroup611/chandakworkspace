@@ -14,7 +14,7 @@ export default function CompliancePage() {
       <div className="h-screen flex items-center justify-center">
         <ChandakLoader
           size="lg"
-          title="Loading Compliance Vault..."
+          title="Loading compliance vault…"
           subtitle="Verifying statutory permissions & soft-deleted archives"
         />
       </div>
@@ -23,7 +23,7 @@ export default function CompliancePage() {
   if (roleCode !== "SUPER_ADMIN" && !hasPermission("TRASH_VIEW")) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4">
-        <h2 className="text-xl font-bold">Access Denied</h2>
+        <h2 className="text-xl font-bold">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view Trash Data.</p>
       </div>
     );
@@ -35,7 +35,7 @@ export default function CompliancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Trash Data</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Trash data</h1>
           </div>
           <p className="text-xs text-muted">
             Securely manage, recover, or permanently purge soft-deleted records across the platform.

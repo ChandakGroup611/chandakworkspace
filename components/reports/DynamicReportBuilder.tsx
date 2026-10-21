@@ -51,7 +51,7 @@ function SortableColumnItem({ item, onToggle }: { item: UserReportLayout; onTogg
               ? "bg-success-soft border-success/30 text-success-text hover:bg-success-soft/80"
               : "bg-sunken border-border text-muted hover:bg-surface"
           }`}
-          title={item.is_visible ? "Hide Column" : "Show Column"}
+          title={item.is_visible ? "Hide column" : "Show column"}
         >
           {item.is_visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
         </AppButton>
@@ -176,7 +176,7 @@ export default function DynamicReportBuilder({
             {/* Left Panel: Selected/Active Columns */}
             <div className="flex-1 flex flex-col min-h-0 bg-surface">
               <div className="p-4 border-b border-border shrink-0 bg-surface">
-                <h3 className="theme-label text-muted">Report Layout</h3>
+                <h3 className="theme-label text-muted">Report layout</h3>
               </div>
               <div className="p-4 flex-1 overflow-y-auto space-y-2">
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -195,7 +195,7 @@ export default function DynamicReportBuilder({
             {/* Right Panel: Available Fields */}
             <div className="w-full md:w-72 lg:w-80 flex flex-col min-h-0 bg-sunken">
               <div className="p-4 border-b border-border shrink-0 bg-sunken">
-                <h3 className="theme-label text-muted">Available Fields</h3>
+                <h3 className="theme-label text-muted">Available fields</h3>
               </div>
               <div className="p-4 flex-1 overflow-y-auto space-y-2">
                 {unselectedFields.map((field) => (
@@ -217,7 +217,7 @@ export default function DynamicReportBuilder({
                         {field.display_name}
                       </span>
                     </div>
-                    <span className="theme-label text-theme-btn-primary bg-theme-btn-primary/10 px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <span className="theme-label text-theme-btn-primary bg-accent-soft px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                       Add +
                     </span>
                   </div>
@@ -239,7 +239,7 @@ export default function DynamicReportBuilder({
               disabled={isSaving || isResetting}
               leftIcon={<RotateCcw className={`w-4 h-4 ${isResetting ? "animate-spin" : ""}`} />}
             >
-              Reset to Default
+              Reset to default
             </AppButton>
 
             <div className="flex gap-3">
@@ -263,9 +263,9 @@ export default function DynamicReportBuilder({
       <ConfirmDialog
         open={isResetConfirmOpen}
         onClose={() => setIsResetConfirmOpen(false)}
-        title="Reset Column Layout"
+        title="Reset column layout"
         description="Are you sure you want to reset to the system default layout?"
-        confirmLabel="Reset to Default"
+        confirmLabel="Reset to default"
         tone="danger"
         onConfirm={async () => {
           try {

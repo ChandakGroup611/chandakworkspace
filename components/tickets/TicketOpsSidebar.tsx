@@ -15,6 +15,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 interface TicketOpsSidebarProps {
   ticket: any;
@@ -43,18 +44,18 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         {/* SLA Engine Block */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-muted uppercase tracking-widest">SLA Performance</h3>
-            <AppBadge variant={isStable ? "success" : "warning"} className="text-[0.65rem] py-0">STABLE</AppBadge>
+            <h3 className="text-xs font-bold text-muted">SLA performance</h3>
+            <AppBadge variant={isStable ? "success" : "warning"} className="text-[0.65rem] py-0">Stable</AppBadge>
           </div>
           <div className={`p-5 border rounded-2xl space-y-4 ${
-            "bg-elevated/50/50/50/50 border-border"
+            "bg-elevated/50 border-border"
           }`}>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <span className={`text-2xl font-bold text-foreground"}`}>{timeLeft}m</span>
-                <p className="text-xs text-muted font-medium">Until Resolution Breach</p>
+                <p className="text-xs text-muted font-medium">Until resolution breach</p>
               </div>
-              <div className={`p-3 rounded-xl bg-theme-btn-primary/10`}>
+              <div className={`p-3 rounded-xl bg-accent-soft`}>
                 <Clock className={`h-5 w-5 text-theme-icon`} />
               </div>
             </div>
@@ -65,9 +66,9 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
                   style={{ width: `${slaPercentage}%` }}
                 />
               </div>
-              <div className="flex justify-between text-[0.65rem] text-muted font-bold uppercase tracking-tighter">
+              <div className="flex justify-between text-[0.65rem] text-muted font-bold tracking-tighter">
                 <span>0m</span>
-                <span>{ticket.priorityObj?.sla_target_minutes || 240}m Target</span>
+                <span>{ticket.priorityObj?.sla_target_minutes || 240}m target</span>
               </div>
             </div>
           </div>
@@ -75,34 +76,34 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
         {/* Workflow Actions */}
         <section className="space-y-4">
-          <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Workflow Actions</h3>
+          <h3 className="text-xs font-bold text-muted">Workflow actions</h3>
           <div className="grid grid-cols-1 gap-2">
             <AppButton 
               className={`w-full justify-start text-xs py-5 border ${
-                "bg-theme-btn-primary/10 border-theme-btn-primary/30 text-theme-icon hover:opacity-90/10"
+                "bg-accent-soft border-theme-btn-primary/30 text-theme-icon hover:bg-surface-hover"
               }`}
               onClick={() => onAction("ASSIGN")}
             >
-              <UserPlus className="h-4 w-4 mr-3" /> Assign to Me
+              <UserPlus className="h-4 w-4 mr-3" /> Assign to me
             </AppButton>
             <AppButton 
               variant="secondary"
-              className={`w-full justify-start text-xs py-5 ${ "theme-card-structural text-muted hover:bg-elevated/50/50/50/50 shadow-sm" }`}
+              className={`w-full justify-start text-xs py-5 ${ "theme-card-structural text-muted hover:bg-elevated/50 shadow-sm" }`}
               onClick={() => onAction("RESOLVE")}
             >
-              <CheckCircle2 className="h-4 w-4 mr-3 text-success" /> Mark as Resolved
+              <CheckCircle2 className="h-4 w-4 mr-3 text-success" /> Mark as resolved
             </AppButton>
             <div className="grid grid-cols-2 gap-2">
               <AppButton 
                 variant="ghost" 
-                className={`text-xs h-10 border bg-elevated/50/50/50/50 border-border text-muted`}
+                className={`text-xs h-10 border bg-elevated/50 border-border text-muted`}
                 onClick={() => onAction("HOLD")}
               >
-                <Pause className="h-3 w-3 mr-2" /> Put on Hold
+                <Pause className="h-3 w-3 mr-2" /> Put on hold
               </AppButton>
               <AppButton 
                 variant="ghost" 
-                className={`text-xs h-10 border bg-elevated/50/50/50/50 border-border text-muted`}
+                className={`text-xs h-10 border bg-elevated/50 border-border text-muted`}
                 onClick={() => onAction("ESCALATE")}
               >
                 <AlertTriangle className="h-3 w-3 mr-2" /> Escalate
@@ -110,16 +111,16 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             </div>
             <AppButton 
               variant="ghost" 
-              className={`w-full justify-start text-danger/80 hover:text-danger hover:bg-red-50 text-xs h-10 mt-2 border ${
-                "border-red-100"
+              className={`w-full justify-start text-danger/80 hover:text-danger hover:bg-danger-soft text-xs h-10 mt-2 border ${
+                "border-danger-border"
               }`}
-              onClick={() => {
-                if(confirm("Confirm permanent removal from active operations?")) {
+              onClick={async () => {
+                if (await confirmAction({ title: "Delete this ticket?", description: "It's removed from active operations permanently.", confirmLabel: "Delete ticket", tone: "danger" })) {
                   onAction("DELETE");
                 }
               }}
             >
-              <AlertTriangle className="h-3 w-3 mr-2" /> Purge Ticket Record
+              <AlertTriangle className="h-3 w-3 mr-2" /> Purge ticket record
             </AppButton>
           </div>
         </section>
@@ -127,19 +128,19 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         {/* Watchers Registry */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Watchers</h3>
+            <h3 className="text-xs font-bold text-muted">Watchers</h3>
             <span className="text-xs text-theme-icon font-bold cursor-pointer">Manage</span>
           </div>
           <div className="flex -space-x-2">
             {[1, 2, 3].map(i => (
               <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white bg-theme-btn-primary ${
-                "border-white"
+                "border-border"
               }`}>
                 JD
               </div>
             ))}
-            <AppButton variant="secondary" className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${
-              "border-border bg-elevated/50/50/50/50 text-muted hover:bg-elevated/50/50/50/50"
+            <AppButton aria-label="Add person" variant="secondary" className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${
+              "border-border bg-elevated/50 text-muted hover:bg-elevated/50"
             }`}>
               <UserPlus className="h-3 w-3" />
             </AppButton>
@@ -148,11 +149,11 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
         {/* Attachment Zone */}
         <section className="space-y-4">
-          <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Quick Attachments</h3>
+          <h3 className="text-xs font-bold text-muted">Quick attachments</h3>
           <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
-            "border-border bg-elevated/50/50/50/50/50 hover:bg-elevated/50/50/50/50/50"
+            "border-border bg-elevated/50 hover:bg-elevated/50"
           }`}>
-            <div className={`p-2 rounded-lg bg-surface group-hover:opacity-90/10`}>
+            <div className={`p-2 rounded-lg bg-surface group-hover:bg-surface-hover`}>
               <Eye className={`h-4 w-4 text-muted group-hover:text-theme-icon`} />
             </div>
             <p className="text-[0.7rem] text-muted">Drop files to link</p>
@@ -162,12 +163,12 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
       {/* Sticky Bottom Actions */}
       <div className={`p-4 border-t flex items-center justify-between ${
-        "bg-elevated/50/50/50/50 border-border"
+        "bg-elevated/50 border-border"
       }`}>
-        <AppButton variant="secondary" className={`p-2 rounded-lg transition-colors hover:bg-elevated/50 text-muted`}>
+        <AppButton aria-label="Open workflow" variant="secondary" className={`p-2 rounded-lg transition-colors hover:bg-elevated/50 text-muted`}>
           <Workflow className="h-4 w-4" />
         </AppButton>
-        <span className="text-xs font-bold text-muted uppercase tracking-widest">Governance ID: 9910-E</span>
+        <span className="text-xs font-bold text-muted">Governance ID: 9910-E</span>
       </div>
     </div>
   );

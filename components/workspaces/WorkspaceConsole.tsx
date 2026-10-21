@@ -10,7 +10,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
       {workspaces.map(ws => (
-        <div key={ws.id} className="theme-card-structural rounded-2xl p-6 hover: transition-all group">
+        <div key={ws.id} className="theme-card-structural rounded-2xl p-6 transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div>
               <h3 className="font-semibold text-lg text-foreground group-hover:text-theme-icon transition-colors">{ws.workspace_name}</h3>
@@ -38,7 +38,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
               <span className="text-muted font-medium">{ws.members?.length || 0}</span>
             </div>
             <AppButton variant="ghost" size="sm" className="h-auto p-0 text-theme-icon hover:text-muted-foreground font-medium text-xs">
-              Enter Workspace <ArrowRight className="h-3 w-3 ml-1" />
+              Enter workspace <ArrowRight className="h-3 w-3 ml-1" />
             </AppButton>
           </div>
         </div>
@@ -50,18 +50,18 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
 export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: any[] }) {
   // A heavy enterprise execution context dashboard
   return (
-    <div className="flex flex-col h-full bg-background dark:bg-[#0a0a0b] text-muted">
-      <header className="p-6 border-b flex justify-between items-center theme-card-structural /20">
+    <div className="flex flex-col h-full bg-background text-muted">
+      <header className="p-6 border-b flex justify-between items-center theme-card-structural">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{workspace.workspace_name}</h1>
           
         </div>
         <div className="flex gap-4">
           <AppButton variant="secondary" className=" theme-tab-standard  rounded-xl   transition-colors" leftIcon={<Activity className="h-4 w-4" />}>
-            Check Availability
+            Cheque availability
           </AppButton>
-          <AppButton variant="primary" className=" theme-tab-standard  bg-theme-btn-primary text-theme-btn-primary-text rounded-xl   hover:opacity-90 transition-colors shadow-lg shadow-indigo-500/20" leftIcon={<Plus className="h-4 w-4" />}>
-            New Task
+          <AppButton variant="primary" className=" theme-tab-standard bg-theme-btn-primary text-theme-btn-primary-text rounded-xl hover:opacity-90 transition-colors shadow-lg" leftIcon={<Plus className="h-4 w-4" />}>
+            New task
           </AppButton>
         </div>
       </header>
@@ -69,22 +69,22 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
       <div className="flex-1 overflow-auto">
         {/* Placeholder for TaskBoard or TaskTimeline */}
         <div className="p-6">
-          <div className="theme-card-structural /40 rounded-2xl p-6 mb-6 flex justify-around">
+          <div className="theme-card-structural rounded-2xl p-6 mb-6 flex justify-around">
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">{tasks.length}</p>
-              <p className="text-xs text-muted uppercase tracking-widest mt-1">Total Tasks</p>
+              <p className="text-xs text-muted mt-1">Total tasks</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-warning">{tasks.filter(t => !t.status?.is_closed).length}</p>
-              <p className="text-xs text-muted uppercase tracking-widest mt-1">Active</p>
+              <p className="text-xs text-muted mt-1">Active</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-danger">0</p>
-              <p className="text-xs text-muted uppercase tracking-widest mt-1">SLA Breached</p>
+              <p className="text-xs text-muted mt-1">SLA breached</p>
             </div>
           </div>
           
-          <h2 className="text-lg font-semibold mb-4 text-foreground">Active Tasks Kanban</h2>
+          <h2 className="text-lg font-semibold mb-4 text-foreground">Active tasks Kanban</h2>
           {/* <TaskBoard initialTasks={tasks} statuses={[]} /> */}
         </div>
       </div>

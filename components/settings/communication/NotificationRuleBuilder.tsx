@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { Plus, Trash2, Save, Filter, Users, Send, Loader2, Workflow } from "lucide-react";
 import { saveSettingsEntity, deleteSettingsEntity } from "@/lib/actions/settings";
 import { createClient } from "@/utils/supabase/client";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 // Define available modules and their events/statuses
 const MODULE_CONFIG: Record<string, { events: string[], statuses: string[] }> = {
@@ -106,7 +107,7 @@ export default function NotificationRuleBuilder() {
       setRules(rules.filter(r => r.id !== id));
       return;
     }
-    if (!confirm("Delete this rule?")) return;
+    if (!(await confirmAction("Delete this rule?"))) return;
     try {
       const res = await deleteSettingsEntity("notification_rules", id, true);
       if (!res.success) throw new Error(res.error);
@@ -141,7 +142,7 @@ export default function NotificationRuleBuilder() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-surface border border-border p-4 rounded-xl shadow-sm">
         <div>
-          <h2 className="text-lg font-bold text-heading">Rule Engine</h2>
+          <h2 className="text-lg font-bold text-heading">Rule engine</h2>
         </div>
         <AppButton
           variant="primary"
@@ -149,7 +150,7 @@ export default function NotificationRuleBuilder() {
           className="flex items-center gap-2"
           leftIcon={<Plus className="w-4 h-4" />}
         >
-          <span>Add Rule</span>
+          <span>Add rule</span>
         </AppButton>
       </div>
 
@@ -164,7 +165,7 @@ export default function NotificationRuleBuilder() {
                 <span className="font-mono text-success-text font-bold text-lg">IF</span>
                 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-muted uppercase">Module =</span>
+                  <span className="text-xs font-semibold text-muted">Module =</span>
                   <select 
                     value={rule.module}
                     onChange={(e) => updateLocalRule(rule.id, "module", e.target.value)}
@@ -177,7 +178,7 @@ export default function NotificationRuleBuilder() {
                 <span className="font-mono text-muted font-bold text-sm">AND</span>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-muted uppercase">Event =</span>
+                  <span className="text-xs font-semibold text-muted">Event =</span>
                   <select 
                     value={rule.event}
                     onChange={(e) => updateLocalRule(rule.id, "event", e.target.value)}
@@ -190,7 +191,7 @@ export default function NotificationRuleBuilder() {
                 <span className="font-mono text-muted font-bold text-sm">AND</span>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-muted uppercase">Status =</span>
+                  <span className="text-xs font-semibold text-muted">Status =</span>
                   <select 
                     value={rule.status_trigger || "ANY"}
                     onChange={(e) => updateLocalRule(rule.id, "status_trigger", e.target.value)}
@@ -205,7 +206,7 @@ export default function NotificationRuleBuilder() {
               <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-primary font-bold text-lg">THEN</span>
+                    <span className="font-mono text-primary font-bold text-lg">Then</span>
                     <span className="text-sm font-semibold text-subtle">Resolve Recipients:</span>
                   </div>
                   
@@ -244,7 +245,7 @@ export default function NotificationRuleBuilder() {
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "EMAIL")}
                         className="rounded border-input text-primary focus:ring-ring"
                       />
-                      <span className="text-sm text-subtle font-medium">Email Dispatch</span>
+                      <span className="text-sm text-subtle font-medium">Email dispatch</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -253,7 +254,7 @@ export default function NotificationRuleBuilder() {
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "IN_APP")}
                         className="rounded border-input text-primary focus:ring-ring"
                       />
-                      <span className="text-sm text-subtle font-medium">In-App Notification</span>
+                      <span className="text-sm text-subtle font-medium">In-app notification</span>
                     </label>
                   </div>
                 </div>
@@ -263,7 +264,7 @@ export default function NotificationRuleBuilder() {
               <div className="bg-sunken px-6 py-3 border-t border-border flex justify-between items-center">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.is_active ? 'bg-success' : 'bg-surface border border-border'}`}>
-                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
+                    <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
                     type="checkbox" 
@@ -271,7 +272,7 @@ export default function NotificationRuleBuilder() {
                     checked={rule.is_active} 
                     onChange={(e) => updateLocalRule(rule.id, "is_active", e.target.checked)}
                   />
-                  <span className="text-xs font-semibold text-muted uppercase">Rule Active</span>
+                  <span className="text-xs font-semibold text-muted">Rule active</span>
                 </label>
 
                 <div className="flex items-center gap-3">
@@ -300,7 +301,7 @@ export default function NotificationRuleBuilder() {
         {rules.length === 0 && (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-xl">
             <Workflow className="w-12 h-12 text-subtle mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-muted">No Routing Rules Configured</h3>
+            <h3 className="text-lg font-bold text-muted">No routing rules configured</h3>
             </div>
         )}
       </div>

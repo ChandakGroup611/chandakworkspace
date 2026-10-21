@@ -1,7 +1,7 @@
 import { SelfServicePortal } from "@/components/tickets/SelfServicePortal";
 
 export const metadata = {
-  title: "My IT Support",
+  title: "My IT support",
   description: "End-user support portal",
 };
 

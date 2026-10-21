@@ -98,9 +98,9 @@ export default function CustomFieldsConfigurator() {
   const filteredFields = fields.filter(f => f.module === activeModule);
 
   const moduleTabs = [
-    { id: "tickets" as const, label: "ITSM Ticketing Fields", icon: Ticket, count: fields.filter(f => f.module === "tickets").length },
-    { id: "tasks" as const, label: "Workspace Task Fields", icon: FolderKanban, count: fields.filter(f => f.module === "tasks").length },
-    { id: "requirements" as const, label: "Requirement Attributes", icon: FileCheck2, count: fields.filter(f => f.module === "requirements").length },
+    { id: "tickets" as const, label: "ITSM ticketing fields", icon: Ticket, count: fields.filter(f => f.module === "tickets").length },
+    { id: "tasks" as const, label: "Workspace task fields", icon: FolderKanban, count: fields.filter(f => f.module === "tasks").length },
+    { id: "requirements" as const, label: "Requirement attributes", icon: FileCheck2, count: fields.filter(f => f.module === "requirements").length },
   ];
 
   return (
@@ -118,15 +118,15 @@ export default function CustomFieldsConfigurator() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Database className="h-4 w-4 text-theme-icon animate-pulse" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
-              Global Custom Fields Configuration Engine
+            <h2 className="text-sm font-semibold text-muted">
+              Global custom fields configuration engine
             </h2>
           </div>
           <p className="text-xs text-muted">
             Define typed schema extension dictionaries mapped to JSONB storage layers directly in PostgreSQL backend records.
           </p>
         </div>
-        <AppBadge variant="success">End-to-End JSONB Linked</AppBadge>
+        <AppBadge variant="success">End-to-end JSONB linked</AppBadge>
       </div>
 
       {/* Orchestrated grid rows */}
@@ -134,8 +134,8 @@ export default function CustomFieldsConfigurator() {
         {/* Left Side Span 4: Module selection tabs & form definition addition */}
         <div className="lg:col-span-4 space-y-6 flex flex-col">
           <AppCard className="p-4 space-y-3">
-            <span className="text-xs font-bold text-muted uppercase tracking-wider block">
-              Target Entity Scope
+            <span className="text-xs font-bold text-muted block">
+              Target entity scope
             </span>
 
             <div className="space-y-1.5">
@@ -147,7 +147,7 @@ export default function CustomFieldsConfigurator() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveModule(tab.id)}
-                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural /[0.06] border-theme-btn-primary/40 text-white shadow-md font-bold" : "/[0.01] border-border hover:border-border text-muted hover:text-muted" }`}
+                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural border-theme-btn-primary/40 text-white shadow-md font-bold" : "border-border hover:border-border text-muted hover:text-muted" }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <div className={`p-1.5 rounded-lg ${isActive ? "bg-theme-btn-primary text-theme-btn-primary-text" : "bg-surface/5 text-muted"}`}>
@@ -155,7 +155,7 @@ export default function CustomFieldsConfigurator() {
                       </div>
                       <span className="text-xs truncate">{tab.label}</span>
                     </div>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /5 text-muted border-border">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural text-muted border-border">
                       {tab.count} fields
                     </span>
                   </AppButton>
@@ -165,16 +165,16 @@ export default function CustomFieldsConfigurator() {
           </AppCard>
 
           {/* New field definition append form */}
-          <AppCard className="p-5 space-y-4 border-theme-btn-primary/20 bg-gradient-to-b from-blue-950/10 via-transparent to-transparent">
+          <AppCard className="p-5 space-y-4 border-theme-btn-primary/20 bg-gradient-to-b from-info-soft via-transparent to-transparent">
             <span className="text-xs font-semibold text-foreground block pb-2 border-b border-border">
-              Append Schema Definition
+              Append schema definition
             </span>
 
             <form onSubmit={handleAddField} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-sm font-bold text-muted block uppercase">Field Display Label</label>
+                <label className="text-sm font-bold text-muted block">Field display label</label>
                 <AppInput 
-                  placeholder="e.g. Server Kernel Patch ID" 
+                  placeholder="e.g. Server kernel patch ID" 
                   value={newLabel}
                   onChange={(e) => {
                     setNewLabel(e.target.value);
@@ -187,7 +187,7 @@ export default function CustomFieldsConfigurator() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-bold text-muted block uppercase">Internal Mapping Key</label>
+                <label className="text-sm font-bold text-muted block">Internal mapping key</label>
                 <AppInput 
                   placeholder="e.g. kernel_patch_id" 
                   value={newKey}
@@ -198,26 +198,26 @@ export default function CustomFieldsConfigurator() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-sm font-bold text-muted block uppercase">Payload Type</label>
+                  <label className="text-sm font-bold text-muted block">Payload type</label>
                   <select 
                     value={newType}
                     onChange={(e: any) => setNewType(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg theme-card-structural /5 border-border text-[14px] text-muted focus:outline-none focus:border-theme-btn-primary/50"
+                    className="w-full h-10 px-3 rounded-lg theme-card-structural border-border text-[14px] text-muted focus:outline-none focus:border-theme-btn-primary/50"
                   >
-                    <option value="text" className="bg-background dark:bg-[#0f172a]">Text String</option>
-                    <option value="number" className="bg-background dark:bg-[#0f172a]">Numeric Scalar</option>
-                    <option value="select" className="bg-background dark:bg-[#0f172a]">Dropdown Menu</option>
-                    <option value="boolean" className="bg-background dark:bg-[#0f172a]">True / False Switch</option>
+                    <option value="text" className="bg-background">Text string</option>
+                    <option value="number" className="bg-background">Numeric scalar</option>
+                    <option value="select" className="bg-background">Dropdown menu</option>
+                    <option value="boolean" className="bg-background">True / false switch</option>
                   </select>
                 </div>
 
                 <div className="space-y-1 flex flex-col justify-end">
-                  <label className="flex items-center gap-2 h-10 px-3 rounded-lg theme-card-structural /[0.02] border-border cursor-pointer select-none hover:/5">
+                  <label className="flex items-center gap-2 h-10 px-3 rounded-lg theme-card-structural border-border cursor-pointer select-none hover:/5">
                     <input 
                       type="checkbox" 
                       checked={newRequired}
                       onChange={(e) => setNewRequired(e.target.checked)}
-                      className="rounded accent-blue-500" 
+                      className="rounded accent-primary" 
                     />
                     <span className="text-[0.8rem] font-bold text-muted">Mandatory</span>
                   </label>
@@ -226,9 +226,9 @@ export default function CustomFieldsConfigurator() {
 
               {newType === "select" && (
                 <div className="space-y-1 animate-in fade-in duration-200">
-                  <label className="text-sm font-bold text-muted block uppercase">Dropdown Options String Array</label>
+                  <label className="text-sm font-bold text-muted block">Dropdown options string array</label>
                   <AppInput 
-                    placeholder="Comma-separated items..." 
+                    placeholder="Comma-separated items…" 
                     value={newOptionsStr}
                     onChange={(e) => setNewOptionsStr(e.target.value)}
                     className="h-10 text-[14px]"
@@ -239,7 +239,7 @@ export default function CustomFieldsConfigurator() {
 
               <AppButton variant="primary" size="md" type="submit" className="w-full mt-2 font-bold">
                 <Plus className="h-3.5 w-3.5 mr-1" />
-                <span>Inject Field Mapping</span>
+                <span>Inject field mapping</span>
               </AppButton>
             </form>
           </AppCard>
@@ -254,8 +254,8 @@ export default function CustomFieldsConfigurator() {
                   Active Dictionaries: <strong className="text-theme-icon capitalize">{activeModule}</strong>
                 </AppCardTitle>
                 </div>
-              <span className="text-xs font-mono font-bold theme-card-structural /5 px-2 py-0.5 rounded text-muted border-border">
-                Target Schema: JSONB Map
+              <span className="text-xs font-mono font-bold theme-card-structural px-2 py-0.5 rounded text-muted border-border">
+                Target schema: JSONB map
               </span>
             </AppCardHeader>
 
@@ -264,9 +264,9 @@ export default function CustomFieldsConfigurator() {
                 <AppTable>
                   <AppTableHeader>
                     <tr>
-                      <AppTableHead>Field Descriptor Label</AppTableHead>
-                      <AppTableHead>Internal JSONB Key</AppTableHead>
-                      <AppTableHead>Data Type</AppTableHead>
+                      <AppTableHead>Field descriptor label</AppTableHead>
+                      <AppTableHead>Internal JSONB key</AppTableHead>
+                      <AppTableHead>Data type</AppTableHead>
                       <AppTableHead className="text-center">Constraints</AppTableHead>
                       <AppTableHead className="text-right">Mutator</AppTableHead>
                     </tr>
@@ -288,7 +288,7 @@ export default function CustomFieldsConfigurator() {
                           {fItem.field_key}
                         </AppTableCell>
                         <AppTableCell>
-                          <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /[0.03] text-muted border-border capitalize">
+                          <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural text-muted border-border capitalize">
                             {fItem.field_type}
                           </span>
                         </AppTableCell>
@@ -298,7 +298,7 @@ export default function CustomFieldsConfigurator() {
                           </AppBadge>
                         </AppTableCell>
                         <AppTableCell className="text-right">
-                          <AppButton variant="secondary"
+                          <AppButton aria-label="Drop field dictionary key" variant="secondary"
                             type="button"
                             onClick={() => handleDeleteField(fItem.id)}
                             className="p-1 rounded text-muted hover:text-danger hover:bg-danger/10 transition-colors"
@@ -320,8 +320,8 @@ export default function CustomFieldsConfigurator() {
               )}
             </div>
 
-            <div className="p-4 theme-card-structural /[0.01] border-t border-border space-y-2">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider block">End-to-End JSONB Data Capture Simulation</span>
+            <div className="p-4 theme-card-structural border-t border-border space-y-2">
+              <span className="text-xs font-bold text-muted block">End-to-end JSONB data capture simulation</span>
               <p className="text-[0.8rem] text-muted leading-snug">
                 Records inside the active view render dynamic input strips matching these declared payload parameters. Storage calls append directly to PostgreSQL database tuples automatically.
               </p>

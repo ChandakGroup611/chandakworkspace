@@ -65,12 +65,12 @@ export function EditableTaskTitle({ task, asHeading = false, readOnly = false }:
             }
           }}
           disabled={isSaving}
-          className={`flex-1 theme-card-structural rounded px-3 py-1 ${asHeading ? 'text-2xl' : 'text-xl'} font-extrabold text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary w-full transition-all shadow-sm`}
+          className={`flex-1 theme-card-structural rounded px-3 py-1 ${asHeading ? 'text-2xl' : 'text-xl'} font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary w-full transition-all shadow-sm`}
         />
-        <AppButton size="sm" variant="primary" onClick={handleSave} disabled={isSaving} className="h-8 w-8 p-0 shrink-0 shadow-sm">
+        <AppButton aria-label="Confirm" size="sm" variant="primary" onClick={handleSave} disabled={isSaving} className="h-8 w-8 p-0 shrink-0 shadow-sm">
           <Check className="h-4 w-4" />
         </AppButton>
-        <AppButton size="sm" variant="ghost" onClick={() => { setIsEditing(false); setTitle(task.subject || task.title); }} disabled={isSaving} className="h-8 w-8 p-0 shrink-0 text-muted hover:text-foreground">
+        <AppButton aria-label="Close" size="sm" variant="ghost" onClick={() => { setIsEditing(false); setTitle(task.subject || task.title); }} disabled={isSaving} className="h-8 w-8 p-0 shrink-0 text-muted hover:text-foreground">
           <X className="h-4 w-4" />
         </AppButton>
       </div>
@@ -86,7 +86,7 @@ export function EditableTaskTitle({ task, asHeading = false, readOnly = false }:
     <div className="group flex items-start gap-2 relative w-full">
       <TitleWrapper className={titleClasses}>{title}</TitleWrapper>
       {canEdit && (
-        <AppButton 
+        <AppButton aria-label="Edit task title" 
           variant="ghost"
           size="icon-sm"
           onClick={(e) => {
@@ -95,7 +95,7 @@ export function EditableTaskTitle({ task, asHeading = false, readOnly = false }:
             setIsEditing(true);
           }}
           className="opacity-70 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5 hover:bg-surface/50 rounded-lg text-muted hover:text-foreground shrink-0 cursor-pointer"
-          title="Edit Task Title"
+          title="Edit task title"
         >
           <Edit2 className="h-4 w-4" />
         </AppButton>

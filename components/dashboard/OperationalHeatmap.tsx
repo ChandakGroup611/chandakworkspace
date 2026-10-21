@@ -97,9 +97,9 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
 
   // Return specific mapped background alpha classes dependent on intensity values
   const getCellBg = (intensity: number) => {
-    if (intensity > 75) return "bg-danger shadow-md shadow-rose-500/20";
+    if (intensity > 75) return "bg-danger shadow-md";
     if (intensity > 50) return "bg-warning";
-    if (intensity > 25) return "bg-theme-btn-primary/80";
+    if (intensity > 25) return "bg-primary";
     return "bg-surface/5 hover:bg-surface/10";
   };
 
@@ -108,9 +108,9 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
       <AppCardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
           <Flame className="h-4 w-4 text-danger" />
-          <AppCardTitle>Operational Heatmap Matrix</AppCardTitle>
+          <AppCardTitle>Operational heatmap matrix</AppCardTitle>
         </div>
-        <span className="text-xs text-theme-icon font-bold">Ingress vs SLA Resolution</span>
+        <span className="text-xs text-theme-icon font-bold">Ingress vs SLA resolution</span>
       </AppCardHeader>
 
       <AppCardContent className="flex-1 flex flex-col justify-between space-y-4 pt-2">
@@ -127,7 +127,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
                     key={hItem.hour}
                     onMouseEnter={() => setHoveredCell({ day: dItem.day, hour: hItem.hour, volume: hItem.volume, data: hItem })}
                     onMouseLeave={() => setHoveredCell(null)}
-                    className={`h-7 rounded-md transition-all duration-200 cursor-pointer border border-border hover:scale-105 ${getCellBg(hItem.intensity)}`}
+                    className={`h-7 rounded-md transition-all duration-200 cursor-pointer border border-border ${getCellBg(hItem.intensity)}`}
                   />
                 ))}
               </div>
@@ -136,7 +136,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         </div>
 
         {/* Dynamic Context Tooltip Frame */}
-        <div className="h-8 flex items-center justify-between px-3 rounded-lg theme-card-structural /20 text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
+        <div className="h-8 flex items-center justify-between px-3 rounded-lg theme-card-structural text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
           {hoveredCell ? (
             <div className="flex items-center gap-2.5 text-muted font-medium animate-in fade-in duration-150">
               <Activity className="h-3 w-3 text-theme-icon shrink-0" />
@@ -165,7 +165,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
           <div className="flex items-center gap-1">
             <span className="text-[0.7rem] text-subtle mr-1 select-none">Scale:</span>
             <div className="w-2 h-2 rounded bg-surface/5" />
-            <div className="w-2 h-2 rounded bg-theme-btn-primary/80" />
+            <div className="w-2 h-2 rounded bg-primary" />
             <div className="w-2 h-2 rounded bg-warning" />
             <div className="w-2 h-2 rounded bg-danger" />
           </div>

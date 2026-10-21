@@ -46,25 +46,25 @@ export default function GlobalShortcuts() {
     navigation: [
       {
         keys: ["Alt", "D"],
-        description: "Go to Dashboard",
+        description: "Go to dashboard",
         icon: LayoutDashboard,
         action: () => router.push("/")
       },
       {
         keys: ["Alt", "W"],
-        description: "Go to Workspaces",
+        description: "Go to workspaces",
         icon: Layers,
         action: () => router.push("/workspaces")
       },
       {
         keys: ["Alt", "K"],
-        description: "Go to Ticket Tracking",
+        description: "Go to ticket tracking",
         icon: TerminalSquare,
         action: () => router.push("/tickets")
       },
       {
         keys: ["Alt", "R"],
-        description: "Go to Requirements",
+        description: "Go to requirements",
         icon: FileText,
         action: () => router.push("/requirements")
       }
@@ -84,13 +84,13 @@ export default function GlobalShortcuts() {
       },
       {
         keys: ["Alt", "Shift", "K"],
-        description: "Create New Ticket",
+        description: "Create new ticket",
         icon: TerminalSquare,
         action: () => router.push("/tickets?create=true")
       },
       {
         keys: ["Alt", "Shift", "R"],
-        description: "Create New Requirement",
+        description: "Create new requirement",
         icon: FileText,
         action: () => router.push("/requirements?create=true")
       }
@@ -98,7 +98,7 @@ export default function GlobalShortcuts() {
     system: [
       {
         keys: ["Shift", "?"],
-        description: "Show Shortcuts Menu",
+        description: "Show shortcuts menu",
         icon: Keyboard,
         action: () => setIsOpen(true)
       }
@@ -145,7 +145,7 @@ export default function GlobalShortcuts() {
       type="button"
       key={item.description}
       onClick={() => executeAction(item.action)}
-      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-hover cursor-pointer transition-colors group text-left border-0 bg-transparent"
+      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-surface-hover cursor-pointer transition-colors group text-left border-0 bg-transparent"
     >
       <div className="flex items-center gap-2.5">
         <div className="p-1.5 rounded-md bg-sunken border border-border group-hover:border-primary/30 transition-colors">
@@ -156,7 +156,7 @@ export default function GlobalShortcuts() {
       <div className="flex items-center gap-1">
         {item.keys.map((k, i) => (
           <React.Fragment key={i}>
-            <kbd className="min-w-[20px] inline-flex items-center justify-center rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted shadow-xs">
+            <kbd className="min-w-[20px] inline-flex items-center justify-center rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted shadow-xs">
               {k}
             </kbd>
             {i < item.keys.length - 1 && <span className="text-muted text-xs">+</span>}
@@ -217,7 +217,7 @@ export default function GlobalShortcuts() {
         
         <div className="bg-sunken p-2.5 text-center border-t border-border">
           <p className="text-[11px] text-muted">
-            Tip: Press <kbd className="px-1 py-0.5 rounded border border-border bg-surface text-[10px] font-mono">Shift + ?</kbd> anytime to open this menu
+            Tip: press <kbd className="px-1 py-0.5 rounded border border-border bg-surface text-[11px] font-mono">Shift + ?</kbd> anytime to open this menu
           </p>
         </div>
       </div>

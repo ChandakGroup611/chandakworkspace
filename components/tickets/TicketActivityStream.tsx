@@ -118,7 +118,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
 
           return (
             <div key={activity.id} className="relative flex gap-6 group">
-              <div className={`z-10 h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${ activity.event_type === "SLA_ESCALATION" ? ("bg-red-50 border-red-100 text-danger") : ("theme-card-structural text-theme-icon shadow-[var(--shadow-ambient)]") }`}>
+              <div className={`z-10 h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${ activity.event_type === "SLA_ESCALATION" ? ("bg-danger-soft border-danger-border text-danger") : ("theme-card-structural text-theme-icon shadow-sm") }`}>
                 <Icon className="h-4 w-4" />
               </div>
               <div className="flex-1 pb-8">
@@ -138,7 +138,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
                     </span>
                     <span className="text-muted">→</span>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                      "bg-emerald-50 text-emerald-700"
+                      "bg-success-soft text-success-text"
                     }`}>
                       {activity.after_values?.name || "Unknown"}
                     </span>

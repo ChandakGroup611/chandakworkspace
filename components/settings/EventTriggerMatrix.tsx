@@ -28,7 +28,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   if (permsLoading) {
     return (
       <div className="py-12 flex justify-center">
-        <ChandakLoader size="md" title="Loading Notification Matrix..." />
+        <ChandakLoader size="md" title="Loading notification matrix…" />
       </div>
     );
   }
@@ -36,10 +36,10 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   if (!hasPermission("SETTINGS_NOTIFICATIONS_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
+        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view Notification Settings.</p>
       </div>
     );
@@ -48,17 +48,17 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   const canManage = hasPermission("SETTINGS_NOTIFICATIONS_MANAGE");
 
   return (
-    <div className="theme-card-structural /5 border-border p-6 rounded-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
-      <h2 className="text-xl font-bold text-foreground mb-2">Event Trigger Controls</h2>
+    <div className="theme-card-structural border-border p-6 rounded-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
+      <h2 className="text-xl font-bold text-foreground mb-2">Event trigger controls</h2>
       <div className="space-y-8">
         {modules.map(mod => {
           const modConfigs = configs.filter(c => c.module_code === mod);
           return (
             <div key={mod} className="border border-border rounded-lg overflow-hidden">
-              <div className="theme-card-structural /30 px-4 py-3 border-b">
-                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">{mod}</h3>
+              <div className="theme-card-structural px-4 py-3 border-b">
+                <h3 className="text-sm font-semibold text-foreground">{mod}</h3>
               </div>
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-border">
                 {modConfigs.map(config => (
                   <div key={config.id} className="flex items-center justify-between p-4 bg-surface/[0.02] hover:bg-surface/[0.04] transition-colors">
                     <div>
@@ -70,20 +70,20 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                     </div>
                     <div className="flex gap-6">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <span className="text-xs font-medium text-muted uppercase">In-App</span>
+                        <span className="text-xs font-medium text-muted">In-App</span>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-white/20 theme-card-structural text-theme-icon focus:ring-theme-btn-primary/50" 
+                          className="w-4 h-4 rounded border-border theme-card-structural text-theme-icon focus:ring-theme-btn-primary/50" 
                           checked={config.is_inapp_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_inapp_enabled', config.is_inapp_enabled !== false)}
                           disabled={loadingId === config.id || !canManage}
                         />
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <span className="text-xs font-medium text-muted uppercase">Email</span>
+                        <span className="text-xs font-medium text-muted">Email</span>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-white/20 theme-card-structural text-theme-icon focus:ring-theme-btn-primary/50" 
+                          className="w-4 h-4 rounded border-border theme-card-structural text-theme-icon focus:ring-theme-btn-primary/50" 
                           checked={config.is_email_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_email_enabled', config.is_email_enabled !== false)}
                           disabled={loadingId === config.id || !canManage}

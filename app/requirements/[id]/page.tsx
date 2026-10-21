@@ -12,7 +12,7 @@ import { Users, Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye,
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { formatDate, formatDateTime, formatCount } from "@/components/ui/data";
+import { formatDate, formatDateTime, formatCount, StatusBadge, PriorityIndicator } from "@/components/ui/data";
 
 import { PageContainer } from "@/components/layout/PageContainer";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -527,13 +527,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         const start = new Date(formData.start_date);
         start.setHours(0, 0, 0, 0);
         if ((requirement.approval_status === 'Draft' || !requirement.approval_status) && start < today) {
-            toast.error("Start Date cannot be less than today's date.");
+            toast.error("Start date cannot be less than today's date.");
             return;
         }
         const due = new Date(formData.due_date);
         due.setHours(0, 0, 0, 0);
         if (due < start) {
-            toast.error("Due Date cannot be less than Start Date.");
+            toast.error("Due date cannot be less than start date.");
             return;
         }
       }
@@ -697,21 +697,18 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-surface">
-        <ChandakLoader
-          size="lg"
-          title="Loading Requirement Architecture..."
-          subtitle="Fetching business specification and approvals"
-        />
+      <div className="flex h-[60vh] flex-col items-center justify-center">
+        <ChandakLoader size="lg" title="Loading requirement…" />
       </div>
     );
   }
 
   if (!requirement) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center text-foreground bg-surface">
-        <h2>Requirement not found.</h2>
-        <AppButton onClick={() => router.push('/requirements')} className="mt-4">Back to List</AppButton>
+      <div className="flex h-[60vh] flex-col items-center justify-center text-center text-foreground">
+        <h2 className="text-[17px] font-semibold text-heading">We couldn&apos;t find that requirement</h2>
+        <p className="mt-1 text-[13.5px] text-muted">It may have been deleted, or you may not have access to it.</p>
+        <AppButton variant="secondary" onClick={() => router.push('/requirements')} className="mt-4" leftIcon={<ArrowLeft className="h-4 w-4" />}>Back to requirements</AppButton>
       </div>
     );
   }
@@ -730,92 +727,86 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
   return (
     <PageContainer strict={true} className="bg-background">
-      <div className="flex-1 overflow-y-auto px-6 md:px-8 pb-12 pt-6 md:pt-8">
-      <div className="flex flex-wrap items-center justify-between pb-2 mb-2 shrink-0 border-b border-border gap-4">
-        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 min-w-0">
-            <h1 className="text-[1.1rem] font-bold text-foreground truncate max-w-full leading-tight">
-              <span className="text-muted mr-2 font-mono text-sm tracking-wider">{requirement.code || reqId}</span>
-              {requirement.title || 'Untitled Subject'}
+      <div className="flex-1 overflow-y-auto pb-12">
+      <div className="mb-5 flex shrink-0 flex-col gap-3 border-b border-border pb-4">
+        <button type="button" onClick={() => router.back()} className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-accent-soft-text hover:underline">
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Back
+        </button>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{requirement.code || reqId}</span>
+              <StatusBadge status={requirement.approval_status || requirement.status?.name || "Draft"} />
               {requirement.amendment_version > 0 && (
-                <span className="ml-3 px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20 text-xs font-semibold">
-                  v{requirement.amendment_version}
-                </span>
+                <span className="rounded bg-sunken px-1.5 text-[12px] leading-5 text-subtle" title="Amendment version">v{requirement.amendment_version}</span>
               )}
+            </div>
+            <h1 className="mt-1 break-words text-[20px] font-semibold leading-snug text-heading">
+              {requirement.title || 'Untitled requirement'}
             </h1>
+            <dl className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px]">
+              <div className="flex items-center gap-1.5">
+                <dt className="text-muted">Priority</dt>
+                <dd><PriorityIndicator priority={requirement.priority?.name || requirement.priority?.priority_name || null} className="text-[13px]" /></dd>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <dt className="text-muted">Raised</dt>
+                <dd className="text-foreground tabular">{formatDate(requirement.created_at)}</dd>
+              </div>
+              {requirement.put_to_use_date && (
+                <div className="flex items-center gap-1.5">
+                  <dt className="text-muted">Put to use</dt>
+                  <dd className="text-success-text tabular">{formatDate(requirement.put_to_use_date)}</dd>
+                </div>
+              )}
+            </dl>
           </div>
-          <AppBadge variant="info" className="shrink-0">{requirement.approval_status || requirement.status?.name || "Draft"}</AppBadge>
-          <div className="flex flex-wrap items-center gap-2 ml-2 border-l border-border pl-3">
-            <span className="theme-label text-muted">Priority:</span>
-            <AppBadge
-              variant="custom"
-              customColor={requirement.priority?.priority_color || 'var(--muted)'}
-              className="text-[10px]"
-            >
-              {requirement.priority?.name || requirement.priority?.priority_name || '-'}
-            </AppBadge>
-            <span className="theme-label text-muted ml-2">Created:</span>
-            <span className="text-xs font-semibold text-foreground shrink-0">
-              {formatDate(requirement.created_at)}
-            </span>
-            {requirement.put_to_use_date && (
-              <>
-                <span className="theme-label text-success ml-2">Put to Use:</span>
-                <span className="text-xs font-semibold text-accent shrink-0">
-                  {formatDate(requirement.put_to_use_date)}
-                </span>
-              </>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {!isViewMode && (isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
+              <AppButton variant="ghost" className="text-danger-text hover:bg-danger-soft" leftIcon={<Trash2 className="h-4 w-4"/>} onClick={() => setShowDeleteConfirm(true)}>
+                Delete
+              </AppButton>
+            )}
+            {!isViewMode && (requirement.approval_status === 'Approved' || requirement.approval_status === 'In Progress') && (isSuperAdmin || requirement.creator_id === currentUserId) && (
+              <AppButton variant="secondary" leftIcon={<Edit2 className="h-4 w-4"/>} onClick={() => setShowAmendmentDialog(true)}>
+                Change requirement
+              </AppButton>
+            )}
+            {!isViewMode && (requirement.approval_status === 'Approved' || requirement.approval_status === 'In Progress') && (isSuperAdmin || hasPermission('TASKS_CREATE') || requirement.creator_id === currentUserId || requirement.current_assignee_id === currentUserId) && (
+              <AppButton variant={isReadyToPutToUse ? "secondary" : "primary"} leftIcon={<FilePlus className="h-4 w-4"/>} onClick={() => setShowWorkspaceSelector(true)}>
+                Assign task
+              </AppButton>
+            )}
+            {!isViewMode && isReadyToPutToUse && (
+              <AppButton variant="primary" leftIcon={<CheckCircle className="h-4 w-4"/>} onClick={() => setShowPutToUseDialog(true)}>
+                Put to use
+              </AppButton>
             )}
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <AppButton variant="outline" size="sm" onClick={() => router.back()} leftIcon={<ArrowLeft className="h-3.5 w-3.5"/>}>
-            Back
-          </AppButton>
-          {!isViewMode && (isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
-            <AppButton variant="destructive" size="sm" leftIcon={<Trash2 className="h-4 w-4"/>} onClick={() => setShowDeleteConfirm(true)}>
-              Delete
-            </AppButton>
-          )}
-          {!isViewMode && (requirement.approval_status === 'Approved' || requirement.approval_status === 'In Progress') && (isSuperAdmin || hasPermission('TASKS_CREATE') || requirement.creator_id === currentUserId || requirement.current_assignee_id === currentUserId) && (
-            <AppButton variant="primary" size="sm" leftIcon={<FilePlus className="h-4 w-4"/>} onClick={() => setShowWorkspaceSelector(true)}>
-              Assign Task
-            </AppButton>
-          )}
-          {!isViewMode && (requirement.approval_status === 'Approved' || requirement.approval_status === 'In Progress') && (isSuperAdmin || requirement.creator_id === currentUserId) && (
-            <AppButton variant="secondary" size="sm" leftIcon={<Edit2 className="h-4 w-4"/>} onClick={() => setShowAmendmentDialog(true)}>
-              Change Requirement
-            </AppButton>
-          )}
-          {!isViewMode && isReadyToPutToUse && (
-            <AppButton variant="primary" size="sm" leftIcon={<CheckCircle className="h-4 w-4"/>} onClick={() => setShowPutToUseDialog(true)}>
-              Put to Use
-            </AppButton>
-          )}
         </div>
       </div>
 
       <Dialog open={showAmendmentDialog} onOpenChange={setShowAmendmentDialog}>
         <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
           <DialogHeader className="px-6 py-4 border-b border-border">
-            <DialogTitle>Amend Requirement</DialogTitle>
+            <DialogTitle>Amend requirement</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-label text-muted mb-1.5">Revised Details of Requirement</label>
+              <label className="mb-1.5 block text-[13px] font-medium text-subtle">What has changed <span className="text-danger-text" aria-hidden>*</span></label>
               <textarea 
-                className="w-full flex min-h-[100px] rounded-md border border-border bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50" 
-                placeholder="Describe what has changed in the requirement..."
+                className="min-h-[100px] w-full resize-y px-3 py-2 text-[13.5px]"
+                placeholder="Describe what has changed in the requirement…"
                 value={amendmentDetails}
                 onChange={(e) => setAmendmentDetails(e.target.value)}
               />
             </div>
             <div>
-              <label className="block theme-label text-muted mb-1.5">Attachment (Optional)</label>
+              <label className="mb-1.5 block text-[13px] font-medium text-subtle">Attachment (optional)</label>
               {!amendmentFile ? (
                 <input 
                   type="file" 
-                  className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary-hover transition-all"
+                  className="w-full text-[13px] text-muted file:mr-3 file:h-8 file:rounded-md file:border file:border-border file:bg-surface file:px-3 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-surface-hover"
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       setAmendmentFile(e.target.files[0]);
@@ -830,8 +821,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       <p className="text-xs font-semibold truncate text-foreground" title={amendmentFile.name}>
                         {amendmentFile.name}
                       </p>
-                      <p className="text-[10px] text-muted">
-                        {(amendmentFile.size / 1024).toFixed(1)} KB • Staged for amendment
+                      <p className="text-[11px] text-muted">
+                        {(amendmentFile.size / 1024).toFixed(1)} KB • staged for amendment
                       </p>
                     </div>
                   </div>
@@ -844,8 +835,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         const url = URL.createObjectURL(amendmentFile);
                         window.open(url, '_blank');
                       }}
-                      className="px-2 py-1 text-xs text-accent hover:bg-theme-btn-primary/10 rounded flex items-center gap-1 font-semibold"
-                      title="View Document"
+                      className="px-2 py-1 text-xs text-accent hover:bg-accent-soft rounded flex items-center gap-1 font-semibold"
+                      title="View document"
                     >
                       <Eye className="h-3.5 w-3.5" />
                       <span>View</span>
@@ -864,19 +855,19 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
                       }}
-                      className="px-2 py-1 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded flex items-center gap-1 font-semibold"
-                      title="Download Document"
+                      className="px-2 py-1 text-xs text-theme-icon hover:bg-accent-soft rounded flex items-center gap-1 font-semibold"
+                      title="Download document"
                     >
                       <Download className="h-3.5 w-3.5" />
                       <span>Download</span>
                     </AppButton>
-                    <AppButton
+                    <AppButton aria-label="Remove file"
                       variant="ghost"
                       size="sm"
                       type="button"
                       onClick={() => setAmendmentFile(null)}
                       className="p-1 h-7 w-7 text-muted hover:text-danger hover:bg-danger/10 rounded flex items-center justify-center"
-                      title="Remove File"
+                      title="Remove file"
                     >
                       <X className="h-3.5 w-3.5" />
                     </AppButton>
@@ -893,40 +884,40 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
               <label htmlFor="needsReapproval" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Needs Re-Approval Flow?
+                Send for re-approval
               </label>
             </div>
-            <p className="text-[11px] text-muted">
-              If checked, the requirement will go back to Pending and a new approval flow will be triggered. If unchecked, the changes are auto-approved and will instantly push notifications to any active tasks linked to this requirement.
+            <p className="text-[12.5px] text-muted">
+              If ticked, the requirement goes back to pending approval and a new approval flow starts. If not, the change is approved straight away and everyone on the linked tasks is notified.
             </p>
           </div>
           <DialogFooter className="px-6 py-4 bg-surface border-t border-border">
-            <AppButton variant="outline" onClick={() => setShowAmendmentDialog(false)}>Cancel</AppButton>
-            <AppButton variant="primary" onClick={handleAmendment} isLoading={submittingAmendment} disabled={!amendmentDetails.trim()}>Submit Amendment</AppButton>
+            <AppButton variant="ghost" onClick={() => setShowAmendmentDialog(false)}>Cancel</AppButton>
+            <AppButton variant="primary" onClick={handleAmendment} isLoading={submittingAmendment} disabled={!amendmentDetails.trim()}>Save change</AppButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showReadyNotification} onOpenChange={setShowReadyNotification}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-border bg-primary/5">
-            <DialogTitle className="flex items-center gap-2 text-theme-icon">
-              <CheckCircle className="h-5 w-5" />
-              Tasks Completed
+          <DialogHeader className="border-b border-border px-6 py-4">
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-success" aria-hidden />
+              All linked tasks are complete
             </DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <p className="text-sm text-subtle">
-              All linked tasks for this requirement have been successfully closed. The requirement is now <strong>Ready to Put to Use</strong>.
+              Every task linked to this requirement is closed. It&apos;s now ready to put to use.
             </p>
           </div>
           <DialogFooter className="px-6 py-4 bg-surface border-t border-border">
-            <AppButton variant="outline" onClick={() => setShowReadyNotification(false)}>Close</AppButton>
+            <AppButton variant="ghost" onClick={() => setShowReadyNotification(false)}>Later</AppButton>
             <AppButton variant="primary" onClick={() => {
               setShowReadyNotification(false);
               setShowPutToUseDialog(true);
             }}>
-              Proceed to Put to Use
+              Put to use
             </AppButton>
           </DialogFooter>
         </DialogContent>
@@ -935,20 +926,20 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       <Dialog open={showPutToUseDialog} onOpenChange={setShowPutToUseDialog}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           <DialogHeader className="px-6 py-4 border-b border-border">
-            <DialogTitle>Put Requirement to Use</DialogTitle>
+            <DialogTitle>Put requirement to use</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-label text-muted mb-1.5">Select Put to Use Date</label>
+              <label className="mb-1.5 block text-[13px] font-medium text-subtle">Put to use on <span className="text-danger-text" aria-hidden>*</span></label>
               <AppInput type="date" value={putToUseDate} onChange={(e) => setPutToUseDate(e.target.value)} />
             </div>
-            <p className="text-xs text-muted">
-              Setting this date will officially mark the requirement as Closed.
+            <p className="text-[12.5px] text-muted">
+              The requirement is marked as closed from this date.
             </p>
           </div>
           <DialogFooter className="px-6 py-4 bg-surface border-t border-border">
-            <AppButton variant="outline" onClick={() => setShowPutToUseDialog(false)}>Cancel</AppButton>
-            <AppButton variant="primary" onClick={handlePutToUse} isLoading={submittingPutToUse} disabled={!putToUseDate}>Confirm</AppButton>
+            <AppButton variant="ghost" onClick={() => setShowPutToUseDialog(false)}>Cancel</AppButton>
+            <AppButton variant="primary" onClick={handlePutToUse} isLoading={submittingPutToUse} disabled={!putToUseDate}>Put to use</AppButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -956,30 +947,30 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       <Dialog open={showWorkspaceSelector} onOpenChange={setShowWorkspaceSelector}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           <DialogHeader className="px-6 py-4 border-b border-border">
-            <DialogTitle>Select Workspace for Task</DialogTitle>
+            <DialogTitle>Where should the task go?</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-data-value text-subtle mb-1">Target Workspace <span className="text-danger">*</span></label>
+              <label className="mb-1.5 block text-[13px] font-medium text-subtle">Workspace <span className="text-danger-text" aria-hidden>*</span></label>
               <select
                 value={selectedWorkspaceId}
                 onChange={(e) => setSelectedWorkspaceId(e.target.value)}
-                className="w-full text-sm p-2.5 border border-border rounded-md bg-surface text-foreground focus:ring-primary focus:border-primary"
+                className="h-9 w-full px-3 text-[13.5px]"
               >
-                <option value="">-- Select Workspace --</option>
+                <option value="">Select a workspace</option>
                 {workspaces.map(w => <option key={w.id} value={w.id}>{w.workspace_name || w.name}</option>)}
               </select>
             </div>
             
             {selectedWorkspaceId && (
               <div>
-                <label className="block theme-data-value text-subtle mb-1">Sub-Workspace (Optional)</label>
+                <label className="mb-1.5 block text-[13px] font-medium text-subtle">Sub-workspace (optional)</label>
                 <select
                   value={selectedSubWorkspaceId}
                   onChange={(e) => setSelectedSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-border rounded-md bg-surface text-foreground focus:ring-primary focus:border-primary"
+                  className="h-9 w-full px-3 text-[13.5px]"
                 >
-                  <option value="">-- None --</option>
+                  <option value="">None</option>
                   {subWorkspaces.filter(sw => sw.parent_workspace_id === selectedWorkspaceId).map(sw => (
                     <option key={sw.id} value={sw.id}>{sw.workspace_name}</option>
                   ))}
@@ -988,7 +979,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             )}
           </div>
           <DialogFooter className="px-6 py-4 border-t border-border bg-surface">
-            <AppButton variant="outline" onClick={() => setShowWorkspaceSelector(false)}>Cancel</AppButton>
+            <AppButton variant="ghost" onClick={() => setShowWorkspaceSelector(false)}>Cancel</AppButton>
             <AppButton 
               variant="primary" 
               disabled={!selectedWorkspaceId} 
@@ -1033,30 +1024,30 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
       <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pb-12">
         {showApprovalControls && (
-          <div className="bg-surface border-l-4 border-accent p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+          <div role="region" aria-label="Your decision" className="mb-5 rounded-[10px] border border-warning-border bg-warning-soft p-4">
             <div className="flex items-start gap-3">
-              <ShieldAlert className="h-6 w-6 text-accent shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-warning">
-                    {requirement.approval_status === 'Pending SignOff' ? 'Action Required: Sign Off is Pending' : isPendingForOther ? 'Action Required: Manual Override Approval' : 'Action Required: Your Approval is Pending'}
+              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning-text" aria-hidden />
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-[14px] font-semibold text-warning-text">
+                    {requirement.approval_status === 'Pending SignOff' ? 'Your sign-off is needed' : isPendingForOther ? 'Override approval as Super Admin' : 'Your approval is needed'}
                   </h3>
                   {isPendingForOther && (
-                    <AppButton variant="ghost" size="sm" onClick={() => setShowManualOverride(false)}>Cancel Override</AppButton>
+                    <AppButton variant="ghost" size="sm" onClick={() => setShowManualOverride(false)}>Cancel override</AppButton>
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 rounded-md bg-surface p-3">
                   <LazyQuill
                     value={approvalRemarks}
                     onChange={setApprovalRemarks}
-                    placeholder={requirement.approval_status === 'Pending SignOff' ? "Enter your mandatory sign-off remarks here..." : "Enter your mandatory approval or rejection remarks here..."}
+                    placeholder={requirement.approval_status === 'Pending SignOff' ? "Sign-off remarks (required)" : "Remarks for your decision (required)"}
                   />
                   <div className="flex flex-wrap gap-2">
                     <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                     <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
                     {requirement.approval_status === 'Pending SignOff' ? (
-                      <AppButton variant="primary" onClick={() => submitApproval('SignOff' as any)} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Sign Off</AppButton>
+                      <AppButton variant="primary" onClick={() => submitApproval('SignOff' as any)} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Sign off</AppButton>
                     ) : (
                       <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
                     )}
@@ -1068,52 +1059,47 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         )}
 
         {isPendingForOther && !showManualOverride && (
-           <div className="bg-surface border-l-4 border-warning p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between flex-wrap gap-4">
+           <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-[10px] border border-info-border bg-info-soft p-4">
              <div className="flex items-center gap-3">
-               <ShieldAlert className="h-6 w-6 text-warning shrink-0" />
+               <ShieldAlert className="h-5 w-5 shrink-0 text-info-text" aria-hidden />
                <div>
-                 <h3 className="text-sm font-bold text-warning">
-                   Approval Queue Pending
+                 <h3 className="text-[14px] font-semibold text-info-text">
+                   Waiting for another approver
                  </h3>
-                 <p className="text-xs text-muted mt-0.5">A user's approval is pending. As a Super Admin, you can manually override and approve this requirement.</p>
+                 <p className="mt-0.5 text-[13px] text-info-text">As a Super Admin, you can override and decide on their behalf.</p>
                </div>
              </div>
-             <AppButton variant="primary" onClick={() => setShowManualOverride(true)}>Manual Approve Override</AppButton>
+             <AppButton variant="secondary" onClick={() => setShowManualOverride(true)}>Override approval</AppButton>
            </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-surface border border-border mb-6 shadow-xs select-none">
+        <div role="tablist" aria-label="Requirement sections" className="mb-5 flex gap-1 overflow-x-auto border-b border-border no-scrollbar">
           {[
-            { id: 'details', label: 'Requirement Details', icon: FileText },
-            { id: 'analysis', label: 'Business Analysis', icon: Target },
-            { id: 'approval', label: 'Approval Workflow', icon: Shield },
+            { id: 'details', label: 'Details', icon: FileText },
+            { id: 'analysis', label: 'Business analysis', icon: Target },
+            { id: 'approval', label: 'Approvals', icon: Shield },
             { id: 'tasks', label: 'Tasks', icon: Briefcase, count: linkedTasks.length },
-            { id: 'audit', label: 'Audit Trail', icon: Clock, count: auditLogs.length }
+            { id: 'audit', label: 'History', icon: Clock, count: auditLogs.length }
           ].map(tab => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
             return (
-              <AppButton
+              <button
                 key={tab.id}
                 type="button"
-                variant={isActive ? "primary" : "ghost"}
+                role="tab"
+                aria-selected={isActive}
                 onClick={() => setActiveTab(tab.id)}
-                className={`theme-tab-standard rounded-xl ${
-                  isActive ? "shadow-sm border-transparent" : "border border-transparent hover:border-border/60"
+                className={`-mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-[13.5px] transition-colors ${
+                  isActive ? "border-primary font-semibold text-foreground" : "border-transparent font-medium text-muted hover:text-foreground"
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-primary-foreground" : "text-theme-icon"}`} />
+                <Icon className="h-4 w-4" aria-hidden />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className={`ml-1 px-1.5 py-0.2 text-[10px] font-semibold rounded-full ${
-                    isActive 
-                      ? "bg-primary-foreground/20 text-primary-foreground" 
-                      : "bg-elevated text-muted border border-border"
-                  }`}>
-                    {tab.count}
-                  </span>
+                  <span className="rounded bg-sunken px-1.5 text-[11.5px] leading-5 text-subtle tabular">{tab.count}</span>
                 )}
-              </AppButton>
+              </button>
             );
           })}
         </div>
@@ -1124,16 +1110,15 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <FileText className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Requirement Reason & Details</h3>
+                  <h3 className="text-[14px] font-semibold text-heading">Requirement reason & details</h3>
                 </div>
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-accent" /> Issue Description
+                      <FileText className="w-3.5 h-3.5 text-accent" /> Issue description
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.objective || requirement.custom_fields?.description || snap.description || '-'}
@@ -1142,7 +1127,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason
+                      <FileText className="w-3.5 h-3.5 text-accent" /> Requirement reason
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.custom_fields?.custom_fields?.business_reason || requirement.objective || '-'}
@@ -1151,7 +1136,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Details
+                      <FileText className="w-3.5 h-3.5 text-accent" /> Requirement details
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.requirement_details || requirement.custom_fields?.requirement_details || requirement.custom_fields?.requirement_description || requirement.custom_fields?.custom_fields?.requirement_description || requirement.functional_scope || '-'}
@@ -1166,17 +1151,16 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4 animate-in fade-in duration-500">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-theme-btn-primary shadow-xs" />
                   <Server className="w-4 h-4 text-theme-btn-primary" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Infrastructure Specifications</h3>
+                  <h3 className="text-[14px] font-semibold text-heading">Infrastructure specifications</h3>
                 </div>
               </div>
               <div className="p-0">
                 <AppTable>
                   <AppTableHeader>
                     <AppTableRow>
-                      <AppTableHead className="w-[50%]">Item Description</AppTableHead>
-                      <AppTableHead className="text-right">Unit Cost</AppTableHead>
+                      <AppTableHead className="w-[50%]">Item description</AppTableHead>
+                      <AppTableHead className="text-right">Unit cost</AppTableHead>
                       <AppTableHead className="text-right">Quantity</AppTableHead>
                       <AppTableHead className="text-right">Total</AppTableHead>
                     </AppTableRow>
@@ -1193,7 +1177,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       </AppTableRow>
                     ))}
                     <AppTableRow className="bg-elevated/30 border-t-2 border-theme-btn-primary/20">
-                      <AppTableCell colSpan={3} className="text-right font-bold text-muted">Total Estimated Cost</AppTableCell>
+                      <AppTableCell colSpan={3} className="text-right font-bold text-muted">Total estimated cost</AppTableCell>
                       <AppTableCell className="text-right font-bold text-lg text-theme-btn-primary">
                         ${formatCount(snap.infraSpecifications.reduce((sum: number, spec: any) => sum + ((spec.cost || 0) * (spec.qty || 1)), 0))}
                       </AppTableCell>
@@ -1208,9 +1192,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Target className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Business Classification</h3>
+                  <h3 className="text-[14px] font-semibold text-heading">Business classification</h3>
                 </div>
               </div>
 
@@ -1223,7 +1206,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   {(requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-accent" /> Business Classification
+                      <Briefcase className="w-3.5 h-3.5 text-accent" /> Business classification
                     </span>
                     <div>
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface text-foreground border border-border/60">
@@ -1236,7 +1219,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   {(requirement.business_criticality?.name || requirement.priority?.name) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business Criticality <span className="text-danger">*</span>
+                      <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business criticality <span className="text-danger">*</span>
                     </span>
                     <div>
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface text-foreground border border-border/60">
@@ -1249,7 +1232,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   {(requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Target className="w-3.5 h-3.5 text-accent" /> Business Value
+                      <Target className="w-3.5 h-3.5 text-accent" /> Business value
                     </span>
                     <span className="theme-data-value text-foreground break-all">
                       {requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value}
@@ -1260,7 +1243,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   {(requirement.business_impact || requirement.custom_fields?.business_impact) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Target className="w-3.5 h-3.5 text-accent" /> Business Impact
+                      <Target className="w-3.5 h-3.5 text-accent" /> Business impact
                     </span>
                     <span className="theme-data-value text-foreground break-all">
                       {requirement.business_impact || requirement.custom_fields?.business_impact}
@@ -1275,7 +1258,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   {(requirement.dependency_notes || requirement.custom_fields?.dependency_notes) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-danger">*</span>
+                      <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency notes <span className="text-danger">*</span>
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.dependency_notes || requirement.custom_fields?.dependency_notes}
@@ -1286,7 +1269,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   {(requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture <span className="text-danger">*</span>
+                      <Server className="w-3.5 h-3.5 text-accent" /> Technical scope / architecture <span className="text-danger">*</span>
                     </span>
                     <div 
                       className="theme-data-value text-foreground leading-relaxed break-words quill-rendered-content"
@@ -1302,7 +1285,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
             <AppCard className="overflow-hidden border border-border p-5 mb-4">
               <div className="text-xs font-semibold text-muted mb-3 flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-accent" /> Scope & System Classification
+                <Briefcase className="w-4 h-4 text-accent" /> Scope & system classification
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
                 <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
@@ -1341,12 +1324,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
-                  <span className="theme-label mb-1 text-muted flex items-center gap-1">Sub Category</span>
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">Sub category</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.sub_category?.name || snap.subcategory || '-'}>{requirement.sub_category?.name || snap.subcategory || '-'}</span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
-                  <span className="theme-label mb-1 text-muted flex items-center gap-1">Created By</span>
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">Created by</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.creator?.full_name || '-'}>{requirement.creator?.full_name || '-'}</span>
                 </div>
 
@@ -1359,7 +1342,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
             <AppCard className="overflow-hidden border border-border p-5 mb-4">
               <div className="text-xs font-semibold text-muted mb-3 flex items-center gap-2">
-                <Paperclip className="h-4 w-4 text-theme-icon" /> Associated Files & Attachments ({attachments.length})
+                <Paperclip className="h-4 w-4 text-theme-icon" /> Associated files & attachments ({attachments.length})
               </div>
               <div className="mb-4">
                 <EnterpriseUploader 
@@ -1377,11 +1360,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               <section className="bg-warning-soft rounded-2xl p-6 border border-warning-border shadow-sm">
                 <h3 className="theme-label text-warning mb-2 font-semibold text-base flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5" />
-                  User Acceptance Testing (UAT)
+                  User acceptance testing (UAT)
                 </h3>
                 <textarea 
                   className="w-full bg-surface border border-border rounded-xl p-3 text-sm text-foreground mb-4 focus:outline-none focus:border-primary min-h-[100px]"
-                  placeholder="Enter UAT feedback or rejection reasons (Required for Failure)..."
+                  placeholder="Enter UAT feedback or rejection reasons (Required for Failure)…"
                   value={uatComment}
                   onChange={e => setUatComment(e.target.value)}
                 />
@@ -1393,7 +1376,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     variant="primary"
                     leftIcon={<CheckCircle className="w-4 h-4" />}
                   >
-                    Approve & Close Requirement
+                    Approve & close requirement
                   </AppButton>
                   <AppButton 
                     onClick={() => handleUAT('FAIL')}
@@ -1402,7 +1385,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     variant="destructive"
                     leftIcon={<XCircle className="w-4 h-4" />}
                   >
-                    Fail & Reopen Task
+                    Fail & reopen task
                   </AppButton>
                 </div>
               </section>
@@ -1417,9 +1400,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Target className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Business Classification</h3>
+                  <h3 className="text-[14px] font-semibold text-heading">Business classification</h3>
                 </div>
               </div>
 
@@ -1427,9 +1409,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-accent" /> Business Classification <span className="text-danger">*</span></span>
+                      <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-accent" /> Business classification <span className="text-danger">*</span></span>
                       {isEditable && (
-                        <AppButton variant="ghost" type="button" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10 h-auto min-h-0 min-w-0">
+                        <AppButton aria-label="Add" variant="ghost" type="button" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10 h-auto min-h-0 min-w-0">
                           <Plus className="w-3.5 h-3.5" />
                         </AppButton>
                       )}
@@ -1440,7 +1422,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         value={formData.requirement_type_id || ""}
                         onChange={(e) => handleUpdateField('requirement_type_id', e.target.value)}
                       >
-                        <option value="">Select Classification...</option>
+                        <option value="">Select Classification…</option>
                         {masters.issue_types?.map((t: any) => (
                           <option key={t.id} value={t.id}>{t.name}</option>
                         ))}
@@ -1454,7 +1436,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business Criticality <span className="text-danger">*</span></span>
+                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business criticality <span className="text-danger">*</span></span>
                     </label>
                     {isEditable ? (
                       <select
@@ -1462,7 +1444,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         value={formData.business_criticality_id || ""}
                         onChange={(e) => handleUpdateField('business_criticality_id', e.target.value)}
                       >
-                        <option value="">Select Criticality...</option>
+                        <option value="">Select Criticality…</option>
                         {masters.priority_master?.map((p: any) => (
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
@@ -1476,9 +1458,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-accent" /> Business Value</span>
+                      <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-accent" /> Business value</span>
                       {isEditable && (
-                        <AppButton variant="ghost" type="button" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10 h-auto min-h-0 min-w-0">
+                        <AppButton aria-label="Add" variant="ghost" type="button" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10 h-auto min-h-0 min-w-0">
                           <Plus className="w-3.5 h-3.5" />
                         </AppButton>
                       )}
@@ -1489,7 +1471,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         value={formData.business_value_id || ""}
                         onChange={(e) => handleUpdateField('business_value_id', e.target.value)}
                       >
-                        <option value="">Select Value...</option>
+                        <option value="">Select Value…</option>
                         {masters.business_values?.map((bv: any) => (
                           <option key={bv.id} value={bv.id}>{bv.name}</option>
                         ))}
@@ -1505,14 +1487,14 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-accent" /> Business Impact</span>
+                      <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-accent" /> Business impact</span>
                     </label>
                     {isEditable ? (
                       <textarea
                         className="flex min-h-[80px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.business_impact}
                         onChange={(e) => handleUpdateField('business_impact', e.target.value)}
-                        placeholder="Enter business impact details..."
+                        placeholder="Enter business impact details…"
                       />
                     ) : (
                       <div className="p-3 rounded-lg border border-border bg-surface text-foreground text-sm whitespace-pre-wrap">
@@ -1523,14 +1505,14 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-danger">*</span></span>
+                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency notes <span className="text-danger">*</span></span>
                     </label>
                     {isEditable ? (
                       <textarea
                         className="flex min-h-[80px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.dependency_notes}
                         onChange={(e) => handleUpdateField('dependency_notes', e.target.value)}
-                        placeholder="Enter dependency notes..."
+                        placeholder="Enter dependency notes…"
                       />
                     ) : (
                       <div className="p-3 rounded-lg border border-border bg-surface text-foreground text-sm whitespace-pre-wrap">
@@ -1546,16 +1528,15 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <FileText className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Requirement Reason, Details & Technical Scope</h3>
+                  <h3 className="text-[14px] font-semibold text-heading">Requirement reason, details & technical scope</h3>
                 </div>
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Issue Description</span>
+                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Issue description</span>
                     </label>
                     <div className="p-3.5 rounded-xl bg-surface border border-border h-full">
                       <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
@@ -1566,14 +1547,14 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason</span>
+                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Requirement reason</span>
                     </label>
                     {isEditable ? (
                       <textarea
                         className="flex min-h-[80px] h-full w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.requirement_reason}
                         onChange={(e) => handleUpdateField('requirement_reason', e.target.value)}
-                        placeholder="Enter requirement reason..."
+                        placeholder="Enter requirement reason…"
                       />
                     ) : (
                       <div className="p-3.5 rounded-xl bg-surface border border-border h-full">
@@ -1586,14 +1567,14 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Requirement Details</span>
+                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Requirement details</span>
                     </label>
                     {isEditable ? (
                       <textarea
                         className="flex min-h-[80px] h-full w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.requirement_details}
                         onChange={(e) => handleUpdateField('requirement_details', e.target.value)}
-                        placeholder="Enter requirement details..."
+                        placeholder="Enter requirement details…"
                       />
                     ) : (
                       <div className="p-3.5 rounded-xl bg-surface border border-border h-full">
@@ -1607,13 +1588,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                 <div className="flex flex-col space-y-1.5 mt-4">
                   <label className="theme-label text-muted flex items-center justify-between">
-                    <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture Details <span className="text-danger">*</span></span>
+                    <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-accent" /> Technical scope / architecture details <span className="text-danger">*</span></span>
                   </label>
                   {isEditable ? (
                     <LazyQuill
                       value={formData.technical_scope}
                       onChange={(v) => handleUpdateField('technical_scope', v)}
-                      placeholder="Enter architecture details..."
+                      placeholder="Enter architecture details…"
                     />
                   ) : (
                     <div className="p-3 rounded-lg border border-border bg-surface text-foreground text-sm prose dark:prose-invert max-w-none">
@@ -1630,33 +1611,32 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                     <Server className="w-4 h-4 text-accent" />
-                    <h3 className="font-bold text-sm tracking-wide text-foreground">IT & Software Scope</h3>
+                    <h3 className="text-[14px] font-semibold text-heading">IT & software scope</h3>
                   </div>
                 </div>
                 <div className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">Target System / Application</span>
+                      <span className="theme-label mb-1.5 text-muted">Target system / application</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_system || '-'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">Data Privacy & Security</span>
+                      <span className="theme-label mb-1.5 text-muted">Data privacy & security</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.data_privacy || '-'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">Software License Cost</span>
+                      <span className="theme-label mb-1.5 text-muted">Software license cost</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.software_cost ? `₹${requirement.custom_fields.software_cost}` : 'N/A'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">Development Cost</span>
+                      <span className="theme-label mb-1.5 text-muted">Development cost</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.dev_cost ? `₹${requirement.custom_fields.dev_cost}` : 'N/A'}</span>
                     </div>
                   </div>
                   {requirement.custom_fields?.integrations && (
                     <div className="mt-3.5 flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">Integration Dependencies</span>
+                      <span className="theme-label mb-1.5 text-muted">Integration dependencies</span>
                       <span className="theme-data-value text-foreground whitespace-pre-wrap">{requirement.custom_fields.integrations}</span>
                     </div>
                   )}
@@ -1669,27 +1649,26 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                     <Server className="w-4 h-4 text-accent" />
-                    <h3 className="font-bold text-sm tracking-wide text-foreground">Infrastructure Scope</h3>
+                    <h3 className="text-[14px] font-semibold text-heading">Infrastructure scope</h3>
                   </div>
                 </div>
                 <div className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">Target Environment</span>
+                      <span className="theme-label mb-1.5 text-muted">Target environment</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_environment || '-'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">Hardware & Capacity Needs</span>
+                      <span className="theme-label mb-1.5 text-muted">Hardware & capacity needs</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.hardware_needs || '-'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">CAPEX Amount</span>
+                      <span className="theme-label mb-1.5 text-muted">CAPEX amount</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.capex_amount ? `₹${requirement.custom_fields.capex_amount}` : 'N/A'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
-                      <span className="theme-label mb-1.5 text-muted">OPEX Amount</span>
+                      <span className="theme-label mb-1.5 text-muted">OPEX amount</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.opex_amount ? `₹${requirement.custom_fields.opex_amount}` : 'N/A'}</span>
                     </div>
                   </div>
@@ -1701,9 +1680,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Clock className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Timelines & Resources</h3>
+                  <h3 className="text-[14px] font-semibold text-heading">Timelines & resources</h3>
                 </div>
               </div>
 
@@ -1711,7 +1689,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-accent" /> Start Date <span className="text-danger">*</span>
+                      <Calendar className="w-3.5 h-3.5 text-accent" /> Start date <span className="text-danger">*</span>
                     </span>
                     {isEditable ? (
                       <AppInput type="date" min={requirement.created_at?.slice(0, 10)} value={formData.start_date} onChange={(e) => handleDateChange('start_date', e.target.value)} className="w-full" />
@@ -1724,7 +1702,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-accent" /> Due Date <span className="text-danger">*</span>
+                      <Calendar className="w-3.5 h-3.5 text-accent" /> Due date <span className="text-danger">*</span>
                     </span>
                     {isEditable ? (
                       <AppInput type="date" min={formData.start_date || requirement.created_at?.slice(0, 10)} value={formData.due_date} onChange={(e) => handleDateChange('due_date', e.target.value)} className="w-full" />
@@ -1737,7 +1715,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Hourglass className="w-3.5 h-3.5 text-accent" /> Estimated Effort (Days) <span className="text-danger">*</span>
+                      <Hourglass className="w-3.5 h-3.5 text-accent" /> Estimated effort (days) <span className="text-danger">*</span>
                     </span>
                     {isEditable ? (
                       <AppInput type="number" min="1" value={formData.estimated_effort} onChange={handleEffortChange} className="w-full" placeholder="e.g. 5" />
@@ -1750,7 +1728,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-accent" /> Estimated Cost
+                      <Briefcase className="w-3.5 h-3.5 text-accent" /> Estimated cost
                     </span>
                     {isEditable ? (
                       <AppInput type="number" placeholder="Amount (e.g. 50000)" value={formData.estimated_cost} onChange={(e) => setFormData({...formData, estimated_cost: e.target.value})} className="w-full" />
@@ -1763,7 +1741,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-accent" /> Estimated Resources
+                      <Users className="w-3.5 h-3.5 text-accent" /> Estimated resources
                     </span>
                     {isEditable ? (
                       <AppInput placeholder="e.g. 2 Developers" value={formData.estimated_resources} onChange={(e) => setFormData({...formData, estimated_resources: e.target.value})} className="w-full" />
@@ -1782,9 +1760,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Briefcase className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Impacted Departments & Define Approval Sequence *</h3>
+                  <h3 className="text-[14px] font-semibold text-heading">Impacted departments & define approval sequence *</h3>
                 </div>
               </div>
 
@@ -1792,7 +1769,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-accent">
-                      Primary Impacted Department
+                      Primary impacted department
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="px-3 py-1 rounded-full theme-data-value bg-primary text-primary-foreground shadow-xs">
@@ -1803,13 +1780,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-accent">
-                      Department Approvers & Stakeholders (Sequence Configured)
+                      Department approvers & stakeholders (sequence configured)
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {approvalFlow && approvalFlow.length > 0 ? (
                         approvalFlow.map((flow: any, idx: number) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-foreground">
-                            <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center">{idx + 1}</span>
+                            <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold flex items-center justify-center">{idx + 1}</span>
                             {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.designation?.name || '-'})
                           </span>
                         ))
@@ -1823,12 +1800,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                           });
                         }).map((flow: any, idx: number) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-foreground">
-                            <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center">{idx + 1}</span>
+                            <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold flex items-center justify-center">{idx + 1}</span>
                             {flow.approver?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.designation?.name || '-'})
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs font-medium text-muted italic">Department Approver Sequence Configured</span>
+                        <span className="text-xs font-medium text-muted italic">Department approver sequence configured</span>
                       )}
                     </div>
                   </div>
@@ -1839,9 +1816,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <div className="p-4 rounded-xl bg-surface border border-border space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-muted flex items-center gap-1.5">
-                      <Shield className="w-3.5 h-3.5 text-accent" /> Select Impacted Departments & Define Approval Sequence <span className="text-danger">*</span>
+                      <Shield className="w-3.5 h-3.5 text-accent" /> Select impacted departments & define approval sequence <span className="text-danger">*</span>
                     </span>
-                    <span className="text-[10px] text-muted font-medium">Click departments to select, then assign approver order (1st, 2nd, etc).</span>
+                    <span className="text-[11px] text-muted font-medium">Click departments to select, then assign approver order (1st, 2nd, etc).</span>
                   </div>
 
                   {/* 1. Impacted Department Buttons */}
@@ -1863,7 +1840,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         >
                           <div className={`w-2 h-2 rounded-full ${isSelected ? "bg-surface" : "bg-accent"}`} />
                           <span>{d.name}</span>
-                          {isSelected && <span className="text-[10px] font-semibold bg-surface/20 px-1.5 py-0.2 rounded-full">Selected</span>}
+                          {isSelected && <span className="text-[11px] font-semibold bg-surface/20 px-1.5 py-0.2 rounded-full">Selected</span>}
                         </AppButton>
                       );
                     })}
@@ -1873,7 +1850,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   {formData.impacted_departments.length > 0 && (
                     <div className="mt-4 space-y-4 pt-3 border-t border-border">
                       <label className="block theme-label text-muted">
-                        Configure Department Approval Sequence <span className="text-danger">*</span>
+                        Configure department approval sequence <span className="text-danger">*</span>
                       </label>
                       {formData.impacted_departments.map((deptId: string) => {
                         const dept = masters.departments?.find((d: any) => d.id === deptId);
@@ -1939,7 +1916,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                                       }`}
                                     >
                                       {isUserSelected && (
-                                        <span className="bg-surface/25 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-semibold">
+                                        <span className="bg-surface/25 w-4 h-4 rounded-full flex items-center justify-center text-[11px] font-semibold">
                                           {orderIndex}
                                         </span>
                                       )}
@@ -1954,7 +1931,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                             {selectedApprovers.length > 0 && (
                               <div className="mt-2 p-2.5 rounded-lg bg-surface border border-border">
                                 <div className="theme-label text-foreground font-semibold mb-1">
-                                  {deptName} - Configured Approval Sequence
+                                  {deptName} - Configured approval sequence
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-foreground">
                                   {selectedApprovers.map((id: string, index: number) => {
@@ -1980,21 +1957,21 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   {/* 3. Sign-Off Approver Selection */}
                   <div className="mt-4 pt-4 border-t border-border">
                     <label className="block theme-label text-muted mb-2">
-                      Designated Sign-Off Approver <span className="text-danger">*</span>
+                      Designated sign-off approver <span className="text-danger">*</span>
                     </label>
                     <select 
                       className="flex h-10 w-full md:w-1/2 rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                       value={formData.signoff_approver_id}
                       onChange={(e) => setFormData({ ...formData, signoff_approver_id: e.target.value })}
                     >
-                      <option value="" className="text-muted">-- Select Sign-Off Approver --</option>
+                      <option value="" className="text-muted">-- Select sign-off approver --</option>
                       {(masters.users || []).map((u: any) => (
                         <option key={u.id} value={u.id} className="text-foreground">
                           {u.full_name || u.name || 'User'} {u.designation?.name ? `(${u.designation.name})` : ''}
                         </option>
                       ))}
                     </select>
-                    <p className="text-[10px] text-muted font-medium mt-1.5">
+                    <p className="text-[11px] text-muted font-medium mt-1.5">
                       This user will be responsible for the final sign-off once all departmental approvals are complete.
                     </p>
                   </div>
@@ -2011,7 +1988,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs animate-pulse" />
                   <FileText className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Analysis Remarks & Approver History</h3>
+                  <h3 className="text-[14px] font-semibold text-heading">Analysis remarks & approver history</h3>
                 </div>
               </div>
 
@@ -2019,12 +1996,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 {/* SECTION 1: Add New Analysis Remarks (Always Visible & Accessible) */}
                 <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-surface border border-border">
                   <label className="theme-data-value text-warning flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Add New Analysis Remarks (Mandatory for Approvers) <span className="text-danger">*</span>
+                    <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Add new analysis remarks (mandatory for approvers) <span className="text-danger">*</span>
                   </label>
                   <LazyQuill
                     value={approvalRemarks}
                     onChange={setApprovalRemarks}
-                    placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback with rich text decorations..."
+                    placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback with rich text decorations…"
                   />
                   </div>
 
@@ -2032,7 +2009,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <div className="pt-3 border-t border-border space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="theme-label flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-theme-icon" /> Remarks History ({auditLogs.length})
+                      <Clock className="w-3.5 h-3.5 text-theme-icon" /> Remarks history ({auditLogs.length})
                     </h4>
                     
                     <AppButton
@@ -2044,12 +2021,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       {isRemarksHistoryMinimized ? (
                         <>
                           <ChevronDown className="w-4 h-4" />
-                          <span>Show Remarks History ({auditLogs.length})</span>
+                          <span>Show remarks history ({auditLogs.length})</span>
                         </>
                       ) : (
                         <>
                           <ChevronRight className="w-4 h-4" />
-                          <span>Hide Remarks History</span>
+                          <span>Hide remarks history</span>
                         </>
                       )}
                     </AppButton>
@@ -2061,7 +2038,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         <div className="space-y-2.5 max-h-60 overflow-y-auto scrollbar-thin pr-1">
                           {auditLogs.map((log: any, idx: number) => (
                             <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/60 hover:border-border transition-all">
-                              <div className="w-7 h-7 rounded-full bg-theme-btn-primary/20 text-theme-icon font-bold text-xs flex items-center justify-center shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-accent-soft text-theme-icon font-bold text-xs flex items-center justify-center shrink-0">
                                 {log.user?.full_name?.substring(0, 2).toUpperCase() || 'U'}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -2147,12 +2124,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                                 <div className={`flex-1 p-3 rounded-lg border ${statusColor} transition-colors`}>
                                   <div className="flex justify-between items-start mb-1">
                                     <div className="font-semibold text-sm">Level {flow.level}: {flow.approver?.full_name || '-'}</div>
-                                    <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-full bg-surface">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider px-2 py-0.5 rounded-full bg-surface">
                                       {icon} {flow.status}
                                     </div>
                                   </div>
                                   {flow.actioned_at && (
-                                    <div className="text-[10px] text-muted mb-2">
+                                    <div className="text-[11px] text-muted mb-2">
                                       {formatDateTime(flow.actioned_at)}
                                     </div>
                                   )}
@@ -2181,7 +2158,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
                 <div className="flex items-center gap-2">
                   <Server className="h-5 w-5 text-theme-icon" />
-                  <h2 className="text-sm font-bold text-foreground">Implementation Tasks</h2>
+                  <h2 className="text-sm font-bold text-foreground">Implementation tasks</h2>
                 </div>
               </div>
               
@@ -2194,11 +2171,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <AppTable>
                   <AppTableHeader>
                     <AppTableRow>
-                      <AppTableHead>Task Name</AppTableHead>
+                      <AppTableHead>Task name</AppTableHead>
                       <AppTableHead>Assignee</AppTableHead>
                       <AppTableHead>Status</AppTableHead>
-                      <AppTableHead>Due Date</AppTableHead>
-                      <AppTableHead>Linked On</AppTableHead>
+                      <AppTableHead>Due date</AppTableHead>
+                      <AppTableHead>Linked on</AppTableHead>
                     </AppTableRow>
                   </AppTableHeader>
                   <AppTableBody>
@@ -2214,7 +2191,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                           <AppBadge
                             variant="custom"
                             customColor={link.task?.status?.status_color || 'var(--muted)'}
-                            className="text-[10px]"
+                            className="text-[11px]"
                           >
                             {link.task?.status?.name || 'New'}
                           </AppBadge>
@@ -2237,7 +2214,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <div className="space-y-4 animate-in fade-in duration-300 pt-2 pb-10">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
                 <Clock className="h-5 w-5 text-theme-icon" />
-                <h2 className="text-sm font-bold text-foreground">Audit Trail & Lifecycle History</h2>
+                <h2 className="text-sm font-bold text-foreground">Audit trail & lifecycle history</h2>
               </div>
               
               {auditLogs.length === 0 ? (
@@ -2300,7 +2277,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               <label className="block theme-data-value text-muted mb-1">Name <span className="text-danger">*</span></label>
               <AppInput
                 autoFocus
-                placeholder="Enter name..."
+                placeholder="Enter name…"
                 value={newMasterName}
                 onChange={(e) => setNewMasterName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddMasterSubmit(); }}
@@ -2347,7 +2324,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         onClick={() => handleAction('SAVE')}
                         leftIcon={<Save className="w-4 h-4" />}
                       >
-                        Save Draft
+                        Save draft
                       </AppButton>
                       
                       {requirement.approval_status !== 'On Hold' && (
@@ -2357,7 +2334,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                           onClick={() => handleAction('HOLD')}
                           leftIcon={<PauseCircle className="w-4 h-4" />}
                         >
-                          Hold Requirement
+                          Hold requirement
                         </AppButton>
                       )}
 
@@ -2367,7 +2344,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         onClick={() => handleAction('CANCEL')}
                         leftIcon={<XCircle className="w-4 h-4" />}
                       >
-                        Reject Requirement
+                        Reject requirement
                       </AppButton>
 
                       <AppButton
@@ -2376,7 +2353,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         onClick={() => handleAction('ACCEPT')}
                         leftIcon={<CheckCircle className="w-4 h-4" />}
                       >
-                        Accept & Initiate Approval
+                        Accept & initiate approval
                       </AppButton>
                     </>
                   ) : null
@@ -2407,7 +2384,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title="Delete Requirement"
+        title="Delete requirement"
         description="Are you sure you want to permanently delete this requirement? This action cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"
@@ -2420,7 +2397,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
 export default function RequirementAnalyzePage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <React.Suspense fallback={<div className="flex h-[calc(100vh-100px)] items-center justify-center"><ChandakLoader size="lg" title="Loading Requirement..." /></div>}>
+    <React.Suspense fallback={<div className="flex h-[calc(100vh-100px)] items-center justify-center"><ChandakLoader size="lg" title="Loading requirement…" /></div>}>
       <RequirementAnalyzePageContent params={params} />
     </React.Suspense>
   );

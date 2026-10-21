@@ -25,7 +25,7 @@ class WidgetErrorBoundary extends React.Component<{ children: React.ReactNode, t
       return (
         <div className="h-full flex flex-col items-center justify-center p-6 border border-danger/20 bg-danger/5 rounded-2xl text-center">
           <AlertTriangle className="w-8 h-8 text-danger/50 mb-3" />
-          <h3 className="text-sm font-semibold text-danger">Widget Unavailable</h3>
+          <h3 className="text-sm font-semibold text-danger">Widget unavailable</h3>
           <p className="text-xs text-danger/70 mt-1 max-w-[200px] truncate">{this.state.error?.message || "An error occurred"}</p>
         </div>
       );
@@ -42,22 +42,22 @@ export interface DashboardEngineProps {
 const SECTIONS = [
   {
     id: "executive_center",
-    title: "Executive Command & Action Center",
-    description: "Digest, KPI Cards, SLA Countdown, Deadlines & Live Feed",
+    title: "Executive command & action center",
+    description: "Digest, KPI cards, SLA countdown, deadlines & live feed",
     icon: Sparkles,
     types: ["executive_digest", "sla_countdown", "kpi", "upcoming_deadlines", "recent_tickets", "activity_feed"]
   },
   {
     id: "operational_intelligence",
-    title: "Operational & Departmental Intelligence",
-    description: "Department Health, Bottleneck Radar, Workload & Resolution Velocity",
+    title: "Operational & departmental intelligence",
+    description: "Department health, bottleneck radar, workload & resolution velocity",
     icon: SlidersHorizontal,
     types: ["departmental_health", "bottleneck_radar", "risk_intelligence", "status_comparison", "resolution_velocity", "sla_governance", "workload_intelligence", "charts"]
   },
   {
     id: "execution_velocity",
-    title: "Execution & Active Sprint Velocity",
-    description: "Active Sprint Kanban Board, Flow Stages & Team Throughput",
+    title: "Execution & active sprint velocity",
+    description: "Active sprint Kanban board, flow stages & team throughput",
     icon: LayoutDashboard,
     types: ["kanban", "team_performance"]
   }
@@ -117,7 +117,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-sm text-muted-foreground animate-pulse">Loading Next-Gen Layout...</div>;
+    return <div className="flex items-center justify-center h-64 text-sm text-muted-foreground animate-pulse">Loading Next-Gen Layout…</div>;
   }
 
   // Active widgets ordered by user preference
@@ -147,15 +147,15 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
           aria-expanded={!isCollapsed}
         >
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="p-2 rounded-xl bg-theme-btn-primary/10 text-theme-icon shrink-0 group-hover:scale-105 transition-transform">
+            <div className="p-2 rounded-xl bg-accent-soft text-theme-icon shrink-0 transition-transform">
               <IconComp className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground truncate">
+                <h2 className="text-xs sm:text-sm font-bold text-foreground truncate">
                   {section.title}
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 shrink-0">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 shrink-0">
                   {sectionWidgets.length} {sectionWidgets.length === 1 ? 'KPI / Widget' : 'KPIs & Widgets'}
                 </span>
               </div>
@@ -220,7 +220,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-1 mb-4">
         {/* Top Section KPI Quick Navigation & Accordion Pill Strip */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-nowrap shrink-0 py-0.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
+          <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
             KPI Sections:
           </span>
 
@@ -245,21 +245,21 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
                 }, 50);
               }}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 border select-none active:scale-95",
+                "flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 border select-none",
                 !isCollapsed 
-                  ? "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/30 shadow-xs" 
+                  ? "bg-accent-soft text-theme-icon border-theme-btn-primary/30 shadow-xs" 
                   : "bg-surface text-muted-foreground hover:text-foreground border-border/60 hover:bg-surface/60"
               )}
             >
               <IconComp className="w-3.5 h-3.5" />
               <span>{s.title.split('&')[0].trim()}</span>
               <span className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-bold border",
+                "px-1.5 py-0.2 rounded-full text-[11px] font-bold border",
                 !isCollapsed ? "bg-theme-btn-primary text-white border-transparent" : "bg-surface-hover text-muted-foreground border-border/40"
               )}>
                 {sectionWidgets.length}
               </span>
-              <span className="opacity-60 text-[10px]">
+              <span className="opacity-60 text-[11px]">
                 {isCollapsed ? "▸" : "▾"}
               </span>
             </button>
@@ -282,9 +282,9 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
             </AppButton>
 
             {presetDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-xl shadow-2xl theme-card-structural border border-border/80 z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 py-1.5 border-b border-border/40">
-                  Switch Dashboard Layout Preset
+              <div className="absolute right-0 mt-2 w-72 rounded-xl shadow-lg theme-card-structural border border-border/80 z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="text-[11px] font-bold text-muted-foreground px-3 py-1.5 border-b border-border/40">
+                  Switch dashboard layout preset
                 </div>
                 <div className="py-1 space-y-0.5">
                   {Object.entries(DASHBOARD_PRESETS).map(([key, preset]) => (
@@ -301,7 +301,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
                       )}
                     >
                       <span className="font-semibold">{preset.name}</span>
-                      <span className="text-[10px] text-muted-foreground font-normal line-clamp-1">{preset.description}</span>
+                      <span className="text-[11px] text-muted-foreground font-normal line-clamp-1">{preset.description}</span>
                     </button>
                   ))}
                 </div>
@@ -317,7 +317,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
             onClick={() => setIsCustomizeOpen(true)}
             className="theme-card-structural hover:bg-background/80 whitespace-nowrap text-xs shrink-0 h-7.5 px-2.5"
           >
-            Customize
+            Customise
           </AppButton>
 
           {/* Expand/Minimize All Sections */}
@@ -336,14 +336,14 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
       {SECTIONS.map(section => renderSection(section))}
 
       {activeWidgets.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-dashed rounded-3xl theme-card-structural /30 border-border">
+        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-dashed rounded-3xl theme-card-structural border-border">
           <Settings2 className="w-12 h-12 mb-4 text-muted-foreground/30" />
-          <h3 className="text-lg font-semibold text-foreground">Dashboard is Empty</h3>
+          <h3 className="text-lg font-semibold text-foreground">Dashboard is empty</h3>
           <p className="mt-2 text-sm text-muted-foreground max-w-md">
-            All widgets have been hidden. Click customize to add enterprise widgets back to your command center.
+            All widgets have been hidden. Click customise to add enterprise widgets back to your command center.
           </p>
           <AppButton variant="primary" className="mt-6" onClick={() => setIsCustomizeOpen(true)}>
-            Customize Dashboard
+            Customise dashboard
           </AppButton>
         </div>
       )}

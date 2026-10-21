@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
 import { AppButton } from "@/components/ui/AppButton";
+import { formatDateTime } from "@/components/ui/data";
 
 export default function DeliveryLogs() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -57,9 +58,9 @@ export default function DeliveryLogs() {
     <div className="space-y-4 animate-in fade-in duration-500">
       <AppCard className="flex justify-between items-center p-4">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Transmission Logs</h2>
+          <h2 className="text-lg font-bold text-foreground">Transmission logs</h2>
           </div>
-        <AppButton
+        <AppButton aria-label="Refresh"
           onClick={fetchLogs}
           disabled={loading}
           variant="secondary"
@@ -75,7 +76,7 @@ export default function DeliveryLogs() {
             <AppTableHeader>
               <AppTableRow>
                 <AppTableHead>Timestamp</AppTableHead>
-                <AppTableHead>Trigger Event</AppTableHead>
+                <AppTableHead>Trigger event</AppTableHead>
                 <AppTableHead>Recipient</AppTableHead>
                 <AppTableHead>Gateway</AppTableHead>
                 <AppTableHead>Status</AppTableHead>
@@ -85,7 +86,7 @@ export default function DeliveryLogs() {
               {logs.map((log) => (
                 <AppTableRow key={log.id}>
                   <AppTableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(log.recorded_at).toLocaleString()}
+                    {formatDateTime(log.recorded_at)}
                   </AppTableCell>
                   <AppTableCell>
                     <div className="flex flex-col">

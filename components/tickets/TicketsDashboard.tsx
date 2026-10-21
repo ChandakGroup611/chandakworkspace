@@ -44,31 +44,31 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-theme-btn-primary/5 group-hover:opacity-90/10 transition-colors" />
+          <div className="absolute inset-0 bg-accent-soft group-hover:bg-surface-hover transition-colors" />
           <Ticket className="w-8 h-8 text-theme-icon mb-3" />
-          <div className="text-3xl font-black text-foreground">{totalTickets}</div>
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Total Tickets</div>
+          <div className="text-3xl font-semibold text-foreground">{totalTickets}</div>
+          <div className="text-xs font-bold text-muted-foreground mt-1">Total tickets</div>
         </div>
 
         <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-theme-btn-primary/5 group-hover:opacity-90/10 transition-colors" />
+          <div className="absolute inset-0 bg-accent-soft group-hover:bg-surface-hover transition-colors" />
           <Clock className="w-8 h-8 text-theme-icon mb-3" />
-          <div className="text-3xl font-black text-foreground">{openTickets}</div>
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Open Tickets</div>
+          <div className="text-3xl font-semibold text-foreground">{openTickets}</div>
+          <div className="text-xs font-bold text-muted-foreground mt-1">Open tickets</div>
         </div>
 
         <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-success/5 group-hover:bg-success/10 transition-colors" />
           <CheckCircle2 className="w-8 h-8 text-success mb-3" />
-          <div className="text-3xl font-black text-foreground">{resolvedTickets}</div>
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Resolved ({resolutionRate}%)</div>
+          <div className="text-3xl font-semibold text-foreground">{resolvedTickets}</div>
+          <div className="text-xs font-bold text-muted-foreground mt-1">Resolved ({resolutionRate}%)</div>
         </div>
 
         <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-danger/5 group-hover:bg-danger/10 transition-colors" />
           <AlertCircle className="w-8 h-8 text-danger mb-3" />
-          <div className="text-3xl font-black text-danger">{breachedSla}</div>
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">SLA Breaches</div>
+          <div className="text-3xl font-semibold text-danger">{breachedSla}</div>
+          <div className="text-xs font-bold text-muted-foreground mt-1">SLA breaches</div>
         </div>
       </div>
 
@@ -76,7 +76,7 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ticket Volume Trends */}
         <div className="theme-card-structural rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-foreground mb-6 uppercase tracking-wider">7-Day Ticket Volume</h3>
+          <h3 className="text-sm font-bold text-foreground mb-6">7-Day ticket volume</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={volumeData}>
@@ -102,7 +102,7 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
 
         {/* Agent Workload */}
         <div className="theme-card-structural rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-foreground mb-6 uppercase tracking-wider">Top Agent Workload (Open)</h3>
+          <h3 className="text-sm font-bold text-foreground mb-6">Top agent workload (open)</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={workloadData} layout="vertical" margin={{ left: 40 }}>

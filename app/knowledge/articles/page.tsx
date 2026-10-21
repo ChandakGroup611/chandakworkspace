@@ -52,18 +52,18 @@ export default function KnowledgeBaseAuthoring() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Knowledge Base Authoring"
-        badge={<AppBadge variant="info">Support Hub</AppBadge>}
+        title="Knowledge base authoring"
+        badge={<AppBadge variant="info">Support hub</AppBadge>}
         actions={
           <AppButton variant="primary" onClick={handleCreateNew} leftIcon={<BookOpen className="w-4 h-4" />}>
-            New Article
+            New article
           </AppButton>
         }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6 h-[calc(100vh-200px)]">
         {/* Left Sidebar: Article List */}
-        <div className="lg:col-span-1 border border-border bg-surface dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm">
+        <div className="lg:col-span-1 border border-border bg-surface rounded-2xl flex flex-col overflow-hidden shadow-sm">
           <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02]">
             <h3 className="font-bold text-sm">Library</h3>
           </div>
@@ -74,15 +74,15 @@ export default function KnowledgeBaseAuthoring() {
                 onClick={() => { setActiveArticle(article); setPreviewMode(false); }}
                 className={`p-3 rounded-xl border cursor-pointer transition-colors ${
                   activeArticle?.id === article.id
-                    ? "border-theme-btn-primary bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 shadow-sm" 
+                    ? "border-theme-btn-primary bg-accent-soft dark:bg-accent-soft shadow-sm" 
                     : "border-transparent hover:bg-surface dark:hover:bg-surface/5"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <AppBadge variant={article.isPublished ? "success" : "warning"} className="text-[9px] px-1.5 py-0">
+                  <AppBadge variant={article.isPublished ? "success" : "warning"} className="text-[11px] px-1.5 py-0">
                     {article.isPublished ? "PUBLISHED" : "DRAFT"}
                   </AppBadge>
-                  <span className="text-[10px] text-muted">{article.category}</span>
+                  <span className="text-[11px] text-muted">{article.category}</span>
                 </div>
                 <h4 className={`text-sm font-bold truncate ${activeArticle?.id === article.id ? "text-theme-icon" : "text-foreground"}`}>
                   {article.title || "Untitled Article"}
@@ -98,7 +98,7 @@ export default function KnowledgeBaseAuthoring() {
         </div>
 
         {/* Right Area: Editor */}
-        <div className="lg:col-span-3 flex flex-col h-full bg-surface dark:bg-[#0B0F19] rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="lg:col-span-3 flex flex-col h-full bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
           {activeArticle ? (
             <>
               {/* Editor Header */}
@@ -109,14 +109,14 @@ export default function KnowledgeBaseAuthoring() {
                     size="sm" 
                     onClick={() => setPreviewMode(false)}
                   >
-                    Edit Mode
+                    Edit mode
                   </AppButton>
                   <AppButton 
                     variant={previewMode ? "primary" : "outline"} 
                     size="sm" 
                     onClick={() => setPreviewMode(true)}
                   >
-                    <Eye className="w-4 h-4 mr-2" /> Live Preview
+                    <Eye className="w-4 h-4 mr-2" /> Live preview
                   </AppButton>
                 </div>
                 <div className="flex items-center gap-3">
@@ -132,7 +132,7 @@ export default function KnowledgeBaseAuthoring() {
                     </select>
                   </label>
                   <AppButton variant="primary" onClick={handleSave} size="sm" leftIcon={<Save className="w-4 h-4" />}>
-                    Save Article
+                    Save article
                   </AppButton>
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function KnowledgeBaseAuthoring() {
                 ) : (
                   <div className="p-6 space-y-6 max-w-4xl mx-auto">
                     <div>
-                      <label className="text-sm font-bold text-muted uppercase">Article Title</label>
+                      <label className="text-sm font-bold text-muted">Article title</label>
                       <AppInput 
                         value={activeArticle.title} 
                         onChange={e => setActiveArticle({...activeArticle, title: e.target.value})} 
@@ -165,7 +165,7 @@ export default function KnowledgeBaseAuthoring() {
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-sm font-bold text-muted uppercase">Category</label>
+                        <label className="text-sm font-bold text-muted">Category</label>
                         <select 
                           className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" 
                           value={activeArticle.category} 
@@ -173,14 +173,14 @@ export default function KnowledgeBaseAuthoring() {
                         >
                           <option>General</option>
                           <option>Account</option>
-                          <option>IT Support</option>
-                          <option>HR & Policies</option>
+                          <option>IT support</option>
+                          <option>HR & policies</option>
                           <option>Facilities</option>
                         </select>
                       </div>
                       <div>
-                        <label className="text-sm font-bold text-muted uppercase flex items-center gap-1">
-                          <Tag className="w-3 h-3" /> Search Tags (Comma separated)
+                        <label className="text-sm font-bold text-muted flex items-center gap-1">
+                          <Tag className="w-3 h-3" /> Search tags (comma separated)
                         </label>
                         <AppInput 
                           value={activeArticle.tags || ""} 
@@ -192,7 +192,7 @@ export default function KnowledgeBaseAuthoring() {
                     </div>
 
                     <div>
-                      <label className="text-sm font-bold text-muted uppercase mb-1 block">Article Content</label>
+                      <label className="text-sm font-bold text-muted mb-1 block">Article content</label>
                       <div className="border border-border rounded-lg overflow-hidden bg-surface dark:bg-transparent">
                         <RichTextEditor 
                           value={activeArticle.content} 
@@ -207,9 +207,9 @@ export default function KnowledgeBaseAuthoring() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted">
               <LayoutTemplate className="w-16 h-16 text-muted dark:text-subtle mb-4" />
-              <h3 className="text-lg font-bold text-foreground">No Article Selected</h3>
+              <h3 className="text-lg font-bold text-foreground">No article selected</h3>
               <p className="text-sm mt-1">Select an article from the library or create a new one.</p>
-              <AppButton variant="primary" className="mt-6" onClick={handleCreateNew}>Create New Article</AppButton>
+              <AppButton variant="primary" className="mt-6" onClick={handleCreateNew}>Create new article</AppButton>
             </div>
           )}
         </div>

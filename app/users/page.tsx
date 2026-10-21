@@ -682,7 +682,7 @@ export default function UserMasterPage() {
       }`}>
         <ChandakLoader
           size="lg"
-          title="Verifying Credentials..."
+          title="Verifying Credentials…"
           subtitle="Loading enterprise user directory"
         />
       </div>
@@ -698,8 +698,8 @@ export default function UserMasterPage() {
       }`}>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>Enterprise Personnel Registry</h1>
-            <AppBadge variant="info">Identity Directory</AppBadge>
+            <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>Enterprise personnel registry</h1>
+            <AppBadge variant="info">Identity directory</AppBadge>
           </div>
           <p className={`text-xs ${"text-muted"}`}>
             Governed system personnel records supporting strict department routing, role assignments, and instant audit trails.
@@ -713,7 +713,7 @@ export default function UserMasterPage() {
             leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-theme-icon" : ""}`} />}
             onClick={fetchUsersDirectory}
           >
-            Refresh Directory
+            Refresh directory
           </AppButton>
           <AppButton 
             variant="outline" 
@@ -722,7 +722,7 @@ export default function UserMasterPage() {
             onClick={() => setInviteModalOpen(true)}
             disabled={!(hasPermission("USERS_CREATE") || isSuperAdmin)}
           >
-            Invite User
+            Invite user
           </AppButton>
           <AppButton 
             variant="primary" 
@@ -731,31 +731,31 @@ export default function UserMasterPage() {
             onClick={() => router.push("/users/new")}
             disabled={!(hasPermission("USERS_CREATE") || isSuperAdmin)}
           >
-            Register User Account
+            Register user account
           </AppButton>
         </div>
       </div>
 
       {/* Invite Modal */}
       {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface dark:bg-slate-900 border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
             {/* Modal Header */}
             <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20">
+                <div className="h-10 w-10 rounded-xl bg-accent-soft text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20">
                   <Mail className="h-5 w-5" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-foreground">
-                    Invite User to Organization
+                    Invite user to organisation
                   </h3>
                   <p className="text-xs text-muted">
                     Dispatch an email invitation with predefined roles and module access permissions.
                   </p>
                 </div>
               </div>
-              <AppButton 
+              <AppButton aria-label="Close" 
                 variant="ghost" 
                 size="icon-sm" 
                 onClick={() => setInviteModalOpen(false)}
@@ -770,16 +770,16 @@ export default function UserMasterPage() {
               {/* Basic Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold mb-1 block text-foreground">Full Name</label>
+                  <label className="text-xs font-semibold mb-1 block text-foreground">Full name</label>
                   <AppInput 
                     type="text" 
-                    placeholder="e.g. John Doe" 
+                    placeholder="e.g. John doe" 
                     value={inviteFullName} 
                     onChange={e => setInviteFullName(e.target.value)} 
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold mb-1 block text-foreground">Email Address *</label>
+                  <label className="text-xs font-semibold mb-1 block text-foreground">Email address *</label>
                   <AppInput 
                     type="email" 
                     placeholder="user@example.com" 
@@ -792,13 +792,13 @@ export default function UserMasterPage() {
               {/* Organization & Role */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-xs font-semibold mb-1 block text-foreground">Initial Role</label>
+                  <label className="text-xs font-semibold mb-1 block text-foreground">Initial role</label>
                   <select 
                     className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary"
                     value={inviteRole}
                     onChange={e => setInviteRole(e.target.value)}
                   >
-                    <option value="">-- Select Role --</option>
+                    <option value="">-- Select role --</option>
                     {roles.map(r => (
                       <option key={r.id} value={r.id}>{r.name}</option>
                     ))}
@@ -815,7 +815,7 @@ export default function UserMasterPage() {
                       setInviteDesignation("");
                     }}
                   >
-                    <option value="">-- Select Department --</option>
+                    <option value="">-- Select department --</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
@@ -829,7 +829,7 @@ export default function UserMasterPage() {
                     value={inviteDesignation}
                     onChange={e => setInviteDesignation(e.target.value)}
                   >
-                    <option value="">-- Select Designation --</option>
+                    <option value="">-- Select designation --</option>
                     {designations
                       .filter(ds => !inviteDepartment || ds.department_id === inviteDepartment)
                       .map(ds => (
@@ -843,7 +843,7 @@ export default function UserMasterPage() {
               <div className="pt-2 border-t border-border/60">
                 <div className="flex items-center justify-between mb-2.5">
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted">Operational Module Access</h4>
+                    <h4 className="text-xs font-bold text-muted">Operational module access</h4>
                     <p className="text-[11px] text-muted">Select modules the user will be provisioned access to upon accepting invite</p>
                   </div>
                   <AppBadge variant="info">Auto-Provisioned</AppBadge>
@@ -856,21 +856,21 @@ export default function UserMasterPage() {
                       name: "Workspace & Tasks", 
                       desc: "Task tracker, sprints, ticketing/helpdesk, requirements & AMC lifecycle.", 
                       icon: FolderKanban, 
-                      color: "text-blue-500 bg-blue-500/10 border-blue-500/20" 
+                      color: "text-info-text bg-info-soft border-info-border" 
                     },
                     { 
                       code: "VEHICLE_DESK", 
                       name: "Vehicle Management Desk", 
                       desc: "Fleet master, vehicle allocation, trip sheets, driver roster, maintenance & spare parts.", 
                       icon: Car, 
-                      color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" 
+                      color: "text-success-text bg-success-soft border-success-border" 
                     },
                     { 
                       code: "DESIGN_TRACKING", 
                       name: "Design & Drawing Tracking", 
                       desc: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC.", 
                       icon: Compass, 
-                      color: "text-purple-500 bg-purple-500/10 border-purple-500/20" 
+                      color: "text-accent-soft-text bg-accent-soft border-border" 
                     }
                   ].map((mod) => {
                     const isChecked = inviteSelectedModules.includes(mod.code);
@@ -914,8 +914,8 @@ export default function UserMasterPage() {
                             <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                               {mod.name}
                               {isDefault && (
-                                <span className="text-[10px] bg-theme-btn-primary/15 text-theme-btn-primary font-medium px-1.5 py-0.5 rounded border border-theme-btn-primary/30">
-                                  Default Landing
+                                <span className="text-[11px] bg-accent-soft text-theme-btn-primary font-medium px-1.5 py-0.5 rounded border border-theme-btn-primary/30">
+                                  Default landing
                                 </span>
                               )}
                             </span>
@@ -969,8 +969,8 @@ export default function UserMasterPage() {
 
       {/* Assign Modules Modal Dialog */}
       {moduleModalOpen && moduleModalUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface dark:bg-slate-900 border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-surface text-theme-icon flex items-center justify-center border border-border">
@@ -978,14 +978,14 @@ export default function UserMasterPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-foreground">
-                    Assign Operational Modules
+                    Assign operational modules
                   </h3>
                   <p className="text-xs text-muted">
                     Configure permitted workspaces for {moduleModalUser.full_name} ({moduleModalUser.email})
                   </p>
                 </div>
               </div>
-              <AppButton 
+              <AppButton aria-label="Close" 
                 variant="ghost" 
                 size="icon-sm" 
                 onClick={() => setModuleModalOpen(false)}
@@ -999,14 +999,14 @@ export default function UserMasterPage() {
               {moduleModalLoading ? (
                 <div className="py-8 text-center text-muted flex flex-col items-center gap-2">
                   <RefreshCw className="h-5 w-5 animate-spin text-theme-icon" />
-                  <span className="text-xs">Loading module entitlements...</span>
+                  <span className="text-xs">Loading module entitlements…</span>
                 </div>
               ) : (
                 [
-                  { code: "VEHICLE_DESK", name: "Vehicle Module", desc: "Fleet inventory, trip sheets, driver rosters, maintenance & spare parts.", icon: Car, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
-                  { code: "TASK_WORKFLOW", name: "Workspace Module", desc: "Executive task tracker, sprints, ticketing/helpdesk, requirements & AMC.", icon: FolderKanban, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+                  { code: "VEHICLE_DESK", name: "Vehicle Module", desc: "Fleet inventory, trip sheets, driver rosters, maintenance & spare parts.", icon: Car, color: "text-success-text bg-success-soft border-success-border" },
+                  { code: "TASK_WORKFLOW", name: "Workspace Module", desc: "Executive task tracker, sprints, ticketing/helpdesk, requirements & AMC.", icon: FolderKanban, color: "text-info-text bg-info-soft border-info-border" },
                   { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-theme-icon bg-surface border-border" },
-                  { code: "DASHBOARDS", name: "Dashboards", desc: "IT & Marketing budget dashboards. What each user can do is set by DASH_* role permissions.", icon: LineChart, color: "text-fuchsia-500 bg-fuchsia-500/10 border-fuchsia-500/20" }
+                  { code: "DASHBOARDS", name: "Dashboards", desc: "IT & Marketing budget dashboards. What each user can do is set by DASH_* role permissions.", icon: LineChart, color: "text-accent-soft-text bg-accent-soft border-border" }
                 ].map((mod) => {
                   const isChecked = modalSelectedCodes.includes(mod.code);
                   const isDefault = modalDefaultCode === mod.code;
@@ -1031,8 +1031,8 @@ export default function UserMasterPage() {
                               {mod.name}
                             </span>
                             {isDefault && isChecked && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                                <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" /> Landing Default
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
+                                <Star className="h-2.5 w-2.5 fill-warning text-warning-text" /> Landing default
                               </span>
                             )}
                           </div>
@@ -1052,11 +1052,11 @@ export default function UserMasterPage() {
                             onClick={() => setModalDefaultCode(mod.code)}
                             className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${
                               isDefault
-                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold cursor-default"
+                                ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
                                 : "text-muted hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
                             }`}
                           >
-                            <Star className={`h-3 w-3 ${isDefault ? "fill-amber-500 text-amber-500" : ""}`} />
+                            <Star className={`h-3 w-3 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
                             <span>{isDefault ? "Default" : "Make Default"}</span>
                           </AppButton>
                         )}
@@ -1080,7 +1080,7 @@ export default function UserMasterPage() {
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                          <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-btn-primary"></div>
                         </label>
                       </div>
                     </div>
@@ -1121,13 +1121,13 @@ export default function UserMasterPage() {
       {/* Dismissable Informational Alerts */}
       {successAlert && (
         <div className={`p-4 rounded-xl border flex items-center justify-between text-xs animate-in fade-in-20 ${
-          "bg-emerald-50 border-emerald-200 text-emerald-800"
+          "bg-success-soft border-success-border text-success-text"
         }`}>
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
             <span className="font-medium">{successAlert}</span>
           </div>
-          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-subtle">
+          <AppButton aria-label="Close" variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-subtle">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
@@ -1135,14 +1135,14 @@ export default function UserMasterPage() {
 
       {errorAlert && (
         <div className={`p-4 rounded-xl border flex items-start gap-2.5 text-xs animate-in fade-in-20 ${
-          "bg-rose-50 border-rose-200 text-rose-800"
+          "bg-danger-soft border-danger-border text-danger-text"
         }`}>
           <ShieldAlert className="h-4 w-4 text-danger shrink-0 mt-0.5" />
           <div className="flex-1">
-            <strong className="font-bold block mb-0.5">Validation Constraint Notice:</strong>
+            <strong className="font-bold block mb-0.5">Validation constraint notice:</strong>
             {errorAlert}
           </div>
-          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-subtle">
+          <AppButton aria-label="Close" variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-subtle">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
@@ -1159,16 +1159,16 @@ export default function UserMasterPage() {
             <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-border flex flex-col gap-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
-                  <h2 className="text-sm font-semibold text-foreground dark:text-white">
-                    Personnel Registry
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Personnel registry
                   </h2>
                   <span className="text-[11px] text-muted">
-                    {filteredUsers.length} Users Found
+                    {filteredUsers.length} Users found
                   </span>
                 </div>
 
                 {/* Status Switcher Tabs */}
-                <div className="flex items-center gap-1 p-1 rounded-lg bg-surface dark:bg-[#0f111a] border border-border dark:border-border">
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-surface border border-border dark:border-border">
                   {(["ALL", "ACTIVE", "DISABLED"] as const).map(flt => (
                     <AppButton variant="secondary"
                       key={flt}
@@ -1177,7 +1177,7 @@ export default function UserMasterPage() {
                       className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
                         statusFilter === flt 
                           ? "bg-theme-btn-primary text-white shadow-sm" 
-                          : "text-subtle hover:text-foreground dark:text-muted dark:hover:text-white hover:bg-surface dark:hover:bg-surface/5"
+                          : "text-subtle hover:text-foreground dark:text-muted hover:bg-surface dark:hover:bg-surface/5"
                       }`}
                     >
                       {flt}
@@ -1192,9 +1192,9 @@ export default function UserMasterPage() {
                   <select 
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
-                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-surface dark:bg-[#0f111a] border-border dark:border-border appearance-none focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 text-subtle dark:text-muted"
+                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-surface border-border dark:border-border appearance-none focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 text-subtle dark:text-muted"
                   >
-                    <option value="ALL">All Departments</option>
+                    <option value="ALL">All departments</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id}>{d.name || d.code}</option>
                     ))}
@@ -1202,11 +1202,11 @@ export default function UserMasterPage() {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none" />
                 </div>
                 <AppInput
-                  placeholder="Search across all fields (Name, UIN, Email, Dept, Designation, Role, Manager)..."
+                  placeholder="Search across all fields (Name, UIN, Email, Dept, Designation, Role, Manager)…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   leftIcon={<Search className="h-3.5 w-3.5" />}
-                  className="w-full h-9 text-xs bg-surface dark:bg-[#0f111a]"
+                  className="w-full h-9 text-xs bg-surface"
                 />
               </div>
             </div>
@@ -1217,7 +1217,7 @@ export default function UserMasterPage() {
                 <div className="flex flex-col items-center justify-center py-16">
                   <ChandakLoader
                     size="md"
-                    title="Syncing Enterprise Directory..."
+                    title="Syncing enterprise directory…"
                     subtitle="Loading active staff personnel & role credentials"
                   />
                 </div>
@@ -1228,7 +1228,7 @@ export default function UserMasterPage() {
                     No active staff personnel correspond to selected keyword tags.
                   </p>
                   <p className="text-xs text-muted">
-                    Click 'Register User Account' above to input authentic credentials.
+                    Click 'register user account' above to input authentic credentials.
                   </p>
                 </div>
               ) : (
@@ -1237,14 +1237,14 @@ export default function UserMasterPage() {
                     <AppTableHeader>
                       <tr>
                         <AppTableHead className="w-14 text-center px-2">Avatar</AppTableHead>
-                        <AppTableHead>Full Name</AppTableHead>
-                        <AppTableHead>Corporate Email</AppTableHead>
+                        <AppTableHead>Full name</AppTableHead>
+                        <AppTableHead>Corporate email</AppTableHead>
                         <AppTableHead>Department</AppTableHead>
                         <AppTableHead>Designation</AppTableHead>
-                        <AppTableHead>Reporting Manager</AppTableHead>
-                        <AppTableHead className="w-28 text-center">Account Status</AppTableHead>
-                        <AppTableHead>Unique Code (UIN)</AppTableHead>
-                        <AppTableHead>System Role</AppTableHead>
+                        <AppTableHead>Reporting manager</AppTableHead>
+                        <AppTableHead className="w-28 text-center">Account status</AppTableHead>
+                        <AppTableHead>Unique code (UIN)</AppTableHead>
+                        <AppTableHead>System role</AppTableHead>
                         <AppTableHead className="text-right w-32 shrink-0 pr-4">Actions</AppTableHead>
                       </tr>
                     </AppTableHeader>
@@ -1257,62 +1257,62 @@ export default function UserMasterPage() {
                             onClick={() => handleInspectUser(usr)}
                             className={`cursor-pointer group transition-all duration-200 ${
                               isSelected 
-                                ? ("bg-theme-btn-primary/10/50 shadow-inner") 
+                                ? ("bg-accent-soft shadow-inner") 
                                 : ("hover:bg-elevated/80")
                             }`}
                           >
                             <AppTableCell className="w-14 px-2">
                               <div className="relative w-8 h-8 mx-auto">
-                                <div className={`absolute inset-0 flex items-center justify-center rounded-full text-[10px] font-medium uppercase ${
-                                  "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                                <div className={`absolute inset-0 flex items-center justify-center rounded-full text-[11px] font-medium ${
+                                  "bg-sunken text-foreground"
                                 }`}>
                                   {usr.full_name?.substring(0, 2) || "NA"}
                                 </div>
                                 <img 
                                   src={usr.profile_photo || PRESET_AVATARS[0]} 
                                   alt={usr.full_name}
-                                  className="absolute inset-0 w-8 h-8 rounded-full object-cover shadow-none ring-1 ring-transparent group-hover:ring-slate-200 dark:group-hover:ring-slate-700 transition-all z-10"
+                                  className="absolute inset-0 w-8 h-8 rounded-full object-cover shadow-none ring-1 ring-transparent group-hover:ring-border transition-all z-10"
                                   onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
                                 />
                               </div>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-sm font-bold text-slate-900 dark:text-slate-100 block`}>
+                              <span className={`text-sm font-bold text-foreground block`}>
                                 {usr.full_name}
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`truncate max-w-[200px] text-muted dark:text-slate-400 text-xs`}>
+                              <span className={`truncate max-w-[200px] text-muted text-xs`}>
                                 {usr.email}
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`flex items-center gap-1 shrink-0 text-slate-600 dark:text-slate-400 font-medium text-xs`}>
+                              <span className={`flex items-center gap-1 shrink-0 text-subtle font-medium text-xs`}>
                                 <Layers className="h-3 w-3 opacity-70" />
                                 <span className="truncate max-w-[150px]">{usr.departmentObj?.name || "Global Scope"}</span>
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase whitespace-nowrap bg-theme-btn-primary/10 text-theme-icon`}>
+                              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold tracking-wide whitespace-nowrap bg-accent-soft text-theme-icon`}>
                                 {usr.designationObj?.name || "General Assignee"}
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[11px] font-semibold text-slate-700 dark:text-slate-300`}>
+                              <span className={`text-[11px] font-semibold text-foreground`}>
                                 {usr.managerObj?.full_name || "Self / Root"}
                               </span>
                             </AppTableCell>
 
                             <AppTableCell className="w-28 text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase inline-block ${
+                              <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold inline-block ${
                                 usr.is_active 
-                                  ? ("bg-emerald-50 dark:bg-emerald-900/30 text-success dark:text-success") 
-                                  : ("bg-slate-100 dark:bg-slate-800 text-muted dark:text-slate-400")
+                                  ? ("bg-success-soft text-success dark:text-success") 
+                                  : ("bg-sunken text-muted")
                               }`}>
                                 {usr.is_active ? "Active" : "Disabled"}
                               </span>
@@ -1320,17 +1320,17 @@ export default function UserMasterPage() {
 
                             <AppTableCell>
                               {usr.user_code ? (
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-muted dark:text-slate-400`}>
+                                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap bg-sunken text-muted`}>
                                   {usr.user_code}
                                 </span>
                               ) : (
-                                <span className="text-[10px] text-slate-400 dark:text-muted italic">NA</span>
+                                <span className="text-[11px] text-muted dark:text-muted italic">NA</span>
                               )}
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                                usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-warning" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                                usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-warning-soft text-warning-text dark:text-warning" : "bg-sunken text-subtle"
                               }`}>
                                 {usr.roleObj?.name || "Standard Profile"}
                               </span>
@@ -1339,35 +1339,35 @@ export default function UserMasterPage() {
                             <AppTableCell className="text-right w-32 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1.5">
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
-                                  <AppButton variant="secondary"
+                                  <AppButton aria-label="Assign workspace modules" variant="secondary"
                                     type="button"
                                     onClick={() => handleOpenModuleModal(usr)}
-                                    className="p-1.5 rounded-lg transition-all text-theme-icon dark:text-muted-foreground bg-surface/80 dark:bg-surface hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-border/70 dark:border-indigo-800/50 shadow-2xs"
-                                    title="Assign Workspace Modules"
+                                    className="p-1.5 rounded-lg transition-all text-theme-icon dark:text-muted-foreground bg-surface/80 dark:bg-surface hover:bg-accent-soft border border-border/70 shadow-2xs"
+                                    title="Assign workspace modules"
                                   >
                                     <Layers className="h-4 w-4" />
                                   </AppButton>
                                 )}
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
-                                  <AppButton variant="secondary"
+                                  <AppButton aria-label="Edit user profile" variant="secondary"
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
                                     className={`p-1.5 rounded-lg transition-all ${
-                                      "text-slate-500 dark:text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 border border-transparent hover:border-border"
+                                      "text-muted dark:text-muted hover:text-theme-icon hover:bg-accent-soft border border-transparent hover:border-border"
                                     }`}
-                                    title="Edit User Profile"
+                                    title="Edit user profile"
                                   >
                                     <Edit3 className="h-4 w-4" />
                                   </AppButton>
                                 )}
                                 {(hasPermission("USERS_DELETE") || isSuperAdmin) && (
-                                  <AppButton variant="secondary"
+                                  <AppButton aria-label="Remove user" variant="secondary"
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
                                     className={`p-1.5 rounded-lg transition-all ${
-                                      "text-slate-400 dark:text-muted hover:text-danger hover:bg-rose-50 dark:hover:bg-rose-900/20 border border-transparent hover:border-rose-200/40"
+                                      "text-muted dark:text-muted hover:text-danger hover:bg-danger-soft border border-transparent hover:border-danger-border"
                                     }`}
-                                    title="Remove User"
+                                    title="Remove user"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </AppButton>
@@ -1394,7 +1394,7 @@ export default function UserMasterPage() {
           style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
           onClick={() => { if (!deleteWarningData.loading) { setDeleteInspectUser(null); setDeleteWarningData(null); } }}
         >
-          <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden flex flex-col p-6 space-y-6 ${
+          <div className={`relative w-full max-w-md rounded-2xl border shadow-lg overflow-hidden flex flex-col p-6 space-y-6 ${
             "bg-surface border-border text-foreground"
           }`} onClick={(e) => e.stopPropagation()}>
             
@@ -1402,20 +1402,20 @@ export default function UserMasterPage() {
               <div className="flex flex-col items-center justify-center py-10">
                 <ChandakLoader
                   size="md"
-                  title="Performing Security Integrity Checks..."
-                  subtitle="Scanning Tickets, Tasks, and Requirements references"
+                  title="Performing security integrity checks…"
+                  subtitle="Scanning tickets, tasks, and requirements references"
                 />
               </div>
             ) : deleteWarningData.hasReferences ? (
               <>
                 {/* Deletion Warning Alert Style */}
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-warning/10 border border-amber-500/20 text-warning shrink-0">
+                  <div className="p-3 rounded-full bg-warning/10 border border-warning-border text-warning shrink-0">
                     <ShieldAlert className="h-6 w-6 animate-pulse" />
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-sm font-bold tracking-tight text-warning">
-                      Delete Warning: Active Assignments
+                      Delete warning: active assignments
                     </h3>
                     <p className={`text-xs ${"text-muted"}`}>
                       Personnel <strong className={"text-foreground"}>{deleteInspectUser.full_name}</strong> is associated with active assignments.
@@ -1426,19 +1426,19 @@ export default function UserMasterPage() {
                 <div className={`p-4 rounded-xl border space-y-2.5 text-xs ${
                   "bg-elevated/50 border-border"
                 }`}>
-                  <span className="text-xs font-bold text-muted uppercase tracking-wider block">
-                    Active Reference Summary
+                  <span className="text-xs font-bold text-muted block">
+                    Active reference summary
                   </span>
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-muted flex items-center gap-1.5">
-                        ðŸŽ« Active Tickets:
+                        ðŸŽ« active tickets:
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.tickets > 0 
-                          ? "bg-danger/10 text-danger border border-rose-500/20" 
-                          : "bg-gray-500/10 text-muted"
+                          ? "bg-danger/10 text-danger border border-danger-border" 
+                          : "bg-sunken text-muted"
                       }`}>
                         {deleteWarningData.tickets}
                       </span>
@@ -1446,12 +1446,12 @@ export default function UserMasterPage() {
 
                     <div className="flex items-center justify-between">
                       <span className="text-muted flex items-center gap-1.5">
-                        ðŸ“‹ Workspace Tasks:
+                        ðŸ“‹ workspace tasks:
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.tasks > 0 
-                          ? "bg-danger/10 text-danger border border-rose-500/20" 
-                          : "bg-gray-500/10 text-muted"
+                          ? "bg-danger/10 text-danger border border-danger-border" 
+                          : "bg-sunken text-muted"
                       }`}>
                         {deleteWarningData.tasks}
                       </span>
@@ -1463,8 +1463,8 @@ export default function UserMasterPage() {
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.requirements > 0 
-                          ? "bg-danger/10 text-danger border border-rose-500/20" 
-                          : "bg-gray-500/10 text-muted"
+                          ? "bg-danger/10 text-danger border border-danger-border" 
+                          : "bg-sunken text-muted"
                       }`}>
                         {deleteWarningData.requirements}
                       </span>
@@ -1473,7 +1473,7 @@ export default function UserMasterPage() {
                 </div>
 
                 <div className={`p-3 rounded-lg border text-[0.8rem] leading-relaxed ${
-                  "bg-rose-50/50 border-rose-200 text-rose-900"
+                  "bg-danger-soft border-danger-border text-danger-text"
                 }`}>
                   <strong>Warning:</strong> Deleting this user will archive their account and remove them from active views. Relational historic logs will be preserved as soft-deleted. Are you sure you want to proceed?
                 </div>
@@ -1493,9 +1493,9 @@ export default function UserMasterPage() {
                     variant="outline" 
                     size="sm"
                     onClick={() => handleDeactivateUser(deleteInspectUser)}
-                    className="w-full sm:w-auto text-warning border-amber-500/30 hover:bg-warning/10"
+                    className="w-full sm:w-auto text-warning border-warning-border hover:bg-warning/10"
                   >
-                    Deactivate Only
+                    Deactivate only
                   </AppButton>
                   <AppButton 
                     type="button" 
@@ -1505,7 +1505,7 @@ export default function UserMasterPage() {
                     onClick={() => handleConfirmSoftDelete(deleteInspectUser)}
                     className="w-full sm:w-auto bg-danger hover:bg-danger text-white border-none"
                   >
-                    Force Delete &amp; Archive
+                    Force delete &amp; archive
                   </AppButton>
                 </div>
               </>
@@ -1513,12 +1513,12 @@ export default function UserMasterPage() {
               <>
                 {/* Safe for Soft Delete Alert Style */}
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-success/10 border border-emerald-500/20 text-success shrink-0">
+                  <div className="p-3 rounded-full bg-success/10 border border-success-border text-success shrink-0">
                     <CheckCircle2 className="h-6 w-6 animate-pulse" />
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-sm font-bold tracking-tight text-success">
-                      Delete Account Confirmation
+                      Delete account confirmation
                     </h3>
                     <p className={`text-xs ${"text-muted"}`}>
                       Personnel <strong className={"text-foreground"}>{deleteInspectUser.full_name}</strong> has no active references in Tickets, Tasks, or Requirements.
@@ -1545,9 +1545,9 @@ export default function UserMasterPage() {
                     variant="outline" 
                     size="sm"
                     onClick={() => handleDeactivateUser(deleteInspectUser)}
-                    className="w-full sm:w-auto text-warning border-amber-500/30 hover:bg-warning/10"
+                    className="w-full sm:w-auto text-warning border-warning-border hover:bg-warning/10"
                   >
-                    Deactivate Only
+                    Deactivate only
                   </AppButton>
                   <AppButton 
                     type="button" 
@@ -1557,7 +1557,7 @@ export default function UserMasterPage() {
                     onClick={() => handleConfirmSoftDelete(deleteInspectUser)}
                     className="w-full sm:w-auto bg-danger hover:bg-danger text-white border-none"
                   >
-                    Confirm Delete
+                    Confirm delete
                   </AppButton>
                 </div>
               </>
@@ -1570,11 +1570,11 @@ export default function UserMasterPage() {
       {/* ── Assign Workspace Modules Modal ── */}
       {moduleModalOpen && moduleModalUser && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-150"
           onClick={() => { if (!moduleModalSaving) setModuleModalOpen(false); }}
         >
           <div 
-            className="relative w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl p-6 space-y-5 text-foreground"
+            className="relative w-full max-w-lg rounded-2xl border border-border bg-surface shadow-lg p-6 space-y-5 text-foreground"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -1585,14 +1585,14 @@ export default function UserMasterPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-foreground">
-                    Assign Operational Modules
+                    Assign operational modules
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Personnel: <strong>{moduleModalUser.full_name}</strong> ({moduleModalUser.email})
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Close"
                 type="button"
                 onClick={() => setModuleModalOpen(false)}
                 className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer"
@@ -1605,14 +1605,14 @@ export default function UserMasterPage() {
               <div className="flex flex-col items-center justify-center py-8">
                 <ChandakLoader
                   size="md"
-                  title="Loading Module Entitlements..."
-                  subtitle="Fetching authorized workspace modules"
+                  title="Loading module entitlements…"
+                  subtitle="Fetching authorised workspace modules"
                 />
               </div>
             ) : (
               <div className="space-y-4 text-xs">
                 <p className="text-xs text-muted-foreground">
-                  Select which workspace modules this user can access. Unauthorized modules will be completely hidden from their switcher and navigation.
+                  Select which workspace modules this user can access. Unauthorised modules will be completely hidden from their switcher and navigation.
                 </p>
 
                 {/* Module Cards */}
@@ -1623,28 +1623,28 @@ export default function UserMasterPage() {
                       name: "Workspace Tasks & Governance",
                       desc: "Executive tasks, sprints, tickets, requirements, SLA, and enterprise analytics.",
                       icon: FolderKanban,
-                      color: "text-blue-500 border-blue-500/30 bg-blue-500/10"
+                      color: "text-info-text border-info-border bg-info-soft"
                     },
                     {
                       code: "DESIGN_TRACKING",
                       name: "Design & Engineering Tracking",
                       desc: "Architectural drawings, CAD revisions, stage-gate reviews, GFC site handover & consultant directory.",
                       icon: Compass,
-                      color: "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
+                      color: "text-success-text border-success-border bg-success-soft"
                     },
                     {
                       code: "VEHICLE_DESK",
                       name: "Fleet & Vehicle Desk",
                       desc: "Vehicle allocations, driver roster, trip sheets, maintenance, parts inventory & logistics.",
                       icon: Car,
-                      color: "text-amber-500 border-amber-500/30 bg-amber-500/10"
+                      color: "text-warning-text border-warning-border bg-warning-soft"
                     },
                     {
                       code: "DASHBOARDS",
                       name: "Department Dashboards",
                       desc: "IT & Marketing budget dashboards on live IN4 data. Actions are set by DASH_* role permissions.",
                       icon: LineChart,
-                      color: "text-fuchsia-500 border-fuchsia-500/30 bg-fuchsia-500/10"
+                      color: "text-accent-soft-text border-border bg-accent-soft"
                     }
                   ].map(mod => {
                     const isSelected = modalSelectedCodes.includes(mod.code);
@@ -1671,7 +1671,7 @@ export default function UserMasterPage() {
                         }}
                         className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
                           isSelected 
-                            ? "bg-surface border-border shadow-xs ring-1 ring-indigo-500/20" 
+                            ? "bg-surface border-border shadow-xs ring-1 ring-ring" 
                             : "bg-muted/30 border-border opacity-60 hover:opacity-100"
                         }`}
                       >
@@ -1683,8 +1683,8 @@ export default function UserMasterPage() {
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-foreground text-xs">{mod.name}</span>
                               {isDefault && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface text-theme-icon dark:text-muted-foreground font-bold border border-border">
-                                  Default Landing
+                                <span className="text-[11px] px-1.5 py-0.2 rounded bg-surface text-theme-icon dark:text-muted-foreground font-bold border border-border">
+                                  Default landing
                                 </span>
                               )}
                             </div>
@@ -1695,7 +1695,7 @@ export default function UserMasterPage() {
                         <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
                           <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all ${
                             isSelected 
-                              ? "bg-indigo-600 border-indigo-600 text-white shadow-2xs" 
+                              ? "bg-primary border-border-active text-white shadow-2xs" 
                               : "border-border bg-surface"
                           }`}>
                             {isSelected && <Check className="h-3 w-3" />}
@@ -1708,7 +1708,7 @@ export default function UserMasterPage() {
 
                 {/* Default Landing Module Dropdown */}
                 <div className="pt-2 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <label className="text-xs font-bold text-foreground">Default Landing Module:</label>
+                  <label className="text-xs font-bold text-foreground">Default landing module:</label>
                   <select
                     value={modalDefaultCode}
                     onChange={e => setModalDefaultCode(e.target.value)}
@@ -1742,7 +1742,7 @@ export default function UserMasterPage() {
                 onClick={handleSaveModules}
                 disabled={moduleModalSaving || moduleModalLoading}
                 leftIcon={moduleModalSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                className="bg-indigo-600 hover:bg-surface0 text-white font-bold"
+                className="bg-primary hover:bg-surface0 text-white font-bold"
               >
                 {moduleModalSaving ? "Saving Allocations..." : "Save Module Allocations"}
               </AppButton>

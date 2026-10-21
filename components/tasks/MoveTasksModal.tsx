@@ -128,13 +128,13 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
         <div className="py-4">
           {step === 1 && (
             <div className="space-y-4">
-              <label className="theme-label block">Target Workspace</label>
+              <label className="theme-label block">Target workspace</label>
               <select
                 value={targetWorkspaceId}
                 onChange={(e) => setTargetWorkspaceId(e.target.value)}
                 className="w-full text-sm bg-elevated text-foreground border border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
               >
-                <option value="">Select a Workspace...</option>
+                <option value="">Select a Workspace…</option>
                 {workspaces.map(w => (
                   <option key={w.id} value={w.id}>{w.workspace_name}</option>
                 ))}
@@ -160,13 +160,13 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                       
                       {t.reqNewExec && (
                         <div>
-                          <label className="theme-label block">New Executive</label>
+                          <label className="theme-label block">New executive</label>
                           <select
                             value={mappings[t.id]?.newExecutive || ""}
                             onChange={(e) => setMappings(prev => ({ ...prev, [t.id]: { ...prev[t.id], newExecutive: e.target.value } }))}
                             className="w-full mt-1 text-xs bg-surface text-foreground border border-border rounded px-2 py-1.5"
                           >
-                            <option value="">Select Executive...</option>
+                            <option value="">Select Executive…</option>
                             {stakeholders.map(s => (
                               <option key={s.user_id} value={s.user_id}>{s.full_name || s.email}</option>
                             ))}
@@ -176,7 +176,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
 
                       {t.reqNewWatchers && (
                         <div>
-                          <label className="theme-label block">New Watchers</label>
+                          <label className="theme-label block">New watchers</label>
                           {/* simple multiple select for watchers */}
                           <select
                             multiple
@@ -192,7 +192,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                               <option key={s.user_id} value={s.user_id}>{s.full_name || s.email}</option>
                             ))}
                           </select>
-                          <p className="text-[10px] text-muted mt-1">Hold Ctrl/Cmd to select multiple.</p>
+                          <p className="text-[11px] text-muted mt-1">Hold Ctrl/Cmd to select multiple.</p>
                         </div>
                       )}
                     </div>
@@ -217,7 +217,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
               <AppButton type="button" variant="ghost" onClick={() => setStep(1)}>Back</AppButton>
               <AppButton type="button" variant="primary" disabled={loading} onClick={handleMove}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Confirm Move
+                Confirm move
               </AppButton>
             </>
           )}

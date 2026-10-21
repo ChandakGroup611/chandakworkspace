@@ -14,7 +14,8 @@ import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor,
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ChandakLoader from "@/components/ui/ChandakLoader";
-import { formatDate } from "@/components/ui/data";
+import { formatDate, StatusBadge, PriorityIndicator } from "@/components/ui/data";
+import { Info } from "lucide-react";
 
 export default function RequirementsGroomingBoard() {
   const router = useRouter();
@@ -31,10 +32,10 @@ export default function RequirementsGroomingBoard() {
 
   const columns = useMemo(() => {
     const statuses = [
-      { id: "Draft", name: "Backlog / Draft", color: "var(--muted)" },
-      { id: "Pending Approval", name: "In Review (Grooming)", color: "var(--warning)" },
-      { id: "Approved", name: "Ready for Dev (Approved)", color: "var(--success)" },
-      { id: "Rejected", name: "Rejected / Cancelled", color: "var(--danger)" }
+      { id: "Draft", name: "Backlog", color: "var(--text-muted)" },
+      { id: "Pending Approval", name: "In review", color: "var(--warning)" },
+      { id: "Approved", name: "Ready for development", color: "var(--success)" },
+      { id: "Rejected", name: "Rejected or cancelled", color: "var(--danger)" }
     ];
 
     return statuses.map(s => {
@@ -92,31 +93,30 @@ export default function RequirementsGroomingBoard() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Agile Requirements Grooming"
-        badge={<AppBadge variant="warning">Grooming Board</AppBadge>}
-        actions={
-          <Link href="/requirements">
-            <AppButton variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
-              Back to List
-            </AppButton>
-          </Link>
-        }
+        title="Requirement grooming"
+        description="Requirements grouped by approval stage"
+        breadcrumbs={[{ label: "Requirements", href: "/requirements" }, { label: "Grooming" }]}
       />
 
-      <div className="mt-4 flex-1 overflow-hidden flex flex-col min-h-[500px]">
+      <div role="note" className="flex items-start gap-2 rounded-md border border-info-border bg-info-soft px-3 py-2 text-[13px] text-info-text">
+        <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <span>Moving a card here is for planning only and isn&apos;t saved. To change a requirement&apos;s status, open it and use its approval flow.</span>
+      </div>
+
+      <div className="mt-4 flex min-h-[500px] flex-1 flex-col overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-full min-h-[400px]">
-            <ChandakLoader size="md" title="Loading Grooming Board..." />
+            <ChandakLoader size="md" title="Loading grooming board…" />
           </div>
         ) : (
-          <div className="flex h-full overflow-x-auto pb-4 space-x-6">
+          <div className="flex h-full gap-3 overflow-x-auto pb-2">
             <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               {columns.map(col => (
                 <BoardColumn key={col.id} column={col} onClick={(req) => router.push(`/requirements/${req.id}?tab=analysis`)} />
               ))}
               <DragOverlay>
                 {activeReq ? (
-                  <div className="rotate-3 opacity-90 cursor-grabbing shadow-2xl">
+                  <div className="cursor-grabbing opacity-95 shadow-lg">
                     <ReqCard req={activeReq} />
                   </div>
                 ) : null}
@@ -136,18 +136,16 @@ function BoardColumn({ column, onClick }: { column: any, onClick: (req: any) => 
   });
 
   return (
-    <div className="flex flex-col w-[350px] min-w-[350px] bg-surface rounded-2xl border border-border h-full">
-      <div className="p-4 border-b border-border flex items-center justify-between bg-surface shrink-0 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: column.color }} />
-          <h3 className="font-bold text-[15px] text-foreground tracking-tight">{column.name}</h3>
+    <section aria-label={column.name} className="flex h-full w-[320px] min-w-[320px] flex-col rounded-[10px] border border-border bg-sunken">
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: column.color }} aria-hidden />
+          <h3 className="text-[13.5px] font-semibold text-heading">{column.name}</h3>
         </div>
-        <div className="bg-elevated text-muted px-2 py-0.5 rounded-full text-xs font-bold">
-          {column.items.length}
-        </div>
+        <span className="rounded bg-surface px-1.5 text-[12px] text-subtle tabular">{column.items.length}</span>
       </div>
-      
-      <div ref={setNodeRef} className="flex-1 p-3 overflow-y-auto space-y-3 flex flex-col min-h-[150px]">
+
+      <div ref={setNodeRef} className="flex min-h-[150px] flex-1 flex-col space-y-2 overflow-y-auto p-2">
         <SortableContext items={column.items.map((r: any) => r.code || r.requirement_code || r.id)} strategy={verticalListSortingStrategy}>
           {column.items.map((req: any) => (
             <SortableReqCard key={req.code || req.requirement_code || req.id} req={req} onClick={() => onClick(req)} />
@@ -155,12 +153,12 @@ function BoardColumn({ column, onClick }: { column: any, onClick: (req: any) => 
         </SortableContext>
         
         {column.items.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center border border-border rounded-xl m-2 bg-elevated/40">
-            <span className="text-sm font-medium text-muted">Empty Queue</span>
+          <div className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface/60 p-4 text-center text-[12.5px] text-muted">
+            No requirements in this stage
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -174,7 +172,7 @@ function SortableReqCard({ req, onClick }: { req: any, onClick: () => void }) {
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   if (isDragging) {
-    return <div ref={setNodeRef} style={style} className="opacity-40 border-2 border-theme-btn-primary rounded-xl h-[140px] bg-theme-btn-primary/5" />;
+    return <div ref={setNodeRef} style={style} className="h-[132px] rounded-[10px] border-2 border-border-active bg-accent-soft opacity-50" />;
   }
 
   return (
@@ -187,7 +185,8 @@ function SortableReqCard({ req, onClick }: { req: any, onClick: () => void }) {
       tabIndex={0}
       onClick={() => { if (!isDragging) onClick(); }} 
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!isDragging) onClick(); } }}
-      className="cursor-grab active:cursor-grabbing"
+      aria-label={`${req.code || req.requirement_code || "Requirement"}: ${req.title || "Untitled requirement"}. Press Enter to open.`}
+      className="cursor-grab rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:cursor-grabbing"
     >
       <ReqCard req={req} />
     </div>
@@ -195,50 +194,36 @@ function SortableReqCard({ req, onClick }: { req: any, onClick: () => void }) {
 }
 
 function ReqCard({ req }: { req: any }) {
+  const creator = req.creator?.full_name || req.requester?.full_name || "";
   return (
-    <AppCard className="hover:shadow-md hover:border-theme-btn-primary/40 transition-all group overflow-hidden bg-surface border-border">
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-3 gap-2">
-          <div className="flex items-center gap-2">
-            <GripVertical className="h-4 w-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded">
-              {req.code || req.requirement_code || req.id?.substring(0, 8)}
-            </div>
-          </div>
-          {req.priority?.name && (
-            <AppBadge 
-              variant="custom"
-              customColor={req.priority.priority_color || 'var(--muted)'}
-              className="text-[10px]"
-            >
-              {req.priority.name}
-            </AppBadge>
-          )}
+    <div className="theme-card-structural group p-3 shadow-sm transition-[border-color,box-shadow] hover:border-border-active hover:shadow-md">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <GripVertical className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+          <span className="font-mono text-[12px] font-medium text-accent-soft-text">
+            {req.code || req.requirement_code || req.id?.substring(0, 8)}
+          </span>
         </div>
-        
-        <h4 className="font-bold text-[14px] text-foreground leading-snug mb-3 line-clamp-2" title={req.title}>
-          {req.title || "Untitled Requirement"}
-        </h4>
-        
-        <div className="flex items-center gap-2 mb-3">
-          <span className="theme-label">Module:</span>
-          <span className="text-xs font-semibold text-muted truncate">{req.module?.name || '-'}</span>
-        </div>
-
-        <div className="flex items-center justify-between pt-3 border-t border-border">
-          <div className="flex items-center gap-2">
-             <div className="w-6 h-6 rounded-full bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold" title={req.creator?.full_name || 'Requester'}>
-               {(req.creator?.full_name || req.requester?.full_name || 'U').substring(0, 2).toUpperCase()}
-             </div>
-             <div className="text-[10px] font-medium text-muted">{formatDate(req.created_at)}</div>
-          </div>
-          
-          <div className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 bg-elevated rounded text-muted">
-             {req.approval_status?.includes('Pending') ? <Clock className="w-3.5 h-3.5 text-warning" /> : req.approval_status === 'Approved' ? <CheckCircle2 className="w-3.5 h-3.5 text-success" /> : <AlertCircle className="w-3.5 h-3.5 text-muted" />}
-             {req.approval_status || 'Draft'}
-          </div>
-        </div>
+        {req.priority?.name && <PriorityIndicator priority={req.priority.name} className="text-[12px] text-subtle" />}
       </div>
-    </AppCard>
+
+      <h4 className="mb-2 line-clamp-2 text-[13.5px] font-semibold leading-snug text-foreground" title={req.title}>
+        {req.title || "Untitled requirement"}
+      </h4>
+
+      {req.module?.name && <div className="mb-2 truncate text-[12.5px] text-muted">{req.module.name}</div>}
+
+      <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
+        <div className="flex min-w-0 items-center gap-2 text-[12px] text-muted">
+          {creator && (
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[10.5px] font-semibold text-accent-soft-text" title={creator}>
+              {creator.split(/\s+/).slice(0, 2).map((n: string) => n[0]?.toUpperCase()).join("")}
+            </span>
+          )}
+          <span className="tabular">{formatDate(req.created_at)}</span>
+        </div>
+        <StatusBadge status={req.approval_status || "Draft"} size="sm" />
+      </div>
+    </div>
   );
 }

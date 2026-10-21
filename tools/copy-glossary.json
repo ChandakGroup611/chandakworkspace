@@ -1,0 +1,469 @@
+{
+  "_about": "Wording rules for tools/text-audit.mjs. Edit freely; the checker reads this file. Spelling follows Indian/British English (organisation, licence, cancelled) because the app is used in India. Change 'spelling' to 'us' to flip every pair.",
+  "spelling": "en-IN",
+  "variants": [
+    [
+      "organisation",
+      "organization"
+    ],
+    [
+      "organisations",
+      "organizations"
+    ],
+    [
+      "cancelled",
+      "canceled"
+    ],
+    [
+      "cancelling",
+      "canceling"
+    ],
+    [
+      "colour",
+      "color"
+    ],
+    [
+      "colours",
+      "colors"
+    ],
+    [
+      "analyse",
+      "analyze"
+    ],
+    [
+      "analysed",
+      "analyzed"
+    ],
+    [
+      "catalogue",
+      "catalog"
+    ],
+    [
+      "authorise",
+      "authorize"
+    ],
+    [
+      "authorised",
+      "authorized"
+    ],
+    [
+      "unauthorised",
+      "unauthorized"
+    ],
+    [
+      "customise",
+      "customize"
+    ],
+    [
+      "prioritise",
+      "prioritize"
+    ],
+    [
+      "finalise",
+      "finalize"
+    ],
+    [
+      "summarise",
+      "summarize"
+    ],
+    [
+      "utilisation",
+      "utilization"
+    ],
+    [
+      "enrolment",
+      "enrollment"
+    ],
+    [
+      "behaviour",
+      "behavior"
+    ],
+    [
+      "labelled",
+      "labeled"
+    ],
+    [
+      "modelling",
+      "modeling"
+    ],
+    [
+      "travelling",
+      "traveling"
+    ],
+    [
+      "traveller",
+      "traveler"
+    ],
+    [
+      "travellers",
+      "travelers"
+    ],
+    [
+      "cheque",
+      "check"
+    ]
+  ],
+  "_variantsNote": "Pairs are [preferred, other]. 'licence' (noun) vs 'license' (verb) and 'centre' vs 'center' are not enforced automatically because product names (e.g. 'Communication Center', 'Microsoft License') may legitimately use either. Add them here if you decide.",
+  "preferredTerms": [
+    {
+      "avoid": [
+        "Log Out",
+        "Logout",
+        "Log out",
+        "Sign Out"
+      ],
+      "use": "Sign out"
+    },
+    {
+      "avoid": [
+        "Log In",
+        "Login"
+      ],
+      "use": "Sign in",
+      "only": "button"
+    },
+    {
+      "avoid": [
+        "Reqs"
+      ],
+      "use": "Requirements"
+    },
+    {
+      "avoid": [
+        "Kindly"
+      ],
+      "use": "Please"
+    },
+    {
+      "avoid": [
+        "Pls",
+        "Plz"
+      ],
+      "use": "Please"
+    },
+    {
+      "avoid": [
+        "Click here"
+      ],
+      "use": "a link that names the destination"
+    },
+    {
+      "avoid": [
+        "Something went wrong",
+        "An error occurred",
+        "Error occurred",
+        "Unknown error"
+      ],
+      "use": "say what failed and what to do, e.g. \"Couldn't save the vehicle. Check the registration number and try again.\""
+    },
+    {
+      "avoid": [
+        "Are you sure?"
+      ],
+      "use": "name the record and the consequence, e.g. \"Delete vehicle MH 12 AB 1234? Its trips stay in reports.\""
+    },
+    {
+      "avoid": [
+        "Submit"
+      ],
+      "use": "the action, e.g. \"Create ticket\", \"Send for approval\"",
+      "only": "button"
+    },
+    {
+      "avoid": [
+        "OK",
+        "Ok"
+      ],
+      "use": "the action, e.g. \"Done\", \"Delete\"",
+      "only": "button"
+    },
+    {
+      "avoid": [
+        "Vendor / Provider Master",
+        "Vendor/Provider Master"
+      ],
+      "use": "Vendors"
+    },
+    {
+      "avoid": [
+        "Trash Data"
+      ],
+      "use": "Trash"
+    },
+    {
+      "avoid": [
+        "No Data",
+        "No data found",
+        "No Records Found",
+        "No records found"
+      ],
+      "use": "say what's missing and what to do, e.g. \"No tasks match these filters\""
+    },
+    {
+      "avoid": [
+        "Paytment"
+      ],
+      "use": "Payment"
+    }
+  ],
+  "acronyms": [
+    "AMC",
+    "API",
+    "BOQ",
+    "CC",
+    "CCTV",
+    "CEO",
+    "CFO",
+    "CP",
+    "CSV",
+    "DMS",
+    "DPR",
+    "EMI",
+    "ERP",
+    "FAQ",
+    "GFC",
+    "GST",
+    "GSTIN",
+    "HO",
+    "HR",
+    "IAM",
+    "ID",
+    "IFSC",
+    "IMS",
+    "INR",
+    "IT",
+    "KPI",
+    "KYC",
+    "MIS",
+    "MKT",
+    "ADM",
+    "MOM",
+    "NOC",
+    "OTP",
+    "PAN",
+    "PDF",
+    "PO",
+    "PR",
+    "PUC",
+    "QA",
+    "QC",
+    "RBAC",
+    "RC",
+    "RERA",
+    "RFI",
+    "RFQ",
+    "SAP",
+    "SLA",
+    "SMS",
+    "SOP",
+    "SOPs",
+    "SSO",
+    "TDS",
+    "UAT",
+    "UPI",
+    "URL",
+    "VPN",
+    "XLSX",
+    "XLS",
+    "P0",
+    "P1",
+    "P2",
+    "P3",
+    "UI",
+    "UX",
+    "AI",
+    "CRM",
+    "HSN",
+    "SAC",
+    "TAN",
+    "UOM",
+    "WO",
+    "CAPEX",
+    "OPEX",
+    "TCO",
+    "MSA"
+  ],
+  "properNouns": [
+    "Chandak",
+    "Chandak Group",
+    "Chandak Workspace",
+    "Microsoft",
+    "OneDrive",
+    "One Drive",
+    "Excel",
+    "Outlook",
+    "Teams",
+    "Tally",
+    "AutoCAD",
+    "Supabase",
+    "Google",
+    "WhatsApp",
+    "Andheri",
+    "Mumbai",
+    "Pune",
+    "Borivali",
+    "Thane",
+    "India",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+    "Vehicle Desk",
+    "Design Tracking",
+    "Task Workflow",
+    "Dashboards"
+  ],
+  "misspellings": {
+    "paytment": "payment",
+    "pament": "payment",
+    "recieve": "receive",
+    "recieved": "received",
+    "occured": "occurred",
+    "occurence": "occurrence",
+    "seperate": "separate",
+    "seperately": "separately",
+    "definately": "definitely",
+    "maintainance": "maintenance",
+    "maintanance": "maintenance",
+    "sucessfully": "successfully",
+    "succesfully": "successfully",
+    "successfuly": "successfully",
+    "sucess": "success",
+    "adress": "address",
+    "priviledge": "privilege",
+    "enviroment": "environment",
+    "goverment": "government",
+    "accomodation": "accommodation",
+    "comission": "commission",
+    "commitee": "committee",
+    "neccessary": "necessary",
+    "necesary": "necessary",
+    "shedule": "schedule",
+    "calender": "calendar",
+    "catagory": "category",
+    "aproval": "approval",
+    "approvel": "approval",
+    "aprove": "approve",
+    "apporve": "approve",
+    "requirment": "requirement",
+    "requirments": "requirements",
+    "managment": "management",
+    "mangement": "management",
+    "dashbaord": "dashboard",
+    "documnet": "document",
+    "documnets": "documents",
+    "docuemnt": "document",
+    "attachement": "attachment",
+    "attachemnt": "attachment",
+    "assigne": "assignee",
+    "assingee": "assignee",
+    "assinged": "assigned",
+    "asigned": "assigned",
+    "complted": "completed",
+    "compelted": "completed",
+    "pendding": "pending",
+    "pendng": "pending",
+    "statsu": "status",
+    "staus": "status",
+    "vechicle": "vehicle",
+    "vehical": "vehicle",
+    "vehicel": "vehicle",
+    "insurence": "insurance",
+    "insurace": "insurance",
+    "drawign": "drawing",
+    "revison": "revision",
+    "revsion": "revision",
+    "transmital": "transmittal",
+    "consultent": "consultant",
+    "liasoning": "liaisoning",
+    "liaisioning": "liaisoning",
+    "subscripton": "subscription",
+    "susbcription": "subscription",
+    "notifcation": "notification",
+    "notificaton": "notification",
+    "employe": "employee",
+    "emplyee": "employee",
+    "depatment": "department",
+    "departmnet": "department",
+    "deparment": "department",
+    "compnay": "company",
+    "comapny": "company",
+    "reciept": "receipt",
+    "invocie": "invoice",
+    "ammount": "amount",
+    "amout": "amount",
+    "quantiy": "quantity",
+    "quanity": "quantity",
+    "totla": "total",
+    "upload sucessful": "upload successful",
+    "uploded": "uploaded",
+    "dowload": "download",
+    "donwload": "download",
+    "pasword": "password",
+    "passowrd": "password",
+    "acess": "access",
+    "accesss": "access",
+    "permision": "permission",
+    "permissons": "permissions",
+    "selet": "select",
+    "slect": "select",
+    "occassion": "occasion",
+    "untill": "until",
+    "wich": "which",
+    "thier": "their",
+    "recieving": "receiving",
+    "beleive": "believe",
+    "begining": "beginning",
+    "existance": "existence",
+    "independant": "independent",
+    "relevent": "relevant",
+    "refered": "referred",
+    "transfered": "transferred",
+    "prefered": "preferred",
+    "aquire": "acquire",
+    "acheive": "achieve",
+    "arguement": "argument",
+    "concensus": "consensus",
+    "embarass": "embarrass",
+    "foriegn": "foreign",
+    "garantee": "guarantee",
+    "harrass": "harass",
+    "immediatly": "immediately",
+    "occurance": "occurrence",
+    "persue": "pursue",
+    "publically": "publicly",
+    "reccomend": "recommend",
+    "recomend": "recommend",
+    "tommorow": "tomorrow",
+    "tommorrow": "tomorrow",
+    "truely": "truly",
+    "wierd": "weird",
+    "writting": "writing"
+  }
+}

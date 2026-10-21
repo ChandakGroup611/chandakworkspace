@@ -6,8 +6,8 @@ export default function SettingsLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Enterprise Configuration"
-        subtitle="Loading system preferences, triggers & integrations..."
+        title="Enterprise configuration"
+        subtitle="Loading system preferences, triggers & integrations…"
       />
     </div>
   );

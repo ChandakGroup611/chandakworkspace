@@ -48,7 +48,7 @@ export default function SLARuleBuilder() {
       const data = await fetchSLARules();
       setRules(data);
     } catch (err) {
-      toast.error("Failed to load SLA Rules");
+      toast.error("Failed to load SLA rules");
     } finally {
       setLoading(false);
     }
@@ -98,13 +98,13 @@ export default function SLARuleBuilder() {
       return;
     }
     if (!form.name || !form.code) {
-      toast.error("Name and Code are required");
+      toast.error("Name and code are required");
       return;
     }
     setSaving(true);
     try {
       await saveSLARule(form);
-      toast.success("SLA Rule saved successfully");
+      toast.success("SLA rule saved successfully");
       setEditingId(null);
       await loadRules();
     } catch (err: any) {
@@ -125,7 +125,7 @@ export default function SLARuleBuilder() {
   const executeDelete = async (id: string) => {
     try {
       await deleteSLARule(id);
-      toast.success("SLA Rule deleted");
+      toast.success("SLA rule deleted");
       await loadRules();
     } catch (err: any) {
       toast.error(err.message || "Failed to delete SLA rule");
@@ -135,7 +135,7 @@ export default function SLARuleBuilder() {
   if (loading || permsLoading) {
     return (
       <div className="h-[80vh] flex items-center justify-center">
-        <ChandakLoader size="lg" title="Loading SLA Policies..." subtitle="Fetching governance rules" />
+        <ChandakLoader size="lg" title="Loading SLA Policies…" subtitle="Fetching governance rules" />
       </div>
     );
   }
@@ -145,7 +145,7 @@ export default function SLARuleBuilder() {
       <PageContainer strict={true}>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Shield className="w-16 h-16 text-danger mb-4 opacity-80" />
-          <h2 className="text-xl font-bold">Access Restricted</h2>
+          <h2 className="text-xl font-bold">Access restricted</h2>
           <p className="text-sm text-muted mt-2 max-w-md">
             You do not have the required permissions (SLA_VIEW) to access SLA policy configuration.
           </p>
@@ -157,12 +157,12 @@ export default function SLARuleBuilder() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="SLA Rule Builder"
-        badge={<AppBadge variant="warning">Governance Engine</AppBadge>}
+        title="SLA rule builder"
+        badge={<AppBadge variant="warning">Governance engine</AppBadge>}
         actions={
           canCreate ? (
             <AppButton variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>
-              Create Policy
+              Create policy
             </AppButton>
           ) : undefined
         }
@@ -173,7 +173,7 @@ export default function SLARuleBuilder() {
           {rules.length === 0 && editingId !== "new" && (
             <div className="text-center py-12 bg-surface border border-border rounded-2xl">
               <ShieldAlert className="w-12 h-12 text-muted mx-auto mb-4" />
-              <h3 className="text-lg font-bold">No SLA Policies Found</h3>
+              <h3 className="text-lg font-bold">No SLA policies found</h3>
               <p className="text-sm text-muted mt-1">Create your first policy to start tracking SLA breaches.</p>
             </div>
           )}
@@ -183,7 +183,7 @@ export default function SLARuleBuilder() {
               {editingId === rule.id ? (
                 <div className="p-6 space-y-4">
                   <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
-                    <h3 className="font-bold text-lg">Edit SLA Policy</h3>
+                    <h3 className="font-bold text-lg">Edit SLA policy</h3>
                     <div className="flex gap-2">
                       <AppButton size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</AppButton>
                       <AppButton size="sm" variant="primary" onClick={handleSave} disabled={saving} leftIcon={saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}>Save</AppButton>
@@ -191,33 +191,33 @@ export default function SLARuleBuilder() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-medium text-muted block mb-1">Policy Name</label>
-                      <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. High Priority Issues" />
+                      <label className="text-xs font-medium text-muted block mb-1">Policy name</label>
+                      <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. High priority issues" />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted block mb-1">System Code</label>
+                      <label className="text-xs font-medium text-muted block mb-1">System code</label>
                       <AppInput value={form.code} onChange={e => setForm({...form, code: e.target.value})} className="font-mono" />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted block mb-1">Response Target (Minutes)</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Response target (minutes)</label>
                       <AppInput type="number" value={form.response_target_minutes} onChange={e => setForm({...form, response_target_minutes: parseInt(e.target.value) || 0})} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted block mb-1">Resolution Target (Minutes)</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Resolution target (minutes)</label>
                       <AppInput type="number" value={form.resolution_target_minutes} onChange={e => setForm({...form, resolution_target_minutes: parseInt(e.target.value) || 0})} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted block mb-1">Working Hours Code</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Working hours code</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                         <option value="24x7">24x7 Continuous</option>
-                        <option value="9x5">9x5 Business Hours</option>
+                        <option value="9x5">9x5 business hours</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted block mb-1">Escalation Level</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Escalation level</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                         <option value="STANDARD">Standard</option>
-                        <option value="PRIORITY">Priority Escalate</option>
+                        <option value="PRIORITY">Priority escalate</option>
                         <option value="URGENT">Urgent (C-Level)</option>
                       </select>
                     </div>
@@ -250,7 +250,7 @@ export default function SLARuleBuilder() {
                       <AppButton size="sm" variant="outline" onClick={() => handleEdit(rule)}>Edit</AppButton>
                     )}
                     {canDelete && (
-                      <AppButton size="sm" variant="outline" className="text-danger hover:bg-danger-soft" onClick={() => handleDelete(rule.id)}>
+                      <AppButton aria-label="Delete" size="sm" variant="outline" className="text-danger hover:bg-danger-soft" onClick={() => handleDelete(rule.id)}>
                         <Trash2 className="w-4 h-4" />
                       </AppButton>
                     )}
@@ -264,41 +264,41 @@ export default function SLARuleBuilder() {
             <AppCard className="ring-2 ring-theme-btn-primary">
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
-                  <h3 className="font-bold text-lg text-theme-icon">Create New SLA Policy</h3>
+                  <h3 className="font-bold text-lg text-theme-icon">Create new SLA policy</h3>
                   <div className="flex gap-2">
                     <AppButton size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</AppButton>
-                    <AppButton size="sm" variant="primary" onClick={handleSave} disabled={saving} leftIcon={saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}>Save Policy</AppButton>
+                    <AppButton size="sm" variant="primary" onClick={handleSave} disabled={saving} leftIcon={saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}>Save policy</AppButton>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-muted block mb-1">Policy Name</label>
-                    <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Critical Outage" />
+                    <label className="text-xs font-medium text-muted block mb-1">Policy name</label>
+                    <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Critical outage" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted block mb-1">System Code</label>
+                    <label className="text-xs font-medium text-muted block mb-1">System code</label>
                     <AppInput value={form.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase().replace(/\s+/g, '_')})} className="font-mono" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted block mb-1">Response Target (Minutes)</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Response target (minutes)</label>
                     <AppInput type="number" value={form.response_target_minutes} onChange={e => setForm({...form, response_target_minutes: parseInt(e.target.value) || 0})} />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted block mb-1">Resolution Target (Minutes)</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Resolution target (minutes)</label>
                     <AppInput type="number" value={form.resolution_target_minutes} onChange={e => setForm({...form, resolution_target_minutes: parseInt(e.target.value) || 0})} />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted block mb-1">Working Hours Code</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Working hours code</label>
                     <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                       <option value="24x7">24x7 Continuous</option>
-                      <option value="9x5">9x5 Business Hours</option>
+                      <option value="9x5">9x5 business hours</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted block mb-1">Escalation Level</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Escalation level</label>
                     <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                       <option value="STANDARD">Standard</option>
-                      <option value="PRIORITY">Priority Escalate</option>
+                      <option value="PRIORITY">Priority escalate</option>
                       <option value="URGENT">Urgent (C-Level)</option>
                     </select>
                   </div>
@@ -311,7 +311,7 @@ export default function SLARuleBuilder() {
         <div className="space-y-6">
           <AppCard>
             <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02]">
-              <h3 className="font-bold text-sm">How SLA Governance Works</h3>
+              <h3 className="font-bold text-sm">How SLA governance works</h3>
             </div>
             <div className="p-4 space-y-4 text-sm text-subtle dark:text-muted">
               <p>SLA Policies are automatically attached to Tickets and internal Tasks based on their severity and priority configurations.</p>
@@ -337,7 +337,7 @@ export default function SLARuleBuilder() {
           setDeleteConfirmId(null);
           await executeDelete(id);
         }}
-        title="Delete SLA Policy"
+        title="Delete SLA policy"
         description="Are you sure you want to delete this SLA Policy? Active trackers using this policy will be impacted."
         confirmLabel="Delete"
         tone="danger"

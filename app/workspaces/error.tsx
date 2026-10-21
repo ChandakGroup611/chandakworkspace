@@ -16,40 +16,38 @@ export default function WorkspacesError({
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center p-8 text-center bg-surface rounded-2xl border border-border m-4 shadow-xs">
-      <div className="w-12 h-12 rounded-2xl bg-warning-soft text-warning-text border border-warning-border flex items-center justify-center mb-4">
-        <AlertTriangle className="w-6 h-6" />
+    <div className="m-4 flex min-h-[60vh] flex-col items-center justify-center rounded-[10px] border border-border bg-surface p-8 text-center">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning-soft text-warning-text">
+        <AlertTriangle className="h-6 w-6" aria-hidden />
       </div>
-      <h1 className="mb-2 text-xl font-bold text-foreground">
-        Workspace Module Notice
+      <h1 className="mb-1.5 text-[17px] font-semibold text-heading">
+        Workspaces didn't load
       </h1>
-      <p className="mb-4 text-xs text-muted max-w-md break-words">
-        {error?.message || "An issue occurred while loading this workspace view. Please retry or reload."}
+      <p className="mb-4 max-w-md text-[13.5px] text-muted">
+        Something interrupted loading this view. Try again; if it keeps happening, send the reference below to IT support.
       </p>
       {error?.digest && (
-        <p className="mb-6 text-xs text-muted font-mono">
-          Code: <code className="rounded bg-sunken px-1.5 py-0.5 text-foreground">{error.digest}</code>
+        <p className="mb-6 text-[12.5px] text-muted">
+          Reference <code className="rounded bg-sunken px-1.5 py-0.5 font-mono text-foreground">{error.digest}</code>
         </p>
       )}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <AppButton
           onClick={() => reset()}
           variant="primary"
-          size="sm"
-          leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+          leftIcon={<RefreshCw className="h-4 w-4" />}
         >
-          Retry View
+          Try again
         </AppButton>
         <AppButton
-          variant="outline"
+          variant="ghost"
           onClick={() => {
             if (typeof window !== "undefined") {
               window.location.reload();
             }
           }}
-          className="rounded text-xs px-4 py-2"
         >
-          Reload Page
+          Reload page
         </AppButton>
       </div>
     </div>

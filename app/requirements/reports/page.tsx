@@ -12,7 +12,7 @@ export default async function RequirementReportsPage() {
     return (
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
           <p className="text-muted">You do not have permission to view this page.</p>
         </div>
       </div>

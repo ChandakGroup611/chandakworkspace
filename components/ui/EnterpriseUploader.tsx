@@ -171,7 +171,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
       {/* Dropzone */}
       <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className="w-full">
         {/* ui-audit-ignore-next-line dropzone upload area */}
-        <button type="button" onClick={() => fileInputRef.current?.click()} className={`w-full text-center relative border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? "border-primary bg-accent-soft" : "border-border hover:border-primary bg-surface hover:bg-hover"}`}>
+        <button type="button" onClick={() => fileInputRef.current?.click()} className={`w-full text-center relative border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? "border-primary bg-accent-soft" : "border-border hover:border-primary bg-surface hover:bg-surface-hover"}`}>
         <input 
           type="file" 
           multiple 
@@ -186,7 +186,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
           Click or drag files here to upload
         </h4>
         <p className="text-[11px] text-muted">
-          Supports Word, Excel, PDF, Images, Text & Archives (up to 100MB)
+          Supports word, Excel, PDF, images, text & archives (up to 100MB)
         </p>
       </button>
       </div>
@@ -209,7 +209,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                   </span>
                   {fileObj.status === 'uploading' && (
                     <span className="text-[11px] text-primary flex items-center gap-1 font-medium">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
+                      <Loader2 className="h-3 w-3 animate-spin" /> Uploading…
                     </span>
                   )}
                   {fileObj.status === 'error' && (
@@ -243,7 +243,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                         window.open(url, '_blank');
                       }}
                       className="p-1.5 h-7 w-7 text-accent hover:bg-accent-soft rounded flex items-center justify-center"
-                      aria-label="View staged file" title="View Staged File"
+                      aria-label="View staged file" title="View staged file"
                     >
                       <Eye className="h-3.5 w-3.5" />
                     </AppButton>
@@ -262,7 +262,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                         URL.revokeObjectURL(url);
                       }}
                       className="p-1.5 h-7 w-7 text-primary hover:bg-accent-soft rounded flex items-center justify-center"
-                      aria-label="Download staged file" title="Download Staged File"
+                      aria-label="Download staged file" title="Download staged file"
                     >
                       <Download className="h-3.5 w-3.5" />
                     </AppButton>
@@ -279,7 +279,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                   </AppButton>
                 )}
                 {fileObj.status !== 'uploading' && (
-                  <AppButton 
+                  <AppButton aria-label="Close" 
                     variant="ghost"
                     size="sm"
                     onClick={() => removeFile(fileObj.id)}
@@ -323,19 +323,19 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="px-2 py-1 rounded-lg text-primary hover:bg-accent-soft transition-colors flex items-center gap-1 font-semibold" 
-                      title="View Attachment"
+                      title="View attachment"
                     >
                       <Eye className="h-3.5 w-3.5" />
-                      <span className="text-[10px] font-bold">View</span>
+                      <span className="text-[11px] font-bold">View</span>
                     </a>
                     <a 
                       href={downloadUrl} 
                       download={fileName} 
                       className="px-2 py-1 rounded-lg text-primary hover:bg-accent-soft transition-colors flex items-center gap-1 font-semibold" 
-                      title="Download Attachment"
+                      title="Download attachment"
                     >
                       <Download className="h-3.5 w-3.5" />
-                      <span className="text-[10px] font-bold">Download</span>
+                      <span className="text-[11px] font-bold">Download</span>
                     </a>
                   </div>
                 </div>

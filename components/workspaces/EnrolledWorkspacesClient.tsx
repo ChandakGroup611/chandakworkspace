@@ -2,10 +2,11 @@
 import { toast } from 'react-toastify';
 
 import React, { useState } from "react";
-import { AppCard, AppCardHeader } from "@/components/ui/AppCard";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { StatusBadge } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
 import { AppButton } from "@/components/ui/AppButton";
-import { AppBadge } from "@/components/ui/AppBadge";
-import { FolderKanban, Search, Trash2, Edit2, Eye, ArrowLeft } from "lucide-react";
+import { FolderKanban, Search, Trash2, Edit2, Eye } from "lucide-react";
 import { AppTable, AppTableContainer, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 import { AppInput } from "@/components/ui/AppInput";
 import { useRouter } from "next/navigation";
@@ -43,132 +44,120 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
 
   if (permsLoading) {
     return (
-      <div className="py-12 flex justify-center">
-        <ChandakLoader size="md" title="Loading Enrolled Workspaces..." />
+      <div className="flex justify-center py-12">
+        <ChandakLoader size="md" title="Loading your workspaces…" />
       </div>
     );
   }
 
   if (!hasPermission("ENROLLED_WORKSPACES_VIEW")) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
-          <FolderKanban className="h-10 w-10" />
+      <div className="flex flex-col items-center justify-center space-y-3 py-12 text-center">
+        <div className="rounded-full bg-warning-soft p-3 text-warning-text">
+          <FolderKanban className="h-6 w-6" aria-hidden />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view Enrolled Workspaces.</p>
+        <h2 className="text-[15px] font-semibold text-heading">You don't have access to enrolled workspaces</h2>
+        <p className="text-[13px] text-muted">Ask your administrator to grant Enrolled workspaces view access in RBAC access policies.</p>
       </div>
     );
   }
 
   const canManage = hasPermission("ENROLLED_WORKSPACES_MANAGE");
+  const iconBtn = "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring";
 
   return (
-    <div className="p-8 w-full max-w-7xl mx-auto space-y-6 text-foreground">
-      <div className="flex items-center justify-between border-b pb-4 border-border dark:border-border">
-        <div className="flex items-center gap-3">
-          <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
-            Back
-          </AppButton>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <FolderKanban className="h-6 w-6 text-success" />
-              Enrolled Workspaces
-            </h1>
-            <p className="text-sm text-muted">
-              A list of all explicit workspace and sub-workspace nodes you are a member of.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-7xl space-y-5 p-4 text-foreground sm:p-6">
+      <PageHeader
+        title="Enrolled workspaces"
+        description="Workspaces and sub-workspaces you're a member of"
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Enrolled workspaces" }]}
+      />
 
-      <AppCard className="bg-surface">
-        <AppCardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border/50 dark:border-border">
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-            <AppInput 
-              placeholder="Search by name or code..." 
+      <div className="theme-card-structural overflow-hidden">
+        <div className="flex flex-col gap-2 border-b border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:w-72">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+            <AppInput
+              type="search"
+              aria-label="Search by name or code"
+              placeholder="Search by name or code"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-10 text-sm"
+              className="h-9 pl-9 text-[13.5px]"
             />
           </div>
-          <div className="text-sm text-muted font-medium">
-            {filteredItems.length} Enrolled Nodes Found
-          </div>
-        </AppCardHeader>
-        <div className="p-0">
-          <AppTableContainer>
-            <AppTable>
-              <AppTableHeader>
-                <tr>
-                  <AppTableHead>Node ID</AppTableHead>
-                  <AppTableHead>Name</AppTableHead>
-                  <AppTableHead>Type</AppTableHead>
-                  <AppTableHead>Status</AppTableHead>
-                  <AppTableHead className="text-right">Actions</AppTableHead>
-                </tr>
-              </AppTableHeader>
-              <AppTableBody>
-                {filteredItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-muted text-sm">
-                      No enrolled workspaces found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredItems.map(item => (
-                    <AppTableRow key={`${item.type}-${item.id}`}>
-                      <AppTableCell>
-                        <span className="font-mono text-[13px] font-bold text-theme-icon">
-                          {item.workspace_code || item.code || item.id.substring(0,8)}
-                        </span>
-                      </AppTableCell>
-                      <AppTableCell>
-                        <span className="font-semibold text-foreground">
-                          {item.workspace_name || item.name}
-                        </span>
-                      </AppTableCell>
-                      <AppTableCell>
-                        <AppBadge variant={item.type === 'workspace' ? "info" : "neutral"}>
-                          {item.type === 'workspace' ? "Workspace" : "Sub-Workspace"}
-                        </AppBadge>
-                      </AppTableCell>
-                      <AppTableCell>
-                        <AppBadge 
-                          variant={item.status?.status_name === "Inactive" ? "danger" : "success"}
-                          customColor={item.status?.status_color || null}
-                          isOutline={true}
-                          className="text-xs"
-                        >
-                          {item.status?.status_name || "Active"}
-                        </AppBadge>
-                      </AppTableCell>
-                      <AppTableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <AppButton variant="ghost" size="sm" onClick={() => handleView(item)} className="h-8 px-2 text-subtle hover:opacity-90/10 hover:text-theme-icon transition-all active:scale-95">
-                            <Eye className="h-4 w-4 mr-1" /> View
-                          </AppButton>
-                          {canManage && (
-                            <>
-                              <AppButton variant="ghost" size="sm" onClick={() => handleUpdate(item)} className="h-8 px-2 text-subtle hover:bg-theme-btn-secondary/10 hover:text-theme-btn-secondary-text transition-all active:scale-95">
-                                <Edit2 className="h-4 w-4 mr-1" /> Update
-                              </AppButton>
-                              <AppButton variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-subtle hover:bg-danger/10 hover:text-danger transition-all active:scale-95">
-                                <Trash2 className="h-4 w-4 mr-1" /> Delete
-                              </AppButton>
-                            </>
-                          )}
-                        </div>
-                      </AppTableCell>
-                    </AppTableRow>
-                  ))
-                )}
-              </AppTableBody>
-            </AppTable>
-          </AppTableContainer>
+          {searchQuery && (
+            <div className="text-[12.5px] text-muted tabular">
+              {filteredItems.length} of {combinedItems.length} shown
+            </div>
+          )}
         </div>
-      </AppCard>
+        <AppTableContainer>
+          <AppTable>
+            <AppTableHeader>
+              <tr>
+                <AppTableHead>Code</AppTableHead>
+                <AppTableHead>Name</AppTableHead>
+                <AppTableHead>Type</AppTableHead>
+                <AppTableHead>Status</AppTableHead>
+                <AppTableHead className="text-right">Actions</AppTableHead>
+              </tr>
+            </AppTableHeader>
+            <AppTableBody>
+              {filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState
+                      kind={searchQuery ? "no-results" : "empty"}
+                      compact
+                      title={searchQuery ? "No workspaces match your search" : "You're not in any workspace yet"}
+                      description={searchQuery ? "Check the spelling, or search by workspace code." : "Ask a workspace owner to add you."}
+                    />
+                  </td>
+                </tr>
+              ) : (
+                filteredItems.map(item => (
+                  <AppTableRow key={`${item.type}-${item.id}`}>
+                    <AppTableCell>
+                      <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">
+                        {item.workspace_code || item.code || item.id.substring(0,8)}
+                      </span>
+                    </AppTableCell>
+                    <AppTableCell>
+                      <span className="font-medium text-foreground">
+                        {item.workspace_name || item.name}
+                      </span>
+                    </AppTableCell>
+                    <AppTableCell className="text-subtle">
+                      {item.type === 'workspace' ? "Workspace" : "Sub-workspace"}
+                    </AppTableCell>
+                    <AppTableCell>
+                      <StatusBadge status={item.status?.status_name || "Active"} />
+                    </AppTableCell>
+                    <AppTableCell className="text-right">
+                      <div className="flex items-center justify-end gap-0.5">
+                        <button type="button" onClick={() => handleView(item)} className={iconBtn} title="View" aria-label={`View ${item.workspace_name || item.name}`}>
+                          <Eye className="h-4 w-4" aria-hidden />
+                        </button>
+                        {canManage && (
+                          <>
+                            <button type="button" onClick={() => handleUpdate(item)} className={iconBtn} title="Edit" aria-label={`Edit ${item.workspace_name || item.name}`}>
+                              <Edit2 className="h-4 w-4" aria-hidden />
+                            </button>
+                            <button type="button" onClick={() => handleDelete(item)} className={`${iconBtn} hover:bg-danger-soft hover:text-danger-text`} title="Delete" aria-label={`Delete ${item.workspace_name || item.name}`}>
+                              <Trash2 className="h-4 w-4" aria-hidden />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </AppTableCell>
+                  </AppTableRow>
+                ))
+              )}
+            </AppTableBody>
+          </AppTable>
+        </AppTableContainer>
+      </div>
     </div>
   );
 }

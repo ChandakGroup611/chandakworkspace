@@ -114,7 +114,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-surface border-border">
         <DialogHeader className="px-6 py-4 border-b border-border bg-surface">
-          <DialogTitle>Update Requirement</DialogTitle>
+          <DialogTitle>Update requirement</DialogTitle>
         </DialogHeader>
 
         <div className="flex border-b border-border overflow-x-auto bg-surface px-6 pt-2">
@@ -156,7 +156,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
-                      placeholder="Requirement Title"
+                      placeholder="Requirement title"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -167,7 +167,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                         onChange={(e) => setFormData({ ...formData, software_system_id: e.target.value })}
                         className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       >
-                        <option value="">Select System</option>
+                        <option value="">Select system</option>
                         {masters.systems.map((s: any) => (
                           <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
@@ -183,7 +183,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                         required
                         className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       >
-                        <option value="" disabled>Select Priority</option>
+                        <option value="" disabled>Select priority</option>
                         {masters.priorities.map((p: any) => (
                           <option key={p.id} value={p.id}>{p.priority_name}</option>
                         ))}
@@ -198,20 +198,20 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                         onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
                         className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       >
-                        <option value="">Select Department</option>
+                        <option value="">Select department</option>
                         {masters.departments.map((d: any) => (
                           <option key={d.id} value={d.id}>{d.name}</option>
                         ))}
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="theme-label block">Target Release</label>
+                      <label className="theme-label block">Target release</label>
                       <input
                         type="text"
                         value={formData.target_release}
                         onChange={(e) => setFormData({ ...formData, target_release: e.target.value })}
                         className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
-                        placeholder="e.g. v2.4.0, Q3 Release"
+                        placeholder="e.g. v2.4.0, q3 release"
                       />
                     </div>
                   </div>
@@ -222,7 +222,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="theme-label block">Story Points</label>
+                      <label className="theme-label block">Story points</label>
                       <input
                         type="number"
                         min="0"
@@ -232,7 +232,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="theme-label block">Estimated Effort</label>
+                      <label className="theme-label block">Estimated effort</label>
                       <input
                         type="text"
                         value={formData.estimated_effort}
@@ -244,7 +244,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="theme-label block">Estimated Cost (₹)</label>
+                      <label className="theme-label block">Estimated cost (₹)</label>
                       <input
                         type="number"
                         min="0"
@@ -255,19 +255,19 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="theme-label block">Budget Impact</label>
+                      <label className="theme-label block">Budget impact</label>
                       <input
                         type="text"
                         value={formData.budget_impact}
                         onChange={(e) => setFormData({ ...formData, budget_impact: e.target.value })}
                         className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
-                        placeholder="High, Low, OPEX..."
+                        placeholder="High, Low, OPEX…"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="theme-label block">Start Date</label>
+                      <label className="theme-label block">Start date</label>
                       <input
                         type="date"
                         value={formData.start_date}
@@ -276,7 +276,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="theme-label block">Target Completion</label>
+                      <label className="theme-label block">Target completion</label>
                       <input
                         type="date"
                         value={formData.expected_completion_date}
@@ -291,7 +291,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
               {activeTab === 'details' && (
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="theme-label block">Acceptance Criteria</label>
+                    <label className="theme-label block">Acceptance criteria</label>
                     <textarea
                       rows={3}
                       value={formData.acceptance_criteria}
@@ -301,7 +301,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="theme-label block">Dependency Notes</label>
+                    <label className="theme-label block">Dependency notes</label>
                     <textarea
                       rows={2}
                       value={formData.dependency_notes}
@@ -310,7 +310,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="theme-label block">Requirement Reason</label>
+                    <label className="theme-label block">Requirement reason</label>
                     <textarea
                       rows={2}
                       value={formData.requirement_reason}
@@ -328,7 +328,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
           <AppButton type="button" variant="outline" onClick={onClose} disabled={saving}>Cancel</AppButton>
           <AppButton type="button" variant="primary" onClick={handleSubmit} disabled={saving || loading}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-            Update Requirement
+            Update requirement
           </AppButton>
         </DialogFooter>
       </DialogContent>

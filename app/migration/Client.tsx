@@ -28,7 +28,7 @@ export default function MigrationClient() {
     if (!file) return;
 
     if (selectedModule === 'TASK' && !targetWorkspaceId) {
-      toast.warning('Please select a Target Workspace before uploading tasks.');
+      toast.warning('Please select a target workspace before uploading tasks.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -82,7 +82,7 @@ export default function MigrationClient() {
 
   const generateTemplate = async () => {
     if (selectedModule === 'TASK' && !targetWorkspaceId) {
-      toast.warning("Please select a Target Workspace context first.");
+      toast.warning("Please select a target workspace context first.");
       return;
     }
 
@@ -120,8 +120,8 @@ export default function MigrationClient() {
       { header: 'Status (Required)', key: 'status', width: 20 },
       { header: 'Priority (Required)', key: 'priority', width: 20 },
       { header: 'Department (Required)', key: 'department', width: 20 },
-      { header: 'Start Date (YYYY-MM-DD) (Required)', key: 'start', width: 25 },
-      { header: 'End Date (YYYY-MM-DD) (Required)', key: 'end', width: 25 },
+      { header: 'Start date (YYYY-MM-DD) (required)', key: 'start', width: 25 },
+      { header: 'End date (YYYY-MM-DD) (required)', key: 'end', width: 25 },
       { header: 'Primary Assignee/Owner (Required)', key: 'owner', width: 30 },
       { header: 'Executor 1 (Required)', key: 'executor1', width: 25 },
       { header: 'Executor 2 (Optional)', key: 'executor2', width: 25 },
@@ -191,7 +191,7 @@ export default function MigrationClient() {
 
   const generateWorkspaceTemplate = (worksheet: ExcelJS.Worksheet) => {
     worksheet.columns = [
-      { header: 'Workspace Name (Required)', key: 'name', width: 30 },
+      { header: 'Workspace name (required)', key: 'name', width: 30 },
       { header: 'Description', key: 'desc', width: 40 },
     ];
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -200,8 +200,8 @@ export default function MigrationClient() {
 
   const generateSubworkspaceTemplate = (worksheet: ExcelJS.Worksheet, allWorkspaces: any[]) => {
     worksheet.columns = [
-      { header: 'Parent Workspace (Required)', key: 'parent', width: 30 },
-      { header: 'Subworkspace Name (Required)', key: 'name', width: 30 },
+      { header: 'Parent workspace (required)', key: 'parent', width: 30 },
+      { header: 'Subworkspace name (required)', key: 'name', width: 30 },
       { header: 'Description', key: 'desc', width: 40 },
     ];
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -232,12 +232,12 @@ export default function MigrationClient() {
           
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent-soft text-accent-soft-text text-xs font-semibold">1</span>
-            Configure Template
+            Configure template
           </h2>
           
           <div className="space-y-5 relative z-10">
             <div>
-              <label className="block text-sm font-medium text-muted mb-1.5">Module Type</label>
+              <label className="block text-sm font-medium text-muted mb-1.5">Module type</label>
               <select 
                 value={selectedModule}
                 onChange={e => {
@@ -247,7 +247,7 @@ export default function MigrationClient() {
                 }}
                 className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
               >
-                <option value="WORKSPACE">Root Workspace</option>
+                <option value="WORKSPACE">Root workspace</option>
                 <option value="SUBWORKSPACE">Subworkspace</option>
                 <option value="TASK">Tasks</option>
               </select>
@@ -263,7 +263,7 @@ export default function MigrationClient() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold text-muted mb-1.5">Target Workspace (Root) <span className="text-danger">*</span></label>
+                  <label className="block text-sm font-semibold text-muted mb-1.5">Target workspace (root) <span className="text-danger">*</span></label>
                   <select
                     className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                     value={targetWorkspaceId}
@@ -272,7 +272,7 @@ export default function MigrationClient() {
                       setTargetSubworkspaceId('');
                     }}
                   >
-                    <option value="">Select a workspace...</option>
+                    <option value="">Select a workspace…</option>
                     {rootWorkspaces.map((ws: any) => (
                       <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
                     ))}
@@ -280,14 +280,14 @@ export default function MigrationClient() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-muted mb-1.5">Target Subworkspace (Optional)</label>
+                  <label className="block text-sm font-semibold text-muted mb-1.5">Target subworkspace (optional)</label>
                   <select
                     className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary disabled:opacity-50"
                     value={targetSubworkspaceId}
                     onChange={(e) => setTargetSubworkspaceId(e.target.value)}
                     disabled={!targetWorkspaceId}
                   >
-                    <option value="">-- Root Level (No Subworkspace) --</option>
+                    <option value="">-- Root level (no subworkspace) --</option>
                     {subWorkspaces.map((ws: any) => (
                       <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
                     ))}
@@ -315,7 +315,7 @@ export default function MigrationClient() {
           
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent-soft text-accent-soft-text text-xs font-semibold">2</span>
-            Upload Data
+            Upload data
           </h2>
           
           <div className="space-y-4">
@@ -365,7 +365,7 @@ export default function MigrationClient() {
                  <div className="py-2 flex flex-col items-center justify-center">
                    <ChandakLoader
                      size="sm"
-                     title="Processing Excel File..."
+                     title="Processing Excel File…"
                      subtitle="Validating data schema and preparing records"
                    />
                  </div>
@@ -379,7 +379,7 @@ export default function MigrationClient() {
                      size="sm" 
                      className="mt-4 pointer-events-none" 
                    >
-                     Select File
+                     Select file
                    </AppButton>
                  </>
                )}

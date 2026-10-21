@@ -63,7 +63,7 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
                 <div className="prog-bar" style={{ width: '100%', background: 'var(--accent)' }}></div>
               </div>
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)', marginTop: '4px' }}>In Progress</div>
+            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)', marginTop: '4px' }}>In progress</div>
           </>
         )}
       </div>
@@ -74,16 +74,16 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
     <div className="panel theme-card-structural" style={{ marginBottom: '20px' }}>
       <div className="panel-header">
         <i className="ti ti-layout-kanban" style={{ fontSize: '16px', color: 'var(--teal)' }} aria-hidden="true"></i>
-        <span className="panel-title">Kanban Board · Active Sprint</span>
+        <span className="panel-title">Kanban board · active sprint</span>
         <span style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{board.backlog.length + board.inProgress.length + board.inReview.length} active items</span>
-        <span className="panel-action" style={{ marginLeft: '12px' }}>Full Board ↗</span>
+        <span className="panel-action" style={{ marginLeft: '12px' }}>Full board ↗</span>
       </div>
       <div className="panel-body">
         <div className="sprint-cols">
 
           <div className="sprint-col">
             <div className="sprint-col-header">
-              <span className="sprint-col-name">Backlog / Open</span>
+              <span className="sprint-col-name">Backlog / open</span>
               <span className="sprint-count">{board.backlog.length}</span>
             </div>
             {board.backlog.map(m => renderCard(m, false))}
@@ -91,7 +91,7 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
 
           <div className="sprint-col">
             <div className="sprint-col-header">
-              <span className="sprint-col-name" style={{ color: 'var(--accent)' }}>In Progress</span>
+              <span className="sprint-col-name" style={{ color: 'var(--accent)' }}>In progress</span>
               <span className="sprint-count">{board.inProgress.length}</span>
             </div>
             {board.inProgress.map(m => renderCard(m, true))}
@@ -99,7 +99,7 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
 
           <div className="sprint-col">
             <div className="sprint-col-header">
-              <span className="sprint-col-name" style={{ color: 'var(--amber)' }}>In Review</span>
+              <span className="sprint-col-name" style={{ color: 'var(--amber)' }}>In review</span>
               <span className="sprint-count">{board.inReview.length}</span>
             </div>
             {board.inReview.map(m => renderCard(m, false))}

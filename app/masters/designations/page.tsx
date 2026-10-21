@@ -12,6 +12,7 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 import { createClient } from "@/utils/supabase/client";
 import { Briefcase, Search, Plus, Edit, Trash2, X, RefreshCw } from "lucide-react";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 export default function DesignationsMasterPage() {
   const supabase = createClient();
@@ -126,7 +127,7 @@ export default function DesignationsMasterPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this designation?")) return;
+    if (!(await confirmAction("Are you sure you want to delete this designation?"))) return;
     try {
       const res = await deleteMasterEntity("designations", id);
       if (!res.success) throw new Error(res.error);
@@ -152,23 +153,23 @@ export default function DesignationsMasterPage() {
 
         <AppCard className="flex-1 flex flex-col overflow-hidden">
           <AppCardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 shrink-0">
-            <AppCardTitle className="text-lg">Designation Directory</AppCardTitle>
+            <AppCardTitle className="text-lg">Designation directory</AppCardTitle>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                 <AppInput 
-                  placeholder="Search designations..." 
+                  placeholder="Search designations…" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-10 w-full"
                 />
               </div>
-              <AppButton variant="outline" size="sm" onClick={fetchData} className="h-10 px-3 hidden sm:flex">
+              <AppButton aria-label="Refresh" variant="outline" size="sm" onClick={fetchData} className="h-10 px-3 hidden sm:flex">
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </AppButton>
               <AppButton size="sm" className="h-10 shrink-0 shadow-md shadow-theme-btn-primary/20" onClick={handleOpenCreate}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Designation
+                Add designation
               </AppButton>
             </div>
           </AppCardHeader>
@@ -178,7 +179,7 @@ export default function DesignationsMasterPage() {
                 <AppTableHeader>
                   <AppTableRow>
                     <AppTableHead>Code</AppTableHead>
-                    <AppTableHead>Designation Name</AppTableHead>
+                    <AppTableHead>Designation name</AppTableHead>
                     <AppTableHead>Department</AppTableHead>
                     <AppTableHead>Status</AppTableHead>
                     <AppTableHead className="w-[100px] text-right">Actions</AppTableHead>
@@ -188,7 +189,7 @@ export default function DesignationsMasterPage() {
                   {loading ? (
                     <AppTableRow>
                       <AppTableCell colSpan={5} className="h-40 text-center text-muted">
-                        Loading designations...
+                        Loading designations…
                       </AppTableCell>
                     </AppTableRow>
                   ) : filtered.length === 0 ? (
@@ -199,7 +200,7 @@ export default function DesignationsMasterPage() {
                     </AppTableRow>
                   ) : (
                     filtered.map(d => (
-                      <AppTableRow key={d.id} className="hover:bg-theme-btn-primary/5 group">
+                      <AppTableRow key={d.id} className="hover:bg-accent-soft group">
                         <AppTableCell className="font-mono text-sm font-bold text-theme-icon">{d.code}</AppTableCell>
                         <AppTableCell className="font-bold text-foreground">{d.name}</AppTableCell>
                         <AppTableCell>{d.departments?.name || <span className="text-muted italic">Unassigned</span>}</AppTableCell>
@@ -210,10 +211,10 @@ export default function DesignationsMasterPage() {
                         </AppTableCell>
                         <AppTableCell className="text-right">
                           <div className="flex items-center justify-end gap-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                            <AppButton variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(d)} className="text-accent">
+                            <AppButton aria-label="Edit" variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(d)} className="text-accent">
                               <Edit className="h-4 w-4" />
                             </AppButton>
-                            <AppButton variant="ghost" size="icon-sm" onClick={() => handleDelete(d.id)} className="text-danger">
+                            <AppButton aria-label="Delete" variant="ghost" size="icon-sm" onClick={() => handleDelete(d.id)} className="text-danger">
                               <Trash2 className="h-4 w-4" />
                             </AppButton>
                           </div>
@@ -230,13 +231,13 @@ export default function DesignationsMasterPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-surface/40">
-          <div className="bg-surface border border-border shadow-2xl rounded-2xl w-full max-w-lg flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-surface border border-border shadow-lg rounded-2xl w-full max-w-lg flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
-              <h2 className="text-xl font-black text-foreground">
+              <h2 className="text-xl font-semibold text-foreground">
                 {editId ? "Edit Designation" : "Add Designation"}
               </h2>
-              <AppButton variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-surface/5 transition-colors">
+              <AppButton aria-label="Close" variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-surface/5 transition-colors">
                 <X className="h-5 w-5 text-muted" />
               </AppButton>
             </div>
@@ -244,31 +245,31 @@ export default function DesignationsMasterPage() {
             <div className="p-6">
               <form id="desigForm" onSubmit={handleSave} className="space-y-6">
                 {errorMsg && (
-                  <div className="p-3 rounded-lg bg-red-50 text-danger border border-red-100 text-sm font-medium">
+                  <div className="p-3 rounded-lg bg-danger-soft text-danger border border-danger-border text-sm font-medium">
                     {errorMsg}
                   </div>
                 )}
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted uppercase">Designation Name <span className="text-danger">*</span></label>
-                    <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Senior Developer" className="h-11" />
+                    <label className="text-sm font-bold text-muted">Designation name <span className="text-danger">*</span></label>
+                    <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Senior developer" className="h-11" />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Code <span className="text-danger">*</span></label>
+                      <label className="text-sm font-bold text-muted">Code <span className="text-danger">*</span></label>
                       <AppInput value={formCode} onChange={e => setFormCode(e.target.value)} required placeholder="e.g. SR-DEV" className="h-11 uppercase font-mono" />
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Department</label>
+                      <label className="text-sm font-bold text-muted">Department</label>
                       <select 
                         value={formDeptId} 
                         onChange={e => setFormDeptId(e.target.value)} 
                         className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                       >
-                        <option value="">-- No Department --</option>
+                        <option value="">-- No department --</option>
                         {departments.map(dept => (
                           <option key={dept.id} value={dept.id}>{dept.name}</option>
                         ))}
@@ -277,18 +278,18 @@ export default function DesignationsMasterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted uppercase">Description</label>
+                    <label className="text-sm font-bold text-muted">Description</label>
                     <textarea 
                       value={formDesc} 
                       onChange={e => setFormDesc(e.target.value)} 
-                      placeholder="Brief description..." 
+                      placeholder="Brief description…" 
                       className="w-full h-24 p-3 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border resize-none"
                     />
                   </div>
 
                   <label className="flex items-center gap-3 cursor-pointer mt-2">
                     <input type="checkbox" checked={formIsActive} onChange={e => setFormIsActive(e.target.checked)} className="h-4 w-4 rounded border-border text-theme-icon focus:ring-theme-btn-primary" />
-                    <span className="text-sm font-medium text-foreground">Active Designation</span>
+                    <span className="text-sm font-medium text-foreground">Active designation</span>
                   </label>
                 </div>
               </form>

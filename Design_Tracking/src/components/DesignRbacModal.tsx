@@ -29,6 +29,7 @@ import {
   UserCheck
 } from "lucide-react";
 import { DesignRbacGovernance } from "./DesignRbacGovernance";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 interface DesignRbacModalProps {
   isOpen: boolean;
@@ -46,12 +47,12 @@ const ROLES = [
 
 const MODULES: Array<{ code: DesignRbacPolicy["module"]; label: string; icon: any }> = [
   { code: "DESIGN_MATRIX", label: "Tender Design Matrix", icon: Layers },
-  { code: "DRAWINGS", label: "Drawing Sheet Register", icon: FileText },
+  { code: "DRAWINGS", label: "Drawing sheet register", icon: FileText },
   { code: "CONSULTANTS", label: "Consultant Directory", icon: Users },
   { code: "LOOK_AHEAD", label: "30/60 Day Look-Ahead", icon: Clock },
   { code: "LIAISON", label: "Statutory Liaisoning", icon: ShieldCheck },
-  { code: "TRANSMITTALS", label: "Transmittal Dispatch", icon: Send },
-  { code: "RFIS", label: "RFI & Site Queries", icon: HelpCircle }
+  { code: "TRANSMITTALS", label: "Transmittal dispatch", icon: Send },
+  { code: "RFIS", label: "RFI & site queries", icon: HelpCircle }
 ];
 
 export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
@@ -200,7 +201,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
   };
 
   const handleResetDefaults = async () => {
-    if (confirm("Reset all RBAC policies to system recommended defaults?")) {
+    if ((await confirmAction("Reset all RBAC policies to system recommended defaults?"))) {
       const defaults = DesignMasterStore.buildDefaultRbacPolicies();
       setPolicies(defaults);
       DesignMasterStore.bulkSaveRbacPolicies(defaults);
@@ -211,21 +212,21 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="bg-surface border border-border w-full max-w-4xl rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-150">
+      <div className="bg-surface border border-border w-full max-w-4xl rounded-3xl shadow-lg p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-border pb-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/25">
+            <div className="h-10 w-10 rounded-2xl bg-info-soft text-info-text flex items-center justify-center border border-info-border">
               <Lock className="h-5 w-5" />
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-info-text flex items-center gap-1.5">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Enterprise Identity Governance</span>
+                <span>Enterprise identity governance</span>
               </span>
               <h3 className="text-lg font-bold text-foreground mt-0.5">
-                RBAC Access Policies: Project-wise / Role-based / CRUD Options
+                RBAC access policies: project-wise / role-based / CRUD options
               </h3>
               <p className="text-xs text-muted-foreground">
                 Configure fine-grained Create [C], Read [R], Update [U], Delete [D] permissions per role and development project.
@@ -233,10 +234,10 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
             </div>
           </div>
 
-          <button
+          <button aria-label="Close"
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="h-8 w-8 rounded-xl hover:bg-sunken flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -249,12 +250,12 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
             onClick={() => setActiveModalTab("USERS")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeModalTab === "USERS"
-                ? "bg-purple-600 text-white shadow-sm"
+                ? "bg-primary text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             <UserCheck className="h-3.5 w-3.5" />
-            <span>Workspace User Access & Scopes</span>
+            <span>Workspace user access & scopes</span>
           </button>
 
           <button
@@ -262,12 +263,12 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
             onClick={() => setActiveModalTab("ROLES")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeModalTab === "ROLES"
-                ? "bg-purple-600 text-white shadow-sm"
+                ? "bg-primary text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             }`}
           >
             <ShieldCheck className="h-3.5 w-3.5" />
-            <span>Role Matrix & CRUD Defaults</span>
+            <span>Role matrix & CRUD defaults</span>
           </button>
         </div>
 
@@ -278,7 +279,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
         ) : (
           <>
             {saveSuccessMessage && (
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+              <div className="p-3 rounded-xl bg-success-soft border border-success-border text-success-text text-xs font-bold flex items-center gap-2 animate-in fade-in">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>{saveSuccessMessage}</span>
               </div>
@@ -289,8 +290,8 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
               {/* 1. Select Role */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-teal-600" />
-                  <span>1. Target User Role:</span>
+                  <Users className="h-3.5 w-3.5 text-info-text" />
+                  <span>1. Target user role:</span>
                 </label>
                 <select
                   value={selectedRole}
@@ -309,15 +310,15 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
               {/* 2. Select Project Scope */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5 text-blue-500" />
-                  <span>2. Project Scope (Project-Wise):</span>
+                  <Building2 className="h-3.5 w-3.5 text-info-text" />
+                  <span>2. Project scope (project-wise):</span>
                 </label>
                 <select
                   value={selectedProject}
                   onChange={e => setSelectedProject(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
                 >
-                  <option value="ALL">🏢 All Development Projects (Global Default)</option>
+                  <option value="ALL">🏢 All development projects (global default)</option>
                   {storeState.projects.map(p => (
                     <option key={p.id} value={p.id}>{p.name} ({p.location || "Site"})</option>
                   ))}
@@ -331,11 +332,11 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
             {/* CRUD Permission Matrix Grid */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-                  CRUD Capability Configuration for [{currentRoleObj.name}] on [{selectedProject === "ALL" ? "All Projects" : (storeState.projects.find(p => p.id === selectedProject)?.name || selectedProject)}]
+                <h4 className="text-xs font-bold text-foreground">
+                  CRUD capability configuration for [{currentRoleObj.name}] on [{selectedProject === "ALL" ? "All Projects" : (storeState.projects.find(p => p.id === selectedProject)?.name || selectedProject)}]
                 </h4>
                 <span className="text-[11px] text-muted-foreground font-mono">
-                  [C] Create • [R] Read • [U] Update • [D] Delete
+                  [C] create • [r] read • [u] update • [d] delete
                 </span>
               </div>
 
@@ -343,12 +344,12 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                 <table className="w-full text-left text-xs border-collapse">
                   <thead className="bg-muted/40 border-b border-border text-[11px] font-bold text-foreground">
                     <tr>
-                      <th className="p-3 w-1/3">Module / Resource Area</th>
+                      <th className="p-3 w-1/3">Module / resource area</th>
                       <th className="p-3 text-center">Create [C]</th>
-                      <th className="p-3 text-center">Read / View [R]</th>
+                      <th className="p-3 text-center">Read / view [r]</th>
                       <th className="p-3 text-center">Update [U]</th>
                       <th className="p-3 text-center">Delete [D]</th>
-                      <th className="p-3 text-right">Quick Preset</th>
+                      <th className="p-3 text-right">Quick preset</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
@@ -360,12 +361,12 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                       return (
                         <tr key={mod.code} className="hover:bg-muted/20 transition-colors">
                           <td className="p-3 font-semibold text-foreground flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                            <div className="h-7 w-7 rounded-lg bg-info-soft text-info-text flex items-center justify-center shrink-0">
                               <Icon className="h-3.5 w-3.5" />
                             </div>
                             <div>
                               <div className="font-bold text-foreground">{mod.label}</div>
-                              <span className="text-[10px] text-muted-foreground font-mono">{mod.code}</span>
+                              <span className="text-[11px] text-muted-foreground font-mono">{mod.code}</span>
                             </div>
                           </td>
 
@@ -377,10 +378,10 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               onClick={() => handleTogglePermission(mod.code, "canCreate")}
                               className={`h-7 w-7 rounded-lg font-bold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canCreate 
-                                  ? "bg-emerald-600 text-white shadow-xs" 
+                                  ? "bg-success text-white shadow-xs" 
                                   : "bg-muted text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
-                              title="Toggle Create Permission"
+                              title="Toggle create permission"
                             >
                               {policy.canCreate ? "✓" : "—"}
                             </button>
@@ -394,10 +395,10 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               onClick={() => handleTogglePermission(mod.code, "canRead")}
                               className={`h-7 w-7 rounded-lg font-bold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canRead 
-                                  ? "bg-blue-600 text-white shadow-xs" 
+                                  ? "bg-info text-white shadow-xs" 
                                   : "bg-muted text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
-                              title="Toggle Read Permission"
+                              title="Toggle read permission"
                             >
                               {policy.canRead ? "✓" : "—"}
                             </button>
@@ -411,10 +412,10 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               onClick={() => handleTogglePermission(mod.code, "canUpdate")}
                               className={`h-7 w-7 rounded-lg font-bold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canUpdate 
-                                  ? "bg-amber-600 text-white shadow-xs" 
+                                  ? "bg-warning text-white shadow-xs" 
                                   : "bg-muted text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
-                              title="Toggle Update Permission"
+                              title="Toggle update permission"
                             >
                               {policy.canUpdate ? "✓" : "—"}
                             </button>
@@ -428,10 +429,10 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               onClick={() => handleTogglePermission(mod.code, "canDelete")}
                               className={`h-7 w-7 rounded-lg font-bold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canDelete 
-                                  ? "bg-rose-600 text-white shadow-xs" 
+                                  ? "bg-danger-solid text-white shadow-xs" 
                                   : "bg-muted text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
-                              title="Toggle Delete Permission"
+                              title="Toggle delete permission"
                             >
                               {policy.canDelete ? "✓" : "—"}
                             </button>
@@ -443,7 +444,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               type="button"
                               disabled={isSuper}
                               onClick={() => handleGrantAll(mod.code)}
-                              className="px-2 py-1 rounded-md text-[10px] font-bold text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 mr-1.5 cursor-pointer disabled:opacity-50"
+                              className="px-2 py-1 rounded-md text-[11px] font-bold text-info-text hover:bg-info-soft mr-1.5 cursor-pointer disabled:opacity-50"
                             >
                               Full CRUD
                             </button>
@@ -451,7 +452,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               type="button"
                               disabled={isSuper}
                               onClick={() => handleRevokeAll(mod.code)}
-                              className="px-2 py-1 rounded-md text-[10px] font-bold text-muted-foreground hover:bg-muted cursor-pointer disabled:opacity-50"
+                              className="px-2 py-1 rounded-md text-[11px] font-bold text-muted-foreground hover:bg-muted cursor-pointer disabled:opacity-50"
                             >
                               Revoke
                             </button>
@@ -472,7 +473,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                <span>Reset Recommended Defaults</span>
+                <span>Reset recommended defaults</span>
               </button>
 
               <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
@@ -487,7 +488,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                   type="button"
                   disabled={isSaving}
                   onClick={handleSavePolicies}
-                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-md inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-info hover:bg-info text-white font-bold shadow-md inline-flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
                 >
                   <Save className="h-3.5 w-3.5" />
                   <span>{isSaving ? "Saving..." : "Save RBAC Policies"}</span>

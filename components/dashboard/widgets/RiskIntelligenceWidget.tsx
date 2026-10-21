@@ -50,9 +50,9 @@ export function RiskIntelligenceWidget({ kpis }: RiskIntelligenceWidgetProps) {
   return (
     <BaseWidget 
       id="risk-intel"
-      title="Risk Intelligence Radar" 
+      title="Risk intelligence radar" 
       subtitle="System health & exposure analysis"
-      icon={<ShieldAlert className="w-5 h-5 text-amber-500" />}
+      icon={<ShieldAlert className="w-5 h-5 text-warning-text" />}
       collapsible={true}
       overflowHidden
     >

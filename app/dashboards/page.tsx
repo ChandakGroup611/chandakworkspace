@@ -40,7 +40,7 @@ export default async function DashboardsPage() {
             href="/"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Navigation
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to navigation
           </Link>
         </div>
         <h1 className="text-2xl font-bold text-foreground">Dashboards</h1>

@@ -8,40 +8,40 @@ import ChandakLoader from "@/components/ui/ChandakLoader";
 
 const MODULES = [
   {
-    title: "Email Providers",
+    title: "Email providers",
     description: "Manage Primary and Fallback SMTP/Graph providers for high-availability routing.",
     href: "/settings/communication/providers",
     icon: Server,
     color: "text-theme-icon",
-    bg: "bg-theme-btn-primary/10",
+    bg: "bg-accent-soft",
     border: "border-theme-btn-primary/20"
   },
   {
-    title: "Template Designer",
+    title: "Template designer",
     description: "Design dynamic HTML email templates with intelligent merge tag hydration.",
     href: "/settings/communication/templates",
     icon: LayoutTemplate,
     color: "text-theme-icon",
-    bg: "bg-theme-btn-primary/10",
+    bg: "bg-accent-soft",
     border: "border-theme-btn-primary/20"
   },
   {
-    title: "Notification Rules",
+    title: "Notification rules",
     description: "Configure event-based routing, recipient resolution, and status triggers.",
     href: "/settings/communication/rules",
     icon: Workflow,
     color: "text-success",
     bg: "bg-success/10",
-    border: "border-emerald-500/20"
+    border: "border-success-border"
   },
   {
-    title: "Delivery Logs",
+    title: "Delivery logs",
     description: "Audit trail of all communication dispatch, fallbacks, and delivery receipts.",
     href: "/settings/communication/logs",
     icon: Activity,
     color: "text-warning",
     bg: "bg-warning/10",
-    border: "border-amber-500/20"
+    border: "border-warning-border"
   }
 ];
 
@@ -51,7 +51,7 @@ export default function CommunicationCenterHub() {
   if (permsLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <ChandakLoader size="lg" title="Loading Communication Settings..." subtitle="Fetching provider and template configurations" />
+        <ChandakLoader size="lg" title="Loading communication settings…" subtitle="Fetching provider and template configurations" />
       </div>
     );
   }
@@ -59,10 +59,10 @@ export default function CommunicationCenterHub() {
   if (!hasPermission("SETTINGS_COMMUNICATION_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
+        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view Communication Settings.</p>
       </div>
     );
@@ -72,14 +72,14 @@ export default function CommunicationCenterHub() {
     <div className="w-full max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <header className="border-b border-border pb-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Communication Center
+          Communication center
         </h1>
         </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {MODULES.map((mod) => (
           <Link href={mod.href} key={mod.title}>
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md hover:border-theme-btn-primary/50 hover:bg-theme-btn-primary/5 transition-all cursor-pointer group h-full">
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md hover:border-theme-btn-primary/50 hover:bg-accent-soft transition-all cursor-pointer group h-full">
               <div className="flex items-start space-x-4">
                 <div className={`p-3 rounded-lg ${mod.bg} ${mod.border} border transition-colors group-hover:bg-opacity-20`}>
                   <mod.icon className={`w-6 h-6 ${mod.color}`} />

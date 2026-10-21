@@ -57,7 +57,7 @@ interface NavGroup {
 
 const taskNavGroups: NavGroup[] = [
   {
-    label: "Core Operations",
+    label: "Core operations",
     items: [
       { 
         label: "Dashboard", 
@@ -65,20 +65,20 @@ const taskNavGroups: NavGroup[] = [
         icon: LayoutDashboard,
         subItems: [
           { label: "Overview", href: "/?view=overview" },
-          { label: "My Portfolio", href: "/?view=portfolio" }
+          { label: "My portfolio", href: "/?view=portfolio" }
         ]
       },
-      { label: "My Support Portal", href: "/support", icon: LifeBuoy, permission: "SUPPORT_PORTAL_VIEW" },
-      { label: "Ticket Tracking", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
+      { label: "My support portal", href: "/support", icon: LifeBuoy, permission: "SUPPORT_PORTAL_VIEW" },
+      { label: "Ticket tracking", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
       { 
         label: "Requirements", 
         href: "/requirements", 
         icon: FileCheck2,
         permission: "REQUIREMENTS_VIEW",
         subItems: [
-          { label: "Requirements Master", href: "/requirements", permission: "REQUIREMENTS_VIEW" },
-          { label: "Requirement Approvals", href: "/requirements/approvals", permission: "REQUIREMENTS_APPROVALS_VIEW" },
-          { label: "Reports & Analytics", href: "/requirements/reports", permission: "REQUIREMENTS_REPORTS_VIEW" }
+          { label: "All requirements", href: "/requirements", permission: "REQUIREMENTS_VIEW" },
+          { label: "Requirement approvals", href: "/requirements/approvals", permission: "REQUIREMENTS_APPROVALS_VIEW" },
+          { label: "Reports and analytics", href: "/requirements/reports", permission: "REQUIREMENTS_REPORTS_VIEW" }
         ]
       },
       { 
@@ -87,53 +87,53 @@ const taskNavGroups: NavGroup[] = [
         icon: FolderKanban, 
         permission: "WORKSPACES_VIEW",
         subItems: [
-          { label: "Workspace Master", href: "/workspaces", permission: "WORKSPACES_VIEW" },
-          { label: "Enrolled Workspaces", href: "/workspaces/enrolled", permission: "ENROLLED_WORKSPACES_VIEW" },
-          { label: "Workspace Tasks", href: "/workspaces/tasks", permission: "TASKS_VIEW" },
-          { label: "Transfer Tasks", href: "/workspaces/transfer-tasks", permission: "TASKS_TRANSFER_VIEW" },
-          { label: "Data Migration", href: "/migration", permission: "DATA_MIGRATION_VIEW" },
-          { label: "Reports & Analytics", href: "/workspaces/reports", permission: "REPORTS_VIEW" }
+          { label: "All workspaces", href: "/workspaces", permission: "WORKSPACES_VIEW" },
+          { label: "Enrolled workspaces", href: "/workspaces/enrolled", permission: "ENROLLED_WORKSPACES_VIEW" },
+          { label: "Workspace tasks", href: "/workspaces/tasks", permission: "TASKS_VIEW" },
+          { label: "Transfer tasks", href: "/workspaces/transfer-tasks", permission: "TASKS_TRANSFER_VIEW" },
+          { label: "Data migration", href: "/migration", permission: "DATA_MIGRATION_VIEW" },
+          { label: "Reports and analytics", href: "/workspaces/reports", permission: "REPORTS_VIEW" }
         ]
       },
     ]
   },
   {
-    label: "Governance & Analysis",
+    label: "Governance and analysis",
     items: [
-      { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert, permission: "SLA_VIEW" },
-      { label: "AMC & Subscriptions", href: "/amc", icon: ShieldCheck, permission: "AMC_VIEW" },
-      { label: "User Master", href: "/users", icon: Users, permission: "USERS_VIEW" },
-      { label: "RBAC Access Policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
-      { label: "IAM Controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
-      { label: "Learning Hub", href: "/learning", icon: BookOpen },
+      { label: "SLA monitoring", href: "/sla", icon: ShieldAlert, permission: "SLA_VIEW" },
+      { label: "AMC and subscriptions", href: "/amc", icon: ShieldCheck, permission: "AMC_VIEW" },
+      { label: "Users", href: "/users", icon: Users, permission: "USERS_VIEW" },
+      { label: "RBAC access policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
+      { label: "IAM controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
+      { label: "Learning hub", href: "/learning", icon: BookOpen },
     ]
   },
   {
-    label: "System Base",
+    label: "System base",
     items: [
       { 
-        label: "Master Entities", 
+        label: "Masters", 
         href: "/masters", 
         icon: Database,
         permission: "MASTERS_VIEW",
         subItems: [
-          { label: "Company Master", href: "/masters/companies", permission: "COMPANIES_VIEW" },
-          { label: "Vendor / Provider Master", href: "/masters/vendors", permission: "MASTERS_VIEW" },
-          { label: "System Master", href: "/masters", permission: "SYSTEM_MASTERS_VIEW" }
+          { label: "Companies", href: "/masters/companies", permission: "COMPANIES_VIEW" },
+          { label: "Vendors", href: "/masters/vendors", permission: "MASTERS_VIEW" },
+          { label: "System masters", href: "/masters", permission: "SYSTEM_MASTERS_VIEW" }
         ]
       },
-      { label: "Trash Data", href: "/compliance", icon: Trash2, permission: "TRASH_VIEW" },
+      { label: "Trash", href: "/compliance", icon: Trash2, permission: "TRASH_VIEW" },
       { 
         label: "Settings", 
         href: "/settings", 
         icon: Settings,
         permission: "SETTINGS_MANAGE",
         subItems: [
-          { label: "Design Gallery", href: "/settings", permission: "SETTINGS_THEME_VIEW" },
-          { label: "Identity & Access", href: "/settings/identity", permission: "SETTINGS_IDENTITY_VIEW" },
-          { label: "Communication Center", href: "/settings/communication", permission: "SETTINGS_COMMUNICATION_VIEW" },
+          { label: "Design gallery", href: "/settings", permission: "SETTINGS_THEME_VIEW" },
+          { label: "Identity and access", href: "/settings/identity", permission: "SETTINGS_IDENTITY_VIEW" },
+          { label: "Communication centre", href: "/settings/communication", permission: "SETTINGS_COMMUNICATION_VIEW" },
           { label: "Notifications", href: "/settings/notifications", permission: "SETTINGS_NOTIFICATIONS_VIEW" },
-          { label: "Billing & Subscription", href: "/subscription", permission: "SETTINGS_MANAGE" }
+          { label: "Billing and subscription", href: "/subscription", permission: "SETTINGS_MANAGE" }
         ]
       },
     ]
@@ -142,34 +142,34 @@ const taskNavGroups: NavGroup[] = [
 
 const vehicleNavGroups: NavGroup[] = [
   {
-    label: "Fleet Operations",
+    label: "Fleet operations",
     items: [
-      { label: "Fleet Dashboard", href: "/vehicle", icon: LayoutDashboard },
-      { label: "Vehicle Inventory", href: "/vehicle/inventory", icon: Car, fleetModule: "VEHICLES" },
-      { label: "Register Vehicle", href: "/vehicle/register", icon: PlusCircle, fleetModule: "REGISTER" },
-      { label: "Daily Trip Sheets", href: "/vehicle/trips", icon: Calendar, fleetModule: "TRIPS" },
-      { label: "Driver Roster", href: "/vehicle/drivers", icon: Users, fleetModule: "DRIVERS" },
-      { label: "Traveler Allocations", href: "/vehicle/travelers", icon: UserCheck, fleetModule: "TRAVELERS" },
+      { label: "Fleet dashboard", href: "/vehicle", icon: LayoutDashboard },
+      { label: "Vehicle inventory", href: "/vehicle/inventory", icon: Car, fleetModule: "VEHICLES" },
+      { label: "Register vehicle", href: "/vehicle/register", icon: PlusCircle, fleetModule: "REGISTER" },
+      { label: "Daily trip sheets", href: "/vehicle/trips", icon: Calendar, fleetModule: "TRIPS" },
+      { label: "Driver roster", href: "/vehicle/drivers", icon: Users, fleetModule: "DRIVERS" },
+      { label: "Traveller allocations", href: "/vehicle/travelers", icon: UserCheck, fleetModule: "TRAVELERS" },
     ]
   },
   {
-    label: "Service & Assets",
+    label: "Service and assets",
     items: [
-      { label: "Document Vault", href: "/vehicle/documents", icon: FileCheck2, fleetModule: "VEHICLES" },
-      { label: "Service Bills & Job Cards", href: "/vehicle/maintenance", icon: Wrench, fleetModule: "MAINTENANCE" },
-      { label: "Parts & Accessories", href: "/vehicle/parts", icon: Package, fleetModule: "PARTS" },
-      { label: "Insurance Vendor Master", href: "/vehicle/vendors", icon: ShieldCheck, fleetModule: "VENDORS" },
-      { label: "Compliance & Alerts", href: "/vehicle/alerts", icon: ShieldAlert, fleetModule: "ALERTS" },
+      { label: "Document vault", href: "/vehicle/documents", icon: FileCheck2, fleetModule: "VEHICLES" },
+      { label: "Service bills and job cards", href: "/vehicle/maintenance", icon: Wrench, fleetModule: "MAINTENANCE" },
+      { label: "Parts and accessories", href: "/vehicle/parts", icon: Package, fleetModule: "PARTS" },
+      { label: "Insurance vendors", href: "/vehicle/vendors", icon: ShieldCheck, fleetModule: "VENDORS" },
+      { label: "Compliance and alerts", href: "/vehicle/alerts", icon: ShieldAlert, fleetModule: "ALERTS" },
     ]
   },
   {
-    label: "Analytics & System",
+    label: "Analytics and system",
     items: [
-      { label: "Fleet Reports", href: "/vehicle/reports", icon: LineChart, fleetModule: "REPORTS" },
-      { label: "My Assigned Vehicles", href: "/vehicle/my-garage", icon: LifeBuoy, fleetModule: "MY_GARAGE" },
-      { label: "Fleet Guidelines / SOPs", href: "/vehicle/learning", icon: BookOpen, fleetModule: "LEARNING" },
-      { label: "RBAC Access Policies", href: "/vehicle/rbac", icon: Key, fleetModule: "RBAC" },
-      { label: "Fleet Settings", href: "/vehicle/settings", icon: Settings, fleetModule: "SETTINGS" },
+      { label: "Fleet reports", href: "/vehicle/reports", icon: LineChart, fleetModule: "REPORTS" },
+      { label: "My assigned vehicles", href: "/vehicle/my-garage", icon: LifeBuoy, fleetModule: "MY_GARAGE" },
+      { label: "Fleet guidelines and SOPs", href: "/vehicle/learning", icon: BookOpen, fleetModule: "LEARNING" },
+      { label: "RBAC access policies", href: "/vehicle/rbac", icon: Key, fleetModule: "RBAC" },
+      { label: "Fleet settings", href: "/vehicle/settings", icon: Settings, fleetModule: "SETTINGS" },
     ]
   }
 ];
@@ -180,57 +180,57 @@ const dashboardsNavGroups: NavGroup[] = [
   {
     label: "Dashboards",
     items: [
-      { label: "All Dashboards", href: "/dashboards", icon: LayoutDashboard },
-      { label: "IT Budget & Expense", href: "/dashboards/it", icon: LineChart, permission: "DASH_IT_VIEW" },
-      { label: "Marketing Budget", href: "/dashboards/mkt", icon: LineChart, permission: "DASH_MKT_VIEW" },
-      { label: "Admin Access", href: "/dashboards/adm", icon: LineChart, permission: "DASH_ADM_VIEW" },
+      { label: "All dashboards", href: "/dashboards", icon: LayoutDashboard },
+      { label: "IT budget and expense", href: "/dashboards/it", icon: LineChart, permission: "DASH_IT_VIEW" },
+      { label: "Marketing budget", href: "/dashboards/mkt", icon: LineChart, permission: "DASH_MKT_VIEW" },
+      { label: "Admin access", href: "/dashboards/adm", icon: LineChart, permission: "DASH_ADM_VIEW" },
     ]
   }
 ];
 
 const designNavGroups: NavGroup[] = [
   {
-    label: "Tender & Pre-Construction",
+    label: "Tender and pre-construction",
     items: [
-      { label: "Building Section Matrix", href: "/design/building-matrix", icon: Building2 },
-      { label: "Tender Design Matrix", href: "/design/matrix", icon: Layers },
-      { label: "Look-Ahead Forecast", href: "/design/look-ahead", icon: Clock },
-      { label: "Statutory Liaisoning", href: "/design/liaisoning", icon: ShieldCheck },
-      { label: "Design Stages Roadmap", href: "/design/stages", icon: Calendar },
+      { label: "Building section matrix", href: "/design/building-matrix", icon: Building2 },
+      { label: "Tender design matrix", href: "/design/matrix", icon: Layers },
+      { label: "Look-ahead forecast", href: "/design/look-ahead", icon: Clock },
+      { label: "Statutory liaisoning", href: "/design/liaisoning", icon: ShieldCheck },
+      { label: "Design stages roadmap", href: "/design/stages", icon: Calendar },
     ]
   },
   {
-    label: "Drawings & Site Execution",
+    label: "Drawings and site execution",
     items: [
-      { label: "DMS Folder Vault", href: "/design/dms", icon: FolderTree },
-      { label: "Drawing Register", href: "/design/drawings", icon: FileText },
-      { label: "Design Approvals", href: "/design/approvals", icon: CheckCircle2 },
-      { label: "Revision History", href: "/design/revisions", icon: RotateCcw },
-      { label: "GFC Site Handover", href: "/design/handover", icon: Building2 },
-      { label: "Transmittals & Slips", href: "/design/transmittals", icon: Send },
-      { label: "RFI & Site Queries", href: "/design/rfis", icon: HelpCircle },
+      { label: "DMS folders", href: "/design/dms", icon: FolderTree },
+      { label: "Drawing register", href: "/design/drawings", icon: FileText },
+      { label: "Design approvals", href: "/design/approvals", icon: CheckCircle2 },
+      { label: "Revision history", href: "/design/revisions", icon: RotateCcw },
+      { label: "GFC site handover", href: "/design/handover", icon: Building2 },
+      { label: "Transmittals and slips", href: "/design/transmittals", icon: Send },
+      { label: "RFIs and site queries", href: "/design/rfis", icon: HelpCircle },
     ]
   },
   {
-    label: "Directory & Governance",
+    label: "Directory and governance",
     items: [
-      { label: "Learning & Lifecycle Guide", href: "/design/learning", icon: BookOpen },
-      { label: "Consultant Directory", href: "/design/consultants", icon: Users },
-      { label: "Design Analytics", href: "/design/reports", icon: LineChart },
-      { label: "RBAC Access Policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
+      { label: "Learning and lifecycle guide", href: "/design/learning", icon: BookOpen },
+      { label: "Consultant directory", href: "/design/consultants", icon: Users },
+      { label: "Design analytics", href: "/design/reports", icon: LineChart },
+      { label: "RBAC access policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
       { 
-        label: "Masters Setup", 
+        label: "Masters setup", 
         href: "/design/masters", 
         icon: Settings2, 
         permission: "MASTERS_VIEW",
         subItems: [
-          { label: "Project Master", href: "/design/projects", permission: "MASTERS_VIEW" },
-          { label: "Sub-Project Master", href: "/design/sub-projects", permission: "MASTERS_VIEW" },
-          { label: "Consultant Master", href: "/design/consultants", permission: "MASTERS_VIEW" },
-          { label: "Package Master", href: "/design/packages", permission: "MASTERS_VIEW" },
-          { label: "Sub Package Master", href: "/design/sub-packages", permission: "MASTERS_VIEW" },
-          { label: "Statutory Authorities", href: "/design/authorities", permission: "MASTERS_VIEW" },
-          { label: "Backup & Templates", href: "/design/templates", permission: "MASTERS_VIEW" }
+          { label: "Projects", href: "/design/projects", permission: "MASTERS_VIEW" },
+          { label: "Sub-projects", href: "/design/sub-projects", permission: "MASTERS_VIEW" },
+          { label: "Consultants", href: "/design/consultants", permission: "MASTERS_VIEW" },
+          { label: "Packages", href: "/design/packages", permission: "MASTERS_VIEW" },
+          { label: "Sub-packages", href: "/design/sub-packages", permission: "MASTERS_VIEW" },
+          { label: "Statutory authorities", href: "/design/authorities", permission: "MASTERS_VIEW" },
+          { label: "Backup and templates", href: "/design/templates", permission: "MASTERS_VIEW" }
         ]
       },
     ]
@@ -361,7 +361,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
             gi > 0 && <div className="mx-3 mb-2 h-px bg-sidebar-border" aria-hidden />
           ) : (
             // ui-audit-ignore-next-line overline group label in the nav rail
-            <div className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-muted">{group.label}</div>
+            <div className="px-3 pb-1.5 text-[11px] font-semibold text-sidebar-muted">{group.label}</div>
           )}
           <ul className="space-y-0.5">
             {group.items.map((item) => {
@@ -443,11 +443,6 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
         </div>
       ))}
 
-      {permsLoading && !roleCode && (
-        <div className="space-y-2 px-3 pt-2" aria-hidden>
-          {[0, 1, 2, 3].map((i) => <div key={i} className="h-8 animate-pulse rounded-md bg-sidebar-hover" />)}
-        </div>
-      )}
     </nav>
   );
 

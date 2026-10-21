@@ -6,8 +6,8 @@ export default function UsersLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Chandak Enterprise Directory"
-        subtitle="Loading staff personnel, roles & authentication credentials..."
+        title="Chandak enterprise directory"
+        subtitle="Loading staff personnel, roles & authentication credentials…"
       />
     </div>
   );

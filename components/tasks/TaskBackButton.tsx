@@ -24,7 +24,7 @@ export function TaskBackButton({ fallbackHref, label = "Back", icon, className }
   };
 
   return (
-    <button
+    <button type="button"
       onClick={handleBack}
       className={className || "inline-flex items-center gap-2 text-sm font-semibold text-theme-icon hover:opacity-80 transition-opacity"}
     >

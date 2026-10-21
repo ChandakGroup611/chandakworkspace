@@ -5,6 +5,7 @@ import { Search, Filter, Clock, User, AlertCircle, Hash, Eye, Edit2, Trash2 } fr
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { formatDate } from "@/components/ui/data";
 
 interface TicketListSidebarProps {
   tickets: any[];
@@ -33,13 +34,13 @@ export function TicketListSidebar({
     <div className={`flex flex-col h-full overflow-hidden border-r transition-colors duration-300 ${ "theme-card-structural " }`}>
       {/* Filters Area */}
       <div className={`p-4 space-y-4 border-b ${
-        "border-border bg-elevated/50/50/50/50/30"
+        "border-border bg-elevated/50"
       }`}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
           <input 
             type="text"
-            placeholder="Search tickets..."
+            placeholder="Search tickets…"
             className={`w-full h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -57,7 +58,7 @@ export function TicketListSidebar({
                 : ""
             }`}
           >
-            All Departments
+            All departments
           </AppButton>
           {departments.map(dept => (
             <AppButton 
@@ -97,12 +98,12 @@ export function TicketListSidebar({
                 onClick={() => onSelect(ticket)}
                 className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border cursor-pointer ${
                   isSelected 
-                    ? ("bg-theme-btn-primary/10 border-theme-btn-primary/30 shadow-sm")
-                    : ("hover:bg-elevated/50/50/50/50 border-transparent")
+                    ? ("bg-accent-soft border-theme-btn-primary/30 shadow-sm")
+                    : ("hover:bg-elevated/50 border-transparent")
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className={`text-xs font-mono font-bold uppercase tracking-wider text-theme-icon`}>
+                  <span className={`text-xs font-mono font-bold text-theme-icon`}>
                     {ticket.id}
                   </span>
                   <div className="flex items-center gap-1">
@@ -131,7 +132,7 @@ export function TicketListSidebar({
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    <span>{new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                    <span>{formatDate(ticket.createdAt)}</span>
                   </div>
                 </div>
 
@@ -141,18 +142,18 @@ export function TicketListSidebar({
                       <AppBadge variant={ticket.statusObj?.code === "ST_OPEN" ? "info" : "success"} className="text-[0.65rem] py-0 px-1.5">
                         {ticket.statusObj?.name || "Active"}
                       </AppBadge>
-                      <span className="text-[0.65rem] text-muted-foreground font-medium bg-indigo-400/10 px-1.5 rounded">
-                        SLA: STABLE
+                      <span className="text-[0.65rem] text-muted-foreground font-medium bg-accent-soft px-1.5 rounded">
+                        SLA: stable
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-theme-btn-primary/10 text-theme-icon hover:opacity-90/20" title="View" onClick={(e) => e.stopPropagation()}>
+                      <AppButton aria-label="View" variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-accent-soft text-theme-icon hover:opacity-90/20" title="View" onClick={(e) => e.stopPropagation()}>
                         <Eye className="h-3.5 w-3.5" />
                       </AppButton>
-                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-warning/10 text-warning hover:bg-warning/20" title="Update" onClick={(e) => e.stopPropagation()}>
+                      <AppButton aria-label="Update" variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-warning/10 text-warning hover:bg-warning/20" title="Update" onClick={(e) => e.stopPropagation()}>
                         <Edit2 className="h-3.5 w-3.5" />
                       </AppButton>
-                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-danger/10 text-danger hover:bg-danger/20" title="Delete" onClick={(e) => e.stopPropagation()}>
+                      <AppButton aria-label="Delete" variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-danger/10 text-danger hover:bg-danger/20" title="Delete" onClick={(e) => e.stopPropagation()}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </AppButton>
                     </div>
@@ -166,12 +167,12 @@ export function TicketListSidebar({
 
       {/* Stats Summary */}
       <div className={`p-4 border-t transition-colors duration-300 ${
-        "border-border bg-elevated/50/50/50/50/30"
+        "border-border bg-elevated/50"
       } flex items-center justify-between`}>
-        <span className="text-xs text-muted font-medium">{tickets.length} Incidents Found</span>
+        <span className="text-xs text-muted font-medium">{tickets.length} Incidents found</span>
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-success" />
-          <span className="text-xs text-muted">Realtime Sync Active</span>
+          <span className="text-xs text-muted">Realtime sync active</span>
         </div>
       </div>
     </div>

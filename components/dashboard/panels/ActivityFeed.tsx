@@ -70,7 +70,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
       <div className="flex items-center justify-between p-4 border-b theme-card-structural">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-success" />
-          <span className="text-sm font-bold text-foreground">Recent Activity</span>
+          <span className="text-sm font-bold text-foreground">Recent activity</span>
         </div>
         <AppButton variant="ghost" size="sm" className="h-6 text-xs gap-1">All <ArrowRight className="h-3 w-3" /></AppButton>
       </div>
@@ -88,7 +88,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
                 <div className="mt-0.5">{iconElement}</div>
                 <div>
                   <div className="text-xs text-foreground"><strong>{act.user}</strong> {act.action} <span className="font-mono text-muted-foreground">{act.target}</span></div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{act.time}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">{act.time}</div>
                 </div>
               </div>
             );

@@ -9,6 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Plus, X, Trash2, LayoutTemplate } from "lucide-react";
 import { fetchTaskTemplates, createTaskTemplate, deleteTaskTemplate } from "@/lib/actions/workspaces";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 export default function TemplateManager({ workspaceId, onClose }: { workspaceId: string, onClose: () => void }) {
   const { isLight: isLightMode } = useTheme();
@@ -64,7 +65,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this template forever?")) return;
+    if (!(await confirmAction("Delete this template forever?"))) return;
     try {
       await deleteTaskTemplate(id);
       setTemplates(templates.filter(t => t.id !== id));
@@ -80,9 +81,9 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
         <div className={`p-4 border-b flex justify-between items-center bg-elevated border-border`}>
           <div className="flex items-center gap-2">
             <LayoutTemplate className="h-5 w-5 text-theme-icon" />
-            <h2 className="font-bold text-lg">Task Templates Manager</h2>
+            <h2 className="font-bold text-lg">Task templates manager</h2>
           </div>
-          <AppButton variant="ghost" onClick={onClose} className="p-1 rounded-md hover:bg-surface/10 dark:hover:bg-surface/10 transition-colors">
+          <AppButton aria-label="Close" variant="ghost" onClick={onClose} className="p-1 rounded-md hover:bg-surface/10 dark:hover:bg-surface/10 transition-colors">
             <X className="h-5 w-5" />
           </AppButton>
         </div>
@@ -92,29 +93,29 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
             <div className="flex justify-end items-center">
               {canCreate && (
                 <AppButton onClick={() => setIsCreating(true)} variant="primary" className="bg-theme-btn-primary hover:opacity-90">
-                  <Plus className="h-4 w-4 mr-1" /> New Template
+                  <Plus className="h-4 w-4 mr-1" /> New template
                 </AppButton>
               )}
             </div>
           )}
 
           {isCreating && (
-            <form onSubmit={handleCreate} className={`p-4 rounded-xl border space-y-4 bg-theme-btn-primary/10/50 border-indigo-100`}>
-              <h3 className="font-semibold text-sm">Create New Template</h3>
+            <form onSubmit={handleCreate} className={`p-4 rounded-xl border space-y-4 bg-accent-soft border-border`}>
+              <h3 className="font-semibold text-sm">Create new template</h3>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Template Name</label>
-                <AppInput required value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="e.g. Monthly Server Patching" />
+                <label className="text-sm font-bold text-muted">Template name</label>
+                <AppInput required value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="e.g. Monthly server patching" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Default Task Title</label>
-                <AppInput required value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. [MAINTENANCE] Patch Production Servers" />
+                <label className="text-sm font-bold text-muted">Default task title</label>
+                <AppInput required value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. [MAINTENANCE] patch production servers" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Default Description</label>
+                <label className="text-sm font-bold text-muted">Default description</label>
                 <textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  placeholder="Steps to execute..."
+                  placeholder="Steps to execute…"
                   className={`w-full min-h-[80px] p-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y ${ "theme-card-structural text-foreground" }`}
                 />
               </div>
@@ -127,7 +128,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
 
           <div className="space-y-3">
             {isLoading ? (
-              <div className="p-8 text-center text-muted text-sm animate-pulse">Loading templates...</div>
+              <div className="p-8 text-center text-muted text-sm animate-pulse">Loading templates…</div>
             ) : templates.length === 0 && !isCreating ? (
               <div className="p-8 text-center border border-dashed rounded-xl border-border dark:border-border text-muted text-sm">
                 No templates found in this workspace. Create one above!
@@ -140,7 +141,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
                     <p className="text-xs text-muted truncate max-w-md mt-0.5">{t.subject}</p>
                   </div>
                   {canDelete && (
-                    <AppButton variant="secondary" onClick={() => handleDelete(t.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
+                    <AppButton aria-label="Delete" variant="secondary" onClick={() => handleDelete(t.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
                       <Trash2 className="h-4 w-4" />
                     </AppButton>
                   )}

@@ -37,22 +37,22 @@ export default function GlobalError({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-heading mb-2">Application Error</h2>
-          <p className="text-xs text-muted mb-4 break-words">
-            {error?.message || "A critical error occurred while loading the application."}
+          <h2 className="mb-1.5 text-[17px] font-semibold text-heading">Chandak Workspace didn&apos;t load</h2>
+          <p className="mb-4 text-[13.5px] text-muted">
+            Try again. If it keeps happening, send the reference below to IT support.
           </p>
           {error?.digest && (
             <p className="text-[11px] text-muted font-mono mb-6 bg-sunken p-2 rounded-lg border border-border break-all">
-              Error Digest: {error.digest}
+              Reference: {error.digest}
             </p>
           )}
           <div className="flex items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => reset()}
-              className="px-4 py-2 text-xs font-semibold rounded-md bg-primary hover:bg-primary-hover text-primary-foreground transition-colors"
+              className="h-9 rounded-md bg-primary px-4 text-[13.5px] font-medium text-primary-foreground hover:bg-primary-hover"
             >
-              Try Again
+              Try again
             </button>
             <button
               type="button"
@@ -61,9 +61,9 @@ export default function GlobalError({
                   window.location.href = "/";
                 }
               }}
-              className="px-4 py-2 text-xs font-semibold rounded-md bg-surface hover:bg-surface-hover text-foreground border border-border transition-colors"
+              className="h-9 rounded-md px-4 text-[13.5px] font-medium text-foreground hover:bg-surface-hover"
             >
-              Back to Home
+              Go to home
             </button>
           </div>
         </div>

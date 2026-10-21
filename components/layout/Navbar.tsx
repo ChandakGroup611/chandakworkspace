@@ -32,7 +32,7 @@ type QuickAction = { id: string; label: string; href: string; icon: React.Elemen
 const QUICK_ACTIONS: QuickAction[] = [
   { id: "ws", label: "Create new workspace", href: "/workspaces" /* TODO: open the create form, e.g. ?create=1 */, icon: FolderPlus },
   { id: "task", label: "Create new task", href: "/workspaces/tasks", icon: CheckSquare },
-  { id: "fleet", label: "Open Fleet & Logistics desk", href: "/vehicle", icon: Car },
+  { id: "fleet", label: "Open fleet & logistics desk", href: "/vehicle", icon: Car },
 ];
 
 const RESULT_ICON: Record<string, React.ElementType> = { TASK: CheckSquare, TICKET: FileText, VEHICLE: Car };

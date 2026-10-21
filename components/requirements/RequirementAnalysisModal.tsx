@@ -187,11 +187,11 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
         <AppCardHeader className="border-b shrink-0 pb-4 border-border bg-surface">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
+            <div className="p-2 rounded-lg bg-accent-soft text-theme-icon">
               <LayoutDashboard className="h-5 w-5" />
             </div>
             <div>
-              <AppCardTitle className="text-xl text-foreground">Requirement Analysis</AppCardTitle>
+              <AppCardTitle className="text-xl text-foreground">Requirement analysis</AppCardTitle>
             </div>
           </div>
         </AppCardHeader>
@@ -208,58 +208,58 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             {/* Business Section */}
             <div className="space-y-4">
               <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-theme-icon border-border">
-                <Briefcase className="h-4 w-4" /> Business Classification
+                <Briefcase className="h-4 w-4" /> Business classification
               </h3>
               
               
               <div className="grid grid-cols-1 mb-4">
                 <div>
-                  <label className={labelClass}>Requirement Domain (Scope) <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Requirement domain (scope) <span className="text-danger">*</span></label>
                   <select className={inputClass} value={formData.requirement_domain} onChange={e => setFormData({...formData, requirement_domain: e.target.value})} required>
-                    <option value="General Business">General Business</option>
-                    <option value="IT & Software System">IT & Software System</option>
-                    <option value="Infrastructure & Hardware">Infrastructure & Hardware</option>
+                    <option value="General Business">General business</option>
+                    <option value="IT & Software System">IT & software system</option>
+                    <option value="Infrastructure & Hardware">Infrastructure & hardware</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Requirement Type <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Requirement type <span className="text-danger">*</span></label>
                   <select className={inputClass} value={formData.requirement_type_id} onChange={e => setFormData({...formData, requirement_type_id: e.target.value})} required>
-                    <option value="">Select Type</option>
+                    <option value="">Select type</option>
                     {(masters?.issue_types || []).map((t: any) => (
                       <option key={t.id} value={t.id}>{t.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Business Criticality <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Business criticality <span className="text-danger">*</span></label>
                   <select className={inputClass} value={formData.business_criticality_id} onChange={e => setFormData({...formData, business_criticality_id: e.target.value})} required>
-                    <option value="" disabled>Select Criticality</option>
+                    <option value="" disabled>Select criticality</option>
                     {(masters?.priority_master || []).map((p: any) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Business Value</label>
-                  <AppInput placeholder="e.g. Revenue Impact, Cost Saving" value={formData.business_value_id} onChange={e => setFormData({...formData, business_value_id: e.target.value})} className={inputClass} />
+                  <label className={labelClass}>Business value</label>
+                  <AppInput placeholder="e.g. Revenue impact, cost saving" value={formData.business_value_id} onChange={e => setFormData({...formData, business_value_id: e.target.value})} className={inputClass} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Business Objective <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Business objective <span className="text-danger">*</span></label>
                   <textarea className={textareaClass} value={formData.objective} onChange={e => setFormData({...formData, objective: e.target.value})} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Business Impact</label>
+                  <label className={labelClass}>Business impact</label>
                   <textarea className={textareaClass} value={formData.business_impact} onChange={e => setFormData({...formData, business_impact: e.target.value})} />
                 </div>
                 <div>
-                  <label className={labelClass}>Budget Impact</label>
-                  <AppInput placeholder="e.g. Unbudgeted, Q3 Budget Allocation" value={formData.budget_impact} onChange={e => setFormData({...formData, budget_impact: e.target.value})} className={inputClass} />
+                  <label className={labelClass}>Budget impact</label>
+                  <AppInput placeholder="e.g. Unbudgeted, q3 budget allocation" value={formData.budget_impact} onChange={e => setFormData({...formData, budget_impact: e.target.value})} className={inputClass} />
                 </div>
               </div>
             </div>
@@ -267,31 +267,31 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             {/* Technical Section */}
             <div className="space-y-4">
               <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-success border-border">
-                <Server className="h-4 w-4" /> Technical & Execution Scope
+                <Server className="h-4 w-4" /> Technical & execution scope
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Functional Scope <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Functional scope <span className="text-danger">*</span></label>
                   <textarea className={textareaClass} value={formData.functional_scope} onChange={e => setFormData({...formData, functional_scope: e.target.value})} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Technical Scope / Architecture <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Technical scope / architecture <span className="text-danger">*</span></label>
                   <textarea className={textareaClass} value={formData.technical_scope} onChange={e => setFormData({...formData, technical_scope: e.target.value})} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Estimated Effort (Days) <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Estimated effort (days) <span className="text-danger">*</span></label>
                   <AppInput type="number" placeholder="e.g. 10" value={formData.estimated_effort} onChange={handleEffortChange} className={inputClass} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Estimated Cost</label>
+                  <label className={labelClass}>Estimated cost</label>
                   <AppInput type="number" placeholder="e.g. 5000" value={formData.estimated_cost} onChange={e => setFormData({...formData, estimated_cost: e.target.value})} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Estimated Resources</label>
+                  <label className={labelClass}>Estimated resources</label>
                   <AppInput placeholder="e.g. 2 Developers" value={formData.estimated_resources} onChange={e => setFormData({...formData, estimated_resources: e.target.value})} className={inputClass} />
                 </div>
               </div>
@@ -302,29 +302,29 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             {formData.requirement_domain === "IT & Software System" && (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                 <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-info border-border">
-                  <Server className="h-4 w-4" /> IT & Software System Scope
+                  <Server className="h-4 w-4" /> IT & software system scope
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Target System / Application</label>
+                    <label className={labelClass}>Target system / application</label>
                     <AppInput placeholder="e.g. Internal ERP, CRM" value={formData.target_system} onChange={e => setFormData({...formData, target_system: e.target.value})} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Data Privacy & Security</label>
-                    <AppInput placeholder="e.g. Handles PII, Needs Security Audit" value={formData.data_privacy} onChange={e => setFormData({...formData, data_privacy: e.target.value})} className={inputClass} />
+                    <label className={labelClass}>Data privacy & security</label>
+                    <AppInput placeholder="e.g. Handles PII, needs security audit" value={formData.data_privacy} onChange={e => setFormData({...formData, data_privacy: e.target.value})} className={inputClass} />
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}>Integration Dependencies</label>
-                  <textarea className={textareaClass} value={formData.integrations} onChange={e => setFormData({...formData, integrations: e.target.value})} placeholder="Describe API or 3rd party integrations..." />
+                  <label className={labelClass}>Integration dependencies</label>
+                  <textarea className={textareaClass} value={formData.integrations} onChange={e => setFormData({...formData, integrations: e.target.value})} placeholder="Describe API or 3rd party integrations…" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Software License Cost</label>
+                    <label className={labelClass}>Software license cost</label>
                     <AppInput type="number" placeholder="e.g. 1500" value={formData.software_cost} onChange={e => setFormData({...formData, software_cost: e.target.value})} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Development Cost</label>
+                    <label className={labelClass}>Development cost</label>
                     <AppInput type="number" placeholder="e.g. 5000" value={formData.dev_cost} onChange={e => setFormData({...formData, dev_cost: e.target.value})} className={inputClass} />
                   </div>
                 </div>
@@ -335,23 +335,23 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             {formData.requirement_domain === "Infrastructure & Hardware" && (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                 <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-foreground border-border`}>
-                  <Server className="h-4 w-4" /> Infrastructure Scope
+                  <Server className="h-4 w-4" /> Infrastructure scope
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Target Environment / Data Center</label>
+                    <label className={labelClass}>Target environment / data center</label>
                     <AppInput placeholder="e.g. AWS, Azure, On-Premise" value={formData.target_environment} onChange={e => setFormData({...formData, target_environment: e.target.value})} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Hardware & Capacity Needs</label>
+                    <label className={labelClass}>Hardware & capacity needs</label>
                     <AppInput placeholder="e.g. 2TB Storage, 32GB RAM" value={formData.hardware_needs} onChange={e => setFormData({...formData, hardware_needs: e.target.value})} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>CAPEX Amount (Capital Expenditure)</label>
+                    <label className={labelClass}>CAPEX amount (capital expenditure)</label>
                     <AppInput type="number" placeholder="e.g. 10000" value={formData.capex_amount} onChange={e => setFormData({...formData, capex_amount: e.target.value})} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>OPEX Amount (Recurring / Ops)</label>
+                    <label className={labelClass}>OPEX amount (recurring / ops)</label>
                     <AppInput type="number" placeholder="e.g. 500" value={formData.opex_amount} onChange={e => setFormData({...formData, opex_amount: e.target.value})} className={inputClass} />
                   </div>
                 </div>
@@ -361,18 +361,18 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             {/* Governance & Dependency */}
             <div className="space-y-4">
               <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-warning border-border">
-                <Shield className="h-4 w-4" /> Governance & Dependencies
+                <Shield className="h-4 w-4" /> Governance & dependencies
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className={labelClass}>Dependency Notes <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Dependency notes <span className="text-danger">*</span></label>
                   <AppInput placeholder="e.g. Blocked by REQ-002" value={formData.dependency_notes} onChange={e => setFormData({...formData, dependency_notes: e.target.value})} className={inputClass} required />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className={labelClass}>Impacted Departments (Approval Sequence) <span className="text-danger">*</span></label>
+                <label className={labelClass}>Impacted departments (approval sequence) <span className="text-danger">*</span></label>
                 <div className="p-4 rounded-xl flex flex-wrap gap-2 bg-elevated border border-border">
                   {(masters?.departments || []).map((d: any) => {
                     const isSelected = formData.impacted_departments.includes(d.id);
@@ -388,7 +388,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                             : "bg-surface border-border text-muted hover:bg-surface-hover"
                         }`}
                       >
-                        {isSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
+                        {isSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[11px]">{index + 1}</span>}
                         {d.department_name}
                       </AppButton>
                     );
@@ -397,7 +397,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
                 {formData.impacted_departments.length > 0 && (
                   <div className="mt-4 space-y-3">
-                    <label className={labelClass}>Define Approval Sequence <span className="text-danger">*</span></label>
+                    <label className={labelClass}>Define approval sequence <span className="text-danger">*</span></label>
                     {formData.impacted_departments.map((deptId) => {
                       const deptName = masters.departments?.find((d: any) => d.id === deptId)?.name;
                       const deptUsers = masters.users?.filter((u: any) => u.department_id === deptId) || [];
@@ -427,7 +427,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                   }}
                                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${ isUserSelected ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" : "bg-elevated border-border text-muted hover:bg-elevated" }`}
                                 >
-                                  {isUserSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
+                                  {isUserSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[11px]">{orderIndex}</span>}
                                   {u.full_name}
                                 </AppButton>
                               );
@@ -444,7 +444,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
               {/* Sign-Off Approver */}
               <div className="mt-4 pt-4 border-t border-border">
                 <label className={labelClass}>
-                  Designated Sign-Off Approver <span className="text-danger">*</span>
+                  Designated sign-off approver <span className="text-danger">*</span>
                 </label>
                 <select 
                   className={inputClass}
@@ -452,14 +452,14 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                   onChange={(e) => setFormData({ ...formData, signoff_approver_id: e.target.value })}
                   required
                 >
-                  <option value="" className="text-muted">-- Select Sign-Off Approver --</option>
+                  <option value="" className="text-muted">-- Select sign-off approver --</option>
                   {(masters.users || []).map((u: any) => (
                     <option key={u.id} value={u.id} className="text-foreground">
                       {u.full_name || u.name || 'User'} {u.designation?.name ? `(${u.designation.name})` : ''}
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-muted mt-1.5">
+                <p className="text-[11px] text-muted mt-1.5">
                   This user will be responsible for the final sign-off once all departmental approvals are complete.
                 </p>
               </div>
@@ -468,20 +468,20 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             {/* Stakeholders & Timelines */}
             <div className="space-y-4">
               <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-theme-icon border-border">
-                <Calendar className="h-4 w-4" /> Schedule & Stakeholders
+                <Calendar className="h-4 w-4" /> Schedule & stakeholders
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Start Date <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Start date <span className="text-danger">*</span></label>
                   <AppInput type="date" value={formData.start_date} min={new Date().toISOString().slice(0, 10)} onChange={e => handleDateChange('start_date', e.target.value)} className={inputClass} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Due Date <span className="text-danger">*</span></label>
+                  <label className={labelClass}>Due date <span className="text-danger">*</span></label>
                   <AppInput type="date" value={formData.due_date} min={formData.start_date || new Date().toISOString().slice(0, 10)} onChange={e => handleDateChange('due_date', e.target.value)} className={inputClass} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Expected Completion</label>
+                  <label className={labelClass}>Expected completion</label>
                   <AppInput type="date" value={formData.expected_completion_date} onChange={e => setFormData({...formData, expected_completion_date: e.target.value})} className={inputClass} />
                 </div>
               </div>

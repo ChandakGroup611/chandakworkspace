@@ -6,7 +6,7 @@ import { fetchVehicleDashboardStats, fetchVehiclesList } from "@/lib/actions/veh
 import FleetDeskHost from "@/components/vehicle/FleetDeskHost";
 
 export const metadata = {
-  title: "Vehicle Module | Chandak Workspace",
+  title: "Vehicle module | Chandak Workspace",
   description: "Enterprise fleet management, vehicle allocation, drivers, trip sheets & maintenance."
 };
 

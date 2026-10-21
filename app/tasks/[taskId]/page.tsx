@@ -67,18 +67,18 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
               href={`/workspaces${(task.sub_workspace_id || task.workspace_id) ? `?workspace=${task.sub_workspace_id || task.workspace_id}&restoreHierarchy=true` : '?restoreHierarchy=true'}`}
               className="inline-flex items-center gap-2 text-sm font-semibold text-muted hover:text-foreground transition-colors"
             >
-              Back to Execution Hierarchy
+              Back to execution hierarchy
             </Link>
           </div>
         </div>
 
         {/* Header Tags */}
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <p className="text-[11px] font-mono tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded font-bold border border-theme-btn-primary/20">
+          <p className="text-[11px] font-mono tracking-wider text-theme-icon bg-accent-soft px-2 py-0.5 rounded font-bold border border-theme-btn-primary/20">
             {task.task_code || "TASK"}
           </p>
           <p className="text-[11px] tracking-wider text-muted px-2 py-0.5 border border-border dark:border-border rounded font-bold bg-surface dark:bg-transparent">
-            WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
+            Workspace: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
           </p>
         </div>
         
@@ -99,9 +99,9 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
               <Type className="w-4 h-4 text-accent" />
-              <h3 className="font-semibold text-sm tracking-wide text-foreground">Task Subject & Description</h3>
+              <h3 className="font-semibold text-sm tracking-wide text-foreground">Task subject & description</h3>
             </div>
-            <span className="text-[10px] font-mono font-semibold text-accent-soft-text bg-accent-soft px-2.5 py-0.5 rounded-full border border-border">
+            <span className="text-[11px] font-mono font-semibold text-accent-soft-text bg-accent-soft px-2.5 py-0.5 rounded-full border border-border">
               {task.task_code || "TASK"}
             </span>
           </div>
@@ -109,7 +109,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             
             {task.description && (
               <div className="w-full">
-                <span className="text-[10px] font-semibold text-muted mb-2 flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-muted mb-2 flex items-center gap-1.5">
                   <AlignLeft className="w-3.5 h-3.5" /> Description
                 </span>
                 <SafeHtml 
@@ -121,11 +121,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             
             {typeof task.custom_fields?.progress_percentage === 'number' && (
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-semibold text-muted">Subtask Progress</span>
+                <span className="text-[11px] font-semibold text-muted">Subtask progress</span>
                 <div className="w-64 h-1.5 bg-sunken rounded-full overflow-hidden">
                   <div className="h-full bg-success rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
                 </div>
-                <span className="text-[10px] font-semibold text-muted">{task.custom_fields.progress_percentage}%</span>
+                <span className="text-[11px] font-semibold text-muted">{task.custom_fields.progress_percentage}%</span>
               </div>
             )}
           </div>
@@ -136,7 +136,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             <div className="mb-4 rounded-xl bg-warning-soft border border-warning-border p-4 shadow-xs flex items-start gap-3">
               <ShieldAlert className="w-5 h-5 text-warning-text shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-semibold text-warning-text">Task is Frozen</h4>
+                <h4 className="text-sm font-semibold text-warning-text">Task is frozen</h4>
                 <p className="text-xs text-warning-text mt-1">
                   This task is strictly frozen because its status is Closed. Only Super Admins and the Task Assignee (Task Owner) can edit or reopen it.
                 </p>

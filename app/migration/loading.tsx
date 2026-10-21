@@ -6,8 +6,8 @@ export default function MigrationLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Enterprise Data Migration"
-        subtitle="Initializing migration pipelines & spreadsheet transformers..."
+        title="Enterprise data migration"
+        subtitle="Initializing migration pipelines & spreadsheet transformers…"
       />
     </div>
   );

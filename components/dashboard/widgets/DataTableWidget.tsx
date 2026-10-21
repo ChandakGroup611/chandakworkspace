@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ListChecks } from "lucide-react";
 import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
 import { BaseWidget } from "./BaseWidget";
+import { formatDate } from "@/components/ui/data";
 
 interface DataTableWidgetProps {
   metrics?: any[];
@@ -21,12 +22,12 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
   const renderStatus = (s: string) => {
     const statusStr = String(s || "").toLowerCase();
     if (statusStr.includes("resolv") || statusStr.includes("done")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-success/10 text-success border border-emerald-500/20">Done</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-success/10 text-success border border-success-border">Done</span>;
     if (statusStr.includes("escalat") || statusStr.includes("block")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-danger/10 text-danger border border-red-500/20">Blocked</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-danger/10 text-danger border border-danger-border">Blocked</span>;
     if (statusStr.includes("review")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-warning/10 text-warning border border-amber-500/20">Review</span>;
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">Active</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-warning/10 text-warning border border-warning-border">Review</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">Active</span>;
   };
 
   const renderPriority = (p: string) => {
@@ -34,38 +35,38 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
     if (priorityStr.includes("critical") || priorityStr.includes("p1")) 
       return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span><span className="text-xs text-foreground">Critical</span></div>;
     if (priorityStr.includes("high") || priorityStr.includes("p2")) 
-      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500"></span><span className="text-xs text-foreground">High</span></div>;
+      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-warning"></span><span className="text-xs text-foreground">High</span></div>;
     if (priorityStr.includes("medium")) 
       return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-warning"></span><span className="text-xs text-foreground">Medium</span></div>;
-    return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-slate-400"></span><span className="text-xs text-foreground">Low</span></div>;
+    return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-border-active"></span><span className="text-xs text-foreground">Low</span></div>;
   };
 
   return (
     <BaseWidget
       id="recent-items"
-      title="Recent Assignments"
+      title="Recent assignments"
       subtitle="Latest active and in-flight operational deliverables"
       icon={<ListChecks className="w-5 h-5 text-theme-icon" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 shrink-0">
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 shrink-0">
           {recentItems.length} Items
         </span>
       }
       className="h-[400px]"
       collapsible={true}
       noPadding
-      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors" onClick={onOpenList || (() => router.push('/tickets'))}>View All</span>}
+      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors" onClick={onOpenList || (() => router.push('/tickets'))}>View all</span>}
     >
       <div className="w-full overflow-auto h-full custom-scrollbar">
         <AppTable className="border-b-0">
           <AppTableHeader className="sticky top-0 z-10 bg-surface/90 shadow-sm">
             <AppTableRow className="border-b border-border/50">
-              <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent">ID / Title</AppTableHead>
-              <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent w-24">Type</AppTableHead>
-              <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent w-28">Priority</AppTableHead>
-              <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent w-24">Status</AppTableHead>
-              <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent w-20">Assignee</AppTableHead>
-              <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent w-24">Due Date</AppTableHead>
+              <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent">ID / title</AppTableHead>
+              <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent w-24">Type</AppTableHead>
+              <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent w-28">Priority</AppTableHead>
+              <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent w-24">Status</AppTableHead>
+              <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent w-20">Assignee</AppTableHead>
+              <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent w-24">Due date</AppTableHead>
             </AppTableRow>
           </AppTableHeader>
           <AppTableBody>
@@ -74,7 +75,7 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
                 const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
                 const isBug = m.module === 'Tickets';
                 const isTask = m.module === 'Tasks';
-                const tagBg = isBug ? 'bg-danger/10 text-danger border-red-500/20' : isTask ? 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20' : 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20';
+                const tagBg = isBug ? 'bg-danger/10 text-danger border-danger-border' : isTask ? 'bg-accent-soft text-theme-icon border-theme-btn-primary/20' : 'bg-accent-soft text-theme-icon border-theme-btn-primary/20';
                 
                 const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
@@ -86,27 +87,27 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
                 };
 
                 return (
-                  <AppTableRow key={i} onClick={handleRowClick} className="cursor-pointer hover:theme-card-structural -hover/50 transition-colors border-b /40 last:border-0 group">
+                  <AppTableRow key={i} onClick={handleRowClick} className="cursor-pointer -hover/50 transition-colors border-b last:border-0 group">
                     <AppTableCell>
-                      <div className="font-mono text-[10px] font-bold text-muted-foreground uppercase mb-0.5">{m.code || `TF-${shortId}`}</div>
+                      <div className="font-mono text-[11px] font-bold text-muted-foreground mb-0.5">{m.code || `TF-${shortId}`}</div>
                       <div className="text-sm font-semibold text-foreground truncate max-w-[250px] group-hover:text-primary transition-colors" title={m.title}>{m.title || `${m.module} Assignment`}</div>
                     </AppTableCell>
                     <AppTableCell>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${tagBg}`}>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold border ${tagBg}`}>
                         {m.module.substring(0,4)}
                       </span>
                     </AppTableCell>
                     <AppTableCell>{renderPriority(m.priority || "")}</AppTableCell>
                     <AppTableCell>{renderStatus(m.status)}</AppTableCell>
                     <AppTableCell>
-                      <div className="w-6 h-6 rounded-full theme-card-structural flex items-center justify-center text-[10px] font-bold text-foreground" title={m.user}>
+                      <div className="w-6 h-6 rounded-full theme-card-structural flex items-center justify-center text-[11px] font-bold text-foreground" title={m.user}>
                         {initials}
                       </div>
                     </AppTableCell>
                     <AppTableCell>
                       {m.dueDate ? (
                         <div className={`text-xs font-semibold ${m.isOverdue ? 'text-danger' : 'text-muted-foreground'}`}>
-                          {new Date(m.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          {formatDate(m.dueDate)}
                         </div>
                       ) : (
                         <div className="text-xs text-muted-foreground/50 italic">N/A</div>

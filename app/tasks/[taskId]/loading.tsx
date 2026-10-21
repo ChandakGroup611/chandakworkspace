@@ -6,7 +6,7 @@ export default function TaskLoading() {
     <div className="flex h-[60vh] w-full items-center justify-center">
       <ChandakLoader
         size="md"
-        title="Decrypting Task Data..."
+        title="Decrypting task data…"
         subtitle="Fetching operational intel"
       />
     </div>

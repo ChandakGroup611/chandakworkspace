@@ -6,8 +6,8 @@ export default function IamLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Identity & Access Governance"
-        subtitle="Verifying security matrix, active sessions & permissions..."
+        title="Identity & access governance"
+        subtitle="Verifying security matrix, active sessions & permissions…"
       />
     </div>
   );

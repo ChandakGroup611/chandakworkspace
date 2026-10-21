@@ -134,7 +134,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       badge: "Engineering Coordination",
       icon: FileText,
       color: "text-theme-btn-primary",
-      bgColor: "bg-theme-btn-primary/10",
+      bgColor: "bg-accent-soft",
       borderColor: "border-theme-btn-primary/30",
       route: "/design/drawings",
       summary: "Consultant CAD/PDF uploads, multi-revision vaults (R0 -> R1 -> R2), and multi-disciplinary clash reviews.",
@@ -229,10 +229,10 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 theme-label text-theme-btn-primary">
               <BookOpen className="h-4 w-4" />
-              <span>Design & Engineering Onboarding & Architecture Playbook</span>
+              <span>Design & engineering onboarding & architecture playbook</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-              End-to-End Workflow, Transaction Lifecycle & Field Dictionary
+              End-to-end workflow, transaction lifecycle & field dictionary
             </h2>
             <p className="text-sm text-muted-foreground max-w-3xl">
               Master the entire Design & Tracking lifecycle: from master setup sequence and tender heatmaps to CAD revisions, GFC transmittals, and site clash RFIs.
@@ -251,7 +251,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
               }`}
             >
               <Workflow className="h-3.5 w-3.5 text-theme-btn-primary" />
-              <span>Process Flowchart</span>
+              <span>Process flowchart</span>
             </button>
 
             <button
@@ -264,7 +264,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
               }`}
             >
               <Database className="h-3.5 w-3.5 text-theme-btn-primary" />
-              <span>CRUD & Field Dictionary</span>
+              <span>CRUD & field dictionary</span>
             </button>
 
             <button
@@ -277,7 +277,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
               }`}
             >
               <GitFork className="h-3.5 w-3.5 text-theme-btn-primary" />
-              <span>Ecosystem Impact</span>
+              <span>Ecosystem impact</span>
             </button>
           </div>
         </div>
@@ -316,7 +316,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                   </div>
                   {isSelected && (
                     <div className="flex items-center gap-1 text-[11px] font-semibold text-theme-btn-primary pt-1 border-t border-border/50">
-                      <span>Viewing Active Details</span>
+                      <span>Viewing active details</span>
                       <ChevronRight className="h-3 w-3" />
                     </div>
                   )}
@@ -355,7 +355,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                     href={activePhase.route}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text text-xs font-bold hover:opacity-90 transition-opacity shadow-sm self-start md:self-center"
                   >
-                    <span>Open Live View</span>
+                    <span>Open live view</span>
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -365,17 +365,17 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                   <div className="p-4 rounded-xl bg-muted/40 border border-border space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                       <Sparkles className="h-3.5 w-3.5 text-warning" />
-                      <span>Executive Overview</span>
+                      <span>Executive overview</span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       {activePhase.summary}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-theme-btn-primary/5 border border-theme-btn-primary/20 space-y-1.5">
+                  <div className="p-4 rounded-xl bg-accent-soft border border-theme-btn-primary/20 space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-theme-btn-primary">
                       <ShieldCheck className="h-3.5 w-3.5" />
-                      <span>Why This Is Done (Business Purpose & Risk Mitigation)</span>
+                      <span>Why this is done (business purpose & risk mitigation)</span>
                     </div>
                     <p className="text-xs text-foreground/90 leading-relaxed">
                       {activePhase.whyFirst}
@@ -387,7 +387,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                 <div className="space-y-3">
                   <h4 className="theme-label text-muted-foreground flex items-center gap-2">
                     <Workflow className="h-3.5 w-3.5 text-theme-btn-primary" />
-                    <span>Sequential Steps & Field Purpose</span>
+                    <span>Sequential steps & field purpose</span>
                   </h4>
 
                   <div className="overflow-x-auto rounded-xl border border-border">
@@ -395,10 +395,10 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                       <thead>
                         <tr className="bg-muted/60 border-b border-border text-muted-foreground font-semibold">
                           <th className="py-2.5 px-3 w-16">Seq #</th>
-                          <th className="py-2.5 px-3 w-40">Entity / Master</th>
-                          <th className="py-2.5 px-3 w-56">Action & Inputs</th>
-                          <th className="py-2.5 px-3 w-64">Key Fields Captured</th>
-                          <th className="py-2.5 px-3">Why & What Purpose It Serves</th>
+                          <th className="py-2.5 px-3 w-40">Entity / master</th>
+                          <th className="py-2.5 px-3 w-56">Action & inputs</th>
+                          <th className="py-2.5 px-3 w-64">Key fields captured</th>
+                          <th className="py-2.5 px-3">Why & what purpose it serves</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">

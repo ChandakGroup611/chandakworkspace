@@ -95,7 +95,7 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border bg-surface">
           <div>
-            <h2 className="text-lg font-bold text-foreground tracking-tight">Customize Dashboard</h2>
+            <h2 className="text-lg font-bold text-foreground tracking-tight">Customise dashboard</h2>
           </div>
           <AppButton variant="ghost" type="button" aria-label="Close dialog" onClick={onClose} className="p-2 text-muted-foreground hover:bg-surface hover:text-foreground rounded-full transition-colors">
             <X className="w-5 h-5" />
@@ -125,12 +125,12 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
         {/* Footer */}
         <div className="flex items-center justify-between p-5 border-t border-border bg-background/50">
           <AppButton variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground hover:text-foreground">
-            <RefreshCw className="w-4 h-4 mr-2" /> Reset to Default
+            <RefreshCw className="w-4 h-4 mr-2" /> Reset to default
           </AppButton>
           <div className="flex gap-3">
             <AppButton variant="outline" onClick={onClose}>Cancel</AppButton>
             <AppButton variant="primary" onClick={handleSave} leftIcon={<Check className="w-4 h-4" />}>
-              Save Layout
+              Save layout
             </AppButton>
           </div>
         </div>
@@ -205,7 +205,7 @@ function SortableWidgetItem({ item, onToggle, onSpanChange, onMoveUp, onMoveDown
                   "w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-all",
                   item.colSpan === w 
                     ? "bg-primary text-primary-foreground shadow-sm" 
-                    : "bg-theme-btn-primary/10 text-muted-foreground hover:bg-theme-btn-primary/20 hover:text-foreground"
+                    : "bg-accent-soft text-muted-foreground hover:bg-accent-soft hover:text-foreground"
                 )}
               >
                 {w}/4

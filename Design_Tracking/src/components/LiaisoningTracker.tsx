@@ -184,30 +184,30 @@ export const LiaisoningTracker: React.FC = () => {
     }
     if (lower.includes("not onboard")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
-          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
-          <span>Not Onboard</span>
+        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-danger-soft text-danger-text border border-danger-border inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-danger-solid shrink-0" />
+          <span>Not onboard</span>
         </span>
       );
     }
     if (lower.includes("onboard")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-success-soft text-success-text border border-success-border inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-success shrink-0" />
           <span>{lower.includes("pending") ? "Compliance Pending" : "Onboard"}</span>
         </span>
       );
     }
     if (lower.includes("fixed") || lower.includes("cleared") || lower.includes("obtained")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
-          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-info-soft text-info-text border border-info-border inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-info shrink-0" />
           <span>{val}</span>
         </span>
       );
     }
     return (
-      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-foreground border border-border whitespace-nowrap">
+      <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-sunken text-foreground border border-border whitespace-nowrap">
         {val}
       </span>
     );
@@ -251,12 +251,12 @@ export const LiaisoningTracker: React.FC = () => {
 
   const getAuthorityIcon = (title: string) => {
     const lower = title.toLowerCase();
-    if (lower.includes("fire") || lower.includes("cfo")) return <Flame className="h-4 w-4 text-orange-500" />;
-    if (lower.includes("tree")) return <Trees className="h-4 w-4 text-emerald-500" />;
-    if (lower.includes("aviation") || lower.includes("aai")) return <Plane className="h-4 w-4 text-sky-500" />;
+    if (lower.includes("fire") || lower.includes("cfo")) return <Flame className="h-4 w-4 text-warning-text" />;
+    if (lower.includes("tree")) return <Trees className="h-4 w-4 text-success-text" />;
+    if (lower.includes("aviation") || lower.includes("aai")) return <Plane className="h-4 w-4 text-info-text" />;
     if (lower.includes("rera")) return <FileBadge2 className="h-4 w-4 text-theme-icon" />;
-    if (lower.includes("architect") || lower.includes("liaison") || lower.includes("bmc") || lower.includes("mcgm")) return <Building2 className="h-4 w-4 text-blue-500" />;
-    return <ShieldCheck className="h-4 w-4 text-emerald-500" />;
+    if (lower.includes("architect") || lower.includes("liaison") || lower.includes("bmc") || lower.includes("mcgm")) return <Building2 className="h-4 w-4 text-info-text" />;
+    return <ShieldCheck className="h-4 w-4 text-success-text" />;
   };
 
   return (
@@ -272,14 +272,14 @@ export const LiaisoningTracker: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">
-                Statutory Liaisoning
+                Statutory liaisoning
               </h2>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
             {/* View Mode Toggle */}
-            <div className="p-0.5 rounded-xl border border-border bg-slate-100 dark:bg-slate-800 flex items-center">
+            <div className="p-0.5 rounded-xl border border-border bg-sunken flex items-center">
               <button
                 type="button"
                 onClick={() => setViewMode("MATRIX")}
@@ -288,7 +288,7 @@ export const LiaisoningTracker: React.FC = () => {
                 }`}
               >
                 <TableIcon className="h-3.5 w-3.5" />
-                <span>Matrix Grid</span>
+                <span>Matrix grid</span>
               </button>
               <button
                 type="button"
@@ -298,7 +298,7 @@ export const LiaisoningTracker: React.FC = () => {
                 }`}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
-                <span>Cards View</span>
+                <span>Cards view</span>
               </button>
             </div>
 
@@ -310,7 +310,7 @@ export const LiaisoningTracker: React.FC = () => {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 aria-label="Search statutory authority"
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-border-active"
               />
             </div>
 
@@ -318,7 +318,7 @@ export const LiaisoningTracker: React.FC = () => {
             <button
               type="button"
               onClick={handleExportCsv}
-              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-theme-icon" />
               <span>Export CSV</span>
@@ -349,7 +349,7 @@ export const LiaisoningTracker: React.FC = () => {
               selectedValues={selectedOnboardingFilters}
               onChange={setSelectedOnboardingFilters}
               colorTheme="purple"
-              placeholder="All Statuses"
+              placeholder="All statuses"
               searchPlaceholder="Filter onboarding..."
               showSearch={false}
             />
@@ -359,21 +359,21 @@ export const LiaisoningTracker: React.FC = () => {
               <button
                 type="button"
                 onClick={handleClearAllFilters}
-                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                className="h-9 px-3 rounded-xl border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
                 title="Reset all active filters"
               >
                 <X className="h-3.5 w-3.5" />
-                <span>Reset Filters ({totalActiveFilterCount})</span>
+                <span>Reset filters ({totalActiveFilterCount})</span>
               </button>
             )}
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
             <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">Compliance Readiness:</span>
-            <span className="text-xs font-black text-theme-icon dark:text-muted-foreground font-mono">{complianceStats.rate}%</span>
-            <div className="w-28 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0">
+            <span className="text-xs font-semibold text-theme-icon dark:text-muted-foreground font-mono">{complianceStats.rate}%</span>
+            <div className="w-28 h-2 rounded-full bg-sunken overflow-hidden shrink-0">
               <div
-                className="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-500"
                 style={{ width: `${complianceStats.rate}%` }}
               />
             </div>
@@ -383,7 +383,7 @@ export const LiaisoningTracker: React.FC = () => {
         {/* 🏷️ Active Selected Filter Badges */}
         {totalActiveFilterCount > 0 && (
           <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
-            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
               Active Filters:
             </span>
 
@@ -391,14 +391,14 @@ export const LiaisoningTracker: React.FC = () => {
             {selectedProjectFilters.map(p => (
               <span
                 key={`proj-${p}`}
-                className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                className="px-2 py-0.5 rounded-lg bg-info-soft text-info-text border border-info-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
               >
                 <Building className="h-2.5 w-2.5" />
                 <span>{p}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedProjectFilters(prev => prev.filter(x => x !== p))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -413,10 +413,10 @@ export const LiaisoningTracker: React.FC = () => {
               >
                 <CheckCircle2 className="h-2.5 w-2.5" />
                 <span>{f === "ONBOARD" ? "Onboarded / Cleared" : "Pending Onboarding"}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedOnboardingFilters(prev => prev.filter(x => x !== f))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -426,7 +426,7 @@ export const LiaisoningTracker: React.FC = () => {
             <button
               type="button"
               onClick={handleClearAllFilters}
-              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+              className="text-[11px] text-muted-foreground hover:text-danger-text underline ml-1 cursor-pointer font-medium"
             >
               Clear all
             </button>
@@ -438,7 +438,7 @@ export const LiaisoningTracker: React.FC = () => {
       {filteredAuthorities.length === 0 && (
         <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
           <Shield className="h-10 w-10 text-muted-foreground/40 mx-auto" />
-          <h4 className="text-sm font-bold text-foreground">No Statutory Authorities Configured</h4>
+          <h4 className="text-sm font-bold text-foreground">No statutory authorities configured</h4>
           
         </div>
       )}
@@ -448,18 +448,18 @@ export const LiaisoningTracker: React.FC = () => {
         <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-sm">
           <div className="overflow-x-auto custom-scrollbar max-h-[72vh]">
             <table className="w-full text-left text-xs border-collapse min-w-max">
-              <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border shadow-xs">
+              <thead className="sticky top-0 z-20 bg-sunken border-b border-border shadow-xs">
                 <tr>
-                  <th className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[280px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm whitespace-nowrap">
-                    Statutory Authority / Scope
+                  <th className="p-3.5 sticky left-0 z-30 bg-sunken border-r border-border min-w-[280px] font-semibold text-foreground text-[11px] shadow-sm whitespace-nowrap">
+                    Statutory authority / scope
                   </th>
                   {dynamicColumns.map((col, idx) => (
                     <th
                       key={idx}
-                      className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[140px] whitespace-nowrap"
+                      className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[11px] bg-sunken min-w-[140px] whitespace-nowrap"
                     >
-                      <div className="truncate font-black text-foreground whitespace-nowrap">{col.projectName}</div>
-                      <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block whitespace-nowrap">
+                      <div className="truncate font-semibold text-foreground whitespace-nowrap">{col.projectName}</div>
+                      <div className="text-muted-foreground font-mono font-semibold text-[11px] mt-0.5 px-1.5 py-0.5 rounded bg-sunken inline-block whitespace-nowrap">
                         {col.towerName}
                       </div>
                     </th>
@@ -469,8 +469,8 @@ export const LiaisoningTracker: React.FC = () => {
 
               <tbody className="divide-y divide-border/60">
                 {filteredAuthorities.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-                    <td className="p-3.5 sticky left-0 z-10 bg-surface group-hover:bg-slate-50 dark:group-hover:bg-slate-900 border-r border-border shadow-sm">
+                  <tr key={item.id} className="hover:bg-sunken transition-colors group">
+                    <td className="p-3.5 sticky left-0 z-10 bg-surface group-hover:bg-sunken border-r border-border shadow-sm">
                       <div className="flex items-center gap-2">
                         {getAuthorityIcon(item.authorityName)}
                         <div>
@@ -478,7 +478,7 @@ export const LiaisoningTracker: React.FC = () => {
                             {item.authorityName}
                           </div>
                           {item.scope && (
-                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                            <div className="text-[11px] text-muted-foreground mt-0.5">
                               {item.scope}
                             </div>
                           )}
@@ -535,23 +535,23 @@ export const LiaisoningTracker: React.FC = () => {
                         {getAuthorityIcon(item.authorityName)}
                       </div>
                       <div>
-                        <h4 className="text-xs font-black text-foreground leading-snug">
+                        <h4 className="text-xs font-semibold text-foreground leading-snug">
                           {item.authorityName}
                         </h4>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground">
                           {item.scope || item.category}
                         </span>
                       </div>
                     </div>
-                    <span className="font-mono text-xs font-black text-theme-icon dark:text-muted-foreground">
+                    <span className="font-mono text-xs font-semibold text-theme-icon dark:text-muted-foreground">
                       {towerRate}%
                     </span>
                   </div>
 
                   {/* Tower Progress Bar */}
-                  <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="w-full h-1.5 rounded-full bg-sunken overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all"
+                      className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all"
                       style={{ width: `${towerRate}%` }}
                     />
                   </div>
@@ -559,7 +559,7 @@ export const LiaisoningTracker: React.FC = () => {
 
                 <div className="pt-2.5 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
                   <span>{onboardTowers} of {totalTowers} towers covered</span>
-                  <span className="text-theme-icon font-bold">Verified Scope</span>
+                  <span className="text-theme-icon font-bold">Verified scope</span>
                 </div>
               </div>
             );
@@ -591,40 +591,40 @@ export const LiaisoningTracker: React.FC = () => {
           <div className="max-w-4xl space-y-6">
             <AppCard>
               <AppCardHeader>
-                <AppCardTitle className="text-sm font-bold text-foreground">Authority Scope & Tower Target</AppCardTitle>
+                <AppCardTitle className="text-sm font-bold text-foreground">Authority scope & tower target</AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Statutory Authority Body</span>
+                    <span className="text-[11px] font-bold text-muted-foreground block">Statutory authority body</span>
                     <span className="text-sm font-bold text-foreground">{activeCell.authority.authorityName}</span>
                     <p className="text-[11px] text-muted-foreground">{activeCell.authority.scope || activeCell.authority.category}</p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Target Development & Wing</span>
+                    <span className="text-[11px] font-bold text-muted-foreground block">Target development & wing</span>
                     <span className="text-sm font-bold text-foreground">{activeCell.col.projectName}</span>
                     <p className="text-[11px] text-muted-foreground">Wing {activeCell.col.towerName}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  <label className="font-bold text-foreground block">Quick Select Compliance Status:</label>
+                  <label className="font-bold text-foreground block">Quick select compliance status:</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus("Onboard")}
-                      className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      className="p-3 rounded-xl border border-success-border bg-success-soft text-success-text hover:bg-success-soft text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      <span>Mark Onboard</span>
+                      <CheckCircle2 className="h-4 w-4 text-success-text" />
+                      <span>Mark onboard</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus("Fixed consultant")}
-                      className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      className="p-3 rounded-xl border border-info-border bg-info-soft text-info-text hover:bg-info-soft text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
-                      <Building2 className="h-4 w-4 text-blue-500" />
-                      <span>Fixed Partner</span>
+                      <Building2 className="h-4 w-4 text-info-text" />
+                      <span>Fixed partner</span>
                     </button>
                     <button
                       type="button"
@@ -632,27 +632,27 @@ export const LiaisoningTracker: React.FC = () => {
                       className="p-3 rounded-xl border border-border bg-surface text-foreground dark:text-muted-foreground hover:bg-surface text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
                       <FileCheck2 className="h-4 w-4 text-theme-icon" />
-                      <span>Compliance Pending</span>
+                      <span>Compliance pending</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus("Not Onboard")}
-                      className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      className="p-3 rounded-xl border border-danger-border bg-danger-soft text-danger-text hover:bg-danger-soft text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
-                      <AlertCircle className="h-4 w-4 text-rose-500" />
-                      <span>Not Onboard</span>
+                      <AlertCircle className="h-4 w-4 text-danger-text" />
+                      <span>Not onboard</span>
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-border">
                   <label className="font-bold text-foreground block">
-                    Custom Target Date / Consultant Remark:
+                    Custom target date / consultant remark:
                   </label>
                   <div className="flex items-center gap-3">
                     <input
                       type="text"
-                      placeholder="e.g. In Scrutiny at CFO / Target 15 Nov"
+                      placeholder="e.g. In scrutiny at CFO / target 15 Nov"
                       value={customRemark}
                       onChange={e => setCustomRemark(e.target.value)}
                       className="flex-1 h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
@@ -664,7 +664,7 @@ export const LiaisoningTracker: React.FC = () => {
                       onClick={() => handleUpdateStatus(customRemark || "NA")}
                       className="h-10 px-5 text-xs font-bold"
                     >
-                      Save Custom Remark
+                      Save custom remark
                     </AppButton>
                   </div>
                 </div>

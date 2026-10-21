@@ -51,6 +51,17 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { EmptyState } from "@/components/ui/feedback/States";
+import { cn } from "@/lib/utils";
+
+const SEG_ON = "bg-surface text-foreground font-semibold shadow-sm";
+const SEG_OFF = "text-muted hover:text-foreground";
+const SEG_BTN = "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors";
+const CHIP = "inline-flex items-center gap-1 rounded-md bg-accent-soft py-0.5 pl-2 pr-1 text-[12.5px] text-accent-soft-text";
+const CHIP_X = "inline-flex h-5 w-5 items-center justify-center rounded hover:bg-surface/60";
+const FIELD_LABEL = "text-[13px] font-medium text-subtle";
+const SECTION_TITLE = "text-[14px] font-semibold text-heading";
+const MODAL_CARD = "w-full max-w-md overflow-hidden rounded-[12px] border border-border bg-elevated text-foreground shadow-lg";
 export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
   const { isLight: isLightMode } = useTheme();
@@ -384,9 +395,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   const scopeOptions = useMemo(() => [
     { id: 'WORKSPACES', label: 'Workspaces' },
-    { id: 'SUB_WORKSPACES', label: 'Sub-Workspaces' },
+    { id: 'SUB_WORKSPACES', label: 'Sub-workspaces' },
     { id: 'TASKS', label: 'Tasks' },
   ], []);
+  const scopeLabel = (id: string) => scopeOptions.find(o => o.id === id)?.label || id;
 
   const workspaceOptions = useMemo(() => {
     return (workspaces || []).map((w: any) => ({
@@ -772,7 +784,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     e?.preventDefault();
     if (isSubmitting) return;
     if (newWS.start_date && newWS.end_date && new Date(newWS.end_date) < new Date(newWS.start_date)) {
-      toast.error("Target End Date cannot be earlier than the Start Date.");
+      toast.error("Target end date can't be before the start date.");
       return;
     }
     try {
@@ -798,7 +810,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
-        triggerToast("Workspace updated successfully");
+        triggerToast("Workspace updated");
         
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
         if (selectedCompany) data.company = selectedCompany;
@@ -825,7 +837,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
-        triggerToast("Workspace created successfully");
+        triggerToast("Workspace created");
         
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
         if (selectedCompany) data.company = selectedCompany;
@@ -907,7 +919,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
          window.location.reload();
          return;
       }
-      triggerErrorToast("Database Error on Workspace Save: " + (err.message || err.details || JSON.stringify(err)));
+      triggerErrorToast("Couldn't save the workspace: " + (err.message || err.details || "please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -938,8 +950,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       open: true,
       type: 'WORKSPACE',
       id,
-      title: "Delete Workspace",
-      description: "Are you sure you want to delete this workspace? This will permanently delete all tasks, chat messages, and timeline audits inside it."
+      title: "Delete this workspace?",
+      description: "All tasks, chat messages and timeline history inside it are permanently deleted."
     });
   };
 
@@ -950,7 +962,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       
       const updatedList = workspaces.filter(w => w.id !== id);
       setWorkspaces(updatedList);
-      triggerToast("Workspace deleted successfully");
+      triggerToast("Workspace deleted");
       if (updatedList.length > 0) {
         setActiveWorkspace(updatedList[0]);
       } else {
@@ -988,7 +1000,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       });
     } catch (e: any) {
       console.warn("[Workspace Deletion] Intercepted:", e.message || e);
-      triggerErrorToast("Database Error on Workspace Deletion: " + (e.message || e.details || JSON.stringify(e)));
+      triggerErrorToast("Couldn't delete the workspace: " + (e.message || e.details || "please try again."));
     }
   };
 
@@ -997,8 +1009,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       open: true,
       type: 'TASK',
       id: nodeId,
-      title: "Delete Task",
-      description: "Are you sure you want to delete this task? This action cannot be undone."
+      title: "Delete this task?",
+      description: "The task, its checklist and remarks are removed. This can't be undone from here."
     });
   };
 
@@ -1007,7 +1019,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       const res = await deleteTask(nodeId);
       if (res?.error) throw new Error(res.error);
       
-      triggerToast("Task deleted successfully");
+      triggerToast("Task deleted");
       
       // Optimistically remove from tree and bubble task count downwards
       setMasterHierarchy(prev => {
@@ -1036,7 +1048,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       setTasks(prev => prev.filter(t => t.id !== nodeId));
     } catch (e: any) {
       console.warn("[Task Deletion] Intercepted:", e.message || e);
-      triggerErrorToast("Database Error on Task Deletion: " + (e.message || e.details || JSON.stringify(e)));
+      triggerErrorToast("Couldn't delete the task: " + (e.message || e.details || "please try again."));
     }
   };
 
@@ -1091,7 +1103,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       
       // Close modal immediately for instant UI feedback
       setIsCreatingTask(false);
-      triggerToast("Task created successfully");
+      triggerToast("Task created");
       
       // Optimistically insert to list for instant update
       setTasks(prev => [{ ...data, isOptimistic: true }, ...prev]);
@@ -1141,7 +1153,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
            window.location.reload();
            return;
         }
-        triggerErrorToast("Database Error on Task Creation: " + (err.message || err.details || JSON.stringify(err)));
+        triggerErrorToast("Couldn't create the task: " + (err.message || err.details || "please try again."));
       }
   };
 
@@ -1152,8 +1164,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       }`}>
         <ChandakLoader
           size="lg"
-          title="Hydrating Enterprise Workspaces..."
-          subtitle="Synchronizing workspaces and operational streams"
+          title="Loading workspaces…"
+          subtitle="Fetching workspaces and tasks"
         />
       </div>
     );
@@ -1164,11 +1176,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="p-4 rounded-full bg-danger/10 border border-danger/20 text-danger">
-          <ShieldAlert className="h-10 w-10" />
+        <div className="rounded-full bg-warning-soft p-3 text-warning-text">
+          <ShieldAlert className="h-6 w-6" aria-hidden />
         </div>
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view the Workspace & Task Engine Dashboard.</p>
+        <h2 className="text-[15px] font-semibold text-heading">You don't have access to workspaces</h2>
+        <p className="text-[13px] text-muted">Ask your administrator to grant Workspaces view access in RBAC access policies.</p>
       </div>
     );
   }
@@ -1176,40 +1188,45 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Workspace & Task Engine"
-        icon={<FolderKanban className="h-6 w-6" />}
+        title="Workspaces"
+        description="Workspaces, sub-workspaces and their tasks in one hierarchy"
         actions={
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-end">
-            <div className="relative flex items-center flex-1 sm:flex-none min-w-[130px] sm:w-64 md:w-72">
-              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isSearching ? 'text-theme-icon animate-spin' : 'text-muted'}`} />
-              <input 
-                type="text" 
-                placeholder="Search..." 
+            <div className="relative flex min-w-[160px] flex-1 items-center sm:w-64 sm:flex-none md:w-72">
+              {isSearching
+                ? <Loader2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted" aria-label="Searching" />
+                : <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />}
+              <input
+                type="search"
+                aria-label="Search workspaces and tasks"
+                placeholder="Search workspaces and tasks"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full pl-9 pr-8 h-8 text-[13px] rounded-lg theme-card-structural focus:outline-none focus:ring-1 focus:ring-theme-icon transition-all text-foreground`}
+                className="h-9 w-full pl-9 pr-8 text-[13.5px]"
               />
               {searchQuery && (
-                <AppButton 
+                <button
+                  type="button"
+                  aria-label="Clear search"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-surface/50 text-muted hover:text-foreground"
+                  className="absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-muted hover:bg-sunken hover:text-foreground"
                 >
-                  <X className="h-3.5 w-3.5" />
-                </AppButton>
+                  <X className="h-3.5 w-3.5" aria-hidden />
+                </button>
               )}
             </div>
 
             <div className="relative shrink-0" ref={filterPopoverRef}>
-              <AppButton 
-                variant={showFilters || activeFilterCount > 0 ? "primary" : "outline"} 
-                size="sm" 
+              <AppButton
+                variant="secondary"
                 leftIcon={<Filter className="h-4 w-4" />}
                 onClick={() => setShowFilters(!showFilters)}
-                className="relative"
+                aria-expanded={showFilters}
+                className={cn(showFilters && "border-border-active bg-surface-hover")}
               >
                 Filters
                 {activeFilterCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-surface text-foreground">
+                  <span className="rounded bg-primary px-1.5 text-[11px] leading-[18px] text-primary-foreground tabular">
                     {activeFilterCount}
                   </span>
                 )}
@@ -1217,32 +1234,26 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               {/* Floating Filter Popover (Does NOT take page height) */}
               {showFilters && (
-                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-border bg-surface shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3.5 max-h-[85vh] overflow-y-auto custom-scrollbar">
-                  <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
-                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                      <Filter className="h-3.5 w-3.5 text-theme-icon" />
-                      Filter Engine
-                      <span className="text-[10px] font-normal lowercase tracking-normal text-muted">
-                        (Multi-Select)
-                      </span>
-                    </span>
+                <div role="dialog" aria-label="Filters" className="absolute right-0 top-full z-[var(--z-popover)] mt-2 max-h-[85vh] w-80 space-y-3.5 overflow-y-auto rounded-[10px] border border-border bg-elevated p-4 text-foreground shadow-lg sm:w-96">
+                  <div className="flex items-center justify-between border-b border-border pb-2.5">
+                    <span className="text-[14px] font-semibold text-heading">Filters</span>
                     <div className="flex items-center gap-2">
                       {activeFilterCount > 0 && (
                         <button 
                           type="button"
                           onClick={clearFilters}
-                          className="text-[11px] font-semibold text-muted hover:text-danger underline transition-colors"
+                          className="text-[12.5px] font-medium text-accent-soft-text hover:underline"
                         >
-                          Reset
+                          Reset all
                         </button>
                       )}
                       <button 
                         type="button"
                         aria-label="Close filters"
                         onClick={() => setShowFilters(false)}
-                        className="text-muted hover:text-foreground p-0.5 rounded-md hover:bg-surface/60"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-foreground"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-4 w-4" aria-hidden />
                       </button>
                     </div>
                   </div>
@@ -1251,25 +1262,26 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   <button
                     type="button"
                     onClick={() => setFilters(prev => ({ ...prev, myTasksOnly: !prev.myTasksOnly }))}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${
-                      filters.myTasksOnly 
-                        ? 'bg-success/15 text-success border-success/40 shadow-sm' 
-                        : 'border-border text-muted hover:text-foreground hover:bg-surface/50'
-                    }`}
+                    role="switch"
+                    aria-checked={filters.myTasksOnly}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-md border px-3 py-2 text-[13px] font-medium transition-colors",
+                      filters.myTasksOnly ? "border-border-active bg-accent-soft text-accent-soft-text" : "border-border text-foreground hover:bg-surface-hover"
+                    )}
                   >
                     <span className="flex items-center gap-2">
-                      <UserCheck className="h-4 w-4" />
-                      My Assigned Tasks Only
+                      <UserCheck className="h-4 w-4" aria-hidden />
+                      Only tasks assigned to me
                     </span>
-                    {filters.myTasksOnly && <Check className="h-3.5 w-3.5" />}
+                    {filters.myTasksOnly && <Check className="h-4 w-4" aria-hidden />}
                   </button>
 
                   {/* Multi-Selection Filters */}
                   <div className="space-y-3">
                     {/* Scope Multi-Select */}
                     <WorkspaceFilterMultiSelect
-                      label="Scope"
-                      placeholder="All Scopes"
+                      label="Level"
+                      placeholder="All levels"
                       options={scopeOptions}
                       selectedIds={filters.entityTypes && filters.entityTypes.length > 0 ? filters.entityTypes : (filters.entityType && filters.entityType !== 'ALL' ? [filters.entityType] : [])}
                       onChange={(ids) => {
@@ -1292,7 +1304,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     {workspaceOptions.length > 0 && (
                       <WorkspaceFilterMultiSelect
                         label="Workspace"
-                        placeholder="All Workspaces"
+                        placeholder="All workspaces"
                         options={workspaceOptions}
                         selectedIds={filters.workspaceIds || (filters.workspaceId ? [filters.workspaceId] : [])}
                         onChange={(ids) => setFilters(prev => ({ ...prev, workspaceIds: ids, workspaceId: ids.length === 1 ? ids[0] : '' }))}
@@ -1306,7 +1318,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     {companyOptions.length > 1 && (
                       <WorkspaceFilterMultiSelect
                         label="Company"
-                        placeholder="All Companies"
+                        placeholder="All companies"
                         options={companyOptions}
                         selectedIds={filters.companyIds || (filters.companyId ? [filters.companyId] : [])}
                         onChange={(ids) => setFilters(prev => ({ ...prev, companyIds: ids, companyId: ids.length === 1 ? ids[0] : '' }))}
@@ -1319,7 +1331,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     {/* Status Multi-Select */}
                     <WorkspaceFilterMultiSelect
                       label="Status"
-                      placeholder="All Statuses"
+                      placeholder="All statuses"
                       options={statusOptions}
                       selectedIds={filters.statusIds || (filters.statusId ? [filters.statusId] : [])}
                       onChange={(ids) => setFilters(prev => ({ ...prev, statusIds: ids, statusId: ids.length === 1 ? ids[0] : '' }))}
@@ -1331,7 +1343,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     {/* Priority Multi-Select */}
                     <WorkspaceFilterMultiSelect
                       label="Priority"
-                      placeholder="All Priorities"
+                      placeholder="All priorities"
                       options={priorityOptions}
                       selectedIds={filters.priorityIds || (filters.priorityId ? [filters.priorityId] : [])}
                       onChange={(ids) => setFilters(prev => ({ ...prev, priorityIds: ids, priorityId: ids.length === 1 ? ids[0] : '' }))}
@@ -1343,7 +1355,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     {/* Assignee Multi-Select */}
                     <WorkspaceFilterMultiSelect
                       label="Assignee"
-                      placeholder="All Assignees"
+                      placeholder="All assignees"
                       options={assigneeOptions}
                       selectedIds={filters.assigneeIds || (filters.assigneeId ? [filters.assigneeId] : [])}
                       onChange={(ids) => setFilters(prev => ({ ...prev, assigneeIds: ids, assigneeId: ids.length === 1 ? ids[0] : '' }))}
@@ -1354,11 +1366,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   </div>
 
                   <div className="pt-2 border-t border-border flex items-center justify-end">
-                    <AppButton 
-                      variant="primary" 
-                      size="sm" 
+                    <AppButton
+                      variant="secondary"
                       onClick={() => setShowFilters(false)}
-                      className="w-full text-xs font-semibold py-1.5"
+                      className="w-full"
                     >
                       Done
                     </AppButton>
@@ -1367,22 +1378,29 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               )}
             </div>
 
-            <AppButton 
-              variant="outline" 
-              size="sm" 
-              leftIcon={<FileSpreadsheet className="h-4 w-4 text-success" />} 
+            <AppButton
+              variant="ghost"
+              leftIcon={<FileSpreadsheet className="h-4 w-4" />}
               onClick={() => router.push("/migration")}
               className="shrink-0 whitespace-nowrap"
-              title="Bulk Data Migration & Excel Import for Workspaces & Tasks"
+              title="Import workspaces and tasks from Excel"
+              aria-label="Import workspaces and tasks from Excel"
             >
-              <span className="hidden sm:inline">Import Excel</span>
-              <span className="sm:hidden">Import</span>
+              <span className="hidden sm:inline">Import</span>
             </AppButton>
+
+            <SavedFiltersDropdown
+              savedFilters={savedFilters}
+              activeSavedFilterId={activeSavedFilterId}
+              onSaveCurrent={handleSaveCurrentFilter}
+              onApplyFilter={applyFilter}
+              onDeleteFilter={deleteSavedFilter}
+              align="end"
+            />
             
-            <AppButton 
-              variant="primary" 
-              size="sm" 
-              leftIcon={<Plus className="h-4 w-4" />} 
+            <AppButton
+              variant="primary"
+              leftIcon={<Plus className="h-4 w-4" />}
               onClick={() => {
                 setNewWS({
                   name: "", 
@@ -1400,179 +1418,155 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               disabled={!hasPermission("WORKSPACES_CREATE")}
               className="shrink-0 whitespace-nowrap"
             >
-              <span className="hidden sm:inline">New Workspace</span>
-              <span className="sm:hidden">Workspace</span>
+              New workspace
             </AppButton>
-            
-            {savedFilters.length > 0 && <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>}
-            
-            {savedFilters.map(f => (
-              <AppButton
-                key={f.id}
-                variant="ghost"
-                onClick={() => applyFilter(f)}
-                className={`hidden md:inline-flex px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all ${activeSavedFilterId === f.id ? "bg-primary/10 text-primary shadow-sm" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
-              >
-                {f.name}
-              </AppButton>
-            ))}
-
-            <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
-            
-            <SavedFiltersDropdown
-              savedFilters={savedFilters}
-              activeSavedFilterId={activeSavedFilterId}
-              onSaveCurrent={handleSaveCurrentFilter}
-              onApplyFilter={applyFilter}
-              onDeleteFilter={deleteSavedFilter}
-              align="end"
-            />
           </div>
         }
       />
 
-      {/* HIERARCHY SCOPE BAR */}
-      <div className="px-3 sm:px-4 py-2 mb-4 theme-card-structural rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs border border-border/50">
-        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar w-full sm:w-auto pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-muted mr-1.5 shrink-0">
-            Hierarchy Scope:
-          </span>
-
-          {/* Entire Organization (Super Admin / Global) */}
+      {/* Scope: segmented control (same pattern as Workspace tasks) */}
+      <div className="theme-card-structural mb-4 flex flex-wrap items-center gap-2 p-3">
+        <span className="theme-label mr-1">Scope</span>
+        <div className="inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="Scope">
           {(isSuperAdmin || !isManager) && (
             <button
               type="button"
+              role="radio"
+              aria-checked={hierarchyScope === "all" && selectedDepartmentName === "ALL" && !filters.myTasksOnly}
               onClick={() => {
                 setHierarchyScope("all");
                 setSelectedDepartmentName("ALL");
                 setFilters(prev => ({ ...prev, myTasksOnly: false, assigneeId: '', assigneeIds: [] }));
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
-                hierarchyScope === "all" && selectedDepartmentName === "ALL" && !filters.myTasksOnly
-                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                  : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
-              }`}
+              className={cn(SEG_BTN, hierarchyScope === "all" && selectedDepartmentName === "ALL" && !filters.myTasksOnly ? SEG_ON : SEG_OFF)}
             >
-              <Globe className="w-3.5 h-3.5" />
-              Entire Organization
+              <Globe className="h-3.5 w-3.5" aria-hidden /> Entire organisation
             </button>
           )}
 
-          {/* Reporting Tree (for CFO / Managers / Team Leads) */}
           {isManager && (
             <button
               type="button"
+              role="radio"
+              aria-checked={hierarchyScope === "my_reports"}
               onClick={() => {
                 setHierarchyScope("my_reports");
                 setSelectedDepartmentName("ALL");
                 setFilters(prev => ({ ...prev, myTasksOnly: false }));
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
-                hierarchyScope === "my_reports"
-                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                  : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
-              }`}
+              className={cn(SEG_BTN, hierarchyScope === "my_reports" ? SEG_ON : SEG_OFF)}
             >
-              <Users className="w-3.5 h-3.5" />
-              My Reporting Tree ({userScope?.subordinateUserIds?.length || 0} Members)
+              <Users className="h-3.5 w-3.5" aria-hidden /> My reporting tree
+              <span className="rounded bg-sunken px-1 text-[11.5px] text-muted tabular" title="People in your reporting tree">{userScope?.subordinateUserIds?.length || 0}</span>
             </button>
           )}
 
-          {/* Managed Departments (for CFO / Multi-Department Heads) */}
           {(managedDepts.length > 0 || userScope?.primaryDepartmentName) && (
-            <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setHierarchyScope("my_dept");
-                  setSelectedDepartmentName("ALL");
-                  setFilters(prev => ({ ...prev, myTasksOnly: false }));
-                }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
-                  hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
-                    ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5" />
-                {managedDepts.length > 1
-                  ? `All My Depts (${managedDepts.length})`
-                  : `My Dept (${userScope?.primaryDepartmentName || "General"})`}
-              </button>
-
-              {/* Multi-Department Dropdown (e.g. for CFO) */}
-              {managedDepts.length > 1 && (
-                <select
-                  value={selectedDepartmentName}
-                  onChange={(e) => {
-                    setSelectedDepartmentName(e.target.value);
-                    setHierarchyScope("my_dept");
-                  }}
-                  className="text-xs bg-background/80 border border-border/60 rounded px-2 py-0.5 text-foreground font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="ALL">All Managed ({managedDepts.length})</option>
-                  {managedDepts.map((d: any) => (
-                    <option key={d.id} value={d.name}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"}
+              onClick={() => {
+                setHierarchyScope("my_dept");
+                setSelectedDepartmentName("ALL");
+                setFilters(prev => ({ ...prev, myTasksOnly: false }));
+              }}
+              className={cn(SEG_BTN, hierarchyScope === "my_dept" ? SEG_ON : SEG_OFF)}
+            >
+              <Building2 className="h-3.5 w-3.5" aria-hidden />
+              {managedDepts.length > 1
+                ? "My departments"
+                : `My department · ${userScope?.primaryDepartmentName || "General"}`}
+            </button>
           )}
 
-          {/* Personal Assigned Scope */}
           <button
             type="button"
+            role="radio"
+            aria-checked={hierarchyScope === "assigned_me" || filters.myTasksOnly}
             onClick={() => {
               setHierarchyScope("assigned_me");
               setSelectedDepartmentName("ALL");
               setFilters(prev => ({ ...prev, myTasksOnly: true }));
             }}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
-              hierarchyScope === "assigned_me" || filters.myTasksOnly
-                ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
-            }`}
+            className={cn(SEG_BTN, hierarchyScope === "assigned_me" || filters.myTasksOnly ? SEG_ON : SEG_OFF)}
           >
-            <UserCheck className="w-3.5 h-3.5" />
-            My Assigned Items
+            <UserCheck className="h-3.5 w-3.5" aria-hidden /> Assigned to me
           </button>
         </div>
+
+        {managedDepts.length > 1 && (
+          <label className="relative inline-flex items-center">
+            <span className="sr-only">Department</span>
+            <select
+              value={selectedDepartmentName}
+              onChange={(e) => {
+                setSelectedDepartmentName(e.target.value);
+                setHierarchyScope("my_dept");
+              }}
+              className="h-8 appearance-none pl-3 pr-8 text-[13px]"
+            >
+              <option value="ALL">All my departments ({managedDepts.length})</option>
+              {managedDepts.map((d: any) => (
+                <option key={d.id} value={d.name}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 h-4 w-4 text-muted" aria-hidden />
+          </label>
+        )}
+
+        {savedFilters.length > 0 && (
+          <div className="ml-auto inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg border border-border bg-sunken p-0.5 no-scrollbar" role="radiogroup" aria-label="Saved filters">
+            {savedFilters.map(f => (
+              <button
+                key={f.id}
+                type="button"
+                role="radio"
+                aria-checked={activeSavedFilterId === f.id}
+                onClick={() => applyFilter(f)}
+                className={cn(SEG_BTN, activeSavedFilterId === f.id ? "bg-accent-soft font-semibold text-accent-soft-text" : SEG_OFF)}
+              >
+                {f.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Active Filter Chips Strip (Ultra-compact, takes minimal height ~28px) */}
       {activeFilterCount > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 mb-3 px-1 animate-in fade-in duration-150">
-          <span className="text-[10px] font-semibold text-muted mr-1">Active:</span>
+        <div className="mb-3 flex flex-wrap items-center gap-1.5 px-1" aria-label="Active filters">
+          <span className="mr-1 text-[12.5px] text-muted">Filtered by</span>
 
           {/* Scope Chips */}
           {filters.entityTypes && filters.entityTypes.length > 0 ? (
             filters.entityTypes.map(scopeType => (
-              <span key={scopeType} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
-                Scope: {scopeType.replace('_', ' ')}
+              <span key={scopeType} className={CHIP}>
+                Level: {scopeLabel(scopeType)}
                 <button
                   type="button"
-                  aria-label="Remove scope filter"
+                  aria-label="Remove level filter"
                   onClick={() => toggleScope(scopeType)}
-                  className="hover:text-danger ml-0.5 font-bold"
-                  title="Remove scope"
+                  className={CHIP_X}
+                  title="Remove level filter"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" aria-hidden />
                 </button>
               </span>
             ))
           ) : (filters.entityType && filters.entityType !== 'ALL' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
-              Scope: {filters.entityType.replace('_', ' ')}
+            <span className={CHIP}>
+              Level: {scopeLabel(filters.entityType)}
               <button
                 type="button"
-                aria-label="Remove scope filter"
+                aria-label="Remove level filter"
                 onClick={() => setFilters(p => ({ ...p, entityType: 'ALL', entityTypes: [] }))}
-                className="hover:text-danger ml-0.5 font-bold"
-                title="Remove scope"
+                className={CHIP_X}
+                title="Remove level filter"
               >
-                <X className="w-3 h-3" />
+                <X className="h-3 w-3" aria-hidden />
               </button>
             </span>
           ))}
@@ -1585,7 +1579,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             const wsObj = workspaces.find((w: any) => w.id === wId);
             const wsName = wsObj?.name || wsObj?.workspace_name || 'Workspace';
             return (
-              <span key={wId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              <span key={wId} className={CHIP}>
                 Workspace: {wsName}
                 <button
                   type="button"
@@ -1595,10 +1589,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     const next = currentIds.filter(id => id !== wId);
                     return { ...p, workspaceIds: next, workspaceId: next.length === 1 ? next[0] : '' };
                   })}
-                  className="hover:text-danger ml-0.5 font-bold"
+                  className={CHIP_X}
                   title="Remove workspace filter"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" aria-hidden />
                 </button>
               </span>
             );
@@ -1612,7 +1606,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             const compObj = companies.find((c: any) => c.id === cId);
             const compName = compObj?.name || compObj?.company_name || 'Company';
             return (
-              <span key={cId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              <span key={cId} className={CHIP}>
                 Company: {compName}
                 <button
                   type="button"
@@ -1622,10 +1616,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     const next = currentIds.filter(id => id !== cId);
                     return { ...p, companyIds: next, companyId: next.length === 1 ? next[0] : '' };
                   })}
-                  className="hover:text-danger ml-0.5 font-bold"
+                  className={CHIP_X}
                   title="Remove company filter"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" aria-hidden />
                 </button>
               </span>
             );
@@ -1633,16 +1627,16 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
           {/* My Assigned Tasks Only */}
           {filters.myTasksOnly && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-success/15 text-success border border-success/30">
-              My Assigned Tasks Only
+            <span className={CHIP}>
+              Assigned to me
               <button
                 type="button"
                 aria-label="Remove my tasks filter"
                 onClick={() => setFilters(p => ({ ...p, myTasksOnly: false }))}
-                className="hover:text-danger ml-0.5 font-bold"
+                className={CHIP_X}
                 title="Remove filter"
               >
-                <X className="w-3 h-3" />
+                <X className="h-3 w-3" aria-hidden />
               </button>
             </span>
           )}
@@ -1655,7 +1649,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             const statusObj = taskStatuses.find((s: any) => s.id === sId);
             const statusName = statusObj?.name || statusObj?.status_name || 'Status';
             return (
-              <span key={sId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              <span key={sId} className={CHIP}>
                 {statusObj?.status_color && (
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusObj.status_color }} />
                 )}
@@ -1668,10 +1662,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     const next = currentIds.filter(id => id !== sId);
                     return { ...p, statusIds: next, statusId: next.length === 1 ? next[0] : '' };
                   })}
-                  className="hover:text-danger ml-0.5 font-bold"
+                  className={CHIP_X}
                   title="Remove status filter"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" aria-hidden />
                 </button>
               </span>
             );
@@ -1685,7 +1679,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             const prioObj = priorities.find((p: any) => p.id === pId);
             const prioName = prioObj?.name || prioObj?.priority_name || 'Priority';
             return (
-              <span key={pId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              <span key={pId} className={CHIP}>
                 {prioObj?.priority_color && (
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: prioObj.priority_color }} />
                 )}
@@ -1698,10 +1692,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     const next = currentIds.filter(id => id !== pId);
                     return { ...p, priorityIds: next, priorityId: next.length === 1 ? next[0] : '' };
                   })}
-                  className="hover:text-danger ml-0.5 font-bold"
+                  className={CHIP_X}
                   title="Remove priority filter"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" aria-hidden />
                 </button>
               </span>
             );
@@ -1715,7 +1709,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             const userObj = allUsers.find((u: any) => u.id === aId);
             const userName = userObj?.full_name || 'User';
             return (
-              <span key={aId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              <span key={aId} className={CHIP}>
                 Assignee: {userName}
                 <button
                   type="button"
@@ -1725,10 +1719,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     const next = currentIds.filter(id => id !== aId);
                     return { ...p, assigneeIds: next, assigneeId: next.length === 1 ? next[0] : '' };
                   })}
-                  className="hover:text-danger ml-0.5 font-bold"
+                  className={CHIP_X}
                   title="Remove assignee filter"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" aria-hidden />
                 </button>
               </span>
             );
@@ -1737,7 +1731,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           <button
             type="button"
             onClick={clearFilters}
-            className="text-[11px] text-muted hover:text-danger underline ml-2 font-semibold"
+            className="ml-2 text-[12.5px] font-medium text-accent-soft-text hover:underline"
           >
             Clear all
           </button>
@@ -1749,50 +1743,55 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         <div className="flex-1 flex flex-col min-h-0">
             
             {/* Hierarchical Task Matrix */}
-            <AppCard className="flex-1 p-2 flex flex-col min-h-0 overflow-hidden">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-border/40 pb-3 mb-4">
-                <div className="flex items-center gap-1 theme-card-structural p-1 rounded-lg">
-                  <AppButton 
-                    variant="ghost" 
+            <div className="theme-card-structural flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="flex flex-col justify-between gap-2.5 border-b border-border px-3 py-2.5 sm:flex-row sm:items-center">
+                <div className="inline-flex gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="View">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={activeView === 'HIERARCHY'}
                     onClick={() => setActiveView('HIERARCHY')}
-                    className={`h-8 px-3 text-[12px] rounded-md transition-all ${activeView === 'HIERARCHY' ? "bg-background text-foreground shadow-sm font-semibold" : "text-muted hover:text-foreground font-medium"}`}
+                    className={cn(SEG_BTN, activeView === 'HIERARCHY' ? SEG_ON : SEG_OFF)}
                   >
-                    <GitMerge className="h-3.5 w-3.5 mr-1.5" />
-                    Execution Hierarchy
-                  </AppButton>
-                  <AppButton 
-                    variant="ghost" 
+                    <GitMerge className="h-3.5 w-3.5" aria-hidden />
+                    Hierarchy
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={activeView === 'SPRINTS'}
                     onClick={() => setActiveView('SPRINTS')}
-                    className={`h-8 px-3 text-[12px] rounded-md transition-all ${activeView === 'SPRINTS' ? "bg-background text-foreground shadow-sm font-semibold" : "text-muted hover:text-foreground font-medium"}`}
+                    className={cn(SEG_BTN, activeView === 'SPRINTS' ? SEG_ON : SEG_OFF)}
                   >
-                    <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                    Sprint Planning
-                  </AppButton>
+                    <Calendar className="h-3.5 w-3.5" aria-hidden />
+                    Sprint planning
+                  </button>
                 </div>
 
                 {activeView === 'HIERARCHY' && (
                   <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-                    <label className={`flex items-center gap-2 cursor-pointer text-muted`}>
-                      <input 
-                        type="checkbox" 
-                        checked={autoCollapse} 
-                        onChange={e => setAutoCollapse(e.target.checked)} 
-                        className={`rounded border-border text-theme-icon focus:ring-theme-icon`}
+                    <label className="flex cursor-pointer items-center gap-2 text-[13px] text-subtle">
+                      <input
+                        type="checkbox"
+                        checked={autoCollapse}
+                        onChange={e => setAutoCollapse(e.target.checked)}
+                        className="h-4 w-4"
                       />
-                      <span className="text-[11px] font-semibold whitespace-nowrap">Auto-Minimize Others</span>
+                      <span className="whitespace-nowrap">Collapse other branches</span>
                     </label>
-                    <div className="flex items-center gap-1">
-                      <div className="w-px h-4 bg-border/50 mx-1"></div>
+                    <div className="flex items-center gap-0.5">
+                      <div className="mx-1 h-5 w-px bg-border" aria-hidden></div>
                       <AppButton
                         variant="ghost"
                         size="icon-sm"
                         onClick={handleExpandAllBranches}
                         disabled={isExpandingAll}
-                        className="text-muted hover:text-foreground rounded-md"
-                        title="Fetch and expand all workspace and task branches"
+                        className="text-muted hover:text-foreground"
+                        title="Expand all"
+                        aria-label="Expand all branches"
                       >
                         {isExpandingAll ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <ChevronsUpDown className="h-4 w-4" />
                         )}
@@ -1802,8 +1801,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         variant="ghost"
                         size="icon-sm"
                         onClick={handleCollapseAllBranches}
-                        className="text-muted hover:text-foreground rounded-md"
-                        title="Collapse all branches"
+                        className="text-muted hover:text-foreground"
+                        title="Collapse all"
+                        aria-label="Collapse all branches"
                       >
                         <ChevronsDownUp className="h-4 w-4" />
                       </AppButton>
@@ -1813,7 +1813,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
 
               {activeView === 'HIERARCHY' ? (
-                <div className="flex-1 overflow-auto min-h-0 scrollbar-thin pr-1">
+                <div className="min-h-0 flex-1 overflow-auto">
               <WorkspaceMasterTable 
                 hierarchy={masterHierarchy} 
                 expandedNodes={expandedNodes}
@@ -1893,16 +1893,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   <SprintBoard workspaceId={activeWorkspace?.id || workspaces[0]?.id} currentUser={currentUser} />
                 </div>
               )}
-            </AppCard>
+            </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 mx-4 my-8 rounded-xl border border-border bg-sunken/40">
-          <FolderKanban className="h-10 w-10 text-muted opacity-40 mb-4" />
-          <h2 className="text-[15px] font-semibold tracking-tight text-foreground mb-1">No Active Workspaces Found</h2>
-          
-          <AppButton variant="primary" onClick={() => setWsModalMode('ROOT')} disabled={!hasPermission("WORKSPACES_CREATE")} leftIcon={<Plus className="h-4 w-4" />}>
-            Create Workspace
-          </AppButton>
+        <div className="theme-card-structural">
+          <EmptyState
+            title="No workspaces yet"
+            description={hasPermission("WORKSPACES_CREATE") ? "Create a workspace to start organising tasks." : "You haven't been added to a workspace yet. Ask a workspace owner to add you."}
+            action={hasPermission("WORKSPACES_CREATE") ? (
+              <AppButton variant="secondary" onClick={() => setWsModalMode('ROOT')} leftIcon={<FolderKanban className="h-4 w-4" />}>
+                Create workspace
+              </AppButton>
+            ) : undefined}
+          />
         </div>
       )}
 
@@ -1910,28 +1913,28 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <SidePeekDrawer
         isOpen={wsModalMode !== null}
         onClose={() => { setWsModalMode(null); setEditWSId(null); }}
-        title={wsModalMode === 'EDIT' ? "Edit Workspace" : (wsModalMode === 'SUB' ? "New Sub-Workspace" : "Provision Workspace")}
+        title={wsModalMode === 'EDIT' ? "Edit workspace" : (wsModalMode === 'SUB' ? "New sub-workspace" : "New workspace")}
         width="lg"
       >
         <div className="flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto p-6 space-y-8">
+          <div className="flex-1 space-y-7 overflow-y-auto p-6">
             
             {/* Section 1: Workspace Identity */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-border/40 pb-2">
-                <Building2 className="h-4 w-4 text-theme-icon" />
-                <h3 className={`text-sm font-semibold tracking-tight text-foreground`}>Workspace Identity</h3>
+              <div className="flex items-center gap-2 border-b border-border pb-2">
+                <Building2 className="h-4 w-4 text-muted" aria-hidden />
+                <h3 className={SECTION_TITLE}>Details</h3>
               </div>
               
               <div className="grid grid-cols-1 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium text-muted">Company / Entity Link *</label>
+                  <label className={FIELD_LABEL}>Company <span className="text-danger-text" aria-hidden>*</span></label>
                   <select 
-                    className={`w-full p-2 rounded-md text-[13px] theme-card-structural /60 focus:border-theme-icon focus:outline-none transition-colors text-foreground`}
+                    className="h-9 w-full px-3 text-[13.5px]"
                     value={newWS.company_id}
                     onChange={e => setNewWS({...newWS, company_id: e.target.value})}
                   >
-                    <option value="" disabled>-- Select Company --</option>
+                    <option value="" disabled>Select a company</option>
                     {companies.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
                   </select>
                 </div>
@@ -1939,21 +1942,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium text-muted">Workspace Name *</label>
-                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className="bg-surface h-9 text-[13px]" />
+                  <label className={FIELD_LABEL}>Name <span className="text-danger-text" aria-hidden>*</span></label>
+                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className="h-9 text-[13.5px]" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium text-muted">Workspace Code</label>
-                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? (newWS.code || "") : "[Auto-Generated]"} className="bg-surface-hover h-9 text-[13px]" />
+                  <label className={FIELD_LABEL}>Code</label>
+                  <AppInput disabled placeholder="Generated when you save" value={editWSId ? (newWS.code || "") : "Generated when you save"} className="h-9 text-[13.5px]" />
                 </div>
               </div>
 
               {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
                 <div className="grid grid-cols-1">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted">Parent Workspace Link</label>
+                    <label className={FIELD_LABEL}>Parent workspace</label>
                     <select 
-                      className={`w-full p-2 rounded-md text-[13px] theme-card-structural /60 focus:border-theme-icon focus:outline-none transition-colors text-foreground`}
+                      className="h-9 w-full px-3 text-[13.5px]"
                       value={newWS.parent_workspace_id}
                       onChange={e => {
                         const parentId = e.target.value;
@@ -1965,7 +1968,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         });
                       }}
                     >
-                      <option value="" disabled>-- Select Parent Workspace --</option>
+                      <option value="" disabled>Select a parent workspace</option>
                       {workspaces.filter(w => w.id !== editWSId).map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
                     </select>
                   </div>
@@ -1975,29 +1978,29 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
             {/* Section 2: Timeline & Objectives */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-border/40 pb-2">
-                <Target className="h-4 w-4 text-theme-icon" />
-                <h3 className={`text-sm font-semibold tracking-tight text-foreground`}>Timeline & Objectives</h3>
+              <div className="flex items-center gap-2 border-b border-border pb-2">
+                <Target className="h-4 w-4 text-muted" aria-hidden />
+                <h3 className={SECTION_TITLE}>Timeline and objective</h3>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium text-muted">Start Date</label>
+                  <label className={FIELD_LABEL}>Start date</label>
                   {/* ui-audit-ignore-next-line html-date-input */}
-                  <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className="bg-surface h-9 text-[13px]" />
+                  <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className="h-9 text-[13.5px]" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium text-muted">Target End Date</label>
+                  <label className={FIELD_LABEL}>Target end date</label>
                   {/* ui-audit-ignore-next-line html-date-input */}
-                  <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className="bg-surface h-9 text-[13px]" />
+                  <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className="h-9 text-[13.5px]" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-muted">Objective Description</label>
-                <textarea 
-                  className={`w-full h-24 p-3 rounded-md text-[13px] theme-card-structural /60 focus:border-theme-icon focus:outline-none transition-colors resize-none text-foreground`}
-                  placeholder="Detailed project requirements, goals, and constraints..."
+                <label className={FIELD_LABEL}>Objective</label>
+                <textarea
+                  className="min-h-24 w-full resize-y px-3 py-2 text-[13.5px]"
+                  placeholder="What this workspace should achieve, and any constraints"
                   value={newWS.description}
                   onChange={e => setNewWS({...newWS, description: e.target.value})}
                 />
@@ -2006,14 +2009,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
             {/* Section 3: Access & Security */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-border/40 pb-2">
-                <ShieldCheck className="h-4 w-4 text-theme-icon" />
-                <h3 className={`text-sm font-semibold tracking-tight text-foreground`}>Access & Stakeholders</h3>
+              <div className="flex items-center gap-2 border-b border-border pb-2">
+                <ShieldCheck className="h-4 w-4 text-muted" aria-hidden />
+                <h3 className={SECTION_TITLE}>Access and people</h3>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-medium text-muted block">Workspace Assignees (Users)</label>
+                  <label className={FIELD_LABEL}>Members</label>
                   <AppButton 
                     variant="ghost" 
                     size="sm"
@@ -2027,28 +2030,29 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         setNewWS({...newWS, assigneeIds: allIds});
                       }
                     }}
-                    className="h-6 px-2 text-[10px] text-theme-icon hover:bg-theme-btn-primary/10"
+                    className="h-7 px-2 text-[12.5px] text-accent-soft-text"
                   >
-                    {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Deselect All" : "Select All"}
+                    {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Clear all" : "Select all"}
                   </AppButton>
                 </div>
 
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
-                  <input 
-                    type="text" 
-                    placeholder="Search personnel..." 
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+                  <input
+                    type="search"
+                    aria-label="Search people"
+                    placeholder="Search people"
                     value={assigneeSearch} 
                     onChange={e => setAssigneeSearch(e.target.value)} 
                     onClick={e => e.stopPropagation()}
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
-                    className="w-full pl-8 pr-3 h-8 text-[12px] rounded-md /60 theme-card-structural focus:outline-none focus:border-theme-icon text-foreground transition-colors"
+                    className="h-9 w-full pl-8 pr-3 text-[13.5px]"
                   />
                 </div>
 
-                <div className="max-h-[160px] overflow-y-auto rounded-md border border-border/40 bg-background/50 p-1 scrollbar-thin">
+                <div className="max-h-[200px] overflow-y-auto rounded-md border border-border bg-surface p-1">
                   {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
-                    <label key={u.id} className="flex items-center gap-3 text-sm p-1.5 rounded cursor-pointer hover:bg-surface-hover transition-colors">
+                    <label key={u.id} className="flex cursor-pointer items-center gap-3 rounded-md p-1.5 text-[13.5px] hover:bg-surface-hover">
                       <input 
                         type="checkbox" 
                         disabled={checkingDependencyId === u.id}
@@ -2081,21 +2085,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                             setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
                           }
                         }} 
-                        className="rounded border-border text-theme-icon focus:ring-theme-icon focus:ring-offset-background h-3.5 w-3.5" 
+                        className="h-4 w-4"
                       />
                       <div className="flex flex-col min-w-0">
-                        <span className="text-foreground text-[12px] font-medium truncate flex items-center gap-2">
+                        <span className="flex items-center gap-2 truncate text-[13.5px] text-foreground">
                           {u.full_name}
-                          {checkingDependencyId === u.id && <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />}
+                          {checkingDependencyId === u.id && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" aria-label="Checking assignments" />}
                         </span>
                       </div>
                     </label>
                   ))}
-                  {availableUsers.length === 0 && <p className="text-[11px] text-muted p-2 text-center">No users available.</p>}
+                  {availableUsers.length === 0 && <p className="p-3 text-center text-[13px] text-muted">No people to add.</p>}
                 </div>
               </div>
 
-              <div className={`p-3 rounded-md /40 flex items-start gap-3 transition-colors ${ newWS.is_public ? "bg-theme-btn-primary/5 border-theme-btn-primary/30" : "theme-card-structural " }`}>
+              <div className={cn("flex items-start gap-3 rounded-md border p-3 transition-colors", newWS.is_public ? "border-border-active bg-accent-soft" : "border-border bg-surface")}>
                 <input 
                   type="checkbox" 
                   id="is_public" 
@@ -2109,21 +2113,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       setNewWS({...newWS, is_public: false});
                     }
                   }} 
-                  className="mt-0.5 rounded border-border text-theme-icon focus:ring-theme-icon h-4 w-4 cursor-pointer"
+                  className="mt-0.5 h-4 w-4 cursor-pointer"
                 />
                 <label htmlFor="is_public" className="cursor-pointer flex flex-col">
-                  <span className="text-[13px] font-semibold text-foreground">Public Visibility</span>
-                  <span className="text-[11px] text-muted">Allow any authenticated personnel to view and join this workspace.</span>
+                  <span className="text-[13.5px] font-medium text-foreground">Visible to everyone</span>
+                  <span className="text-[12.5px] text-muted">Anyone signed in can view and join this workspace.</span>
                 </label>
               </div>
             </div>
 
           </div>
           
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border px-6 pb-6">
-            <AppButton variant="outline" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
-            <AppButton variant="primary" onClick={handleCreateWorkspace} disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : (editWSId ? "Save Changes" : "Provision Workspace")}
+          <div className="flex justify-end gap-2 border-t border-border px-6 py-3">
+            <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting}>Cancel</AppButton>
+            <AppButton variant="primary" onClick={handleCreateWorkspace} disabled={isSubmitting} isLoading={isSubmitting}>
+              {isSubmitting ? "Saving…" : (editWSId ? "Save changes" : (wsModalMode === 'SUB' ? "Create sub-workspace" : "Create workspace"))}
             </AppButton>
           </div>
         </div>
@@ -2156,13 +2160,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
-          <span className="text-xs font-semibold">{successToast}</span>
+        <div role="status" className="fixed bottom-6 right-6 z-[var(--z-toast)] flex max-w-sm items-center gap-2 rounded-[10px] border border-border border-l-[3px] border-l-success bg-elevated px-4 py-3 text-foreground shadow-lg">
+          <Check className="h-4 w-4 shrink-0 text-success" aria-hidden />
+          <span className="text-[13.5px]">{successToast}</span>
         </div>
       )}
       {errorToast && (
-        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-xl bg-danger text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
-          <span className="text-xs font-semibold">{errorToast}</span>
+        <div role="alert" className="fixed bottom-6 right-6 z-[var(--z-toast)] flex max-w-sm items-center gap-2 rounded-[10px] border border-border border-l-[3px] border-l-danger bg-elevated px-4 py-3 text-foreground shadow-lg">
+          <ShieldAlert className="h-4 w-4 shrink-0 text-danger" aria-hidden />
+          <span className="text-[13.5px]">{errorToast}</span>
         </div>
       )}
 
@@ -2175,50 +2181,52 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Dependency Check Modal */}
       {dependencyModal && (
-        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
-          <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-warning-soft border-warning/20' : 'bg-warning/10 border-warning/20'}`}>
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="dep-modal-title" className={MODAL_CARD}>
+            <div className="border-b border-border px-5 py-4">
               <div className="flex items-center gap-3">
-                {dependencyModal.result.type === 'executive' ? (
-                  <ShieldAlert className="w-5 h-5 text-warning" />
-                ) : (
-                  <ShieldCheck className="w-5 h-5 text-warning" />
-                )}
-                <h3 className="font-bold text-sm">
-                  {dependencyModal.result.type === 'executive' ? 'Task Reassignment Required' : 'Action Requires Attention'}
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-warning-soft text-warning-text">
+                  {dependencyModal.result.type === 'executive' ? (
+                    <ShieldAlert className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4" aria-hidden />
+                  )}
+                </span>
+                <h3 id="dep-modal-title" className="text-[15px] font-semibold text-heading">
+                  {dependencyModal.result.type === 'executive' ? `Reassign ${dependencyModal.userName}'s tasks first` : `Remove ${dependencyModal.userName}?`}
                 </h3>
               </div>
             </div>
             
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-foreground leading-relaxed">
-                <strong>{dependencyModal.userName}</strong> has active assignments under this workspace:
+            <div className="space-y-4 p-5">
+              <p className="text-[13.5px] leading-relaxed text-foreground">
+                <strong className="font-semibold">{dependencyModal.userName}</strong> still has active work in this workspace:
               </p>
               
-              <ul className="text-xs text-muted space-y-1 bg-surface p-3 rounded-lg border border-border/50 max-h-36 overflow-y-auto">
+              <ul className="max-h-36 space-y-1 overflow-y-auto rounded-md border border-border bg-sunken p-3 text-[13px]">
                 {dependencyModal.result.blockingItems.map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <span className="text-theme-icon mt-0.5">•</span>
-                    <span className="font-medium text-foreground/90">{item}</span>
+                    <span className="mt-0.5 text-muted" aria-hidden>•</span>
+                    <span className="text-foreground">{item}</span>
                   </li>
                 ))}
               </ul>
               
-              <div className="p-3 bg-surface-hover rounded-lg border border-border/50 text-xs text-foreground font-medium">
+              <div className="rounded-md border border-warning-border bg-warning-soft px-3 py-2 text-[12.5px] text-warning-text">
                 {dependencyModal.result.message}
               </div>
 
               {dependencyModal.result.type === 'executive' && (
                 <div className="space-y-1.5 pt-2">
-                  <label className="text-[11px] font-semibold text-foreground">
-                    Select Replacement Assignee: *
+                  <label className={FIELD_LABEL}>
+                    Hand their tasks to <span className="text-danger-text" aria-hidden>*</span>
                   </label>
                   <select
                     value={reassignTargetUserId}
                     onChange={e => setReassignTargetUserId(e.target.value)}
-                    className="w-full p-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:border-theme-icon transition-colors"
+                    className="h-9 w-full px-3 text-[13.5px]"
                   >
-                    <option value="">-- Select Member to Take Over Tasks --</option>
+                    <option value="">Select a person</option>
                     {availableUsers
                       .filter(u => u.id !== dependencyModal.userId && !u.is_deleted)
                       .map(u => (
@@ -2227,16 +2235,16 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         </option>
                       ))}
                   </select>
-                  <p className="text-[11px] text-muted">
-                    All tasks, subtasks, checklists, and tickets will be transferred to this user.
+                  <p className="text-[12.5px] text-muted">
+                    Their tasks, sub-tasks, checklists and tickets move to this person.
                   </p>
                 </div>
               )}
             </div>
             
-            <div className="p-4 border-t border-border flex justify-end gap-3 bg-surface/30">
-              <AppButton 
-                variant="outline" 
+            <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
+              <AppButton
+                variant="ghost"
                 onClick={() => {
                   setDependencyModal(null);
                   setReassignTargetUserId("");
@@ -2264,22 +2272,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       }));
                       
                       const targetUser = availableUsers.find(u => u.id === reassignTargetUserId);
-                      triggerToast(`Tasks successfully reassigned to ${targetUser?.full_name || 'new user'} and ${dependencyModal.userName} removed.`);
+                      triggerToast(`Tasks moved to ${targetUser?.full_name || 'the new person'}. ${dependencyModal.userName} removed.`);
                       setDependencyModal(null);
                       setReassignTargetUserId("");
                     } catch (err: any) {
-                      toast.error(err.message || "Failed to reassign tasks");
+                      toast.error(err.message || "Couldn't reassign the tasks. Try again.");
                     } finally {
                       setIsReassigning(false);
                     }
                   }}
                 >
-                  {isReassigning ? "Reassigning..." : "Reassign & Remove User"}
+                  {isReassigning ? "Reassigning…" : "Reassign and remove"}
                 </AppButton>
               ) : (
-                <AppButton 
-                  variant="primary" 
-                  className="bg-danger hover:opacity-90 border-none"
+                <AppButton
+                  variant="destructive"
                   onClick={() => {
                     // Safe to remove watcher
                     setNewWS({
@@ -2289,7 +2296,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     setDependencyModal(null);
                   }}
                 >
-                  Yes, Remove User
+                  Remove {dependencyModal.userName}
                 </AppButton>
               )}
             </div>
@@ -2299,45 +2306,45 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* User Role Assignment Modal */}
       {userRoleModal && (
-        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
-          <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[80vh]">
-            <div className="p-4 border-b bg-surface flex items-center justify-between shrink-0">
-              <h3 className="font-bold text-sm">Assign User Role: {userRoleModal.userName}</h3>
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="role-modal-title" className={cn(MODAL_CARD, "flex max-h-[80vh] flex-col")}>
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
+              <h3 id="role-modal-title" className="text-[15px] font-semibold text-heading">Add {userRoleModal.userName}</h3>
               <button 
                 type="button" 
                 aria-label="Close role assignment modal"
                 onClick={() => { setUserRoleModal(null); setStagedTaskRoles({}); }} 
-                className="text-muted hover:text-foreground"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-foreground"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" aria-hidden />
               </button>
             </div>
             
-            <div className="p-5 overflow-y-auto flex-1 min-h-0">
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
               {userRoleModal.step === 'choice' ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-foreground leading-relaxed">
-                    Will this user be only a watcher in this workspace, or should they be assigned as an owner/executive to specific tasks?
+                  <p className="text-[13.5px] leading-relaxed text-foreground">
+                    Should {userRoleModal.userName} only watch this workspace, or work on specific tasks?
                   </p>
                   
-                  <div className="flex flex-col gap-3 mt-4">
-                    <AppButton 
-                      variant="outline" 
-                      className="justify-start h-auto py-3 px-4 text-left border-border/50 hover:bg-surface"
+                  <div className="mt-4 flex flex-col gap-2">
+                    <AppButton
+                      variant="secondary"
+                      className="h-auto justify-start px-4 py-3 text-left"
                       onClick={() => {
                         setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, userRoleModal.userId]});
                         setUserRoleModal(null);
                       }}
                     >
                       <div>
-                        <div className="font-bold text-sm text-foreground">Only Watcher / Member</div>
-                        <div className="text-xs text-muted mt-1">Add them to the workspace without task assignments.</div>
+                        <div className="text-[13.5px] font-semibold text-foreground">Watcher only</div>
+                        <div className="mt-0.5 text-[12.5px] font-normal text-muted">Add them to the workspace without assigning tasks.</div>
                       </div>
                     </AppButton>
                     
-                    <AppButton 
-                      variant="primary" 
-                      className="justify-start h-auto py-3 px-4 text-left bg-theme-btn-primary hover:opacity-90"
+                    <AppButton
+                      variant="secondary"
+                      className="h-auto justify-start px-4 py-3 text-left"
                       onClick={async () => {
                         setUserRoleModal({ ...userRoleModal, step: 'tasks' });
                         setFetchingTasksForRole(true);
@@ -2353,35 +2360,36 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       }}
                     >
                       <div>
-                        <div className="font-bold text-sm">Assign to Tasks</div>
-                        <div className="text-xs opacity-90 mt-1">Select specific tasks to assign them as Primary or Executor.</div>
+                        <div className="text-[13.5px] font-semibold text-foreground">Assign to tasks</div>
+                        <div className="mt-0.5 text-[12.5px] font-normal text-muted">Choose tasks where they're the primary owner or an executor.</div>
                       </div>
                     </AppButton>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-sm text-foreground leading-relaxed">
-                    Select tasks to assign <strong>{userRoleModal.userName}</strong> to:
+                  <p className="text-[13.5px] leading-relaxed text-foreground">
+                    Choose a role for <strong className="font-semibold">{userRoleModal.userName}</strong> on each task:
                   </p>
                   
                   {fetchingTasksForRole ? (
                     <div className="flex items-center justify-center p-8 text-muted">
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                      <span className="text-sm">Loading tasks...</span>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden />
+                      <span className="text-[13.5px]">Loading tasks…</span>
                     </div>
                   ) : workspaceTasksForRole.length === 0 ? (
-                    <div className="text-center p-8 bg-surface rounded-lg border border-border/50 text-sm text-muted">
-                      No active tasks found in this workspace.
+                    <div className="rounded-md border border-border bg-sunken p-6 text-center text-[13.5px] text-muted">
+                      This workspace has no active tasks yet.
                     </div>
                   ) : (
                     <div className="space-y-2">
                       {workspaceTasksForRole.map(task => (
-                        <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-surface">
-                          <div className="font-medium text-xs truncate max-w-[180px]">{task.title}</div>
+                        <div key={task.id} className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface p-3">
+                          <div className="min-w-0 truncate text-[13.5px] text-foreground" title={task.title}>{task.title}</div>
                           <div className="flex items-center gap-2">
                             <select
-                              className="text-xs bg-background border border-border rounded px-2 py-1 outline-none text-muted focus:text-foreground"
+                              aria-label={`Role on ${task.title}`}
+                              className="h-8 px-2 text-[13px]"
                               value={stagedTaskRoles[task.id] || ""}
                               onChange={e => {
                                 const val = e.target.value;
@@ -2396,7 +2404,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                             >
                               <option value="">None</option>
                               <option value="executor">Executor</option>
-                              <option value="primary">Primary Owner</option>
+                              <option value="primary">Primary owner</option>
                             </select>
                           </div>
                         </div>
@@ -2408,7 +2416,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             </div>
             
             {userRoleModal.step === 'tasks' && (
-              <div className="p-4 border-t border-border flex justify-end gap-3 bg-surface/30 shrink-0">
+              <div className="flex shrink-0 justify-end gap-2 border-t border-border px-5 py-3">
                 <AppButton 
                   variant="ghost" 
                   onClick={() => setUserRoleModal({ ...userRoleModal, step: 'choice' })}
@@ -2416,10 +2424,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 >
                   Back
                 </AppButton>
-                <AppButton 
-                  variant="primary" 
-                  className="bg-theme-btn-primary hover:opacity-90"
-                  disabled={isAssigningTasks || (workspaceTasksForRole.length > 0 && Object.keys(stagedTaskRoles).length === 0)}
+                <AppButton
+                  variant="primary"
+                  isLoading={isAssigningTasks}
+                  disabled={isAssigningTasks|| (workspaceTasksForRole.length > 0 && Object.keys(stagedTaskRoles).length === 0)}
                   onClick={async () => {
                     if (Object.keys(stagedTaskRoles).length > 0) {
                       setIsAssigningTasks(true);
@@ -2430,11 +2438,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         if (res.error) {
                           toast.error(res.error);
                         } else {
-                          toast.success(`User assigned to ${assignments.length} task(s).`);
+                          toast.success(`${userRoleModal.userName} added to ${assignments.length} ${assignments.length === 1 ? "task" : "tasks"}`);
                         }
                       } catch (err) {
                         console.error(err);
-                        toast.error("Failed to assign user to tasks.");
+                        toast.error("Couldn't add them to the tasks. Try again.");
                       } finally {
                         setIsAssigningTasks(false);
                       }
@@ -2445,7 +2453,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     setStagedTaskRoles({});
                   }}
                 >
-                  {isAssigningTasks ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Assignments'}
+                  {isAssigningTasks ? "Saving…" : "Save assignments"}
                 </AppButton>
               </div>
             )}
@@ -2466,8 +2474,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             await executeDeleteWorkspaceTask(id);
           }
         }}
-        title={deleteConfirm?.title || "Confirm Deletion"}
-        description={deleteConfirm?.description || "Are you sure you want to proceed?"}
+        title={deleteConfirm?.title || "Delete this item?"}
+        description={deleteConfirm?.description || "This can't be undone from here."}
         confirmLabel="Delete"
         tone="danger"
       />

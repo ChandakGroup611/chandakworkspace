@@ -27,6 +27,7 @@ import { RfiItem, RfiPriority, RfiStatus, DesignDiscipline } from "../types";
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 export function DesignRfiTracker() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,16 +103,16 @@ export function DesignRfiTracker() {
   }, [rfis]);
 
   const statusFilterOptions = useMemo(() => [
-    { value: "OPEN", label: "Open / Awaiting Response", count: rfis.filter(r => r.status === "OPEN").length },
-    { value: "UNDER_REVIEW", label: "Under Review / Escalated", count: rfis.filter(r => r.status === "UNDER_REVIEW").length },
-    { value: "CLARIFIED", label: "Clarified / Resolved", count: rfis.filter(r => r.status === "CLARIFIED").length },
+    { value: "OPEN", label: "Open / awaiting response", count: rfis.filter(r => r.status === "OPEN").length },
+    { value: "UNDER_REVIEW", label: "Under review / escalated", count: rfis.filter(r => r.status === "UNDER_REVIEW").length },
+    { value: "CLARIFIED", label: "Clarified / resolved", count: rfis.filter(r => r.status === "CLARIFIED").length },
     { value: "CLOSED", label: "Closed & Signed-off", count: rfis.filter(r => r.status === "CLOSED").length }
   ], [rfis]);
 
   const priorityFilterOptions = useMemo(() => [
     { value: "URGENT", label: "Urgent (24-48h SLA)", count: rfis.filter(r => r.priority === "URGENT").length },
-    { value: "HIGH", label: "High (3-5 Days SLA)", count: rfis.filter(r => r.priority === "HIGH").length },
-    { value: "NORMAL", label: "Normal (7 Days SLA)", count: rfis.filter(r => r.priority === "NORMAL").length }
+    { value: "HIGH", label: "High (3-5 days SLA)", count: rfis.filter(r => r.priority === "HIGH").length },
+    { value: "NORMAL", label: "Normal (7 days SLA)", count: rfis.filter(r => r.priority === "NORMAL").length }
   ], [rfis]);
 
   // Filtered RFIs
@@ -222,16 +223,16 @@ export function DesignRfiTracker() {
   };
 
   const priorityBadges: Record<RfiPriority, { label: string; color: string }> = {
-    URGENT: { label: "URGENT", color: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" },
-    HIGH: { label: "HIGH", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" },
-    NORMAL: { label: "NORMAL", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" }
+    URGENT: { label: "URGENT", color: "bg-danger-soft text-danger-text border-danger-border" },
+    HIGH: { label: "HIGH", color: "bg-warning-soft text-warning-text border-warning-border" },
+    NORMAL: { label: "NORMAL", color: "bg-info-soft text-info-text border-info-border" }
   };
 
   const statusBadges: Record<RfiStatus, { label: string; color: string; icon: any }> = {
-    OPEN: { label: "OPEN", color: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20", icon: AlertTriangle },
-    UNDER_REVIEW: { label: "UNDER REVIEW", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20", icon: Clock },
-    CLARIFIED: { label: "CLARIFIED", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", icon: CheckCircle2 },
-    CLOSED: { label: "CLOSED", color: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20", icon: CheckCircle2 }
+    OPEN: { label: "OPEN", color: "bg-danger-soft text-danger-text border-danger-border", icon: AlertTriangle },
+    UNDER_REVIEW: { label: "UNDER REVIEW", color: "bg-warning-soft text-warning-text border-warning-border", icon: Clock },
+    CLARIFIED: { label: "CLARIFIED", color: "bg-success-soft text-success-text border-success-border", icon: CheckCircle2 },
+    CLOSED: { label: "CLOSED", color: "bg-sunken text-subtle border-border", icon: CheckCircle2 }
   };
 
   return (
@@ -246,7 +247,7 @@ export function DesignRfiTracker() {
           </div>
           <div>
             <h2 className="text-base font-bold text-foreground">
-              RFI & Site Clash Query Tracker
+              RFI & site clash query tracker
             </h2>
           </div>
         </div>
@@ -255,10 +256,10 @@ export function DesignRfiTracker() {
           <button
             type="button"
             onClick={() => setIsRaiseModalOpen(true)}
-            className="h-8 px-3.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
+            className="h-8 px-3.5 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Raise Site Query (RFI)</span>
+            <span>Raise site query (RFI)</span>
           </button>
         </div>
       </div>
@@ -266,27 +267,27 @@ export function DesignRfiTracker() {
       {/* KPI Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-muted-foreground uppercase">Total RFIs Logged</div>
-          <div className="text-xl font-black text-foreground mt-1">{rfis.length}</div>
+          <div className="text-[11px] font-bold text-muted-foreground">Total RFIs logged</div>
+          <div className="text-xl font-semibold text-foreground mt-1">{rfis.length}</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase">Open / Pending</div>
-          <div className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
+          <div className="text-[11px] font-bold text-danger-text">Open / pending</div>
+          <div className="text-xl font-semibold text-danger-text mt-1">
             {rfis.filter(r => r.status === "OPEN" || r.status === "UNDER_REVIEW").length}
           </div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Clarified & Resolved</div>
-          <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+          <div className="text-[11px] font-bold text-success-text">Clarified & resolved</div>
+          <div className="text-xl font-semibold text-success-text mt-1">
             {rfis.filter(r => r.status === "CLARIFIED" || r.status === "CLOSED").length}
           </div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase">Urgent Priority</div>
-          <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
+          <div className="text-[11px] font-bold text-warning-text">Urgent priority</div>
+          <div className="text-xl font-semibold text-warning-text mt-1">
             {rfis.filter(r => r.priority === "URGENT").length}
           </div>
         </div>
@@ -302,7 +303,7 @@ export function DesignRfiTracker() {
               aria-label="Search RFI number, subject, consultant"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-border-active"
             />
           </div>
 
@@ -313,7 +314,7 @@ export function DesignRfiTracker() {
               selectedValues={selectedProjects}
               onChange={setSelectedProjects}
               colorTheme="blue"
-              placeholder="All Projects"
+              placeholder="All projects"
             />
 
             <DesignMultiSelectDropdown
@@ -322,7 +323,7 @@ export function DesignRfiTracker() {
               selectedValues={selectedDisciplines}
               onChange={setSelectedDisciplines}
               colorTheme="emerald"
-              placeholder="All Disciplines"
+              placeholder="All disciplines"
             />
 
             <DesignMultiSelectDropdown
@@ -331,7 +332,7 @@ export function DesignRfiTracker() {
               selectedValues={selectedStatuses}
               onChange={setSelectedStatuses}
               colorTheme="purple"
-              placeholder="All Status"
+              placeholder="All status"
             />
 
             <DesignMultiSelectDropdown
@@ -340,7 +341,7 @@ export function DesignRfiTracker() {
               selectedValues={selectedPriorities}
               onChange={setSelectedPriorities}
               colorTheme="rose"
-              placeholder="All Priorities"
+              placeholder="All priorities"
             />
 
             {(selectedProjects.length > 0 || selectedDisciplines.length > 0 || selectedStatuses.length > 0 || selectedPriorities.length > 0 || searchQuery) && (
@@ -353,7 +354,7 @@ export function DesignRfiTracker() {
                   setSelectedPriorities([]);
                   setSearchQuery("");
                 }}
-                className="h-8 px-2.5 rounded-xl border border-dashed border-rose-500/40 hover:border-rose-500/70 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                className="h-8 px-2.5 rounded-xl border border-dashed border-danger-border hover:border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <X className="h-3 w-3" />
                 <span>Reset</span>
@@ -372,13 +373,13 @@ export function DesignRfiTracker() {
               return (
                 <span
                   key={id}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 text-[11px] font-medium"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-info-soft text-info-text border border-info-border text-[11px] font-medium"
                 >
                   <span>Project: {p?.name || id}</span>
-                  <button
+                  <button aria-label="Close"
                     type="button"
                     onClick={() => setSelectedProjects(selectedProjects.filter(x => x !== id))}
-                    className="hover:text-blue-900 dark:hover:text-blue-100"
+                    className="hover:text-info-text"
                   >
                     <X className="h-2.5 w-2.5" />
                   </button>
@@ -389,13 +390,13 @@ export function DesignRfiTracker() {
             {selectedDisciplines.map(disc => (
               <span
                 key={disc}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[11px] font-medium"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-success-soft text-success-text border border-success-border text-[11px] font-medium"
               >
                 <span>Discipline: {disc}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedDisciplines(selectedDisciplines.filter(x => x !== disc))}
-                  className="hover:text-emerald-900 dark:hover:text-emerald-100"
+                  className="hover:text-success-text"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -410,10 +411,10 @@ export function DesignRfiTracker() {
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface text-foreground dark:text-muted-foreground border border-border text-[11px] font-medium"
                 >
                   <span>Status: {opt?.label || st}</span>
-                  <button
+                  <button aria-label="Close"
                     type="button"
                     onClick={() => setSelectedStatuses(selectedStatuses.filter(x => x !== st))}
-                    className="hover:text-purple-900 dark:hover:text-purple-100"
+                    className="hover:text-accent-soft-text"
                   >
                     <X className="h-2.5 w-2.5" />
                   </button>
@@ -426,13 +427,13 @@ export function DesignRfiTracker() {
               return (
                 <span
                   key={prio}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20 text-[11px] font-medium"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-danger-soft text-danger-text border border-danger-border text-[11px] font-medium"
                 >
                   <span>Priority: {opt?.label || prio}</span>
-                  <button
+                  <button aria-label="Close"
                     type="button"
                     onClick={() => setSelectedPriorities(selectedPriorities.filter(x => x !== prio))}
-                    className="hover:text-rose-900 dark:hover:text-rose-100"
+                    className="hover:text-danger-text"
                   >
                     <X className="h-2.5 w-2.5" />
                   </button>
@@ -476,17 +477,17 @@ export function DesignRfiTracker() {
                 {/* Header line */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono font-black text-sm text-theme-icon dark:text-muted-foreground">
+                    <span className="font-mono font-semibold text-sm text-theme-icon dark:text-muted-foreground">
                       {r.rfiNumber}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${pBadge.color}`}>
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${pBadge.color}`}>
                       {pBadge.label}
                     </span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${sBadge.color}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border ${sBadge.color}`}>
                       <StatusIcon className="h-3 w-3" />
                       <span>{sBadge.label}</span>
                     </span>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-muted-foreground">
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-sunken text-muted-foreground">
                       {r.discipline}
                     </span>
                   </div>
@@ -514,7 +515,7 @@ export function DesignRfiTracker() {
                   </div>
 
                   {r.drawingCode && (
-                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-mono text-[11px]">
+                    <div className="flex items-center gap-1.5 text-info-text font-mono text-[11px]">
                       <FileText className="h-3.5 w-3.5" />
                       <span>{r.drawingCode}</span>
                     </div>
@@ -533,11 +534,11 @@ export function DesignRfiTracker() {
 
                 {/* Consultant Response Box if Clarified */}
                 {r.consultantResponse && (
-                  <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <div className="p-3.5 rounded-xl bg-success-soft border border-success-border text-xs space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-success-text">
                       <div className="flex items-center gap-1.5">
                         <CornerDownRight className="h-3.5 w-3.5" />
-                        <span>Consultant Clarification & Solution:</span>
+                        <span>Consultant clarification & solution:</span>
                       </div>
                       <span className="font-normal text-muted-foreground">
                         By {r.respondedBy} on {r.respondedDate}
@@ -547,9 +548,9 @@ export function DesignRfiTracker() {
                       {r.consultantResponse}
                     </p>
                     {r.resolvingRevisionNumber && (
-                      <div className="pl-5 pt-1 text-[11px] text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1">
-                        <span>Resolved in Drawing Revision:</span>
-                        <span className="font-mono font-black px-1.5 py-0.2 rounded bg-blue-500/10">{r.resolvingRevisionNumber}</span>
+                      <div className="pl-5 pt-1 text-[11px] text-info-text font-semibold flex items-center gap-1">
+                        <span>Resolved in drawing revision:</span>
+                        <span className="font-mono font-semibold px-1.5 py-0.2 rounded bg-info-soft">{r.resolvingRevisionNumber}</span>
                       </div>
                     )}
                   </div>
@@ -566,22 +567,22 @@ export function DesignRfiTracker() {
                         setRespondedByName("");
                         setResolvingRev("");
                       }}
-                      className="h-7 px-3 rounded-lg bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      className="h-7 px-3 rounded-lg bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
-                      <span>Submit Consultant Clarification</span>
+                      <span>Submit consultant clarification</span>
                     </button>
                   )}
 
-                  <button
+                  <button aria-label="Delete RFI"
                     type="button"
-                    onClick={() => {
-                      if (confirm(`Delete RFI query ${r.rfiNumber}?`)) {
+                    onClick={async () => {
+                      if (await confirmAction(`Delete RFI query ${r.rfiNumber}?`)) {
                         DesignMasterStore.deleteRfi(r.id);
                       }
                     }}
                     title="Delete RFI"
-                    className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                    className="h-7 w-7 rounded-lg hover:bg-danger-soft text-muted-foreground hover:text-danger-text inline-flex items-center justify-center transition-colors cursor-pointer"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -597,7 +598,7 @@ export function DesignRfiTracker() {
       {/* RAISE RFI TRANSACTION CANVAS */}
       {isRaiseModalOpen && (
         <TransactionFormLayout
-          title="Raise Site Request For Information (RFI)"
+          title="Raise site request for information (RFI)"
           badge="Technical Query Entry"
           category="RFI & Query Control"
           icon={HelpCircle}
@@ -605,7 +606,7 @@ export function DesignRfiTracker() {
           description="Log design query, site condition clash, or structural specification ambiguity with consultant assignment."
           breadcrumbs={[
             { label: "RFI Tracker", onClick: () => setIsRaiseModalOpen(false) },
-            { label: "Raise Site RFI" }
+            { label: "Raise site RFI" }
           ]}
           onBack={() => setIsRaiseModalOpen(false)}
           backLabel="Back to RFIs"
@@ -625,7 +626,7 @@ export function DesignRfiTracker() {
         >
           <div className="space-y-6 max-w-4xl">
             {formError && (
-              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
@@ -635,7 +636,7 @@ export function DesignRfiTracker() {
               <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
                 <AppCardTitle className="text-sm font-bold flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
-                  <span>Project & Engineering Discipline</span>
+                  <span>Project & engineering discipline</span>
                 </AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="p-5 space-y-4">
@@ -645,10 +646,10 @@ export function DesignRfiTracker() {
                     <select
                       value={projectId}
                       onChange={e => setProjectId(e.target.value)}
-                      aria-label="Select Project"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                      aria-label="Select project"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
                     >
-                      <option value="">Select Project</option>
+                      <option value="">Select project</option>
                       {projects.map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
@@ -656,14 +657,14 @@ export function DesignRfiTracker() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Tower / Zone</label>
+                    <label className="text-xs font-bold text-foreground">Tower / zone</label>
                     <input
                       type="text"
                       value={towerName}
                       onChange={e => setTowerName(e.target.value)}
-                      placeholder="e.g. Tower B / Podium Basement 1"
-                      aria-label="Tower or Zone"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      placeholder="e.g. Tower b / podium basement 1"
+                      aria-label="Tower or zone"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -675,25 +676,25 @@ export function DesignRfiTracker() {
                       value={discipline}
                       onChange={e => setDiscipline(e.target.value as DesignDiscipline)}
                       aria-label="Discipline"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
                     >
                       <option value="Architectural">Architectural</option>
                       <option value="Structural">Structural</option>
-                      <option value="MEP">MEP (Mech / Elec / Plumb)</option>
-                      <option value="Landscape">Landscape & Hardscape</option>
-                      <option value="Interior">Interior / Common Areas</option>
+                      <option value="MEP">MEP (mech / elec / plumb)</option>
+                      <option value="Landscape">Landscape & hardscape</option>
+                      <option value="Interior">Interior / common areas</option>
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Priority Level *</label>
+                    <label className="text-xs font-bold text-foreground">Priority level *</label>
                     <select
                       value={priority}
                       onChange={e => setPriority(e.target.value as RfiPriority)}
-                      aria-label="Priority Level"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                      aria-label="Priority level"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
                     >
-                      <option value="URGENT">Urgent (Site Stoppage Risk)</option>
+                      <option value="URGENT">Urgent (site stoppage risk)</option>
                       <option value="HIGH">High (Upcoming Activity)</option>
                       <option value="NORMAL">Normal (Pre-construction / Planning)</option>
                     </select>
@@ -702,25 +703,25 @@ export function DesignRfiTracker() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Referenced Drawing Number</label>
+                    <label className="text-xs font-bold text-foreground">Referenced drawing number</label>
                     <input
                       type="text"
                       value={drawingCode}
                       onChange={e => setDrawingCode(e.target.value)}
                       placeholder="e.g. ST-T1-COL-204"
-                      aria-label="Referenced Drawing Number"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      aria-label="Referenced drawing number"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Target Resolution Date</label>
+                    <label className="text-xs font-bold text-foreground">Target resolution date</label>
                     <input
                       type="date"
                       value={targetResolutionDate}
                       onChange={e => setTargetResolutionDate(e.target.value)}
-                      aria-label="Target Resolution Date"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      aria-label="Target resolution date"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -731,60 +732,60 @@ export function DesignRfiTracker() {
               <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
                 <AppCardTitle className="text-sm font-bold flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
-                  <span>Technical Query Details</span>
+                  <span>Technical query details</span>
                 </AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="p-5 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Subject / Query Title *</label>
+                  <label className="text-xs font-bold text-foreground">Subject / query title *</label>
                   <input
                     type="text"
                     required
                     value={subject}
                     onChange={e => setSubject(e.target.value)}
                     placeholder="e.g. Clash between MEP HVAC Ducting and Structural Beam Level 3"
-                    aria-label="Subject or Query Title"
-                    className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    aria-label="Subject or query title"
+                    className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Detailed Query Description *</label>
+                  <label className="text-xs font-bold text-foreground">Detailed query description *</label>
                   <textarea
                     rows={4}
                     required
                     value={queryDescription}
                     onChange={e => setQueryDescription(e.target.value)}
-                    placeholder="Provide specific grid locations, discrepancy measurements, and contractor query..."
-                    aria-label="Detailed Query Description"
-                    className="w-full p-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
+                    placeholder="Provide specific grid locations, discrepancy measurements, and contractor query…"
+                    aria-label="Detailed query description"
+                    className="w-full p-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Raised By (Site Engineer) *</label>
+                    <label className="text-xs font-bold text-foreground">Raised by (site engineer) *</label>
                     <input
                       type="text"
                       required
                       value={raisedBy}
                       onChange={e => setRaisedBy(e.target.value)}
-                      placeholder="e.g. Site Engineer (Civil)"
-                      aria-label="Raised By Site Engineer"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      placeholder="e.g. Site engineer (civil)"
+                      aria-label="Raised by site engineer"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Assigned Consultant Firm *</label>
+                    <label className="text-xs font-bold text-foreground">Assigned consultant firm *</label>
                     <input
                       type="text"
                       required
                       value={assignedConsultant}
                       onChange={e => setAssignedConsultant(e.target.value)}
-                      placeholder="e.g. Structural Consultant / MEP Firm"
-                      aria-label="Assigned Consultant Firm"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      placeholder="e.g. Structural consultant / MEP firm"
+                      aria-label="Assigned consultant firm"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -801,7 +802,7 @@ export function DesignRfiTracker() {
           badge="Consultant Response"
           category="RFI & Query Control"
           icon={MessageSquare}
-          iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+          iconBg="bg-success-soft text-success-text border-success-border"
           description="Formal technical response, engineering instructions and resolving drawing revision commit."
           breadcrumbs={[
             { label: "RFI Tracker", onClick: () => setSelectedRfiForReply(null) },
@@ -819,7 +820,7 @@ export function DesignRfiTracker() {
               <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
                 <AppCardTitle className="text-sm font-bold flex items-center gap-2">
                   <HelpCircle className="h-4 w-4 text-theme-btn-primary" />
-                  <span>Site Query Dossier</span>
+                  <span>Site query dossier</span>
                 </AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="p-5 space-y-3">
@@ -828,20 +829,20 @@ export function DesignRfiTracker() {
                   {selectedRfiForReply.queryDescription}
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
-                  <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
-                    <span className="text-[10px] text-muted-foreground block font-bold">Project:</span>
+                  <div className="p-2.5 rounded-lg bg-sunken border border-border">
+                    <span className="text-[11px] text-muted-foreground block font-bold">Project:</span>
                     <span className="font-semibold text-foreground">{selectedRfiForReply.projectName}</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
-                    <span className="text-[10px] text-muted-foreground block font-bold">Discipline:</span>
+                  <div className="p-2.5 rounded-lg bg-sunken border border-border">
+                    <span className="text-[11px] text-muted-foreground block font-bold">Discipline:</span>
                     <span className="font-semibold text-foreground">{selectedRfiForReply.discipline}</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
-                    <span className="text-[10px] text-muted-foreground block font-bold">Raised By:</span>
+                  <div className="p-2.5 rounded-lg bg-sunken border border-border">
+                    <span className="text-[11px] text-muted-foreground block font-bold">Raised By:</span>
                     <span className="font-semibold text-foreground">{selectedRfiForReply.raisedBy}</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
-                    <span className="text-[10px] text-muted-foreground block font-bold">Assigned To:</span>
+                  <div className="p-2.5 rounded-lg bg-sunken border border-border">
+                    <span className="text-[11px] text-muted-foreground block font-bold">Assigned To:</span>
                     <span className="font-semibold text-theme-icon dark:text-muted-foreground">{selectedRfiForReply.assignedConsultant}</span>
                   </div>
                 </div>
@@ -849,7 +850,7 @@ export function DesignRfiTracker() {
             </AppCard>
 
             {replyError && (
-              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{replyError}</span>
               </div>
@@ -859,49 +860,49 @@ export function DesignRfiTracker() {
             <AppCard className="border-border shadow-xs">
               <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
                 <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Consultant Technical Resolution</span>
+                  <CheckCircle2 className="h-4 w-4 text-success-text" />
+                  <span>Consultant technical resolution</span>
                 </AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="p-5 space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-foreground">
-                    Consultant Clarification & Technical Instructions *
+                    Consultant clarification & technical instructions *
                   </label>
                   <textarea
                     rows={5}
                     required
                     value={responseText}
                     onChange={e => setResponseText(e.target.value)}
-                    placeholder="Provide detailed engineering clearance, revised coordinate fix, or contractor instructions..."
+                    placeholder="Provide detailed engineering clearance, revised coordinate fix, or contractor instructions…"
                     aria-label="Consultant clarification and instructions"
-                    className="w-full p-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
+                    className="w-full p-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-success-border resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Responded By (Consultant Engineer) *</label>
+                    <label className="text-xs font-bold text-foreground">Responded by (consultant engineer) *</label>
                     <input
                       type="text"
                       required
                       value={respondedByName}
                       onChange={e => setRespondedByName(e.target.value)}
-                      placeholder="e.g. Lead Structural Consultant"
-                      aria-label="Responded By Consultant Engineer"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      placeholder="e.g. Lead structural consultant"
+                      aria-label="Responded by consultant engineer"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-success-border"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Resolving Drawing Revision (e.g. R3)</label>
+                    <label className="text-xs font-bold text-foreground">Resolving drawing revision (e.g. R3)</label>
                     <input
                       type="text"
                       value={resolvingRev}
                       onChange={e => setResolvingRev(e.target.value)}
-                      placeholder="e.g. ST-T1-COL-204 Rev R3"
-                      aria-label="Resolving Drawing Revision"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      placeholder="e.g. ST-t1-COL-204 rev r3"
+                      aria-label="Resolving drawing revision"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-success-border"
                     />
                   </div>
                 </div>

@@ -246,7 +246,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
       {/* ========================================================================= */}
       {viewMode === "FORM" && (
         <TransactionFormLayout
-          title={editingId ? `Edit Consultant: ${formName || "Partner"}` : "Create New Consultant Master"}
+          title={editingId ? `Edit Consultant: ${formName || "Partner"}` : "Create new consultant master"}
           icon={Users}
           description="Register consultant firm credentials, lead personnel, and map engineering packages from Package Master"
           onBack={() => setViewMode("DIRECTORY")}
@@ -268,36 +268,36 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
             <div className="p-5 rounded-2xl bg-surface border border-border shadow-xs space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-border/60">
                 <Users className="h-4 w-4 text-theme-icon" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  1. Firm Information & Lead Personnel
+                <h4 className="text-xs font-bold text-foreground">
+                  1. Firm information & lead personnel
                 </h4>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Consultant Firm Name <span className="text-rose-500">*</span>
+                    Consultant firm name <span className="text-danger-text">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={formName}
                     onChange={e => setFormName(e.target.value)}
-                    placeholder="e.g., Sterling Engineering & Structural Consultants"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    placeholder="e.g., sterling engineering & structural consultants"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Lead Contact Person <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
+                    Lead contact person <span className="text-muted-foreground text-[11px] font-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
                     value={formLeadContact}
                     onChange={e => setFormLeadContact(e.target.value)}
-                    placeholder="e.g., Er. Rajesh Sharma (Optional)"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    placeholder="e.g., er. Rajesh sharma (optional)"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -305,27 +305,27 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Official Email <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
+                    Official email <span className="text-muted-foreground text-[11px] font-normal">(Optional)</span>
                   </label>
                   <input
                     type="email"
                     value={formEmail}
                     onChange={e => setFormEmail(e.target.value)}
                     placeholder="e.g., r.sharma@sterlingconsultants.in (Optional)"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Direct Phone Number
+                    Direct phone number
                   </label>
                   <input
                     type="tel"
                     value={formPhone}
                     onChange={e => setFormPhone(e.target.value)}
                     placeholder="+91 98200 00000"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -333,7 +333,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Target Turnaround Time (TAT Days)
+                    Target turnaround time (TAT days)
                   </label>
                   <input
                     type="number"
@@ -342,13 +342,13 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     max="30"
                     value={formTatDays}
                     onChange={e => setFormTatDays(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Initial Quality Rating (1.0 - 5.0)
+                    Initial quality rating (1.0 - 5.0)
                   </label>
                   <input
                     type="number"
@@ -357,7 +357,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     max="5"
                     value={formRating}
                     onChange={e => setFormRating(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -368,10 +368,10 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-theme-icon" />
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    2. Map Tagged Packages from Package Master <span className="text-rose-500">*</span>
+                  <h4 className="text-xs font-bold text-foreground">
+                    2. Map tagged packages from package master <span className="text-danger-text">*</span>
                   </h4>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface text-theme-icon dark:text-muted-foreground font-bold">
+                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface text-theme-icon dark:text-muted-foreground font-bold">
                     {formSelectedCategories.length} Selected
                   </span>
                 </div>
@@ -383,15 +383,15 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     className="px-2.5 py-1 rounded-lg text-xs font-bold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors cursor-pointer inline-flex items-center gap-1"
                   >
                     <CheckSquare className="h-3.5 w-3.5" />
-                    <span>Select All</span>
+                    <span>Select all</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormSelectedCategories([])}
-                    className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-lg text-xs font-bold bg-sunken text-subtle hover:bg-sunken transition-colors cursor-pointer inline-flex items-center gap-1"
                   >
                     <Square className="h-3.5 w-3.5" />
-                    <span>Remove All</span>
+                    <span>Remove all</span>
                   </button>
                 </div>
               </div>
@@ -403,8 +403,8 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                   type="text"
                   value={formCategorySearch}
                   onChange={e => setFormCategorySearch(e.target.value)}
-                  placeholder="Filter engineering packages from Package Master (e.g. Structural, MEP, Landscape, Façade)..."
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                  placeholder="Filter engineering packages from Package Master (e.g. Structural, MEP, Landscape, Façade)…"
+                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -423,15 +423,15 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                       }}
                       className={`p-3 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
                         isSelected
-                          ? "bg-surface dark:bg-surface border-purple-500 text-purple-900 dark:text-purple-100 font-bold shadow-xs ring-1 ring-purple-500/30"
-                          : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                          ? "bg-surface dark:bg-surface border-border-active text-accent-soft-text font-bold shadow-xs ring-1 ring-ring"
+                          : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-sunken"
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-base shrink-0">{cat.icon || "📁"}</span>
                         <div className="min-w-0">
                           <div className="truncate font-semibold">{cat.name}</div>
-                          <span className="text-[10px] text-muted-foreground font-mono font-normal">
+                          <span className="text-[11px] text-muted-foreground font-mono font-normal">
                             {cat.code}
                           </span>
                         </div>
@@ -439,7 +439,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
 
                       <div className={`h-4 w-4 rounded-md flex items-center justify-center shrink-0 border ${
                         isSelected
-                          ? "bg-purple-600 border-purple-600 text-white"
+                          ? "bg-primary border-border-active text-white"
                           : "border-border bg-background"
                       }`}>
                         {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
@@ -455,13 +455,13 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               <button
                 type="button"
                 onClick={() => setViewMode("DIRECTORY")}
-                className="px-5 py-2.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer transition-colors"
+                className="px-5 py-2.5 rounded-xl border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground cursor-pointer transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                className="px-6 py-2.5 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
               >
                 {editingId ? "Save Consultant Changes" : "Register Consultant Master"}
               </button>
@@ -480,7 +480,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               </div>
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-foreground">
-                  Consultant Master (Partner Directory)
+                  Consultant master (partner directory)
                 </h3>
               </div>
             </div>
@@ -489,18 +489,18 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <Upload className="h-3.5 w-3.5 text-theme-icon" />
-                <span>Import Consultants (Excel)</span>
+                <span>Import consultants (Excel)</span>
               </button>
               <button
                 type="button"
                 onClick={handleOpenAdd}
-                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Create Consultant Master</span>
+                <span>Create consultant master</span>
               </button>
             </div>
           </div>
@@ -509,37 +509,37 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-semibold text-muted-foreground block">Total Consultants</span>
-                <span className="text-lg font-black text-foreground">{consultants.length}</span>
+                <span className="text-[11px] font-semibold text-muted-foreground block">Total consultants</span>
+                <span className="text-lg font-semibold text-foreground">{consultants.length}</span>
               </div>
               <Users className="h-4 w-4 text-theme-icon" />
             </div>
             <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-semibold text-muted-foreground block">Onboarded & Tagged</span>
-                <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                <span className="text-[11px] font-semibold text-muted-foreground block">Onboarded & tagged</span>
+                <span className="text-lg font-semibold text-success-text">
                   {onboardedCount}
                 </span>
               </div>
-              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <ShieldCheck className="h-4 w-4 text-success-text" />
             </div>
             <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-semibold text-muted-foreground block">Pending Tagging</span>
-                <span className="text-lg font-black text-amber-600 dark:text-amber-400">
+                <span className="text-[11px] font-semibold text-muted-foreground block">Pending tagging</span>
+                <span className="text-lg font-semibold text-warning-text">
                   {consultants.length - onboardedCount}
                 </span>
               </div>
-              <Clock className="h-4 w-4 text-amber-500" />
+              <Clock className="h-4 w-4 text-warning-text" />
             </div>
             <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-semibold text-muted-foreground block">Package Coverage</span>
-                <span className="text-lg font-black text-blue-600 dark:text-blue-400">
+                <span className="text-[11px] font-semibold text-muted-foreground block">Package coverage</span>
+                <span className="text-lg font-semibold text-info-text">
                   {categories.length} Pkgs
                 </span>
               </div>
-              <Tag className="h-4 w-4 text-blue-500" />
+              <Tag className="h-4 w-4 text-info-text" />
             </div>
           </div>
 
@@ -552,10 +552,10 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                 />
                 {searchQuery && (
-                  <button
+                  <button aria-label="Close"
                     type="button"
                     onClick={() => setSearchQuery("")}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
@@ -576,7 +576,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                   >
                     <option value="ALL">All ({consultants.length})</option>
                     <option value="ONBOARD">Onboarded</option>
-                    <option value="NOT_ONBOARD">Not Onboard</option>
+                    <option value="NOT_ONBOARD">Not onboard</option>
                   </select>
                 </div>
                 <div className="text-xs text-muted-foreground font-medium pl-2 border-l border-border">
@@ -596,11 +596,11 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                 onClick={() => setSelectedCategoryFilter("ALL")}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                   selectedCategoryFilter === "ALL"
-                    ? "bg-purple-600 text-white font-bold shadow-2xs"
+                    ? "bg-primary text-white font-bold shadow-2xs"
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
                 }`}
               >
-                All Packages
+                All packages
               </button>
               {categories.map(cat => {
                 const count = categoryCounts[cat.name] || 0;
@@ -612,13 +612,13 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     onClick={() => setSelectedCategoryFilter(cat.name)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 ${
                       selectedCategoryFilter === cat.name
-                        ? "bg-purple-600 text-white font-bold shadow-2xs"
+                        ? "bg-primary text-white font-bold shadow-2xs"
                         : "bg-muted/40 text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <span>{cat.icon || "📁"}</span>
                     <span>{cat.name}</span>
-                    <span className="opacity-70 text-[10px]">({count})</span>
+                    <span className="opacity-70 text-[11px]">({count})</span>
                   </button>
                 );
               })}
@@ -632,7 +632,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <h5 className="text-sm font-bold text-foreground">No Consultants Found</h5>
+                <h5 className="text-sm font-bold text-foreground">No consultants found</h5>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {searchQuery || selectedCategoryFilter !== "ALL"
                     ? "Try adjusting your search or package filter criteria."
@@ -642,10 +642,10 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               <button
                 type="button"
                 onClick={handleOpenAdd}
-                className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+                className="px-4 py-1.5 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Create First Consultant</span>
+                <span>Create first consultant</span>
               </button>
             </div>
           ) : (
@@ -667,13 +667,13 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {isOnboard ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-success-soft text-success-text border border-success-border flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-success" />
                                 <span>Onboarded ({c.activeProjects?.length || 0} Projs)</span>
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
-                                Available / Standby
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-sunken text-subtle border border-border">
+                                Available / standby
                               </span>
                             )}
                           </div>
@@ -688,19 +688,19 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
 
                         {/* Actions */}
                         <div className="flex items-center gap-1 shrink-0">
-                          <button
+                          <button aria-label="Edit consultant & packages"
                             type="button"
                             onClick={() => handleOpenEdit(c)}
-                            className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
-                            title="Edit Consultant & Packages"
+                            className="h-7 w-7 rounded-lg hover:bg-sunken text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+                            title="Edit consultant & packages"
                           >
                             <Edit2 className="h-3 w-3" />
                           </button>
-                          <button
+                          <button aria-label="Delete consultant"
                             type="button"
                             onClick={() => handleTriggerDelete(c)}
-                            className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                            title="Delete Consultant"
+                            className="h-7 w-7 rounded-lg hover:bg-danger-soft text-muted-foreground hover:text-danger-text flex items-center justify-center transition-colors cursor-pointer"
+                            title="Delete consultant"
                           >
                             <Trash2 className="h-3 w-3" />
                           </button>
@@ -723,8 +723,8 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
 
                       {/* Mapped Categories Badges */}
                       <div className="space-y-1 pt-1.5 border-t border-border">
-                        <span className="text-[10px] font-bold text-muted-foreground block">
-                          Tagged Packages ({mappedCats.length}):
+                        <span className="text-[11px] font-bold text-muted-foreground block">
+                          Tagged packages ({mappedCats.length}):
                         </span>
                         <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto custom-scrollbar">
                           {mappedCats.map((catName, idx) => {
@@ -732,7 +732,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                             return (
                               <span
                                 key={idx}
-                                className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border flex items-center gap-1"
+                                className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border flex items-center gap-1"
                               >
                                 <span>{catMaster?.icon || "📁"}</span>
                                 <span>{catName}</span>
@@ -747,11 +747,11 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     <div className="pt-2.5 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center gap-3">
                         <span className="inline-flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-amber-500" />
+                          <Clock className="h-3 w-3 text-warning-text" />
                           <span className="font-semibold text-foreground">{c.averageTatDays || 3}d</span> TAT
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                          <Star className="h-3 w-3 text-warning-text fill-warning" />
                           <span className="font-semibold text-foreground">{c.rating || 5.0}</span>
                         </span>
                       </div>
@@ -761,7 +761,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                         onClick={() => handleOpenEdit(c)}
                         className="h-6 px-2.5 rounded-lg bg-surface hover:bg-surface text-theme-icon dark:text-muted-foreground border border-border text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer"
                       >
-                        Edit Packages
+                        Edit packages
                       </button>
                     </div>
                   </div>

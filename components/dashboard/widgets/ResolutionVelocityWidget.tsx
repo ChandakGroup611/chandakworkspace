@@ -84,9 +84,9 @@ export function ResolutionVelocityWidget({ metrics = [] }: ResolutionVelocityWid
   return (
     <BaseWidget 
       id="resolution-velocity" 
-      title="Resolution Velocity Progress" 
-      subtitle="7-Day Creation vs Resolution Throughput" 
-      icon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
+      title="Resolution velocity progress" 
+      subtitle="7-Day creation vs resolution throughput" 
+      icon={<TrendingUp className="w-5 h-5 text-success-text" />}
       collapsible={true}
       overflowHidden
     >

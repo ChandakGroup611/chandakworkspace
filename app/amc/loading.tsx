@@ -6,8 +6,8 @@ export default function AmcLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Chandak AMC & Contracts"
-        subtitle="Initializing maintenance agreements, vendor logs & assets..."
+        title="Chandak AMC & contracts"
+        subtitle="Initializing maintenance agreements, vendor logs & assets…"
       />
     </div>
   );

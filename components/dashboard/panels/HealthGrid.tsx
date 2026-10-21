@@ -44,7 +44,7 @@ export default function HealthGrid({ metrics = [] }: HealthGridProps) {
           <i className="ti ti-flame" aria-hidden="true"></i>
         </div>
         <div>
-          <div className="health-label">Resolution Rate</div>
+          <div className="health-label">Resolution rate</div>
           <div className="health-value" style={{ color: 'var(--green)' }}>{velocity} items</div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export default function HealthGrid({ metrics = [] }: HealthGridProps) {
           <i className="ti ti-clock" aria-hidden="true"></i>
         </div>
         <div>
-          <div className="health-label">Avg. Cycle Time</div>
+          <div className="health-label">Avg. Cycle time</div>
           <div className="health-value" style={{ color: 'var(--accent)' }}>{cycleTime} days</div>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function HealthGrid({ metrics = [] }: HealthGridProps) {
           <i className="ti ti-target" aria-hidden="true"></i>
         </div>
         <div>
-          <div className="health-label">Sprint Completion</div>
+          <div className="health-label">Sprint completion</div>
           <div className="health-value" style={{ color: 'var(--amber)' }}>{completion}%</div>
         </div>
       </div>

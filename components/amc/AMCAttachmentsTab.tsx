@@ -6,6 +6,8 @@ import { AppButton } from "@/components/ui/AppButton";
 import { toast } from 'react-toastify';
 import { Paperclip, Trash2, Download, Plus, Loader2, FileText, CheckCircle2, Eye, X } from "lucide-react";
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
+import { confirmAction } from "@/components/ui/feedback/confirm";
+import { formatDate } from "@/components/ui/data";
 
 interface Attachment {
   id: string;
@@ -112,7 +114,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
   };
 
   const handleDelete = async (id: string, fileUrl: string) => {
-    if (!confirm("Are you sure you want to delete this attachment?")) return;
+    if (!(await confirmAction("Are you sure you want to delete this attachment?"))) return;
     
     try {
       // Delete from DB
@@ -136,33 +138,33 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
         <div className="w-full md:w-1/3 p-5 rounded-2xl border bg-surface/50 border-border">
           <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
             <Paperclip className="h-4 w-4 text-theme-icon" />
-            Upload Document
+            Upload document
           </h3>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted uppercase">Document Type</label>
+              <label className="text-xs font-bold text-muted">Document type</label>
               <select 
                 value={fileType}
                 onChange={(e) => setFileType(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg text-sm bg-elevated border border-border text-foreground focus:outline-none focus:border-theme-btn-primary"
               >
-                <option value="MSA">Master Service Agreement (MSA)</option>
-                <option value="NDA">Non-Disclosure Agreement (NDA)</option>
-                <option value="DPA">Data Processing Agreement (DPA)</option>
+                <option value="MSA">Master service agreement (MSA)</option>
+                <option value="NDA">Non-disclosure agreement (NDA)</option>
+                <option value="DPA">Data processing agreement (DPA)</option>
                 <option value="Invoice">Invoice / PO</option>
-                <option value="SOW">Statement of Work (SOW)</option>
+                <option value="SOW">Statement of work (SOW)</option>
                 <option value="Other">Other</option>
               </select>
             </div>
             
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted uppercase">Select File</label>
+              <label className="text-xs font-bold text-muted">Select file</label>
               <input 
                 id="file-upload"
                 type="file" 
                 onChange={handleFileChange}
-                className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary/10 file:text-theme-btn-primary hover:file:bg-theme-btn-primary/20"
+                className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent-soft file:text-theme-btn-primary hover:file:bg-accent-soft"
               />
             </div>
 
@@ -174,13 +176,13 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                     <p className="font-semibold truncate text-foreground" title={fileToUpload.name}>
                       {fileToUpload.name}
                     </p>
-                    <p className="text-[10px] text-muted">
-                      {(fileToUpload.size / 1024).toFixed(1)} KB • Staged for upload
+                    <p className="text-[11px] text-muted">
+                      {(fileToUpload.size / 1024).toFixed(1)} KB • staged for upload
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <AppButton
+                  <AppButton aria-label="View document"
                     variant="ghost"
                     size="sm"
                     type="button"
@@ -188,12 +190,12 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                       const url = URL.createObjectURL(fileToUpload);
                       window.open(url, '_blank');
                     }}
-                    className="p-1 h-7 w-7 text-accent hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
-                    title="View Document"
+                    className="p-1 h-7 w-7 text-accent hover:bg-accent-soft rounded flex items-center justify-center"
+                    title="View document"
                   >
                     <Eye className="h-3.5 w-3.5" />
                   </AppButton>
-                  <AppButton
+                  <AppButton aria-label="Download document"
                     variant="ghost"
                     size="sm"
                     type="button"
@@ -207,12 +209,12 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
                     }}
-                    className="p-1 h-7 w-7 text-theme-icon hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
-                    title="Download Document"
+                    className="p-1 h-7 w-7 text-theme-icon hover:bg-accent-soft rounded flex items-center justify-center"
+                    title="Download document"
                   >
                     <Download className="h-3.5 w-3.5" />
                   </AppButton>
-                  <AppButton
+                  <AppButton aria-label="Remove file"
                     variant="ghost"
                     size="sm"
                     type="button"
@@ -222,7 +224,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                       if (input) input.value = '';
                     }}
                     className="p-1 h-7 w-7 text-muted hover:text-danger hover:bg-danger/10 rounded flex items-center justify-center"
-                    title="Remove File"
+                    title="Remove file"
                   >
                     <X className="h-3.5 w-3.5" />
                   </AppButton>
@@ -246,9 +248,9 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
           <AppTable className="w-full text-left border-collapse text-sm">
             <AppTableHeader className="bg-surface/50">
               <AppTableRow>
-                <AppTableHead className="p-3 font-medium text-muted">File Name</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-muted">File name</AppTableHead>
                 <AppTableHead className="p-3 font-medium text-muted">Type</AppTableHead>
-                <AppTableHead className="p-3 font-medium text-muted">Uploaded By</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-muted">Uploaded by</AppTableHead>
                 <AppTableHead className="p-3 font-medium text-muted">Date</AppTableHead>
                 <AppTableHead className="p-3 font-medium text-muted text-right">Actions</AppTableHead>
               </AppTableRow>
@@ -285,20 +287,20 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                       {file.user_master?.full_name || 'System'}
                     </AppTableCell>
                     <AppTableCell className="p-3 text-muted text-xs whitespace-nowrap">
-                      {new Date(file.uploaded_at).toLocaleDateString()}
+                      {formatDate(file.uploaded_at)}
                     </AppTableCell>
                     <AppTableCell className="p-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <AppButton 
+                        <AppButton aria-label="View document" 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => window.open(file.file_url, '_blank')}
-                          className="text-accent hover:text-accent hover:bg-theme-btn-primary/10"
-                          title="View Document"
+                          className="text-accent hover:text-accent hover:bg-accent-soft"
+                          title="View document"
                         >
                           <Eye className="h-4 w-4" />
                         </AppButton>
-                        <AppButton 
+                        <AppButton aria-label="Download document" 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => {
@@ -310,17 +312,17 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                             a.click();
                             document.body.removeChild(a);
                           }}
-                          className="text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10"
-                          title="Download Document"
+                          className="text-theme-icon hover:text-theme-icon hover:bg-accent-soft"
+                          title="Download document"
                         >
                           <Download className="h-4 w-4" />
                         </AppButton>
-                        <AppButton 
+                        <AppButton aria-label="Delete document" 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleDelete(file.id, file.file_url)}
                           className="text-danger hover:text-danger hover:bg-danger/10"
-                          title="Delete Document"
+                          title="Delete document"
                         >
                           <Trash2 className="h-4 w-4" />
                         </AppButton>

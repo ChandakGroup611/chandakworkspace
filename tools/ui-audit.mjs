@@ -21,7 +21,7 @@ const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const val = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
 const ROOT = process.cwd();
-const SCAN_DIRS = ["app", "src", "components", "features", "modules", "lib"].filter((d) => fs.existsSync(path.join(ROOT, d)));
+const SCAN_DIRS = ["app", "src", "components", "features", "modules", "lib", "Design_Tracking"].filter((d) => fs.existsSync(path.join(ROOT, d)));
 const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "dist", "build", "coverage", "__tests__", "tools", "examples", "_ui-kit", "_ui-kit-v3"]);
 
 const PALETTE = "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
@@ -47,16 +47,16 @@ const RULES = [
   ["blur", "WARN", /\bbackdrop-blur(?:-\w+)?\b/g, "backdrop-blur (disabled app-wide; leaves translucent panels)", "Use opaque bg-elevated / bg-surface"],
   ["date-format", "WARN", /toLocaleDateString\(|toLocaleString\(\s*\)|format\([^)]*["'`](?:dd[-/]MM[-/]yyyy|yyyy-MM-dd|DD[-/]MM[-/]YYYY|YYYY-MM-DD)["'`]|\.split\(\s*["']T["']\s*\)\[0\]/g, "Ad-hoc date formatting (mixed formats)", "DateCell / DueDateCell / formatDate() from components/ui/data"],
   ["emoji", "WARN", /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "Emoji in UI", "Use a lucide icon or plain text"],
-  ["old-hover-token", "ERROR", /hover:opacity-90\/10|ring-ring\b(?!\])|shadow-\[var\(--shadow-ambient\)\]/g, "Class that resolves to nothing", "See UI_STANDARDS.md token list"],
+  ["old-hover-token", "ERROR", /hover:opacity-90\/10|\bbg-hover\b|border-border-subtle\b|ring-focus-ring\b|shadow-\[var\(--shadow-ambient\)\]/g, "Class that resolves to nothing", "See UI_STANDARDS.md token list"],
 ];
 
 const MODULES = [
   ["vehicle", "Vehicle Desk", /(^|\/)(vehicle|fleet)(\/|$)/i],
-  ["design", "Design Tracking", /(^|\/)design(\/|$)/i],
+  ["design", "Design Tracking", /(^|\/)(design|Design_Tracking|verify-drawing)(\/|$)/i],
   ["dashboards", "Dashboards & Reports", /(^|\/)(dashboards?|reports?|analytics)(\/|$)/i],
   ["admin", "Admin, RBAC & Masters", /(^|\/)(settings|rbac|iam|users?|masters?|compliance|subscription|profile|learning)(\/|$)/i],
   ["auth", "Login & module select", /(^|\/)(login|register|select-module|auth)(\/|$)/i],
-  ["shared", "Shared components & layout", /^(components|src\/components|lib|src\/lib)\//i],
+  ["shared", "Shared components & layout", /^((src\/)?components\/(ui|theme|layout|providers|collaboration|common|shared)\/|(src\/)?lib\/|app\/(layout|providers|error|not-found|loading)\.)/i],
   ["tasks", "Task Workflow (tickets, requirements, workspaces, SLA, AMC…)", /.*/],
 ];
 const moduleOf = (rel) => MODULES.find(([, , re]) => re.test(rel)) ?? MODULES[MODULES.length - 1];

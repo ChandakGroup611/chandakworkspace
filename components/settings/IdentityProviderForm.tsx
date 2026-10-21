@@ -70,7 +70,7 @@ export default function IdentityProviderForm() {
         if (!res.success) throw new Error(res.error);
       }
 
-      triggerToast("Identity Provider Configuration Saved", "success");
+      triggerToast("Identity provider configuration saved", "success");
     } catch (err: any) {
       triggerToast(err.message || "Failed to save configuration", "error");
     } finally {
@@ -81,7 +81,7 @@ export default function IdentityProviderForm() {
   if (fetching || permsLoading) {
     return (
       <div className="flex justify-center py-12">
-        <ChandakLoader size="md" title="Loading Identity Provider..." />
+        <ChandakLoader size="md" title="Loading identity provider…" />
       </div>
     );
   }
@@ -89,10 +89,10 @@ export default function IdentityProviderForm() {
   if (!hasPermission("SETTINGS_IDENTITY_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
+        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view Identity Settings.</p>
       </div>
     );
@@ -118,11 +118,11 @@ export default function IdentityProviderForm() {
               type="button"
               role="switch"
               aria-checked={config.is_active}
-              aria-label="Toggle Entra ID Status"
+              aria-label="Toggle Entra ID status"
               onClick={() => setConfig({ ...config, is_active: !config.is_active })}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${config.is_active ? 'bg-primary' : 'bg-sunken border border-border'}`}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function IdentityProviderForm() {
               value={config.tenant_id || ""}
               onChange={(e) => setConfig({ ...config, tenant_id: e.target.value })}
               className="w-full bg-surface border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-border-active"
-              placeholder="e.g. 8eaef023-..."
+              placeholder="e.g. 8eaef023-…"
             />
           </div>
           
@@ -146,12 +146,12 @@ export default function IdentityProviderForm() {
               value={config.client_id || ""}
               onChange={(e) => setConfig({ ...config, client_id: e.target.value })}
               className="w-full bg-surface border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-border-active"
-              placeholder="e.g. d2a2b023-..."
+              placeholder="e.g. d2a2b023-…"
             />
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-subtle">Client Secret (Encrypted)</label>
+            <label className="text-sm font-medium text-subtle">Client secret (encrypted)</label>
             <div className="relative">
               <input 
                 type="password" 
@@ -187,7 +187,7 @@ export default function IdentityProviderForm() {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-heading">Auto-Provisioning Settings</h2>
+            <h2 className="text-xl font-semibold text-heading">Auto-provisioning settings</h2>
           </div>
         </div>
 
@@ -197,14 +197,14 @@ export default function IdentityProviderForm() {
               type="button"
               role="switch"
               aria-checked={config.auto_provision_users}
-              aria-label="Enable JIT Provisioning"
+              aria-label="Enable JIT provisioning"
               onClick={() => setConfig({ ...config, auto_provision_users: !config.auto_provision_users })}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${config.auto_provision_users ? 'bg-primary' : 'bg-sunken border border-border'}`}
             >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
             </button>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Enable JIT (Just-In-Time) Provisioning</span>
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Enable JIT (just-in-time) provisioning</span>
               <span className="text-xs text-muted">Automatically create user accounts in the system if they authenticate successfully via Azure AD.</span>
             </div>
           </label>
@@ -218,10 +218,10 @@ export default function IdentityProviderForm() {
               onClick={() => setConfig({ ...config, force_sso: !config.force_sso })}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${config.force_sso ? 'bg-danger-solid' : 'bg-sunken border border-border'}`}
             >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
             </button>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Force SSO (Disable Password Login)</span>
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Force SSO (disable password login)</span>
               <span className="text-xs text-muted">If enabled, standard password login will be hidden and all users MUST use Microsoft SSO.</span>
             </div>
           </label>

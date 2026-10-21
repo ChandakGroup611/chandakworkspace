@@ -56,25 +56,25 @@ const getModuleMeta = (code: string) => {
     case "VEHICLE_DESK":
       return {
         icon: Car,
-        badgeBg: "bg-amber-500/15 text-amber-500 border-amber-500/30",
+        badgeBg: "bg-warning-soft text-warning-text border-warning-border",
         description: "Fleet master, vehicle inventory, daily trip sheets, driver roster, maintenance & parts."
       };
     case "TASK_WORKFLOW":
       return {
         icon: FolderKanban,
-        badgeBg: "bg-blue-500/15 text-blue-500 border-blue-500/30",
+        badgeBg: "bg-info-soft text-info-text border-info-border",
         description: "Executive task tracker, sprints, ticketing/helpdesk, requirements lifecycle & AMC."
       };
     case "DASHBOARDS":
       return {
         icon: LineChart,
-        badgeBg: "bg-fuchsia-500/15 text-fuchsia-500 border-fuchsia-500/30",
+        badgeBg: "bg-accent-soft text-accent-soft-text border-border",
         description: "IT & Marketing budget dashboards on live IN4 data. Actions are set by DASH_* role permissions."
       };
     case "DESIGN_TRACKING":
       return {
         icon: Compass,
-        badgeBg: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
+        badgeBg: "bg-success-soft text-success-text border-success-border",
         description: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC."
       };
     default:
@@ -315,17 +315,17 @@ export default function UserFormPage() {
   };
 
   const inputStyle = `w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 focus:border-theme-btn-primary ${
-    "bg-surface dark:bg-[#0a0d14] border-border dark:border-border text-slate-800 dark:text-slate-200 disabled:bg-slate-100 disabled:dark:bg-slate-800 disabled:text-slate-400 disabled:dark:text-muted"
+    "bg-surface border-border dark:border-border text-foreground disabled:bg-sunken disabled:text-muted disabled:dark:text-muted"
   }`;
 
-  const labelStyle = `text-sm font-semibold mb-2 block text-slate-700`;
+  const labelStyle = `text-sm font-semibold mb-2 block text-foreground`;
 
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[50vh]">
         <ChandakLoader
           size="md"
-          title="Loading Configuration Master..."
+          title="Loading configuration master…"
           subtitle="Fetching user profile & system permissions"
         />
       </div>
@@ -334,9 +334,9 @@ export default function UserFormPage() {
 
   return (
     <div className="w-full pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 sticky -top-4 md:-top-6 z-50 bg-surface dark:bg-slate-900 border-b border-border shadow-sm px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between mb-6">
+      <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 sticky -top-4 md:-top-6 z-50 bg-surface border-b border-border shadow-sm px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <AppButton 
+          <AppButton aria-label="Back" 
             variant="outline" 
             size="icon" 
             onClick={() => router.push("/users")}
@@ -358,11 +358,11 @@ export default function UserFormPage() {
             type="button"
             variant="outline" 
             onClick={() => setAssignModalOpen(true)}
-            className="px-4 h-10 font-semibold flex items-center gap-2 border-border dark:border-indigo-800/60 bg-surface/60 dark:bg-surface text-foreground dark:text-muted-foreground hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all shadow-xs cursor-pointer"
+            className="px-4 h-10 font-semibold flex items-center gap-2 border-border bg-surface/60 dark:bg-surface text-foreground dark:text-muted-foreground hover:bg-accent-soft transition-all shadow-xs cursor-pointer"
             title="Configure and assign workspace modules"
           >
             <Layers className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
-            <span>Assign Modules ({selectedModuleCodes.length})</span>
+            <span>Assign modules ({selectedModuleCodes.length})</span>
           </AppButton>
           <AppButton 
             variant="outline" 
@@ -384,8 +384,8 @@ export default function UserFormPage() {
 
       {/* Interactive Assign Modules Modal Dialog */}
       {assignModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface dark:bg-slate-900 border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-surface text-theme-icon flex items-center justify-center border border-border">
@@ -393,14 +393,14 @@ export default function UserFormPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-foreground">
-                    Assign Operational Modules
+                    Assign operational modules
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Configure permitted workspaces and default landing for {formFullName || "this user"}
                   </p>
                 </div>
               </div>
-              <AppButton 
+              <AppButton aria-label="Close" 
                 variant="ghost" 
                 size="icon-sm" 
                 onClick={() => setAssignModalOpen(false)}
@@ -439,12 +439,12 @@ export default function UserFormPage() {
                           <span className="font-bold text-sm text-foreground">
                             {mod.name}
                           </span>
-                          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                             {mod.code}
                           </span>
                           {isDefault && isChecked && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                              <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" /> Landing Default
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
+                              <Star className="h-2.5 w-2.5 fill-warning text-warning-text" /> Landing default
                             </span>
                           )}
                         </div>
@@ -464,11 +464,11 @@ export default function UserFormPage() {
                           onClick={() => setDefaultModuleCode(mod.code)}
                           className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${
                             isDefault
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold cursor-default"
+                              ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
                               : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
                           }`}
                         >
-                          <Star className={`h-3 w-3 ${isDefault ? "fill-amber-500 text-amber-500" : ""}`} />
+                          <Star className={`h-3 w-3 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
                           <span>{isDefault ? "Default" : "Make Default"}</span>
                         </AppButton>
                       )}
@@ -493,7 +493,7 @@ export default function UserFormPage() {
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                        <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-btn-primary"></div>
                       </label>
                     </div>
                   </div>
@@ -555,19 +555,19 @@ export default function UserFormPage() {
       <div className="px-4 sm:px-6 lg:px-8">
 
       {successAlert && (
-        <div className="p-4 mb-6 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm flex items-center justify-between animate-in fade-in duration-200">
+        <div className="p-4 mb-6 rounded-xl bg-success-soft border border-success-border text-success-text text-sm flex items-center justify-between animate-in fade-in duration-200">
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <CheckCircle2 className="h-5 w-5 text-success-text shrink-0" />
             <span className="font-semibold">{successAlert}</span>
           </div>
-          <AppButton variant="ghost" size="icon-sm" onClick={() => setSuccessAlert(null)}>
+          <AppButton aria-label="Close" variant="ghost" size="icon-sm" onClick={() => setSuccessAlert(null)}>
             <X className="h-4 w-4" />
           </AppButton>
         </div>
       )}
 
       {errorAlert && (
-        <div className="p-4 mb-6 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-start gap-3">
+        <div className="p-4 mb-6 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-sm flex items-start gap-3">
           <X className="h-5 w-5 shrink-0 mt-0.5" />
           <p className="font-medium">{errorAlert}</p>
         </div>
@@ -583,28 +583,28 @@ export default function UserFormPage() {
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-theme-icon" />
-                <AppCardTitle className="text-lg">Personal Identity</AppCardTitle>
+                <AppCardTitle className="text-lg">Personal identity</AppCardTitle>
               </div>
             </AppCardHeader>
             <AppCardContent className="p-6 space-y-8">
               {/* Photo Upload Row */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-border">
                 <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ring-4 ring-offset-2 bg-slate-200 text-slate-400 ring-slate-100 ring-offset-white`}>
+                  <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ring-4 ring-offset-2 bg-sunken text-muted ring-border ring-offset-surface`}>
                     {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
                       <img src={formPhoto} alt="Profile" className="w-full h-full object-cover" onError={(e) => { (e.target as any).src = '' }} />
                     ) : (
                       <ImageIcon className="w-12 h-12 opacity-50" />
                     )}
                   </div>
-                  <div className="absolute bottom-0 right-0 w-9 h-9 bg-theme-btn-primary text-white rounded-full flex items-center justify-center border-[3px] border-surface shadow-sm transition-transform group-hover:scale-110">
+                  <div className="absolute bottom-0 right-0 w-9 h-9 bg-theme-btn-primary text-white rounded-full flex items-center justify-center border-[3px] border-surface shadow-sm transition-transform">
                     <Camera className="w-4 h-4" />
                   </div>
                 </div>
                 
                 <div className="flex flex-col items-start gap-3 flex-1">
                   <div>
-                    <h3 className="font-semibold text-base mb-1">Profile Photo</h3>
+                    <h3 className="font-semibold text-base mb-1">Profile photo</h3>
                     <p className="text-sm text-muted-foreground max-w-sm">Upload a professional headshot. Recommended dimensions: 400x400px.</p>
                   </div>
                   <div className="flex items-center gap-3 w-full">
@@ -635,9 +635,9 @@ export default function UserFormPage() {
               {/* Identity Inputs Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div>
-                  <label className={labelStyle}>Full Name *</label>
+                  <label className={labelStyle}>Full name *</label>
                   <input 
-                    placeholder="e.g. Sarah Chen" 
+                    placeholder="e.g. Sarah chen" 
                     value={formFullName} 
                     onChange={(e) => setFormFullName(e.target.value)} 
                     required 
@@ -646,7 +646,7 @@ export default function UserFormPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelStyle}>Corporate Email *</label>
+                  <label className={labelStyle}>Corporate email *</label>
                   <input 
                     type="email" 
                     placeholder="e.g. sarah.chen@company.com" 
@@ -666,7 +666,7 @@ export default function UserFormPage() {
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-warning" />
-                <AppCardTitle className="text-lg">Organization Alignment</AppCardTitle>
+                <AppCardTitle className="text-lg">Organisation alignment</AppCardTitle>
               </div>
             </AppCardHeader>
             <AppCardContent className="p-6">
@@ -683,7 +683,7 @@ export default function UserFormPage() {
                       disabled={!isSuperAdmin}
                       className={`${inputStyle} appearance-none pr-10`}
                     >
-                      <option value="">Select Department...</option>
+                      <option value="">Select Department…</option>
                       {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                     <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
@@ -709,7 +709,7 @@ export default function UserFormPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className={labelStyle}>Reporting Manager</label>
+                  <label className={labelStyle}>Reporting manager</label>
                   <div className="relative">
                     <select 
                       value={formManagerId} 
@@ -717,7 +717,7 @@ export default function UserFormPage() {
                       disabled={!isSuperAdmin}
                       className={`${inputStyle} appearance-none pr-10`}
                     >
-                      <option value="">Select a Manager...</option>
+                      <option value="">Select a Manager…</option>
                       {availableManagers.map(mgr => <option key={mgr.id} value={mgr.id}>{mgr.full_name} ({mgr.user_code})</option>)}
                     </select>
                     <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
@@ -738,7 +738,7 @@ export default function UserFormPage() {
                   <Layers className="h-4 w-4" />
                 </div>
                 <div>
-                  <AppCardTitle className="text-lg">Workspace Module Entitlements</AppCardTitle>
+                  <AppCardTitle className="text-lg">Workspace module entitlements</AppCardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Assign permitted operational modules and configure user's landing default workspace.
                   </p>
@@ -777,12 +777,12 @@ export default function UserFormPage() {
                           <span className="font-bold text-sm text-foreground">
                             {mod.name}
                           </span>
-                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
                             {mod.code}
                           </span>
                           {isDefault && isChecked && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                              <Star className="h-3 w-3 fill-amber-500 text-amber-500" /> Landing Default
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
+                              <Star className="h-3 w-3 fill-warning text-warning-text" /> Landing default
                             </span>
                           )}
                         </div>
@@ -805,11 +805,11 @@ export default function UserFormPage() {
                           title={isDefault ? "Current landing default" : "Set as landing default workspace"}
                           className={`text-xs h-8 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${
                             isDefault
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold cursor-default"
+                              ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
                               : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
                           }`}
                         >
-                          <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-amber-500 text-amber-500" : ""}`} />
+                          <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
                           <span className="hidden sm:inline">{isDefault ? "Default" : "Make Default"}</span>
                         </AppButton>
                       )}
@@ -841,7 +841,7 @@ export default function UserFormPage() {
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                          <div className="w-11 h-6 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-btn-primary"></div>
                         </label>
                       </div>
                     </div>
@@ -860,20 +860,20 @@ export default function UserFormPage() {
           <AppCard className={`overflow-hidden transition-all border-border`}>
             <AppCardContent className="p-6 space-y-6">
               <div>
-                <label className={labelStyle}>Account Status</label>
-                <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${formIsActive ? ("bg-emerald-50 border-emerald-200") : ("bg-rose-50 border-rose-200")}`}>
+                <label className={labelStyle}>Account status</label>
+                <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${formIsActive ? ("bg-success-soft border-success-border") : ("bg-danger-soft border-danger-border")}`}>
                   <span className={`font-semibold ${formIsActive ? "text-success dark:text-success" : "text-danger dark:text-danger"}`}>
                     {formIsActive ? "Active Participant" : "Suspended"}
                   </span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="sr-only peer" disabled={!isSuperAdmin} />
-                    <div className="w-11 h-6 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
+                    <div className="w-11 h-6 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className={labelStyle}>Unique Code (UIN) *</label>
+                <label className={labelStyle}>Unique code (UIN) *</label>
                 <input 
                   placeholder="e.g. EMP8839" 
                   value={formUserCode} 
@@ -887,16 +887,16 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 3: Security Credentials */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-border`}>
+          <AppCard className={`overflow-hidden shadow-md ring-1 ring-border transition-all border-border`}>
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-danger" />
-                <AppCardTitle className="text-lg">Security Settings</AppCardTitle>
+                <AppCardTitle className="text-lg">Security settings</AppCardTitle>
               </div>
             </AppCardHeader>
             <AppCardContent className="p-6 space-y-6">
               <div>
-                <label className={labelStyle}>System Role</label>
+                <label className={labelStyle}>System role</label>
                 <div className="relative">
                   <select 
                     value={formRoleId} 
@@ -904,7 +904,7 @@ export default function UserFormPage() {
                     disabled={!isSuperAdmin}
                     className={`${inputStyle} appearance-none pr-10 font-semibold text-theme-icon dark:text-theme-icon`}
                   >
-                    <option value="">Select Role...</option>
+                    <option value="">Select Role…</option>
                     {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
                   <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
@@ -912,9 +912,9 @@ export default function UserFormPage() {
               </div>
 
               <div className="pt-6 border-t border-border space-y-5">
-                <h4 className="text-sm font-semibold mb-2">Supabase Credentials</h4>
+                <h4 className="text-sm font-semibold mb-2">Supabase credentials</h4>
                 <div>
-                  <label className="text-sm font-semibold mb-1 block text-muted-foreground">New Password {isEditingMode && "(Leave empty to keep current)"}</label>
+                  <label className="text-sm font-semibold mb-1 block text-muted-foreground">New password {isEditingMode && "(Leave empty to keep current)"}</label>
                   <div className="relative">
                     <input 
                       type={showPassword ? "text" : "password"} 
@@ -930,7 +930,7 @@ export default function UserFormPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold mb-1 block text-muted-foreground">Confirm Password</label>
+                  <label className="text-sm font-semibold mb-1 block text-muted-foreground">Confirm password</label>
                   <input 
                     type={showPassword ? "text" : "password"} 
                     value={formConfirmPassword} 
@@ -945,19 +945,19 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 4: Hardware Assets */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-border`}>
+          <AppCard className={`overflow-hidden shadow-md ring-1 ring-border transition-all border-border`}>
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <MonitorSmartphone className="h-5 w-5 text-theme-icon" />
-                <AppCardTitle className="text-lg">Assigned Assets</AppCardTitle>
+                <AppCardTitle className="text-lg">Assigned assets</AppCardTitle>
               </div>
             </AppCardHeader>
             <AppCardContent className="p-6">
-              <label className={labelStyle}>Linked IT Hardware Tags</label>
+              <label className={labelStyle}>Linked IT hardware tags</label>
               <div className={`min-h-[140px] p-4 rounded-xl border flex flex-col gap-3 relative bg-surface border-border`}>
                 <div className="flex flex-wrap items-center gap-2">
                   {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
-                    <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-theme-btn-primary/10 text-theme-icon-secondary border border-theme-btn-primary/30 rounded-lg dark:bg-theme-btn-primary/20 dark:text-muted-foreground dark:border-theme-btn-primary/30 shadow-sm">
+                    <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-accent-soft text-theme-icon-secondary border border-theme-btn-primary/30 rounded-lg dark:bg-accent-soft dark:text-muted-foreground dark:border-theme-btn-primary/30 shadow-sm">
                       <MonitorSmartphone className="h-3 w-3" />
                       {tag} 
                       <X className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" onClick={() => {
@@ -985,7 +985,7 @@ export default function UserFormPage() {
                       }}
                       disabled={!isSuperAdmin}
                     >
-                      <option value="" disabled hidden>+ Add another asset...</option>
+                      <option value="" disabled hidden>+ Add another asset…</option>
                       {availableAssets.map(a => (
                         <option key={a.id} value={a.asset_tag || a.code}>{a.asset_tag || a.code} - {a.name}</option>
                       ))}

@@ -42,6 +42,7 @@ import {
   MessageSquare,
   Plus
 } from "lucide-react";
+import { formatDateTime } from "@/components/ui/data";
 
 interface MatrixColumn {
   colKey: string;
@@ -231,33 +232,33 @@ export const TenderDesignMatrix: React.FC = () => {
       );
     }
 
-    let badgeClass = "bg-slate-100 dark:bg-slate-800 text-foreground border-border";
-    let dotClass = "bg-slate-400";
+    let badgeClass = "bg-sunken text-foreground border-border";
+    let dotClass = "bg-border-active";
 
     if (lower.includes("received")) {
-      badgeClass = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
-      dotClass = "bg-emerald-500 animate-pulse";
+      badgeClass = "bg-success-soft text-success-text border-success-border";
+      dotClass = "bg-success animate-pulse";
     } else if (lower.includes("pending") || lower.includes("not onboard")) {
-      badgeClass = "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30";
-      dotClass = "bg-rose-500";
+      badgeClass = "bg-danger-soft text-danger-text border-danger-border";
+      dotClass = "bg-danger-solid";
     } else if (lower.includes("progress") || lower.includes("onboard") || lower.includes("track")) {
-      badgeClass = "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30";
-      dotClass = "bg-amber-500";
+      badgeClass = "bg-warning-soft text-warning-text border-warning-border";
+      dotClass = "bg-warning";
     } else {
-      badgeClass = "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30";
-      dotClass = "bg-sky-500";
+      badgeClass = "bg-info-soft text-info-text border-info-border";
+      dotClass = "bg-info";
     }
 
     return (
       <div className="flex flex-col items-center gap-0.5 max-w-[130px] mx-auto">
-        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border inline-flex items-center gap-1 shadow-2xs whitespace-nowrap ${badgeClass}`}>
+        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border inline-flex items-center gap-1 shadow-2xs whitespace-nowrap ${badgeClass}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${dotClass} shrink-0`} />
           <span className="truncate max-w-[100px]" title={val}>{val}</span>
         </span>
         
         {/* Planned and Actual Date mini tags */}
         {(entry?.plannedDate || entry?.actualDate) && (
-          <div className="flex items-center gap-1 text-[9px] font-mono text-muted-foreground mt-0.5">
+          <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground mt-0.5">
             {entry.plannedDate && (
               <span title={`Planned Date: ${entry.plannedDate}`}>
                 P: {entry.plannedDate.slice(5)}
@@ -266,7 +267,7 @@ export const TenderDesignMatrix: React.FC = () => {
             {entry.actualDate && entry.actualDate !== "-" && (
               <>
                 <span>•</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold" title={`Actual Date: ${entry.actualDate}`}>
+                <span className="text-success-text font-bold" title={`Actual Date: ${entry.actualDate}`}>
                   A: {entry.actualDate.slice(5)}
                 </span>
               </>
@@ -277,7 +278,7 @@ export const TenderDesignMatrix: React.FC = () => {
         {/* Remarks Tag if present */}
         {entry?.remarks && (
           <div className="flex items-center gap-0.5 text-[8.5px] text-muted-foreground max-w-[110px] truncate mt-0.5" title={`Remark: ${entry.remarks}`}>
-            <MessageSquare className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+            <MessageSquare className="h-2.5 w-2.5 shrink-0 text-muted" />
             <span className="truncate italic">{entry.remarks}</span>
           </div>
         )}
@@ -533,7 +534,7 @@ export const TenderDesignMatrix: React.FC = () => {
     });
 
     DesignMasterStore.bulkRecordPackageStatus(updates, "Senior Design Manager");
-    toast.success(`⚡ Batch Updated ${updates.length} cells successfully across ${batchSelectedTowers.length} line items with mandatory dates & audit logging!`);
+    toast.success(`Batch Updated ${updates.length} cells successfully across ${batchSelectedTowers.length} line items with mandatory dates & audit logging!`);
     setIsBatchModalOpen(false);
   };
 
@@ -634,19 +635,19 @@ export const TenderDesignMatrix: React.FC = () => {
       },
       {
         value: "IN_PROGRESS",
-        label: "In Progress / Onboard",
+        label: "In progress / onboard",
         count: matrixStats.inProgress,
         colorDot: "#f59e0b"
       },
       {
         value: "PENDING",
-        label: "Pending / Not Onboard",
+        label: "Pending / not onboard",
         count: matrixStats.pending,
         colorDot: "#f43f5e"
       },
       {
         value: "TARGET_DATE",
-        label: "Target Dates",
+        label: "Target dates",
         count: matrixStats.targetDates,
         colorDot: "#0ea5e9"
       }
@@ -683,10 +684,10 @@ export const TenderDesignMatrix: React.FC = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               aria-label="Search packages"
-              className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+              className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-success-border"
             />
             {searchQuery && (
-              <button
+              <button aria-label="Close"
                 type="button"
                 onClick={() => setSearchQuery("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -701,32 +702,32 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsAuditDrawerOpen(true)}
-              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
               title="View live audit trail and mail notification logs"
             >
               <History className="h-3.5 w-3.5 text-theme-icon" />
-              <span>Audit Trail ({storeState.auditLogs?.length || 0})</span>
+              <span>Audit trail ({storeState.auditLogs?.length || 0})</span>
             </button>
 
             {/* RBAC Policies Button */}
             <button
               type="button"
               onClick={() => setIsRbacModalOpen(true)}
-              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
               title="Configure Role-Based and Project-Wise CRUD permissions"
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
-              <span>RBAC Policies</span>
+              <ShieldCheck className="h-3.5 w-3.5 text-info-text" />
+              <span>RBAC policies</span>
             </button>
 
             {/* Batch Fill */}
             <button
               type="button"
               onClick={handleOpenBatchModal}
-              className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+              className="h-9 px-3.5 rounded-xl bg-info hover:bg-info text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
-              <Zap className="h-3.5 w-3.5 text-amber-300" />
-              <span>Batch Fill</span>
+              <Zap className="h-3.5 w-3.5 text-warning-text" />
+              <span>Batch fill</span>
             </button>
 
             {/* Export XLSX */}
@@ -734,7 +735,7 @@ export const TenderDesignMatrix: React.FC = () => {
               type="button"
               onClick={handleExportExcel}
               disabled={isExportingExcel}
-              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
+              className="h-9 px-3.5 rounded-xl bg-success hover:bg-success text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
               <span>{isExportingExcel ? "Generating..." : "Export .XLSX"}</span>
@@ -744,7 +745,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={handleExportCsv}
-              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
             >
               <Download className="h-3.5 w-3.5 text-muted-foreground" />
               <span>CSV</span>
@@ -798,7 +799,7 @@ export const TenderDesignMatrix: React.FC = () => {
             selectedValues={selectedStatuses}
             onChange={setSelectedStatuses}
             colorTheme="amber"
-            placeholder="All Statuses"
+            placeholder="All statuses"
             searchPlaceholder="Search status..."
           />
 
@@ -807,11 +808,11 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={handleClearAllFilters}
-              className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+              className="h-9 px-3 rounded-xl border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
               title="Reset all active multi-selection filters"
             >
               <X className="h-3.5 w-3.5" />
-              <span>Reset Filters ({totalActiveFilterCount})</span>
+              <span>Reset filters ({totalActiveFilterCount})</span>
             </button>
           )}
         </div>
@@ -819,7 +820,7 @@ export const TenderDesignMatrix: React.FC = () => {
         {/* 🏷️ Active Selected Filter Badges (Removable Tags Bar) */}
         {totalActiveFilterCount > 0 && (
           <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
-            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
               Active Filters:
             </span>
 
@@ -829,14 +830,14 @@ export const TenderDesignMatrix: React.FC = () => {
               return (
                 <span
                   key={`proj-${pId}`}
-                  className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                  className="px-2 py-0.5 rounded-lg bg-info-soft text-info-text border border-info-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
                 >
                   <Building className="h-2.5 w-2.5" />
                   <span>{p?.name || pId}</span>
-                  <button
+                  <button aria-label="Close"
                     type="button"
                     onClick={() => setSelectedProjects(prev => prev.filter(x => x !== pId))}
-                    className="hover:text-rose-500 cursor-pointer p-0.5"
+                    className="hover:text-danger-text cursor-pointer p-0.5"
                   >
                     <X className="h-2.5 w-2.5" />
                   </button>
@@ -848,14 +849,14 @@ export const TenderDesignMatrix: React.FC = () => {
             {selectedDisciplines.map(d => (
               <span
                 key={`disc-${d}`}
-                className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                className="px-2 py-0.5 rounded-lg bg-success-soft text-success-text border border-success-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
               >
                 <SlidersHorizontal className="h-2.5 w-2.5" />
                 <span>{d}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedDisciplines(prev => prev.filter(x => x !== d))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -870,10 +871,10 @@ export const TenderDesignMatrix: React.FC = () => {
               >
                 <Users className="h-2.5 w-2.5" />
                 <span>{cName}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedConsultants(prev => prev.filter(x => x !== cName))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -886,17 +887,17 @@ export const TenderDesignMatrix: React.FC = () => {
               return (
                 <span
                   key={`st-${st}`}
-                  className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                  className="px-2 py-0.5 rounded-lg bg-warning-soft text-warning-text border border-warning-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
                 >
                   <span
                     className="h-1.5 w-1.5 rounded-full"
                     style={{ backgroundColor: opt?.colorDot || "#f59e0b" }}
                   />
                   <span>{opt?.label || st}</span>
-                  <button
+                  <button aria-label="Close"
                     type="button"
                     onClick={() => setSelectedStatuses(prev => prev.filter(x => x !== st))}
-                    className="hover:text-rose-500 cursor-pointer p-0.5"
+                    className="hover:text-danger-text cursor-pointer p-0.5"
                   >
                     <X className="h-2.5 w-2.5" />
                   </button>
@@ -907,7 +908,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={handleClearAllFilters}
-              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+              className="text-[11px] text-muted-foreground hover:text-danger-text underline ml-1 cursor-pointer font-medium"
             >
               Clear all
             </button>
@@ -919,20 +920,20 @@ export const TenderDesignMatrix: React.FC = () => {
       <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-sm">
         <div className="overflow-x-auto custom-scrollbar max-h-[72vh]">
           <table className="w-full text-left text-xs border-collapse min-w-max">
-            <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border shadow-xs">
+            <thead className="sticky top-0 z-20 bg-sunken border-b border-border shadow-xs">
               <tr>
                 <th 
-                  className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[280px] max-w-[320px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm whitespace-nowrap"
+                  className="p-3.5 sticky left-0 z-30 bg-sunken border-r border-border min-w-[280px] max-w-[320px] font-semibold text-foreground text-[11px] shadow-sm whitespace-nowrap"
                 >
-                  Package & Sub-Package Deliverables
+                  Package & sub-package deliverables
                 </th>
                 {visibleColumns.map((col, idx) => (
                   <th
                     key={idx}
-                    className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[140px] whitespace-nowrap"
+                    className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[11px] bg-sunken min-w-[140px] whitespace-nowrap"
                   >
-                    <div className="truncate font-black text-foreground">{col.projectName}</div>
-                    <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block">
+                    <div className="truncate font-semibold text-foreground">{col.projectName}</div>
+                    <div className="text-muted-foreground font-mono font-semibold text-[11px] mt-0.5 px-1.5 py-0.5 rounded bg-sunken inline-block">
                       {col.towerName}
                     </div>
                   </th>
@@ -953,11 +954,11 @@ export const TenderDesignMatrix: React.FC = () => {
                 </tr>
               ) : (
                 filteredPackages.map((pkg) => (
-                  <tr key={pkg.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+                  <tr key={pkg.id} className="hover:bg-sunken transition-colors group">
                     {/* Frozen Package Name Column */}
-                    <td className="p-3.5 sticky left-0 z-10 bg-surface group-hover:bg-slate-50 dark:group-hover:bg-slate-900 border-r border-border font-medium text-foreground shadow-sm">
+                    <td className="p-3.5 sticky left-0 z-10 bg-surface group-hover:bg-sunken border-r border-border font-medium text-foreground shadow-sm">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <span className="text-[11px] font-semibold px-1.5 py-0.2 rounded bg-success-soft text-success-text border border-success-border">
                           {pkg.disciplineName}
                         </span>
                       </div>
@@ -973,7 +974,7 @@ export const TenderDesignMatrix: React.FC = () => {
                         <td
                           key={colIdx}
                           onClick={() => handleOpenInspector(pkg, col)}
-                          className="p-2 border-r border-border/30 text-center cursor-pointer hover:bg-emerald-500/5 transition-colors group/cell"
+                          className="p-2 border-r border-border/30 text-center cursor-pointer hover:bg-success-soft transition-colors group/cell"
                           title={`Click to inspect & edit: ${pkg.packageName} • ${col.projectName} (${col.towerName})`}
                         >
                           {renderCellBadge(entry)}
@@ -996,7 +997,7 @@ export const TenderDesignMatrix: React.FC = () => {
           title={"Deliverable Inspector: " + activeCell.pkg.packageName}
           category="Tender & Design Matrix"
           icon={Edit2}
-          iconBg="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          iconBg="bg-success-soft text-success-text"
           description={"Inspect deliverable readiness, update mandatory milestone dates, and review audit trail for " + activeCell.col.projectName + " • Wing " + activeCell.col.towerName + "."}
           breadcrumbs={[
             { label: "Design Tracking Desk" },
@@ -1019,10 +1020,10 @@ export const TenderDesignMatrix: React.FC = () => {
               <AppCardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Deliverable Package Scope</span>
+                    <span className="text-[11px] font-bold text-muted-foreground block">Deliverable package scope</span>
                     <AppCardTitle className="text-base font-bold text-foreground">{activeCell.pkg.packageName}</AppCardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {activeCell.col.projectName} • Wing {activeCell.col.towerName} • <span className="text-emerald-600 font-semibold">{activeCell.pkg.disciplineName}</span>
+                      {activeCell.col.projectName} • Wing {activeCell.col.towerName} • <span className="text-success-text font-semibold">{activeCell.pkg.disciplineName}</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/40 border border-border text-xs">
@@ -1034,7 +1035,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       )}
                     >
                       <Edit2 className="h-3.5 w-3.5" />
-                      <span>Edit Status & Dates</span>
+                      <span>Edit status & dates</span>
                     </button>
                     <button
                       type="button"
@@ -1044,7 +1045,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       )}
                     >
                       <History className="h-3.5 w-3.5 text-theme-icon" />
-                      <span>Audit Trail</span>
+                      <span>Audit trail</span>
                     </button>
                   </div>
                 </div>
@@ -1054,7 +1055,7 @@ export const TenderDesignMatrix: React.FC = () => {
             {inspectorTab === "EDIT" && (
               <form id="deliverable-inspector-form" onSubmit={handleSaveCell} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-5 text-xs">
                 {cellFormError && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+                  <div className="p-3 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     <span>{cellFormError}</span>
                   </div>
@@ -1063,7 +1064,7 @@ export const TenderDesignMatrix: React.FC = () => {
                 {/* Status Selector */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-foreground block">
-                    Deliverable Status <span className="text-rose-500">*</span>
+                    Deliverable status <span className="text-danger-text">*</span>
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <button
@@ -1071,11 +1072,11 @@ export const TenderDesignMatrix: React.FC = () => {
                       onClick={() => setCellStatus("Received")}
                       className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "Received"
-                          ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500 shadow-2xs"
+                          ? "border-success-border bg-success-soft text-success-text ring-1 ring-success-border shadow-2xs"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      <CheckCircle2 className="h-4 w-4 text-success-text" />
                       <span>Received</span>
                     </button>
                     <button
@@ -1083,23 +1084,23 @@ export const TenderDesignMatrix: React.FC = () => {
                       onClick={() => setCellStatus("In progress")}
                       className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "In progress"
-                          ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500 shadow-2xs"
+                          ? "border-warning-border bg-warning-soft text-warning-text ring-1 ring-warning-border shadow-2xs"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <Clock className="h-4 w-4 text-amber-500" />
-                      <span>In Progress</span>
+                      <Clock className="h-4 w-4 text-warning-text" />
+                      <span>In progress</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setCellStatus("Pending")}
                       className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "Pending"
-                          ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500 shadow-2xs"
+                          ? "border-danger-border bg-danger-soft text-danger-text ring-1 ring-danger-border shadow-2xs"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <AlertTriangle className="h-4 w-4 text-rose-500" />
+                      <AlertTriangle className="h-4 w-4 text-danger-text" />
                       <span>Pending</span>
                     </button>
                     <button
@@ -1107,21 +1108,21 @@ export const TenderDesignMatrix: React.FC = () => {
                       onClick={() => setCellStatus("NA")}
                       className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "NA"
-                          ? "border-slate-500 bg-slate-500/20 text-foreground ring-1 ring-slate-500 shadow-2xs"
+                          ? "border-border-active bg-sunken text-foreground ring-1 ring-border shadow-2xs"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <span>Not Applicable (NA)</span>
+                      <span>Not applicable (NA)</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Mandatory Planned & Actual Dates */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-sunken border border-border">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                      <span>Planned Date <span className="text-rose-500">* (Mandatory)</span></span>
+                      <Calendar className="h-3.5 w-3.5 text-info-text" />
+                      <span>Planned date <span className="text-danger-text">* (Mandatory)</span></span>
                     </label>
                     <input
                       type="date"
@@ -1134,8 +1135,8 @@ export const TenderDesignMatrix: React.FC = () => {
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Actual Date <span className="text-rose-500">* (Mandatory)</span></span>
+                      <Clock className="h-3.5 w-3.5 text-success-text" />
+                      <span>Actual date <span className="text-danger-text">* (Mandatory)</span></span>
                     </label>
                     <input
                       type="text"
@@ -1154,12 +1155,12 @@ export const TenderDesignMatrix: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                       <Users className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
-                      <span>Designated Consultant Partner</span>
+                      <span>Designated consultant partner</span>
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsReassigningConsultant(!isReassigningConsultant)}
-                      className="h-6 px-2.5 rounded-lg border border-border bg-surface hover:bg-surface text-foreground dark:text-muted-foreground text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                      className="h-6 px-2.5 rounded-lg border border-border bg-surface hover:bg-surface text-foreground dark:text-muted-foreground text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       {isReassigningConsultant ? "Keep Designated Partner" : "Change / Reassign"}
                     </button>
@@ -1169,7 +1170,7 @@ export const TenderDesignMatrix: React.FC = () => {
                   {resolvedCellConsultant ? (
                     <div className="p-4 rounded-2xl bg-surface border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-10 w-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                        <div className="h-10 w-10 rounded-xl bg-primary text-white flex items-center justify-center font-semibold text-sm shrink-0 shadow-xs">
                           {resolvedCellConsultant.name?.charAt(0) || "C"}
                         </div>
                         <div className="min-w-0 space-y-0.5">
@@ -1177,7 +1178,7 @@ export const TenderDesignMatrix: React.FC = () => {
                             <span className="text-xs font-bold text-foreground truncate">
                               {resolvedCellConsultant.name}
                             </span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface text-foreground dark:text-muted-foreground border border-border">
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-surface text-foreground dark:text-muted-foreground border border-border">
                               {resolvedCellConsultant.category || activeCell.pkg.disciplineName}
                             </span>
                           </div>
@@ -1190,21 +1191,21 @@ export const TenderDesignMatrix: React.FC = () => {
                       </div>
 
                       <div className="shrink-0">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-success-soft text-success-text border border-success-border">
                           <CheckCircle2 className="h-3 w-3" />
                           <span>Assigned for {activeCell.col.projectName}</span>
                         </span>
                       </div>
                     </div>
                   ) : (
-                    <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-border text-xs text-muted-foreground flex items-center justify-between">
+                    <div className="p-3.5 rounded-xl bg-sunken border border-border text-xs text-muted-foreground flex items-center justify-between">
                       <span>No specific consultant tagged for this package.</span>
                       <button
                         type="button"
                         onClick={() => setIsReassigningConsultant(true)}
-                        className="h-6 px-2.5 rounded-lg bg-theme-btn-primary hover:opacity-90 text-white text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                        className="h-6 px-2.5 rounded-lg bg-theme-btn-primary hover:opacity-90 text-white text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        + Assign Partner
+                        + Assign partner
                       </button>
                     </div>
                   )}
@@ -1213,14 +1214,14 @@ export const TenderDesignMatrix: React.FC = () => {
                   {isReassigningConsultant && (
                     <div className="p-3.5 rounded-xl bg-muted/30 border border-border animate-in fade-in duration-150 space-y-1.5">
                       <label className="text-[11px] font-bold text-foreground">
-                        Select New Consultant Partner from Consultant Master:
+                        Select new consultant partner from consultant master:
                       </label>
                       <select
                         value={cellConsultantId}
                         onChange={e => setCellConsultantId(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
                       >
-                        <option value="">-- Retain Default / None --</option>
+                        <option value="">-- Retain default / none --</option>
                         {storeState.consultants.map(c => (
                           <option key={c.id} value={c.id}>
                             {c.name} ({c.category}) - {c.onboardingStatus}
@@ -1234,13 +1235,13 @@ export const TenderDesignMatrix: React.FC = () => {
                 {/* Audit Remarks */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-foreground block">
-                    Audit Remarks / Delivery Notes
+                    Audit remarks / delivery notes
                   </label>
                   <input
                     type="text"
                     value={cellRemarks}
                     onChange={e => setCellRemarks(e.target.value)}
-                    placeholder="Enter inspection remarks, drawing revision notes, or handover status..."
+                    placeholder="Enter inspection remarks, drawing revision notes, or handover status…"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1251,11 +1252,11 @@ export const TenderDesignMatrix: React.FC = () => {
             {inspectorTab === "AUDIT" && (
               <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-4 text-xs">
                 <div className="flex items-center justify-between">
-                  <h5 className="text-xs font-bold text-foreground uppercase tracking-wider">
-                    Change Audit History for this Deliverable
+                  <h5 className="text-xs font-bold text-foreground">
+                    Change audit history for this deliverable
                   </h5>
                   <span className="text-[11px] text-muted-foreground font-mono">
-                    {DesignMasterStore.getAuditLogs({ entryKey: `${activeCell.col.projectId}__${activeCell.col.towerId}__${activeCell.pkg.id}` }).length} Logs Recorded
+                    {DesignMasterStore.getAuditLogs({ entryKey: `${activeCell.col.projectId}__${activeCell.col.towerId}__${activeCell.pkg.id}` }).length} Logs recorded
                   </span>
                 </div>
 
@@ -1269,10 +1270,10 @@ export const TenderDesignMatrix: React.FC = () => {
                       <div key={log.id} className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2 text-xs">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-foreground flex items-center gap-1.5">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            <span className="h-2 w-2 rounded-full bg-success" />
                             <span>Status: <strong>{log.newStatus}</strong> (was: {log.previousStatus})</span>
                           </span>
-                          <span className="text-[10px] text-muted-foreground font-mono">
+                          <span className="text-[11px] text-muted-foreground font-mono">
                             {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -1288,11 +1289,11 @@ export const TenderDesignMatrix: React.FC = () => {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border">
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border">
                           <span>Changed by: <strong className="text-foreground">{log.changedBy}</strong></span>
-                          <span className="text-teal-600 dark:text-teal-400 font-bold flex items-center gap-1">
+                          <span className="text-info-text font-bold flex items-center gap-1">
                             <Mail className="h-3 w-3" />
-                            <span>Mail Dispatched</span>
+                            <span>Mail dispatched</span>
                           </span>
                         </div>
                       </div>
@@ -1311,7 +1312,7 @@ export const TenderDesignMatrix: React.FC = () => {
       {/* 📜 Audit Trail & Mail Logs Working Document Canvas */}
       {isAuditDrawerOpen && (
         <WorkingDocumentLayout
-          title="Master Design Matrix: Audit Trail & Mail Dispatch Ledger"
+          title="Master design matrix: audit trail & mail dispatch ledger"
           badge={filteredAuditLogs.length + " Records"}
           badgeColor="bg-surface text-theme-icon border border-border"
           category="Audit & Compliance"
@@ -1321,7 +1322,7 @@ export const TenderDesignMatrix: React.FC = () => {
           breadcrumbs={[
             { label: "Design Tracking Desk" },
             { label: "Tender Design Matrix", onClick: () => setIsAuditDrawerOpen(false) },
-            { label: "Audit Ledger" }
+            { label: "Audit ledger" }
           ]}
           onBack={() => setIsAuditDrawerOpen(false)}
           backLabel="Back to Tender Design Matrix"
@@ -1330,7 +1331,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <AppCard>
               <AppCardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <AppCardTitle className="text-sm font-bold text-foreground">Audit Log History</AppCardTitle>
+                  <AppCardTitle className="text-sm font-bold text-foreground">Audit log history</AppCardTitle>
                 </div>
               </AppCardHeader>
               <AppCardContent className="space-y-4">
@@ -1341,7 +1342,7 @@ export const TenderDesignMatrix: React.FC = () => {
                   type="text"
                   value={auditSearchQuery}
                   onChange={e => setAuditSearchQuery(e.target.value)}
-                  placeholder="Search audit trail by project, package, or user..."
+                  placeholder="Search audit trail by project, package, or user…"
                   className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -1359,15 +1360,15 @@ export const TenderDesignMatrix: React.FC = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-foreground text-sm">{log.projectName}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border font-mono">
+                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border font-mono">
                           {log.towerName}
                         </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
+                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-success-soft text-success-text font-bold border border-success-border">
                           {log.newStatus}
                         </span>
                       </div>
                       <span className="text-[11px] text-muted-foreground font-mono">
-                        {new Date(log.timestamp).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
+                        {formatDateTime(log.timestamp)} IST
                       </span>
                     </div>
 
@@ -1377,19 +1378,19 @@ export const TenderDesignMatrix: React.FC = () => {
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] p-2.5 rounded-xl bg-muted/20 border border-border">
                       <div>
-                        <span className="text-muted-foreground block text-[10px]">Planned Date:</span>
+                        <span className="text-muted-foreground block text-[11px]">Planned Date:</span>
                         <strong className="text-foreground font-mono">{log.newPlannedDate}</strong>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block text-[10px]">Actual Date:</span>
+                        <span className="text-muted-foreground block text-[11px]">Actual Date:</span>
                         <strong className="text-foreground font-mono">{log.newActualDate}</strong>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block text-[10px]">Consultant:</span>
+                        <span className="text-muted-foreground block text-[11px]">Consultant:</span>
                         <strong className="text-theme-icon dark:text-muted-foreground">{log.consultantName || "Not tagged"}</strong>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block text-[10px]">Changed By:</span>
+                        <span className="text-muted-foreground block text-[11px]">Changed By:</span>
                         <strong className="text-foreground">{log.changedBy}</strong>
                       </div>
                     </div>
@@ -1401,11 +1402,11 @@ export const TenderDesignMatrix: React.FC = () => {
                     )}
 
                     <div className="flex items-center justify-between pt-1 border-t border-border text-[11px]">
-                      <span className="text-teal-600 dark:text-teal-400 font-bold flex items-center gap-1">
+                      <span className="text-info-text font-bold flex items-center gap-1">
                         <Mail className="h-3 w-3" />
-                        <span>Audit Email Dispatched ({log.mailRecipientCount || 3} recipients)</span>
+                        <span>Audit email dispatched ({log.mailRecipientCount || 3} recipients)</span>
                       </span>
-                      <span className="text-muted-foreground font-mono text-[10px]">
+                      <span className="text-muted-foreground font-mono text-[11px]">
                         ID: {log.id}
                       </span>
                     </div>
@@ -1423,15 +1424,15 @@ export const TenderDesignMatrix: React.FC = () => {
       {/* ⚡ Batch Update Transaction Layout */}
       {isBatchModalOpen && (
         <TransactionFormLayout
-          title="Batch Status Update"
+          title="Batch status update"
           category="Tender & Design Matrix"
           icon={Zap}
-          iconBg="bg-teal-500/10 text-teal-600 dark:text-teal-400"
+          iconBg="bg-info-soft text-info-text"
           description="Bulk update package status and mandatory planned/actual milestone dates across multiple wings and towers."
           breadcrumbs={[
             { label: "Design Tracking Desk" },
             { label: "Tender Design Matrix", onClick: () => setIsBatchModalOpen(false) },
-            { label: "Batch Update" }
+            { label: "Batch update" }
           ]}
           onBack={() => setIsBatchModalOpen(false)}
           backLabel="Back to Tender Design Matrix"
@@ -1447,7 +1448,7 @@ export const TenderDesignMatrix: React.FC = () => {
           <div className="max-w-4xl space-y-6">
             <AppCard>
               <AppCardHeader>
-                <AppCardTitle className="text-sm font-bold text-foreground">Batch Scope & Status Details</AppCardTitle>
+                <AppCardTitle className="text-sm font-bold text-foreground">Batch scope & status details</AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="space-y-4">
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-4 text-xs">
@@ -1455,8 +1456,8 @@ export const TenderDesignMatrix: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    <Building className="h-3.5 w-3.5 text-blue-500" />
-                    <span>Target Project / Development</span>
+                    <Building className="h-3.5 w-3.5 text-info-text" />
+                    <span>Target project / development</span>
                   </label>
                   <select
                     value={batchProjectId}
@@ -1481,15 +1482,15 @@ export const TenderDesignMatrix: React.FC = () => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Parent Package Scope</span>
+                    <SlidersHorizontal className="h-3.5 w-3.5 text-success-text" />
+                    <span>Parent package scope</span>
                   </label>
                   <select
                     value={batchDiscipline}
                     onChange={e => setBatchDiscipline(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    <option value="ALL">All Packages ({storeState.packages.length} Sub-Packages)</option>
+                    <option value="ALL">All packages ({storeState.packages.length} Sub-Packages)</option>
                     {categories.map(cat => (
                       <option key={cat} value={cat}>{cat} ({storeState.packages.filter(p => p.disciplineName === cat).length} Packages)</option>
                     ))}
@@ -1499,9 +1500,9 @@ export const TenderDesignMatrix: React.FC = () => {
 
               {/* Zero-Packages Warning and Auto-Load helper */}
               {storeState.packages.length === 0 && (
-                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="p-3 rounded-xl bg-info-soft border border-info-border text-info-text text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 shrink-0 text-blue-500" />
+                    <Info className="h-4 w-4 shrink-0 text-info-text" />
                     <span>No Sub-Packages loaded. Load the standard template to populate all standard packages.</span>
                   </div>
                   <button
@@ -1517,10 +1518,10 @@ export const TenderDesignMatrix: React.FC = () => {
                         if (allTwrIds.length > 0) setBatchSelectedTowers(allTwrIds);
                       }, 50);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
+                    className="px-2.5 py-1 rounded-lg bg-info hover:bg-info text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
                   >
                     <Zap className="h-3 w-3" />
-                    <span>Load Standard Template</span>
+                    <span>Load standard template</span>
                   </button>
                 </div>
               )}
@@ -1530,10 +1531,10 @@ export const TenderDesignMatrix: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                   <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                     <Layers className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
-                    <span>Target Wings & Sub-Projects (Line Item Selection)</span>
+                    <span>Target wings & sub-projects (line item selection)</span>
                   </label>
                   <div className="flex items-center gap-2 text-[11px]">
-                    <span className="font-semibold text-teal-600 dark:text-teal-400">
+                    <span className="font-semibold text-info-text">
                       {batchSelectedTowers.length} of {batchRelatedTowers.length} selected
                     </span>
                     {batchRelatedTowers.length > 0 && (
@@ -1541,17 +1542,17 @@ export const TenderDesignMatrix: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setBatchSelectedTowers(batchRelatedTowers.map(t => t.id))}
-                          className="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 font-bold cursor-pointer transition-colors"
+                          className="px-2 py-0.5 rounded-md bg-info-soft text-info-text hover:bg-info-soft font-bold cursor-pointer transition-colors"
                         >
-                          Select All
+                          Select all
                         </button>
                         <span>•</span>
                         <button
                           type="button"
                           onClick={() => setBatchSelectedTowers([])}
-                          className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                          className="px-2 py-0.5 rounded-md bg-danger-soft text-danger-text hover:bg-danger-soft font-medium cursor-pointer transition-colors"
                         >
-                          Clear All
+                          Clear all
                         </button>
                       </div>
                     )}
@@ -1565,7 +1566,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       type="text"
                       value={batchTowerSearch}
                       onChange={e => setBatchTowerSearch(e.target.value)}
-                      placeholder="Filter wings / sub-projects..."
+                      placeholder="Filter wings / sub-projects…"
                       aria-label="Filter wings or sub-projects"
                       className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                     />
@@ -1573,9 +1574,9 @@ export const TenderDesignMatrix: React.FC = () => {
                 )}
 
                 {batchRelatedTowers.length === 0 ? (
-                  <div className="w-full p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="w-full p-3 rounded-xl bg-warning-soft border border-warning-border text-warning-text text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-warning-text" />
                       <span>No Wings or Sub-Projects configured for this project yet.</span>
                     </div>
                     <button
@@ -1588,10 +1589,10 @@ export const TenderDesignMatrix: React.FC = () => {
                         });
                         setBatchSelectedTowers([newTwr.id]);
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
+                      className="px-2.5 py-1 rounded-lg bg-warning hover:bg-warning text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
                     >
                       <Plus className="h-3 w-3" />
-                      <span>Quick Add &ldquo;Wing A&rdquo;</span>
+                      <span>Quick add &ldquo;wing a&rdquo;</span>
                     </button>
                   </div>
                 ) : (
@@ -1610,13 +1611,13 @@ export const TenderDesignMatrix: React.FC = () => {
                             }}
                             className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
                               isChecked 
-                                ? "bg-teal-500/10 border-teal-500/40 text-foreground ring-1 ring-teal-500/30 shadow-2xs" 
+                                ? "bg-info-soft border-info-border text-foreground ring-1 ring-info-border shadow-2xs" 
                                 : "bg-surface border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                             }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div className={`h-4.5 w-4.5 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
-                                isChecked ? "bg-teal-600 text-white border-teal-600" : "border-border bg-background"
+                                isChecked ? "bg-info text-white border-info-border" : "border-border bg-background"
                               }`}>
                                 {isChecked ? <Check className="h-3 w-3 stroke-[3]" /> : null}
                               </div>
@@ -1625,16 +1626,16 @@ export const TenderDesignMatrix: React.FC = () => {
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-bold text-xs text-foreground">{twr.towerName}</span>
                                   {twr.isSubProjectTower && (
-                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-surface text-foreground dark:text-muted-foreground border border-border">
+                                    <span className="px-1.5 py-0.2 rounded text-[11px] font-bold bg-surface text-foreground dark:text-muted-foreground border border-border">
                                       🏙️ {twr.subProjectName || "Sub-Project"}
                                     </span>
                                   )}
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                                  <span className="px-1.5 py-0.2 rounded text-[11px] font-medium bg-muted text-muted-foreground border border-border">
                                     {twr.towerType || "Sale"}
                                   </span>
                                 </div>
 
-                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
                                   {twr.taggedConsultants && twr.taggedConsultants.length > 0 ? (
                                     <span>Assigned: <strong className="text-foreground">{twr.taggedConsultants.slice(0, 2).join(", ")}{twr.taggedConsultants.length > 2 ? ` +${twr.taggedConsultants.length - 2}` : ""}</strong></span>
                                   ) : (
@@ -1645,9 +1646,9 @@ export const TenderDesignMatrix: React.FC = () => {
                             </div>
 
                             <div className="shrink-0 flex items-center gap-2">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-colors ${
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
                                 isChecked 
-                                  ? "bg-teal-600/20 text-teal-700 dark:text-teal-300 border border-border" 
+                                  ? "bg-info-soft text-info-text border border-border" 
                                   : "bg-muted text-muted-foreground border border-border"
                               }`}>
                                 {isChecked ? "Included" : "Excluded"}
@@ -1665,16 +1666,16 @@ export const TenderDesignMatrix: React.FC = () => {
                 <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
-                    <span>Assign Consultant Partner</span>
+                    <span>Assign consultant partner</span>
                   </span>
-                  <span className="text-[10px] text-muted-foreground">Optional</span>
+                  <span className="text-[11px] text-muted-foreground">Optional</span>
                 </label>
                 <select
                   value={batchConsultantName}
                   onChange={e => setBatchConsultantName(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  <option value="">-- Retain Existing / Default Consultant Partner --</option>
+                  <option value="">-- Retain existing / default consultant partner --</option>
                   {storeState.consultants.map(c => (
                     <option key={c.id} value={c.name}>
                       {c.name} ({c.category})
@@ -1687,8 +1688,8 @@ export const TenderDesignMatrix: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                    <span>Planned Date <span className="text-rose-500">*</span></span>
+                    <Calendar className="h-3.5 w-3.5 text-info-text" />
+                    <span>Planned date <span className="text-danger-text">*</span></span>
                   </label>
                   <input
                     type="date"
@@ -1701,8 +1702,8 @@ export const TenderDesignMatrix: React.FC = () => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Actual Date <span className="text-rose-500">*</span></span>
+                    <Calendar className="h-3.5 w-3.5 text-success-text" />
+                    <span>Actual date <span className="text-danger-text">*</span></span>
                   </label>
                   <input
                     type="date"
@@ -1717,15 +1718,15 @@ export const TenderDesignMatrix: React.FC = () => {
               {/* Status Selector */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" />
-                  <span>New Status</span>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-warning-text" />
+                  <span>New status</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
-                    { id: "Received", label: "Received", dotColor: "#10b981", activeClass: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/40 font-bold" },
-                    { id: "In progress", label: "In Progress", dotColor: "#f59e0b", activeClass: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/40 font-bold" },
-                    { id: "Pending", label: "Pending", dotColor: "#f43f5e", activeClass: "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500/40 font-bold" },
-                    { id: "Target Date", label: "Target Date", dotColor: "#0ea5e9", activeClass: "border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300 ring-1 ring-sky-500/40 font-bold" },
+                    { id: "Received", label: "Received", dotColor: "#10b981", activeClass: "border-success-border bg-success-soft text-success-text ring-1 ring-success-border font-bold" },
+                    { id: "In progress", label: "In Progress", dotColor: "#f59e0b", activeClass: "border-warning-border bg-warning-soft text-warning-text ring-1 ring-warning-border font-bold" },
+                    { id: "Pending", label: "Pending", dotColor: "#f43f5e", activeClass: "border-danger-border bg-danger-soft text-danger-text ring-1 ring-danger-border font-bold" },
+                    { id: "Target Date", label: "Target Date", dotColor: "#0ea5e9", activeClass: "border-info-border bg-info-soft text-info-text ring-1 ring-info-border font-bold" },
                   ].map(st => {
                     const isSelected = batchStatus === st.id;
                     return (
@@ -1750,8 +1751,8 @@ export const TenderDesignMatrix: React.FC = () => {
               {/* Remarks / Audit Notes Field */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
-                  <span>Remark / Notes</span>
+                  <MessageSquare className="h-3.5 w-3.5 text-muted" />
+                  <span>Remark / notes</span>
                 </label>
                 <textarea
                   rows={2}

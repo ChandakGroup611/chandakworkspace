@@ -6,8 +6,8 @@ export default function SelectModuleLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Chandak Workspace Gateway"
-        subtitle="Verifying authorized enterprise application modules..."
+        title="Chandak Workspace gateway"
+        subtitle="Verifying authorised enterprise application modules…"
       />
     </div>
   );

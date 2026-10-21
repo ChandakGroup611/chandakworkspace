@@ -92,7 +92,7 @@ export function GlobalCommandCenter() {
             ref={inputRef}
             type="text"
             className="flex-1 h-12 bg-transparent border-none outline-none text-foreground placeholder:text-muted text-sm font-medium"
-            placeholder="Search tickets, tasks, requirements... (Esc to close)"
+            placeholder="Search tickets, tasks, requirements… (Esc to close)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -103,7 +103,7 @@ export function GlobalCommandCenter() {
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {query.length > 0 && query.length < 2 && (
             <div className="p-4 text-center text-xs text-muted">
-              Type at least 2 characters to search...
+              Type at least 2 characters to search…
             </div>
           )}
 
@@ -122,7 +122,7 @@ export function GlobalCommandCenter() {
                 setIsOpen(false);
                 router.push(r.url);
               }}
-              className="w-full flex items-center justify-start gap-3 p-3 text-left rounded-lg hover:bg-hover transition-colors h-auto font-normal"
+              className="w-full flex items-center justify-start gap-3 p-3 text-left rounded-lg hover:bg-surface-hover transition-colors h-auto font-normal"
             >
               <div className="p-2 rounded-md bg-sunken border border-border shrink-0">
                 {getTypeIcon(r.type)}

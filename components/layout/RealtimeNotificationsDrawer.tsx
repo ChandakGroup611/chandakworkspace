@@ -196,20 +196,19 @@ export default function RealtimeNotificationsDrawer() {
 
   return (
     <>
-      <AppButton 
-        variant="outline"
-        size="icon"
+      <button 
+        type="button"
         aria-label="Toggle notifications stream"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative h-9 w-9 rounded-lg bg-surface border border-border text-muted hover:bg-hover hover:text-foreground"
+        className="relative inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
       >
         <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-warning" : ""}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-warning px-1 text-[10px] font-semibold text-primary-foreground shadow-xs ring-2 ring-surface font-mono leading-none z-10">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-warning px-1 text-[11px] font-semibold text-primary-foreground shadow-xs ring-2 ring-surface font-mono leading-none z-10">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
-      </AppButton>
+      </button>
 
       {/* Mobile Toast Notification Overlay */}
       {mounted && createPortal(
@@ -221,7 +220,7 @@ export default function RealtimeNotificationsDrawer() {
             return (
               <div
                 key={toast.id}
-                className="pointer-events-auto flex items-start gap-3 rounded-xl p-3.5 bg-elevated border border-border text-foreground shadow-md transition-colors hover:bg-hover group animate-in slide-in-from-right-12 duration-200"
+                className="pointer-events-auto flex items-start gap-3 rounded-xl p-3.5 bg-elevated border border-border text-foreground shadow-md transition-colors hover:bg-surface-hover group animate-in slide-in-from-right-12 duration-200"
               >
                 <button
                   type="button"
@@ -363,7 +362,7 @@ export default function RealtimeNotificationsDrawer() {
                           ? isCritical 
                             ? "bg-danger-soft border-danger-border" 
                             : "bg-warning-soft border-warning-border"
-                          : "bg-surface border-border hover:bg-hover"
+                          : "bg-surface border-border hover:bg-surface-hover"
                       }`}
                     >
                       <button
@@ -387,7 +386,7 @@ export default function RealtimeNotificationsDrawer() {
                           <p className={`text-xs leading-relaxed break-words ${!item.is_read ? "text-foreground font-medium" : "text-muted"}`}>
                             {displayMessage}
                           </p>
-                          <div className="flex items-center justify-between text-[10px] pt-1 border-t border-border mt-1 text-muted">
+                          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-border mt-1 text-muted">
                             <span>Actor: <strong className="font-medium text-foreground">{item.actor_name || item.actor}</strong></span>
                             <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           </div>

@@ -144,9 +144,9 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
-            <h3 className="text-xl font-bold text-theme-icon">License Allocation</h3>
+            <h3 className="text-xl font-bold text-theme-icon">License allocation</h3>
             <p className="text-sm text-muted mt-1">
-              {allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'} Licenses Assigned
+              {allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'} Licenses assigned
             </p>
           </div>
           <AppButton 
@@ -163,7 +163,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
           {/* Active Allocations Panel */}
           <div className={`flex-1 border-r flex flex-col border-border`}>
             <div className={`p-4 border-b font-semibold bg-elevated border-border`}>
-              Currently Assigned Users
+              Currently assigned users
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {loading ? (
@@ -176,7 +176,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                     <div>
                       <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
                       <div className="text-xs text-muted">{a.user_master?.email}</div>
-                      <div className="text-[10px] text-muted mt-1">Allocated: {formatDate(a.allocated_at)}</div>
+                      <div className="text-[11px] text-muted mt-1">Allocated: {formatDate(a.allocated_at)}</div>
                     </div>
                     <AppButton 
                       variant="outline" 
@@ -200,7 +200,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                 <input 
                   type="text" 
-                  placeholder="Search users to allocate..." 
+                  placeholder="Search users to allocate…" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm outline-none focus:ring-2 focus:ring-theme-btn-primary/20 transition-all theme-card-structural text-foreground`}
@@ -245,7 +245,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
           setRevokeConfirmId(null);
           await executeRevoke(id);
         }}
-        title="Revoke License"
+        title="Revoke license"
         description="Are you sure you want to revoke this license allocation?"
         confirmLabel="Revoke"
         tone="danger"

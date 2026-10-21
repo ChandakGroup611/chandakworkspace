@@ -64,7 +64,10 @@ const TaskTimelineView = dynamic(() => import("@/components/tasks/TaskTimelineVi
   ssr: false
 });
 
-import { LayoutGrid, List as ListIcon, CalendarDays } from "lucide-react";
+import { LayoutGrid, List as ListIcon, CalendarDays, ChevronDown, X } from "lucide-react";
+import { StatusBadge, PriorityIndicator, DateCell, DueDateCell, UserCell, UserStack, StatTile, StatTileRow } from "@/components/ui/data";
+import { ConfirmDialog } from "@/components/ui/enterprise/ConfirmDialog";
+import { EmptyState } from "@/components/ui/feedback/States";
 import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
 import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
 
@@ -144,6 +147,17 @@ export const isTaskOpen = (t: any): boolean => {
   return !isTaskCompleted(t) && !isTaskInProgress(t);
 };
 
+/** Sentence case for column names coming from the report config ("Created At" → "Created"). */
+const HEADER_OVERRIDES: Record<string, string> = { "Created At": "Created", "Updated At": "Updated", "Due Date": "Due", "Watchers & Reviewers": "Watchers & reviewers", "Remarks & Comments": "Remarks" };
+function headerLabel(name: string) {
+  if (!name) return name;
+  if (HEADER_OVERRIDES[name]) return HEADER_OVERRIDES[name];
+  return name
+    .split(" ")
+    .map((w, i) => (i === 0 || /^[A-Z0-9]{2,}$/.test(w) ? w : w.toLowerCase()))
+    .join(" ");
+}
+
 function DraggableTableHead({ 
   col, 
   isFirst, 
@@ -159,7 +173,8 @@ function DraggableTableHead({
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
   const isActions = col.field_key === "actions";
-  const w = isActions ? Math.max(col.column_width || col.default_width || 120, 110) : (col.column_width || col.default_width || 150);
+  // Floors stop saved column configs from squeezing names, badges and dates into "Avinas…".
+  const w = isActions ? Math.max(col.column_width || col.default_width || 120, 110) : Math.max(col.column_width || col.default_width || 150, MIN_COL_WIDTH[col.field_key] ?? 0);
   const isTitle = col.field_key === "title_description";
   const style = { 
     transform: CSS.Translate.toString(transform), 
@@ -178,16 +193,15 @@ function DraggableTableHead({
       ref={setNodeRef} 
       style={style} 
       className={cn(
-        "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-3 py-2 cursor-grab active:cursor-grabbing hover:opacity-90/10 transition-colors align-middle group/header relative", 
-        !isTitle ? "text-center" : "text-left",
-        isActions ? "shadow-[-4px_0_8px_rgba(0,0,0,0.06)]" : "",
+        "select-none bg-sunken border-b border-border text-[12px] font-semibold text-subtle px-3 py-2 cursor-grab active:cursor-grabbing hover:text-foreground transition-colors align-middle group/header relative text-left",
+        isActions ? "text-right shadow-[inset_1px_0_0_var(--border-subtle)]" : "",
         ["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""
       )}
       {...attributes} 
       {...listeners}
     >
-      <div className={cn("flex items-center gap-2 w-full", isTitle ? "justify-between" : "justify-center")}>
-        <span className="truncate flex-1">{isTitle ? "Title" : col.display_name}</span>
+      <div className={cn("flex items-center gap-2 w-full", isActions ? "justify-end" : "justify-between")}>
+        <span className="truncate flex-1">{isTitle ? "Title" : headerLabel(col.display_name)}</span>
         {col.field_key !== "actions" && options && onFilterChange && (
           <div className="flex-shrink-0 opacity-0 group-hover/header:opacity-100 data-[active=true]:opacity-100 transition-opacity" data-active={filterValues && filterValues.length > 0} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
             <MultiSelectFilter 
@@ -203,6 +217,11 @@ function DraggableTableHead({
   );
 }
 
+const MIN_COL_WIDTH: Record<string, number> = { assignee: 180, creator_name: 170, executors: 140, reviewers: 140, status: 140, due_date: 130, created_at: 120, updated_at: 120, start_date: 120, priority: 110, department: 150, workspace: 150, sub_workspace: 150 };
+const SEG_ON = "bg-surface text-foreground font-semibold shadow-sm";
+const SEG_OFF = "text-muted hover:text-foreground";
+const ROW_ICON_BTN = "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring";
+
 const INITIAL_TASK_FIELDS: UIFieldDefinition[] = [
   { field_key: "code", display_name: "Code", data_type: "text", is_default: true, default_width: 100 },
   { field_key: "title_description", display_name: "Title", data_type: "custom", is_default: true, default_width: 300 },
@@ -212,7 +231,7 @@ const INITIAL_TASK_FIELDS: UIFieldDefinition[] = [
   { field_key: "priority", display_name: "Priority", data_type: "badge", is_default: true, default_width: 120 },
   { field_key: "due_date", display_name: "Due Date", data_type: "date", is_default: true, default_width: 120 },
   { field_key: "status", display_name: "Status", data_type: "badge", is_default: true, default_width: 150 },
-  { field_key: "assignee", display_name: "Assignee", data_type: "user", is_default: true, default_width: 120 },
+  { field_key: "assignee", display_name: "Assignee", data_type: "user", is_default: true, default_width: 180 },
   { field_key: "created_at", display_name: "Created At", data_type: "date", is_default: true, default_width: 130 },
   { field_key: "actions", display_name: "Actions", data_type: "custom", is_default: true, default_width: 120 },
   { field_key: "start_date", display_name: "Start Date", data_type: "date", is_default: false, default_width: 120 },
@@ -674,9 +693,9 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
     const completed = baseFiltered.filter(t => isTaskCompleted(t)).length;
     
     return [
-      { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-sky-500/10", iconColorClass: "text-sky-600 dark:text-sky-400", onClick: () => setKpiFilter(null), isActive: kpiFilter === null },
+      { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-info-soft", iconColorClass: "text-info-text", onClick: () => setKpiFilter(null), isActive: kpiFilter === null },
       { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-theme-btn-primary/10", iconColorClass: "text-theme-icon", onClick: () => setKpiFilter(kpiFilter === 'Open' ? null : 'Open'), isActive: kpiFilter === 'Open' },
-      { label: "In Progress", value: inProgress, icon: <Loader2 className="h-5 w-5" />, iconBgClass: "bg-warning/10", iconColorClass: "text-warning dark:text-warning", onClick: () => setKpiFilter(kpiFilter === 'In Progress' ? null : 'In Progress'), isActive: kpiFilter === 'In Progress' },
+      { label: "In progress", value: inProgress, icon: <Loader2 className="h-5 w-5" />, iconBgClass: "bg-warning/10", iconColorClass: "text-warning dark:text-warning", onClick: () => setKpiFilter(kpiFilter === 'In Progress' ? null : 'In Progress'), isActive: kpiFilter === 'In Progress' },
       { label: "Completed", value: completed, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-success/10", iconColorClass: "text-success dark:text-success", onClick: () => setKpiFilter(kpiFilter === 'Completed' ? null : 'Completed'), isActive: kpiFilter === 'Completed' },
     ];
   }, [baseFiltered, kpiFilter]);
@@ -741,10 +760,17 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
     await fetchTasksData();
   };
 
-  const handleDeleteTask = async (e: React.MouseEvent, taskId: string) => {
+  // Delete asks for confirmation in an in-app dialog (was window.confirm).
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
+  const handleDeleteTask = (e: React.MouseEvent, taskId: string) => {
     e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) return;
-    
+    const t = tasks.find(x => x.id === taskId);
+    setPendingDelete({ id: taskId, title: t?.title || "this task" });
+  };
+
+  const performDeleteTask = async (taskId: string) => {
     try {
       setDeleteLoadingId(taskId);
       const res = await deleteTask(taskId);
@@ -752,10 +778,11 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         throw new Error(res.error);
       }
       setTasks(prev => prev.filter(t => t.id !== taskId));
+      triggerToast("Task deleted");
     } catch (e: any) {
-      toast.error("Status update failed: " + e.message);
+      toast.error("Couldn't delete the task: " + e.message);
     } finally {
-      setInlineLoading(false);
+      setDeleteLoadingId(null);
     }
   };
 
@@ -774,8 +801,9 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
     setSelectedTaskIds(next);
   };
 
-  const handleBulkDelete = async () => {
-    if (!confirm(`Are you sure you want to delete ${selectedTaskIds.size} tasks?`)) return;
+  const handleBulkDelete = () => setConfirmBulkDelete(true);
+
+  const performBulkDelete = async () => {
     try {
       setLoading(true);
       const results = await Promise.all(Array.from(selectedTaskIds).map(id => deleteTask(id)));
@@ -785,9 +813,9 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
       }
       setTasks(prev => prev.filter(t => !selectedTaskIds.has(t.id)));
       setSelectedTaskIds(new Set());
-      triggerToast(`Successfully deleted tasks.`);
+      triggerToast("Tasks deleted");
     } catch (e: any) {
-      toast.error("Bulk delete failed: " + e.message);
+      toast.error("Couldn't delete the selected tasks: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -1085,7 +1113,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
   if (permsLoading) {
     return (
       <div className="py-12 flex justify-center">
-        <ChandakLoader size="md" title="Verifying Permissions..." subtitle="Loading enterprise task matrix" />
+        <ChandakLoader size="md" title="Verifying permissions…" subtitle="Loading enterprise task matrix" />
       </div>
     );
   }
@@ -1093,11 +1121,11 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
   if (!hasPermission("TASKS_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
-          <Shield className="h-10 w-10" />
+        <div className="rounded-full bg-warning-soft p-3 text-warning-text">
+          <Shield className="h-6 w-6" aria-hidden />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view Workspace Tasks.</p>
+        <h2 className="text-[15px] font-semibold text-heading">You don't have access to workspace tasks</h2>
+        <p className="text-[13px] text-muted">Ask your administrator to grant Tasks view access in RBAC access policies.</p>
       </div>
     );
   }
@@ -1105,41 +1133,43 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
   return (
     <ExperienceProvider mode="operational">
       <div className="space-y-6">
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-2">
-          <div className="flex flex-col gap-2 shrink-0">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const wsTarget = selectedWorkspaceId ? `?workspace=${selectedWorkspaceId}&restoreHierarchy=true` : '?restoreHierarchy=true';
-                  router.push(`/workspaces${wsTarget}`);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-theme-icon bg-theme-btn-primary/10 hover:bg-theme-btn-primary/20 border border-theme-btn-primary/30 transition-all active:scale-95 shadow-xs shrink-0 cursor-pointer"
-                title="Return to Execution Hierarchy at the current level"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Back to Hierarchy</span>
-              </button>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground bg-clip-text">
-                Workspace Tasks
-              </h1>
-            </div>
-            <p className="text-xs sm:text-[13px] font-medium text-muted flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 theme-card-structural dark:/10 px-2 py-0.5 rounded-md shadow-sm">
-                <Layers className="h-3 w-3" />
-                {selectedWorkspaceId ? allWorkspaces.find(w => w.id === selectedWorkspaceId)?.workspace_name || allWorkspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Selected Workspace' : 'All Workspaces'}
-              </span>
-              <span>•</span>
-              <span>{filtered.length} total tasks</span>
+        <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                const wsTarget = selectedWorkspaceId ? `?workspace=${selectedWorkspaceId}&restoreHierarchy=true` : '?restoreHierarchy=true';
+                router.push(`/workspaces${wsTarget}`);
+              }}
+              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent-soft-text hover:underline"
+              title="Return to the workspace hierarchy at the current level"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Back to hierarchy
+            </button>
+            <h1 className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-heading">Workspace tasks</h1>
+            <p className="mt-0.5 flex items-center gap-1.5 text-[13.5px] text-muted">
+              <Layers className="h-3.5 w-3.5" aria-hidden />
+              {selectedWorkspaceId ? allWorkspaces.find(w => w.id === selectedWorkspaceId)?.workspace_name || allWorkspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Selected workspace' : 'All workspaces'}
             </p>
           </div>
-          
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0" />
-            <div className="hidden sm:block h-8 w-[1px] bg-border mx-1 shrink-0"></div>
-            
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <StatTileRow>
+              {kpis.map((k, i) => (
+                <StatTile
+                  key={k.label}
+                  label={k.label === "In Progress" ? "In progress" : k.label}
+                  value={k.value}
+                  icon={k.icon}
+                  tone={(["neutral", "info", "accent", "success"] as const)[i] ?? "neutral"}
+                  selected={k.isActive}
+                  onSelect={k.onClick}
+                />
+              ))}
+            </StatTileRow>
             {canCreate && (
-              <AppButton size="sm" onClick={() => {
+              <AppButton size="lg" onClick={() => {
                 let initialWs = selectedWorkspaceId || "";
                 let initialSubWs = "";
                 const selectedWsObj = allWorkspaces.find(w => w.id === selectedWorkspaceId);
@@ -1150,189 +1180,142 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                 setCreationWorkspaceId(initialWs);
                 setCreationSubWorkspaceId(initialSubWs);
                 setShowWorkspaceSelector(true);
-              }} leftIcon={<Plus className="h-4 w-4" />} className="h-10 px-5 rounded-xl font-bold bg-foreground text-background hover:bg-foreground/90 dark:bg-primary dark:text-primary-foreground shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] dark:shadow-[0_4px_14px_0_rgba(0,182,212,0.3)] transition-all active:scale-[0.98] shrink-0 w-full sm:w-auto justify-center">
-                New Task
+              }} leftIcon={<Plus className="h-4 w-4" />} className="w-full sm:w-auto">
+                New task
               </AppButton>
             )}
           </div>
         </header>
 
-        {/* HIERARCHY SCOPE BAR */}
-        <div className="px-3 sm:px-4 py-2.5 theme-card-structural rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs border border-border/50">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto pb-1 sm:pb-0">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
-              Scope:
-            </span>
-
-            {/* Entire Organization (Super Admin / Global) */}
-            {(isSuperAdmin || !isManager) && (
-              <AppButton
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setHierarchyScope("all");
-                  setSelectedDepartmentName("ALL");
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
-                  hierarchyScope === "all" && selectedDepartmentName === "ALL"
-                    ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
-                    : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
-                )}
-              >
-                <Globe className="w-3.5 h-3.5" />
-                Entire Organization
-              </AppButton>
-            )}
-
-            {/* Reporting Tree (for CFO / Managers / Team Leads) */}
-            {isManager && (
-              <AppButton
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setHierarchyScope("my_reports");
-                  setSelectedDepartmentName("ALL");
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
-                  hierarchyScope === "my_reports"
-                    ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
-                    : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
-                )}
-              >
-                <Users className="w-3.5 h-3.5" />
-                My Reporting Tree ({userScope?.subordinateUserIds?.length || 0} Members)
-              </AppButton>
-            )}
-
-            {/* Managed Departments (for CFO / Multi-Department Heads) */}
-            {(managedDepts.length > 0 || userScope?.primaryDepartmentName) && (
-              <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40 shrink-0">
-                <AppButton
+        {/* Toolbar card: scope, view, involvement, search and actions */}
+        <div className="theme-card-structural flex flex-col gap-3 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="theme-label mr-1">Scope</span>
+            <div className="inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="Scope">
+              {(isSuperAdmin || !isManager) && (
+                <button
                   type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setHierarchyScope("my_dept");
-                    setSelectedDepartmentName("ALL");
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
-                    hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
-                      ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+                  role="radio"
+                  aria-checked={hierarchyScope === "all" && selectedDepartmentName === "ALL"}
+                  onClick={() => { setHierarchyScope("all"); setSelectedDepartmentName("ALL"); }}
+                  className={cn("inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors", hierarchyScope === "all" && selectedDepartmentName === "ALL" ? SEG_ON : SEG_OFF)}
                 >
-                  <Building2 className="w-3.5 h-3.5" />
-                  {managedDepts.length > 1
-                    ? `All My Depts (${managedDepts.length})`
-                    : `My Dept (${userScope?.primaryDepartmentName || "General"})`}
-                </AppButton>
-
-                {/* Multi-Department Dropdown (e.g. for CFO) */}
-                {managedDepts.length > 1 && (
-                  <select
-                    value={selectedDepartmentName}
-                    onChange={(e) => {
-                      setSelectedDepartmentName(e.target.value);
-                      setHierarchyScope("my_dept");
-                    }}
-                    className="text-xs bg-background/80 border border-border/60 rounded px-2 py-0.5 text-foreground font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="ALL">All Managed ({managedDepts.length})</option>
-                    {managedDepts.map((d: any) => (
-                      <option key={d.id} value={d.name}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            )}
-
-            {/* Personal Assigned Scope */}
-            <AppButton
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setHierarchyScope("assigned_me");
-                setSelectedDepartmentName("ALL");
-              }}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
-                hierarchyScope === "assigned_me"
-                  ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
-                  : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                  <Globe className="h-3.5 w-3.5" aria-hidden /> Entire organisation
+                </button>
               )}
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              Assigned to Me
-            </AppButton>
-          </div>
-
-          <div className="text-[11px] text-muted font-medium shrink-0">
-            Showing <strong className="text-foreground">{filtered.length}</strong> tasks
-          </div>
-        </div>
-
-        {/* Command Bar */}
-        <div className="sticky top-0 z-30 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2.5 sm:p-2 theme-card-structural rounded-2xl shadow-sm mb-6">
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1.5 md:pb-0 no-scrollbar">
-            {/* View Toggles */}
-            <div className="flex bg-elevated/50 p-1 rounded-xl border border-border/50 shrink-0">
-              <AppButton variant="ghost" 
-                onClick={() => setViewMode("list")} 
-                className={`p-2 rounded-lg transition-all ${viewMode === "list" ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
-                title="List View"
+              {isManager && (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={hierarchyScope === "my_reports"}
+                  onClick={() => { setHierarchyScope("my_reports"); setSelectedDepartmentName("ALL"); }}
+                  className={cn("inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors", hierarchyScope === "my_reports" ? SEG_ON : SEG_OFF)}
+                >
+                  <Users className="h-3.5 w-3.5" aria-hidden /> My reporting tree
+                  <span className="rounded bg-sunken px-1 text-[11.5px] text-muted tabular">{userScope?.subordinateUserIds?.length || 0}</span>
+                </button>
+              )}
+              {(managedDepts.length > 0 || userScope?.primaryDepartmentName) && (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={hierarchyScope === "my_dept"}
+                  onClick={() => { setHierarchyScope("my_dept"); setSelectedDepartmentName("ALL"); }}
+                  className={cn("inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors", hierarchyScope === "my_dept" ? SEG_ON : SEG_OFF)}
+                >
+                  <Building2 className="h-3.5 w-3.5" aria-hidden />
+                  {managedDepts.length > 1 ? "My departments" : `My department${userScope?.primaryDepartmentName ? ` · ${userScope.primaryDepartmentName}` : ""}`}
+                </button>
+              )}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={hierarchyScope === "assigned_me"}
+                onClick={() => { setHierarchyScope("assigned_me"); setSelectedDepartmentName("ALL"); }}
+                className={cn("inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors", hierarchyScope === "assigned_me" ? SEG_ON : SEG_OFF)}
               >
-                <ListIcon className="h-4 w-4" />
-              </AppButton>
-              <AppButton variant="ghost" 
-                onClick={() => setViewMode("board")} 
-                className={`p-2 rounded-lg transition-all ${viewMode === "board" ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
-                title="Board View"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </AppButton>
-              <AppButton variant="ghost" 
-                onClick={() => setViewMode("timeline")} 
-                className={`p-2 rounded-lg transition-all ${viewMode === "timeline" ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
-                title="Timeline View"
-              >
-                <CalendarDays className="h-4 w-4" />
-              </AppButton>
+                <UserCheck className="h-3.5 w-3.5" aria-hidden /> Assigned to me
+              </button>
             </div>
 
-            <div className="h-6 w-[1px] bg-border mx-0.5 shrink-0"></div>
-
-            {/* Scope Toggles & Saved Filter Tabs */}
-            <div className="flex items-center gap-1 bg-elevated/50 p-1 rounded-xl border border-border/50 overflow-x-auto no-scrollbar shrink-0">
-              {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
-                <AppButton
-                  key={sc}
-                  variant="ghost"
-                  onClick={() => setScope(sc)}
-                  className={`px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-[12px] font-bold rounded-lg transition-all whitespace-nowrap shrink-0 ${!activeSavedFilterId && scope === sc ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+            {managedDepts.length > 1 && hierarchyScope === "my_dept" && (
+              <label className="relative inline-flex items-center">
+                <span className="sr-only">Department</span>
+                <select
+                  value={selectedDepartmentName}
+                  onChange={(e) => { setSelectedDepartmentName(e.target.value); setHierarchyScope("my_dept"); }}
+                  className="h-8 appearance-none pl-3 pr-8 text-[13px]"
                 >
-                  {sc === "ALL" ? "All" : sc === "ASSIGNEE" ? "Assigned to Me" : "Enrolled"}
-                </AppButton>
+                  <option value="ALL">All my departments ({managedDepts.length})</option>
+                  {managedDepts.map((d: any) => (
+                    <option key={d.id} value={d.name}>{d.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 h-4 w-4 text-muted" aria-hidden />
+              </label>
+            )}
+
+            {filtered.length !== kpis[0]?.value && (
+              <span className="ml-auto text-[12.5px] text-muted tabular">
+                {filtered.length} of {kpis[0]?.value ?? filtered.length} shown
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col items-stretch gap-2 border-t border-border pt-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+            {/* View Toggles */}
+            <div className="inline-flex shrink-0 gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="View">
+              <button type="button" role="radio" aria-checked={viewMode === "list"} aria-label="List view" title="List view"
+                onClick={() => setViewMode("list")}
+                className={cn("inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "list" ? SEG_ON : SEG_OFF)}
+              >
+                <ListIcon className="h-4 w-4" aria-hidden />
+              </button>
+              <button type="button" role="radio" aria-checked={viewMode === "board"} aria-label="Board view" title="Board view"
+                onClick={() => setViewMode("board")}
+                className={cn("inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "board" ? SEG_ON : SEG_OFF)}
+              >
+                <LayoutGrid className="h-4 w-4" aria-hidden />
+              </button>
+              <button type="button" role="radio" aria-checked={viewMode === "timeline"} aria-label="Timeline view" title="Timeline view"
+                onClick={() => setViewMode("timeline")}
+                className={cn("inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "timeline" ? SEG_ON : SEG_OFF)}
+              >
+                <CalendarDays className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+
+            {/* Involvement + saved filter tabs */}
+            <div className="inline-flex shrink-0 items-center gap-0.5 overflow-x-auto rounded-lg border border-border bg-sunken p-0.5 no-scrollbar" role="radiogroup" aria-label="Show">
+              {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
+                <button
+                  key={sc}
+                  type="button"
+                  role="radio"
+                  aria-checked={!activeSavedFilterId && scope === sc}
+                  onClick={() => setScope(sc)}
+                  className={cn("inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors", !activeSavedFilterId && scope === sc ? SEG_ON : SEG_OFF)}
+                >
+                  {sc === "ALL" ? "All tasks" : sc === "ASSIGNEE" ? "I'm the assignee" : "I'm enrolled"}
+                </button>
               ))}
               
-              {savedFilters.length > 0 && <div className="h-4 w-[1px] bg-border/80 mx-1 shrink-0"></div>}
+              {savedFilters.length > 0 && <div className="mx-1 h-4 w-px shrink-0 bg-border-active" aria-hidden></div>}
               
               {savedFilters.map(f => (
-                <AppButton
+                <button
                   key={f.id}
-                  variant="ghost"
+                  type="button"
+                  role="radio"
+                  aria-checked={activeSavedFilterId === f.id}
                   onClick={() => applyFilter(f)}
-                  className={`px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-[12px] font-bold rounded-lg transition-all whitespace-nowrap shrink-0 ${activeSavedFilterId === f.id ? "bg-primary/10 text-primary shadow-sm" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                  className={cn("inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors", activeSavedFilterId === f.id ? "bg-accent-soft text-accent-soft-text font-semibold" : SEG_OFF)}
                 >
                   {f.name}
-                </AppButton>
+                </button>
               ))}
             </div>
-
-            <div className="h-6 w-[1px] bg-border mx-0.5 shrink-0"></div>
 
             {/* Saved Filters */}
             <SavedFiltersDropdown
@@ -1346,32 +1329,32 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64 min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-              <input 
-                placeholder="Search tasks..." 
-                value={query} 
-                onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-xs sm:text-sm font-medium h-9 sm:h-10 pl-9 pr-3 rounded-xl bg-elevated/50 border border-border/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted" 
+            <div className="relative min-w-0 flex-1 lg:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+              <input
+                type="search"
+                aria-label="Search tasks"
+                placeholder="Search by title, code or assignee"
+                value={query}
+                onChange={(e:any) => setQuery(e.target.value)}
+                className="h-9 w-full pl-9 pr-3 text-[13.5px]"
               />
             </div>
             
             <Popover.Root>
               <Popover.Trigger asChild>
-                <AppButton variant="outline" className="h-9 sm:h-10 px-3 sm:px-4 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural relative shrink-0 text-xs sm:text-sm">
-                  <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                <AppButton variant="secondary" className="shrink-0" leftIcon={<Filter className="h-4 w-4" />}>
                   Filters
-                  {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo || selectedWorkspaceId) && (
-                    <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center border-2 border-surface">
-                      !
-                    </span>
-                  )}
+                  {(() => {
+                    const n = [selectedStatus, selectedPriority, showEscalatedOnly, dateFrom || dateTo, selectedWorkspaceId].filter(Boolean).length;
+                    return n > 0 ? <span className="rounded bg-primary px-1.5 text-[11px] leading-[18px] text-primary-foreground tabular">{n}</span> : null;
+                  })()}
                 </AppButton>
               </Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl theme-card-structural  animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
+                <Popover.Content align="end" sideOffset={8} className="z-[var(--z-popover)] w-80 space-y-4 rounded-[10px] border border-border bg-elevated p-4 text-foreground shadow-lg outline-none">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-bold text-foreground">Advanced Filters</h4>
+                    <h4 className="text-[14px] font-semibold text-heading">Filters</h4>
                     <AppButton variant="ghost" size="sm" onClick={() => { 
                       setSelectedStatus(""); 
                       setSelectedPriority(""); 
@@ -1390,31 +1373,31 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                         localStorage.removeItem(`chandak_tasks_active_id_${effectiveUserId}`);
                       }
                       fetchTasksData(null); 
-                    }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
-                      <RotateCcw className="h-3 w-3" /> Reset
+                    }} className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text">
+                      <RotateCcw className="h-3 w-3" aria-hidden /> Reset all
                     </AppButton>
                   </div>
                   
                   <div className="space-y-3">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Workspace</label>
-                      <select value={selectedWorkspaceId || ""} onChange={(e) => { const v = e.target.value || null; setSelectedWorkspaceId(v); fetchTasksData(v); }} className="w-full h-9 px-3 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20">
-                        <option value="">All Workspaces</option>
+                      <label className="text-[13px] font-medium text-subtle">Workspace</label>
+                      <select value={selectedWorkspaceId || ""} onChange={(e) => { const v = e.target.value || null; setSelectedWorkspaceId(v); fetchTasksData(v); }} className="h-9 w-full px-3 text-[13.5px]">
+                        <option value="">All workspaces</option>
                         {allWorkspaces.map((ws: any) => <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>)}
                       </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Status</label>
-                        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="w-full h-9 px-3 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20">
+                        <label className="text-[13px] font-medium text-subtle">Status</label>
+                        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="h-9 w-full px-3 text-[13.5px]">
                           <option value="">All</option>
                           {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Priority</label>
-                        <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="w-full h-9 px-3 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20">
+                        <label className="text-[13px] font-medium text-subtle">Priority</label>
+                        <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="h-9 w-full px-3 text-[13.5px]">
                           <option value="">All</option>
                           {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
@@ -1422,17 +1405,17 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Date Range</label>
+                      <label className="text-[13px] font-medium text-subtle">Due between</label>
                       <div className="flex items-center gap-2">
-                        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-full h-9 px-2 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20" />
+                        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 w-full px-2 text-[13.5px]" />
                         <span className="text-muted text-xs">to</span>
-                        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-full h-9 px-2 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20" />
+                        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 w-full px-2 text-[13.5px]" />
                       </div>
                     </div>
 
-                    <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer p-2 rounded-lg hover:bg-elevated/50 transition-colors">
-                      <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-border text-primary focus:ring-primary w-4 h-4" />
-                      Show Escalated Only
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md p-1 text-[13.5px] text-foreground">
+                      <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="h-4 w-4" />
+                      Escalated tasks only
                     </label>
                   </div>
                 </Popover.Content>
@@ -1440,79 +1423,48 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
             </Popover.Root>
 
             <AppButton
-              variant="outline"
+              variant="ghost"
               onClick={() => router.push("/migration")}
-              className="h-9 sm:h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural shrink-0"
-              title="Bulk Data Migration & Excel Import for Tasks"
+              className="shrink-0"
+              title="Import tasks from Excel"
+              aria-label="Import tasks from Excel"
+              leftIcon={<FileSpreadsheet className="h-4 w-4" />}
             >
-              <span className="flex items-center gap-1.5"><FileSpreadsheet className="h-4 w-4 text-emerald-600" /><span className="hidden sm:inline">Import Excel</span></span>
+              <span className="hidden sm:inline">Import</span>
             </AppButton>
 
             <Popover.Root>
               <Popover.Trigger asChild>
-                <AppButton variant="outline" className="h-9 sm:h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural shrink-0">
-                  <span className="flex items-center gap-1"><Upload className="h-4 w-4" /><span className="hidden sm:inline">Export</span></span>
+                <AppButton variant="ghost" className="shrink-0" aria-label="Export tasks" leftIcon={<Download className="h-4 w-4" />}>
+                  <span className="hidden sm:inline">Export</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-70" aria-hidden />
                 </AppButton>
               </Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl theme-card-structural border border-border min-w-[140px] shadow-lg">
-                  <AppButton variant="ghost" onClick={exportToExcel} className="w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated rounded-lg transition-colors">
-                    <FileSpreadsheet className="h-4 w-4 text-success" /> Export to Excel
-                  </AppButton>
-                  <AppButton variant="ghost" onClick={exportToPDF} className="w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated rounded-lg transition-colors">
-                    <FileSpreadsheet className="h-4 w-4 text-danger" /> Export to PDF
-                  </AppButton>
+                <Popover.Content align="end" sideOffset={8} className="z-[var(--z-popover)] min-w-[170px] rounded-[10px] border border-border bg-elevated p-1 text-foreground shadow-lg">
+                  <button type="button" onClick={exportToExcel} className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] hover:bg-surface-hover">
+                    <FileSpreadsheet className="h-4 w-4 text-muted" aria-hidden /> Excel (.xlsx)
+                  </button>
+                  <button type="button" onClick={exportToPDF} className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] hover:bg-surface-hover">
+                    <FileText className="h-4 w-4 text-muted" aria-hidden /> PDF
+                  </button>
                 </Popover.Content>
               </Popover.Portal>
             </Popover.Root>
 
             <AppButton
-              variant="outline"
+              variant="ghost"
+              size="icon"
               onClick={() => setIsConfigOpen(true)}
-              className="h-9 sm:h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural shrink-0"
-              title="Configure Columns"
+              className="shrink-0"
+              title="Choose columns"
+              aria-label="Choose columns"
             >
               <Settings2 className="h-4 w-4" />
             </AppButton>
           </div>
-        </div>
-
-        {/* Floating Bulk Action Bar */}
-        {selectedTaskIds.size > 0 && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-300">
-            <div className="flex items-center gap-3 bg-foreground dark:theme-card-structural dark:text-background dark:text-foreground px-5 py-3 rounded-full  dark:">
-              <span className="text-sm font-bold bg-background/20 dark:bg-white/10 px-2.5 py-0.5 rounded-full">
-                {selectedTaskIds.size} Selected
-              </span>
-              <div className="h-5 w-[1px] bg-background/20 dark:bg-border mx-1"></div>
-              
-              <AppButton 
-                variant="ghost"
-                onClick={() => setBulkStatusModalOpen(true)}
-                className="text-sm font-semibold hover:bg-white/10 dark:hover:bg-white/10 text-white flex items-center gap-1.5 px-2"
-              >
-                <Edit2 className="h-4 w-4" /> Update
-              </AppButton>
-              
-              <AppButton 
-                variant="ghost"
-                onClick={handleBulkDelete}
-                className="text-sm font-semibold text-danger hover:bg-danger/10 hover:text-rose-300 flex items-center gap-1.5 px-2"
-              >
-                <Trash2 className="h-4 w-4" /> Delete
-              </AppButton>
-              
-              <AppButton 
-                variant="ghost"
-                onClick={() => setSelectedTaskIds(new Set())}
-                className="text-white/60 hover:text-white p-1 ml-2 transition-colors"
-                title="Clear Selection"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </AppButton>
-            </div>
           </div>
-        )}
+        </div>
 
         <DynamicReportBuilder 
           isOpen={isConfigOpen} 
@@ -1525,8 +1477,9 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         />
 
         {successToast && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text px-4 py-3  animate-in slide-in-from-bottom-5 duration-300">
-            <span className="text-xs font-semibold">{successToast}</span>
+          <div role="status" className="fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-[10px] border border-border border-l-[3px] border-l-success bg-elevated px-4 py-3 text-foreground shadow-lg">
+            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+            <span className="text-[13.5px]">{successToast}</span>
           </div>
         )}
 
@@ -1535,8 +1488,8 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
           {/* Mobile / Tablet Card View (<1024px) */}
           <div className="block lg:hidden space-y-3">
             {filtered.length === 0 ? (
-              <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
-                No tasks match your filters.
+              <div className="theme-card-structural">
+                <EmptyState kind="no-results" compact title="No tasks match these filters" description="Clear filters or switch the scope to Entire organisation." />
               </div>
             ) : (
               filtered.map((task) => {
@@ -1545,13 +1498,13 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                 const wsName = (task.workspace?.name || task.workspace?.code || '—').split(' - ')[0];
                 const isMenuOpen = openMenuTaskId === task.id;
 
-                return (
+                return ( // ui-audit-ignore-next-line mobile card: whole card opens the task, title is also a link
                   <div 
                     key={task.id}
                     data-state={isSelected ? "selected" : undefined}
                     className={cn(
-                      "rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 select-none space-y-3 relative cursor-pointer",
-                      isSelected && "ring-2 ring-theme-btn-primary bg-theme-btn-primary/5"
+                      "theme-card-structural relative cursor-pointer select-none space-y-3 p-4 transition-[border-color,box-shadow] hover:border-border-active hover:shadow-md",
+                      isSelected && "border-primary ring-1 ring-primary"
                     )}
                     onClick={() => router.push(`/tasks/${task.id}`)}
                   >
@@ -1566,20 +1519,14 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                             className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-4 h-4 block"
                           />
                         </div>
-                        <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
+                        <span className="shrink-0 font-mono text-[12px] font-medium text-accent-soft-text">
                           {task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}
                         </span>
-                        {task.priority?.name && (
-                          <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null} isOutline={true} className="text-[10px] py-0 px-1.5 truncate">
-                            {task.priority.name}
-                          </AppBadge>
-                        )}
+                        {task.priority?.name && <PriorityIndicator priority={task.priority.name} className="text-[12.5px]" />}
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} isOutline={true} className="text-[10px] py-0.5 px-2">
-                          {task.status?.name || 'Open'}
-                        </AppBadge>
+                        <StatusBadge status={task.status?.name || "Open"} size="sm" />
 
                         {/* 3-Dots Action Popover */}
                         <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -1589,27 +1536,29 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                               e.stopPropagation();
                               setOpenMenuTaskId(isMenuOpen ? null : task.id);
                             }}
-                            className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-elevated transition-colors"
+                            aria-label={`Actions for ${task.title || "task"}`}
+                            aria-expanded={isMenuOpen}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
                           >
-                            <MoreVertical className="h-4 w-4" />
+                            <MoreVertical className="h-4 w-4" aria-hidden />
                           </button>
                           {isMenuOpen && (
-                            <div className="absolute right-0 top-8 z-50 w-36 p-1 rounded-xl theme-card-structural border border-border shadow-xl space-y-0.5 animate-in zoom-in-95">
+                            <div className="absolute right-0 top-8 z-[var(--z-popover)] w-40 space-y-0.5 rounded-[10px] border border-border bg-elevated p-1 shadow-lg">
                               <Link
                                 href={`/tasks/${task.id}?mode=view`}
-                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-foreground hover:bg-elevated transition-colors w-full"
+                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] text-foreground hover:bg-surface-hover"
                                 onClick={() => setOpenMenuTaskId(null)}
                               >
-                                <Eye className="h-3.5 w-3.5 text-theme-icon" />
+                                <Eye className="h-3.5 w-3.5 text-muted" aria-hidden />
                                 <span>View</span>
                               </Link>
                               {canUpdateRow(task) && (
                                 <Link
                                   href={`/tasks/${task.id}`}
-                                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-warning hover:bg-elevated transition-colors w-full"
+                                  className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] text-foreground hover:bg-surface-hover"
                                   onClick={() => setOpenMenuTaskId(null)}
                                 >
-                                  <Edit2 className="h-3.5 w-3.5" />
+                                  <Edit2 className="h-3.5 w-3.5 text-muted" aria-hidden />
                                   <span>Edit</span>
                                 </Link>
                               )}
@@ -1620,7 +1569,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                     setOpenMenuTaskId(null);
                                     handleDeleteTask(e, task.id);
                                   }}
-                                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-danger hover:bg-danger/10 transition-colors w-full text-left"
+                                  className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-danger-text hover:bg-danger-soft"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                   <span>Delete</span>
@@ -1634,11 +1583,11 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
 
                     {/* Title & Attachment */}
                     <div>
-                      <h3 className="text-sm font-bold text-foreground hover:text-theme-icon transition-colors line-clamp-2">
-                        {task.title || 'Untitled Task'}
+                      <h3 className="line-clamp-2 text-[14px] font-semibold text-foreground">
+                        {task.title || 'Untitled task'}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1 text-[11px] text-muted font-medium flex-wrap">
-                        <span className="truncate max-w-[140px] text-foreground/80 font-semibold">{wsName}</span>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-muted">
+                        <span className="max-w-[140px] truncate text-subtle">{wsName}</span>
                         {subName !== '—' && (
                           <>
                             <span>›</span>
@@ -1646,8 +1595,8 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                           </>
                         )}
                         {task.attachmentCount > 0 && (
-                          <span className="inline-flex items-center gap-1 text-theme-icon bg-theme-btn-primary/10 px-1.5 py-0.2 rounded font-bold">
-                            <Paperclip className="h-3 w-3" /> {task.attachmentCount}
+                          <span className="inline-flex items-center gap-1 rounded bg-sunken px-1.5 text-subtle tabular" title={`${task.attachmentCount} attachment(s)`}>
+                            <Paperclip className="h-3 w-3" aria-hidden /> {task.attachmentCount}
                           </span>
                         )}
                       </div>
@@ -1656,50 +1605,28 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                     {/* Progress Bar (if exists) */}
                     {task.custom_fields?.progress_percentage !== undefined && (
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between text-[10px] font-bold text-muted">
+                        <div className="flex items-center justify-between text-[12px] text-muted">
                           <span>Progress</span>
                           <span>{task.custom_fields.progress_percentage}%</span>
                         </div>
-                        <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
-                          <div className="h-full bg-success rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }} />
+                        <div className="h-1.5 overflow-hidden rounded-full bg-sunken">
+                          <div className="h-full rounded-full bg-success" style={{ width: `${task.custom_fields.progress_percentage}%` }} />
                         </div>
                       </div>
                     )}
 
-                    {/* Bottom Row: Assignee, Department, Due Date */}
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {task.assignee ? (
-                          (() => {
-                            const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
-                            if (!a) return <span className="text-muted text-[11px] italic">Unassigned</span>;
-                            return (
-                              <div className="flex items-center gap-1.5 min-w-0" title={a.full_name}>
-                                {a.profile_photo ? (
-                                  <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
-                                ) : (
-                                  <div className="w-5 h-5 rounded-full bg-theme-btn-primary/20 text-theme-icon flex items-center justify-center text-[9px] font-bold shrink-0">
-                                    {a.full_name?.substring(0, 2).toUpperCase() || "U"}
-                                  </div>
-                                )}
-                                <span className="text-xs font-semibold text-foreground truncate max-w-[100px]">{a.full_name}</span>
-                              </div>
-                            );
-                          })()
-                        ) : (
-                          <span className="text-muted text-[11px] italic">Unassigned</span>
-                        )}
+                    {/* Bottom row: assignee, department, due date */}
+                    <div className="flex items-center justify-between gap-2 border-t border-border pt-2 text-[12.5px]">
+                      <div className="flex min-w-0 items-center gap-2">
+                        {(() => {
+                          const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                          return <UserCell name={a?.full_name} photo={a?.profile_photo} />;
+                        })()}
                         {task.department?.name && (
-                          <span className="text-[10px] font-bold text-muted bg-elevated px-2 py-0.5 rounded-md truncate max-w-[100px]">
-                            {task.department.name}
-                          </span>
+                          <span className="max-w-[110px] truncate rounded bg-sunken px-1.5 text-[12px] text-subtle">{task.department.name}</span>
                         )}
                       </div>
-
-                      <div className="text-[11px] font-semibold text-muted shrink-0 flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>{task.end_date || '—'}</span>
-                      </div>
+                      <DueDateCell value={task.end_date} done={isTaskCompleted(task)} className="shrink-0 text-right" />
                     </div>
                   </div>
                 );
@@ -1710,11 +1637,11 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
           {/* Desktop Table View (>=1024px) */}
           <div className="hidden lg:block">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-border dark:border-border bg-elevated shadow-sm relative">
+              <div ref={parentRef} className="relative h-[calc(100dvh-220px)] min-h-[420px] overflow-auto rounded-[10px] border border-border bg-surface shadow-sm">
                 <AppTable className="w-full min-w-max border-separate border-spacing-0 table-fixed">
-                  <AppTableHeader className="sticky top-0 z-40 bg-elevated">
+                  <AppTableHeader className="sticky top-0 z-[var(--z-sticky)] bg-sunken">
                     <AppTableRow>
-                      <AppTableHead className="text-center p-0 w-[40px] min-w-[40px] max-w-[40px] sticky left-0 top-0 z-50 bg-elevated">
+                      <AppTableHead className="sticky left-0 top-0 z-[calc(var(--z-sticky)+2)] w-[40px] min-w-[40px] max-w-[40px] bg-sunken p-0 text-center">
                         <input 
                           type="checkbox" 
                           checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
@@ -1724,7 +1651,8 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                             }
                           }}
                           onChange={handleSelectAll}
-                          className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-3.5 h-3.5 mx-auto block"
+                          aria-label="Select all tasks"
+                          className="mx-auto block h-4 w-4"
                         />
                       </AppTableHead>
                       <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
@@ -1754,38 +1682,39 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                         key={task.id} 
                         data-state={selectedTaskIds.has(task.id) ? "selected" : undefined}
                         onClick={() => router.push(`/tasks/${task.id}`)}
-                        className="cursor-pointer transition-all duration-200 ease-out hover:bg-surface/80 hover:translate-x-0.5 hover:shadow-2xs"
+                        className="cursor-pointer"
                       >
-                        <AppTableCell className="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-surface group-hover:bg-surface transition-colors" onClick={(e) => e.stopPropagation()}>
+                        <AppTableCell className="sticky left-0 z-[2] w-[40px] min-w-[40px] max-w-[40px] bg-surface p-0 text-center group-hover:bg-surface-hover group-data-[state=selected]:bg-selected" onClick={(e) => e.stopPropagation()}>
                           <input 
                             type="checkbox" 
                             checked={selectedTaskIds.has(task.id)}
                             onChange={(e) => handleSelectTask(task.id, e.target.checked)}
-                            className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-3.5 h-3.5 mx-auto block"
+                            aria-label={`Select ${task.title || "task"}`}
+                            className="mx-auto block h-4 w-4"
                           />
                         </AppTableCell>
                         {visibleColumns.map((col, index) => {
                           const renderCell = () => {
                             switch(col.field_key) {
                             case "code": return (
-                              <AppTableCell className="font-mono font-bold text-theme-icon whitespace-nowrap text-center">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                              <AppTableCell className="whitespace-nowrap font-mono text-[12.5px] font-medium text-accent-soft-text">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
                             );
                             case "title_description": return (
                               <AppTableCell className="text-left">
                                 <div className="flex items-center gap-2 max-w-[320px] md:max-w-none">
-                                  <div className="text-[13px] font-semibold text-foreground break-words whitespace-normal leading-snug min-w-0 flex-1" title={task.title || ''}>{task.title || '-'}</div>
+                                  <div className="min-w-0 flex-1 whitespace-normal break-words text-[13.5px] font-medium leading-snug text-foreground" title={task.title || ''}>{task.title || '—'}</div>
                                   {task.attachmentCount > 0 && (
-                                    <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 text-theme-icon dark:text-theme-icon shrink-0" title={`${task.attachmentCount} Attachment(s)`}>
-                                      <Paperclip className="h-3 w-3" />
+                                    <div className="flex shrink-0 items-center justify-center rounded px-1 py-0.5 text-muted" title={`${task.attachmentCount} attachment(s)`}>
+                                      <Paperclip className="h-3.5 w-3.5" aria-label={`${task.attachmentCount} attachment(s)`} />
                                     </div>
                                   )}
                                 </div>
                                 {task.custom_fields?.progress_percentage !== undefined && (
                                   <div className="mt-1.5 flex items-center gap-2">
-                                    <div className="flex-1 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
-                                      <div className="h-full bg-success rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
+                                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
+                                      <div className="h-full rounded-full bg-success" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
                                     </div>
-                                    <span className="text-[10px] font-bold text-muted">{task.custom_fields.progress_percentage}%</span>
+                                    <span className="text-[11.5px] text-muted tabular">{task.custom_fields.progress_percentage}%</span>
                                   </div>
                                 )}
                               </AppTableCell>
@@ -1795,37 +1724,39 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                               const parts = wsName.split(' - ');
                               const mainWorkspace = parts[0];
                               return (
-                                <AppTableCell className="text-subtle text-center px-2" title={mainWorkspace}>
-                                  <div className="max-w-[120px] truncate mx-auto">{mainWorkspace}</div>
+                                <AppTableCell className="px-3 text-subtle" title={mainWorkspace}>
+                                  <div className="max-w-[160px] truncate">{mainWorkspace}</div>
                                 </AppTableCell>
                               );
                             }
                             case "sub_workspace": {
                               const finalSubName = getSubWorkspaceName(task);
                               return (
-                                <AppTableCell className="text-subtle text-center px-2" title={finalSubName}>
-                                  <div className="max-w-[120px] truncate mx-auto">{finalSubName}</div>
+                                <AppTableCell className="px-3 text-subtle" title={finalSubName}>
+                                  <div className="max-w-[160px] truncate">{finalSubName}</div>
                                 </AppTableCell>
                               );
                             }
                             case "department": return (
-                              <AppTableCell className="text-subtle whitespace-nowrap text-center px-2">
+                              <AppTableCell className="whitespace-nowrap px-3">
                                 <Popover.Root>
-                                  <Popover.Trigger asChild>
-                                    <AppButton variant="secondary" 
+                                  <Popover.Trigger asChild disabled={!canUpdateRow(task)}>
+                                    <button
+                                      type="button"
                                       onClick={(e) => { e.stopPropagation(); }}
-                                      className={`${canUpdateRow(task) ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full`} 
-                                      title={canUpdateRow(task) ? "Update Department" : "Department"}
+                                      disabled={!canUpdateRow(task)}
+                                      aria-label={canUpdateRow(task) ? `Change department, currently ${task.department?.name || "none"}` : undefined}
+                                      title={canUpdateRow(task) ? "Change department" : undefined}
+                                      className="group/cell -mx-1.5 inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-0.5 text-left enabled:hover:bg-sunken disabled:cursor-default"
                                     >
-                                      <AppBadge variant="neutral" className={`max-w-full truncate block ${canUpdateRow(task) ? "border-dashed" : ""}`}>
-                                        {task.department?.name || '—'}
-                                      </AppBadge>
-                                    </AppButton>
+                                      <span className={cn("truncate", task.department?.name ? "text-subtle" : "text-muted")}>{task.department?.name || '—'}</span>
+                                      {canUpdateRow(task) && <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-visible/cell:opacity-100" aria-hidden />}
+                                    </button>
                                   </Popover.Trigger>
                                   {canUpdateRow(task) && (
                                     <Popover.Portal>
-                                      <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl  flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
-                                        <div className="text-[10px] font-bold text-muted uppercase tracking-wider px-2 py-1 mb-1 border-b border-border/50">Update Department</div>
+                                      <Popover.Content align="start" sideOffset={4} className="z-[var(--z-popover)] flex w-56 flex-col gap-1 rounded-[10px] border border-border bg-elevated p-1.5 text-foreground shadow-lg outline-none" onClick={(e) => e.stopPropagation()}>
+                                        <div className="theme-label mb-0.5 border-b border-border px-2 pb-1.5 pt-1">Change department</div>
                                         <div className="max-h-60 overflow-y-auto pr-1">
                                           {departments.map(d => (
                                             <AppButton 
@@ -1839,10 +1770,10 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                                 setInlineRemark("");
                                                 setDepartmentModalOpen(true);
                                               }}
-                                              className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${d.id === task.department_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-elevated font-medium'}`}
+                                              className={cn("flex h-auto w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[13px]", d.id === task.department_id ? "bg-accent-soft font-semibold text-accent-soft-text" : "text-foreground hover:bg-surface-hover")}
                                             >
                                               <span className="truncate">{d.name}</span>
-                                              {d.id === task.department_id && <CheckCircle2 className="h-3 w-3" />}
+                                              {d.id === task.department_id && <CheckCircle2 className="h-3.5 w-3.5" aria-label="Current" />}
                                             </AppButton>
                                           ))}
                                         </div>
@@ -1853,38 +1784,36 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                               </AppTableCell>
                             );
                             case "priority": return (
-                              <AppTableCell className="text-center px-1">
-                                <div className="w-full flex items-center justify-center min-w-0 overflow-hidden">
-                                  <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null} isOutline={true} className="max-w-full truncate block" title={task.priority?.name || ''}>
-                                    {task.priority?.name || '—'}
-                                  </AppBadge>
-                                </div>
+                              <AppTableCell className="px-3">
+                                <PriorityIndicator priority={task.priority?.name} />
                               </AppTableCell>
                             );
                             case "due_date": return (
-                              <AppTableCell className="text-subtle whitespace-nowrap text-center">{task.end_date || '—'}</AppTableCell>
+                              <AppTableCell className="whitespace-nowrap px-3"><DueDateCell value={task.end_date} done={isTaskCompleted(task)} /></AppTableCell>
                             );
                             case "status": return (
-                              <AppTableCell className="text-center px-1">
-                                <div className="w-full flex items-center justify-center min-w-0 overflow-hidden">
+                              <AppTableCell className="px-3">
+                                <div className="flex min-w-0 items-center">
                                   <Popover.Root>
-                                    <Popover.Trigger asChild>
-                                      <AppButton variant="secondary" 
+                                    <Popover.Trigger asChild disabled={!canUpdateRow(task)}>
+                                      <button
+                                        type="button"
                                         onClick={(e) => { e.stopPropagation(); }}
-                                        className={`${canUpdateRow(task) ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full truncate px-2`} 
-                                        title={canUpdateRow(task) ? "Update Status" : "Status"}
+                                        disabled={!canUpdateRow(task)}
+                                        aria-label={canUpdateRow(task) ? `Change status, currently ${task.status?.name || "none"}` : undefined}
+                                        title={canUpdateRow(task) ? "Change status" : undefined}
+                                        className="group/cell -mx-1 inline-flex max-w-full items-center gap-1 rounded-md px-1 py-0.5 enabled:hover:bg-sunken disabled:cursor-default"
                                       >
-                                        <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={cn(canUpdateRow(task) ? "border-dashed" : "", "max-w-full truncate block")} isOutline={true} title={task.status?.name || ''}>
-                                          {task.status?.name || '—'}
-                                        </AppBadge>
-                                      </AppButton>
+                                        <StatusBadge status={task.status?.name || null} className="max-w-full truncate" />
+                                        {canUpdateRow(task) && <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-visible/cell:opacity-100" aria-hidden />}
+                                      </button>
                                     </Popover.Trigger>
                                   {canUpdateRow(task) && (
                                     <Popover.Portal>
-                                      <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl  flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
-                                        <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/50">
-                                          <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Update Status</span>
-                                          <Link href={`/tasks/${task.id}`} className="text-[10px] font-bold text-primary hover:underline">View</Link>
+                                      <Popover.Content align="start" sideOffset={4} className="z-[var(--z-popover)] flex w-56 flex-col gap-1 rounded-[10px] border border-border bg-elevated p-1.5 text-foreground shadow-lg outline-none" onClick={(e) => e.stopPropagation()}>
+                                        <div className="mb-0.5 flex items-center justify-between border-b border-border px-2 pb-1.5 pt-1">
+                                          <span className="theme-label">Change status</span>
+                                          <Link href={`/tasks/${task.id}`} className="text-[12px] font-medium text-accent-soft-text hover:underline">Open task</Link>
                                         </div>
                                         <div className="max-h-60 overflow-y-auto pr-1">
                                           {masterStatuses.map(s => (
@@ -1899,10 +1828,10 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                                 setInlineRemark("");
                                                 setStatusModalOpen(true);
                                               }}
-                                              className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${s.id === task.status_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-elevated font-medium'}`}
+                                              className={cn("flex h-auto w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[13px]", s.id === task.status_id ? "bg-accent-soft font-semibold text-accent-soft-text" : "text-foreground hover:bg-surface-hover")}
                                             >
-                                              <span className="truncate">{s.name}</span>
-                                              {s.id === task.status_id && <CheckCircle2 className="h-3 w-3" />}
+                                              <StatusBadge status={s.name} size="sm" />
+                                              {s.id === task.status_id && <CheckCircle2 className="h-3.5 w-3.5" aria-label="Current" />}
                                             </AppButton>
                                           ))}
                                         </div>
@@ -1914,116 +1843,64 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                             </AppTableCell>
                           );
                           case "assignee": return (
-                            <AppTableCell className="text-center px-1">
-                              {task.assignee ? (
-                                <div className="flex items-center justify-center gap-1.5">
-                                  {(() => {
-                                     const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
-                                     if (!a) return <span className="text-[13px] text-subtle italic">Unassigned</span>;
-                                     return (
-                                       <>
-                                         {a.profile_photo ? (
-                                           <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
-                                         ) : (
-                                           <div className="w-5 h-5 rounded-full bg-theme-btn-primary/20 text-theme-icon flex items-center justify-center text-[9px] font-bold shrink-0">
-                                             {a.full_name?.substring(0, 2).toUpperCase() || "U"}
-                                           </div>
-                                         )}
-                                         <span className="text-xs font-semibold text-foreground truncate max-w-[90px]" title={a.full_name}>{a.full_name}</span>
-                                       </>
-                                     );
-                                  })()}
-                                </div>
-                              ) : (
-                                <span className="text-[13px] text-subtle italic">Unassigned</span>
-                              )}
+                            <AppTableCell className="px-3">
+                              {(() => {
+                                const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                                return <UserCell name={a?.full_name} photo={a?.profile_photo} />;
+                              })()}
                             </AppTableCell>
                           );
                           case "creator_name": return (
-                            <AppTableCell className="text-subtle text-center">{task.creator?.full_name || '—'}</AppTableCell>
+                            <AppTableCell className="px-3"><UserCell name={task.creator?.full_name} emptyLabel="—" /></AppTableCell>
                           );
                           case "start_date": return (
-                            <AppTableCell className="text-subtle whitespace-nowrap text-center">{formatDate(task.start_date)}</AppTableCell>
+                            <AppTableCell className="whitespace-nowrap px-3"><DateCell value={task.start_date} /></AppTableCell>
                           );
                           case "duration": {
                             let text = "—";
                             if (task.start_date && task.end_date) {
                               const diff = Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24));
-                              text = `${diff} day(s)`;
+                              text = `${diff} ${diff === 1 ? "day" : "days"}`;
                             }
-                            return <AppTableCell className="text-subtle ">{text}</AppTableCell>;
+                            return <AppTableCell className="px-3 text-subtle tabular">{text}</AppTableCell>;
                           }
                           case "progress": return (
                             <AppTableCell className="w-[120px]">
                               {task.progress_percentage !== undefined ? (
                                 <div className="flex items-center gap-2">
-                                  <div className="flex-1 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
-                                    <div className="h-full bg-success rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
+                                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
+                                    <div className="h-full rounded-full bg-success" style={{ width: `${task.progress_percentage}%` }}></div>
                                   </div>
-                                  <span className="text-[10px] font-bold text-muted w-6 text-right">{task.progress_percentage}%</span>
+                                  <span className="w-8 text-right text-[11.5px] text-muted tabular">{task.progress_percentage}%</span>
                                 </div>
                               ) : "—"}
                             </AppTableCell>
                           );
                           case "executors": return (
-                            <AppTableCell>
-                              {task.executors && task.executors.length > 0 ? (
-                                <div className="flex -space-x-1.5 overflow-hidden">
-                                  {task.executors.slice(0, 3).map((u: any) => (
-                                    u.profile_photo ? (
-                                      <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
-                                    ) : (
-                                      <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-emerald-100 text-emerald-700 text-[8px] font-bold" title={u.full_name}>
-                                        {u.full_name?.substring(0, 2).toUpperCase() || "E"}
-                                      </div>
-                                    )
-                                  ))}
-                                  {task.executors.length > 3 && (
-                                    <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-surface text-muted text-[8px] font-bold z-10">
-                                      +{task.executors.length - 3}
-                                    </div>
-                                  )}
-                                </div>
-                              ) : <span className="text-muted text-xs">—</span>}
+                            <AppTableCell className="px-3">
+                              <UserStack users={(task.executors || []).map((u: any) => ({ name: u.full_name, photo: u.profile_photo }))} />
                             </AppTableCell>
                           );
                           case "reviewers": return (
-                            <AppTableCell>
-                              {task.reviewers && task.reviewers.length > 0 ? (
-                                <div className="flex -space-x-1.5 overflow-hidden">
-                                  {task.reviewers.slice(0, 3).map((u: any) => (
-                                    u.profile_photo ? (
-                                      <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
-                                    ) : (
-                                      <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-theme-btn-primary/10 text-theme-icon text-[8px] font-bold" title={u.full_name}>
-                                        {u.full_name?.substring(0, 2).toUpperCase() || "W"}
-                                      </div>
-                                    )
-                                  ))}
-                                  {task.reviewers.length > 3 && (
-                                    <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-surface text-muted text-[8px] font-bold z-10">
-                                      +{task.reviewers.length - 3}
-                                    </div>
-                                  )}
-                                </div>
-                              ) : <span className="text-muted text-xs">—</span>}
+                            <AppTableCell className="px-3">
+                              <UserStack users={(task.reviewers || []).map((u: any) => ({ name: u.full_name, photo: u.profile_photo }))} />
                             </AppTableCell>
                           );
                           case "attachments": return (
-                            <AppTableCell className="text-center">
+                            <AppTableCell className="px-3">
                               {task.attachmentCount > 0 ? (
-                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/10 dark:text-theme-icon font-medium text-[11px]">
-                                  <Paperclip className="h-3 w-3" />
+                                <div className="inline-flex items-center gap-1.5 text-[12.5px] text-subtle tabular">
+                                  <Paperclip className="h-3.5 w-3.5 text-muted" aria-hidden />
                                   {task.attachmentCount}
                                 </div>
                               ) : <span className="text-muted text-xs">—</span>}
                             </AppTableCell>
                           );
                           case "comments": return (
-                            <AppTableCell className="text-center">
+                            <AppTableCell className="px-3">
                               {task.commentCount > 0 ? (
-                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/10 dark:text-theme-icon font-medium text-[11px]">
-                                  <MessageSquare className="h-3 w-3" />
+                                <div className="inline-flex items-center gap-1.5 text-[12.5px] text-subtle tabular">
+                                  <MessageSquare className="h-3.5 w-3.5 text-muted" aria-hidden />
                                   {task.commentCount}
                                 </div>
                               ) : <span className="text-muted text-xs">—</span>}
@@ -2032,7 +1909,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                           case "external_link": return (
                             <AppTableCell >
                               {task.custom_fields?.link_url ? (
-                                <a href={getSafeExternalUrl(task.custom_fields.link_url)} target="_blank" rel="noopener noreferrer" className="text-theme-icon hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
+                                <a href={getSafeExternalUrl(task.custom_fields.link_url)} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-[200px] items-center gap-1 truncate text-accent-soft-text hover:underline" onClick={(e) => e.stopPropagation()}>
                                   <ExternalLink className="h-3 w-3 flex-shrink-0" />
                                   <span className="truncate">{task.custom_fields.link_url}</span>
                                 </a>
@@ -2040,43 +1917,43 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                             </AppTableCell>
                           );
                           case "created_at": return (
-                            <AppTableCell className="text-right text-muted whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
+                            <AppTableCell className="whitespace-nowrap px-3"><DateCell value={task.created_at} /></AppTableCell>
                           );
                           case "updated_at": return (
-                            <AppTableCell className="text-right text-muted whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
+                            <AppTableCell className="whitespace-nowrap px-3"><DateCell value={task.updated_at} /></AppTableCell>
                           );
                           case "actions": return (
-                            <AppTableCell className="text-right">
-                              <div className="flex items-center justify-end gap-3">
-                                <Link 
+                            <AppTableCell className="px-2">
+                              <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
+                                <Link
                                   href={`/tasks/${task.id}?mode=view`}
-                                  className="text-theme-icon hover:text-theme-icon transition-colors active:scale-95"
-                                  title="View Task"
+                                  className={ROW_ICON_BTN}
+                                  title="View"
+                                  aria-label={`View ${task.title || "task"}`}
                                 >
-                                  <Eye className="h-[15px] w-[15px]" />
+                                  <Eye className="h-4 w-4" aria-hidden />
                                 </Link>
                                 {canUpdateRow(task) && (
-                                  <Link 
+                                  <Link
                                     href={`/tasks/${task.id}`}
-                                    className="text-warning hover:text-warning transition-colors active:scale-95"
-                                    title="Edit Task"
+                                    className={ROW_ICON_BTN}
+                                    title="Edit"
+                                    aria-label={`Edit ${task.title || "task"}`}
                                   >
-                                    <Edit2 className="h-[15px] w-[15px]" />
+                                    <Edit2 className="h-4 w-4" aria-hidden />
                                   </Link>
                                 )}
                                 {canDeleteRow(task) && (
-                                  <AppButton variant="secondary" 
+                                  <button
+                                    type="button"
                                     onClick={(e) => handleDeleteTask(e, task.id)}
                                     disabled={deleteLoadingId === task.id}
-                                    className="text-danger hover:text-danger transition-colors active:scale-95 disabled:opacity-50"
-                                    title="Delete Task"
+                                    className={cn(ROW_ICON_BTN, "hover:bg-danger-soft hover:text-danger-text disabled:opacity-50")}
+                                    title="Delete"
+                                    aria-label={`Delete ${task.title || "task"}`}
                                   >
-                                    {deleteLoadingId === task.id ? (
-                                      <Loader2 className="h-[15px] w-[15px] animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-[15px] w-[15px]" />
-                                    )}
-                                  </AppButton>
+                                    {deleteLoadingId === task.id ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
+                                  </button>
                                 )}
                               </div>
                             </AppTableCell>
@@ -2094,10 +1971,10 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                             else if (col.data_type === "date") val = formatDate(val);
                             
                             return (
-                              <AppTableCell className="text-subtle ">
-                                <div className="truncate max-w-[200px]" title={String(val)}>
+                              <AppTableCell className="px-3 text-subtle">
+                                <div className="max-w-[200px] truncate" title={String(val)}>
                                   {col.data_type === "link" && val !== "—" ? (
-                                    <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
+                                    <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-accent-soft-text hover:underline" onClick={(e) => e.stopPropagation()}>{val}</a>
                                   ) : col.data_type === "badge" && val !== "—" ? (
                                     <AppBadge variant="neutral">{val}</AppBadge>
                                   ) : (
@@ -2116,8 +1993,8 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                           key: col.field_id,
                           className: cn(
                             cellNode.props.className, 
-                            isFirst ? "sticky left-[40px] z-20 bg-surface transition-colors" : "",
-                            isActions ? "sticky right-0 z-20 bg-surface transition-colors shadow-[-4px_0_8px_rgba(0,0,0,0.06)]" : ""
+                            isFirst ? "sticky left-[40px] z-[2] bg-surface group-hover:bg-surface-hover group-data-[state=selected]:bg-selected" : "",
+                            isActions ? "sticky right-0 z-[2] bg-surface shadow-[inset_1px_0_0_var(--border-subtle)] group-hover:bg-surface-hover group-data-[state=selected]:bg-selected" : ""
                           ),
                         });
                       })}
@@ -2150,7 +2027,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
           const t = filtered.find(x => x.id === taskId) || tasks.find(x => x.id === taskId);
           if (!t) return;
           if (!canUpdateRow(t)) {
-            toast.error("You are not authorized to update this task.");
+            toast.error("You aren't allowed to update this task.");
             return;
           }
           setInlineTask(t);
@@ -2174,61 +2051,63 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
     </div>
   )}
 
-        {filtered.length === 0 && !loading && (
-          <div className="text-center py-10 text-muted">No tasks found for this filter.</div>
+        {filtered.length === 0 && !loading && viewMode !== "list" && (
+          <EmptyState kind="no-results" title="No tasks match these filters" description="Clear filters or switch the scope to Entire organisation." />
         )}
         
 
       {/* Side Drawer Component */}
       {selectedTask && (
         <>
-          <div className="fixed inset-0 z-40 bg-surface/40 transition-opacity" onClick={() => setSelectedTask(null)} />
-          <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] theme-card-structural dark:bg-[#0B0F19]  border-l border-border dark:border-border flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="p-4 border-b border-border dark:border-border flex items-center justify-between bg-surface dark:theme-card-structural /[0.02]">
-              <div>
-                <h2 className="text-[14px] font-bold text-foreground truncate pr-4">{selectedTask.title}</h2>
-                <div className="text-[11px] font-mono text-muted mt-1">{selectedTask.code} • {selectedTask.workspace?.name}</div>
+          {/* ui-audit-ignore-next-line backdrop: click-outside closes the drawer; Close button is the keyboard path */}
+          <div className="fixed inset-0 z-[var(--z-overlay)] bg-[var(--overlay)]" onClick={() => setSelectedTask(null)} aria-hidden />
+          <div role="dialog" aria-modal="true" aria-label={selectedTask.title || "Task"} className="fixed inset-y-0 right-0 z-[var(--z-modal)] flex w-full flex-col border-l border-border bg-elevated text-foreground shadow-lg md:w-[460px]">
+            <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+              <div className="min-w-0">
+                <div className="font-mono text-[12px] font-medium text-accent-soft-text">{selectedTask.code}</div>
+                <h2 className="mt-0.5 truncate text-[16px] font-semibold text-heading">{selectedTask.title}</h2>
+                <div className="mt-0.5 text-[12.5px] text-muted">{selectedTask.workspace?.name}</div>
               </div>
-              <AppButton variant="ghost" size="sm" onClick={() => setSelectedTask(null)} className="h-8 w-8 p-0 shrink-0">✕</AppButton>
+              <AppButton variant="ghost" size="icon" onClick={() => setSelectedTask(null)} className="shrink-0" aria-label="Close"><X className="h-4 w-4" aria-hidden /></AppButton>
             </div>
             
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
               <div className="space-y-2">
-                <h4 className="text-[11px] uppercase font-bold text-muted tracking-wider">Description</h4>
+                <h4 className="theme-label">Description</h4>
                 <div className="text-[13px] text-foreground  leading-relaxed">
-                  <SafeHtml html={selectedTask.description || 'No description provided.'} />
+                  <SafeHtml html={selectedTask.description || 'No description added.'} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
-                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority</span>
-                  <div className="text-[13px] font-semibold text-foreground truncate">{selectedTask.priority?.name || 'N/A'}</div>
+                <div className="flex flex-col rounded-md border border-border bg-surface p-3">
+                  <span className="mb-1 text-[12.5px] text-muted">Priority</span>
+                  <PriorityIndicator priority={selectedTask.priority?.name} />
                 </div>
-                <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
-                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Department</span>
-                  <div className="text-[13px] font-semibold text-foreground truncate">{selectedTask.department?.name || 'N/A'}</div>
+                <div className="flex flex-col rounded-md border border-border bg-surface p-3">
+                  <span className="mb-1 text-[12.5px] text-muted">Department</span>
+                  <div className="truncate text-[13.5px] text-foreground">{selectedTask.department?.name || '—'}</div>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
-                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Status</span>
-                  <div className="text-[13px] font-semibold text-foreground truncate">{selectedTask.status?.name || 'N/A'}</div>
+                <div className="flex flex-col rounded-md border border-border bg-surface p-3">
+                  <span className="mb-1 text-[12.5px] text-muted">Status</span>
+                  <div><StatusBadge status={selectedTask.status?.name || null} /></div>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
-                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Due Date</span>
-                  <div className="text-[13px] font-semibold text-foreground truncate">{selectedTask.end_date || 'N/A'}</div>
+                <div className="flex flex-col rounded-md border border-border bg-surface p-3">
+                  <span className="mb-1 text-[12.5px] text-muted">Due</span>
+                  <DueDateCell value={selectedTask.end_date} done={isTaskCompleted(selectedTask)} />
                 </div>
               </div>
               
               {/* Checklists and Custom Fields */}
               {selectedTask.custom_fields && Object.keys(selectedTask.custom_fields).length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-border/50 dark:border-border">
-                  <h4 className="text-[11px] uppercase font-bold text-theme-icon tracking-wider mb-2">Checklists & Details</h4>
+                <div className="space-y-3 border-t border-border pt-4">
+                  <h4 className="theme-label mb-2">Checklist and details</h4>
                   
                   {selectedTask.custom_fields.checklist && Array.isArray(selectedTask.custom_fields.checklist) && (
                     <div className="space-y-2 mb-4">
                       {selectedTask.custom_fields.checklist.map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-start gap-2 bg-surface dark:theme-card-structural /[0.02] p-2 rounded-lg border-border/50 dark:border-border">
-                          <input type="checkbox" checked={item.completed} readOnly className="mt-1 shrink-0 rounded border-border text-theme-icon focus:ring-theme-btn-primary" />
+                        <div key={idx} className="flex items-start gap-2 rounded-md border border-border bg-surface p-2">
+                          <input type="checkbox" checked={item.completed} readOnly aria-label={item.title} className="mt-0.5 h-4 w-4 shrink-0" />
                           <span className={`text-[13px] ${item.completed ? 'line-through text-muted' : 'text-foreground '}`}>{item.title}</span>
                         </div>
                       ))}
@@ -2238,7 +2117,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                   <div className="grid gap-3">
                     {Object.entries(selectedTask.custom_fields).filter(([k]) => k !== 'checklist' && k !== 'progress_percentage').map(([key, value]) => (
                       <div key={key} className="flex flex-col gap-1">
-                        <span className="text-[11px] uppercase font-bold text-muted tracking-wider">{key.replace(/_/g, ' ')}</span>
+                        <span className="text-[12.5px] text-muted">{(() => { const t = key.replace(/_/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); })()}</span>
                         <div className="text-[13px] text-foreground ">
                           {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
                         </div>
@@ -2249,9 +2128,9 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               )}
             </div>
 
-            <div className="p-4 border-t border-border dark:border-border bg-surface dark:theme-card-structural /[0.02] flex items-center gap-2">
+            <div className="flex items-center gap-2 border-t border-border px-5 py-3">
               <Link href={`/tasks/${selectedTask.id}`} className="w-full flex-1">
-                <AppButton variant="primary" className="w-full bg-theme-btn-primary hover:opacity-90">Open Execution Workspace</AppButton>
+                <AppButton variant="primary" className="w-full">Open task</AppButton>
               </Link>
             </div>
           </div>
@@ -2261,44 +2140,44 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
 
       {/* Floating Action Bar for Bulk Actions */}
       {selectedTaskIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 theme-card-structural dark:bg-[#0f111a] border-border dark:border-border  rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
-          <div className="flex items-center gap-2">
-            <div className="bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/20 dark:text-theme-icon font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
+        <div role="region" aria-label="Bulk actions" className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-4 rounded-[10px] border border-border bg-elevated px-4 py-2.5 shadow-lg md:bottom-6">
+          <div className="flex items-center gap-2 text-[13.5px]">
+            <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-accent-soft px-1.5 text-[12px] font-semibold text-accent-soft-text tabular">
               {selectedTaskIds.size}
-            </div>
-            <span className="theme-data-value text-subtle ">Tasks Selected</span>
+            </span>
+            <span className="text-subtle">selected</span>
           </div>
-          <div className="h-6 w-px bg-elevated dark:bg-surface/20"></div>
+          <div className="h-6 w-px bg-border" aria-hidden></div>
           <div className="flex items-center gap-2">
             {canUpdate && (
-              <AppButton variant="outline" size="sm" onClick={() => setBulkStatusModalOpen(true)}>Update Tasks</AppButton>
+              <AppButton variant="secondary" size="sm" onClick={() => setBulkStatusModalOpen(true)}>Update</AppButton>
             )}
             {canDelete && (
-              <AppButton variant="outline" size="sm" onClick={handleBulkDelete} className="text-danger hover:text-danger hover:bg-rose-50 dark:hover:bg-danger/10">Delete Tasks</AppButton>
+              <AppButton variant="secondary" size="sm" onClick={handleBulkDelete} className="text-danger-text hover:bg-danger-soft">Delete</AppButton>
             )}
-            <AppButton variant="ghost" size="sm" onClick={() => setSelectedTaskIds(new Set())}>Cancel</AppButton>
+            <AppButton variant="ghost" size="sm" onClick={() => setSelectedTaskIds(new Set())}>Clear selection</AppButton>
           </div>
         </div>
       )}
 
       {/* Bulk Status Update Modal */}
       <Dialog open={bulkStatusModalOpen} onOpenChange={setBulkStatusModalOpen}>
-        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border ">
+        <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Bulk Update Tasks</DialogTitle>
+            <DialogTitle>Update {selectedTaskIds.size} tasks</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="text-sm font-medium mb-1">Updating {selectedTaskIds.size} Tasks</div>
+            <div className="text-[13px] text-muted">Only the fields you change are updated.</div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">From Status (Current)</label>
+                <label className="text-[13px] font-medium text-subtle">Current status</label>
                 <select
                   value={bulkOldStatus}
                   onChange={(e) => setBulkOldStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
+                  className="h-9 w-full px-3 text-[13.5px]"
                 >
-                  <option value="">Any Status</option>
+                  <option value="">Any status</option>
                   {masterStatuses.map((st) => (
                     <option key={st.id} value={st.id}>{st.name}</option>
                   ))}
@@ -2306,13 +2185,13 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               </div>
 
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">To Status (New)</label>
+                <label className="text-[13px] font-medium text-subtle">New status</label>
                 <select
                   value={bulkNewStatus}
                   onChange={(e) => setBulkNewStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
+                  className="h-9 w-full px-3 text-[13.5px]"
                 >
-                  <option value="">Leave Unchanged</option>
+                  <option value="">Leave unchanged</option>
                   {masterStatuses.map((st) => (
                     <option key={st.id} value={st.id}>{st.name}</option>
                   ))}
@@ -2322,13 +2201,13 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">From Department (Current)</label>
+                <label className="text-[13px] font-medium text-subtle">Current department</label>
                 <select
                   value={bulkOldDepartment}
                   onChange={(e) => setBulkOldDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
+                  className="h-9 w-full px-3 text-[13.5px]"
                 >
-                  <option value="">Any Department</option>
+                  <option value="">Any department</option>
                   {departments.map((dep) => (
                     <option key={dep.id} value={dep.id}>{dep.name}</option>
                   ))}
@@ -2336,13 +2215,13 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               </div>
 
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">To Department (New)</label>
+                <label className="text-[13px] font-medium text-subtle">New department</label>
                 <select
                   value={bulkNewDepartment}
                   onChange={(e) => setBulkNewDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
+                  className="h-9 w-full px-3 text-[13.5px]"
                 >
-                  <option value="">Leave Unchanged</option>
+                  <option value="">Leave unchanged</option>
                   {departments.map((dep) => (
                     <option key={dep.id} value={dep.id}>{dep.name}</option>
                   ))}
@@ -2351,15 +2230,15 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
             </div>
             
             <div className="grid gap-2">
-              <label className="text-sm font-bold text-muted uppercase tracking-wider">Remark (Optional)</label>
+              <label className="text-[13px] font-medium text-subtle">Remark (optional)</label>
               <textarea
                 value={bulkRemark}
                 onChange={(e) => setBulkRemark(e.target.value)}
                 placeholder="Why are you updating these tasks?"
-                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary min-h-[80px] resize-none"
+                className="min-h-[88px] w-full resize-y px-3 py-2 text-[13.5px]"
               />
             </div>
-            <div className="text-[10px] text-warning">Note: Tasks you don't own will fail to update unless you are a super admin.</div>
+            <div className="rounded-md border border-warning-border bg-warning-soft px-3 py-2 text-[12.5px] text-warning-text">Tasks you don't own are skipped unless you're a Super Admin.</div>
           </div>
           <DialogFooter>
             <AppButton variant="ghost" onClick={() => setBulkStatusModalOpen(false)}>Cancel</AppButton>
@@ -2369,7 +2248,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               disabled={inlineLoading || (!bulkNewStatus && !bulkNewDepartment)}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Update Tasks
+              Update tasks
             </AppButton>
           </DialogFooter>
         </DialogContent>
@@ -2377,42 +2256,42 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
 
       {/* Inline Status Update Modal */}
       <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
-        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border ">
+        <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Update Status</DialogTitle>
+            <DialogTitle>Change status</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
+            <div className="text-[13.5px] text-foreground"><span className="text-muted">Task:</span> {inlineTask?.title || '—'}</div>
             
             {canChangeFields ? (
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">
-                  New Status <span className="text-danger">*</span>
+                <label className="text-[13px] font-medium text-subtle">
+                  New status <span className="text-danger-text" aria-hidden>*</span>
                 </label>
                 <select
                   value={inlineNewStatus}
                   onChange={(e) => setInlineNewStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
+                  className="h-9 w-full px-3 text-[13.5px]"
                 >
-                  <option value="" disabled>Select Status</option>
+                  <option value="" disabled>Select a status</option>
                   {masterStatuses.map((st) => (
                     <option key={st.id} value={st.id}>{st.name}</option>
                   ))}
                 </select>
               </div>
             ) : (
-              <div className="text-xs text-warning bg-amber-50 p-2 rounded border border-amber-200">
-                You are not the assignee for this task. You can only leave a remark/comment.
+              <div className="rounded-md border border-warning-border bg-warning-soft px-3 py-2 text-[12.5px] text-warning-text">
+                You're not the assignee of this task, so you can only add a remark.
               </div>
             )}
             
             <div className="grid gap-2">
-              <label className="text-sm font-bold text-muted uppercase tracking-wider">Remark (Required)</label>
+              <label className="text-[13px] font-medium text-subtle">Remark <span className="text-danger-text" aria-hidden>*</span></label>
               <textarea
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary min-h-[80px] resize-none"
+                className="min-h-[88px] w-full resize-y px-3 py-2 text-[13.5px]"
               />
             </div>
           </div>
@@ -2424,7 +2303,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               disabled={inlineLoading || !inlineRemark.trim() || (canChangeFields && !inlineNewStatus)}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {canChangeFields ? "Change Status" : "Add Remark"}
+              {canChangeFields ? "Change status" : "Add remark"}
             </AppButton>
           </DialogFooter>
         </DialogContent>
@@ -2432,40 +2311,40 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
 
       {/* Inline Department Update Modal */}
       <Dialog open={departmentModalOpen} onOpenChange={setDepartmentModalOpen}>
-        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border ">
+        <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Update Department</DialogTitle>
+            <DialogTitle>Change department</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
+            <div className="text-[13.5px] text-foreground"><span className="text-muted">Task:</span> {inlineTask?.title || '—'}</div>
             
             {canChangeFields ? (
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">New Department</label>
+                <label className="text-[13px] font-medium text-subtle">New department</label>
                 <select
                   value={inlineNewDepartment}
                   onChange={(e) => setInlineNewDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
+                  className="h-9 w-full px-3 text-[13.5px]"
                 >
-                  <option value="">-- No Department --</option>
+                  <option value="">No department</option>
                   {departments.map((dep) => (
                     <option key={dep.id} value={dep.id}>{dep.name}</option>
                   ))}
                 </select>
               </div>
             ) : (
-              <div className="text-xs text-warning bg-amber-50 p-2 rounded border border-amber-200">
-                You are not the assignee for this task. You can only leave a remark/comment.
+              <div className="rounded-md border border-warning-border bg-warning-soft px-3 py-2 text-[12.5px] text-warning-text">
+                You're not the assignee of this task, so you can only add a remark.
               </div>
             )}
             
             <div className="grid gap-2">
-              <label className="text-sm font-bold text-muted uppercase tracking-wider">Remark (Required)</label>
+              <label className="text-[13px] font-medium text-subtle">Remark <span className="text-danger-text" aria-hidden>*</span></label>
               <textarea
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary min-h-[80px] resize-none"
+                className="min-h-[88px] w-full resize-y px-3 py-2 text-[13.5px]"
               />
             </div>
           </div>
@@ -2477,29 +2356,29 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               disabled={inlineLoading || !inlineRemark.trim()}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {canChangeFields && inlineNewDepartment !== inlineTask?.department_id ? "Change Department" : "Add Remark"}
+              {canChangeFields && inlineNewDepartment !== inlineTask?.department_id ? "Change department" : "Add remark"}
             </AppButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showWorkspaceSelector} onOpenChange={setShowWorkspaceSelector}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden theme-card-structural dark:bg-[#0a0d14] border-border dark:border-border ">
-          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-border">
-            <DialogTitle>Select Workspace for Task</DialogTitle>
+        <DialogContent className="overflow-hidden p-0 sm:max-w-md">
+          <DialogHeader className="border-b border-border px-6 py-4">
+            <DialogTitle>Where should the task go?</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-data-value text-subtle  mb-1">Target Workspace <span className="text-danger">*</span></label>
+              <label className="mb-1.5 block text-[13px] font-medium text-subtle">Workspace <span className="text-danger-text" aria-hidden>*</span></label>
               <select
                 value={creationWorkspaceId}
                 onChange={(e) => {
                   setCreationWorkspaceId(e.target.value);
                   setCreationSubWorkspaceId("");
                 }}
-                className="w-full text-sm p-2.5 border-border dark:border-border rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground focus:ring-theme-btn-primary focus:border-theme-btn-primary"
+                className="h-9 w-full px-3 text-[13.5px]"
               >
-                <option value="">-- Select Workspace --</option>
+                <option value="">Select a workspace</option>
                 {allWorkspaces.filter(w => !w.parent_workspace_id).map(w => (
                   <option key={w.id} value={w.id}>{w.workspace_name || w.name}</option>
                 ))}
@@ -2508,13 +2387,13 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
             
             {creationWorkspaceId && (
               <div>
-                <label className="block theme-data-value text-subtle  mb-1">Sub-Workspace (Optional)</label>
+                <label className="mb-1.5 block text-[13px] font-medium text-subtle">Sub-workspace (optional)</label>
                 <select
                   value={creationSubWorkspaceId}
                   onChange={(e) => setCreationSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border-border dark:border-border rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground focus:ring-theme-btn-primary focus:border-theme-btn-primary"
+                  className="h-9 w-full px-3 text-[13.5px]"
                 >
-                  <option value="">-- None --</option>
+                  <option value="">None</option>
                   {allWorkspaces.filter(sw => sw.parent_workspace_id === creationWorkspaceId).map(sw => (
                     <option key={sw.id} value={sw.id}>{sw.workspace_name || sw.name}</option>
                   ))}
@@ -2522,8 +2401,8 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               </div>
             )}
           </div>
-          <DialogFooter className="px-6 py-4 border-t border-border/50 dark:border-border bg-surface dark:theme-card-structural /5">
-            <AppButton variant="outline" onClick={() => setShowWorkspaceSelector(false)}>Cancel</AppButton>
+          <DialogFooter className="border-t border-border px-6 py-3">
+            <AppButton variant="ghost" onClick={() => setShowWorkspaceSelector(false)}>Cancel</AppButton>
             <AppButton 
               variant="primary" 
               disabled={!creationWorkspaceId} 
@@ -2537,6 +2416,25 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        tone="danger"
+        title={`Delete “${pendingDelete?.title ?? ""}”?`}
+        description="The task, its checklist and remarks are removed. This can't be undone from here."
+        confirmLabel="Delete task"
+        onConfirm={async () => { if (pendingDelete) await performDeleteTask(pendingDelete.id); }}
+      />
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        onClose={() => setConfirmBulkDelete(false)}
+        tone="danger"
+        title={`Delete ${selectedTaskIds.size} ${selectedTaskIds.size === 1 ? "task" : "tasks"}?`}
+        description="Selected tasks, their checklists and remarks are removed. This can't be undone from here."
+        confirmLabel={`Delete ${selectedTaskIds.size === 1 ? "task" : "tasks"}`}
+        onConfirm={performBulkDelete}
+      />
 
       {isCreatingTask && (
         <TaskCreationWizard 

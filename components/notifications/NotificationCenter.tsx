@@ -93,7 +93,7 @@ export default function NotificationCenter() {
         className={`relative p-2 rounded-lg transition-colors ${
           isOpen 
             ? "bg-accent-soft text-accent-soft-text" 
-            : "text-muted hover:bg-hover"
+            : "text-muted hover:bg-surface-hover"
         }`}
       >
         <Bell className="h-4 w-4" />
@@ -114,7 +114,7 @@ export default function NotificationCenter() {
             <div className="p-3 border-b border-border flex items-center justify-between bg-surface">
               <div className="flex items-center gap-2">
                 <h3 className="text-xs font-semibold text-heading">Notifications</h3>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
                   unreadCount > 0 ? "bg-danger-soft text-danger-text" : "bg-sunken text-muted"
                 }`}>
                   {unreadCount} new
@@ -136,7 +136,7 @@ export default function NotificationCenter() {
               {notifications.map((n) => (
                 <div 
                   key={n.id} 
-                  className="p-3 border-b border-border transition-colors hover:bg-hover relative group flex items-start justify-between gap-2"
+                  className="p-3 border-b border-border transition-colors hover:bg-surface-hover relative group flex items-start justify-between gap-2"
                 >
                   <button
                     type="button"
@@ -146,7 +146,7 @@ export default function NotificationCenter() {
                     <div className="space-y-0.5">
                       <h4 className="text-xs font-semibold text-foreground truncate">{n.title}</h4>
                       <p className="text-[11px] text-muted leading-relaxed line-clamp-2">{n.message}</p>
-                      <span className="text-[10px] text-muted block tabular-nums mt-1">
+                      <span className="text-[11px] text-muted block tabular-nums mt-1">
                         {formatDateTime(n.created_at)}
                       </span>
                     </div>

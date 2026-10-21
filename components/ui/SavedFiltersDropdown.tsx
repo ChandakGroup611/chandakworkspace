@@ -27,14 +27,14 @@ export function SavedFiltersDropdown<T>({
     <Popover.Root>
       <Popover.Trigger asChild>
         <AppButton
-          variant="outline"
-          className={`h-8 px-3 rounded-lg border border-border text-xs font-medium shadow-xs transition-colors flex items-center gap-1.5 ${
-            activeSavedFilterId ? 'bg-accent-soft text-accent-soft-text border-primary/30' : 'bg-surface text-foreground hover:bg-hover'
-          }`}
+          variant="secondary"
+          aria-label="Saved filters"
+          title="Saved filters"
+          className={activeSavedFilterId ? "shrink-0 border-border-active bg-accent-soft text-accent-soft-text" : "shrink-0"}
+          leftIcon={<Bookmark className="h-4 w-4" />}
         >
-          <Bookmark className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Saved Filters</span>
-          {activeSavedFilterId && <span className="w-2 h-2 rounded-full bg-primary ml-1" />}
+          <span className="hidden sm:inline">Saved</span>
+          {activeSavedFilterId && <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-label="A saved filter is applied" />}
         </AppButton>
       </Popover.Trigger>
       <Popover.Portal>
@@ -44,11 +44,11 @@ export function SavedFiltersDropdown<T>({
           className="z-[var(--z-popover)] w-64 p-2 rounded-xl bg-elevated border border-border shadow-md outline-none space-y-2"
         >
           <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border pb-2">
-            <h4 className="text-xs font-semibold text-foreground">Saved Filters</h4>
+            <h4 className="text-[13px] font-semibold text-heading">Saved filters</h4>
             <AppButton
               variant="ghost"
               onClick={onSaveCurrent}
-              className="h-6 px-2 text-[11px] bg-accent-soft text-primary hover:bg-primary/20 rounded-md"
+              className="h-7 rounded-md bg-accent-soft px-2 text-[12px] text-accent-soft-text hover:bg-accent-soft"
             >
               <BookmarkPlus className="h-3 w-3 mr-1" /> Save current
             </AppButton>
@@ -56,7 +56,7 @@ export function SavedFiltersDropdown<T>({
           
           {savedFilters.length === 0 ? (
             <div className="text-center py-4 text-xs text-muted">
-              No saved filters yet.<br />Configure filters and click &ldquo;Save current&rdquo;.
+              No saved filters yet.<br />Set your filters, then choose &ldquo;Save current&rdquo;.
             </div>
           ) : (
             <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
@@ -64,7 +64,7 @@ export function SavedFiltersDropdown<T>({
                 <div
                   key={f.id}
                   className={`group flex items-center justify-between p-1 rounded-lg transition-colors ${
-                    activeSavedFilterId === f.id ? 'bg-accent-soft text-accent-soft-text' : 'hover:bg-hover text-foreground'
+                    activeSavedFilterId === f.id ? 'bg-accent-soft text-accent-soft-text' : 'hover:bg-surface-hover text-foreground'
                   }`}
                 >
                   <button

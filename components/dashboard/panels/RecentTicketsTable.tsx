@@ -6,6 +6,7 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
 import { AppButton } from "@/components/ui/AppButton";
 import { ListChecks } from "lucide-react";
+import { formatDate } from "@/components/ui/data";
 
 interface RecentTicketsTableProps {
   metrics?: any[];
@@ -21,8 +22,8 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
   const renderStatus = (s: string) => {
     if (s === "Resolved") return <span className="status-badge s-done">Done</span>;
     if (s === "Escalated") return <span className="status-badge s-blocked">Blocked</span>;
-    if (s === "Review") return <span className="status-badge s-review">In Review</span>;
-    return <span className="status-badge s-progress">In Progress</span>;
+    if (s === "Review") return <span className="status-badge s-review">In review</span>;
+    return <span className="status-badge s-progress">In progress</span>;
   };
 
   const renderPriority = (p: string) => {
@@ -37,10 +38,10 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
       <div className="flex items-center justify-between p-4 border-b theme-card-structural">
         <div className="flex items-center gap-2">
           <ListChecks className="h-5 w-5 text-theme-icon" />
-          <span className="text-sm font-bold text-foreground">Recent Tickets</span>
+          <span className="text-sm font-bold text-foreground">Recent tickets</span>
         </div>
         <AppButton variant="ghost" size="sm" onClick={() => router.push('/tickets')}>
-          View All ↗
+          View all ↗
         </AppButton>
       </div>
       <div className="p-0">
@@ -52,7 +53,7 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
             <AppTableHead>Priority</AppTableHead>
             <AppTableHead>Status</AppTableHead>
             <AppTableHead>Assignee</AppTableHead>
-            <AppTableHead>Due Date</AppTableHead>
+            <AppTableHead>Due date</AppTableHead>
           </AppTableRow>
         </AppTableHeader>
         <AppTableBody>
@@ -87,7 +88,7 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
                   <AppTableCell>
                     {m.dueDate ? (
                       <div className={`due-date ${isOverdue ? 'due-overdue' : ''}`}>
-                        {new Date(m.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        {formatDate(m.dueDate)}
                       </div>
                     ) : (
                       <div className="due-date text-muted">N/A</div>

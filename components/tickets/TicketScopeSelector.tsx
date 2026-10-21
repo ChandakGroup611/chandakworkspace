@@ -37,7 +37,7 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <ChandakLoader size="md" title="Loading..." subtitle="Fetching ticket categories" />
+        <ChandakLoader size="md" title="Loading…" subtitle="Fetching ticket categories" />
       </div>
     );
   }
@@ -45,7 +45,7 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
   return (
     <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in fade-in zoom-in duration-300">
       <div className="text-center space-y-1">
-        <h2 className="text-xl font-bold text-foreground">Select Ticket Category</h2>
+        <h2 className="text-xl font-bold text-foreground">Select ticket category</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full px-4">
@@ -58,11 +58,11 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
               onClick={() => onSelect(scope)}
               type="button"
               variant="ghost"
-              className="p-0 h-auto w-full group relative text-left transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
+              className="p-0 h-auto w-full group relative text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
             >
               <AppCard className={`h-full w-full transition-all duration-200 overflow-hidden relative shadow-sm hover:shadow-md hover:border-theme-btn-primary/60 theme-card-structural rounded-xl border border-border/60`}>
                 <AppCardContent className="p-5 relative z-10 flex flex-col h-full space-y-4">
-                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center bg-theme-btn-primary/10 text-theme-icon group-hover:bg-theme-btn-primary group-hover:text-theme-btn-primary-text transition-colors duration-200 border border-border/40`}>
+                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center bg-accent-soft text-theme-icon group-hover:bg-theme-btn-primary group-hover:text-theme-btn-primary-text transition-colors duration-200 border border-border/40`}>
                     <Icon className="h-6 w-6 transition-colors duration-200" />
                   </div>
                   
@@ -72,10 +72,10 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
                     </h3>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider uppercase transition-colors pt-3 border-t border-border/40 text-muted group-hover:text-foreground">
+                  <div className="flex items-center justify-between text-[11px] font-semibold transition-colors pt-3 border-t border-border/40 text-muted group-hover:text-foreground">
                     <span>Continue</span>
                     <div className="h-6 w-6 rounded-full bg-border/40 group-hover:bg-foreground/10 flex items-center justify-center transition-colors">
-                      <ChevronRight className="h-3.5 w-3.5 transform group-hover:translate-x-0.5 transition-transform" />
+                      <ChevronRight className="h-3.5 w-3.5 transform transition-transform" />
                     </div>
                   </div>
                 </AppCardContent>

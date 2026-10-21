@@ -20,6 +20,7 @@ import { TicketActivityStream } from "@/components/tickets/TicketActivityStream"
 import { TicketChat } from "@/components/tickets/TicketChat";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import SafeHtml from "@/components/ui/SafeHtml";
+import { formatDate } from "@/components/ui/data";
 
 interface TicketInspectorProps {
   ticket: any;
@@ -39,7 +40,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           <Activity className={`h-10 w-10 text-muted`} />
         </div>
         <div className="space-y-1">
-          <h3 className={`text-2xl font-bold text-foreground"}`}>Select a Ticket to Inspect</h3>
+          <h3 className={`text-2xl font-bold text-foreground"}`}>Select a ticket to inspect</h3>
           
         </div>
       </div>
@@ -59,8 +60,8 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded uppercase tracking-widest ${
-                "text-theme-icon bg-theme-btn-primary/10"
+              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                "text-theme-icon bg-accent-soft"
               }`}>
                 {ticket.id}
               </span>
@@ -76,7 +77,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
         {/* Bento Metadata Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 border rounded-2xl space-y-2 bg-elevated border-border interactive-card">
-            <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted">
               <ShieldCheck className="h-3 w-3" /> Priority
             </div>
             <div className="flex items-center gap-2">
@@ -88,25 +89,25 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           </div>
 
           <div className="p-4 border rounded-2xl space-y-2 bg-elevated border-border interactive-card">
-            <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted">
               <Building className="h-3 w-3" /> Department
             </div>
             <span className="text-sm font-semibold truncate block text-foreground">{dept?.name || "General"}</span>
           </div>
 
           <div className="p-4 border rounded-2xl space-y-2 bg-elevated border-border interactive-card">
-            <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted">
               <User className="h-3 w-3" /> Assignee
             </div>
             <span className="text-sm font-semibold truncate block text-foreground">{ticket.assignedTo || "Unassigned"}</span>
           </div>
 
           <div className="p-4 border rounded-2xl space-y-2 bg-elevated border-border interactive-card">
-            <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted">
               <Clock className="h-3 w-3" /> Created
             </div>
             <span className="text-sm font-semibold text-foreground">
-              {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+              {formatDate(ticket.createdAt)}
             </span>
           </div>
         </div>
@@ -119,7 +120,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             variant={activeTab === tab ? "primary" : "ghost"}
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`theme-tab-standard uppercase tracking-widest ${
+            className={`theme-tab-standard ${
               activeTab === tab 
                 ? "shadow-theme-btn-primary/20 shadow-md scale-[1.02]" 
                 : "text-muted hover:text-foreground border border-transparent hover:border-border/60"
@@ -135,7 +136,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
         {activeTab === "DETAILS" && (
           <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <section className="space-y-4">
-              <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Subject Overview</h3>
+              <h3 className="text-sm font-bold text-muted">Subject overview</h3>
               <div className={`p-6 border rounded-2xl bg-elevated border-border`}>
                 <div className="leading-relaxed text-muted font-medium">
                   <SafeHtml html={ticket.description || "No description provided."} />
@@ -145,8 +146,8 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
 
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Classification</h3>
-                <div className="p-6 theme-card-structural /[0.02] border-border rounded-2xl space-y-4">
+                <h3 className="text-sm font-bold text-muted">Classification</h3>
+                <div className="p-6 theme-card-structural border-border rounded-2xl space-y-4">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted">Category</span>
                     <span className={`font-medium ${"text-foreground"}`}>{ticket.categoryObj?.name || "Unclassified"}</span>
@@ -156,21 +157,21 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
                     <span className={`font-medium ${"text-foreground"}`}>{ticket.subcategoryObj?.name || "Unclassified"}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted">Issue Type</span>
+                    <span className="text-muted">Issue type</span>
                     <span className={`font-medium ${"text-foreground"}`}>{ticket.issueTypeObj?.name || "General"}</span>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Attachments</h3>
-                <div className="p-6 theme-card-structural /[0.02] border-border rounded-2xl flex flex-col items-center justify-center text-center space-y-3 min-h-[140px]">
+                <h3 className="text-sm font-bold text-muted">Attachments</h3>
+                <div className="p-6 theme-card-structural border-border rounded-2xl flex flex-col items-center justify-center text-center space-y-3 min-h-[140px]">
                   <div className="p-3 bg-surface/5 rounded-full">
                     <Paperclip className="h-5 w-5 text-subtle" />
                   </div>
                   <p className="text-xs text-subtle">No diagnostic files attached</p>
                   <AppButton variant="ghost" size="sm" className="text-xs text-theme-icon hover:text-muted-foreground hover:bg-surface/5">
-                    Upload File
+                    Upload file
                   </AppButton>
                 </div>
               </div>

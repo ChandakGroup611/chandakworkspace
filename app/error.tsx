@@ -26,40 +26,34 @@ export default function GlobalError({ error, reset }: {
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center p-8 text-center bg-surface/50 rounded-2xl border border-border m-4 shadow-sm">
-      <div className="w-12 h-12 rounded-2xl bg-danger/10 text-danger flex items-center justify-center mb-4">
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="m-4 flex min-h-[60vh] flex-col items-center justify-center rounded-[10px] border border-border bg-surface p-8 text-center">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-danger-soft text-danger-text">
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       </div>
-      <h1 className="mb-2 text-xl font-bold text-foreground">
-        Something went wrong
+      <h1 className="mb-1.5 text-[17px] font-semibold text-heading">
+        This page didn&apos;t load
       </h1>
-      <p className="mb-4 text-xs text-muted-foreground max-w-md break-words">
-        {error?.message || "An unexpected error occurred while rendering this module."}
+      <p className="mb-4 max-w-md text-[13.5px] text-muted">
+        Try again. If it keeps happening, send the reference below to IT support so they can trace it.
       </p>
       {error?.digest && (
-        <p className="mb-6 text-xs text-subtle font-mono">
-          Digest: <code className="rounded bg-surface px-1.5 py-0.5 text-danger">{error.digest}</code>
+        <p className="mb-6 text-[12.5px] text-muted">
+          Reference <code className="rounded bg-sunken px-1.5 py-0.5 font-mono text-foreground">{error.digest}</code>
         </p>
       )}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <AppButton onClick={() => reset()}>Try again</AppButton>
         <AppButton
-          onClick={() => reset()}
-          className="rounded bg-theme-btn-primary theme-tab-standard text-white hover:bg-theme-btn-primary-secondary px-4 py-2 font-semibold text-xs"
-        >
-          Try again
-        </AppButton>
-        <AppButton
-          variant="outline"
+          variant="ghost"
           onClick={() => {
             if (typeof window !== "undefined") {
               window.location.reload();
             }
           }}
-          className="rounded text-xs px-4 py-2"
         >
-          Reload Page
+          Reload page
         </AppButton>
       </div>
     </div>

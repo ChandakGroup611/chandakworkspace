@@ -6,8 +6,8 @@ export default function TasksLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Chandak Task Governance"
-        subtitle="Loading workspace tasks, sprints & timeline matrix..."
+        title="Chandak task governance"
+        subtitle="Loading workspace tasks, sprints & timeline matrix…"
       />
     </div>
   );

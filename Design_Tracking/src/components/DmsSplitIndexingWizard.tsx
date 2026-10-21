@@ -35,6 +35,7 @@ import {
   createDocTypeAction,
   uploadDmsDocumentFileAction
 } from "@/lib/actions/dms-core";
+import { toast } from "react-toastify";
 
 export type IndexingMode = "SINGLE" | "BATCH" | "SPLIT_PDF";
 
@@ -140,10 +141,10 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
         setNewDocTypeCode("");
         setNewDocTypeDesc("");
       } else {
-        alert(res.error || "Failed to create document type master");
+        toast.info(res.error || "Failed to create document type master");
       }
     } catch (err: any) {
-      alert(err.message || "Failed to create document type master");
+      toast.info(err.message || "Failed to create document type master");
     } finally {
       setIsCreatingDocType(false);
     }
@@ -198,11 +199,11 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
   // Commit Indexing Action
   const handleCommitIndexing = async () => {
     if (!activeStagedFile || !targetFolder) {
-      alert("Please select a valid folder and staged file.");
+      toast.info("Please select a valid folder and staged file.");
       return;
     }
     if (!docTitle.trim()) {
-      alert("Document title is required.");
+      toast.info("Document title is required.");
       return;
     }
 
@@ -249,11 +250,11 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
           onClose();
         }
       } else {
-        alert(res.error || "Failed to index document");
+        toast.info(res.error || "Failed to index document");
       }
     } catch (err: any) {
       console.error("Indexing error:", err);
-      alert(err.message || "Failed to index document");
+      toast.info(err.message || "Failed to index document");
     } finally {
       setIsSubmitting(false);
     }
@@ -262,16 +263,16 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xs flex flex-col overflow-hidden animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 bg-background/95 flex flex-col overflow-hidden animate-in fade-in duration-150">
       {/* 1. TOP HEADER & MODE SWITCHER */}
       <header className="h-14 border-b border-border bg-surface px-6 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-theme-btn-primary/10 border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary shrink-0">
+          <div className="h-8 w-8 rounded-lg bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary shrink-0">
             <Upload className="h-4 w-4" />
           </div>
           <div>
             <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <span>Split-Screen Document Indexing Studio</span>
+              <span>Split-screen document indexing studio</span>
               <span className="text-xs font-normal text-muted-foreground">
                 in <strong className="font-semibold text-foreground">{targetFolder?.name || "Root"}</strong>
               </span>
@@ -282,7 +283,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
 
         {/* 3-Mode Pill Selector */}
         <div className="flex items-center bg-surface border border-border rounded-lg p-1">
-          <button
+          <button type="button"
             onClick={() => setMode("SINGLE")}
             className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-md transition-all ${
               mode === "SINGLE"
@@ -291,9 +292,9 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             }`}
           >
             <FileText className="h-3.5 w-3.5" />
-            <span>Single File</span>
+            <span>Single file</span>
           </button>
-          <button
+          <button type="button"
             onClick={() => setMode("BATCH")}
             className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-md transition-all ${
               mode === "BATCH"
@@ -302,9 +303,9 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             }`}
           >
             <Files className="h-3.5 w-3.5" />
-            <span>Batch Queue</span>
+            <span>Batch queue</span>
           </button>
-          <button
+          <button type="button"
             onClick={() => setMode("SPLIT_PDF")}
             className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-md transition-all ${
               mode === "SPLIT_PDF"
@@ -313,11 +314,11 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             }`}
           >
             <Split className="h-3.5 w-3.5" />
-            <span>Split PDF Set</span>
+            <span>Split PDF set</span>
           </button>
         </div>
 
-        <button
+        <button aria-label="Close" type="button"
           onClick={onClose}
           className="p-2 hover:bg-surface rounded-lg text-muted-foreground hover:text-foreground transition-colors"
         >
@@ -334,7 +335,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             {stagedFiles.length === 0 ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-border hover:border-theme-btn-primary/60 rounded-xl p-8 text-center cursor-pointer bg-surface/50 hover:bg-theme-btn-primary/5 transition-all group"
+                className="border-2 border-dashed border-border hover:border-theme-btn-primary/60 rounded-xl p-8 text-center cursor-pointer bg-surface/50 hover:bg-accent-soft transition-all group"
               >
                 <Upload className="h-8 w-8 mx-auto text-muted-foreground group-hover:text-theme-btn-primary transition-colors" />
                 <h4 className="text-xs font-bold text-foreground mt-2">
@@ -354,15 +355,15 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             ) : (
               <div className="p-3.5 bg-surface border border-border rounded-xl flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-9 w-9 rounded-lg bg-theme-btn-primary/10 border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary shrink-0">
+                  <div className="h-9 w-9 rounded-lg bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary shrink-0">
                     <FileText className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-foreground truncate">
                       {activeStagedFile?.file.name}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {((activeStagedFile?.file.size || 0) / (1024 * 1024)).toFixed(2)} MB • Staged
+                    <p className="text-[11px] text-muted-foreground">
+                      {((activeStagedFile?.file.size || 0) / (1024 * 1024)).toFixed(2)} MB • staged
                       {mode === "BATCH" && ` (${activeFileIndex + 1} of ${stagedFiles.length})`}
                     </p>
                   </div>
@@ -371,14 +372,14 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                 <div className="flex items-center gap-1.5 shrink-0">
                   {mode === "BATCH" && (
                     <div className="flex items-center gap-1 mr-2">
-                      <button
+                      <button aria-label="Previous" type="button"
                         onClick={() => setActiveFileIndex((i) => Math.max(0, i - 1))}
                         disabled={activeFileIndex === 0}
                         className="p-1 hover:bg-surface rounded-md disabled:opacity-30"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
-                      <button
+                      <button aria-label="Next" type="button"
                         onClick={() =>
                           setActiveFileIndex((i) => Math.min(stagedFiles.length - 1, i + 1))
                         }
@@ -389,12 +390,12 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                       </button>
                     </div>
                   )}
-                  <button
+                  <button aria-label="Close" type="button"
                     onClick={() => {
                       setStagedFiles([]);
                       setActiveFileIndex(0);
                     }}
-                    className="p-1.5 hover:bg-surface text-muted-foreground hover:text-rose-500 rounded-md"
+                    className="p-1.5 hover:bg-surface text-muted-foreground hover:text-danger-text rounded-md"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -408,7 +409,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-primary flex items-center gap-1.5">
                     <Split className="h-3.5 w-3.5" />
-                    <span>Page Range Specification</span>
+                    <span>Page range specification</span>
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
@@ -428,17 +429,17 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Document Type Set *
+                  <label className="text-xs font-bold text-muted-foreground">
+                    Document type set *
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowAddDocTypeModal(true)}
                     className="inline-flex items-center gap-1 text-[11px] font-bold text-theme-btn-primary hover:underline hover:brightness-110 cursor-pointer"
-                    title="Add new Document Type Master"
+                    title="Add new document type master"
                   >
                     <Plus className="h-3 w-3 stroke-[2.5]" />
-                    <span>Add Master</span>
+                    <span>Add master</span>
                   </button>
                 </div>
                 <div className="flex items-center gap-1.5 mt-1.5">
@@ -453,11 +454,11 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                       </option>
                     ))}
                   </select>
-                  <button
+                  <button aria-label="Create new document type master"
                     type="button"
                     onClick={() => setShowAddDocTypeModal(true)}
                     className="p-2.5 rounded-lg border border-border bg-surface hover:bg-surface/80 text-foreground shrink-0 cursor-pointer"
-                    title="Create new Document Type Master"
+                    title="Create new document type master"
                   >
                     <Plus className="h-4 w-4 text-theme-btn-primary" />
                   </button>
@@ -465,14 +466,14 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Document Title / Dossier Label *
+                <label className="text-xs font-bold text-muted-foreground">
+                  Document title / dossier label *
                 </label>
                 <input
                   type="text"
                   value={docTitle}
                   onChange={(e) => setDocTitle(e.target.value)}
-                  placeholder="e.g. Tower A - G+10 Structural General Arrangement"
+                  placeholder="e.g. Tower a - g+10 structural general arrangement"
                   className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
                 />
               </div>
@@ -481,11 +482,11 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
               {currentDocType?.fieldDefinitions && currentDocType.fieldDefinitions.length > 0 && (
                 <div className="pt-3 border-t border-border space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                      Extended Metadata Attributes
+                    <span className="text-[11px] font-bold text-muted-foreground">
+                      Extended metadata attributes
                     </span>
-                    <span className="text-[10px] font-mono text-theme-btn-primary">
-                      {currentDocType.fieldDefinitions.length} Dynamic Fields
+                    <span className="text-[11px] font-mono text-theme-btn-primary">
+                      {currentDocType.fieldDefinitions.length} Dynamic fields
                     </span>
                   </div>
 
@@ -494,7 +495,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                       <div key={field.id}>
                         <label className="text-[11px] font-medium text-foreground flex items-center gap-1">
                           <span>{field.fieldLabel}</span>
-                          {field.isRequired && <span className="text-rose-500">*</span>}
+                          {field.isRequired && <span className="text-danger-text">*</span>}
                         </label>
 
                         {field.dataType === "DROPDOWN" && field.dropdownOptions ? (
@@ -508,7 +509,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                             }
                             className="w-full mt-1 text-xs rounded-md bg-surface border border-border p-2 text-foreground"
                           >
-                            <option value="">Select option...</option>
+                            <option value="">Select option…</option>
                             {field.dropdownOptions.map((opt) => (
                               <option key={opt} value={opt}>
                                 {opt}
@@ -563,7 +564,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
               {/* Quality Control Approval Gate */}
               <div className="pt-3 border-t border-border flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold text-foreground">Require QC Verification Gate</div>
+                  <div className="text-xs font-bold text-foreground">Require QC verification gate</div>
                   <p className="text-[11px] text-muted-foreground">
                     Document will remain unapproved until verified by Quality Control Lead.
                   </p>
@@ -580,13 +581,13 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
 
           {/* Action Footer */}
           <div className="mt-auto p-4 bg-surface border-t border-border flex items-center justify-end gap-2">
-            <button
+            <button type="button"
               onClick={onClose}
               className="px-4 py-2 text-xs font-semibold rounded-lg border border-border hover:bg-surface text-muted-foreground"
             >
               Cancel
             </button>
-            <button
+            <button type="button"
               onClick={handleCommitIndexing}
               disabled={!activeStagedFile || isSubmitting || !docTitle.trim()}
               className="px-5 py-2 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs disabled:opacity-50 flex items-center gap-2"
@@ -610,7 +611,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 shrink-0">
                 <Eye className="h-3.5 w-3.5 text-theme-btn-primary" />
-                <span>Real-Time Document Preview</span>
+                <span>Real-time document preview</span>
               </span>
               {activeStagedFile && (
                 <span className="text-[11px] font-mono text-foreground truncate max-w-[200px] border-l border-border pl-2">
@@ -627,15 +628,15 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                     target="_blank"
                     rel="noreferrer"
                     className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-[11px] px-2 font-medium"
-                    title="Open Document in New Tab"
+                    title="Open document in new tab"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                     <span>Popout</span>
                   </a>
-                  <button
+                  <button type="button"
                     onClick={handleDownloadActiveFile}
                     className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-[11px] px-2 font-medium"
-                    title="Download Staged File"
+                    title="Download staged file"
                   >
                     <Download className="h-3.5 w-3.5" />
                     <span>Download</span>
@@ -643,27 +644,27 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                   <div className="h-3 w-px bg-border mx-1" />
                 </>
               )}
-              <button
+              <button aria-label="Zoom out" type="button"
                 onClick={() => setPreviewZoom((z) => Math.max(0.4, Number((z - 0.15).toFixed(2))))}
                 className="p-1 hover:bg-surface rounded-sm text-muted-foreground"
-                title="Zoom Out"
+                title="Zoom out"
               >
                 <ZoomOut className="h-3.5 w-3.5" />
               </button>
               <span className="text-[11px] font-mono font-medium px-1 text-foreground min-w-[40px] text-center">
                 {Math.round(previewZoom * 100)}%
               </span>
-              <button
+              <button aria-label="Zoom in" type="button"
                 onClick={() => setPreviewZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))))}
                 className="p-1 hover:bg-surface rounded-sm text-muted-foreground"
-                title="Zoom In"
+                title="Zoom in"
               >
                 <ZoomIn className="h-3.5 w-3.5" />
               </button>
-              <button
+              <button aria-label="Reset zoom (100%)" type="button"
                 onClick={() => setPreviewZoom(1)}
                 className="p-1 hover:bg-surface rounded-sm text-muted-foreground"
-                title="Reset Zoom (100%)"
+                title="Reset zoom (100%)"
               >
                 <Maximize2 className="h-3.5 w-3.5" />
               </button>
@@ -688,7 +689,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                         src={activeStagedFile.previewUrl}
                         alt={activeStagedFile.title}
                         style={{ transform: `scale(${previewZoom})` }}
-                        className="max-h-full max-w-full object-contain rounded-lg shadow-md border border-border bg-white transition-transform duration-100 origin-center"
+                        className="max-h-full max-w-full object-contain rounded-lg shadow-md border border-border bg-surface transition-transform duration-100 origin-center"
                       />
                     </div>
                   );
@@ -697,7 +698,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                 if (isPdf) {
                   return (
                     <div
-                      className="w-full h-full max-w-5xl bg-white rounded-lg shadow-xl border border-border overflow-hidden transition-transform duration-100 origin-center flex flex-col"
+                      className="w-full h-full max-w-5xl bg-surface rounded-lg shadow-xl border border-border overflow-hidden transition-transform duration-100 origin-center flex flex-col"
                       style={{ transform: `scale(${previewZoom})` }}
                     >
                       <object
@@ -708,12 +709,12 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                         <iframe
                           src={activeStagedFile.previewUrl}
                           className="w-full h-full border-none"
-                          title="PDF Preview"
+                          title="PDF preview"
                         >
                           <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-3">
                             <FileText className="h-12 w-12 text-muted-foreground stroke-1" />
                             <p className="text-xs font-semibold text-foreground">
-                              PDF Preview unavailable in embedded viewer.
+                              PDF preview unavailable in embedded viewer.
                             </p>
                             <a
                               href={activeStagedFile.previewUrl}
@@ -722,7 +723,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                               className="px-3.5 py-2 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text inline-flex items-center gap-1.5"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
-                              <span>Open PDF in New Window</span>
+                              <span>Open PDF in new window</span>
                             </a>
                           </div>
                         </iframe>
@@ -734,7 +735,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                 // Other formats (Documents, Spreadsheets, Archives)
                 return (
                   <div className="max-w-md w-full bg-surface border border-border rounded-xl p-6 text-center space-y-4 shadow-lg animate-in fade-in">
-                    <div className="h-16 w-16 mx-auto rounded-full bg-theme-btn-primary/10 flex items-center justify-center text-theme-btn-primary">
+                    <div className="h-16 w-16 mx-auto rounded-full bg-accent-soft flex items-center justify-center text-theme-btn-primary">
                       <FileText className="h-8 w-8 stroke-[1.5]" />
                     </div>
                     <div>
@@ -754,9 +755,9 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                         className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-surface/80 text-foreground inline-flex items-center gap-1.5"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
-                        <span>View Raw</span>
+                        <span>View raw</span>
                       </a>
-                      <button
+                      <button type="button"
                         onClick={handleDownloadActiveFile}
                         className="px-3 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text inline-flex items-center gap-1.5"
                       >
@@ -782,14 +783,14 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
 
       {/* QUICK ADD DOCUMENT TYPE MASTER MODAL */}
       {showAddDocTypeModal && (
-        <div className="fixed inset-0 z-70 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95">
+        <div className="fixed inset-0 z-70 bg-[var(--overlay)] flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-xl shadow-lg max-w-md w-full overflow-hidden animate-in zoom-in-95">
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-theme-btn-primary" />
-                <h3 className="text-sm font-bold text-foreground">Add Document Type Master</h3>
+                <h3 className="text-sm font-bold text-foreground">Add document type master</h3>
               </div>
-              <button
+              <button aria-label="Close"
                 type="button"
                 onClick={() => setShowAddDocTypeModal(false)}
                 className="p-1 hover:bg-surface rounded-md text-muted-foreground"
@@ -800,8 +801,8 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
 
             <form onSubmit={handleCreateDocTypeMaster} className="p-4 space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Document Type Name *
+                <label className="text-xs font-bold text-muted-foreground">
+                  Document type name *
                 </label>
                 <input
                   type="text"
@@ -817,7 +818,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                       setNewDocTypeCode(val.toUpperCase().replace(/[^A-Z0-9_]/g, "_").slice(0, 32));
                     }
                   }}
-                  placeholder="e.g. Facade Engineering & Details"
+                  placeholder="e.g. Facade engineering & details"
                   className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
                   autoFocus
                   required
@@ -825,8 +826,8 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Type Code *
+                <label className="text-xs font-bold text-muted-foreground">
+                  Type code *
                 </label>
                 <input
                   type="text"
@@ -841,13 +842,13 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                <label className="text-xs font-bold text-muted-foreground">
                   Description
                 </label>
                 <textarea
                   value={newDocTypeDesc}
                   onChange={(e) => setNewDocTypeDesc(e.target.value)}
-                  placeholder="Brief description of documents classified under this type..."
+                  placeholder="Brief description of documents classified under this type…"
                   rows={2}
                   className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary resize-none"
                 />

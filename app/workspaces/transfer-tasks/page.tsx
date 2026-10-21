@@ -14,7 +14,7 @@ export default async function TransferTasksPage() {
     return (
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
           <p className="text-muted">You do not have permission to view this page.</p>
         </div>
       </div>
@@ -25,7 +25,7 @@ export default async function TransferTasksPage() {
   const supabase = createClient(cookieStore);
   
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return <div>Unauthorized</div>;
+  if (!user) return <div>Unauthorised</div>;
 
   // Fetch workspaces the user can access
   const workspaces = await getVisibleWorkspaces(user.id);
@@ -69,13 +69,13 @@ export default async function TransferTasksPage() {
   return (
     <div className="p-6">
       <div className="mb-6 flex flex-col space-y-2">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Transfer Tasks</h1>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Transfer tasks</h1>
         <p className="text-sm text-muted">
           Bulk move tasks between workspaces and reassign owners or watchers if needed.
         </p>
       </div>
 
-      <Suspense fallback={<div className="flex h-64 items-center justify-center"><ChandakLoader size="md" title="Loading transfer console..." /></div>}>
+      <Suspense fallback={<div className="flex h-64 items-center justify-center"><ChandakLoader size="md" title="Loading transfer console…" /></div>}>
         <TransferTasksClient 
           initialTasks={tasks || []} 
           workspaces={workspaces || []} 

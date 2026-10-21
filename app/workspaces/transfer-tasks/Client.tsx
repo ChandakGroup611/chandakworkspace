@@ -180,7 +180,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search tasks..."
+              placeholder="Search tasks…"
               className="w-full pl-9 pr-4 py-2 bg-background border border-input rounded-xl text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -195,7 +195,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
               setFilterSubworkspaceId('');
             }}
           >
-            <option value="">All Workspaces</option>
+            <option value="">All workspaces</option>
             {workspaces.filter((w: any) => !w.parent_workspace_id).map((ws: any) => (
               <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
             ))}
@@ -207,7 +207,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
             onChange={(e) => setFilterSubworkspaceId(e.target.value)}
             disabled={!filterWorkspaceId}
           >
-            <option value="">All Subworkspaces</option>
+            <option value="">All subworkspaces</option>
             {workspaces.filter((w: any) => w.parent_workspace_id === filterWorkspaceId).map((ws: any) => (
               <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
             ))}
@@ -239,7 +239,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                     onChange={toggleAll}
                   />
                 </AppTableHead>
-                <AppTableHead className="px-4 py-3">Task Name</AppTableHead>
+                <AppTableHead className="px-4 py-3">Task name</AppTableHead>
                 <AppTableHead className="px-4 py-3">Workspace</AppTableHead>
                 <AppTableHead className="px-4 py-3">Status</AppTableHead>
                 <AppTableHead className="px-4 py-3">Assignee</AppTableHead>
@@ -294,13 +294,13 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
         <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)]">
           <div className="bg-surface w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] border border-border">
             <div className="p-6 border-b border-border flex-shrink-0">
-              <h2 className="text-xl font-bold text-foreground">Transfer Tasks</h2>
+              <h2 className="text-xl font-bold text-foreground">Transfer tasks</h2>
               
             </div>
             
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Target Workspace</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Target workspace</label>
                 <select
                   className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                   value={targetWorkspaceId}
@@ -312,7 +312,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                     setNewWatchers([]);
                   }}
                 >
-                  <option value="">Select a workspace...</option>
+                  <option value="">Select a workspace…</option>
                   {(() => {
                     const map = new Map<string, any[]>();
                     workspaces.forEach((w: any) => {
@@ -342,7 +342,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
               {targetWorkspaceId && (
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-foreground">Target Parent Task</label>
+                    <label className="text-xs font-semibold text-foreground">Target parent task</label>
                     
                     <select
                       value={targetParentTaskId}
@@ -364,19 +364,19 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                   <div className="flex items-start space-x-3">
                     <AlertTriangle className="h-5 w-5 text-warning-text shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-sm font-semibold text-warning-text">Assignees Incompatible</h4>
+                      <h4 className="text-sm font-semibold text-warning-text">Assignees incompatible</h4>
                       <p className="text-xs text-warning-text/80 mt-1">
                         {validity.invalidTaskAssignees.length} tasks have assignees that do not belong to the target workspace. Please select a new assignee.
                       </p>
                       
                       <div className="mt-3">
-                        <label className="block text-sm font-medium text-warning-text mb-1">New Assignee (Owner)</label>
+                        <label className="block text-sm font-medium text-warning-text mb-1">New assignee (owner)</label>
                         <select
                           className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                           value={newOwnerId}
                           onChange={(e) => setNewOwnerId(e.target.value)}
                         >
-                          <option value="">Select a new user...</option>
+                          <option value="">Select a new user…</option>
                           {targetWorkspaceUsers.map((u: any) => (
                             <option key={u.id} value={u.id}>{u.full_name}</option>
                           ))}
@@ -390,14 +390,14 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
               {targetWorkspaceId && (
                 <div className="pt-4 mt-4 border-t border-border">
-                  <h3 className="text-sm font-medium text-foreground mb-3">Reassign Participants (Optional)</h3>
+                  <h3 className="text-sm font-medium text-foreground mb-3">Reassign participants (optional)</h3>
                   <div className="grid grid-cols-2 gap-4">
                     {/* Executives Column */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-sm font-medium text-muted-foreground">Executives</label>
                         <AppButton variant="secondary" 
-                          className="text-[10px] text-primary hover:underline"
+                          className="text-[11px] text-primary hover:underline"
                           onClick={() => {
                             if (newExecutors.length === targetWorkspaceUsers.length) setNewExecutors([]);
                             else setNewExecutors(targetWorkspaceUsers.map((u: any) => u.id));
@@ -429,7 +429,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-sm font-medium text-muted-foreground">Watchers</label>
                         <AppButton variant="secondary" 
-                          className="text-[10px] text-primary hover:underline"
+                          className="text-[11px] text-primary hover:underline"
                           onClick={() => {
                             if (newWatchers.length === targetWorkspaceUsers.length) setNewWatchers([]);
                             else setNewWatchers(targetWorkspaceUsers.map((u: any) => u.id));
@@ -470,7 +470,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                 disabled={!targetWorkspaceId || (!validity.isValid && !newOwnerId) || isSubmitting}
                 isLoading={isSubmitting}
               >
-                Confirm Transfer
+                Confirm transfer
               </AppButton>
             </div>
           </div>

@@ -27,6 +27,8 @@ import {
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { createClient } from "@/utils/supabase/client";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { confirmAction } from "@/components/ui/feedback/confirm";
+import { formatDate } from "@/components/ui/data";
 
 interface AMCPaymentsTabProps {
   amcId: string;
@@ -139,7 +141,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this invoice?")) return;
+    if (!(await confirmAction("Are you sure you want to delete this invoice?"))) return;
     try {
       const res = await deleteAMCEntity("amc_invoices", id, true);
       if (!res.success) throw new Error(res.error);
@@ -196,7 +198,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
       const diffDays = Math.ceil((new Date().getTime() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24));
       return (
         <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-danger/15 text-danger border border-danger/30 flex items-center gap-1.5">
-          <AlertCircle className="h-3.5 w-3.5" /> {diffDays}d Overdue
+          <AlertCircle className="h-3.5 w-3.5" /> {diffDays}d overdue
         </span>
       );
     }
@@ -210,14 +212,14 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
   return (
     <div className="space-y-6">
       {/* Top Header & Add Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border bg-surface border-border shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-xl bg-theme-btn-primary/10 text-theme-icon">
+            <div className="p-2.5 rounded-xl bg-accent-soft text-theme-icon">
               <Receipt className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-foreground">Payment Schedule & Invoicing Ledger</h3>
+              <h3 className="text-lg font-bold text-foreground">Payment schedule & invoicing ledger</h3>
               
             </div>
           </div>
@@ -230,49 +232,49 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
           leftIcon={<Plus className="h-4 w-4" />}
           className="h-9 text-xs font-semibold shrink-0"
         >
-          Schedule Payment
+          Schedule payment
         </AppButton>
       </div>
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <AppCard className="p-4 border border-border bg-surface rounded-xl space-y-1">
-          <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Total Scheduled</span>
+          <span className="text-[11px] font-bold text-muted">Total scheduled</span>
           <div className="text-xl font-bold text-foreground font-mono">
             ₹ {summary.totalScheduled.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <span className="text-[10px] text-muted">{invoices.length} Payment Schedule(s)</span>
+          <span className="text-[11px] text-muted">{invoices.length} Payment Schedule(s)</span>
         </AppCard>
 
         <AppCard className="p-4 border border-success/30 bg-success/5 rounded-xl space-y-1">
-          <span className="text-[11px] font-bold text-success uppercase tracking-wider">Total Disbursed</span>
+          <span className="text-[11px] font-bold text-success">Total disbursed</span>
           <div className="text-xl font-bold text-success font-mono">
             ₹ {summary.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <span className="text-[10px] text-muted">{summary.paidPercent}% Released</span>
+          <span className="text-[11px] text-muted">{summary.paidPercent}% Released</span>
         </AppCard>
 
         <AppCard className="p-4 border border-warning/30 bg-warning/5 rounded-xl space-y-1">
-          <span className="text-[11px] font-bold text-warning uppercase tracking-wider">Pending Outlay</span>
+          <span className="text-[11px] font-bold text-warning">Pending outlay</span>
           <div className="text-xl font-bold text-warning font-mono">
             ₹ {summary.totalPending.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <span className="text-[10px] text-muted">Awaiting Release</span>
+          <span className="text-[11px] text-muted">Awaiting release</span>
         </AppCard>
 
         <AppCard className="p-4 border border-danger/30 bg-danger/5 rounded-xl space-y-1">
-          <span className="text-[11px] font-bold text-danger uppercase tracking-wider">Overdue Payments</span>
+          <span className="text-[11px] font-bold text-danger">Overdue payments</span>
           <div className="text-xl font-bold text-danger font-mono">
             ₹ {summary.totalOverdue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <span className="text-[10px] text-danger font-semibold">{summary.overdueCount} Overdue Item(s)</span>
+          <span className="text-[11px] text-danger font-semibold">{summary.overdueCount} Overdue Item(s)</span>
         </AppCard>
       </div>
 
       {/* Invoice Ledger */}
       <div className="space-y-3">
         {loading ? (
-          <div className="flex justify-center p-8"><ChandakLoader size="sm" title="Loading invoices..." /></div>
+          <div className="flex justify-center p-8"><ChandakLoader size="sm" title="Loading invoices…" /></div>
         ) : invoices.length === 0 ? (
           <div className="p-10 text-center text-muted italic rounded-2xl border bg-elevated/40 border-border space-y-2">
             <Receipt className="h-8 w-8 text-muted mx-auto opacity-50" />
@@ -291,26 +293,26 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                     {getStatusBadge(inv.status, inv.due_date)}
                     <span className="font-bold text-sm text-foreground">{inv.description || "Scheduled Tranche"}</span>
                     {inv.payment_type && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
                         {inv.payment_type}
                       </span>
                     )}
                     {inv.payment_method && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-elevated text-muted border border-border">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-elevated text-muted border border-border">
                         {inv.payment_method}
                       </span>
                     )}
                   </div>
                   <div className="text-xs text-muted flex items-center gap-4 flex-wrap">
-                    <span>Due: <strong className="text-foreground">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : 'N/A'}</strong></span>
+                    <span>Due: <strong className="text-foreground">{inv.due_date ? formatDate(inv.due_date) : 'N/A'}</strong></span>
                     {inv.invoice_number && <span>Invoice #: <strong className="text-foreground font-mono">{inv.invoice_number}</strong></span>}
-                    {inv.payment_date && <span className="text-success font-semibold">Paid On: {new Date(inv.payment_date).toLocaleDateString()}</span>}
+                    {inv.payment_date && <span className="text-success font-semibold">Paid On: {formatDate(inv.payment_date)}</span>}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between sm:justify-end gap-5 border-t sm:border-t-0 pt-3 sm:pt-0 border-border/50">
                   <div className="text-right">
-                    <div className="font-black text-lg font-mono text-foreground">
+                    <div className="font-semibold text-lg font-mono text-foreground">
                       ₹ {(parseFloat(inv.amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </div>
@@ -327,11 +329,11 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                         {processingId === inv.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Mark Paid"}
                       </AppButton>
                     )}
-                    <AppButton 
+                    <AppButton aria-label="Delete entry" 
                       variant="secondary" 
                       onClick={() => handleDelete(inv.id)} 
                       className="p-2 h-8 w-8 text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                      title="Delete Entry"
+                      title="Delete entry"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </AppButton>
@@ -345,34 +347,34 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
 
       {/* Schedule Payment Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-2xl p-6 bg-surface border border-border shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg rounded-2xl p-6 bg-surface border border-border shadow-lg space-y-5 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-theme-btn-primary/10 text-theme-icon">
+                <div className="p-2 rounded-xl bg-accent-soft text-theme-icon">
                   <Plus className="h-4 w-4" />
                 </div>
-                <h3 className="text-base font-bold text-foreground">Schedule Payment / Invoice</h3>
+                <h3 className="text-base font-bold text-foreground">Schedule payment / invoice</h3>
               </div>
-              <AppButton variant="ghost" size="sm" onClick={() => setShowAddModal(false)} className="p-1 rounded-full">
+              <AppButton aria-label="Close" variant="ghost" size="sm" onClick={() => setShowAddModal(false)} className="p-1 rounded-full">
                 <X className="h-5 w-5" />
               </AppButton>
             </div>
 
             <form onSubmit={handleCreateInvoice} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Tranche Description</label>
+                <label className="text-xs font-semibold text-muted">Tranche description</label>
                 <AppInput 
                   value={formDescription} 
                   onChange={(e) => setFormDescription(e.target.value)} 
-                  placeholder="e.g., Phase 1 Advance / Annual Subscription Renewal Tranche"
+                  placeholder="e.g., phase 1 advance / annual subscription renewal tranche"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">Amount (₹)</label>
+                  <label className="text-xs font-semibold text-muted">Amount (₹)</label>
                   <AppInput 
                     type="number"
                     step="0.01"
@@ -384,7 +386,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">Due / Target Date</label>
+                  <label className="text-xs font-semibold text-muted">Due / target date</label>
                   <AppInput 
                     type="date"
                     value={formDueDate} 
@@ -396,7 +398,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">Invoice / PO Number</label>
+                  <label className="text-xs font-semibold text-muted">Invoice / PO number</label>
                   <AppInput 
                     value={formInvoiceNumber} 
                     onChange={(e) => setFormInvoiceNumber(e.target.value)} 
@@ -404,22 +406,22 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">Payment Method</label>
+                  <label className="text-xs font-semibold text-muted">Payment method</label>
                   <select
                     value={formPaymentMethod}
                     onChange={(e) => setFormPaymentMethod(e.target.value)}
                     className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-xs font-medium outline-none"
                   >
-                    <option value="NEFT / RTGS">NEFT / RTGS</option>
-                    <option value="Corporate Credit Card">Corporate Credit Card</option>
-                    <option value="Wire Transfer">Wire Transfer</option>
-                    <option value="Cheque / Draft">Cheque / Draft</option>
+                    <option value="NEFT / RTGS">Neft / rtgs</option>
+                    <option value="Corporate Credit Card">Corporate credit card</option>
+                    <option value="Wire Transfer">Wire transfer</option>
+                    <option value="Cheque / Draft">Cheque / draft</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                <label className="text-xs font-semibold text-muted">
                   Status <span className="text-danger">*</span>
                 </label>
                 <select
@@ -428,11 +430,11 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                   className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-xs font-medium outline-none"
                   required
                 >
-                  <option value="" disabled>Select Status</option>
+                  <option value="" disabled>Select status</option>
                   <option value="Pending">Pending</option>
                   <option value="Paid">Paid</option>
-                  <option value="Partially Paid">Partially Paid</option>
-                  <option value="On Hold">On Hold</option>
+                  <option value="Partially Paid">Partially paid</option>
+                  <option value="On Hold">On hold</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
               </div>

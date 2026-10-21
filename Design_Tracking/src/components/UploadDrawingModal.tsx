@@ -193,15 +193,15 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
 
   return (
     <TransactionFormLayout
-      title="Upload Drawing Sheet"
+      title="Upload drawing sheet"
       badge="Drawing Register Transaction"
       category="Design Tracking"
       icon={Upload}
-      iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+      iconBg="bg-success-soft text-success-text border-success-border"
       description="Register new CAD, DWG, DXF, STEP, or PDF revision into the official drawing control register."
       breadcrumbs={[
         { label: "Drawing Register", onClick: onClose },
-        { label: "Upload Drawing Sheet" }
+        { label: "Upload drawing sheet" }
       ]}
       onBack={onClose}
       backLabel="Back to Drawing Register"
@@ -214,7 +214,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
     >
       <div className="space-y-6 max-w-4xl">
         {uploadError && (
-          <div className="p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+          <div className="p-3.5 rounded-xl border border-danger-border bg-danger-soft text-danger-text text-xs font-semibold flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{uploadError}</span>
           </div>
@@ -224,14 +224,14 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
         <AppCard className="border-border shadow-xs">
           <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
             <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Project & Discipline Classification</span>
+              <Building2 className="h-4 w-4 text-success-text" />
+              <span>Project & discipline classification</span>
             </AppCardTitle>
           </AppCardHeader>
           <AppCardContent className="p-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Target Project *</label>
+                <label className="text-xs font-bold text-foreground">Target project *</label>
                 <select
                   value={project}
                   onChange={(e) => setProject(e.target.value)}
@@ -244,7 +244,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Engineering Discipline *</label>
+                <label className="text-xs font-bold text-foreground">Engineering discipline *</label>
                 <select
                   value={discipline}
                   onChange={(e) => setDiscipline(e.target.value as DesignDiscipline)}
@@ -252,12 +252,12 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                 >
                   <option value="Architectural">Architectural (General Arrangement)</option>
                   <option value="Structural">Structural (RCC & Steel)</option>
-                  <option value="MEP">MEP (Mech / Elec / Plumbing / HVAC)</option>
-                  <option value="Civil">Civil / Infrastructure & Site Grading</option>
-                  <option value="Façade">Façade & Curtain Wall Detailing</option>
-                  <option value="Landscape">Landscape & Hardscape Works</option>
-                  <option value="Interior">Interior / Common Area Finishes</option>
-                  <option value="BIM">BIM & 3D Clash Coordination</option>
+                  <option value="MEP">MEP (mech / elec / plumbing / HVAC)</option>
+                  <option value="Civil">Civil / infrastructure & site grading</option>
+                  <option value="Façade">Façade & curtain wall detailing</option>
+                  <option value="Landscape">Landscape & hardscape works</option>
+                  <option value="Interior">Interior / common area finishes</option>
+                  <option value="BIM">BIM & 3d clash coordination</option>
                 </select>
               </div>
             </div>
@@ -268,14 +268,14 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
         <AppCard className="border-border shadow-xs">
           <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
             <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-              <Tag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Drawing Sheet Identification</span>
+              <Tag className="h-4 w-4 text-success-text" />
+              <span>Drawing sheet identification</span>
             </AppCardTitle>
           </AppCardHeader>
           <AppCardContent className="p-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-2 space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Drawing Sheet Code *</label>
+                <label className="text-xs font-bold text-foreground">Drawing sheet code *</label>
                 <input
                   type="text"
                   required
@@ -300,31 +300,31 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Drawing Title / Description *</label>
+              <label className="text-xs font-bold text-foreground">Drawing title / description *</label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Tower 1 - Typical Floor Architectural General Arrangement Plan"
+                placeholder="e.g. Tower 1 - typical floor architectural general arrangement plan"
                 className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Consultant / Firm Author</label>
+                <label className="text-xs font-bold text-foreground">Consultant / firm author</label>
                 <input
                   type="text"
                   value={consultant}
                   onChange={(e) => setConsultant(e.target.value)}
-                  placeholder="e.g. Hafeez Contractor / MEP Design Partners"
+                  placeholder="e.g. Hafeez contractor / MEP design partners"
                   className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">File Size Indicator</label>
+                <label className="text-xs font-bold text-foreground">File size indicator</label>
                 <input
                   type="text"
                   value={fileSize}
@@ -336,12 +336,12 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Revision Change Summary & Markup Notes</label>
+              <label className="text-xs font-bold text-foreground">Revision change summary & markup notes</label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Detail key structural revisions, grid changes, clash resolution fixes..."
+                placeholder="Detail key structural revisions, grid changes, clash resolution fixes…"
                 className="w-full rounded-xl border border-border bg-background p-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
               />
             </div>
@@ -353,8 +353,8 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
             <AppCardTitle className="text-sm font-bold flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Digital CAD / PDF File Attachment</span>
+                <FileText className="h-4 w-4 text-success-text" />
+                <span>Digital CAD / PDF file attachment</span>
               </div>
               <span className="text-[11px] font-normal text-muted-foreground">
                 Supported: PDF, DWG, DXF, STEP, STP, STL, ZIP, PNG, JPG
@@ -386,7 +386,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                     : "border-border hover:border-primary/50 hover:bg-muted/10 bg-muted/5"
                 }`}
               >
-                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/20">
+                <div className="h-12 w-12 rounded-2xl bg-success-soft text-success-text flex items-center justify-center mx-auto border border-success-border">
                   <Upload className="h-6 w-6" />
                 </div>
                 <div>
@@ -401,7 +401,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             ) : (
               <div className="p-4 rounded-xl border border-border bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                  <div className="h-10 w-10 rounded-xl bg-success-soft text-success-text flex items-center justify-center shrink-0 border border-success-border">
                     <Paperclip className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
@@ -411,8 +411,8 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                     <div className="text-[11px] text-muted-foreground font-mono flex items-center gap-2 mt-0.5">
                       <span>{fileSize}</span>
                       <span>•</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 font-semibold">
-                        <CheckCircle2 className="h-3 w-3" /> Ready for Upload
+                      <span className="text-success-text flex items-center gap-0.5 font-semibold">
+                        <CheckCircle2 className="h-3 w-3" /> Ready for upload
                       </span>
                     </div>
                   </div>
@@ -440,10 +440,10 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                     <span>Download</span>
                   </button>
 
-                  <button
+                  <button aria-label="Remove selected file"
                     type="button"
                     onClick={() => handleFileChange(null)}
-                    className="h-8 w-8 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                    className="h-8 w-8 rounded-lg hover:bg-danger-soft text-muted-foreground hover:text-danger-text inline-flex items-center justify-center transition-colors cursor-pointer"
                     title="Remove selected file"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

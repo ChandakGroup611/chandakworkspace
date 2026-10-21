@@ -301,8 +301,8 @@ export function MyPortfolioSection() {
                 <Briefcase className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-foreground tracking-tight">
-                  My Portfolio & User Analytics
+                <h2 className="text-xl font-semibold text-foreground tracking-tight">
+                  My portfolio & user analytics
                 </h2>
                 <p className="text-xs text-muted">
                   Personal, team & comparative operational health metrics with timeline revision analysis
@@ -322,13 +322,13 @@ export function MyPortfolioSection() {
               className={cn(
                 "font-bold transition-all shadow-sm",
                 compareMode 
-                  ? "bg-gradient-to-r from-theme-btn-primary to-indigo-600 ring-2 ring-theme-btn-primary/30" 
+                  ? "bg-gradient-to-r from-theme-btn-primary to-primary ring-2 ring-theme-btn-primary/30" 
                   : "border-border/80 hover:border-theme-btn-primary"
               )}
             >
               {compareMode ? "Compare Mode Active" : "Compare Users"}
               {compareMode && (
-                <span className="ml-1.5 px-1.5 py-0.2 bg-white/20 text-white rounded-full text-[10px]">
+                <span className="ml-1.5 px-1.5 py-0.2 bg-sunken text-white rounded-full text-[11px]">
                   ON
                 </span>
               )}
@@ -342,7 +342,7 @@ export function MyPortfolioSection() {
               onClick={() => refetch()}
               className="border-border/80 text-xs"
             >
-              Sync Live
+              Sync live
             </AppButton>
 
           </div>
@@ -355,50 +355,50 @@ export function MyPortfolioSection() {
           
           {/* 1. Date Range Preset */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
-              <Calendar className="h-3 w-3 text-theme-icon" /> Time Window
+            <label className="text-[11px] font-bold text-muted flex items-center gap-1">
+              <Calendar className="h-3 w-3 text-theme-icon" /> Time window
             </label>
             <select
               value={datePreset}
               onChange={(e) => setDatePreset(e.target.value as DatePreset)}
               className="w-full bg-background border border-border/80 rounded-lg px-3 py-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
             >
-              <option value="this_week">This Week (Mon - Sun)</option>
-              <option value="last_week">Last Week</option>
-              <option value="this_month">This Month (Current)</option>
-              <option value="last_month">Last Month</option>
-              <option value="last_30_days">Last 30 Days Rolling</option>
-              <option value="custom">Custom Date Range...</option>
-              <option value="all">All Time (No Constraint)</option>
+              <option value="this_week">This week (mon - sun)</option>
+              <option value="last_week">Last week</option>
+              <option value="this_month">This month (current)</option>
+              <option value="last_month">Last month</option>
+              <option value="last_30_days">Last 30 days rolling</option>
+              <option value="custom">Custom date range…</option>
+              <option value="all">All time (no constraint)</option>
             </select>
           </div>
 
           {/* 2. Scope / Entity Filter */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
-              <Layers className="h-3 w-3 text-theme-icon" /> Entity Scope
+            <label className="text-[11px] font-bold text-muted flex items-center gap-1">
+              <Layers className="h-3 w-3 text-theme-icon" /> Entity scope
             </label>
             <MultiSelectFilter
               options={SCOPE_OPTIONS}
               selectedValues={selectedScopes}
               onChange={setSelectedScopes}
-              placeholder="Scope Types"
+              placeholder="Scope types"
             />
           </div>
 
           {/* 3. User Selection */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
-                <Users className="h-3 w-3 text-theme-icon" /> Selected Users
+              <label className="text-[11px] font-bold text-muted flex items-center gap-1">
+                <Users className="h-3 w-3 text-theme-icon" /> Selected users
               </label>
-              <div className="flex items-center gap-1 text-[10px]">
+              <div className="flex items-center gap-1 text-[11px]">
                 <button
                   type="button"
                   onClick={handleSelectMe}
                   className="text-theme-icon hover:underline font-bold"
                 >
-                  Only Me
+                  Only me
                 </button>
                 <span className="text-muted">·</span>
                 <button
@@ -414,20 +414,20 @@ export function MyPortfolioSection() {
               options={userOptions}
               selectedValues={selectedUserIds}
               onChange={setSelectedUserIds}
-              placeholder="Select Users"
+              placeholder="Select users"
             />
           </div>
 
           {/* 4. Active Filter Summary */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
-              <SlidersHorizontal className="h-3 w-3 text-theme-icon" /> Filter Scope
+            <label className="text-[11px] font-bold text-muted flex items-center gap-1">
+              <SlidersHorizontal className="h-3 w-3 text-theme-icon" /> Filter scope
             </label>
             <div className="p-2 rounded-lg bg-background/60 border border-border/70 text-xs flex items-center justify-between">
               <span className="font-semibold text-foreground truncate max-w-[130px]">
                 {filteredItems.length} matching items
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-theme-btn-primary/15 text-theme-icon">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-soft text-theme-icon">
                 {activeUserCount} {activeUserCount === 1 ? "User" : "Users"}
               </span>
             </div>
@@ -439,7 +439,7 @@ export function MyPortfolioSection() {
         {datePreset === "custom" && (
           <div className="pt-3 border-t border-border/40 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in duration-300">
             <div>
-              <label className="text-[10px] font-bold text-muted uppercase">From Date</label>
+              <label className="text-[11px] font-bold text-muted">From date</label>
               <input
                 type="date"
                 value={customStartDate}
@@ -448,7 +448,7 @@ export function MyPortfolioSection() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-muted uppercase">To Date</label>
+              <label className="text-[11px] font-bold text-muted">To date</label>
               <input
                 type="date"
                 value={customEndDate}
@@ -484,23 +484,23 @@ export function MyPortfolioSection() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* KPI 1: CREATED IN PERIOD (WITH SEGREGATED SCOPE BREAKDOWN) */}
-        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group hover:-translate-y-0.5 transition-transform">
+        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Created in Period</span>
-              <div className="text-3xl font-black text-foreground mt-1 tracking-tight">
+              <span className="text-[11px] font-bold text-muted">Created in period</span>
+              <div className="text-3xl font-semibold text-foreground mt-1 tracking-tight">
                 {kpis.createdCount}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-theme-btn-primary/10 text-theme-icon">
+            <div className="p-2.5 rounded-xl bg-accent-soft text-theme-icon">
               <Sparkles className="h-5 w-5" />
             </div>
           </div>
 
           <div className="mt-4 pt-3 border-t border-border/40 space-y-1">
-            <span className="text-[10px] text-muted font-semibold uppercase tracking-wider">Segregated Counts:</span>
+            <span className="text-[11px] text-muted font-semibold">Segregated Counts:</span>
             <div className="flex items-center gap-2 flex-wrap text-[11px]">
-              <span className="text-blue-500 font-semibold">{kpis.createdByModule.Tasks} Tasks</span>
+              <span className="text-info-text font-semibold">{kpis.createdByModule.Tasks} Tasks</span>
               <span className="text-muted">·</span>
               <span className="text-theme-icon font-semibold">{kpis.createdByModule["Sub Tasks"]} Subtasks</span>
               <span className="text-muted">·</span>
@@ -510,11 +510,11 @@ export function MyPortfolioSection() {
         </AppCard>
 
         {/* KPI 2: CLOSED / COMPLETED IN PERIOD */}
-        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group hover:-translate-y-0.5 transition-transform">
+        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[11px] font-bold text-success uppercase tracking-wider">Closed / Completed</span>
-              <div className="text-3xl font-black text-success mt-1 tracking-tight">
+              <span className="text-[11px] font-bold text-success">Closed / completed</span>
+              <div className="text-3xl font-semibold text-success mt-1 tracking-tight">
                 {kpis.closedCount}
               </div>
             </div>
@@ -532,11 +532,11 @@ export function MyPortfolioSection() {
         </AppCard>
 
         {/* KPI 3: OVERDUE TASK COUNT */}
-        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group hover:-translate-y-0.5 transition-transform">
+        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[11px] font-bold text-danger uppercase tracking-wider">Currently Overdue</span>
-              <div className="text-3xl font-black text-danger mt-1 tracking-tight">
+              <span className="text-[11px] font-bold text-danger">Currently overdue</span>
+              <div className="text-3xl font-semibold text-danger mt-1 tracking-tight">
                 {kpis.overdueCount}
               </div>
             </div>
@@ -546,7 +546,7 @@ export function MyPortfolioSection() {
           </div>
 
           <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
-            <span className="text-muted">Active Overdue Risk:</span>
+            <span className="text-muted">Active overdue risk:</span>
             <span className="font-bold text-danger">
               {kpis.overdueCount > 0 ? "Action Required" : "All Clear"}
             </span>
@@ -554,15 +554,15 @@ export function MyPortfolioSection() {
         </AppCard>
 
         {/* KPI 4: DUE BUT NOT COMPLETED IN PERIOD */}
-        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group hover:-translate-y-0.5 transition-transform">
+        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Due But Not Done (Period)</span>
-              <div className="text-3xl font-black text-amber-500 mt-1 tracking-tight">
+              <span className="text-[11px] font-bold text-warning-text">Due but not done (period)</span>
+              <div className="text-3xl font-semibold text-warning-text mt-1 tracking-tight">
                 {kpis.dueNotCompletedCount}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500">
+            <div className="p-2.5 rounded-xl bg-warning-soft text-warning-text">
               <Clock className="h-5 w-5" />
             </div>
           </div>

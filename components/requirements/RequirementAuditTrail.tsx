@@ -5,6 +5,7 @@ import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from '@/componen
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { Activity, Clock, CheckCircle2, AlertCircle, PlayCircle, Send } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { formatDateTime } from "@/components/ui/data";
 
 export function RequirementAuditTrail({ requirementId }: { requirementId: string }) {
   const { isLight: isLightMode } = useTheme();
@@ -33,8 +34,8 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
   }
 
   const getEventIcon = (type: string) => {
-    if (type.includes('APPROVAL')) return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-    if (type.includes('ESCALATION')) return <AlertCircle className="w-4 h-4 text-red-500" />;
+    if (type.includes('APPROVAL')) return <CheckCircle2 className="w-4 h-4 text-success-text" />;
+    if (type.includes('ESCALATION')) return <AlertCircle className="w-4 h-4 text-danger-text" />;
     if (type.includes('INITIATED') || type.includes('CREATED')) return <PlayCircle className="w-4 h-4 text-theme-icon" />;
     return <Activity className="w-4 h-4 text-theme-icon" />;
   };
@@ -44,7 +45,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
       <AppCardHeader className={`border-b bg-elevated border-border`}>
         <div className="flex items-center gap-2">
           <Clock className={`w-4 h-4 text-theme-icon`} />
-          <AppCardTitle className={"text-foreground"}>Governance Audit Trail</AppCardTitle>
+          <AppCardTitle className={"text-foreground"}>Governance audit trail</AppCardTitle>
         </div>
       </AppCardHeader>
       
@@ -59,7 +60,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
               {events.map((ev, idx) => (
                 <div key={ev.id} className="relative pl-6 group">
                   {/* Timeline Dot */}
-                  <div className={`absolute -left-[9px] top-1 rounded-full border-2 ${ "theme-card-structural border-indigo-100" } p-0.5 group-hover:scale-110 transition-transform`}>
+                  <div className={`absolute -left-[9px] top-1 rounded-full border-2 ${ "theme-card-structural border-border" } p-0.5 transition-transform`}>
                     {getEventIcon(ev.event_type)}
                   </div>
 
@@ -68,8 +69,8 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
                       <h4 className={`text-sm font-bold text-foreground`}>
                         {ev.event_type.replace(/_/g, ' ')}
                       </h4>
-                      <span className={`text-[10px] font-medium text-muted`}>
-                        {new Date(ev.performed_at || ev.created_at).toLocaleString()}
+                      <span className={`text-[11px] font-medium text-muted`}>
+                        {formatDateTime(ev.performed_at || ev.created_at)}
                       </span>
                     </div>
 
@@ -78,8 +79,8 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
                     </p>
 
                     {ev.new_value?.level && (
-                      <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold w-fit ${
-                        "bg-theme-btn-primary/10 text-theme-icon"
+                      <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold w-fit ${
+                        "bg-accent-soft text-theme-icon"
                       }`}>
                         Level {ev.new_value.level}
                       </div>

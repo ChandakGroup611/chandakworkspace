@@ -15,7 +15,8 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { QuickApprovalModal } from "@/components/requirements/QuickApprovalModal";
 import ChandakLoader from "@/components/ui/ChandakLoader";
-import { formatDate } from "@/components/ui/data";
+import { formatDate, StatusBadge, PriorityIndicator, UserCell } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface RequirementItem {
   id: string;
@@ -133,7 +134,7 @@ export default function RequirementsPage() {
             const levels = d.requirement_approval_flow.map((f: any) => f?.level).filter((l: any) => typeof l === 'number');
             const totalLevels = levels.length > 0 ? Math.max(...levels) : 1;
             if (pendingLevel) {
-              statusStr = `${statusStr.toUpperCase()} (L${pendingLevel}/${totalLevels})`;
+              statusStr = `${statusStr} · level ${pendingLevel} of ${totalLevels}`;
             }
           }
         }
@@ -220,26 +221,41 @@ export default function RequirementsPage() {
     }
   }, [mounted]);
 
+  // "Pending Approval · level 1 of 2" → "Pending Approval". Multi-level items previously never matched
+  // the exact "Pending Approval" check, so their "Process approval" button and badge colour were missing.
+  const baseStatus = (st: string) => (st || "").split(" · ")[0];
+  const isPending = (st: string) => ["pending approval", "pending"].includes(baseStatus(st).toLowerCase());
+  const visibleReqs = reqs.filter(r => {
+    // If they are not Super Admin and not Creator, only show if they are the current approver OR their department is the current approver
+    if (!isSuperAdmin && (r as any).currentApproverId !== currentUserId && (r as any).currentApproverId !== currentUserDepartmentId && (r as any).createdById !== currentUserId) return false;
+    if (filter.search && !r.title.toLowerCase().includes(filter.search.toLowerCase()) && !r.id.toLowerCase().includes(filter.search.toLowerCase())) return false;
+    if (filter.system && r.softwareSystem !== filter.system) return false;
+    if (filter.priority && r.priority !== filter.priority) return false;
+    if (filter.department && r.department !== filter.department) return false;
+    if (filter.status && r.approvalStatus !== filter.status) return false;
+    return true;
+  });
+  const waitingOnMe = visibleReqs.filter(r => isPending(r.approvalStatus) && (isSuperAdmin || (r as any).currentApproverId === currentUserId)).length;
+  const optionList = (vals: string[]) => Array.from(new Set(vals.filter(v => v && v !== '-'))).sort();
+  const labelCls = "mb-1.5 block text-[13px] font-medium text-subtle";
+  const iconBtn = "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground";
+
   if (!mounted || permsLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-background">
-        <ChandakLoader
-          size="lg"
-          title="Verifying Permissions..."
-          subtitle="Loading requirement approvals"
-        />
+      <div className="flex h-[60vh] flex-col items-center justify-center">
+        <ChandakLoader size="lg" title="Loading approvals…" />
       </div>
     );
   }
 
   if (!hasPermission("REQUIREMENTS_APPROVALS_VIEW")) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background text-foreground">
-        <div className="p-4 rounded-full bg-danger-soft border border-danger/30 text-danger">
-          <ShieldAlert className="h-10 w-10" />
+      <div className="flex h-[60vh] flex-col items-center justify-center space-y-3 text-center text-foreground">
+        <div className="rounded-full bg-warning-soft p-3 text-warning-text">
+          <ShieldAlert className="h-6 w-6" aria-hidden />
         </div>
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view the Requirement Module.</p>
+        <h2 className="text-[15px] font-semibold text-heading">You don't have access to requirement approvals</h2>
+        <p className="text-[13px] text-muted">Ask your administrator to grant Requirement approvals access in RBAC access policies.</p>
       </div>
     );
   }
@@ -247,206 +263,148 @@ export default function RequirementsPage() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Requirement Approvals"
-        badge={<AppBadge variant="warning">Action Required</AppBadge>}
+        title="Requirement approvals"
+        description={waitingOnMe > 0 ? `${waitingOnMe} ${waitingOnMe === 1 ? "requirement is" : "requirements are"} waiting for your decision` : "Nothing is waiting for your decision right now"}
+        breadcrumbs={[{ label: "Requirements", href: "/requirements" }, { label: "Approvals" }]}
         actions={
-          <>
-            <Link href="/">
-              <AppButton type="button" variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
-                Back
-              </AppButton>
-            </Link>
-            <AppButton 
-              type="button"
-              variant="outline" 
-              size="sm" 
-              leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loadingReqs ? 'animate-spin' : ''}`} />}
-              onClick={loadRequirements}
-            >
-              Refresh
-            </AppButton>
-          </>
+          <AppButton
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Refresh approvals"
+            title="Refresh"
+            onClick={loadRequirements}
+          >
+            <RefreshCw className={`h-4 w-4 ${loadingReqs ? 'animate-spin' : ''}`} />
+          </AppButton>
         }
       />
 
-      {/* Filters */}
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3 px-1">
-        <div>
-          <label className="theme-label block mb-1 ml-1">Search</label>
-          <AppInput 
-            placeholder="Search by Title or Req #..." 
-            value={filter.search}
-            onChange={(e: any) => setFilter(f => ({ ...f, search: e.target.value }))}
-          />
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="theme-card-structural grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div>
+            <label htmlFor="ap-search" className={labelCls}>Search</label>
+            <AppInput
+              id="ap-search"
+              type="search"
+              placeholder="Title or requirement code"
+              value={filter.search}
+              onChange={(e: any) => setFilter(f => ({ ...f, search: e.target.value }))}
+            />
+          </div>
+          {([
+            ["system", "System", optionList(reqs.map(r => r.softwareSystem)), "All systems"],
+            ["priority", "Priority", optionList(reqs.map(r => r.priority)), "All priorities"],
+            ["department", "Department", optionList(reqs.map(r => r.department)), "All departments"],
+            ["status", "Status", optionList(reqs.map(r => r.approvalStatus)), "All statuses"],
+          ] as const).map(([key, label, opts, all]) => (
+            <div key={key}>
+              <label htmlFor={`ap-${key}`} className={labelCls}>{label}</label>
+              <select
+                id={`ap-${key}`}
+                className="h-9 w-full px-3 text-[13.5px]"
+                value={(filter as any)[key]}
+                onChange={(e: any) => setFilter(f => ({ ...f, [key]: e.target.value }))}
+              >
+                <option value="">{all}</option>
+                {opts.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+          ))}
         </div>
-        <div>
-          <label className="theme-label block mb-1 ml-1">System</label>
-          <select 
-            className="w-full text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary outline-none"
-            value={filter.system}
-            onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
-          >
-            <option value="">ALL</option>
-            {Array.from(new Set(reqs.map(r => r.softwareSystem).filter(s => s !== '-'))).map(sys => (
-              <option key={sys} value={sys}>{sys}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="theme-label block mb-1 ml-1">Priority</label>
-          <select 
-            className="w-full text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary outline-none"
-            value={filter.priority}
-            onChange={(e: any) => setFilter(f => ({ ...f, priority: e.target.value }))}
-          >
-            <option value="">ALL</option>
-            {Array.from(new Set(reqs.map(r => r.priority).filter(p => p !== '-'))).map(pri => (
-              <option key={pri} value={pri}>{pri}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="theme-label block mb-1 ml-1">Department</label>
-          <select 
-            className="w-full text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary outline-none"
-            value={filter.department}
-            onChange={(e: any) => setFilter(f => ({ ...f, department: e.target.value }))}
-          >
-            <option value="">ALL</option>
-            {Array.from(new Set(reqs.map(r => r.department).filter(d => d !== '-'))).map(dep => (
-              <option key={dep} value={dep}>{dep}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="theme-label block mb-1 ml-1">Status</label>
-          <select 
-            className="w-full text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary outline-none"
-            value={filter.status}
-            onChange={(e: any) => setFilter(f => ({ ...f, status: e.target.value }))}
-          >
-            <option value="">ALL</option>
-            {Array.from(new Set(reqs.map(r => r.approvalStatus))).map(st => (
-              <option key={st} value={st}>{st}</option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      <div className="mt-4 flex-1 overflow-hidden flex flex-col min-h-0">
-        <AppTableContainer className="flex-1 overflow-y-auto">
-          <AppTable>
-            <AppTableHeader>
-              <AppTableRow>
-                <AppTableHead>Req #</AppTableHead>
-                <AppTableHead>Title</AppTableHead>
-                <AppTableHead>System</AppTableHead>
-                <AppTableHead>Module</AppTableHead>
-                <AppTableHead>Submodule</AppTableHead>
-                <AppTableHead>Particulars</AppTableHead>
-                <AppTableHead>Priority</AppTableHead>
-                <AppTableHead>Department</AppTableHead>
-                <AppTableHead>Created By</AppTableHead>
-                <AppTableHead>Created Date</AppTableHead>
-                <AppTableHead>Approval</AppTableHead>
-                <AppTableHead className="w-24 text-center">Action</AppTableHead>
-              </AppTableRow>
-            </AppTableHeader>
-            <AppTableBody>
-              {reqs.filter(r => {
-                // If they are not Super Admin and not Creator, only show if they are the current approver OR their department is the current approver
-                if (!isSuperAdmin && (r as any).currentApproverId !== currentUserId && (r as any).currentApproverId !== currentUserDepartmentId && (r as any).createdById !== currentUserId) return false;
-                if (filter.search && !r.title.toLowerCase().includes(filter.search.toLowerCase()) && !r.id.toLowerCase().includes(filter.search.toLowerCase())) return false;
-                if (filter.system && r.softwareSystem !== filter.system) return false;
-                if (filter.priority && r.priority !== filter.priority) return false;
-                if (filter.department && r.department !== filter.department) return false;
-                if (filter.status && r.approvalStatus !== filter.status) return false;
-                return true;
-              }).length === 0 ? (
-                <AppTableRow>
-                  <AppTableCell colSpan={12} className="text-center py-8 text-muted">
-                    {loadingReqs ? "Loading approvals..." : "No pending approvals found."}
-                  </AppTableCell>
-                </AppTableRow>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {visibleReqs.length === 0 ? (
+            <div className="theme-card-structural">
+              {loadingReqs ? (
+                <div className="flex h-48 items-center justify-center"><ChandakLoader size="md" title="Loading approvals…" /></div>
               ) : (
-                reqs.filter(r => {
-                  if (!isSuperAdmin && (r as any).currentApproverId !== currentUserId && (r as any).currentApproverId !== currentUserDepartmentId && (r as any).createdById !== currentUserId) return false;
-                  if (filter.search && !r.title.toLowerCase().includes(filter.search.toLowerCase()) && !r.id.toLowerCase().includes(filter.search.toLowerCase())) return false;
-                  if (filter.system && r.softwareSystem !== filter.system) return false;
-                  if (filter.priority && r.priority !== filter.priority) return false;
-                  if (filter.department && r.department !== filter.department) return false;
-                  if (filter.status && r.approvalStatus !== filter.status) return false;
-                  return true;
-                }).map((r) => (
-                  <AppTableRow 
-                    key={r.id} 
-                    className="cursor-pointer hover:bg-surface-hover transition-colors"
-                    onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis&from=approvals`)}
-                  >
-                    <AppTableCell className="font-mono text-xs font-bold text-foreground">{r.id}</AppTableCell>
-                    <AppTableCell className="font-medium text-sm max-w-[200px] truncate" title={r.title}>{r.title}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.softwareSystem}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.module}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.subModule}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.subCategory}</AppTableCell>
-                    <AppTableCell>
-                      {r.priority !== '-' ? (
-                        <AppBadge 
-                          variant="custom"
-                          customColor={r.priorityColor || 'var(--muted)'}
-                          className="text-[10px]"
-                        >
-                          {r.priority}
-                        </AppBadge>
-                      ) : (
-                        <span className="text-muted">-</span>
-                      )}
-                    </AppTableCell>
-                    <AppTableCell className="text-xs">{r.department}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.createdBy}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.createdAt}</AppTableCell>
-                    <AppTableCell>
-                       <AppBadge variant={r.approvalStatus === 'Approved' ? 'success' : r.approvalStatus === 'Rejected' ? 'danger' : r.approvalStatus === 'Pending Approval' ? 'warning' : 'neutral'}>
-                         {r.approvalStatus}
-                       </AppBadge>
-                    </AppTableCell>
-                    <AppTableCell>
-                      <div className="flex items-center justify-center gap-0">
-                        <AppButton 
-                          type="button"
-                          variant="ghost" 
-                          size="sm" 
-                          title="View Business Analysis"
-                          aria-label="View Business Analysis"
-                          onClick={(e) => { e.stopPropagation(); router.push(`/requirements/${r.dbId}?tab=analysis`); }}
-                          className="text-muted hover:text-theme-icon"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </AppButton>
-                        {r.approvalStatus === 'Pending Approval' && (isSuperAdmin || (r as any).currentApproverId === currentUserId) && (
-                          <AppButton 
-                            type="button"
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={(e: any) => {
-                              e.stopPropagation();
-                              router.push(`/requirements/${r.dbId}?tab=analysis&from=approvals`);
-                            }}
-                            className="text-warning hover:text-warning hover:bg-warning-soft"
-                            title="Process Approval"
-                            aria-label="Process Approval"
-                          >
-                            <ShieldAlert className="h-4 w-4" />
-                          </AppButton>
-                        )}
-                      </div>
-                    </AppTableCell>
-                  </AppTableRow>
-                ))
+                <EmptyState
+                  kind="no-results"
+                  title="No requirements to approve"
+                  description="Requirements waiting for you, or raised by you, appear here."
+                />
               )}
-            </AppTableBody>
-          </AppTable>
-        </AppTableContainer>
+            </div>
+          ) : (
+            <AppTableContainer className="flex-1 overflow-auto">
+              <AppTable>
+                <AppTableHeader>
+                  <AppTableRow>
+                    <AppTableHead>Requirement</AppTableHead>
+                    <AppTableHead className="min-w-[220px]">Title</AppTableHead>
+                    <AppTableHead>System</AppTableHead>
+                    <AppTableHead>Module</AppTableHead>
+                    <AppTableHead>Sub-module</AppTableHead>
+                    <AppTableHead>Particulars</AppTableHead>
+                    <AppTableHead>Priority</AppTableHead>
+                    <AppTableHead>Department</AppTableHead>
+                    <AppTableHead>Raised by</AppTableHead>
+                    <AppTableHead>Raised on</AppTableHead>
+                    <AppTableHead>Approval</AppTableHead>
+                    <AppTableHead className="w-28 text-right">Actions</AppTableHead>
+                  </AppTableRow>
+                </AppTableHeader>
+                <AppTableBody>
+                  {visibleReqs.map((r) => {
+                    const canProcess = isPending(r.approvalStatus) && (isSuperAdmin || (r as any).currentApproverId === currentUserId);
+                    return (
+                      <AppTableRow
+                        key={r.id}
+                        className="cursor-pointer"
+                        onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis&from=approvals`)}
+                      >
+                        <AppTableCell className="whitespace-nowrap font-mono text-[12.5px] font-medium text-accent-soft-text">{r.id}</AppTableCell>
+                        <AppTableCell className="max-w-[260px] truncate font-medium text-foreground" title={r.title}>{r.title}</AppTableCell>
+                        <AppTableCell className="text-subtle">{r.softwareSystem !== '-' ? r.softwareSystem : '—'}</AppTableCell>
+                        <AppTableCell className="text-subtle">{r.module !== '-' ? r.module : '—'}</AppTableCell>
+                        <AppTableCell className="text-subtle">{r.subModule !== '-' ? r.subModule : '—'}</AppTableCell>
+                        <AppTableCell className="text-subtle">{r.subCategory !== '-' ? r.subCategory : '—'}</AppTableCell>
+                        <AppTableCell>{r.priority !== '-' ? <PriorityIndicator priority={r.priority} /> : <span className="text-muted">—</span>}</AppTableCell>
+                        <AppTableCell className="text-subtle">{r.department !== '-' ? r.department : '—'}</AppTableCell>
+                        <AppTableCell><UserCell name={r.createdBy !== '-' ? r.createdBy : null} emptyLabel="—" /></AppTableCell>
+                        <AppTableCell className="whitespace-nowrap text-subtle tabular">{r.createdAt}</AppTableCell>
+                        <AppTableCell>
+                          <div className="flex flex-col items-start gap-0.5">
+                            <StatusBadge status={baseStatus(r.approvalStatus)} />
+                            {r.approvalStatus.includes(" · ") && <span className="text-[11.5px] text-muted">{r.approvalStatus.split(" · ")[1]}</span>}
+                          </div>
+                        </AppTableCell>
+                        <AppTableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              className={iconBtn}
+                              title="View business analysis"
+                              aria-label={`View business analysis for ${r.id}`}
+                              onClick={(e) => { e.stopPropagation(); router.push(`/requirements/${r.dbId}?tab=analysis`); }}
+                            >
+                              <Eye className="h-4 w-4" aria-hidden />
+                            </button>
+                            {canProcess && (
+                              <AppButton
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e: any) => {
+                                  e.stopPropagation();
+                                  router.push(`/requirements/${r.dbId}?tab=analysis&from=approvals`);
+                                }}
+                                aria-label={`Review and decide on ${r.id}`}
+                              >
+                                Review
+                              </AppButton>
+                            )}
+                          </div>
+                        </AppTableCell>
+                      </AppTableRow>
+                    );
+                  })}
+                </AppTableBody>
+              </AppTable>
+            </AppTableContainer>
+          )}
+        </div>
       </div>
     </PageContainer>
   );

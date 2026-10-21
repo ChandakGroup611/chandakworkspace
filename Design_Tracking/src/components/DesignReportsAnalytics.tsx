@@ -74,12 +74,12 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
       {/* Top Banner Strip */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20 shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-info-soft text-info-text flex items-center justify-center border border-info-border shrink-0">
             <LineChart className="h-4 w-4" />
           </div>
           <div>
             <h2 className="text-base font-bold text-foreground">
-              Design Analytics & Reports
+              Design analytics & reports
             </h2>
           </div>
         </div>
@@ -92,7 +92,7 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
               onClick={() => setTimeRange(range)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 timeRange === range
-                  ? "bg-emerald-600 text-white shadow-sm"
+                  ? "bg-success text-white shadow-sm"
                   : "bg-surface border border-border text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -106,52 +106,52 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span>Total Drawing Sheets</span>
-            <div className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <span>Total drawing sheets</span>
+            <div className="h-7 w-7 rounded-lg bg-info-soft text-info-text flex items-center justify-center">
               <BarChart3 className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <h3 className="text-2xl sm:text-3xl font-black text-foreground">{totalDrawings}</h3>
+            <h3 className="text-2xl sm:text-3xl font-semibold text-foreground">{totalDrawings}</h3>
             <span className="text-[11px] text-muted-foreground">Across all active developments</span>
           </div>
         </div>
 
         <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span>GFC Release Rate</span>
-            <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <span>GFC release rate</span>
+            <div className="h-7 w-7 rounded-lg bg-success-soft text-success-text flex items-center justify-center">
               <TrendingUp className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <h3 className="text-2xl sm:text-3xl font-black text-emerald-500 font-mono">{gfcApprovalRate}%</h3>
+            <h3 className="text-2xl sm:text-3xl font-semibold text-success-text font-mono">{gfcApprovalRate}%</h3>
             <span className="text-[11px] text-muted-foreground">{approvedGfc} of {totalDrawings} certified</span>
           </div>
         </div>
 
         <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span>Review Queue Active</span>
-            <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+            <span>Review queue active</span>
+            <div className="h-7 w-7 rounded-lg bg-warning-soft text-warning-text flex items-center justify-center">
               <Clock className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <h3 className="text-2xl sm:text-3xl font-black text-amber-500">{underReview}</h3>
+            <h3 className="text-2xl sm:text-3xl font-semibold text-warning-text">{underReview}</h3>
             <span className="text-[11px] text-muted-foreground">Average TAT: 3.2 days</span>
           </div>
         </div>
 
         <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span>Empanelled Partners</span>
+            <span>Empanelled partners</span>
             <div className="h-7 w-7 rounded-lg bg-surface text-theme-icon flex items-center justify-center">
               <Users className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <h3 className="text-2xl sm:text-3xl font-black text-theme-icon">{consultants.length}</h3>
+            <h3 className="text-2xl sm:text-3xl font-semibold text-theme-icon">{consultants.length}</h3>
             <span className="text-[11px] text-muted-foreground">Specialist firms engaged</span>
           </div>
         </div>
@@ -163,9 +163,9 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
         <div className="p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div>
-              <h4 className="text-sm font-bold text-foreground">Discipline-wise Delivery Progress</h4>
+              <h4 className="text-sm font-bold text-foreground">Discipline-wise delivery progress</h4>
             </div>
-            <span className="text-xs font-mono font-bold text-emerald-500">Live Metric</span>
+            <span className="text-xs font-mono font-bold text-success-text">Live metric</span>
           </div>
 
           <div className="space-y-3.5">
@@ -177,9 +177,9 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
                     <span className="text-foreground">{disc}</span>
                     <span className="text-muted-foreground font-mono">{stats.gfc} / {stats.total} GFC ({pct}%)</span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="w-full h-2 rounded-full bg-sunken overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500" 
+                      className="h-full bg-gradient-to-r from-success to-info rounded-full transition-all duration-500" 
                       style={{ width: `${pct}%` }} 
                     />
                   </div>
@@ -193,28 +193,28 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
         <div className="p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div>
-              <h4 className="text-sm font-bold text-foreground">Project Readiness Breakdown</h4>
+              <h4 className="text-sm font-bold text-foreground">Project readiness breakdown</h4>
             </div>
-            <Building2 className="h-4 w-4 text-blue-500" />
+            <Building2 className="h-4 w-4 text-info-text" />
           </div>
 
           <div className="space-y-3">
             {Object.keys(projectBreakdown).length === 0 ? (
-              <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 text-center text-muted-foreground text-xs">
+              <div className="p-4 rounded-xl bg-sunken text-center text-muted-foreground text-xs">
                 No project drawings recorded yet.
               </div>
             ) : (
               Object.entries(projectBreakdown).map(([proj, stats]) => {
                 const gfcPct = Math.round((stats.gfc / stats.total) * 100) || 0;
                 return (
-                  <div key={proj} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/60 flex items-center justify-between">
+                  <div key={proj} className="p-3 rounded-xl bg-sunken border border-border/60 flex items-center justify-between">
                     <div>
                       <h5 className="text-xs font-bold text-foreground">{proj}</h5>
-                      <span className="text-[11px] text-muted-foreground">{stats.total} Total Drawing Sheets</span>
+                      <span className="text-[11px] text-muted-foreground">{stats.total} Total drawing sheets</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400">{gfcPct}%</span>
-                      <span className="block text-[10px] text-muted-foreground font-medium">{stats.gfc} GFC Certified</span>
+                      <span className="text-sm font-semibold font-mono text-success-text">{gfcPct}%</span>
+                      <span className="block text-[11px] text-muted-foreground font-medium">{stats.gfc} GFC certified</span>
                     </div>
                   </div>
                 );
@@ -228,20 +228,20 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
       <div className="p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
-            <h4 className="text-sm font-bold text-foreground">Consultant Performance & TAT Scoreboard</h4>
+            <h4 className="text-sm font-bold text-foreground">Consultant performance & TAT scoreboard</h4>
           </div>
         </div>
 
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-xs border-collapse min-w-[850px]">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                <th className="p-3 whitespace-nowrap min-w-[200px]">Consultant Firm</th>
+              <tr className="bg-sunken border-b border-border text-[11px] text-muted-foreground font-semibold">
+                <th className="p-3 whitespace-nowrap min-w-[200px]">Consultant firm</th>
                 <th className="p-3 whitespace-nowrap min-w-[130px]">Category</th>
-                <th className="p-3 whitespace-nowrap min-w-[160px]">Lead Contact</th>
-                <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Sheets Submitted</th>
+                <th className="p-3 whitespace-nowrap min-w-[160px]">Lead contact</th>
+                <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Sheets submitted</th>
                 <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Average TAT</th>
-                <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Quality Rating</th>
+                <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Quality rating</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -253,10 +253,10 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
                 </tr>
               ) : (
                 consultants.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <tr key={c.id} className="hover:bg-sunken">
                     <td className="p-3 font-bold text-foreground whitespace-nowrap min-w-[200px]">{c.name}</td>
                     <td className="p-3 whitespace-nowrap min-w-[130px]">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
                         {c.category}
                       </span>
                     </td>
@@ -264,8 +264,8 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
                     <td className="p-3 text-center font-mono font-bold text-foreground whitespace-nowrap min-w-[120px]">{c.totalDrawingsSubmitted}</td>
                     <td className="p-3 text-center font-mono text-foreground whitespace-nowrap min-w-[120px]">{c.averageTatDays} days</td>
                     <td className="p-3 text-center whitespace-nowrap min-w-[120px]">
-                      <span className="inline-flex items-center gap-1 font-bold text-amber-500 text-xs whitespace-nowrap">
-                        <Star className="h-3.5 w-3.5 fill-amber-500" />
+                      <span className="inline-flex items-center gap-1 font-bold text-warning-text text-xs whitespace-nowrap">
+                        <Star className="h-3.5 w-3.5 fill-warning" />
                         <span>{c.rating}</span>
                       </span>
                     </td>

@@ -37,7 +37,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
 
   const handleFormSubmit = async (data: any) => {
     if (!data.priorityId) {
-      toast.warning("Operational Priority is mandatory. Please select a priority.");
+      toast.warning("Operational priority is mandatory. Please select a priority.");
       return;
     }
     setIsSubmitting(true);
@@ -201,7 +201,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
       title={
         <div className="flex items-center gap-3">
           {step === "FORM" && (
-            <AppButton 
+            <AppButton aria-label="Previous" 
               size="sm"
               variant="ghost"
               onClick={handleBack}
@@ -217,7 +217,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
         <div className="flex items-center gap-2 mt-1">
           <div className={`h-1.5 w-1.5 rounded-full ${step === "SCOPE" ? "bg-theme-btn-primary" : "bg-muted"}`} />
           <div className={`h-1.5 w-1.5 rounded-full ${step === "FORM" ? "bg-theme-btn-primary" : "bg-muted"}`} />
-          <span className="text-xs text-muted uppercase tracking-wider font-semibold ml-1">
+          <span className="text-xs text-muted font-semibold ml-1">
             {step === "SCOPE" ? "Step 1: Category" : `Step 2: ${scope?.name || scope?.code || 'Ticket'} Details`}
           </span>
         </div>
@@ -232,7 +232,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
           <div className="relative">
             {isSubmitting && (
               <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 rounded-xl">
-                <ChandakLoader size="sm" title="Submitting..." subtitle="Creating support ticket" />
+                <ChandakLoader size="sm" title="Submitting…" subtitle="Creating support ticket" />
               </div>
             )}
             {scope?.code === "INFRA" && <TicketFormInfra scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}

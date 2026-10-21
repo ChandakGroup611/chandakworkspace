@@ -419,23 +419,23 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
           {/* Top Header & Actions Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
+              <div className="h-10 w-10 rounded-xl bg-accent-soft text-theme-icon flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
                 <Compass className="h-5 w-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                    Design & Engineering Tracking
+                    Design & engineering tracking
                   </h1>
                   {isRestrictedProjectScope ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
                       <Building2 className="h-3 w-3" />
                       <span>Scoped: {accessibleProjects.map(p => p.name).join(", ")} ({accessibleProjects.length} Project{accessibleProjects.length > 1 ? "s" : ""})</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
                       <ShieldCheck className="h-3 w-3" />
-                      <span>Global Scope ({accessibleProjects.length} Projects)</span>
+                      <span>Global scope ({accessibleProjects.length} Projects)</span>
                     </span>
                   )}
                 </div>
@@ -449,13 +449,13 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
                 onClick={() => handleTabChange("LEARNING")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "LEARNING"
-                    ? "bg-theme-btn-primary/15 border-theme-btn-primary/30 text-theme-btn-primary font-bold shadow-sm"
+                    ? "bg-accent-soft border-theme-btn-primary/30 text-theme-btn-primary font-bold shadow-sm"
                     : "border-border bg-surface hover:bg-surface/80 text-foreground"
                 }`}
-                title="View End-to-End Workflow & Lifecycle Guide"
+                title="View end-to-end workflow & lifecycle guide"
               >
                 <BookOpen className="h-3.5 w-3.5 text-theme-icon" />
-                <span>Learning & Playbook</span>
+                <span>Learning & playbook</span>
               </button>
 
               <button
@@ -465,7 +465,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
                 title="Open quick data entry form"
               >
                 <Plus className="h-3.5 w-3.5 text-theme-icon" />
-                <span>Quick Entry</span>
+                <span>Quick entry</span>
               </button>
 
               <button
@@ -474,7 +474,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text text-xs font-semibold transition-opacity cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" />
-                <span>Upload Drawing</span>
+                <span>Upload drawing</span>
               </button>
             </div>
           </div>

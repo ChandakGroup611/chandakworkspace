@@ -37,6 +37,8 @@ import {
   Edit3,
   ExternalLink
 } from "lucide-react";
+import { confirmAction } from "@/components/ui/feedback/confirm";
+import { formatDate } from "@/components/ui/data";
 
 export interface ImplementationStage {
   id?: string;
@@ -70,9 +72,9 @@ const DEFAULT_STAGES = [
     stage_name: "1. PO Issued & Procurement",
     description: "Purchase order issued, contract signed, initial licenses procured.",
     icon: ShoppingCart,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/30"
+    color: "text-info-text",
+    bgColor: "bg-info-soft",
+    borderColor: "border-info-border"
   },
   {
     stage_key: "discussion",
@@ -88,9 +90,9 @@ const DEFAULT_STAGES = [
     stage_name: "3. Setup & Configuration",
     description: "Tenant setup, SSO / IAM configuration, sandbox & admin provisioning.",
     icon: Settings,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    borderColor: "border-amber-500/30"
+    color: "text-warning-text",
+    bgColor: "bg-warning-soft",
+    borderColor: "border-warning-border"
   },
   {
     stage_key: "implementation",
@@ -106,9 +108,9 @@ const DEFAULT_STAGES = [
     stage_name: "5. UAT & Testing Sign-Off",
     description: "User acceptance testing with department champions, security audit, bug fixing.",
     icon: TestTube2,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-    borderColor: "border-emerald-500/30"
+    color: "text-success-text",
+    bgColor: "bg-success-soft",
+    borderColor: "border-success-border"
   },
   {
     stage_key: "training",
@@ -124,9 +126,9 @@ const DEFAULT_STAGES = [
     stage_name: "7. Go-Live / Put to Use",
     description: "Production launch, system marked fully operational and active in production.",
     icon: PlayCircle,
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-    borderColor: "border-green-500/30"
+    color: "text-success-text",
+    bgColor: "bg-success-soft",
+    borderColor: "border-success-border"
   }
 ];
 
@@ -304,7 +306,7 @@ export function AMCImplementationTab({
 
   const handleDeleteAttachment = async (stage: ImplementationStage) => {
     if (!stage.attachment_file_path || !stage.id) return;
-    if (!confirm("Delete this stage attachment?")) return;
+    if (!(await confirmAction("Delete this stage attachment?"))) return;
 
     try {
       await supabase.storage.from('amc-attachments').remove([stage.attachment_file_path]);
@@ -351,7 +353,7 @@ export function AMCImplementationTab({
   };
 
   const handleDeleteCustomStage = async (stageId: string) => {
-    if (!confirm("Are you sure you want to delete this stage?")) return;
+    if (!(await confirmAction("Are you sure you want to delete this stage?"))) return;
     try {
       const res = await deleteAMCEntity("amc_implementation_stages", stageId, true);
       if (!res.success) throw new Error(res.error);
@@ -363,7 +365,7 @@ export function AMCImplementationTab({
   };
 
   const handleResetToStandard = async () => {
-    if (!confirm("Reset all stages to standard 7 onboarding stages? This will replace existing custom stages.")) return;
+    if (!(await confirmAction("Reset all stages to standard 7 onboarding stages? This will replace existing custom stages."))) return;
     try {
       for (const s of stages) {
         if (s.id) await deleteAMCEntity("amc_implementation_stages", s.id, true);
@@ -386,9 +388,9 @@ export function AMCImplementationTab({
       case 'Completed':
         return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Completed</span>;
       case 'In Progress':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 animate-pulse" /> In Progress</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 animate-pulse" /> In progress</span>;
       case 'Blocked':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-danger/10 text-danger border border-danger/20 flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5" /> Blocked / On Hold</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-danger/10 text-danger border border-danger/20 flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5" /> Blocked / on hold</span>;
       case 'Skipped':
         return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-muted/10 text-muted border border-border flex items-center gap-1.5"><X className="h-3.5 w-3.5" /> Skipped</span>;
       default:
@@ -400,7 +402,7 @@ export function AMCImplementationTab({
     return DEFAULT_STAGES.find(s => s.stage_key === key) || {
       icon: Sparkles,
       color: "text-theme-icon",
-      bgColor: "bg-theme-btn-primary/10",
+      bgColor: "bg-accent-soft",
       borderColor: "border-theme-btn-primary/30",
       description: "Custom implementation milestone."
     };
@@ -409,7 +411,7 @@ export function AMCImplementationTab({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-12">
-        <ChandakLoader size="md" title="Loading Implementation Lifecycle..." subtitle="Fetching software milestones and tracking" />
+        <ChandakLoader size="md" title="Loading implementation lifecycle…" subtitle="Fetching software milestones and tracking" />
       </div>
     );
   }
@@ -422,7 +424,7 @@ export function AMCImplementationTab({
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-theme-icon" />
             <h3 className="text-lg font-bold text-foreground">
-              Software Onboarding & Implementation Lifecycle
+              Software onboarding & implementation lifecycle
             </h3>
           </div>
 
@@ -434,9 +436,9 @@ export function AMCImplementationTab({
               onClick={() => setShowAddCustomModal(true)}
               leftIcon={<Plus className="h-4 w-4" />}
             >
-              Add Custom Stage
+              Add custom stage
             </AppButton>
-            <AppButton
+            <AppButton aria-label="Reset to 7 standard stages"
               type="button"
               variant="ghost"
               size="sm"
@@ -453,17 +455,17 @@ export function AMCImplementationTab({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[11px] font-bold text-muted uppercase">Overall Progress</span>
-              <div className="text-2xl font-black text-foreground">{progressPercent}%</div>
+              <span className="text-[11px] font-bold text-muted">Overall progress</span>
+              <div className="text-2xl font-semibold text-foreground">{progressPercent}%</div>
             </div>
-            <div className="h-10 w-10 rounded-full bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center font-bold text-sm">
+            <div className="h-10 w-10 rounded-full bg-accent-soft text-theme-icon flex items-center justify-center font-bold text-sm">
               {completedCount}/{totalStages}
             </div>
           </div>
 
           <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[11px] font-bold text-muted uppercase">Current Active Stage</span>
+              <span className="text-[11px] font-bold text-muted">Current active stage</span>
               <div className="text-sm font-bold text-foreground truncate max-w-[180px]">
                 {currentActiveStage?.stage_name || "Completed"}
               </div>
@@ -473,10 +475,10 @@ export function AMCImplementationTab({
 
           <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[11px] font-bold text-muted uppercase">Next Target Date</span>
+              <span className="text-[11px] font-bold text-muted">Next target date</span>
               <div className="text-sm font-bold text-foreground">
                 {currentActiveStage?.target_date 
-                  ? new Date(currentActiveStage.target_date).toLocaleDateString() 
+                  ? formatDate(currentActiveStage.target_date) 
                   : "Not set"}
               </div>
             </div>
@@ -488,22 +490,22 @@ export function AMCImplementationTab({
         <div className="space-y-1.5">
           <div className="w-full bg-elevated rounded-full h-2.5 overflow-hidden border border-border">
             <div 
-              className="bg-gradient-to-r from-theme-btn-primary via-emerald-500 to-success h-full transition-all duration-500 rounded-full"
+              className="bg-gradient-to-r from-theme-btn-primary via-success to-success h-full transition-all duration-500 rounded-full"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <div className="flex justify-between text-[10px] text-muted font-medium">
+          <div className="flex justify-between text-[11px] text-muted font-medium">
             <span>Purchased (Kickoff)</span>
-            <span>{completedCount} of {totalStages} Stages Completed</span>
-            <span>Live / Operational</span>
+            <span>{completedCount} of {totalStages} Stages completed</span>
+            <span>Live / operational</span>
           </div>
         </div>
       </AppCard>
 
       {/* STAGE PIPELINE TIMELINE */}
       <div className="space-y-4">
-        <h4 className="text-sm font-bold uppercase tracking-wider text-theme-icon flex items-center gap-2">
-          <Layers className="h-4 w-4" /> Implementation Stages & Sign-Offs
+        <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2">
+          <Layers className="h-4 w-4" /> Implementation stages & sign-offs
         </h4>
 
         <div className="space-y-4">
@@ -535,8 +537,8 @@ export function AMCImplementationTab({
                         <h5 className="text-base font-bold text-foreground">{stage.stage_name}</h5>
                         {getStatusBadge(stage.status)}
                         {stage.stage_key === 'go_live' && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">
-                            Syncs Put to Use Date
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-success-soft text-success-text font-bold border border-success-border">
+                            Syncs put to use date
                           </span>
                         )}
                       </div>
@@ -553,11 +555,11 @@ export function AMCImplementationTab({
                       onChange={(e) => handleUpdateStageField(stage.id!, "status", e.target.value)}
                       className="h-9 px-3 rounded-lg text-xs font-semibold border bg-elevated border-border text-foreground outline-none focus:ring-2 focus:ring-theme-btn-primary/20 cursor-pointer"
                     >
-                      <option value="" disabled>Select Status</option>
+                      <option value="" disabled>Select status</option>
                       <option value="Pending">Pending</option>
-                      <option value="In Progress">In Progress</option>
+                      <option value="In Progress">In progress</option>
                       <option value="Completed">Completed</option>
-                      <option value="Blocked">Blocked / On Hold</option>
+                      <option value="Blocked">Blocked / on hold</option>
                       <option value="Skipped">Skipped</option>
                     </select>
 
@@ -566,14 +568,14 @@ export function AMCImplementationTab({
                       variant="ghost"
                       size="sm"
                       onClick={() => setEditingStageId(isEditing ? null : stage.id!)}
-                      className="h-9 px-2.5 text-xs text-theme-icon hover:bg-theme-btn-primary/10"
+                      className="h-9 px-2.5 text-xs text-theme-icon hover:bg-accent-soft"
                     >
                       <Edit3 className="h-3.5 w-3.5 mr-1" />
                       {isEditing ? "Hide Details" : "Edit / MOM"}
                     </AppButton>
 
                     {isCustom && (
-                      <AppButton
+                      <AppButton aria-label="Delete custom stage"
                         type="button"
                         variant="ghost"
                         size="sm"
@@ -641,7 +643,7 @@ export function AMCImplementationTab({
                     <div className="flex items-center gap-1 shrink-0">
                       {stage.attachment_file_path ? (
                         <>
-                          <AppButton
+                          <AppButton aria-label="View sign-off document"
                             type="button"
                             variant="ghost"
                             size="sm"
@@ -649,12 +651,12 @@ export function AMCImplementationTab({
                               const url = supabase.storage.from('amc-attachments').getPublicUrl(stage.attachment_file_path!).data.publicUrl;
                               window.open(url, '_blank', 'noopener,noreferrer');
                             }}
-                            className="h-6 w-6 p-0 text-accent hover:text-accent hover:bg-theme-btn-primary/10"
-                            title="View Sign-Off Document"
+                            className="h-6 w-6 p-0 text-accent hover:text-accent hover:bg-accent-soft"
+                            title="View sign-off document"
                           >
                             <Eye className="h-3 w-3" />
                           </AppButton>
-                          <AppButton
+                          <AppButton aria-label="Download sign-off document"
                             type="button"
                             variant="ghost"
                             size="sm"
@@ -668,12 +670,12 @@ export function AMCImplementationTab({
                               a.click();
                               document.body.removeChild(a);
                             }}
-                            className="h-6 w-6 p-0 text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10"
-                            title="Download Sign-Off Document"
+                            className="h-6 w-6 p-0 text-theme-icon hover:text-theme-icon hover:bg-accent-soft"
+                            title="Download sign-off document"
                           >
                             <Download className="h-3 w-3" />
                           </AppButton>
-                          <AppButton
+                          <AppButton aria-label="Delete file"
                             type="button"
                             variant="ghost"
                             size="sm"
@@ -707,19 +709,19 @@ export function AMCImplementationTab({
                   <div className="mt-4 pt-4 border-t border-border space-y-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                          Sign-Off Person / Approver Name
+                        <label className="text-[11px] font-bold text-muted">
+                          Sign-off person / approver name
                         </label>
                         <AppInput
                           value={stage.signoff_person_name || ""}
                           onChange={(e) => handleUpdateStageField(stage.id!, "signoff_person_name", e.target.value)}
-                          placeholder="e.g., John Doe (VP Engineering / IT Lead)"
+                          placeholder="e.g., john doe (VP engineering / IT lead)"
                           className="h-9 text-xs"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                          Stage Sign-Off Document
+                        <label className="text-[11px] font-bold text-muted">
+                          Stage sign-off document
                         </label>
                         <div className="flex items-center gap-2 h-9">
                           <input
@@ -728,7 +730,7 @@ export function AMCImplementationTab({
                               const file = e.target.files?.[0];
                               if (file) handleFileUpload(stage, file);
                             }}
-                            className="text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-theme-btn-primary/10 file:text-theme-icon hover:file:bg-theme-btn-primary/20 cursor-pointer flex-1"
+                            className="text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-accent-soft file:text-theme-icon hover:file:bg-accent-soft cursor-pointer flex-1"
                           />
                           {uploadingStageId === stage.id && (
                             <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
@@ -738,13 +740,13 @@ export function AMCImplementationTab({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                        Meeting Minutes (MOM), Key Decisions & Progress Remarks
+                      <label className="text-[11px] font-bold text-muted">
+                        Meeting minutes (MOM), key decisions & progress remarks
                       </label>
                       <textarea
                         value={stage.notes || ""}
                         onChange={(e) => handleUpdateStageField(stage.id!, "notes", e.target.value)}
-                        placeholder="Document key discussion points, blockers, integration details, or meeting minutes for this stage..."
+                        placeholder="Document key discussion points, blockers, integration details, or meeting minutes for this stage…"
                         className="w-full p-3 rounded-xl text-xs bg-elevated border border-border text-foreground outline-none focus:ring-2 focus:ring-theme-btn-primary/20 min-h-[80px] resize-none"
                       />
                     </div>
@@ -758,26 +760,26 @@ export function AMCImplementationTab({
 
       {/* Add Custom Stage Modal */}
       {showAddCustomModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-2xl p-6 bg-surface border border-border shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg rounded-2xl p-6 bg-surface border border-border shadow-lg space-y-5 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <Plus className="h-4 w-4 text-theme-icon" /> Add Custom Implementation Stage
+                <Plus className="h-4 w-4 text-theme-icon" /> Add custom implementation stage
               </h3>
-              <AppButton variant="secondary" onClick={() => setShowAddCustomModal(false)} className="p-1.5 rounded-lg text-muted hover:text-foreground">
+              <AppButton aria-label="Close" variant="secondary" onClick={() => setShowAddCustomModal(false)} className="p-1.5 rounded-lg text-muted hover:text-foreground">
                 <X className="h-4 w-4" />
               </AppButton>
             </div>
 
             <form onSubmit={handleAddCustomStage} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted">
-                  Stage Name <span className="text-danger">*</span>
+                <label className="text-xs font-bold text-muted">
+                  Stage name <span className="text-danger">*</span>
                 </label>
                 <AppInput
                   value={customStageName}
                   onChange={(e) => setCustomStageName(e.target.value)}
-                  placeholder="e.g., Security & Pen-Testing Audit"
+                  placeholder="e.g., security & pen-testing audit"
                   required
                   className="h-10"
                 />
@@ -785,7 +787,7 @@ export function AMCImplementationTab({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted">Target Date</label>
+                  <label className="text-xs font-bold text-muted">Target date</label>
                   <AppInput
                     type="date"
                     value={customStageTargetDate}
@@ -794,7 +796,7 @@ export function AMCImplementationTab({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted">Assign Lead / Owner</label>
+                  <label className="text-xs font-bold text-muted">Assign lead / owner</label>
                   <select
                     value={customStageAssignedTo}
                     onChange={(e) => setCustomStageAssignedTo(e.target.value)}
@@ -809,11 +811,11 @@ export function AMCImplementationTab({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted">Description / Notes</label>
+                <label className="text-xs font-bold text-muted">Description / notes</label>
                 <textarea
                   value={customStageNotes}
                   onChange={(e) => setCustomStageNotes(e.target.value)}
-                  placeholder="Brief description of requirements or deliverables for this stage..."
+                  placeholder="Brief description of requirements or deliverables for this stage…"
                   className="w-full p-3 rounded-xl text-xs bg-elevated border border-border text-foreground outline-none focus:ring-2 focus:ring-theme-btn-primary/20 min-h-[80px] resize-none"
                 />
               </div>
@@ -823,7 +825,7 @@ export function AMCImplementationTab({
                   Cancel
                 </AppButton>
                 <AppButton type="submit" variant="primary" size="sm">
-                  Add Stage
+                  Add stage
                 </AppButton>
               </div>
             </form>

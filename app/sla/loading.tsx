@@ -6,8 +6,8 @@ export default function SlaLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Chandak SLA Engine"
-        subtitle="Calculating operational timeouts, schedules & escalation gates..."
+        title="Chandak SLA engine"
+        subtitle="Calculating operational timeouts, schedules & escalation gates…"
       />
     </div>
   );

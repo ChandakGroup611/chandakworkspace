@@ -92,16 +92,16 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
   return (
     <BaseWidget 
       id="sla-countdown-radar" 
-      title="SLA Early Warning & Breach Ticker"
+      title="SLA early warning & breach ticker"
       subtitle="Real-time resolution countdown for high-urgency active items"
       icon={<Flame className="w-5 h-5 text-danger animate-pulse" />}
       badge={
         categorizedItems.critical.length > 0 ? (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-danger/15 text-danger animate-pulse border border-red-500/30 shrink-0">
-            {categorizedItems.critical.length} Critical Alert{categorizedItems.critical.length > 1 ? "s" : ""}
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-danger/15 text-danger animate-pulse border border-danger-border shrink-0">
+            {categorizedItems.critical.length} Critical alert{categorizedItems.critical.length > 1 ? "s" : ""}
           </span>
         ) : (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-primary/10 text-primary border border-primary/20 shrink-0">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 shrink-0">
             {totalUrgent} Tracked
           </span>
         )
@@ -113,14 +113,14 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
             variant="outline"
             size="sm"
             onClick={() => onDrillDown({
-              title: "SLA Urgent & Expiring Items",
+              title: "SLA urgent & expiring items",
               description: "Items approaching or exceeding their service level deadlines.",
               urgency: "urgent"
             })}
             leftIcon={<Filter className="w-3.5 h-3.5" />}
             className="text-xs theme-card-structural"
           >
-            View All ({totalUrgent})
+            View all ({totalUrgent})
           </AppButton>
         ) : undefined
       }
@@ -137,7 +137,7 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
               : "text-muted-foreground hover:text-foreground hover:bg-surface"
           }`}
         >
-          All Urgencies ({totalUrgent})
+          All urgencies ({totalUrgent})
         </button>
 
         <button
@@ -158,11 +158,11 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
           onClick={() => setActiveTab("urgent")}
           className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "urgent"
-              ? "bg-amber-500 text-white shadow-sm"
-              : "text-amber-500 hover:bg-amber-500/10"
+              ? "bg-warning text-white shadow-sm"
+              : "text-warning-text hover:bg-warning-soft"
           }`}
         >
-          Expiring Today &lt; 8h ({categorizedItems.urgent.length})
+          Expiring today &lt; 8h ({categorizedItems.urgent.length})
         </button>
 
         <button
@@ -170,8 +170,8 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
           onClick={() => setActiveTab("warning")}
           className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
             activeTab === "warning"
-              ? "bg-yellow-500 text-black shadow-sm"
-              : "text-yellow-500 hover:bg-yellow-500/10"
+              ? "bg-warning text-foreground shadow-sm"
+              : "text-warning-text hover:bg-warning-soft"
           }`}
         >
           Next 24h ({categorizedItems.warning.length})
@@ -182,8 +182,8 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
           onClick={() => setActiveTab("breached")}
           className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
             activeTab === "breached"
-              ? "bg-red-700 text-white shadow-sm"
-              : "text-red-700 hover:bg-red-700/10"
+              ? "bg-danger-solid text-white shadow-sm"
+              : "text-danger-text hover:bg-danger-soft"
           }`}
         >
           Breached ({categorizedItems.breached.length})
@@ -207,21 +207,21 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
               <div key={`${item.id}-${idx}`} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-hover/50 transition-colors group">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
-                    isBreached ? 'bg-danger/15 text-danger border border-red-500/20' :
-                    isCritical ? 'bg-danger/10 text-danger border border-red-500/30 animate-pulse' :
-                    isUrgent ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30' :
-                    'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30'
+                    isBreached ? 'bg-danger/15 text-danger border border-danger-border' :
+                    isCritical ? 'bg-danger/10 text-danger border border-danger-border animate-pulse' :
+                    isUrgent ? 'bg-warning-soft text-warning-text border border-warning-border' :
+                    'bg-warning-soft text-warning-text border border-warning-border'
                   }`}>
                     {isBreached ? <ShieldAlert className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-mono text-[10px] font-bold text-muted-foreground uppercase">{item.code}</span>
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider bg-surface border border-border/50 text-foreground">
+                      <span className="font-mono text-[11px] font-bold text-muted-foreground">{item.code}</span>
+                      <span className="px-1.5 py-0.2 rounded text-[11px] font-bold bg-surface border border-border/50 text-foreground">
                         {item.module}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">• Assigned to: <strong className="text-foreground">{item.user}</strong> ({item.departmentName || "General"})</span>
+                      <span className="text-[11px] text-muted-foreground">• Assigned to: <strong className="text-foreground">{item.user}</strong> ({item.departmentName || "General"})</span>
                     </div>
 
                     <a href={itemUrl} className="text-xs font-bold text-foreground hover:text-primary transition-colors line-clamp-1 block" title={item.title}>
@@ -233,19 +233,19 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
                 {/* Countdown pill & Jump button */}
                 <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
                   <div className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1.5 ${
-                    isBreached ? 'bg-danger/10 text-danger border-red-500/30' :
-                    isCritical ? 'bg-danger/10 text-danger border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]' :
-                    isUrgent ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' :
-                    'bg-yellow-500/10 text-yellow-500 border-yellow-500/30'
+                    isBreached ? 'bg-danger/10 text-danger border-danger-border' :
+                    isCritical ? 'bg-danger/10 text-danger border-danger-border shadow-[0_0_10px_rgba(239,68,68,0.2)]' :
+                    isUrgent ? 'bg-warning-soft text-warning-text border-warning-border' :
+                    'bg-warning-soft text-warning-text border-warning-border'
                   }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isBreached || isCritical ? 'bg-danger animate-ping' : 'bg-amber-500'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${isBreached || isCritical ? 'bg-danger animate-ping' : 'bg-warning'}`} />
                     {formatCountdown(item.diffMs)}
                   </div>
 
                   <a
                     href={itemUrl}
                     className="p-1.5 rounded-lg bg-surface border border-border/60 text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
-                    title="Jump to Deliverable"
+                    title="Jump to deliverable"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -255,7 +255,7 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
           })
         ) : (
           <div className="p-8 text-center text-muted-foreground">
-            <CheckCircle className="w-8 h-8 text-emerald-500/40 mx-auto mb-2" />
+            <CheckCircle className="w-8 h-8 text-success-text mx-auto mb-2" />
             <div className="text-xs font-semibold text-foreground">No SLA Breaches or Critical Deadlines in this tier</div>
             <div className="text-[11px] text-muted-foreground mt-0.5">All active deliverables are running on schedule.</div>
           </div>

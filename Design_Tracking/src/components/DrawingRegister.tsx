@@ -28,6 +28,7 @@ import { WorkingDocumentLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { fetchDesignDrawingSignedUrlAction } from "@/lib/actions/design";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 interface DrawingRegisterProps {
   drawings: DrawingItem[];
@@ -152,24 +153,24 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
   const getStatusBadge = (status: DrawingStatus) => {
     switch (status) {
       case "Approved (GFC)":
-        return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+        return "bg-success-soft text-success-text border-success-border";
       case "Under Review":
-        return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30";
+        return "bg-warning-soft text-warning-text border-warning-border";
       case "Revision Requested":
-        return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+        return "bg-danger-soft text-danger-text border-danger-border";
       case "Site Handed Over":
-        return "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30";
+        return "bg-info-soft text-info-text border-info-border";
     }
   };
 
   const getDisciplineBadge = (disc: string) => {
     switch (disc) {
-      case "Architectural": return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
-      case "Structural": return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
+      case "Architectural": return "bg-info-soft text-info-text border-info-border";
+      case "Structural": return "bg-warning-soft text-warning-text border-warning-border";
       case "MEP": return "bg-surface text-foreground border-border";
-      case "Landscape": return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
+      case "Landscape": return "bg-success-soft text-success-text border-success-border";
       case "Interior": return "bg-surface text-foreground border-border";
-      default: return "bg-slate-100 dark:bg-slate-800 text-muted-foreground border-border";
+      default: return "bg-sunken text-muted-foreground border-border";
     }
   };
 
@@ -246,12 +247,12 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
           <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+            <div className="h-9 w-9 rounded-xl bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
               <FileText className="h-4 w-4" />
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">
-                Drawing Register
+                Drawing register
               </h2>
             </div>
           </div>
@@ -265,7 +266,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                 aria-label="Search drawings"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-success-border"
               />
             </div>
 
@@ -273,9 +274,9 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
             <button
               type="button"
               onClick={handleExportCsv}
-              className="h-8 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="h-8 px-3 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
             >
-              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+              <FileSpreadsheet className="h-3.5 w-3.5 text-success-text" />
               <span>Export CSV</span>
             </button>
           </div>
@@ -316,7 +317,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               selectedValues={selectedStatusFilters}
               onChange={setSelectedStatusFilters}
               colorTheme="amber"
-              placeholder="All Statuses"
+              placeholder="All statuses"
               searchPlaceholder="Filter status..."
               showSearch={false}
             />
@@ -326,11 +327,11 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               <button
                 type="button"
                 onClick={handleClearAllFilters}
-                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                className="h-9 px-3 rounded-xl border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
                 title="Reset all active filters"
               >
                 <X className="h-3.5 w-3.5" />
-                <span>Reset Filters ({totalActiveFilterCount})</span>
+                <span>Reset filters ({totalActiveFilterCount})</span>
               </button>
             )}
           </div>
@@ -343,7 +344,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
         {/* 🏷️ Active Selected Filter Badges */}
         {totalActiveFilterCount > 0 && (
           <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
-            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
               Active Filters:
             </span>
 
@@ -351,14 +352,14 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
             {selectedDisciplineFilters.map(d => (
               <span
                 key={`disc-${d}`}
-                className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                className="px-2 py-0.5 rounded-lg bg-success-soft text-success-text border border-success-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
               >
                 <SlidersHorizontal className="h-2.5 w-2.5" />
                 <span>{d}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedDisciplineFilters(prev => prev.filter(x => x !== d))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -369,14 +370,14 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
             {selectedProjectFilters.map(p => (
               <span
                 key={`proj-${p}`}
-                className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                className="px-2 py-0.5 rounded-lg bg-info-soft text-info-text border border-info-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
               >
                 <Building className="h-2.5 w-2.5" />
                 <span>{p}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedProjectFilters(prev => prev.filter(x => x !== p))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -387,14 +388,14 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
             {selectedStatusFilters.map(st => (
               <span
                 key={`st-${st}`}
-                className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                className="px-2 py-0.5 rounded-lg bg-warning-soft text-warning-text border border-warning-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
               >
                 <CheckCircle2 className="h-2.5 w-2.5" />
                 <span>{st}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedStatusFilters(prev => prev.filter(x => x !== st))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -404,7 +405,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
             <button
               type="button"
               onClick={handleClearAllFilters}
-              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+              className="text-[11px] text-muted-foreground hover:text-danger-text underline ml-1 cursor-pointer font-medium"
             >
               Clear all
             </button>
@@ -417,9 +418,9 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-xs border-collapse min-w-[1300px]">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                <th className="p-3.5 whitespace-nowrap min-w-[260px]">Drawing Code & Discipline</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[320px]">Sheet Title & Description</th>
+              <tr className="bg-sunken border-b border-border text-[11px] text-muted-foreground font-semibold">
+                <th className="p-3.5 whitespace-nowrap min-w-[260px]">Drawing code & discipline</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[320px]">Sheet title & description</th>
                 <th className="p-3.5 whitespace-nowrap min-w-[160px]">Project</th>
                 <th className="p-3.5 text-center whitespace-nowrap min-w-[90px]">Revision</th>
                 <th className="p-3.5 whitespace-nowrap min-w-[170px]">Status</th>
@@ -437,17 +438,17 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                 </tr>
               ) : (
                 filteredDrawings.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr key={item.id} className="hover:bg-sunken transition-colors">
                     <td className="p-3.5 whitespace-nowrap min-w-[260px]">
                       <div className="flex items-center gap-2.5 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border whitespace-nowrap shrink-0 ${getDisciplineBadge(item.discipline)}`}>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold border whitespace-nowrap shrink-0 ${getDisciplineBadge(item.discipline)}`}>
                           {item.discipline}
                         </span>
                         <div className="min-w-0">
                           <span className="font-mono font-bold text-foreground block text-xs whitespace-nowrap select-all tracking-tight">
                             {item.code}
                           </span>
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap block mt-0.5">
+                          <span className="text-[11px] text-muted-foreground whitespace-nowrap block mt-0.5">
                             {item.fileSize}
                           </span>
                         </div>
@@ -470,12 +471,12 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                       </span>
                     </td>
                     <td className="p-3.5 text-center whitespace-nowrap min-w-[90px]">
-                      <span className="px-2.5 py-0.5 rounded font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 border border-border text-foreground inline-block whitespace-nowrap">
+                      <span className="px-2.5 py-0.5 rounded font-mono font-bold text-xs bg-sunken border border-border text-foreground inline-block whitespace-nowrap">
                         {item.revision}
                       </span>
                     </td>
                     <td className="p-3.5 whitespace-nowrap min-w-[170px]">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 whitespace-nowrap ${getStatusBadge(item.status)}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border inline-flex items-center gap-1 whitespace-nowrap ${getStatusBadge(item.status)}`}>
                         {item.status === "Approved (GFC)" && <CheckCircle2 className="h-3 w-3 shrink-0" />}
                         {item.status === "Under Review" && <Clock className="h-3 w-3 shrink-0" />}
                         {item.status === "Revision Requested" && <AlertCircle className="h-3 w-3 shrink-0" />}
@@ -492,7 +493,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                         <span className="text-foreground">{item.submittedDate}</span>
                       </div>
                       {item.approvedDate && (
-                        <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 whitespace-nowrap mt-0.5">
+                        <div className="flex items-center gap-1 text-success-text whitespace-nowrap mt-0.5">
                           <span>GFC:</span>
                           <span>{item.approvedDate}</span>
                         </div>
@@ -503,7 +504,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                         <button
                           type="button"
                           onClick={() => handleViewDrawing(item)}
-                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-sunken text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
                           title="View drawing document"
                         >
                           <Eye className="h-3 w-3 shrink-0" />
@@ -512,7 +513,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                         <button
                           type="button"
                           onClick={() => handleDownloadDrawing(item)}
-                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-sunken text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
                           title="Download drawing file"
                         >
                           <Download className="h-3 w-3 shrink-0" />
@@ -521,8 +522,8 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                         <button
                           type="button"
                           onClick={() => setPreviewDrawing(item)}
-                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
-                          title="Blueprint CAD Preview"
+                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-sunken text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+                          title="Blueprint CAD preview"
                         >
                           <Maximize2 className="h-3 w-3 shrink-0" />
                           <span>Blueprint</span>
@@ -530,20 +531,20 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenReviewModal(item)}
-                          className="h-7 px-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold text-xs inline-flex items-center gap-1 transition-colors hover:bg-emerald-500/20 cursor-pointer whitespace-nowrap"
-                          title="Review / GFC Stamp"
+                          className="h-7 px-2 rounded-lg border border-success-border bg-success-soft text-success-text font-semibold text-xs inline-flex items-center gap-1 transition-colors hover:bg-success-soft cursor-pointer whitespace-nowrap"
+                          title="Review / GFC stamp"
                         >
                           <ShieldCheck className="h-3 w-3 shrink-0" />
                           <span>Review</span>
                         </button>
-                        <button
+                        <button aria-label="Delete drawing"
                           type="button"
-                          onClick={() => {
-                            if (confirm(`Delete drawing ${item.code} from register?`)) {
+                          onClick={async () => {
+                            if (await confirmAction(`Delete drawing ${item.code} from the register?`)) {
                               DesignMasterStore.deleteDrawing(item.id);
                             }
                           }}
-                          className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                          className="h-7 w-7 rounded-lg hover:bg-danger-soft text-muted-foreground hover:text-danger-text inline-flex items-center justify-center transition-colors cursor-pointer"
                           title="Delete drawing"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -565,7 +566,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
         <WorkingDocumentLayout
           title={`${previewDrawing.code}: ${previewDrawing.title}`}
           badge={previewDrawing.status}
-          badgeColor={previewDrawing.status === "Approved (GFC)" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30" : "bg-surface text-theme-icon border border-border"}
+          badgeColor={previewDrawing.status === "Approved (GFC)" ? "bg-success-soft text-success-text border border-success-border" : "bg-surface text-theme-icon border border-border"}
           category="Architectural Blueprint & GFC Inspection"
           icon={Compass}
           iconBg="bg-surface text-theme-icon dark:text-muted-foreground"
@@ -589,7 +590,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                     className="text-xs h-9 font-semibold gap-1.5"
                   >
                     <Eye className="h-3.5 w-3.5" />
-                    <span>View Source File</span>
+                    <span>View source file</span>
                   </AppButton>
                   <AppButton
                     type="button"
@@ -599,7 +600,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                     className="text-xs h-9 font-semibold gap-1.5"
                   >
                     <Download className="h-3.5 w-3.5" />
-                    <span>Download File</span>
+                    <span>Download file</span>
                   </AppButton>
                 </>
               )}
@@ -611,7 +612,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                 className="text-xs h-9 font-semibold gap-1.5"
               >
                 <Printer className="h-3.5 w-3.5" />
-                <span>Print Blueprint</span>
+                <span>Print blueprint</span>
               </AppButton>
               <AppButton
                 type="button"
@@ -621,7 +622,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                 className="text-xs h-9 font-semibold gap-1.5"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Open Stage-Gate Review</span>
+                <span>Open stage-gate review</span>
               </AppButton>
             </div>
           }
@@ -630,26 +631,26 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
             {/* Blueprint Overview Info Header */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground block">Project / Development</span>
+                <span className="text-[11px] font-bold text-muted-foreground block">Project / development</span>
                 <span className="text-xs font-bold text-foreground">{previewDrawing.project}</span>
               </div>
               <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground block">Discipline</span>
+                <span className="text-[11px] font-bold text-muted-foreground block">Discipline</span>
                 <span className="text-xs font-bold text-foreground">{previewDrawing.discipline}</span>
               </div>
               <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground block">Author Consultant</span>
+                <span className="text-[11px] font-bold text-muted-foreground block">Author consultant</span>
                 <span className="text-xs font-bold text-foreground">{previewDrawing.consultant}</span>
               </div>
               <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground block">Revision & Date</span>
+                <span className="text-[11px] font-bold text-muted-foreground block">Revision & date</span>
                 <span className="text-xs font-bold font-mono text-foreground">Rev {previewDrawing.revision} • {previewDrawing.submittedDate}</span>
               </div>
             </div>
 
             {/* CAD Blueprint Canvas Simulation */}
             <div
-              className="h-96 w-full rounded-2xl bg-slate-950 border border-border relative overflow-hidden flex flex-col justify-between p-6 font-mono select-none shadow-2xl text-white"
+              className="h-96 w-full rounded-2xl bg-foreground border border-border relative overflow-hidden flex flex-col justify-between p-6 font-mono select-none shadow-lg text-background"
               style={{
                 backgroundImage: "radial-gradient(#0ea5e9 1px, transparent 1px)",
                 backgroundSize: "24px 24px"
@@ -658,36 +659,36 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               {/* Engineering Coordinate Grid Markers */}
               <div className="flex items-center justify-between text-[11px] text-muted-foreground font-bold">
                 <span>GRID COORD: A1-F8 | SCALE: 1:100 METRIC | PROJECTION: ORTHOGRAPHIC</span>
-                <span>CHANDAK DESIGN & ENGINEERING STUDIO</span>
+                <span>Chandak design & engineering studio</span>
               </div>
 
               {/* Center Wireframe Graphics simulation */}
               <div className="flex flex-col items-center justify-center space-y-3 opacity-90 my-auto">
-                <div className="w-80 h-44 border-2 border-dashed border-cyan-400/60 rounded-xl flex items-center justify-center relative bg-cyan-950/20 backdrop-blur-xs">
+                <div className="w-80 h-44 border-2 border-dashed border-info-border rounded-xl flex items-center justify-center relative bg-info-soft">
                   <div className="w-64 h-32 border border-border/40 rounded-lg flex flex-col items-center justify-center p-4 text-center">
                     <span className="text-sm font-bold text-muted-foreground tracking-wider">
                       {previewDrawing.title}
                     </span>
                     <span className="text-[11px] text-muted-foreground/80 font-mono mt-1">
-                      SHEET {previewDrawing.code} • REV {previewDrawing.revision}
+                      Sheet {previewDrawing.code} • REV {previewDrawing.revision}
                     </span>
                   </div>
-                  <div className="absolute -top-3 bg-slate-950 px-3 text-[10px] text-muted-foreground font-bold border border-border rounded">
-                    SECTION X-X' ELEVATION ARCHITECTURAL
+                  <div className="absolute -top-3 bg-surface px-3 text-[11px] text-muted-foreground font-bold border border-border rounded">
+                    Section x-x' elevation architectural
                   </div>
                 </div>
               </div>
 
               {/* Title Block Bottom Right */}
               <div className="flex items-end justify-between border-t border-border pt-3">
-                <div className="text-[11px] text-slate-300 space-y-0.5">
-                  <div>AUTHOR: <strong className="text-white font-bold">{previewDrawing.consultant}</strong></div>
-                  <div>SHEET NO: <strong className="text-white font-mono font-bold">{previewDrawing.code}</strong></div>
-                  <div>WORKFLOW STATUS: <strong className="text-emerald-400 font-bold">{previewDrawing.status}</strong></div>
+                <div className="text-[11px] text-muted space-y-0.5">
+                  <div>Author: <strong className="text-white font-bold">{previewDrawing.consultant}</strong></div>
+                  <div>Sheet no: <strong className="text-white font-mono font-bold">{previewDrawing.code}</strong></div>
+                  <div>Workflow status: <strong className="text-success-text font-bold">{previewDrawing.status}</strong></div>
                 </div>
 
                 {previewDrawing.status === "Approved (GFC)" && (
-                  <div className="p-3 rounded-xl border-2 border-emerald-500 bg-emerald-950/80 text-emerald-400 text-center uppercase font-black text-xs tracking-widest shadow-xl rotate-[-3deg]">
+                  <div className="p-3 rounded-xl border-2 border-success-border bg-success text-success-text text-center font-semibold text-xs shadow-xl rotate-[-3deg]">
                     ✓ GOOD FOR CONSTRUCTION (GFC)
                   </div>
                 )}

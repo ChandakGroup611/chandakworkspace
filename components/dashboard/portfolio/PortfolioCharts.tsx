@@ -120,10 +120,10 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
           <div>
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
+              <div className="p-1.5 rounded-lg bg-accent-soft text-theme-icon">
                 <Activity className="h-4 w-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground tracking-tight">Status-wise Workload Distribution</h3>
+              <h3 className="text-sm font-bold text-foreground tracking-tight">Status-wise workload distribution</h3>
             </div>
             <p className="text-xs text-muted mt-1">Live breakdown of active, in review, escalated & resolved tasks</p>
           </div>
@@ -233,7 +233,7 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
               <div className="p-1.5 rounded-lg bg-danger/10 text-danger">
                 <Flame className="h-4 w-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground tracking-tight">Priority & Risk Breakdown</h3>
+              <h3 className="text-sm font-bold text-foreground tracking-tight">Priority & risk breakdown</h3>
             </div>
             </div>
 

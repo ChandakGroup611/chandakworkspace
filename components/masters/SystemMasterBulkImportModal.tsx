@@ -116,13 +116,13 @@ export function SystemMasterBulkImportModal({
       // Define columns based on master configuration
       const columns: Array<{ header: string; key: string; width: number; example: string }> = [
         { header: "Code (Required)*", key: "code", width: 22, example: `${activeConfig.category.slice(0, 3)}-001` },
-        { header: "Name / Title (Required)*", key: "name", width: 32, example: `Sample ${activeConfig.label}` },
+        { header: "Name / title (required)*", key: "name", width: 32, example: `Sample ${activeConfig.label}` },
         { header: "Description", key: "description", width: 38, example: `Operational details for ${activeConfig.label}` }
       ];
 
       if (activeConfig.parentTable) {
         columns.push({
-          header: "Parent Code or Name (Required)*",
+          header: "Parent code or name (required)*",
           key: "parent_code",
           width: 32,
           example: "Parent Entity Code or Title"
@@ -132,26 +132,26 @@ export function SystemMasterBulkImportModal({
       if (activeConfig.table === "priority_master") {
         columns.push(
           { header: "Standard SLA (Minutes)*", key: "sla_minutes", width: 25, example: "120" },
-          { header: "Priority Color Hex", key: "priority_color", width: 20, example: "#EF4444" }
+          { header: "Priority colour hex", key: "priority_color", width: 20, example: "#EF4444" }
         );
       }
 
       if (activeConfig.table === "status_master") {
         columns.push(
-          { header: "Status Color Hex", key: "status_color", width: 20, example: "#10B981" }
+          { header: "Status colour hex", key: "status_color", width: 20, example: "#10B981" }
         );
       }
 
       if (activeConfig.table === "assets") {
         columns.push(
-          { header: "Asset Tag (Required)*", key: "asset_tag", width: 25, example: "AST-2026-001" },
-          { header: "Department Name / Code", key: "parent_name", width: 28, example: "Information Technology" }
+          { header: "Asset tag (required)*", key: "asset_tag", width: 25, example: "AST-2026-001" },
+          { header: "Department name / code", key: "parent_name", width: 28, example: "Information Technology" }
         );
       }
 
       if (activeConfig.table === "fleet_insurance_vendors") {
         columns.push(
-          { header: "Contact Person", key: "contact_person", width: 25, example: "Mr. Ramesh Sharma" },
+          { header: "Contact person", key: "contact_person", width: 25, example: "Mr. Ramesh Sharma" },
           { header: "Phone", key: "phone", width: 20, example: "+91 98200 12345" },
           { header: "Email", key: "email", width: 28, example: "support@insuranceprovider.com" }
         );
@@ -217,7 +217,7 @@ export function SystemMasterBulkImportModal({
         parseExcelWorksheet(worksheet);
       }
 
-      toast.info(`Spreadsheet loaded. Review preview and click Import.`);
+      toast.info(`Spreadsheet loaded. Review preview and click import.`);
     } catch (err: any) {
       console.error("Error reading file:", err);
       toast.error(`Error parsing spreadsheet: ${err.message || "Invalid file"}`);
@@ -438,21 +438,21 @@ export function SystemMasterBulkImportModal({
   const errorCount = parsedRows.filter(r => !r.isValid).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[var(--overlay)] animate-in fade-in duration-200">
       <div 
-        className="w-full max-w-5xl bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
+        className="w-full max-w-5xl bg-surface border border-border rounded-3xl shadow-lg overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
         {/* Header Bar */}
-        <div className="px-6 py-4 border-b border-border bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-4 border-b border-border bg-sunken flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/25 shrink-0">
+            <div className="h-10 w-10 rounded-2xl bg-info-soft text-info-text flex items-center justify-center border border-info-border shrink-0">
               <FileSpreadsheet className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <span>Excel & CSV Bulk Import</span>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20">
+                <span>Excel & CSV bulk import</span>
+                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-info-soft text-info-text border border-info-border">
                   {activeConfig.category}
                 </span>
               </h3>
@@ -462,10 +462,10 @@ export function SystemMasterBulkImportModal({
             </div>
           </div>
 
-          <button
+          <button aria-label="Close"
             type="button"
             onClick={handleClose}
-            className="h-8 w-8 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+            className="h-8 w-8 rounded-xl hover:bg-sunken text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -476,8 +476,8 @@ export function SystemMasterBulkImportModal({
           {/* Step 1: Active Master Selector */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-foreground uppercase tracking-wider block">
-                1. Selected Master Table
+              <label className="text-xs font-bold text-foreground block">
+                1. Selected master table
               </label>
               <span className="text-xs text-muted-foreground">
                 Category: <strong>{activeConfig.category}</strong> • Relation: <code className="font-mono text-[11px]">{activeConfig.table}</code>
@@ -490,7 +490,7 @@ export function SystemMasterBulkImportModal({
                 setSelectedMasterId(e.target.value);
                 handleReset();
               }}
-              className="w-full text-xs font-bold p-2.5 rounded-xl border border-border bg-background text-foreground focus:ring-2 focus:ring-teal-500 outline-none cursor-pointer"
+              className="w-full text-xs font-bold p-2.5 rounded-xl border border-border bg-background text-foreground focus:ring-2 focus:ring-info-border outline-none cursor-pointer"
             >
               {masterTables.map(t => (
                 <option key={t.id} value={t.id}>
@@ -503,11 +503,11 @@ export function SystemMasterBulkImportModal({
           {/* Step 2: Download Template & File Upload Section */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             {/* Download Template Box */}
-            <div className="lg:col-span-5 p-5 rounded-2xl border border-border bg-slate-50/50 dark:bg-slate-900/30 flex flex-col justify-between space-y-4">
+            <div className="lg:col-span-5 p-5 rounded-2xl border border-border bg-sunken flex flex-col justify-between space-y-4">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-foreground font-bold text-xs uppercase tracking-wider">
-                  <Download className="h-4 w-4 text-teal-600" />
-                  <span>Download Sample Template</span>
+                <div className="flex items-center gap-2 text-foreground font-bold text-xs">
+                  <Download className="h-4 w-4 text-info-text" />
+                  <span>Download sample template</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Download pre-formatted Excel template (.xlsx) with pre-styled headers, sample records, and column guidance.
@@ -517,10 +517,10 @@ export function SystemMasterBulkImportModal({
               <button
                 type="button"
                 onClick={handleDownloadTemplate}
-                className="w-full px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
+                className="w-full px-4 py-2.5 rounded-xl bg-info hover:bg-info text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
               >
                 <FileSpreadsheet className="h-4 w-4" />
-                <span>Download Excel (.xlsx) Template</span>
+                <span>Download Excel (.xlsx) template</span>
               </button>
             </div>
 
@@ -547,19 +547,19 @@ export function SystemMasterBulkImportModal({
                 }}
                 className={`h-full min-h-[160px] p-6 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center cursor-pointer ${
                   file
-                    ? "border-teal-500 bg-teal-50/30 dark:bg-teal-950/20"
-                    : "border-border hover:border-teal-500/60 hover:bg-slate-50 dark:hover:bg-slate-900/40"
+                    ? "border-info-border bg-info-soft"
+                    : "border-border hover:border-info-border hover:bg-sunken"
                 }`}
               >
                 {file ? (
                   <div className="space-y-2">
-                    <div className="h-10 w-10 mx-auto rounded-2xl bg-teal-500/20 text-teal-600 flex items-center justify-center">
+                    <div className="h-10 w-10 mx-auto rounded-2xl bg-info-soft text-info-text flex items-center justify-center">
                       <FileSpreadsheet className="h-5 w-5" />
                     </div>
                     <div>
                       <div className="text-xs font-bold text-foreground">{file.name}</div>
                       <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">
-                        {(file.size / 1024).toFixed(1)} KB • Click or drop another file to replace
+                        {(file.size / 1024).toFixed(1)} KB • click or drop another file to replace
                       </div>
                     </div>
                   </div>
@@ -584,9 +584,9 @@ export function SystemMasterBulkImportModal({
 
           {/* Step 3: Parsing Spinner */}
           {isParsing && (
-            <div className="p-8 rounded-2xl border border-border bg-slate-50/50 dark:bg-slate-900/30 text-center space-y-3">
-              <RefreshCw className="h-6 w-6 text-teal-600 animate-spin mx-auto" />
-              <div className="text-xs font-bold text-foreground">Analyzing spreadsheet structure & schema...</div>
+            <div className="p-8 rounded-2xl border border-border bg-sunken text-center space-y-3">
+              <RefreshCw className="h-6 w-6 text-info-text animate-spin mx-auto" />
+              <div className="text-xs font-bold text-foreground">Analyzing spreadsheet structure & schema…</div>
             </div>
           )}
 
@@ -595,23 +595,23 @@ export function SystemMasterBulkImportModal({
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  <span className="text-xs font-bold text-foreground">
                     Validation Summary:
                   </span>
                   <div className="flex items-center gap-1.5 text-xs">
-                    <span className="px-2 py-0.5 rounded-full font-bold bg-slate-500/10 text-slate-700 dark:text-slate-300">
+                    <span className="px-2 py-0.5 rounded-full font-bold bg-sunken text-foreground">
                       Total: {parsedRows.length}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                    <span className="px-2 py-0.5 rounded-full font-bold bg-success-soft text-success-text">
                       Valid: {validCount}
                     </span>
                     {duplicateCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                      <span className="px-2 py-0.5 rounded-full font-bold bg-warning-soft text-warning-text">
                         Duplicates: {duplicateCount}
                       </span>
                     )}
                     {errorCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full font-bold bg-rose-500/10 text-rose-700 dark:text-rose-300">
+                      <span className="px-2 py-0.5 rounded-full font-bold bg-danger-soft text-danger-text">
                         Errors: {errorCount}
                       </span>
                     )}
@@ -620,14 +620,14 @@ export function SystemMasterBulkImportModal({
 
                 {/* Duplicate Strategy Radio */}
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-muted-foreground font-semibold">If Duplicate Exists:</span>
+                  <span className="text-muted-foreground font-semibold">If duplicate exists:</span>
                   <select
                     value={duplicateStrategy}
                     onChange={e => setDuplicateStrategy(e.target.value as any)}
                     className="px-2.5 py-1 text-xs rounded-lg border border-border bg-background text-foreground font-semibold"
                   >
-                    <option value="SKIP">Skip Duplicate</option>
-                    <option value="OVERWRITE">Update / Overwrite Existing</option>
+                    <option value="SKIP">Skip duplicate</option>
+                    <option value="OVERWRITE">Update / overwrite existing</option>
                   </select>
                 </div>
               </div>
@@ -641,8 +641,8 @@ export function SystemMasterBulkImportModal({
                     onClick={() => setActivePreviewFilter(tab)}
                     className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
                       activePreviewFilter === tab
-                        ? "bg-teal-600 text-white shadow-2xs"
-                        : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "bg-info text-white shadow-2xs"
+                        : "text-muted-foreground hover:text-foreground hover:bg-sunken"
                     }`}
                   >
                     {tab === "ALL" && `All Rows (${parsedRows.length})`}
@@ -656,19 +656,19 @@ export function SystemMasterBulkImportModal({
               {/* Preview Table */}
               <div className="rounded-xl border border-border overflow-hidden max-h-64 overflow-y-auto custom-scrollbar">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-100 dark:bg-slate-900 text-muted-foreground uppercase font-bold sticky top-0 text-[10px]">
+                  <thead className="bg-sunken text-muted-foreground font-bold sticky top-0 text-[11px]">
                     <tr>
                       <th className="p-2.5">Row</th>
                       <th className="p-2.5">Code</th>
                       <th className="p-2.5">Name</th>
                       <th className="p-2.5">Description</th>
-                      {activeConfig.parentTable && <th className="p-2.5">Parent Link</th>}
+                      {activeConfig.parentTable && <th className="p-2.5">Parent link</th>}
                       <th className="p-2.5 text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredPreviewRows.slice(0, 50).map(r => (
-                      <tr key={r.rowNumber} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                      <tr key={r.rowNumber} className="hover:bg-sunken">
                         <td className="p-2.5 font-mono text-muted-foreground">#{r.rowNumber}</td>
                         <td className="p-2.5 font-mono font-bold text-foreground">{r.data.code || "-"}</td>
                         <td className="p-2.5 font-semibold text-foreground">{r.data.name || "-"}</td>
@@ -678,16 +678,16 @@ export function SystemMasterBulkImportModal({
                         )}
                         <td className="p-2.5 text-right whitespace-nowrap">
                           {!r.isValid ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20" title={r.errors.join(", ")}>
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-danger-soft text-danger-text border border-danger-border" title={r.errors.join(", ")}>
                               Error: {r.errors[0]}
                             </span>
                           ) : r.isDuplicate ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-warning-soft text-warning-text border border-warning-border">
                               Duplicate ({duplicateStrategy === "OVERWRITE" ? "Will Overwrite" : "Will Skip"})
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                              Ready to Insert
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-success-soft text-success-text border border-success-border">
+                              Ready to insert
                             </span>
                           )}
                         </td>
@@ -701,11 +701,11 @@ export function SystemMasterBulkImportModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-border bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-4 border-t border-border bg-sunken flex items-center justify-between gap-3 shrink-0">
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer"
+            className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground cursor-pointer"
           >
             Cancel
           </button>
@@ -714,18 +714,18 @@ export function SystemMasterBulkImportModal({
             type="button"
             onClick={handleExecuteImport}
             disabled={parsedRows.length === 0 || validCount + (duplicateStrategy === "OVERWRITE" ? duplicateCount : 0) === 0 || isImporting}
-            className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md cursor-pointer transition-all inline-flex items-center gap-2"
+            className="px-5 py-2 rounded-xl bg-info hover:bg-info disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md cursor-pointer transition-all inline-flex items-center gap-2"
           >
             {isImporting ? (
               <>
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                <span>Importing Records...</span>
+                <span>Importing Records…</span>
               </>
             ) : (
               <>
                 <Check className="h-3.5 w-3.5 stroke-[3]" />
                 <span>
-                  Execute Import ({validCount + (duplicateStrategy === "OVERWRITE" ? duplicateCount : 0)} Records)
+                  Execute import ({validCount + (duplicateStrategy === "OVERWRITE" ? duplicateCount : 0)} Records)
                 </span>
               </>
             )}

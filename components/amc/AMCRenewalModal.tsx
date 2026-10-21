@@ -57,7 +57,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
       const insertRes = await saveAMCEntity("software_amc", newAmc);
       if (!insertRes.success) throw new Error(insertRes.error);
 
-      toast.success("Contract renewed successfully! Old record is archived as 'Renewed'.");
+      toast.success("Contract renewed successfully! Old record is archived as 'renewed'.");
       onRenewed();
     } catch (e: any) {
       toast.error("Failed to renew: " + e.message);
@@ -78,7 +78,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
-            <h3 className="text-xl font-bold text-theme-icon">Renew Subscription</h3>
+            <h3 className="text-xl font-bold text-theme-icon">Renew subscription</h3>
             <p className="text-sm text-muted mt-1">
               {amcData.software_name} - {amcData.provider_name}
             </p>
@@ -103,22 +103,22 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted block mb-1">New Purchase Date *</label>
+                <label className="text-xs font-medium text-muted block mb-1">New purchase date *</label>
                 <AppInput type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted block mb-1">New Expiry Date *</label>
+                <label className="text-xs font-medium text-muted block mb-1">New expiry date *</label>
                 <AppInput type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} required />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted block mb-1">Renewal Cost ({amcData.currency || 'INR'}) *</label>
+                <label className="text-xs font-medium text-muted block mb-1">Renewal cost ({amcData.currency || 'INR'}) *</label>
                 <AppInput type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required placeholder="e.g., 5000" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted block mb-1">New PO Number</label>
+                <label className="text-xs font-medium text-muted block mb-1">New PO number</label>
                 <AppInput value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="Optional" />
               </div>
             </div>
@@ -127,7 +127,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
           <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
             <AppButton type="button" variant="outline" onClick={onClose} disabled={loading}>Discard</AppButton>
             <AppButton type="submit" variant="primary" disabled={loading} leftIcon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}>
-              Confirm Renewal
+              Confirm renewal
             </AppButton>
           </div>
         </form>

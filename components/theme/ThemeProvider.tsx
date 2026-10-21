@@ -169,11 +169,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     const hadLocalTheme = safeGet(STORAGE_KEYS.theme) !== null;
+    if (hadLocalTheme) {
+      hydratedFromDb.current = true;
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname;
+      if (path.startsWith("/login") || path.startsWith("/register") || path.startsWith("/auth/")) {
+        hydratedFromDb.current = true;
+        return;
+      }
+    }
+
     (async () => {
       try {
         const { fetchDesignPreferences } = await import("@/lib/actions/preferences");
         const res = await fetchDesignPreferences();
-        if (cancelled || !res?.success || !res.data || hadLocalTheme) return;
+        if (cancelled || !res?.success || !res.data) return;
         const db = res.data as Record<string, unknown>;
         setPrefs((p) => ({
           ...p,
@@ -198,6 +211,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Save to DB (debounced) after the initial load, so every device follows the user
   useEffect(() => {
     if (!loaded || !hydratedFromDb.current) return;
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname;
+      if (path.startsWith("/login") || path.startsWith("/register") || path.startsWith("/auth/")) {
+        return;
+      }
+    }
     const id = window.setTimeout(async () => {
       try {
         const { saveDesignPreferences } = await import("@/lib/actions/preferences");

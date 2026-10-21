@@ -125,7 +125,7 @@ export default function HolidayCalendar() {
   if (permsLoading) {
     return (
       <div className="h-[80vh] flex items-center justify-center">
-        <ChandakLoader size="lg" title="Loading Schedules..." subtitle="Fetching working hours & holidays" />
+        <ChandakLoader size="lg" title="Loading Schedules…" subtitle="Fetching working hours & holidays" />
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function HolidayCalendar() {
       <PageContainer strict={true}>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Shield className="w-16 h-16 text-danger mb-4 opacity-80" />
-          <h2 className="text-xl font-bold">Access Restricted</h2>
+          <h2 className="text-xl font-bold">Access restricted</h2>
           <p className="text-sm text-muted mt-2 max-w-md">
             You do not have the required permissions (SLA_VIEW) to access SLA schedules and holidays.
           </p>
@@ -147,8 +147,8 @@ export default function HolidayCalendar() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Working Hours & Holidays"
-        badge={<AppBadge variant="info">Governance Engine</AppBadge>}
+        title="Working hours & holidays"
+        badge={<AppBadge variant="info">Governance engine</AppBadge>}
       />
 
       <div className="p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border mt-6">
@@ -161,7 +161,7 @@ export default function HolidayCalendar() {
                 : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
             }`}
           >
-            <Calendar className="w-4 h-4 mr-2" /> Holiday Calendar
+            <Calendar className="w-4 h-4 mr-2" /> Holiday calendar
           </AppButton>
           <AppButton 
             onClick={() => setActiveTab("working_hours")}
@@ -171,7 +171,7 @@ export default function HolidayCalendar() {
                 : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
             }`}
           >
-            <Clock className="w-4 h-4 mr-2" /> Working Hours (Business Schedules)
+            <Clock className="w-4 h-4 mr-2" /> Working hours (business schedules)
           </AppButton>
         </div>
       </div>
@@ -183,10 +183,10 @@ export default function HolidayCalendar() {
               {canCreate && (
                 <AppCard>
                   <div className="p-6">
-                    <h3 className="font-bold text-lg mb-4">Add Holiday</h3>
+                    <h3 className="font-bold text-lg mb-4">Add holiday</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-xs font-medium text-muted block mb-1">Holiday Name</label>
+                        <label className="text-xs font-medium text-muted block mb-1">Holiday name</label>
                         <AppInput value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="e.g. Thanksgiving" />
                       </div>
                       <div>
@@ -194,16 +194,16 @@ export default function HolidayCalendar() {
                         <AppInput type="date" value={newHoliday.date} onChange={e => setNewHoliday({...newHoliday, date: e.target.value})} />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted block mb-1">Region / Office</label>
+                        <label className="text-xs font-medium text-muted block mb-1">Region / office</label>
                         <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={newHoliday.region} onChange={e => setNewHoliday({...newHoliday, region: e.target.value})}>
                           <option>Global</option>
-                          <option>US Region</option>
-                          <option>EMEA Region</option>
-                          <option>APAC Region</option>
+                          <option>US region</option>
+                          <option>EMEA region</option>
+                          <option>APAC region</option>
                         </select>
                       </div>
                       <AppButton variant="primary" className="w-full mt-2" onClick={handleAddHoliday} leftIcon={<Plus className="w-4 h-4"/>}>
-                        Add to Calendar
+                        Add to calendar
                       </AppButton>
                     </div>
                   </div>
@@ -212,7 +212,7 @@ export default function HolidayCalendar() {
               
               <AppCard className="bg-warning-soft border border-warning/20">
                 <div className="p-4 space-y-2">
-                  <h4 className="font-semibold text-warning text-sm">SLA Impact</h4>
+                  <h4 className="font-semibold text-warning text-sm">SLA impact</h4>
                   <p className="text-xs text-muted">
                     SLA timers are automatically paused on registered holidays based on the Ticket's or Task's assigned working hours code.
                   </p>
@@ -223,7 +223,7 @@ export default function HolidayCalendar() {
             <div className={canCreate ? "lg:col-span-2" : "lg:col-span-3"}>
               <AppCard>
                 <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02]">
-                  <h3 className="font-bold text-sm">Upcoming Holidays (2026)</h3>
+                  <h3 className="font-bold text-sm">Upcoming holidays (2026)</h3>
                 </div>
                 <div className="divide-y divide-border">
                   {holidays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(holiday => (
@@ -237,7 +237,7 @@ export default function HolidayCalendar() {
                         </div>
                       </div>
                       {canDelete && (
-                        <AppButton variant="outline" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => handleDeleteHoliday(holiday.id)}>
+                        <AppButton aria-label="Delete" variant="outline" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => handleDeleteHoliday(holiday.id)}>
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       )}
@@ -275,7 +275,7 @@ export default function HolidayCalendar() {
                     <div className="mt-4 flex gap-2">
                       {canUpdate && (
                         <AppButton variant="outline" size="sm" onClick={() => handleOpenEditSchedule(wh)} leftIcon={<Edit2 className="w-3.5 h-3.5" />}>
-                          Edit Schedule
+                          Edit schedule
                         </AppButton>
                       )}
                       {canDelete && (
@@ -295,7 +295,7 @@ export default function HolidayCalendar() {
               >
                 <div className="text-center">
                   <Plus className="w-8 h-8 text-muted mx-auto mb-2" />
-                  <span className="font-bold text-muted">Create Working Hours Profile</span>
+                  <span className="font-bold text-muted">Create working hours profile</span>
                 </div>
               </AppCard>
             )}
@@ -312,11 +312,11 @@ export default function HolidayCalendar() {
           <form onSubmit={handleSaveSchedule}>
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-xs font-medium text-muted block mb-1">Profile Name <span className="text-danger">*</span></label>
+                <label className="text-xs font-medium text-muted block mb-1">Profile name <span className="text-danger">*</span></label>
                 <AppInput 
                   value={scheduleForm.name} 
                   onChange={e => setScheduleForm({ ...scheduleForm, name: e.target.value })} 
-                  placeholder="e.g. Standard Business Hours"
+                  placeholder="e.g. Standard business hours"
                   required
                 />
               </div>
@@ -336,7 +336,7 @@ export default function HolidayCalendar() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted block mb-1">Schedule String <span className="text-danger">*</span></label>
+                <label className="text-xs font-medium text-muted block mb-1">Schedule string <span className="text-danger">*</span></label>
                 <AppInput 
                   value={scheduleForm.schedule} 
                   onChange={e => setScheduleForm({ ...scheduleForm, schedule: e.target.value })} 
@@ -347,7 +347,7 @@ export default function HolidayCalendar() {
             </div>
             <DialogFooter className="px-6 py-4 bg-surface border-t border-border/50">
               <AppButton variant="outline" type="button" onClick={() => setShowScheduleModal(false)}>Cancel</AppButton>
-              <AppButton variant="primary" type="submit" leftIcon={<Save className="w-4 h-4" />}>Save Schedule</AppButton>
+              <AppButton variant="primary" type="submit" leftIcon={<Save className="w-4 h-4" />}>Save schedule</AppButton>
             </DialogFooter>
           </form>
         </DialogContent>

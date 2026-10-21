@@ -76,11 +76,11 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
   return (
     <BaseWidget 
       id="departmental-health" 
-      title="Departmental & Cross-Functional Health"
+      title="Departmental & cross-functional health"
       subtitle="Comparative throughput, workload distribution, and SLA adherence by department"
-      icon={<Building2 className="w-5 h-5 text-blue-500" />}
+      icon={<Building2 className="w-5 h-5 text-info-text" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-500/15 text-blue-500 border border-blue-500/20 shrink-0">
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-info-soft text-info-text border border-info-border shrink-0">
           {departmentStats.length} Departments
         </span>
       }
@@ -107,9 +107,9 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
                 }}
                 className={`p-4 rounded-xl border bg-surface/50 transition-all flex flex-col justify-between ${
                   dept.health === "critical"
-                    ? "border-red-500/30 hover:border-red-500 hover:bg-danger/5"
+                    ? "border-danger-border hover:border-danger-border hover:bg-danger/5"
                     : dept.health === "warning"
-                    ? "border-amber-500/30 hover:border-amber-500 hover:bg-amber-500/5"
+                    ? "border-warning-border hover:border-warning-border hover:bg-warning-soft"
                     : "border-border/50 hover:border-primary/50 hover:bg-surface-hover/70"
                 } ${isClickable ? "cursor-pointer group" : ""}`}
               >
@@ -118,14 +118,14 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
                     <div className="flex items-center gap-2 min-w-0">
                       <div className={`w-2.5 h-2.5 rounded-full ${
                         dept.health === "critical" ? "bg-danger animate-ping" :
-                        dept.health === "warning" ? "bg-amber-500" : "bg-emerald-500"
+                        dept.health === "warning" ? "bg-warning" : "bg-success"
                       }`} />
                       <h3 className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
                         {dept.name}
                       </h3>
                     </div>
 
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 shrink-0">
+                    <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1 shrink-0">
                       <Users className="w-3 h-3" /> {dept.userCount} Member{dept.userCount !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -133,16 +133,16 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
                   {/* Metrics Row */}
                   <div className="grid grid-cols-3 gap-2 my-3 p-2.5 rounded-lg bg-background/60 border border-border/40 text-center">
                     <div>
-                      <div className="text-[10px] text-muted-foreground uppercase font-bold">Active</div>
-                      <div className="text-sm font-black text-foreground mt-0.5">{dept.active}</div>
+                      <div className="text-[11px] text-muted-foreground font-bold">Active</div>
+                      <div className="text-sm font-semibold text-foreground mt-0.5">{dept.active}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground uppercase font-bold">Done</div>
-                      <div className="text-sm font-black text-emerald-500 mt-0.5">{dept.resolved}</div>
+                      <div className="text-[11px] text-muted-foreground font-bold">Done</div>
+                      <div className="text-sm font-semibold text-success-text mt-0.5">{dept.resolved}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground uppercase font-bold">Breached</div>
-                      <div className={`text-sm font-black mt-0.5 ${dept.breached > 0 ? "text-danger" : "text-muted-foreground"}`}>
+                      <div className="text-[11px] text-muted-foreground font-bold">Breached</div>
+                      <div className={`text-sm font-semibold mt-0.5 ${dept.breached > 0 ? "text-danger" : "text-muted-foreground"}`}>
                         {dept.breached}
                       </div>
                     </div>
@@ -150,15 +150,15 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
 
                   {/* Resolution Throughput Progress */}
                   <div>
-                    <div className="flex justify-between items-center text-[10px] font-semibold text-muted-foreground mb-1">
-                      <span>Throughput Velocity</span>
+                    <div className="flex justify-between items-center text-[11px] font-semibold text-muted-foreground mb-1">
+                      <span>Throughput velocity</span>
                       <span>{dept.velocity}%</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-surface overflow-hidden border border-border/40">
                       <div
                         style={{ width: `${dept.velocity}%` }}
                         className={`h-full rounded-full transition-all ${
-                          dept.velocity >= 70 ? "bg-emerald-500" : dept.velocity >= 40 ? "bg-blue-500" : "bg-amber-500"
+                          dept.velocity >= 70 ? "bg-success" : dept.velocity >= 40 ? "bg-info" : "bg-warning"
                         }`}
                       />
                     </div>
@@ -167,8 +167,8 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
 
                 {isClickable && (
                   <div className="mt-3 pt-2 border-t border-border/40 flex items-center justify-between text-[11px] font-bold text-primary">
-                    <span>Inspect Department</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    <span>Inspect department</span>
+                    <ArrowUpRight className="w-3.5 h-3.5 transition-transform" />
                   </div>
                 )}
               </div>

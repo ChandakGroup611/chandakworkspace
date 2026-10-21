@@ -20,12 +20,14 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: 'cover' as const,
-  themeColor: '#090D16'
+  // Browser UI colour follows light/dark mode (matches --bg-app of Chandak Classic).
+  // ui-audit-ignore-next-line meta theme-color must be a literal colour
+  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#F5F6F8' }, { media: '(prefers-color-scheme: dark)', color: '#0F1115' }]
 };
 
 export const metadata = {
   title: 'Chandak Workspace',
-  description: 'Complete Enterprise Implementation Blueprint',
+  description: 'Tasks, tickets, requirements, AMC, fleet and design tracking for Chandak Group',
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
@@ -38,7 +40,7 @@ export const metadata = {
   },
   openGraph: {
     title: 'Chandak Workspace',
-    description: 'Complete Enterprise Implementation Blueprint',
+    description: 'Tasks, tickets, requirements, AMC, fleet and design tracking for Chandak Group',
     images: [{ url: '/Chandak_Group_Official_Logo.png' }],
   },
 }
@@ -70,7 +72,7 @@ export default function RootLayout({
               <ClientSessionManager />
               <GlobalAutoRefresh />
               <WorkspaceShell>{children}</WorkspaceShell>
-              <ToastContainer position="top-center" theme="colored" />
+              <ToastContainer position="bottom-right" theme="light" hideProgressBar newestOnTop closeOnClick pauseOnFocusLoss={false} autoClose={4000} />
             </ThemeProvider>
           </PermissionsProvider>
         </QueryProvider>

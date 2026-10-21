@@ -6,8 +6,8 @@ export default function MastersLoading() {
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
         size="lg"
-        title="Chandak Master Configuration"
-        subtitle="Loading companies, departments, vendors & entity catalogs..."
+        title="Chandak master configuration"
+        subtitle="Loading companies, departments, vendors & entity catalogs…"
       />
     </div>
   );

@@ -123,7 +123,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.priorityId) {
-      toast.warning("Operational Priority is mandatory. Please select a priority.");
+      toast.warning("Operational priority is mandatory. Please select a priority.");
       return;
     }
     onSubmit({ ...formData, isReqCategory });
@@ -132,7 +132,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <ChandakLoader size="md" title="Fetching Infrastructure Matrix..." subtitle="Loading infra categories and assets" />
+        <ChandakLoader size="md" title="Fetching infrastructure matrix…" subtitle="Loading infra categories and assets" />
       </div>
     );
   }
@@ -148,14 +148,14 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
             
             {/* Issue Type & Subtype */}
             <div className="space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Type</label>
+              <label className={`text-sm font-bold text-muted`}>Issue type</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.issueTypeId}
                 onChange={(e) => setFormData({ ...formData, issueTypeId: e.target.value, issueSubtypeId: "" })}
                 required
               >
-                <option value="">Select Type</option>
+                <option value="">Select type</option>
                 {(masters.issue_type || []).map((t: any) => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
@@ -163,7 +163,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
             </div>
 
             <div className="space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Subtype</label>
+              <label className={`text-sm font-bold text-muted`}>Issue subtype</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.issueSubtypeId}
@@ -171,7 +171,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                 required
                 disabled={!formData.issueTypeId}
               >
-                <option value="">Select Subtype</option>
+                <option value="">Select subtype</option>
                 {subTypes.map((t: any) => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
@@ -180,14 +180,14 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
 
             {/* Category & Subcategory */}
             <div className="space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Category</label>
+              <label className={`text-sm font-bold text-muted`}>Issue category</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value, subcategoryId: "" })}
                 required
               >
-                <option value="">Select Category</option>
+                <option value="">Select category</option>
                 {(masters.ticket_category || []).map((c: any) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -195,7 +195,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
             </div>
 
             <div className="space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Sub-Category</label>
+              <label className={`text-sm font-bold text-muted`}>Sub-Category</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.subcategoryId}
@@ -203,7 +203,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                 required
                 disabled={!formData.categoryId}
               >
-                <option value="">Select Subcategory</option>
+                <option value="">Select subcategory</option>
                 {subCategories.map((s: any) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
@@ -212,13 +212,13 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
 
             {/* Asset Selection & Priority */}
             <div className="space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Affected Asset</label>
+              <label className={`text-sm font-bold text-muted`}>Affected asset</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.assetId}
                 onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
               >
-                <option value="">Select Asset (Optional)</option>
+                <option value="">Select asset (optional)</option>
                 {(masters.asset || []).map((a: any) => (
                   <option key={a.id} value={a.id}>{a.name} [{a.asset_tag}]</option>
                 ))}
@@ -226,8 +226,8 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
             </div>
 
             <div className="space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>
-                Operational Priority <span className="text-danger">*</span>
+              <label className={`text-sm font-bold text-muted`}>
+                Operational priority <span className="text-danger">*</span>
               </label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground" }`}
@@ -235,7 +235,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                 onChange={(e) => handlePriorityChange(e.target.value)}
                 required
               >
-                <option value="" disabled>Select Priority</option>
+                <option value="" disabled>Select priority</option>
                 {(masters.master_priority || []).map((p: any) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -244,9 +244,9 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
             </div>
 
             <div className="md:col-span-2 lg:col-span-3 space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Subject <span className="text-red-500">*</span></label>
+              <label className={`text-sm font-bold text-muted`}>Subject <span className="text-danger-text">*</span></label>
               <AppInput 
-                placeholder="Summarize the infrastructure fault..."
+                placeholder="Summarise the infrastructure fault…"
                 value={formData.subject}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, subject: e.target.value })}
                 required
@@ -256,10 +256,10 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
           </div>
 
           <div className="space-y-2">
-            <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Incident Description & Technical Details</label>
+            <label className={`text-sm font-bold text-muted`}>Incident description & technical details</label>
             <textarea 
               className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[100px] resize-none ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
-              placeholder="Describe the hardware fault, server impact, or network outage in detail..."
+              placeholder="Describe the hardware fault, server impact, or network outage in detail…"
               value={formData.remark}
               onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
               required
@@ -269,11 +269,11 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
 
 
           {isReqCategory && (
-            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-theme-btn-primary/5 border border-theme-btn-primary/20 rounded-2xl">
-              <h4 className="text-sm font-bold text-theme-icon mb-2">Requirement Details (Mandatory)</h4>
+            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-accent-soft border border-theme-btn-primary/20 rounded-2xl">
+              <h4 className="text-sm font-bold text-theme-icon mb-2">Requirement details (mandatory)</h4>
               
               <div className="space-y-2">
-                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-danger">*</span></label>
+                <label className={`text-sm font-bold text-muted`}>Requirement reason <span className="text-danger">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[100px] resize-none ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
                   
@@ -284,7 +284,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
               </div>
 
               <div className="space-y-2">
-                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-danger">*</span></label>
+                <label className={`text-sm font-bold text-muted`}>Requirement details <span className="text-danger">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[120px] resize-none ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
                   
@@ -295,43 +295,43 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
             </div>
             
               <div className="space-y-2 mt-4 pt-4 border-t border-theme-btn-primary/20">
-                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Domain (Scope) <span className="text-danger">*</span></label>
+                <label className={`text-sm font-bold text-muted`}>Requirement domain (scope) <span className="text-danger">*</span></label>
                 <select 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${"theme-input-structural text-foreground"}`}
                   value={formData.requirement_domain}
                   onChange={(e) => setFormData(prev => ({...prev, requirement_domain: e.target.value}))}
                   required
                 >
-                  <option value="General Business">General Business</option>
-                  <option value="IT & Software System">IT & Software System</option>
-                  <option value="Infrastructure & Hardware">Infrastructure & Hardware</option>
+                  <option value="General Business">General business</option>
+                  <option value="IT & Software System">IT & software system</option>
+                  <option value="Infrastructure & Hardware">Infrastructure & hardware</option>
                 </select>
               </div>
 
               {formData.requirement_domain === "IT & Software System" && (
-                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary/5 p-4 rounded-xl border border-theme-btn-primary/20">
-                  <h5 className="font-bold text-accent">IT & Software System Scope</h5>
+                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-accent-soft p-4 rounded-xl border border-theme-btn-primary/20">
+                  <h5 className="font-bold text-accent">IT & software system scope</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Target System / Application</label>
+                      <label className={`text-xs font-bold text-muted`}>Target system / application</label>
                       <input type="text" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.target_system} onChange={e => setFormData(p => ({...p, target_system: e.target.value}))} placeholder="e.g. ERP, CRM" />
                     </div>
                     <div className="space-y-2">
-                      <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Data Privacy & Security</label>
+                      <label className={`text-xs font-bold text-muted`}>Data privacy & security</label>
                       <input type="text" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.data_privacy} onChange={e => setFormData(p => ({...p, data_privacy: e.target.value}))} placeholder="e.g. Handles PII" />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Integration Dependencies</label>
-                    <textarea className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground min-h-[60px]`} value={formData.integrations} onChange={e => setFormData(p => ({...p, integrations: e.target.value}))} placeholder="List APIs or 3rd party tools..." />
+                    <label className={`text-xs font-bold text-muted`}>Integration dependencies</label>
+                    <textarea className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground min-h-[60px]`} value={formData.integrations} onChange={e => setFormData(p => ({...p, integrations: e.target.value}))} placeholder="List APIs or 3rd party tools…" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Software License Cost</label>
+                      <label className={`text-xs font-bold text-muted`}>Software license cost</label>
                       <input type="number" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.software_cost} onChange={e => setFormData(p => ({...p, software_cost: e.target.value}))} placeholder="e.g. 1500" />
                     </div>
                     <div className="space-y-2">
-                      <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Development Cost</label>
+                      <label className={`text-xs font-bold text-muted`}>Development cost</label>
                       <input type="number" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.dev_cost} onChange={e => setFormData(p => ({...p, dev_cost: e.target.value}))} placeholder="e.g. 5000" />
                     </div>
                   </div>
@@ -339,23 +339,23 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
               )}
 
               {formData.requirement_domain === "Infrastructure & Hardware" && (
-                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary/5 p-4 rounded-xl border border-theme-btn-primary/20">
-                  <h5 className="font-bold text-accent">Infrastructure Scope</h5>
+                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-accent-soft p-4 rounded-xl border border-theme-btn-primary/20">
+                  <h5 className="font-bold text-accent">Infrastructure scope</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Target Environment</label>
+                      <label className={`text-xs font-bold text-muted`}>Target environment</label>
                       <input type="text" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.target_environment} onChange={e => setFormData(p => ({...p, target_environment: e.target.value}))} placeholder="e.g. AWS, Azure" />
                     </div>
                     <div className="space-y-2">
-                      <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Hardware & Capacity</label>
-                      <input type="text" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.hardware_needs} onChange={e => setFormData(p => ({...p, hardware_needs: e.target.value}))} placeholder="e.g. 2TB Storage" />
+                      <label className={`text-xs font-bold text-muted`}>Hardware & capacity</label>
+                      <input type="text" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.hardware_needs} onChange={e => setFormData(p => ({...p, hardware_needs: e.target.value}))} placeholder="e.g. 2TB storage" />
                     </div>
                     <div className="space-y-2">
-                      <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>CAPEX Amount</label>
+                      <label className={`text-xs font-bold text-muted`}>CAPEX amount</label>
                       <input type="number" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.capex_amount} onChange={e => setFormData(p => ({...p, capex_amount: e.target.value}))} placeholder="e.g. 10000" />
                     </div>
                     <div className="space-y-2">
-                      <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>OPEX Amount</label>
+                      <label className={`text-xs font-bold text-muted`}>OPEX amount</label>
                       <input type="number" className={`w-full p-3 rounded-xl text-sm theme-input-structural text-foreground`} value={formData.opex_amount} onChange={e => setFormData(p => ({...p, opex_amount: e.target.value}))} placeholder="e.g. 500" />
                     </div>
                   </div>
@@ -363,18 +363,18 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
               )}
 
               <div className="space-y-2 mt-4">
-                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Budget Impact</label>
-                <input type="text" className={`w-full p-4 rounded-2xl text-sm theme-input-structural text-foreground`} value={formData.budget_impact} onChange={e => setFormData(p => ({...p, budget_impact: e.target.value}))} placeholder="e.g. Unbudgeted, Approved in Q3" />
+                <label className={`text-sm font-bold text-muted`}>Budget impact</label>
+                <input type="text" className={`w-full p-4 rounded-2xl text-sm theme-input-structural text-foreground`} value={formData.budget_impact} onChange={e => setFormData(p => ({...p, budget_impact: e.target.value}))} placeholder="e.g. Unbudgeted, approved in q3" />
               </div>
               
               {formData.requirement_domain === "Infrastructure & Hardware" && (
                 <div className="space-y-4 mt-6 p-4 rounded-xl border border-dashed border-theme-btn-primary/30 bg-elevated/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h5 className="font-bold text-accent">Infrastructure Specifications</h5>
+                      <h5 className="font-bold text-accent">Infrastructure specifications</h5>
                     </div>
                     <AppButton type="button" size="sm" variant="outline" onClick={handleAddSpec} className="gap-2 text-xs h-8">
-                      <span className="text-lg leading-none">+</span> Add Spec
+                      <span className="text-lg leading-none">+</span> Add spec
                     </AppButton>
                   </div>
                   
@@ -383,19 +383,19 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                       {formData.infraSpecifications.map((spec, index) => (
                         <div key={spec.id} className="flex flex-col md:flex-row gap-3 items-end bg-elevated/50 p-3 rounded-xl border border-border">
                           <div className="flex-1 space-y-1 w-full">
-                            <label className="text-xs font-semibold text-muted uppercase">Item Description</label>
-                            <input type="text" className="w-full h-10 px-3 rounded-lg text-sm theme-input-structural text-foreground" value={spec.item} onChange={(e) => handleUpdateSpec(spec.id, 'item', e.target.value)} placeholder="e.g. Dell PowerEdge R740" />
+                            <label className="text-xs font-semibold text-muted">Item description</label>
+                            <input type="text" className="w-full h-10 px-3 rounded-lg text-sm theme-input-structural text-foreground" value={spec.item} onChange={(e) => handleUpdateSpec(spec.id, 'item', e.target.value)} placeholder="e.g. Dell PowerEdge r740" />
                           </div>
                           <div className="w-full md:w-32 space-y-1">
-                            <label className="text-xs font-semibold text-muted uppercase">Unit Cost ($)</label>
+                            <label className="text-xs font-semibold text-muted">Unit cost ($)</label>
                             <input type="number" className="w-full h-10 px-3 rounded-lg text-sm theme-input-structural text-foreground" value={spec.cost || ''} onChange={(e) => handleUpdateSpec(spec.id, 'cost', parseFloat(e.target.value) || 0)} placeholder="0.00" />
                           </div>
                           <div className="w-full md:w-24 space-y-1">
-                            <label className="text-xs font-semibold text-muted uppercase">Qty</label>
+                            <label className="text-xs font-semibold text-muted">Qty</label>
                             <input type="number" className="w-full h-10 px-3 rounded-lg text-sm theme-input-structural text-foreground" value={spec.qty || ''} onChange={(e) => handleUpdateSpec(spec.id, 'qty', parseInt(e.target.value) || 0)} placeholder="1" />
                           </div>
                           <div className="w-full md:w-auto pt-2 md:pt-0">
-                            <AppButton variant="ghost" type="button" onClick={() => handleRemoveSpec(spec.id)} className="w-full md:w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/20 text-danger transition-colors">
+                            <AppButton aria-label="Close" variant="ghost" type="button" onClick={() => handleRemoveSpec(spec.id)} className="w-full md:w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/20 text-danger transition-colors">
                               <X className="w-4 h-4" />
                             </AppButton>
                           </div>
@@ -412,7 +412,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                     </div>
                   ) : (
                     <div className="text-center py-4 text-sm text-muted/70 italic border border-dashed border-border rounded-xl">
-                      No specifications added. Click 'Add Spec' to itemize requirement.
+                      No specifications added. Click 'add spec' to itemize requirement.
                     </div>
                   )}
                 </div>
@@ -423,7 +423,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
             <div className="flex-1 space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Operational Attachments (Log Files / Screenshots)</label>
+              <label className={`text-sm font-bold text-muted`}>Operational attachments (log files / screenshots)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
                 "border-border hover:border-theme-btn-primary/30 bg-elevated/50"
               }`}>
@@ -440,9 +440,9 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                       </div>
                       <div>
                         <p className={`text-xs font-medium ${"text-foreground"}`}>
-                          Select or Drop Technical Evidence
+                          Select or drop technical evidence
                         </p>
-                        <p className="text-xs text-muted uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
+                        <p className="text-xs text-muted tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
                       </div>
                     </div>
                   </>
@@ -457,7 +457,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                           {formData.attachment.name}
                         </p>
                         <p className="text-xs text-muted">
-                          {(formData.attachment.size / 1024).toFixed(1)} KB • Ready to upload
+                          {(formData.attachment.size / 1024).toFixed(1)} KB • ready to upload
                         </p>
                       </div>
                     </div>
@@ -472,8 +472,8 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                             window.open(url, '_blank');
                           }
                         }}
-                        className="px-2.5 py-1 text-xs text-accent hover:bg-theme-btn-primary/10 flex items-center gap-1 font-semibold"
-                        title="View Document"
+                        className="px-2.5 py-1 text-xs text-accent hover:bg-accent-soft flex items-center gap-1 font-semibold"
+                        title="View document"
                       >
                         <Eye className="h-3.5 w-3.5" />
                         <span>View</span>
@@ -494,13 +494,13 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                             URL.revokeObjectURL(url);
                           }
                         }}
-                        className="px-2.5 py-1 text-xs text-theme-icon hover:bg-theme-btn-primary/10 flex items-center gap-1 font-semibold"
-                        title="Download Document"
+                        className="px-2.5 py-1 text-xs text-theme-icon hover:bg-accent-soft flex items-center gap-1 font-semibold"
+                        title="Download document"
                       >
                         <Download className="h-3.5 w-3.5" />
                         <span>Download</span>
                       </AppButton>
-                      <AppButton 
+                      <AppButton aria-label="Remove file" 
                         variant="secondary" 
                         size="sm"
                         type="button"
@@ -527,7 +527,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
               </AppButton>
               <AppButton variant="primary" type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
                 <Send className="h-4 w-4 mr-2" />
-                Submit Ticket
+                Submit ticket
               </AppButton>
             </div>
           </div>

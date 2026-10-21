@@ -37,13 +37,13 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
     const healthScore = Math.max(20, Math.min(100, 100 - Math.round((penalties / Math.max(1, total)) * 50)));
 
     let healthLabel = "Excellent Operational Flow";
-    let healthColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
+    let healthColor = "text-success-text bg-success-soft border-success-border";
     if (healthScore < 60) {
       healthLabel = "Critical Attention Required";
-      healthColor = "text-danger bg-danger/10 border-red-500/20";
+      healthColor = "text-danger bg-danger/10 border-danger-border";
     } else if (healthScore < 85) {
       healthLabel = "Moderate Workload Friction";
-      healthColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
+      healthColor = "text-warning-text bg-warning-soft border-warning-border";
     }
 
     const bullets: Array<{ id: string; type: "danger" | "warning" | "info" | "success"; icon: any; text: string; filter: DrillDownFilter | null }> = [];
@@ -56,7 +56,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
         icon: ShieldAlert,
         text: `${breachedItems.length} operational item${breachedItems.length > 1 ? "s" : ""} have breached SLA or due dates and require immediate escalation.`,
         filter: {
-          title: "SLA Breached Items",
+          title: "SLA breached items",
           description: "All tickets, tasks, and requirements currently exceeding target resolution deadlines.",
           urgency: "breached"
         }
@@ -71,7 +71,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
         icon: Clock,
         text: `${criticalDueSoon.length} high-priority deadline${criticalDueSoon.length > 1 ? "s" : ""} expire within the next 8 hours.`,
         filter: {
-          title: "Expiring Today (Next 8 Hours)",
+          title: "Expiring today (next 8 hours)",
           description: "Items approaching their SLA expiration deadlines today.",
           urgency: "urgent"
         }
@@ -102,7 +102,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
         icon: Users,
         text: `${unassignedItems.length} active item${unassignedItems.length > 1 ? "s" : ""} remain unassigned in workspaces.`,
         filter: {
-          title: "Unassigned Active Items",
+          title: "Unassigned active items",
           description: "Tasks and tickets that have no designated assignee.",
           userId: "Unassigned"
         }
@@ -117,7 +117,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
         icon: CheckCircle2,
         text: `${resolvedItems.length} item${resolvedItems.length > 1 ? "s" : ""} successfully resolved (${Math.round((resolvedItems.length / total) * 100)}% resolution throughput).`,
         filter: {
-          title: "Resolved Items",
+          title: "Resolved items",
           description: "Completed deliverables and tickets.",
           status: "Resolved"
         }
@@ -134,25 +134,25 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
   return (
     <BaseWidget 
       id="executive-digest" 
-      title="Executive Smart Digest"
+      title="Executive smart digest"
       subtitle="Automated cross-functional briefing from live system activity"
       icon={<Sparkles className="w-5 h-5 animate-pulse text-primary" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-primary/15 text-primary border border-primary/20 shrink-0">
-          AI Live Briefing
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/15 text-primary border border-primary/20 shrink-0">
+          AI live briefing
         </span>
       }
       collapsible={true}
       headerRight={
         <div className="flex items-center gap-2.5 bg-surface/80 px-3 py-1 rounded-xl border border-border/60 shrink-0">
           <div className="text-right hidden sm:block">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Health Score</div>
+            <div className="text-[11px] font-bold text-muted-foreground">Health score</div>
             <div className="text-[11px] font-semibold text-foreground truncate max-w-[140px]">{digest.healthLabel}</div>
           </div>
-          <div className={`flex items-center justify-center w-8 h-8 rounded-lg border font-black text-xs ${
-            digest.healthScore >= 85 ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10' :
-            digest.healthScore >= 60 ? 'text-amber-500 border-amber-500/30 bg-amber-500/10' :
-            'text-danger border-red-500/30 bg-danger/10'
+          <div className={`flex items-center justify-center w-8 h-8 rounded-lg border font-semibold text-xs ${
+            digest.healthScore >= 85 ? 'text-success-text border-success-border bg-success-soft' :
+            digest.healthScore >= 60 ? 'text-warning-text border-warning-border bg-warning-soft' :
+            'text-danger border-danger-border bg-danger/10'
           }`}>
             {digest.healthScore}%
           </div>
@@ -174,19 +174,19 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
               }}
               className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
                 b.type === "danger"
-                  ? "bg-danger/5 border-red-500/20 text-danger-foreground hover:bg-danger/10"
+                  ? "bg-danger/5 border-danger-border text-danger-foreground hover:bg-danger/10"
                   : b.type === "warning"
-                  ? "bg-amber-500/5 border-amber-500/20 text-foreground hover:bg-amber-500/10"
+                  ? "bg-warning-soft border-warning-border text-foreground hover:bg-warning-soft"
                   : b.type === "info"
-                  ? "bg-blue-500/5 border-blue-500/20 text-foreground hover:bg-blue-500/10"
-                  : "bg-emerald-500/5 border-emerald-500/20 text-foreground hover:bg-emerald-500/10"
+                  ? "bg-info-soft border-info-border text-foreground hover:bg-info-soft"
+                  : "bg-success-soft border-success-border text-foreground hover:bg-success-soft"
               } ${isClickable ? "cursor-pointer group" : ""}`}
             >
               <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${
                 b.type === "danger" ? "bg-danger/15 text-danger" :
-                b.type === "warning" ? "bg-amber-500/15 text-amber-500" :
-                b.type === "info" ? "bg-blue-500/15 text-blue-500" :
-                "bg-emerald-500/15 text-emerald-500"
+                b.type === "warning" ? "bg-warning-soft text-warning-text" :
+                b.type === "info" ? "bg-info-soft text-info-text" :
+                "bg-success-soft text-success-text"
               }`}>
                 <Icon className="w-4 h-4" />
               </div>
@@ -196,8 +196,8 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
                   {b.text}
                 </p>
                 {isClickable && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary mt-1 group-hover:underline">
-                    View Items <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary mt-1 group-hover:underline">
+                    View items <ArrowUpRight className="w-3 h-3 transition-transform" />
                   </span>
                 )}
               </div>

@@ -155,29 +155,29 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
       {/* 1. TOP SECURE BANNER */}
       <header className="h-14 border-b border-border bg-surface px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-theme-btn-primary/10 border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary font-black">
+          <div className="h-8 w-8 rounded-lg bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary font-semibold">
             C
           </div>
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-foreground block">
+            <span className="text-xs font-bold text-foreground block">
               CHANDAK GROUP • SECURE DOCUMENT PORTAL
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono">
-              Protected by 6-Layer RBAC & End-to-End Watermarking
+            <span className="text-[11px] text-muted-foreground font-mono">
+              Protected by 6-layer RBAC & end-to-end watermarking
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {step === "UNLOCKED" ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-success-soft text-success-text border border-success-border">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>Session Authenticated</span>
+              <span>Session authenticated</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-warning-soft text-warning-text border border-warning-border">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Identity Verification Required</span>
+              <span>Identity verification required</span>
             </span>
           )}
         </div>
@@ -188,12 +188,12 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
         {isLoadingMeta ? (
           <div className="text-center py-12 text-muted-foreground space-y-3 animate-pulse">
             <ShieldCheck className="h-10 w-10 mx-auto text-theme-btn-primary stroke-1" />
-            <p className="text-xs font-semibold">Establishing encrypted handshake...</p>
+            <p className="text-xs font-semibold">Establishing encrypted handshake…</p>
           </div>
         ) : !meta?.isValid ? (
           /* INVALID / EXPIRED / LOCKED CARD */
           <div className="max-w-md w-full bg-surface border border-border rounded-xl p-6 shadow-xl text-center space-y-4">
-            <div className="h-12 w-12 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center mx-auto">
+            <div className="h-12 w-12 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center mx-auto">
               {meta?.isLocked ? <ShieldAlert className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
             </div>
             <div>
@@ -212,10 +212,10 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
           /* STEP 1: EMAIL IDENTIFICATION CARD */
           <div className="max-w-md w-full bg-surface border border-border rounded-xl p-6 shadow-xl space-y-5">
             <div className="text-center space-y-1.5">
-              <div className="h-11 w-11 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20 flex items-center justify-center mx-auto">
+              <div className="h-11 w-11 rounded-full bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20 flex items-center justify-center mx-auto">
                 <Lock className="h-5 w-5" />
               </div>
-              <h2 className="text-base font-bold text-foreground">Authorized Consultant Access</h2>
+              <h2 className="text-base font-bold text-foreground">Authorised consultant access</h2>
               <p className="text-xs text-muted-foreground">
                 Documents for <strong className="font-semibold text-foreground">{meta.workspaceName}</strong>
               </p>
@@ -229,7 +229,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
             )}
 
             {challengeError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/25 rounded-lg flex items-start gap-2 text-xs text-rose-600 dark:text-rose-400">
+              <div className="p-3 bg-danger-soft border border-danger-border rounded-lg flex items-start gap-2 text-xs text-danger-text">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{challengeError}</span>
               </div>
@@ -237,8 +237,8 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
 
             <form onSubmit={handleRequestOtp} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">
-                  Your Work Email Address *
+                <label className="text-xs font-bold text-muted-foreground block mb-1">
+                  Your work email address *
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -272,17 +272,17 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
           /* STEP 2: PASSWORD + OTP CHALLENGE CARD */
           <div className="max-w-md w-full bg-surface border border-border rounded-xl p-6 shadow-xl space-y-5">
             <div className="text-center space-y-1.5">
-              <div className="h-11 w-11 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20 flex items-center justify-center mx-auto">
+              <div className="h-11 w-11 rounded-full bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20 flex items-center justify-center mx-auto">
                 <Key className="h-5 w-5" />
               </div>
-              <h2 className="text-base font-bold text-foreground">Dual-Challenge Authentication</h2>
+              <h2 className="text-base font-bold text-foreground">Dual-challenge authentication</h2>
               <p className="text-xs text-muted-foreground">
                 Code sent to <strong className="font-semibold text-foreground">{email}</strong>
               </p>
             </div>
 
             {challengeError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/25 rounded-lg flex items-start gap-2 text-xs text-rose-600 dark:text-rose-400">
+              <div className="p-3 bg-danger-soft border border-danger-border rounded-lg flex items-start gap-2 text-xs text-danger-text">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{challengeError}</span>
               </div>
@@ -290,21 +290,21 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
 
             <form onSubmit={handleVerifyChallenge} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">
-                  Link Access Password
+                <label className="text-xs font-bold text-muted-foreground block mb-1">
+                  Link access password
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter link password if provided..."
+                  placeholder="Enter link password if provided…"
                   className="w-full text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">
-                  6-Digit One-Time Passcode *
+                <label className="text-xs font-bold text-muted-foreground block mb-1">
+                  6-Digit one-time passcode *
                 </label>
                 <input
                   type="text"
@@ -334,7 +334,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                 onClick={() => setStep("EMAIL")}
                 className="hover:underline"
               >
-                &larr; Change Email
+                &larr; change email
               </button>
               <button
                 type="button"
@@ -342,7 +342,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                 disabled={isSendingOtp}
                 className="hover:underline text-theme-btn-primary font-bold"
               >
-                Resend Code
+                Resend code
               </button>
             </div>
           </div>
@@ -352,8 +352,8 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
             {/* LEFT PANEL: SHARED ITEMS LIST */}
             <aside className="w-full md:w-80 bg-surface border border-border rounded-xl p-4 flex flex-col shrink-0 shadow-xs">
               <div className="pb-3 border-b border-border">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                  Shared Dossier Items ({sharedItems.length})
+                <span className="text-xs font-bold text-muted-foreground block">
+                  Shared dossier items ({sharedItems.length})
                 </span>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   Click an item to render watermarked preview.
@@ -369,7 +369,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                       onClick={() => setSelectedItemId(item.id)}
                       className={`p-3 rounded-lg border transition-all cursor-pointer ${
                         isSelected
-                          ? "bg-theme-btn-primary/10 border-theme-btn-primary ring-1 ring-theme-btn-primary/20"
+                          ? "bg-accent-soft border-theme-btn-primary ring-1 ring-theme-btn-primary/20"
                           : "bg-surface hover:bg-surface border-border"
                       }`}
                     >
@@ -377,14 +377,14 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                         <span className="font-mono text-xs font-bold text-foreground truncate">
                           {item.codeOrNumber}
                         </span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-theme-btn-primary/15 text-theme-btn-primary">
+                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-accent-soft text-theme-btn-primary">
                           {item.versionOrRev}
                         </span>
                       </div>
                       <p className="text-xs font-medium text-foreground mt-1 truncate">
                         {item.title}
                       </p>
-                      <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-2">
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-2">
                         <span>{item.disciplineOrType}</span>
                         <span>{(item.fileSizeBytes / (1024 * 1024)).toFixed(1)} MB</span>
                       </div>
@@ -404,7 +404,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                     <span className="text-xs font-bold text-foreground truncate block">
                       {selectedItem?.title || "Document Preview"}
                     </span>
-                    <span className="text-[10px] font-mono text-muted-foreground">
+                    <span className="text-[11px] font-mono text-muted-foreground">
                       {selectedItem?.fileName} • {selectedItem?.versionOrRev}
                     </span>
                   </div>
@@ -418,11 +418,11 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs"
                     >
                       <Download className="h-3.5 w-3.5" />
-                      <span>Download Raw File</span>
+                      <span>Download raw file</span>
                     </a>
                   ) : (
                     <span className="text-[11px] font-medium text-muted-foreground px-2 py-1 bg-surface border border-border rounded-md">
-                      View-Only Protected
+                      View-only protected
                     </span>
                   )}
                 </div>
@@ -430,7 +430,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
 
               {/* DWG WATERMARK TECHNICAL DISCLAIMER (FR-268) */}
               {hasDwgFile && (
-                <div className="p-2.5 bg-amber-500/10 border-b border-amber-500/25 px-5 flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300 shrink-0">
+                <div className="p-2.5 bg-warning-soft border-b border-warning-border px-5 flex items-center gap-2 text-xs text-warning-text shrink-0">
                   <Info className="h-4 w-4 shrink-0" />
                   <span>
                     <strong>Technical Notice:</strong> Raw DWG CAD files cannot carry dynamic visual watermarks. Dynamic vector watermarking applies to rendered PDF/raster sheets.
@@ -446,7 +446,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                     {Array.from({ length: 5 }).map((_, i) => (
                       <div
                         key={i}
-                        className="text-xs sm:text-sm font-mono font-bold tracking-widest text-slate-900 dark:text-slate-100 -rotate-12 whitespace-nowrap"
+                        className="text-xs sm:text-sm font-mono font-bold tracking-widest text-foreground -rotate-12 whitespace-nowrap"
                       >
                         {watermarkText}
                       </div>
@@ -455,36 +455,36 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                 )}
 
                 {/* Simulated / Real PDF Viewer Stage */}
-                <div className="bg-white rounded-lg shadow-2xl border border-border w-[800px] h-[950px] p-8 flex flex-col justify-between text-slate-800 relative z-10">
-                  <div className="flex justify-between items-start border-b border-slate-300 pb-3">
+                <div className="bg-surface rounded-lg shadow-lg border border-border w-[800px] h-[950px] p-8 flex flex-col justify-between text-foreground relative z-10">
+                  <div className="flex justify-between items-start border-b border-border pb-3">
                     <div>
-                      <h3 className="text-lg font-black tracking-tight text-slate-900">
+                      <h3 className="text-lg font-semibold tracking-tight text-foreground">
                         CHANDAK GROUP • ENGINEERING
                       </h3>
-                      <p className="text-xs font-semibold text-slate-600">
+                      <p className="text-xs font-semibold text-subtle">
                         {selectedItem?.title} • {selectedItem?.versionOrRev}
                       </p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-slate-500">
+                    <span className="text-xs font-mono font-bold text-muted">
                       {selectedItem?.codeOrNumber}
                     </span>
                   </div>
 
-                  <div className="flex-1 my-6 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center bg-slate-50 text-center p-6 space-y-2">
+                  <div className="flex-1 my-6 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-sunken text-center p-6 space-y-2">
                     <div>
-                      <Layers className="h-12 w-12 text-slate-400 mx-auto stroke-1" />
-                      <p className="text-xs font-bold text-slate-600 mt-2">
-                        Watermarked Document Preview Stage
+                      <Layers className="h-12 w-12 text-muted mx-auto stroke-1" />
+                      <p className="text-xs font-bold text-subtle mt-2">
+                        Watermarked document preview stage
                       </p>
-                      <p className="text-[11px] text-slate-400 max-w-sm">
+                      <p className="text-[11px] text-muted max-w-sm">
                         Rendered with verified session binding for {email}. All access actions are logged in the immutable audit register.
                       </p>
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-300 pt-3 flex justify-between text-[11px] font-mono text-slate-500">
+                  <div className="border-t border-border pt-3 flex justify-between text-[11px] font-mono text-muted">
                     <div>CONFIDENTIAL • RECIPIENT: {email}</div>
-                    <div>DATE: {new Date().toLocaleDateString("en-IN")}</div>
+                    <div>Date: {new Date().toLocaleDateString("en-IN")}</div>
                   </div>
                 </div>
               </div>

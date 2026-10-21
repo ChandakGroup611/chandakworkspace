@@ -45,29 +45,27 @@ export default function DeploymentVersionBanner() {
   if (!hasNewDeployment || isDismissed) return null;
 
   return (
-    <div className="bg-primary text-primary-foreground px-4 py-2 flex items-center justify-between shadow-xs text-xs font-medium animate-in slide-in-from-top duration-200 relative z-20">
-      <div className="flex items-center gap-2">
-        <Sparkles className="h-4 w-4 shrink-0" />
-        <span>
-          A new system update has been deployed. Reload to load the latest version.
-        </span>
+    <div role="status" className="relative z-[var(--z-header)] flex items-center justify-between gap-3 border-b border-info-border bg-info-soft px-4 py-1.5 text-[13px] text-info-text">
+      <div className="flex min-w-0 items-center gap-2">
+        <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="truncate">A new version of Chandak Workspace is available. Reload to get the latest changes.</span>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex shrink-0 items-center gap-1">
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary-foreground/15 hover:bg-primary-foreground/25 text-primary-foreground font-semibold transition-colors cursor-pointer text-xs"
+          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-info-border bg-surface px-2.5 text-[12.5px] font-medium text-foreground hover:bg-surface-hover"
         >
-          <RefreshCw className="h-3 w-3" />
-          <span>Reload</span>
+          <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+          Reload
         </button>
         <button
           type="button"
-          aria-label="Dismiss banner"
+          aria-label="Dismiss"
           onClick={() => setIsDismissed(true)}
-          className="p-1 hover:bg-primary-foreground/15 rounded-md text-primary-foreground/80 hover:text-primary-foreground transition-colors cursor-pointer"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-surface/60"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-3.5 w-3.5" aria-hidden />
         </button>
       </div>
     </div>

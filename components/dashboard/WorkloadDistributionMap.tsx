@@ -10,9 +10,9 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
     let backlogOverdue = 0;
 
     const modules = [
-      { id: "tasks", name: "Workspace Tasks", active: 0, overdue: 0, capacity: 0, color: "from-accent to-indigo-600" },
-      { id: "tickets", name: "ITSM Tickets", active: 0, overdue: 0, capacity: 0, color: "from-indigo-600 to-purple-600" },
-      { id: "requirements", name: "Environments", active: 0, overdue: 0, capacity: 0, color: "from-amber-600 to-rose-600" },
+      { id: "tasks", name: "Workspace Tasks", active: 0, overdue: 0, capacity: 0, color: "from-accent to-primary" },
+      { id: "tickets", name: "ITSM Tickets", active: 0, overdue: 0, capacity: 0, color: "from-primary to-primary" },
+      { id: "requirements", name: "Environments", active: 0, overdue: 0, capacity: 0, color: "from-warning to-danger" },
     ];
 
     activities.forEach(act => {
@@ -46,27 +46,27 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
       <AppCardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-theme-icon" />
-          <AppCardTitle>Workload Saturation Engine</AppCardTitle>
+          <AppCardTitle>Workload saturation engine</AppCardTitle>
         </div>
-        <span className="text-xs theme-card-structural /5 border-border px-2 py-0.5 rounded text-muted font-semibold uppercase">
-          Live Pool
+        <span className="text-xs theme-card-structural border-border px-2 py-0.5 rounded text-muted font-semibold">
+          Live pool
         </span>
       </AppCardHeader>
 
       <AppCardContent className="space-y-4 pt-2">
         <div className="grid grid-cols-2 gap-3 mb-2">
-          <div className="p-3 rounded-xl theme-card-structural /[0.01] border-border flex flex-col justify-between">
-            <span className="text-xs text-muted font-medium tracking-wide">Total Concurrency</span>
+          <div className="p-3 rounded-xl theme-card-structural border-border flex flex-col justify-between">
+            <span className="text-xs text-muted font-medium tracking-wide">Total concurrency</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-xl font-bold text-foreground">{metrics.totalConcurrency}</span>
-              <span className="text-[0.7rem] text-subtle font-bold uppercase">active</span>
+              <span className="text-[0.7rem] text-subtle font-bold">active</span>
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-danger/5 border border-rose-500/10 flex flex-col justify-between">
-            <span className="text-xs text-danger font-medium tracking-wide">Backlog Overdue</span>
+          <div className="p-3 rounded-xl bg-danger/5 border border-danger-border flex flex-col justify-between">
+            <span className="text-xs text-danger font-medium tracking-wide">Backlog overdue</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-xl font-bold text-danger">{metrics.backlogOverdue}</span>
-              <span className="text-[0.7rem] text-danger font-bold uppercase">critical</span>
+              <span className="text-[0.7rem] text-danger font-bold">critical</span>
             </div>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
               </div>
 
               {/* Advanced track layout */}
-              <div className="h-2 w-full theme-card-structural /40 rounded-full overflow-hidden p-[1px]">
+              <div className="h-2 w-full theme-card-structural rounded-full overflow-hidden p-[1px]">
                 <div 
                   className={`h-full rounded-full bg-gradient-to-r ${dept.color} transition-all duration-500 shadow-sm`} 
                   style={{ width: `${dept.capacity}%` }} 

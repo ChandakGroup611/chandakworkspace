@@ -44,7 +44,7 @@ export function ReportKPIBar({
             onClick={kpi.onClick}
             className={cn(
               "flex items-center text-left bg-surface border border-border shadow-xs transition-colors duration-150 select-none min-w-0 group",
-              isClickable && "cursor-pointer hover:bg-hover hover:border-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
+              isClickable && "cursor-pointer hover:bg-surface-hover hover:border-border-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               kpi.isActive && "ring-2 ring-primary border-primary bg-accent-soft",
               variant === "default"
                 ? "gap-3 px-3.5 py-2.5 rounded-xl min-w-[140px] sm:min-w-[170px] shrink-0"

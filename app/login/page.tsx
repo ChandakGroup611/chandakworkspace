@@ -2,7 +2,6 @@
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -150,7 +149,7 @@ export default function LoginPage() {
         if (session) {
           await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
         }
-        setSuccessMsg("You have been successfully logged out.");
+        setSuccessMsg("You've signed out.");
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isTerminated) {
         document.cookie = "active_module=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -160,7 +159,7 @@ export default function LoginPage() {
         }
         setNoticeMsg({
           type: "warning",
-          title: "Session Terminated",
+          title: "Session terminated",
           description: "Your session was terminated by an administrator or remotely."
         });
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -171,7 +170,7 @@ export default function LoginPage() {
         }
         setNoticeMsg({
           type: "warning",
-          title: "Session Transferred",
+          title: "Session transferred",
           description: "You were logged out because your account was logged in on another device or browser. To continue on this device, please sign in."
         });
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -182,7 +181,7 @@ export default function LoginPage() {
         }
         setNoticeMsg({
           type: "info",
-          title: "Session Expired",
+          title: "Session expired",
           description: "Your session expired due to inactivity. Please sign in again."
         });
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -234,7 +233,7 @@ export default function LoginPage() {
     setNoticeMsg(null);
 
     if (!email.trim() || !password) {
-      setErrorMsg("Please fill in all required fields.");
+      setErrorMsg("Enter your email address and password.");
       return;
     }
 
@@ -255,7 +254,7 @@ export default function LoginPage() {
         await completeLogin(data.user, destination);
       }
     } catch (err: any) {
-      setErrorMsg(err.message || "An error occurred during authentication.");
+      setErrorMsg(err.message === "Invalid login credentials" ? "That email and password don't match. Check them and try again." : (err.message || "Sign-in didn't complete. Try again."));
       setLoading(false);
     }
   };
@@ -289,7 +288,7 @@ export default function LoginPage() {
       });
       if (error) throw error;
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to initialize Microsoft login.");
+      setErrorMsg(err.message || "Couldn't start Microsoft sign-in. Try again.");
       setSsoLoading(false);
     }
   };
@@ -299,8 +298,8 @@ export default function LoginPage() {
       <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden items-center justify-center">
         <ChandakLoader
           size="lg"
-          title="Completing sign in..."
-          subtitle="Synchronizing enterprise session..."
+          title="Signing you in…"
+          subtitle="Setting up your session"
         />
       </div>
     );
@@ -312,7 +311,7 @@ export default function LoginPage() {
       <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-sunken border-r border-border text-foreground">
         <Image 
           src="/login-bg.png"
-          alt="Abstract Background"
+          alt="Abstract background"
           fill
           priority
           className="object-cover opacity-10 dark:opacity-25 mix-blend-luminosity"
@@ -321,11 +320,11 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
           {/* Logo - Pushed to Absolute Top */}
-          <div className="absolute top-8 lg:top-12 left-0 right-0 flex flex-col items-center px-6 animate-in fade-in slide-in-from-top-8 duration-700">
+          <div className="absolute top-8 lg:top-12 left-0 right-0 flex flex-col items-center px-6">
             <div className="relative w-fit inline-flex py-3.5 px-6 rounded-xl bg-surface border border-border shadow-sm items-center justify-center">
               <img 
                 src="/Chandak_Group_Official_Logo.png" 
-                alt="Chandak Group Official Logo" 
+                alt="Chandak Group official logo" 
                 className="h-14 lg:h-16 w-auto object-contain dark:brightness-0 dark:invert"
                 style={{ imageRendering: "-webkit-optimize-contrast" }}
               />
@@ -333,13 +332,12 @@ export default function LoginPage() {
           </div>
 
           {/* Main Text - Perfectly Centered */}
-          <div className="max-w-xl mt-28 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground mb-4 leading-tight">
-              Intelligent Governance <br />
-              & Enterprise Mastery
+          <div className="mt-28 max-w-xl">
+            <h1 className="mb-3 text-[30px] font-semibold leading-tight tracking-[-0.01em] text-heading">
+              Chandak Workspace
             </h1>
-            <p className="text-subtle text-base font-normal leading-relaxed max-w-md mx-auto">
-              Securely orchestrate enterprise operations, manage identities, and automate workflows in one unified platform.
+            <p className="mx-auto max-w-md text-[15px] leading-relaxed text-subtle">
+              Tasks, tickets, requirements, AMC, fleet and design approvals for every Chandak Group team, in one place.
             </p>
           </div>
         </div>
@@ -348,13 +346,13 @@ export default function LoginPage() {
       {/* RIGHT PANEL - Authentication Form */}
       <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-background relative text-foreground">
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-24 relative z-10 min-h-full">
-          <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500 fill-mode-both">
+          <div className="w-full max-w-[400px]">
             
             <div className="lg:hidden flex flex-col items-center justify-center mb-8">
               <div className="relative w-fit inline-flex py-2 px-4 items-center justify-center bg-surface rounded-xl shadow-sm border border-border">
                 <img 
                   src="/Chandak_Group_Official_Logo.png" 
-                  alt="Chandak Group Official Logo" 
+                  alt="Chandak Group official logo" 
                   className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
                   style={{ imageRendering: "-webkit-optimize-contrast" }}
                 />
@@ -362,18 +360,18 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-1.5 text-heading">
-                Welcome back
+              <h2 className="mb-1 text-[22px] font-semibold text-heading">
+                Sign in
               </h2>
-              <p className="text-subtle text-sm">
-                Please enter your credentials to sign in to your workspace.
+              <p className="text-[13.5px] text-subtle">
+                Use your Chandak Microsoft account, or your email and password.
               </p>
             </div>
 
             {/* Realtime Alert Displays */}
             {noticeMsg && (
-              <div className="mb-6 p-3.5 rounded-lg bg-warning-soft border border-warning-border text-warning-text text-sm flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+              <div role="status" className={`mb-5 flex items-start gap-3 rounded-md border p-3 text-[13.5px] ${noticeMsg.type === "info" ? "border-info-border bg-info-soft text-info-text" : "border-warning-border bg-warning-soft text-warning-text"}`}>
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <div className="space-y-0.5">
                   <strong className="font-semibold block">{noticeMsg.title}</strong>
                   <span className="opacity-95">{noticeMsg.description}</span>
@@ -382,29 +380,30 @@ export default function LoginPage() {
             )}
 
             {errorMsg && (
-              <div className="mb-6 p-3.5 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-sm flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+              <div role="alert" className="mb-5 flex items-start gap-3 rounded-md border border-danger-border bg-danger-soft p-3 text-[13.5px] text-danger-text">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <div className="space-y-0.5">
-                  <strong className="font-semibold block">Authentication Failed</strong>
+                  <strong className="block font-semibold">Couldn't sign you in</strong>
                   <span className="opacity-95">{errorMsg}</span>
                 </div>
               </div>
             )}
 
             {successMsg && (
-              <div className="mb-6 p-3.5 rounded-lg bg-success-soft border border-success-border text-success-text text-sm flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 shrink-0" />
+              <div role="status" className="mb-5 flex items-center gap-3 rounded-md border border-success-border bg-success-soft p-3 text-[13.5px] text-success-text">
+                <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="font-medium">{successMsg}</span>
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleStandardAuthSubmit} className="space-y-4" autoComplete="off">
+            <form onSubmit={handleStandardAuthSubmit} className="space-y-4">
               <AppInput 
-                label="Email Address"
+                label="Email address"
                 name="email"
                 type="email"
-                placeholder="user@chandak.com"
+                placeholder="name@chandakgroup.com"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 leftIcon={<Mail className="h-4 w-4 text-muted" />}
@@ -413,19 +412,21 @@ export default function LoginPage() {
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-subtle">Password</span>
-                  <Link 
-                    href="#" 
-                    onClick={(e) => { e.preventDefault(); toast.warning("Contact administrator to reset password."); }} 
-                    className="text-xs font-medium text-primary hover:underline"
+                  <label htmlFor="login-password" className="text-[13px] font-medium text-subtle">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => { toast.info("To reset your password, contact IT support (it.support@chandakgroup.com)."); }}
+                    className="text-[12.5px] font-medium text-accent-soft-text hover:underline"
                   >
                     Forgot password?
-                  </Link>
+                  </button>
                 </div>
                 <AppInput 
+                  id="login-password"
                   name="password"
                   type="password"
-                  placeholder="••••••••••••••••"
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4 text-muted" />}
@@ -437,19 +438,12 @@ export default function LoginPage() {
                 type="submit" 
                 variant="primary"
                 disabled={loading || !!successMsg}
-                className="w-full h-10 mt-2 font-semibold"
+                isLoading={loading}
+                size="lg"
+                className="mt-2 w-full"
+                rightIcon={loading ? undefined : <ArrowRight className="h-4 w-4" />}
               >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <span className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                    <span>Processing...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2 w-full">
-                    <span>Sign In</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </div>
-                )}
+                {loading ? "Signing in…" : "Sign in"}
               </AppButton>
             </form>
 
@@ -457,9 +451,9 @@ export default function LoginPage() {
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border"></span>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-3 font-medium tracking-wider text-muted">
-                  Or Continue With
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-background px-3 text-[12.5px] text-muted">
+                  or
                 </span>
               </div>
             </div>
@@ -469,19 +463,23 @@ export default function LoginPage() {
               variant="secondary"
               onClick={handleMicrosoftLogin}
               disabled={ssoLoading}
-              className="w-full h-10 flex items-center justify-center gap-3 font-medium"
+              isLoading={ssoLoading}
+              size="lg"
+              className="w-full"
             >
               {ssoLoading ? (
-                <div className="flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                  Connecting to Microsoft...
-                </div>
+                "Connecting to Microsoft…"
               ) : (
                 <div className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21">
+                  {/* ui-audit-ignore-next-line Microsoft brand mark must keep its own colours */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21" aria-hidden>
+                    {/* ui-audit-ignore-next-line Microsoft brand colours */}
                     <path fill="#f25022" d="M1 1h9v9H1z"/>
+                    {/* ui-audit-ignore-next-line Microsoft brand colours */}
                     <path fill="#00a4ef" d="M1 11h9v9H1z"/>
+                    {/* ui-audit-ignore-next-line Microsoft brand colours */}
                     <path fill="#7fba00" d="M11 1h9v9h-9z"/>
+                    {/* ui-audit-ignore-next-line Microsoft brand colours */}
                     <path fill="#ffb900" d="M11 11h9v9h-9z"/>
                   </svg>
                   <span>Continue with Microsoft</span>

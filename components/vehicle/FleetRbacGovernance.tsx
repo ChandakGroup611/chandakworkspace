@@ -85,29 +85,29 @@ const ROLE_BADGE_COLORS = [
 ];
 
 const MOVEMENT_SCOPE_OPTIONS: Array<{ value: FleetMovementAccessScope; label: string }> = [
-  { value: "ALL", label: "All Movements (Global)" },
-  { value: "ASSIGNED_ONLY", label: "Assigned Vehicle / Chauffeur" },
-  { value: "CREATED_ONLY", label: "Booked by Me Only" },
-  { value: "BRANCH_ONLY", label: "Branch / Depot Scoped" },
+  { value: "ALL", label: "All movements (global)" },
+  { value: "ASSIGNED_ONLY", label: "Assigned vehicle / chauffeur" },
+  { value: "CREATED_ONLY", label: "Booked by me only" },
+  { value: "BRANCH_ONLY", label: "Branch / depot scoped" },
   { value: "DEPARTMENT_ONLY", label: "Department Scoped" },
-  { value: "NONE", label: "No Movement Access" }
+  { value: "NONE", label: "No movement access" }
 ];
 
 const FLEET_MODULE_LIST: Array<{ code: FleetFunctionalModule; label: string; icon: any }> = [
-  { code: "VEHICLES", label: "Vehicle Inventory", icon: Car },
-  { code: "REGISTER", label: "Register Vehicle", icon: PlusCircle },
-  { code: "DRIVERS", label: "Chauffeur & Driver Roster", icon: Users },
-  { code: "TRIPS", label: "Daily Trip Movements & Dispatch", icon: Calendar },
-  { code: "TRAVELERS", label: "Traveler & Dept Allocations", icon: UserCheck },
-  { code: "MAINTENANCE", label: "Maintenance & Job Cards", icon: Wrench },
+  { code: "VEHICLES", label: "Vehicle inventory", icon: Car },
+  { code: "REGISTER", label: "Register vehicle", icon: PlusCircle },
+  { code: "DRIVERS", label: "Chauffeur & driver roster", icon: Users },
+  { code: "TRIPS", label: "Daily trip movements & dispatch", icon: Calendar },
+  { code: "TRAVELERS", label: "Traveller & dept allocations", icon: UserCheck },
+  { code: "MAINTENANCE", label: "Maintenance & job cards", icon: Wrench },
   { code: "PARTS", label: "Parts & Accessories", icon: Package },
-  { code: "VENDORS", label: "Insurance Vendor Master", icon: ShieldCheck },
-  { code: "ALERTS", label: "Statutory Compliance & Alerts", icon: ShieldAlert },
-  { code: "REPORTS", label: "Fleet Reports & Analytics", icon: LineChart },
-  { code: "MY_GARAGE", label: "My Assigned Vehicles (Garage)", icon: LifeBuoy },
-  { code: "LEARNING", label: "Fleet Guidelines / SOPs", icon: BookOpen },
-  { code: "RBAC", label: "RBAC Access Policies", icon: Key },
-  { code: "SETTINGS", label: "Fleet System Settings", icon: Settings }
+  { code: "VENDORS", label: "Insurance vendor master", icon: ShieldCheck },
+  { code: "ALERTS", label: "Statutory compliance & alerts", icon: ShieldAlert },
+  { code: "REPORTS", label: "Fleet reports & analytics", icon: LineChart },
+  { code: "MY_GARAGE", label: "My assigned vehicles (garage)", icon: LifeBuoy },
+  { code: "LEARNING", label: "Fleet guidelines / SOPs", icon: BookOpen },
+  { code: "RBAC", label: "RBAC access policies", icon: Key },
+  { code: "SETTINGS", label: "Fleet system settings", icon: Settings }
 ];
 
 interface ModulePermRow {
@@ -667,11 +667,11 @@ export default function FleetRbacGovernance() {
               <Car className="h-4 w-4" />
             </div>
             <span className="text-xs font-semibold tracking-wider text-warning-text">
-              Fleet & Vehicle Desk Governance
+              Fleet & Vehicle Desk governance
             </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Vehicle RBAC Access Policies
+            Vehicle RBAC access policies
           </h1>
         </div>
 
@@ -685,7 +685,7 @@ export default function FleetRbacGovernance() {
             className="flex items-center gap-1.5"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            <span>Sync Directory</span>
+            <span>Sync directory</span>
           </AppButton>
         </div>
       </div>
@@ -712,13 +712,13 @@ export default function FleetRbacGovernance() {
           onClick={() => setActiveTab("ROLES_BUILDER")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap rounded-none ${
             activeTab === "ROLES_BUILDER"
-              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/5 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <Shield className="h-3.5 w-3.5 text-theme-icon" />
-          <span>Roles & Permissions</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-theme-btn-primary/10 text-theme-icon font-bold border border-theme-btn-primary/20">
+          <span>Roles & permissions</span>
+          <span className="px-2 py-0.5 rounded-full text-xs bg-accent-soft text-theme-icon font-bold border border-theme-btn-primary/20">
             {allRoles.length}
           </span>
         </AppButton>
@@ -728,13 +728,13 @@ export default function FleetRbacGovernance() {
           onClick={() => setActiveTab("PERSONNEL")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap rounded-none ${
             activeTab === "PERSONNEL"
-              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/5 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <Users className="h-3.5 w-3.5 text-theme-icon" />
-          <span>Personnel Directory</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-theme-btn-primary/10 text-theme-icon font-bold border border-theme-btn-primary/20">
+          <span>Personnel directory</span>
+          <span className="px-2 py-0.5 rounded-full text-xs bg-accent-soft text-theme-icon font-bold border border-theme-btn-primary/20">
             {workspaceUsers.length}
           </span>
         </AppButton>
@@ -744,12 +744,12 @@ export default function FleetRbacGovernance() {
           onClick={() => setActiveTab("POLICY_MATRIX")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap rounded-none ${
             activeTab === "POLICY_MATRIX"
-              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/5 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <Layers className="h-3.5 w-3.5 text-theme-icon" />
-          <span>Policy Matrix</span>
+          <span>Policy matrix</span>
         </AppButton>
 
         <AppButton
@@ -757,12 +757,12 @@ export default function FleetRbacGovernance() {
           onClick={() => setActiveTab("SIMULATOR")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap rounded-none ${
             activeTab === "SIMULATOR"
-              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/5 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <Play className="h-3.5 w-3.5 text-theme-icon" />
-          <span>Permission Tester</span>
+          <span>Permission tester</span>
         </AppButton>
       </div>
 
@@ -773,7 +773,7 @@ export default function FleetRbacGovernance() {
           <div className="lg:col-span-4 rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-border/50">
               <span className="text-xs font-semibold tracking-wider text-muted-foreground">
-                Defined Fleet Roles
+                Defined fleet roles
               </span>
               <span className="text-xs text-muted-foreground font-semibold">
                 {allRoles.length} Active
@@ -794,7 +794,7 @@ export default function FleetRbacGovernance() {
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedBuilderRoleCode(role.code); }}
                     className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                       isSelected
-                        ? "bg-theme-btn-primary/10 border-theme-btn-primary/40 shadow-sm"
+                        ? "bg-accent-soft border-theme-btn-primary/40 shadow-sm"
                         : "bg-surface/50 border-border/40 hover:bg-surface hover:border-border"
                     }`}
                   >
@@ -832,7 +832,7 @@ export default function FleetRbacGovernance() {
                     </span>
                     <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-success-soft text-success-text border border-success/30 flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />
-                      <span>Live Reactive</span>
+                      <span>Live reactive</span>
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground max-w-xl">
@@ -848,7 +848,7 @@ export default function FleetRbacGovernance() {
                     className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-success-soft text-success-text border border-success/30 hover:bg-success-soft/80 transition-all cursor-pointer shadow-2xs"
                     title="Grant all CRUD and approval permissions to this role"
                   >
-                    Grant All (Full)
+                    Grant all (full)
                   </button>
                   <button
                     type="button"
@@ -856,7 +856,7 @@ export default function FleetRbacGovernance() {
                     className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-info-soft text-info-text border border-info/30 hover:bg-info-soft/80 transition-all cursor-pointer shadow-2xs"
                     title="Set view only permissions for this role"
                   >
-                    Set Read Only
+                    Set read only
                   </button>
                   <button
                     type="button"
@@ -864,7 +864,7 @@ export default function FleetRbacGovernance() {
                     className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-surface text-muted-foreground border border-border hover:bg-surface/80 hover:text-foreground transition-all cursor-pointer"
                     title="Reset this role to standard defaults"
                   >
-                    Reset Defaults
+                    Reset defaults
                   </button>
                 </div>
               </div>
@@ -873,7 +873,7 @@ export default function FleetRbacGovernance() {
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h3 className="text-xs font-semibold tracking-wider text-muted-foreground flex items-center gap-2">
-                    <span>Module Permissions & Movement Scopes</span>
+                    <span>Module permissions & movement scopes</span>
                   </h3>
                   <span className="text-xs text-muted-foreground italic">
                     Click any cell to tick/untick. Changes take effect immediately.
@@ -891,7 +891,7 @@ export default function FleetRbacGovernance() {
                         <th className="py-3 px-3 text-center">Delete</th>
                         <th className="py-3 px-3 text-center">Approve</th>
                         <th className="py-3 px-3 text-center">Export</th>
-                        <th className="py-3 px-4">Movement Scope</th>
+                        <th className="py-3 px-4">Movement scope</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/40 font-medium">
@@ -1060,7 +1060,7 @@ export default function FleetRbacGovernance() {
                 onChange={e => setRoleFilter(e.target.value)}
                 className="h-9 px-3 rounded-xl border border-border bg-surface text-xs font-medium text-foreground outline-none cursor-pointer"
               >
-                <option value="ALL">All Roles</option>
+                <option value="ALL">All roles</option>
                 {allRoles.map(r => (
                   <option key={r.code} value={r.code}>{r.label}</option>
                 ))}
@@ -1071,7 +1071,7 @@ export default function FleetRbacGovernance() {
                 onChange={e => setDeptFilter(e.target.value)}
                 className="h-9 px-3 rounded-xl border border-border bg-surface text-xs font-medium text-foreground outline-none cursor-pointer"
               >
-                <option value="ALL">All Departments</option>
+                <option value="ALL">All departments</option>
                 {departments.map(d => (
                   <option key={d} value={d}>{d}</option>
                 ))}
@@ -1085,9 +1085,9 @@ export default function FleetRbacGovernance() {
               <thead className="bg-surface text-muted font-semibold text-xs tracking-wider border-b border-border">
                 <tr>
                   <th className="py-3.5 px-4">Personnel</th>
-                  <th className="py-3.5 px-4">Department & Designation</th>
-                  <th className="py-3.5 px-4">Vehicle Module Access</th>
-                  <th className="py-3.5 px-4">Assigned Fleet Role</th>
+                  <th className="py-3.5 px-4">Department & designation</th>
+                  <th className="py-3.5 px-4">Vehicle module access</th>
+                  <th className="py-3.5 px-4">Assigned fleet role</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -1095,7 +1095,7 @@ export default function FleetRbacGovernance() {
                 {isLoading ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center">
-                      <ChandakLoader size="md" subtitle="Loading fleet directory..." />
+                      <ChandakLoader size="md" subtitle="Loading fleet directory…" />
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
@@ -1162,7 +1162,7 @@ export default function FleetRbacGovernance() {
                             </span>
                           ) : (
                             <span className="text-xs text-muted-foreground italic">
-                              Module Not Assigned
+                              Module not assigned
                             </span>
                           )}
                         </td>
@@ -1195,7 +1195,7 @@ export default function FleetRbacGovernance() {
           <div className="bg-card p-5 rounded-2xl border border-border space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-border/50">
               <div>
-                <h3 className="text-sm font-bold text-foreground">Global Vehicle Policy Matrix</h3>
+                <h3 className="text-sm font-bold text-foreground">Global vehicle policy matrix</h3>
                 
               </div>
             </div>
@@ -1204,7 +1204,7 @@ export default function FleetRbacGovernance() {
               <table className="w-full text-xs text-left">
                 <thead className="bg-surface text-muted font-semibold text-xs tracking-wider border-b border-border">
                   <tr>
-                    <th className="py-3 px-4">Fleet Role</th>
+                    <th className="py-3 px-4">Fleet role</th>
                     {FLEET_MODULE_LIST.map(m => (
                       <th key={m.code} className="py-3 px-3 text-center">{m.label}</th>
                     ))}
@@ -1228,7 +1228,7 @@ export default function FleetRbacGovernance() {
                             {hasFull ? (
                               <span className="text-xs font-semibold text-success-text bg-success-soft px-2.5 py-0.5 rounded border border-success/30">Full (CRUD)</span>
                             ) : hasRead ? (
-                              <span className="text-xs font-semibold text-info-text bg-info-soft px-2.5 py-0.5 rounded border border-info/30">View Only</span>
+                              <span className="text-xs font-semibold text-info-text bg-info-soft px-2.5 py-0.5 rounded border border-info/30">View only</span>
                             ) : (
                               <span className="text-xs text-muted-foreground/40">—</span>
                             )}
@@ -1250,7 +1250,7 @@ export default function FleetRbacGovernance() {
           <div>
             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
               <Play className="h-4 w-4 text-theme-icon" />
-              <span>Fleet Permission Simulation Engine</span>
+              <span>Fleet permission simulation engine</span>
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               Simulate operational conditions to verify which actions a user or role is permitted to perform in the Vehicle Module.
@@ -1259,13 +1259,13 @@ export default function FleetRbacGovernance() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Select Personnel</label>
+              <label className="text-xs font-bold text-foreground">Select personnel</label>
               <select
                 value={simUserId}
                 onChange={e => setSimUserId(e.target.value)}
                 className="w-full h-9 px-3 rounded-xl border border-border bg-surface text-xs font-medium text-foreground outline-none"
               >
-                <option value="">Choose a user...</option>
+                <option value="">Choose a user…</option>
                 {mergedUsers.filter(u => u.hasModuleAccess).map(u => (
                   <option key={u.id} value={u.id}>{u.fullName} ({u.fleetAccess?.fleetRole || "TRAVELER"})</option>
                 ))}
@@ -1273,7 +1273,7 @@ export default function FleetRbacGovernance() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Target Functional Module</label>
+              <label className="text-xs font-bold text-foreground">Target functional module</label>
               <select
                 value={simModule}
                 onChange={e => setSimModule(e.target.value as FleetFunctionalModule)}
@@ -1308,28 +1308,28 @@ export default function FleetRbacGovernance() {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-center">
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canRead ? 'bg-success-soft border-success/30' : 'bg-surface border-border'}`}>
-                  <span className="text-xs text-muted-foreground font-semibold block mb-1">View / Read</span>
+                  <span className="text-xs text-muted-foreground font-semibold block mb-1">View / read</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canRead ? 'text-success-text' : 'text-muted'}`}>
                     {activeSimPolicy.canRead ? 'ALLOWED' : 'DENIED'}
                   </span>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canCreate ? 'bg-success-soft border-success/30' : 'bg-surface border-border'}`}>
-                  <span className="text-xs text-muted-foreground font-semibold block mb-1">Create / Add</span>
+                  <span className="text-xs text-muted-foreground font-semibold block mb-1">Create / add</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canCreate ? 'text-success-text' : 'text-muted'}`}>
                     {activeSimPolicy.canCreate ? 'ALLOWED' : 'DENIED'}
                   </span>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canUpdate ? 'bg-success-soft border-success/30' : 'bg-surface border-border'}`}>
-                  <span className="text-xs text-muted-foreground font-semibold block mb-1">Update / Edit</span>
+                  <span className="text-xs text-muted-foreground font-semibold block mb-1">Update / edit</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canUpdate ? 'text-success-text' : 'text-muted'}`}>
                     {activeSimPolicy.canUpdate ? 'ALLOWED' : 'DENIED'}
                   </span>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canDelete ? 'bg-success-soft border-success/30' : 'bg-surface border-border'}`}>
-                  <span className="text-xs text-muted-foreground font-semibold block mb-1">Delete / Remove</span>
+                  <span className="text-xs text-muted-foreground font-semibold block mb-1">Delete / remove</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canDelete ? 'text-success-text' : 'text-muted'}`}>
                     {activeSimPolicy.canDelete ? 'ALLOWED' : 'DENIED'}
                   </span>
@@ -1343,7 +1343,7 @@ export default function FleetRbacGovernance() {
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canExport ? 'bg-success-soft border-success/30' : 'bg-surface border-border'}`}>
-                  <span className="text-xs text-muted-foreground font-semibold block mb-1">Export Logs</span>
+                  <span className="text-xs text-muted-foreground font-semibold block mb-1">Export logs</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canExport ? 'text-success-text' : 'text-muted'}`}>
                     {activeSimPolicy.canExport ? 'ALLOWED' : 'DENIED'}
                   </span>
@@ -1365,7 +1365,7 @@ export default function FleetRbacGovernance() {
             onClick={() => setIsDrawerOpen(false)}
             onKeyDown={(e) => { if (e.key === 'Escape' || e.key === ' ') setIsDrawerOpen(false); }}
           />
-          <div className="relative z-50 w-full max-w-md bg-card border-l border-border h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+          <div className="relative z-50 w-full max-w-md bg-card border-l border-border h-full flex flex-col shadow-lg animate-in slide-in-from-right duration-300">
             {/* Drawer Header */}
             <div className="p-5 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1392,7 +1392,7 @@ export default function FleetRbacGovernance() {
               {/* Role Selection */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold tracking-wider text-muted-foreground">
-                  Assigned Fleet Role
+                  Assigned fleet role
                 </label>
                 <div className="space-y-2">
                   {allRoles.map(role => (
@@ -1424,12 +1424,12 @@ export default function FleetRbacGovernance() {
               {/* Granular Overrides */}
               <div className="space-y-3 pt-3 border-t border-border/50">
                 <label className="text-xs font-semibold tracking-wider text-muted-foreground">
-                  Direct Functional Capabilities
+                  Direct functional capabilities
                 </label>
                 
                 <div className="space-y-2.5">
                   <label className="flex items-center justify-between p-2.5 rounded-lg border border-border/60 bg-surface/40 cursor-pointer">
-                    <span className="text-xs font-medium text-foreground">Can Register / Edit Vehicles</span>
+                    <span className="text-xs font-medium text-foreground">Can register / edit vehicles</span>
                     <input
                       type="checkbox"
                       checked={permVehiclesManage}
@@ -1439,7 +1439,7 @@ export default function FleetRbacGovernance() {
                   </label>
 
                   <label className="flex items-center justify-between p-2.5 rounded-lg border border-border/60 bg-surface/40 cursor-pointer">
-                    <span className="text-xs font-medium text-foreground">Can Manage Drivers & Chauffeurs</span>
+                    <span className="text-xs font-medium text-foreground">Can manage drivers & chauffeurs</span>
                     <input
                       type="checkbox"
                       checked={permDriversManage}
@@ -1449,7 +1449,7 @@ export default function FleetRbacGovernance() {
                   </label>
 
                   <label className="flex items-center justify-between p-2.5 rounded-lg border border-border/60 bg-surface/40 cursor-pointer">
-                    <span className="text-xs font-medium text-foreground">Can Dispatch Trips & Movements</span>
+                    <span className="text-xs font-medium text-foreground">Can dispatch trips & movements</span>
                     <input
                       type="checkbox"
                       checked={permTripsDispatch}
@@ -1459,7 +1459,7 @@ export default function FleetRbacGovernance() {
                   </label>
 
                   <label className="flex items-center justify-between p-2.5 rounded-lg border border-border/60 bg-surface/40 cursor-pointer">
-                    <span className="text-xs font-medium text-foreground">Can Manage Maintenance & Workshops</span>
+                    <span className="text-xs font-medium text-foreground">Can manage maintenance & workshops</span>
                     <input
                       type="checkbox"
                       checked={permMaintenanceManage}
@@ -1469,7 +1469,7 @@ export default function FleetRbacGovernance() {
                   </label>
 
                   <label className="flex items-center justify-between p-2.5 rounded-lg border border-border/60 bg-surface/40 cursor-pointer">
-                    <span className="text-xs font-medium text-foreground">Can View Executive Analytics & Reports</span>
+                    <span className="text-xs font-medium text-foreground">Can view executive analytics & reports</span>
                     <input
                       type="checkbox"
                       checked={permReportsView}
@@ -1499,7 +1499,7 @@ export default function FleetRbacGovernance() {
                 className="flex items-center gap-1.5"
               >
                 {isSaving ? <ChandakLoader size="xs" /> : <Check className="h-3.5 w-3.5" />}
-                <span>Save Permissions</span>
+                <span>Save permissions</span>
               </AppButton>
             </div>
           </div>

@@ -99,7 +99,7 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
       <div className="panel theme-card-structural">
         <div className="panel-header">
           <i className="ti ti-trending-down" style={{ fontSize: '16px', color: 'var(--accent)' }} aria-hidden="true"></i>
-          <span className="panel-title">Active Items Trend</span>
+          <span className="panel-title">Active items trend</span>
           <span className="panel-action">Details ↗</span>
         </div>
         <div className="panel-body">
@@ -127,7 +127,7 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
       <div className="panel theme-card-structural">
         <div className="panel-header">
           <i className="ti ti-chart-donut" style={{ fontSize: '16px', color: 'var(--purple)' }} aria-hidden="true"></i>
-          <span className="panel-title">Ticket Distribution</span>
+          <span className="panel-title">Ticket distribution</span>
           <div className="tab-row">
             <div className="tab active">Type</div>
             <div className="tab">Status</div>
@@ -168,7 +168,7 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
           </div>
 
           <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '0.5px solid var(--border)' }}>
-            <div className="section-label" style={{ marginBottom: '8px' }}>Historical Resolution (Mock)</div>
+            <div className="section-label" style={{ marginBottom: '8px' }}>Historical resolution (mock)</div>
             <div className="velocity-chart">
               <div className="vel-bar-group">
                 <div className="vel-bars">

@@ -6,7 +6,7 @@ import NotificationProviderForm from "@/components/settings/NotificationProvider
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
-  title: "Email Configuration | Enterprise Operations",
+  title: "Email configuration | enterprise operations",
   description: "Configure system-wide email providers like Gmail, Office 365, or Resend API.",
 };
 
@@ -28,7 +28,7 @@ export default async function EmailSettingsPage() {
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-12">
       <header className="border-b border-border pb-4 animate-in fade-in duration-500">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Email Provider Setup
+          Email provider setup
         </h1>
         </header>
 

@@ -246,7 +246,7 @@ export const VehicleBrandLogo: React.FC<VehicleBrandLogoProps> = ({
           <path
             d="M20 72 L20 28 L40 72 M40 28 L54 72 M54 28 L72 72 L80 28"
             stroke="#05141F"
-            className="dark:stroke-white"
+            className=""
             strokeWidth="7"
             strokeLinecap="square"
             strokeLinejoin="miter"
@@ -365,11 +365,11 @@ export const VehicleBrandLogo: React.FC<VehicleBrandLogoProps> = ({
           xmlns="http://www.w3.org/2000/svg"
         >
           <rect width="100" height="100" rx="20" fill="#333333" fillOpacity="0.12" />
-          <circle cx="50" cy="50" r="40" stroke="#333333" className="dark:stroke-slate-200" strokeWidth="5.5" />
+          <circle cx="50" cy="50" r="40" stroke="#333333" className="" strokeWidth="5.5" />
           <path
             d="M50 50 L50 14 M50 50 L20 72 M50 50 L80 72"
             stroke="#333333"
-            className="dark:stroke-slate-200"
+            className=""
             strokeWidth="6"
             strokeLinecap="round"
           />
@@ -571,7 +571,7 @@ export const VehicleBrandLogo: React.FC<VehicleBrandLogoProps> = ({
           <polygon
             points="50,14 78,50 50,86 22,50"
             stroke="#111111"
-            className="dark:stroke-amber-400"
+            className=""
             strokeWidth="7"
             fill="none"
           />
@@ -635,7 +635,7 @@ export const VehicleBrandLogo: React.FC<VehicleBrandLogoProps> = ({
     return (
       <div
         style={{ width: dim, height: dim }}
-        className="rounded-lg bg-theme-btn-primary/10 border border-theme-btn-primary/25 flex items-center justify-center font-bold text-theme-btn-primary shrink-0 select-none shadow-2xs font-mono"
+        className="rounded-lg bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center font-bold text-theme-btn-primary shrink-0 select-none shadow-2xs font-mono"
       >
         <span style={{ fontSize: Math.max(10, Math.floor(dim * 0.48)) }}>
           {initial}

@@ -323,7 +323,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
   };
 
   if (!mounted) {
-    return <div style={{ padding: '2rem', color: '#8b91a8', fontFamily: 'monospace' }}>Loading Next-Gen Command Center...</div>;
+    return <div style={{ padding: '2rem', color: '#8b91a8', fontFamily: 'monospace' }}>Loading next-gen command center…</div>;
   }
 
   return (
@@ -358,7 +358,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 )}
               >
                 <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
-                <span className="whitespace-nowrap">Enterprise Overview</span>
+                <span className="whitespace-nowrap">Enterprise overview</span>
               </button>
 
               <button
@@ -375,10 +375,10 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 )}
               >
                 <Briefcase className="h-3.5 w-3.5 shrink-0" />
-                <span className="whitespace-nowrap">My Portfolio</span>
+                <span className="whitespace-nowrap">My portfolio</span>
                 <span className={cn(
-                  "px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase shrink-0",
-                  activeView === "portfolio" ? "bg-white/20 text-white" : "bg-theme-btn-primary/15 text-theme-icon"
+                  "px-1.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0",
+                  activeView === "portfolio" ? "bg-sunken text-white" : "bg-accent-soft text-theme-icon"
                 )}>
                   Live
                 </span>
@@ -394,17 +394,17 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 onClick={() => setNewMetricOpen(!newMetricOpen)}
                 className="text-xs font-bold shadow-xs whitespace-nowrap shrink-0"
               >
-                New Item
+                New item
               </AppButton>
               {newMetricOpen && (
                 <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 rounded-xl shadow-xl theme-card-structural border border-border/80 z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
                   <div className="py-1" role="menu" aria-orientation="vertical">
-                    <a href="/workspaces?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">New Workspace</a>
-                    <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">New Task</a>
-                    <a href="/tickets?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">New Ticket</a>
-                    <a href="/requirements?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">New Requirement</a>
+                    <a href="/workspaces?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">New workspace</a>
+                    <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">New task</a>
+                    <a href="/tickets?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">New ticket</a>
+                    <a href="/requirements?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">New requirement</a>
                     <div className="border-t border-border/60 my-1"></div>
-                    <a href="/masters?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">Master Configuration</a>
+                    <a href="/masters?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">Master configuration</a>
                   </div>
                 </div>
               )}
@@ -448,7 +448,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 onClick={handlePrintSnapshot}
                 leftIcon={<Printer className="h-3.5 w-3.5 shrink-0" />}
                 className="theme-card-structural hidden lg:inline-flex text-xs shrink-0"
-                title="Print Executive Snapshot"
+                title="Print executive snapshot"
               >
                 Snapshot
               </AppButton>
@@ -460,7 +460,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
         {activeView === "overview" && (
           <div className="px-3 sm:px-6 py-2 bg-surface/40 border-b border-border/50 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none text-xs">
             <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
+              <span className="text-[11px] sm:text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
                 Scope:
               </span>
 
@@ -480,7 +480,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   )}
                 >
                   <Globe className="w-3.5 h-3.5" />
-                  Entire Organization
+                  Entire organisation
                 </button>
               )}
 
@@ -495,12 +495,12 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
                     hierarchyScope === "my_reports"
-                      ? "bg-purple-600 text-white font-bold shadow-sm"
+                      ? "bg-primary text-white font-bold shadow-sm"
                       : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
                   )}
                 >
                   <Users className="w-3.5 h-3.5" />
-                  My Reporting Tree ({currentUser?.subordinateUserIds?.length || 0} Members)
+                  My reporting tree ({currentUser?.subordinateUserIds?.length || 0} Members)
                 </button>
               )}
 
@@ -516,7 +516,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                     className={cn(
                       "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap",
                       hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
-                        ? "bg-blue-600 text-white font-bold shadow-sm"
+                        ? "bg-info text-white font-bold shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -559,12 +559,12 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
                   hierarchyScope === "assigned_me"
-                    ? "bg-emerald-600 text-white font-bold shadow-sm"
+                    ? "bg-success text-white font-bold shadow-sm"
                     : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
                 )}
               >
                 <UserCheck className="w-3.5 h-3.5" />
-                Assigned to Me
+                Assigned to me
               </button>
             </div>
 
@@ -578,7 +578,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
           
           {dbError && (
             <div style={{ marginBottom: '20px', padding: '12px', background: 'rgba(255,95,126,0.1)', color: 'var(--red)', border: '0.5px solid rgba(255,95,126,0.3)', borderRadius: '8px', fontSize: '12px' }}>
-              Data Sync Warning: {dbError}
+              Data sync warning: {dbError}
             </div>
           )}
 
@@ -603,10 +603,10 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
           {/* FOOTER */}
           <div style={{ marginTop: '20px', padding: '14px 0', borderTop: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>ADIOS OperationsOS</div>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>Live Data Sync (15s)</div>
+            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>Live data sync (15s)</div>
             <div style={{ flex: 1 }}></div>
             <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
-              Active Items in Scope: <span style={{ color: 'var(--amber)', fontWeight: 600 }}>{filteredMetrics.length}</span>
+              Active items in scope: <span style={{ color: 'var(--amber)', fontWeight: 600 }}>{filteredMetrics.length}</span>
             </div>
           </div>
 

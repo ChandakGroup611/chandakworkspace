@@ -56,7 +56,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
 
   return (
     <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
-      <h2 className="text-xl font-bold text-heading mb-2">Email Provider Setup</h2>
+      <h2 className="text-xl font-bold text-heading mb-2">Email provider setup</h2>
       <div className="flex gap-2 mb-6">
         {["GMAIL", "OFFICE365", "RESEND"].map((p) => (
           <AppButton 
@@ -72,15 +72,15 @@ export default function NotificationProviderForm({ initialData }: { initialData:
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="block text-xs font-semibold text-subtle mb-1">SMTP Host</label>
+          <label className="block text-xs font-semibold text-subtle mb-1">SMTP host</label>
           <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-subtle mb-1">SMTP Port</label>
+          <label className="block text-xs font-semibold text-subtle mb-1">SMTP port</label>
           <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-subtle mb-1">Username / Email</label>
+          <label className="block text-xs font-semibold text-subtle mb-1">Username / email</label>
           <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
@@ -88,11 +88,11 @@ export default function NotificationProviderForm({ initialData }: { initialData:
           <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-subtle mb-1">Sender Name</label>
+          <label className="block text-xs font-semibold text-subtle mb-1">Sender name</label>
           <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-subtle mb-1">Sender Email (From)</label>
+          <label className="block text-xs font-semibold text-subtle mb-1">Sender email (from)</label>
           <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
       </div>

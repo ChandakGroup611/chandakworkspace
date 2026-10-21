@@ -93,7 +93,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
         <div className="flex items-center justify-between p-4 border-b theme-card-structural">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-theme-icon" />
-            <span className="text-sm font-bold text-foreground">Team Performance · Live Working Metrics</span>
+            <span className="text-sm font-bold text-foreground">Team performance · live working metrics</span>
           </div>
           <AppButton 
             variant="ghost" 
@@ -101,7 +101,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
             onClick={handleOpenTopPerformer}
             className="h-6 text-xs gap-1"
           >
-            Full Working Sheet <ArrowRight className="h-3 w-3" />
+            Full working sheet <ArrowRight className="h-3 w-3" />
           </AppButton>
         </div>
         <div className="p-0 bg-background overflow-x-auto">
@@ -110,16 +110,16 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
               <AppTableRow>
                 <AppTableHead>Member</AppTableHead>
                 <AppTableHead className="text-center">Closed</AppTableHead>
-                <AppTableHead className="text-center">Story Pts</AppTableHead>
+                <AppTableHead className="text-center">Story pts</AppTableHead>
                 <AppTableHead>Progress</AppTableHead>
-                <AppTableHead className="text-right">Avg Days</AppTableHead>
+                <AppTableHead className="text-right">Avg days</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
             <AppTableBody>
               {teamStats.map((u: any, i: number) => {
                 const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
-                const colors = ['bg-success', 'bg-teal-500', 'bg-warning', 'bg-theme-btn-primary', 'bg-theme-btn-primary'];
-                const textColors = ['text-success', 'text-teal-500', 'text-warning', 'text-theme-icon', 'text-theme-icon'];
+                const colors = ['bg-success', 'bg-info', 'bg-warning', 'bg-theme-btn-primary', 'bg-theme-btn-primary'];
+                const textColors = ['text-success', 'text-info-text', 'text-warning', 'text-theme-icon', 'text-theme-icon'];
                 const color = colors[i % colors.length];
                 const textColor = textColors[i % textColors.length];
 
@@ -137,7 +137,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                         </div>
                         <div>
                           <div className="text-xs font-bold text-foreground hover:text-primary transition-colors">{u.name}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">{getRole(u)}</div>
+                          <div className="text-[11px] text-muted-foreground font-mono">{getRole(u)}</div>
                         </div>
                       </div>
                     </AppTableCell>
@@ -148,7 +148,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                       {u.pts}
                     </AppTableCell>
                     <AppTableCell>
-                      <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1.5">
+                      <div className="flex justify-between text-[11px] font-mono text-muted-foreground mb-1.5">
                         <span>Sprint goal</span><span>{progress}%</span>
                       </div>
                       <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden">

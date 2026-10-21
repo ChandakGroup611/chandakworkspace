@@ -130,7 +130,7 @@ export function WorkspaceFilterMultiSelect({
             ? "border-primary ring-1 ring-primary/30 bg-surface shadow-xs"
             : selectedIds.length > 0
             ? "border-primary/50 bg-accent-soft text-foreground"
-            : "border-border bg-surface text-muted hover:text-foreground hover:bg-hover"
+            : "border-border bg-surface text-muted hover:text-foreground hover:bg-surface-hover"
         }`}
       >
         <div className="flex items-center gap-2 truncate pr-2">
@@ -158,7 +158,7 @@ export function WorkspaceFilterMultiSelect({
               type="button"
               aria-label="Clear selection"
               onClick={handleClear}
-              className="p-0.5 rounded hover:bg-hover text-muted hover:text-danger cursor-pointer mr-0.5 bg-transparent border-0"
+              className="p-0.5 rounded hover:bg-surface-hover text-muted hover:text-danger cursor-pointer mr-0.5 bg-transparent border-0"
               title="Clear selection"
             >
               <X className="h-3 w-3" />
@@ -240,7 +240,7 @@ export function WorkspaceFilterMultiSelect({
                     className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-lg transition-colors text-left group cursor-pointer border-0 ${
                       isSelected
                         ? "bg-accent-soft text-primary font-semibold"
-                        : "text-foreground bg-transparent hover:bg-hover"
+                        : "text-foreground bg-transparent hover:bg-surface-hover"
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">

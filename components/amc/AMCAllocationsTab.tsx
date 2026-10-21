@@ -7,6 +7,8 @@ import { AppButton } from "@/components/ui/AppButton";
 import { UserCheck, Search, Filter, Shield, Clock, ArrowRight, UserX, UserMinus, Loader2 } from "lucide-react";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { createClient } from "@/utils/supabase/client";
+import { confirmAction } from "@/components/ui/feedback/confirm";
+import { formatDate } from "@/components/ui/data";
 
 interface AMCAllocationsTabProps {
   amcId: string;
@@ -101,7 +103,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
   };
 
   const handleRevoke = async (allocationId: string) => {
-    if (!confirm("Are you sure you want to revoke this license?")) return;
+    if (!(await confirmAction("Are you sure you want to revoke this license?"))) return;
     
     setProcessingId(allocationId);
     try {
@@ -155,13 +157,13 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
 
   return (
     <div className="space-y-6">
-      <div className={`p-4 rounded-xl border flex items-center justify-between bg-theme-btn-primary/10 border-theme-btn-primary/30 text-theme-icon-secondary`}>
+      <div className={`p-4 rounded-xl border flex items-center justify-between bg-accent-soft border-theme-btn-primary/30 text-theme-icon-secondary`}>
         <div>
-          <h4 className="font-bold">License Utilization</h4>
+          <h4 className="font-bold">License utilisation</h4>
           </div>
         <div className="text-right">
-          <div className="text-2xl font-black">{allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'}</div>
-          <div className="text-xs font-semibold uppercase opacity-70">Licenses Assigned</div>
+          <div className="text-2xl font-semibold">{allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'}</div>
+          <div className="text-xs font-semibold opacity-70">Licenses assigned</div>
         </div>
       </div>
 
@@ -169,7 +171,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
         {/* Active Allocations Panel */}
         <AppCard className={`flex-1 flex flex-col theme-card-structural`}>
           <div className={`p-4 border-b font-semibold bg-elevated border-border`}>
-            Currently Assigned Users
+            Currently assigned users
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {loading ? (
@@ -182,7 +184,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                   <div>
                     <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
                     <div className="text-xs text-muted">{a.user_master?.email}</div>
-                    <div className="text-[10px] text-muted mt-1">Allocated: {new Date(a.allocated_at).toLocaleDateString()}</div>
+                    <div className="text-[11px] text-muted mt-1">Allocated: {formatDate(a.allocated_at)}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {transferringId === a.id ? (
@@ -191,7 +193,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                           className={`text-xs p-1.5 rounded theme-card-structural`}
                           onChange={(e) => handleTransfer(a.id, e.target.value)}
                         >
-                          <option value="">Select user...</option>
+                          <option value="">Select user…</option>
                           {users.map(u => (
                             <option key={u.id} value={u.id}>{u.full_name}</option>
                           ))}
@@ -205,7 +207,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                           size="sm" 
                           onClick={() => setTransferringId(a.id)}
                           disabled={processingId === a.id}
-                          className="text-theme-icon hover:opacity-90/10"
+                          className="text-theme-icon hover:bg-surface-hover"
                         >
                           Transfer
                         </AppButton>
@@ -234,7 +236,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <input 
                 type="text" 
-                placeholder="Search users to allocate..." 
+                placeholder="Search users to allocate…" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm outline-none focus:ring-2 focus:ring-theme-btn-primary/20 transition-all theme-card-structural text-foreground`}

@@ -10,7 +10,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
-import { StatusBadge, formatDate } from "@/components/ui/data";
+import { StatusBadge, PriorityIndicator, DateCell, UserCell } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import DOMPurify from 'dompurify';
 
@@ -60,7 +61,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
           categoryObj: (data.categories || []).find((c: any) => c.id === custom.category_id),
           subcategoryObj: (data.subcategories || []).find((sc: any) => sc.id === custom.subcategory_id),
           issueTypeObj: (data.issueTypes || []).find((it: any) => it.id === custom.issue_type_id),
-          assignedTo: foundTicket.assignee?.full_name || "Unassigned Operations Swarm",
+          assignedTo: foundTicket.assignee?.full_name || "",
           createdAt: foundTicket.created_at
         };
         setTicketData(mappedTicket);
@@ -92,29 +93,27 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       setIsEditing(false);
       fetchData();
     } catch (err: any) {
-      toast.error("Failed to save: " + err.message);
+      toast.error("Couldn't save the ticket: " + err.message);
     }
   };
 
   if (loading || permissionsLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-background text-foreground">
-        <ChandakLoader
-          size="lg"
-          title="Retrieving Enterprise Ticket Profile..."
-          subtitle="Loading conversation timeline and attachments"
-        />
+      <div className="flex h-[60vh] flex-col items-center justify-center text-foreground">
+        <ChandakLoader size="lg" title="Loading ticket…" />
       </div>
     );
   }
 
   if (!ticketData) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-background text-foreground space-y-4">
-        <h2 className="text-xl font-bold">Ticket Not Found</h2>
-        <AppButton variant="primary" onClick={() => router.push("/tickets")}>
-          Return to Tickets
-        </AppButton>
+      <div className="theme-card-structural mx-auto mt-10 max-w-lg">
+        <EmptyState
+          kind="no-results"
+          title="We couldn't find that ticket"
+          description="It may have been deleted, or you may not have access to it."
+          action={<AppButton variant="secondary" onClick={() => router.push("/tickets")} leftIcon={<ArrowLeft className="h-4 w-4" />}>Back to tickets</AppButton>}
+        />
       </div>
     );
   }
@@ -123,118 +122,98 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
   const isTicketOwner = userId ? (ticketData.created_by === userId || ticketData.assigned_to === userId || ticketData.owner_id === userId) : false;
   const canEditTicket = isSuperAdmin || isTicketOwner || (hasPermission && (hasPermission("TICKETS_UPDATE") || hasPermission("TICKETS_MANAGE")));
 
+  const label = "text-[12.5px] text-muted";
+
   return (
-    <div className="flex flex-col h-full bg-background text-foreground space-y-4 pt-2">
-      <div className="px-6 flex flex-wrap items-center gap-4">
-        <Link
-          href="/tickets"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-accent-soft-text hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Ticket List
-        </Link>
-      </div>
-      <div className="space-y-6">
-        <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr] items-stretch">
-          <div className="rounded-3xl border border-border bg-surface p-6 shadow-xs">
-            {/* Top row: Tags and Button */}
-            <div className="flex items-start justify-between gap-4 w-full">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <p className="text-[11px] font-mono font-bold text-accent-soft-text bg-accent-soft px-2 py-0.5 rounded">
-                  {ticketData.id}
-                </p>
-                <p className="text-[11px] text-muted font-semibold px-2 py-0.5 border border-border rounded bg-sunken">
-                  Department: {ticketData.departmentObj?.name || "Unassigned"}
-                </p>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-2xl bg-accent-soft px-4 py-2 text-xs font-semibold text-accent-soft-text shrink-0">
-                <ArrowLeft className="h-4 w-4" />
-                Full ticket page
-              </div>
+    <div className="flex h-full flex-col space-y-5 text-foreground">
+      <Link href="/tickets" className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-accent-soft-text hover:underline">
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Back to tickets
+      </Link>
+      <div className="space-y-5">
+        <div className="grid items-stretch gap-5 xl:grid-cols-[1.8fr_1fr]">
+          <div className="theme-card-structural p-5 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{ticketData.id}</span>
+              <StatusBadge status={ticketData.statusObj?.name || null} />
+              {ticketData.priorityObj?.name && <PriorityIndicator priority={ticketData.priorityObj.name} className="text-[12.5px] text-subtle" />}
+              {canEditTicket && (
+                <div className="ml-auto flex gap-2">
+                  {!isEditing ? (
+                    <AppButton variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
+                      Edit details
+                    </AppButton>
+                  ) : (
+                    <>
+                      <AppButton variant="ghost" size="sm" onClick={() => {
+                        setIsEditing(false);
+                        setEditTitle(ticketData.title || "");
+                        setEditDescription(ticketData.description || "");
+                      }}>
+                        Cancel
+                      </AppButton>
+                      <AppButton variant="primary" size="sm" onClick={handleSaveDetails}>
+                        Save changes
+                      </AppButton>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Content row: Title, description, etc. */}
-            <div className="min-w-0 w-full mt-1">
-              <div className="mt-3 w-full">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold text-muted flex items-center gap-1.5">
-                    Subject
-                  </span>
-                  {canEditTicket && (
-                    !isEditing ? (
-                      <AppButton variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="text-xs font-medium">
-                        Edit
-                      </AppButton>
-                    ) : (
-                      <div className="flex gap-2">
-                        <AppButton variant="ghost" size="sm" onClick={() => {
-                          setIsEditing(false);
-                          setEditTitle(ticketData.title || "");
-                          setEditDescription(ticketData.description || "");
-                        }} className="text-xs font-medium text-muted">
-                          Cancel
-                        </AppButton>
-                        <AppButton variant="primary" size="sm" onClick={handleSaveDetails} className="text-xs font-medium">
-                          Save
-                        </AppButton>
-                      </div>
-                    )
-                  )}
-                </div>
-                <div className="flex items-center gap-3 min-w-0 w-full">
-                  {!isEditing ? (
-                    <h1 className="text-lg font-bold text-foreground break-words whitespace-normal w-full">{ticketData.title}</h1>
-                  ) : (
-                    <input 
-                      className="text-lg font-bold w-full border border-border rounded px-2 py-1 bg-surface text-foreground"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                    />
-                  )}
-                </div>
-              </div>
-              
-              <div className="mt-6 w-full">
-                <span className="text-[10px] font-semibold text-muted mb-2 flex items-center gap-1.5">
-                  Description
-                </span>
-                {!isEditing ? (
-                  <div 
-                    className="text-[13px] sm:text-sm text-foreground w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-sunken/40 p-4 rounded-xl border border-border shadow-xs"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ticketData.description || "No description provided.") }} 
+            <div className="mt-3">
+              {!isEditing ? (
+                <h1 className="whitespace-normal break-words text-[20px] font-semibold leading-snug text-heading">{ticketData.title}</h1>
+              ) : (
+                <>
+                  <label htmlFor="tk-title" className="mb-1.5 block text-[13px] font-medium text-subtle">Subject</label>
+                  <input
+                    id="tk-title"
+                    className="h-9 w-full px-3 text-[14px]"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
                   />
-                ) : (
-                  <textarea 
-                    className="w-full text-[13px] sm:text-sm border border-border rounded-xl p-4 bg-surface text-foreground min-h-[120px] resize-y"
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                  />
-                )}
-              </div>
+                </>
+              )}
             </div>
-            
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-border pt-4">
-              <div>
-                <span className="text-xs font-semibold text-muted">Creator</span>
-                <p className="text-xs font-medium text-foreground mt-0.5">{ticketData.creator?.full_name || "Unknown"}</p>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-muted">Created At</span>
-                <p className="text-xs font-medium text-foreground mt-0.5">{formatDate(ticketData.createdAt)}</p>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-muted">Last Status</span>
-                <div className="mt-0.5">
-                  <StatusBadge status={ticketData.statusObj?.name || "Open"} size="sm" />
-                </div>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-muted">Last Updated</span>
-                <p className="text-xs font-medium text-foreground mt-0.5">{ticketData.updated_at ? formatDate(ticketData.updated_at) : "Never"}</p>
-              </div>
+
+            <div className="mt-5">
+              <div className="mb-1.5 text-[13px] font-medium text-subtle">Description</div>
+              {!isEditing ? (
+                <div
+                  className="prose prose-sm w-full max-w-full rounded-md border border-border bg-sunken p-4 text-[13.5px] leading-relaxed text-foreground dark:prose-invert"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ticketData.description || "No description added.") }}
+                />
+              ) : (
+                <textarea
+                  aria-label="Description"
+                  className="min-h-[140px] w-full resize-y p-3 text-[13.5px]"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                />
+              )}
             </div>
+
+            <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 md:grid-cols-4">
+              <div>
+                <dt className={label}>Department</dt>
+                <dd className="mt-1 text-[13.5px] text-foreground">{ticketData.departmentObj?.name || "—"}</dd>
+              </div>
+              <div>
+                <dt className={label}>Raised by</dt>
+                <dd className="mt-1 text-[13.5px]"><UserCell name={ticketData.creator?.full_name || null} emptyLabel="—" /></dd>
+              </div>
+              <div>
+                <dt className={label}>Raised on</dt>
+                <dd className="mt-1 text-[13.5px]"><DateCell value={ticketData.createdAt} /></dd>
+              </div>
+              <div>
+                <dt className={label}>Last updated</dt>
+                <dd className="mt-1 text-[13.5px]"><DateCell value={ticketData.updated_at} /></dd>
+              </div>
+            </dl>
           </div>
-          
+
           <div className="relative w-full h-full xl:h-auto">
             <div className="xl:absolute xl:inset-0 w-full h-full">
               <TicketRightPanel ticketId={ticketData.id} dbId={ticketData.dbId} />
@@ -242,7 +221,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
           </div>
         </div>
 
-        <div className="w-full mt-6">
+        <div className="w-full">
           <TicketWorkspaceConsole 
             ticket={ticketData}
             onUpdate={fetchData}

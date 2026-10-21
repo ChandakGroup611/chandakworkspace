@@ -107,60 +107,60 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
     switch (colorTheme) {
       case "emerald":
         return {
-          icon: "text-emerald-500",
-          activeBg: "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300",
-          badge: "bg-emerald-600 text-white",
-          checkbox: "text-emerald-600",
-          itemActive: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-100 font-semibold"
+          icon: "text-success-text",
+          activeBg: "bg-success-soft border-success-border text-success-text",
+          badge: "bg-success text-white",
+          checkbox: "text-success-text",
+          itemActive: "bg-success-soft text-success-text font-semibold"
         };
       case "purple":
         return {
           icon: "text-theme-icon",
           activeBg: "bg-surface border-border text-foreground dark:text-muted-foreground",
-          badge: "bg-purple-600 text-white",
+          badge: "bg-primary text-white",
           checkbox: "text-theme-icon",
-          itemActive: "bg-surface dark:bg-surface text-purple-900 dark:text-purple-100 font-semibold"
+          itemActive: "bg-surface dark:bg-surface text-accent-soft-text font-semibold"
         };
       case "amber":
         return {
-          icon: "text-amber-500",
-          activeBg: "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300",
-          badge: "bg-amber-600 text-white",
-          checkbox: "text-amber-600",
-          itemActive: "bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 font-semibold"
+          icon: "text-warning-text",
+          activeBg: "bg-warning-soft border-warning-border text-warning-text",
+          badge: "bg-warning text-white",
+          checkbox: "text-warning-text",
+          itemActive: "bg-warning-soft text-warning-text font-semibold"
         };
       case "teal":
         return {
-          icon: "text-teal-500",
-          activeBg: "bg-teal-500/10 border-border text-teal-700 dark:text-teal-300",
-          badge: "bg-teal-600 text-white",
-          checkbox: "text-teal-600",
-          itemActive: "bg-teal-50 dark:bg-teal-950/30 text-teal-900 dark:text-teal-100 font-semibold"
+          icon: "text-info-text",
+          activeBg: "bg-info-soft border-border text-info-text",
+          badge: "bg-info text-white",
+          checkbox: "text-info-text",
+          itemActive: "bg-info-soft text-info-text font-semibold"
         };
       case "rose":
         return {
-          icon: "text-rose-500",
-          activeBg: "bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300",
-          badge: "bg-rose-600 text-white",
-          checkbox: "text-rose-600",
-          itemActive: "bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-100 font-semibold"
+          icon: "text-danger-text",
+          activeBg: "bg-danger-soft border-danger-border text-danger-text",
+          badge: "bg-danger-solid text-white",
+          checkbox: "text-danger-text",
+          itemActive: "bg-danger-soft text-danger-text font-semibold"
         };
       case "slate":
         return {
-          icon: "text-slate-600 dark:text-slate-300",
-          activeBg: "bg-slate-500/10 border-slate-500/30 text-slate-800 dark:text-slate-200",
-          badge: "bg-slate-700 text-white",
-          checkbox: "text-slate-700 dark:text-slate-300",
-          itemActive: "bg-slate-100 dark:bg-slate-800 text-foreground font-semibold"
+          icon: "text-subtle",
+          activeBg: "bg-sunken border-border text-foreground",
+          badge: "bg-foreground text-background",
+          checkbox: "text-foreground",
+          itemActive: "bg-sunken text-foreground font-semibold"
         };
       case "blue":
       default:
         return {
-          icon: "text-blue-500",
-          activeBg: "bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-300",
-          badge: "bg-blue-600 text-white",
-          checkbox: "text-blue-600",
-          itemActive: "bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-100 font-semibold"
+          icon: "text-info-text",
+          activeBg: "bg-info-soft border-info-border text-info-text",
+          badge: "bg-info text-white",
+          checkbox: "text-info-text",
+          itemActive: "bg-info-soft text-info-text font-semibold"
         };
     }
   }, [colorTheme]);
@@ -195,7 +195,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
         className={`h-9 px-3 rounded-xl border text-xs font-semibold inline-flex items-center justify-between gap-2 transition-all cursor-pointer select-none max-w-[240px] sm:max-w-[280px] shadow-2xs ${
           isFiltered
             ? `${themeClasses.activeBg} font-bold shadow-xs`
-            : "border-border bg-surface hover:bg-slate-50 dark:hover:bg-slate-800/80 text-foreground"
+            : "border-border bg-surface hover:bg-sunken text-foreground"
         }`}
         aria-haspopup="true"
         aria-expanded={isOpen}
@@ -213,7 +213,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
             <span
               onClick={handleClear}
               title="Clear selection"
-              className="p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              className="p-0.5 rounded-full hover:bg-sunken text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
             >
               <X className="h-3 w-3" />
             </span>
@@ -231,15 +231,15 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
         <div
           className={`absolute ${
             align === "right" ? "right-0" : "left-0"
-          } mt-1.5 w-72 sm:w-80 rounded-2xl border border-border bg-surface shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100`}
+          } mt-1.5 w-72 sm:w-80 rounded-2xl border border-border bg-surface shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100`}
         >
           {/* Menu Header */}
-          <div className="p-3 border-b border-border bg-slate-50/60 dark:bg-slate-900/60 space-y-2">
+          <div className="p-3 border-b border-border bg-sunken space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 {icon && <span className={themeClasses.icon}>{icon}</span>}
                 <span>Filter by {label}</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-slate-800 text-muted-foreground font-semibold">
+                <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-sunken text-muted-foreground font-semibold">
                   {selectedValues.length}/{options.length}
                 </span>
               </span>
@@ -258,7 +258,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                     <button
                       type="button"
                       onClick={() => onChange([])}
-                      className="text-xs text-rose-500 hover:underline font-semibold cursor-pointer"
+                      className="text-xs text-danger-text hover:underline font-semibold cursor-pointer"
                     >
                       Clear
                     </button>
@@ -277,10 +277,10 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   aria-label={`Search ${label.toLowerCase()}`}
-                  className="w-full pl-8 pr-7 py-1 text-xs rounded-xl border border-border bg-white dark:bg-slate-950 text-foreground focus:outline-none focus:border-primary"
+                  className="w-full pl-8 pr-7 py-1 text-xs rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:border-primary"
                 />
                 {searchQuery && (
-                  <button
+                  <button aria-label="Close"
                     type="button"
                     onClick={() => setSearchQuery("")}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -308,7 +308,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                     className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer select-none ${
                       isSelected
                         ? themeClasses.itemActive
-                        : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-foreground"
+                        : "hover:bg-sunken text-foreground"
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0 pr-2">
@@ -334,7 +334,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                           {option.label}
                         </span>
                         {option.subtitle && (
-                          <span className="text-[10px] text-muted-foreground block truncate">
+                          <span className="text-[11px] text-muted-foreground block truncate">
                             {option.subtitle}
                           </span>
                         )}
@@ -345,18 +345,18 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                     <div className="shrink-0 flex items-center gap-1.5">
                       {option.badge && (
                         <span
-                          className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
+                          className={`text-[11px] px-1.5 py-0.5 rounded-md font-bold ${
                             option.badgeColor ||
                             (option.badge === "Onboard"
-                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
-                              : "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20")
+                              ? "bg-success-soft text-success-text border border-success-border"
+                              : "bg-warning-soft text-warning-text border border-warning-border")
                           }`}
                         >
                           {option.badge}
                         </span>
                       )}
                       {typeof option.count === "number" && (
-                        <span className="text-[10px] font-mono text-muted-foreground bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
+                        <span className="text-[11px] font-mono text-muted-foreground bg-sunken px-1.5 py-0.5 rounded-md">
                           {option.count}
                         </span>
                       )}
@@ -368,7 +368,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
           </div>
 
           {/* Menu Footer */}
-          <div className="p-2 border-t border-border bg-slate-50/40 dark:bg-slate-900/40 flex items-center justify-between text-[11px]">
+          <div className="p-2 border-t border-border bg-sunken flex items-center justify-between text-[11px]">
             <span className="text-muted-foreground">
               {selectedValues.length === 0
                 ? `Showing all ${options.length}`

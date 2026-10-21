@@ -97,12 +97,12 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
       {/* Header Banner */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
             <ShieldCheck className="h-4 w-4" />
           </div>
           <div>
             <h2 className="text-base font-bold text-foreground">
-              GFC Site Handover Manifest
+              GFC site handover manifest
             </h2>
           </div>
         </div>
@@ -111,18 +111,18 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
           <button
             type="button"
             onClick={handleExportCsv}
-            className="h-8 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+            className="h-8 px-3 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
           >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+            <FileSpreadsheet className="h-3.5 w-3.5 text-success-text" />
             <span>Export CSV</span>
           </button>
           <button
             type="button"
             onClick={() => window.print()}
-            className="h-8 px-3 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-8 px-3 py-1.5 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Printer className="h-3.5 w-3.5" />
-            <span>Print Manifest</span>
+            <span>Print manifest</span>
           </button>
         </div>
       </div>
@@ -130,23 +130,23 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
       {/* KPI Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-muted-foreground uppercase">Total GFC Dispatches</div>
-          <div className="text-xl font-black text-foreground mt-1">{releases.length}</div>
+          <div className="text-[11px] font-bold text-muted-foreground">Total GFC dispatches</div>
+          <div className="text-xl font-semibold text-foreground mt-1">{releases.length}</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Physical Sets Issued</div>
-          <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{totalCopies}</div>
+          <div className="text-[11px] font-bold text-success-text">Physical sets issued</div>
+          <div className="text-xl font-semibold text-success-text mt-1">{totalCopies}</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase">Contractor Firms</div>
-          <div className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">{contractorOptions.length}</div>
+          <div className="text-[11px] font-bold text-info-text">Contractor firms</div>
+          <div className="text-xl font-semibold text-info-text mt-1">{contractorOptions.length}</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-theme-icon dark:text-muted-foreground uppercase">Filtered Records</div>
-          <div className="text-xl font-black text-theme-icon dark:text-muted-foreground mt-1">{filteredReleases.length}</div>
+          <div className="text-[11px] font-bold text-theme-icon dark:text-muted-foreground">Filtered records</div>
+          <div className="text-xl font-semibold text-theme-icon dark:text-muted-foreground mt-1">{filteredReleases.length}</div>
         </div>
       </div>
 
@@ -160,7 +160,7 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
               aria-label="Search drawing, contractor, engineer"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-success-border"
             />
           </div>
 
@@ -171,7 +171,7 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
               selectedValues={selectedContractors}
               onChange={setSelectedContractors}
               colorTheme="blue"
-              placeholder="All Contractors"
+              placeholder="All contractors"
             />
 
             <DesignMultiSelectDropdown
@@ -180,7 +180,7 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
               selectedValues={selectedRevisions}
               onChange={setSelectedRevisions}
               colorTheme="emerald"
-              placeholder="All Revisions"
+              placeholder="All revisions"
             />
 
             {(selectedContractors.length > 0 || selectedRevisions.length > 0 || searchQuery) && (
@@ -191,7 +191,7 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
                   setSelectedRevisions([]);
                   setSearchQuery("");
                 }}
-                className="h-8 px-2.5 rounded-xl border border-dashed border-rose-500/40 hover:border-rose-500/70 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                className="h-8 px-2.5 rounded-xl border border-dashed border-danger-border hover:border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <X className="h-3 w-3" />
                 <span>Reset</span>
@@ -208,13 +208,13 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
             {selectedContractors.map(c => (
               <span
                 key={c}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 text-[11px] font-medium"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-info-soft text-info-text border border-info-border text-[11px] font-medium"
               >
                 <span>Contractor: {c}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedContractors(selectedContractors.filter(x => x !== c))}
-                  className="hover:text-blue-900 dark:hover:text-blue-100"
+                  className="hover:text-info-text"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -224,13 +224,13 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
             {selectedRevisions.map(rev => (
               <span
                 key={rev}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[11px] font-medium"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-success-soft text-success-text border border-success-border text-[11px] font-medium"
               >
                 <span>Revision: {rev}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedRevisions(selectedRevisions.filter(x => x !== rev))}
-                  className="hover:text-emerald-900 dark:hover:text-emerald-100"
+                  className="hover:text-success-text"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -255,14 +255,14 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-xs border-collapse min-w-[1200px]">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                <th className="p-3.5 whitespace-nowrap min-w-[120px]">GFC Release ID</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[280px]">Drawing Code & Title</th>
-                <th className="p-3.5 text-center whitespace-nowrap min-w-[130px]">Certified Revision</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[160px]">Site Engineer</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[190px]">Civil Contractor Firm</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[130px]">Handover Date</th>
-                <th className="p-3.5 text-center whitespace-nowrap min-w-[120px]">Physical Prints</th>
+              <tr className="bg-sunken border-b border-border text-[11px] text-muted-foreground font-semibold">
+                <th className="p-3.5 whitespace-nowrap min-w-[120px]">GFC release ID</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[280px]">Drawing code & title</th>
+                <th className="p-3.5 text-center whitespace-nowrap min-w-[130px]">Certified revision</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[160px]">Site engineer</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[190px]">Civil contractor firm</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[130px]">Handover date</th>
+                <th className="p-3.5 text-center whitespace-nowrap min-w-[120px]">Physical prints</th>
                 <th className="p-3.5 text-right whitespace-nowrap min-w-[140px]">Certificate</th>
               </tr>
             </thead>
@@ -275,7 +275,7 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
                 </tr>
               ) : (
                 filteredReleases.map((rel) => (
-                  <tr key={rel.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr key={rel.id} className="hover:bg-sunken transition-colors">
                     <td className="p-3.5 font-mono font-bold text-muted-foreground whitespace-nowrap min-w-[120px]">
                       #{rel.id}
                     </td>
@@ -284,7 +284,7 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
                       <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{rel.drawingTitle}</div>
                     </td>
                     <td className="p-3.5 text-center whitespace-nowrap min-w-[130px]">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 whitespace-nowrap">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-success-soft text-success-text border border-success-border whitespace-nowrap">
                         {rel.revisionNumber} GFC
                       </span>
                     </td>
@@ -307,10 +307,10 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
                       <button
                         type="button"
                         onClick={() => toast.info(`Downloading Verified GFC Digital Certificate for ${rel.drawingCode}`)}
-                        className="h-7 px-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold text-xs inline-flex items-center gap-1 hover:bg-emerald-500/20 transition-colors cursor-pointer whitespace-nowrap"
+                        className="h-7 px-2.5 rounded-lg border border-success-border bg-success-soft text-success-text font-semibold text-xs inline-flex items-center gap-1 hover:bg-success-soft transition-colors cursor-pointer whitespace-nowrap"
                       >
                         <Download className="h-3.5 w-3.5 shrink-0" />
-                        <span>GFC Pass</span>
+                        <span>GFC pass</span>
                       </button>
                     </td>
                   </tr>

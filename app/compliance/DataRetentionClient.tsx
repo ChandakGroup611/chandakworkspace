@@ -25,6 +25,8 @@ import {
 } from "@/lib/actions/compliance";
 import { usePermissions } from "@/hooks/usePermissions";
 import { MoveTasksModal } from "@/components/tasks/MoveTasksModal";
+import { confirmAction } from "@/components/ui/feedback/confirm";
+import { formatDateTime } from "@/components/ui/data";
 
 type ViewType = "active" | "deleted";
 
@@ -114,7 +116,7 @@ export default function DataRetentionClient() {
     if (ids.length === 0) return;
     
     if (actionType === 'purge') {
-      if (!confirm(`CRITICAL WARNING: You are about to permanently purge ${ids.length} record(s). This action CANNOT be undone. Proceed?`)) {
+      if (!(await confirmAction(`CRITICAL WARNING: You are about to permanently purge ${ids.length} record(s). This action CANNOT be undone. Proceed?`))) {
         return;
       }
     }
@@ -161,12 +163,12 @@ export default function DataRetentionClient() {
               <>
                 {canRestore && (
                   <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
-                    Restore Selected
+                    Restore selected
                   </AppButton>
                 )}
                 {canPurge && (
                   <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
-                    Purge Selected
+                    Purge selected
                   </AppButton>
                 )}
               </>
@@ -174,7 +176,7 @@ export default function DataRetentionClient() {
               <>
                 {activeTab === "tasks" && (
                   <AppButton variant="primary" size="sm" onClick={() => setIsMoveModalOpen(true)} disabled={isProcessing}>
-                    Move Tasks to Workspace
+                    Move tasks to workspace
                   </AppButton>
                 )}
               </>
@@ -192,8 +194,8 @@ export default function DataRetentionClient() {
                 </AppTableHead>
               )}
               <AppTableHead>Code / ID</AppTableHead>
-              <AppTableHead>Name / Title</AppTableHead>
-              <AppTableHead>Last Updated</AppTableHead>
+              <AppTableHead>Name / title</AppTableHead>
+              <AppTableHead>Last updated</AppTableHead>
               <AppTableHead className="text-right">Actions</AppTableHead>
             </tr>
           </AppTableHeader>
@@ -207,7 +209,7 @@ export default function DataRetentionClient() {
               )}
               <AppTableCell className="font-mono text-xs">{record[currentTabConfig.codeKey] || record.id.split('-')[0]}</AppTableCell>
               <AppTableCell className="font-semibold">{record[currentTabConfig.nameKey] || 'N/A'}</AppTableCell>
-              <AppTableCell className="text-xs text-muted">{new Date(record.updated_at).toLocaleString()}</AppTableCell>
+              <AppTableCell className="text-xs text-muted">{formatDateTime(record.updated_at)}</AppTableCell>
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
                   <div className="flex justify-end gap-2">
@@ -223,7 +225,7 @@ export default function DataRetentionClient() {
                     )}
                   </div>
                 ) : (
-                  <AppBadge variant="success">Active Record</AppBadge>
+                  <AppBadge variant="success">Active record</AppBadge>
                 )}
               </AppTableCell>
             </AppTableRow>
@@ -247,12 +249,12 @@ export default function DataRetentionClient() {
       {/* Error Popup Modal */}
       {showErrorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/60">
-          <div className="bg-rose-950 border border-rose-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-rose-900/20">
+          <div className="bg-danger-solid border border-danger-border rounded-2xl p-6 max-w-md w-full shadow-lg">
             <div className="flex items-center gap-3 text-danger mb-4">
               <ShieldAlert className="h-8 w-8" />
-              <h3 className="text-xl font-bold">Deletion Blocked</h3>
+              <h3 className="text-xl font-bold">Deletion blocked</h3>
             </div>
-            <p className="text-rose-200/80 text-sm mb-6 leading-relaxed">
+            <p className="text-danger-text text-sm mb-6 leading-relaxed">
               This record cannot be permanently deleted because active transactions or records are currently attached to it. 
               <br/><br/>
               <strong>System Message:</strong> {errorDetails}
@@ -270,20 +272,20 @@ export default function DataRetentionClient() {
 
       {/* Action Banners */}
       {errorBanner && (
-        <div className="p-4 rounded-xl border border-rose-500/30 bg-danger/10 flex items-start gap-3">
+        <div className="p-4 rounded-xl border border-danger-border bg-danger/10 flex items-start gap-3">
           <AlertOctagon className="h-5 w-5 text-danger shrink-0 mt-0.5" />
           <div className="space-y-1 text-sm">
-            <h4 className="font-bold text-danger uppercase tracking-wider">Action Failed</h4>
+            <h4 className="font-bold text-danger">Action failed</h4>
             <p className="text-danger/80">{errorBanner}</p>
           </div>
         </div>
       )}
       
       {successBanner && (
-        <div className="p-4 rounded-xl border border-emerald-500/30 bg-success/10 flex items-start gap-3">
+        <div className="p-4 rounded-xl border border-success-border bg-success/10 flex items-start gap-3">
           <CheckSquare className="h-5 w-5 text-success shrink-0 mt-0.5" />
           <div className="space-y-1 text-sm">
-            <h4 className="font-bold text-success uppercase tracking-wider">Success</h4>
+            <h4 className="font-bold text-success">Success</h4>
             <p className="text-success/80">{successBanner}</p>
           </div>
         </div>
@@ -329,7 +331,7 @@ export default function DataRetentionClient() {
                 onClick={() => setActiveView("active")}
                 className="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
               >
-                Active Records
+                Active records
               </AppButton>
               <AppButton 
                 variant={activeView === "deleted" ? "destructive" : "ghost"}
@@ -337,7 +339,7 @@ export default function DataRetentionClient() {
                 className="px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
               >
                 <ShieldAlert className="h-3.5 w-3.5" />
-                Recycle Bin
+                Recycle bin
               </AppButton>
             </div>
           </div>

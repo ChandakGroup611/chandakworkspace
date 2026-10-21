@@ -3,6 +3,16 @@
 import React, { useState, useEffect } from "react";
 import { ChevronRight, ChevronDown, ExternalLink, Edit2, Share2, Trash2, MoreVertical, Folder, FolderTree, CheckSquare, CornerDownRight, CheckCircle2, CircleDashed, Paperclip, Eye } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
+import { StatusBadge, PriorityIndicator, formatDate, formatDateTime } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
+import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const MENU_ITEM = "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-foreground hover:bg-surface-hover";
+const ICON_BTN = "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring";
+/** Entity tile colours: workspaces carry the theme accent, everything else stays neutral. */
+const TYPE_TILE: Record<string, string> = { WORKSPACE: "bg-accent-soft text-accent-soft-text", SUB_WORKSPACE: "bg-sunken text-subtle", TASK: "bg-sunken text-subtle", SUB_TASK: "bg-sunken text-muted" };
+const TYPE_LABEL: Record<string, string> = { WORKSPACE: "Workspace", SUB_WORKSPACE: "Sub-workspace", TASK: "Task", SUB_TASK: "Sub-task" };
 import { useRouter } from "next/navigation";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -139,7 +149,7 @@ export function WorkspaceMasterTable({
   };
 
   const getStatusColor = (node: any) => {
-    return node.status?.status_color || node.status?.color || ("#6b7280");
+    return node.status?.status_color || node.status?.color || "var(--text-muted)";
   };
 
   const getStatusName = (node: any) => {
@@ -152,7 +162,7 @@ export function WorkspaceMasterTable({
 
   const getPriorityInfo = (node: any) => {
     const name = node.priority?.priority_name || node.priority?.name || node.priority_name;
-    const color = node.priority?.priority_color || node.priority?.color || "#f59e0b";
+    const color = node.priority?.priority_color || node.priority?.color || "var(--warning)";
     return name ? { name, color } : null;
   };
 
@@ -161,13 +171,13 @@ export function WorkspaceMasterTable({
     return user ? user.full_name : "System";
   };
 
-  const gridCols = 'minmax(360px, 4.5fr) minmax(95px, 1fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(145px, 1.2fr) 85px';
+  const gridCols = 'minmax(360px, 4.5fr) minmax(110px, 1fr) minmax(76px, 0.8fr) minmax(76px, 0.8fr) minmax(88px, 0.8fr) minmax(80px, 0.8fr) minmax(190px, 1.3fr) 108px';
 
   const renderAvatarGroup = (members: any[], title: string, fallbackText: string = "None") => {
     if (!members || members.length === 0) {
       return (
-        <span className="text-[11px] text-muted opacity-40 select-none">
-          {fallbackText}
+        <span className="select-none text-[12.5px] text-muted">
+          {fallbackText === "None" ? "—" : fallbackText}
         </span>
       );
     }
@@ -186,19 +196,20 @@ export function WorkspaceMasterTable({
         return usersMap.get(id)?.full_name || m.name || id;
       }).join(", ")}`}>
         <div className="relative">
-          <div className="h-6 w-6 rounded-full bg-theme-btn-primary/10 border border-border flex items-center justify-center text-[9px] font-bold text-theme-icon overflow-hidden">
+          <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-accent-soft text-[10.5px] font-semibold text-accent-soft-text">
             {uObj?.avatar_url ? (
-              <img src={uObj.avatar_url} alt={name} className="h-full w-full object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={uObj.avatar_url} alt="" className="h-full w-full object-cover" />
             ) : (
               <span>{initials}</span>
             )}
           </div>
           {isOnline && (
-            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-surface" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success ring-2 ring-surface" aria-label="Online" />
           )}
         </div>
         {count > 1 && (
-          <span className="text-[10px] font-semibold text-muted bg-surface-hover px-1.5 py-0.5 rounded-full border border-border/50">
+          <span className="rounded-full bg-sunken px-1.5 text-[11.5px] font-medium leading-5 text-subtle tabular">
             +{count - 1}
           </span>
         )}
@@ -239,8 +250,8 @@ export function WorkspaceMasterTable({
       : (childTaskCount > 0 || hasLoadedChildren);
 
     const creatorId = node.created_by || node.owner_id || node.workspace_owner_id;
-    const fullDate = node.created_at ? new Date(node.created_at).toLocaleString() : '---';
-    const shortDate = node.created_at ? new Date(node.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '---';
+    const fullDate = formatDateTime(node.created_at);
+    const shortDate = formatDate(node.created_at);
     const priority = isTask ? getPriorityInfo(node) : null;
     const statusName = getStatusName(node);
     const statusColor = getStatusColor(node);
@@ -275,26 +286,23 @@ export function WorkspaceMasterTable({
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
-        className={`theme-table-row grid items-center border-b border-border/40 transition-colors group min-h-[48px] cursor-pointer select-none relative hover:bg-surface/50 ${
-          isMenuOpen ? 'z-40' : 'z-0'
-        } ${ node.isMatched ? 'bg-theme-btn-primary/5 ring-1 ring-inset ring-theme-btn-primary/30' : '' }`} 
+        data-matched={node.isMatched ? "true" : undefined}
+        className={cn(
+          "group relative grid min-h-[46px] cursor-pointer select-none items-center border-b border-border transition-colors hover:bg-surface-hover",
+          isMenuOpen ? "z-[3]" : "z-0",
+          node.isMatched && "bg-accent-soft/50"
+        )}
         style={{ gridTemplateColumns: gridCols }}
       >
           {/* VS Code Style Guide Lines for Nested Items */}
           {depth > 0 && Array.from({ length: depth }).map((_, i) => {
             const isLast = i === depth - 1;
-            let guideLineColor = "border-border";
-            
-            if (isLast) {
-              if (node.type === 'SUB_WORKSPACE') guideLineColor = "border-theme-icon";
-              else if (node.type === 'TASK') guideLineColor = "border-emerald-400";
-              else if (node.type === 'SUB_TASK') guideLineColor = "border-amber-400";
-            }
+            const guideLineColor = isLast ? "border-border-active" : "border-border";
 
             return (
               <div 
                 key={i}
-                className={`absolute top-0 bottom-0 border-l ${guideLineColor} pointer-events-none opacity-40`}
+                className={`pointer-events-none absolute bottom-0 top-0 border-l ${guideLineColor}`}
                 style={{ left: `${(i * 24) + 16}px` }}
               />
             );
@@ -302,112 +310,90 @@ export function WorkspaceMasterTable({
 
           {/* Column 1: Tree Hierarchy + Entity Name */}
           <div 
-            className="py-2.5 px-4 flex items-start min-w-0 pr-2 relative z-10" 
+            className="relative z-[1] flex min-w-0 items-start px-4 py-2.5 pr-2"
             style={{ paddingLeft: `${Math.max(16, depth * 24 + 16)}px` }}
             title={node.subject || node.name || 'Untitled Entity'}
           >
             <div className="flex items-start gap-2 min-w-0 flex-1">
               {/* Expand Toggle */}
-              <div 
+              <button
+                type="button"
                 onClick={(e) => canExpand ? toggleNode(node, e) : undefined}
-                className={`h-5 w-5 rounded flex items-center justify-center shrink-0 transition-all duration-200 cursor-pointer mt-0.5 hover:scale-110 active:scale-90 ${
-                  canExpand
-                    ? 'hover:bg-surface-hover text-muted hover:text-foreground' 
-                    : 'opacity-0 pointer-events-none'
-                }`}
+                tabIndex={canExpand ? 0 : -1}
+                aria-hidden={!canExpand}
+                aria-expanded={canExpand ? isExpanded : undefined}
+                aria-label={canExpand ? `${isExpanded ? "Collapse" : "Expand"} ${node.subject || node.name || "item"}` : undefined}
+                className={cn(
+                  "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors",
+                  canExpand ? "text-muted hover:bg-sunken hover:text-foreground" : "pointer-events-none opacity-0"
+                )}
               >
                 {loadingNodes[node.id] ? (
-                  <CircleDashed className="h-3.5 w-3.5 animate-spin text-theme-icon" />
+                  <CircleDashed className="h-4 w-4 animate-spin text-muted" aria-label="Loading" />
                 ) : (
-                  <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform ${
-                    isExpanded ? 'rotate-90 text-theme-icon font-bold' : 'rotate-0 text-muted'
-                  }`} />
+                  <ChevronRight className={cn("h-4 w-4 transition-transform duration-150", isExpanded && "rotate-90 text-foreground")} aria-hidden />
                 )}
-              </div>
+              </button>
 
               {/* Entity Icon */}
-              <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 shadow-xs mt-0.5 ${
-                node.type === 'WORKSPACE' ? 'bg-theme-btn-primary/10 text-theme-icon' :
-                node.type === 'SUB_WORKSPACE' ? 'bg-surface text-theme-icon dark:text-muted-foreground' :
-                node.type === 'TASK' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-              }`}>
-                <TypeIcon className="h-3.5 w-3.5" />
+              <div className={cn("mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md", TYPE_TILE[node.type] || TYPE_TILE.TASK)} title={TYPE_LABEL[node.type]}>
+                <TypeIcon className="h-3.5 w-3.5" aria-label={TYPE_LABEL[node.type]} />
               </div>
 
               {/* Text Info */}
               <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span 
-                    className="font-semibold text-xs text-foreground break-words whitespace-normal leading-snug group-hover:text-theme-icon transition-colors"
+                    className={cn("whitespace-normal break-words leading-snug text-foreground", isWorkspaceType ? "text-[13.5px] font-semibold" : "text-[13.5px] font-medium")}
                     title={node.subject || node.name || 'Untitled Entity'}
                   >
                     {node.subject || node.name || 'Untitled Entity'}
                   </span>
                   
                   {isTask && (
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span 
-                        className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border leading-none shrink-0"
-                        style={{
-                          borderColor: `${statusColor}40`,
-                          backgroundColor: `${statusColor}15`,
-                          color: statusColor
-                        }}
-                        title={`Status: ${statusName}`}
-                      >
-                        {statusName}
-                      </span>
-                      {priority && (
-                        <span 
-                          className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border leading-none shrink-0"
-                          style={{
-                            borderColor: `${priority.color}40`,
-                            backgroundColor: `${priority.color}15`,
-                            color: priority.color
-                          }}
-                          title={`Priority: ${priority.name}`}
-                        >
-                          {priority.name}
-                        </span>
-                      )}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <StatusBadge status={statusName === "Unknown" ? null : statusName} size="sm" />
+                      {priority && <PriorityIndicator priority={priority.name} className="text-[12.5px] text-subtle" />}
                     </div>
                   )}
 
                   {node.attachmentCount > 0 && (
-                    <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-theme-btn-primary/10 text-theme-icon shrink-0" title={`${node.attachmentCount} Attachment(s)`}>
-                      <Paperclip className="h-3 w-3" />
-                    </div>
+                    <span className="inline-flex shrink-0 items-center gap-1 text-[12px] text-muted tabular" title={`${node.attachmentCount} attachment(s)`}>
+                      <Paperclip className="h-3.5 w-3.5" aria-hidden /> {node.attachmentCount}
+                    </span>
                   )}
                 </div>
 
                 {isWorkspaceType && (
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                    <span 
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         saveHierarchySessionState(node.id);
                         router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                       }}
-                      className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded cursor-pointer bg-theme-btn-primary/10 text-theme-icon hover:bg-theme-btn-primary/20 border border-theme-icon/20" 
-                      title={`${directTaskCount} Direct, ${childTaskCount} Child`}
+                      className="text-[12px] text-accent-soft-text hover:underline tabular"
+                      title={`${directTaskCount} directly in this workspace, ${childTaskCount} in sub-items`}
                     >
-                      {totalTaskCount} Tasks <span className="opacity-75">({directTaskCount} Direct)</span>
-                    </span>
+                      {totalTaskCount} {totalTaskCount === 1 ? "task" : "tasks"}
+                      <span className="text-muted"> · {directTaskCount} direct</span>
+                    </button>
                   </div>
                 )}
                 {!isWorkspaceType && childTaskCount > 0 && (
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                    <span 
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         saveHierarchySessionState(node.id);
                         router.push(`/tasks/${node.id}`);
                       }}
-                      className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded cursor-pointer bg-theme-btn-secondary/10 text-theme-btn-secondary-text hover:bg-theme-btn-secondary/20 border border-theme-btn-secondary-text/20"
+                      className="text-[12px] text-accent-soft-text hover:underline tabular"
                     >
-                      {childTaskCount} Sub-Task{childTaskCount !== 1 ? 's' : ''}
-                    </span>
+                      {childTaskCount} {childTaskCount === 1 ? "sub-task" : "sub-tasks"}
+                    </button>
                   </div>
                 )}
               </div>
@@ -415,17 +401,17 @@ export function WorkspaceMasterTable({
           </div>
           
           {/* Created Date */}
-          <div className="py-2 px-3 text-xs text-muted whitespace-nowrap" title={fullDate}>
+          <div className="whitespace-nowrap px-3 py-2 text-[13px] text-subtle tabular" title={fullDate}>
             {shortDate}
           </div>
 
           {/* Creator */}
-          <div className="py-2 px-2 flex items-center justify-center">
+          <div className="flex items-center px-3 py-2">
             {renderAvatarGroup(creatorId ? [{ id: creatorId }] : [], "Creator", "System")}
           </div>
 
           {/* Owner */}
-          <div className="py-2 px-2 flex items-center justify-center">
+          <div className="flex items-center px-3 py-2">
             {renderAvatarGroup(
               isWorkspaceType 
                 ? (node.owner_id ? [{ id: node.owner_id }] : (node.workspace_owner_id ? [{ id: node.workspace_owner_id }] : (node.members?.filter((m: any) => m.role === 'OWNER') || [])))
@@ -435,7 +421,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Executives */}
-          <div className="py-2 px-2 flex items-center justify-center">
+          <div className="flex items-center px-3 py-2">
             {renderAvatarGroup(
               isWorkspaceType 
                 ? (node.members?.filter((m: any) => m.role === 'EXECUTOR') || [])
@@ -445,7 +431,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Watchers */}
-          <div className="py-2 px-2 flex items-center justify-center">
+          <div className="flex items-center px-3 py-2">
             {renderAvatarGroup(
               isWorkspaceType 
                 ? (node.members?.filter((m: any) => m.role === 'WATCHER') || [])
@@ -456,34 +442,36 @@ export function WorkspaceMasterTable({
 
           {/* Create Sub-Items */}
           <div className="py-2 px-2">
-            <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+            <div className="flex items-center gap-1 whitespace-nowrap">
               {isWorkspaceType && onCreateSubWorkspace && canCreateWs && (
-                <AppButton
-                  variant="outline"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
-                  className="h-6 px-2 text-[9px] font-bold uppercase border-theme-icon/30 text-theme-icon hover:bg-theme-btn-primary/10 active:scale-90 hover:scale-105 transition-all"
+                  className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12.5px] font-medium text-subtle hover:bg-sunken hover:text-foreground"
+                  title="Add a sub-workspace"
                 >
-                  + Sub WS
-                </AppButton>
+                  <Plus className="h-3.5 w-3.5" aria-hidden /> Sub-workspace
+                </button>
               )}
               {onCreateTask && canCreateTsk && (
-                <AppButton
-                  variant="outline"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
-                  className="h-6 px-2 text-[9px] font-bold uppercase border-theme-icon/30 text-theme-icon hover:bg-theme-btn-primary/10 active:scale-90 hover:scale-105 transition-all"
+                  className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12.5px] font-medium text-subtle hover:bg-sunken hover:text-foreground"
+                  title={isWorkspaceType ? "Add a task" : "Add a sub-task"}
                 >
-                  {isWorkspaceType ? '+ Task' : '+ Sub'}
-                </AppButton>
+                  <Plus className="h-3.5 w-3.5" aria-hidden /> {isWorkspaceType ? "Task" : "Sub-task"}
+                </button>
               )}
             </div>
           </div>
 
           {/* Sticky Actions Column - Pinned on Right so it never scrolls off */}
-          <div className={`sticky right-0 bg-surface/95 dark:bg-[#0B0F19]/95 shadow-[-6px_0_12px_rgba(0,0,0,0.06)] py-1 px-2 flex items-center justify-center gap-1 whitespace-nowrap ${
-            isMenuOpen ? 'z-40' : 'z-20'
-          }`}>
+          <div className={cn(
+            "sticky right-0 flex items-center justify-end gap-0.5 self-stretch whitespace-nowrap bg-surface px-2 py-1 shadow-[inset_1px_0_0_var(--border-subtle)] group-hover:bg-surface-hover",
+            node.isMatched && "bg-accent-soft",
+            isMenuOpen ? "z-[3]" : "z-[2]"
+          )}>
             {isTask && onOpenTask && (
               <AppButton 
                 variant="ghost"
@@ -492,10 +480,11 @@ export function WorkspaceMasterTable({
                   e.stopPropagation();
                   onOpenTask(node);
                 }}
-                className="h-7 w-7 p-0 text-muted hover:text-theme-icon hover:bg-surface-hover"
-                title="Quick View Details"
+                className="h-7 w-7 p-0 text-muted hover:bg-sunken hover:text-foreground"
+                title="Quick view"
+                aria-label={`Quick view ${node.subject || node.name || "task"}`}
               >
-                <Eye className="h-3.5 w-3.5" />
+                <Eye className="h-4 w-4" />
               </AppButton>
             )}
 
@@ -507,10 +496,11 @@ export function WorkspaceMasterTable({
                   e.stopPropagation();
                   router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                 }}
-                className="h-7 w-7 p-0 text-muted hover:text-theme-icon hover:bg-surface-hover"
-                title="Open Task List"
+                className="h-7 w-7 p-0 text-muted hover:bg-sunken hover:text-foreground"
+                title="Open task list"
+                aria-label={`Open task list for ${node.subject || node.name || "workspace"}`}
               >
-                <ExternalLink className="h-3.5 w-3.5" />
+                <ExternalLink className="h-4 w-4" />
               </AppButton>
             )}
 
@@ -523,16 +513,20 @@ export function WorkspaceMasterTable({
                   e.stopPropagation();
                   setActiveMenu(prev => prev === node.id ? null : node.id);
                 }}
-                className={`h-7 w-7 p-0 transition-colors ${isMenuOpen ? 'bg-surface-hover text-foreground' : 'text-muted hover:text-foreground hover:bg-surface-hover'}`}
-                title="More Actions"
+                className={cn("h-7 w-7 p-0", isMenuOpen ? "bg-sunken text-foreground" : "text-muted hover:bg-sunken hover:text-foreground")}
+                title="More actions"
+                aria-label="More actions"
+                aria-haspopup="menu"
+                aria-expanded={isMenuOpen}
               >
-                <MoreVertical className="h-3.5 w-3.5" />
+                <MoreVertical className="h-4 w-4" />
               </AppButton>
 
               {isMenuOpen && (
                 <div 
                   data-dropdown-menu="true"
-                  className="absolute right-0 top-full mt-1 w-48 rounded-xl shadow-2xl border border-border bg-surface dark:bg-[#111827] p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                  role="menu"
+                  className="absolute right-0 top-full z-[var(--z-popover)] mt-1 w-52 rounded-[10px] border border-border bg-elevated p-1 shadow-lg"
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -547,10 +541,11 @@ export function WorkspaceMasterTable({
                         else if (onOpenTask) onOpenTask(node);
                         else router.push(`/tasks/${node.id}`);
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
+                      role="menuitem"
+                      className={MENU_ITEM}
                     >
-                      <Edit2 className="h-3.5 w-3.5 text-theme-icon" />
-                      <span>{isWorkspaceType ? 'Edit Workspace' : 'Edit Task'}</span>
+                      <Edit2 className="h-4 w-4 text-muted" aria-hidden />
+                      <span>{isWorkspaceType ? 'Edit workspace' : 'Edit task'}</span>
                     </button>
                   )}
 
@@ -563,10 +558,11 @@ export function WorkspaceMasterTable({
                         setActiveMenu(null);
                         onShareNode(node);
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
+                      role="menuitem"
+                      className={MENU_ITEM}
                     >
-                      <Share2 className="h-3.5 w-3.5 text-success" />
-                      <span>Transfer Workspace</span>
+                      <Share2 className="h-4 w-4 text-muted" aria-hidden />
+                      <span>Transfer workspace</span>
                     </button>
                   )}
 
@@ -579,9 +575,10 @@ export function WorkspaceMasterTable({
                         setActiveMenu(null);
                         onDeleteNode(node);
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-danger hover:bg-danger/10 transition-colors text-left"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-danger-text hover:bg-danger-soft"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" aria-hidden />
                       <span>Delete</span>
                     </button>
                   )}
@@ -625,7 +622,7 @@ export function WorkspaceMasterTable({
       ? (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || hasLoadedChildren)
       : (childTaskCount > 0 || hasLoadedChildren);
 
-    const shortDate = node.created_at ? new Date(node.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '---';
+    const shortDate = formatDate(node.created_at);
     const statusName = getStatusName(node);
     const statusColor = getStatusColor(node);
     const priority = isTask ? getPriorityInfo(node) : null;
@@ -644,9 +641,7 @@ export function WorkspaceMasterTable({
     return (
       <div 
         key={node.id}
-        className={`mb-2.5 rounded-xl border border-border/60 bg-surface/90 dark:bg-[#111827]/90 p-3 shadow-xs hover:border-theme-btn-primary/40 transition-all select-none ${
-          isMenuOpen ? 'relative z-40' : 'relative z-10'
-        }`}
+        className={cn("theme-card-structural mb-2 select-none p-3 transition-[border-color] hover:border-border-active", isMenuOpen ? "relative z-[3]" : "relative z-[1]")}
         style={{ marginLeft: `${Math.min(depth * 14, 42)}px` }}
       >
         <div className="flex items-start justify-between gap-2">
@@ -655,32 +650,27 @@ export function WorkspaceMasterTable({
               <button 
                 type="button"
                 onClick={(e) => toggleNode(node, e)}
-                className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground shrink-0 mt-0.5 bg-surface-hover/60 active:scale-90 hover:scale-105 transition-all"
+                className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sunken text-muted hover:text-foreground"
                 aria-label={isExpanded ? "Collapse" : "Expand"}
+                aria-expanded={isExpanded}
               >
                 {loadingNodes[node.id] ? (
-                  <CircleDashed className="h-4 w-4 animate-spin text-theme-icon" />
+                  <CircleDashed className="h-4 w-4 animate-spin" aria-label="Loading" />
                 ) : (
-                  <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform ${
-                    isExpanded ? 'rotate-90 text-theme-icon font-bold' : 'rotate-0 text-muted'
-                  }`} />
+                  <ChevronRight className={cn("h-4 w-4 transition-transform duration-150", isExpanded && "rotate-90 text-foreground")} aria-hidden />
                 )}
               </button>
             ) : (
               <div className="w-2 h-7 shrink-0" />
             )}
 
-            <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-              node.type === 'WORKSPACE' ? 'bg-theme-btn-primary/10 text-theme-icon' :
-              node.type === 'SUB_WORKSPACE' ? 'bg-surface text-theme-icon' :
-              node.type === 'TASK' ? 'bg-emerald-500/10 text-emerald-600' :
-              'bg-amber-500/10 text-amber-600'
-            }`}>
-              <TypeIcon className="h-4 w-4" />
+            <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md", TYPE_TILE[node.type] || TYPE_TILE.TASK)}>
+              <TypeIcon className="h-4 w-4" aria-label={TYPE_LABEL[node.type]} />
             </div>
 
-            <div 
-              className="flex-1 min-w-0 cursor-pointer"
+            {/* ui-audit-ignore-next-line title area opens the item; the ⋮ menu also offers Open */}
+            <div
+              className="min-w-0 flex-1 cursor-pointer"
               onClick={() => {
                 saveHierarchySessionState(node.id);
                 if (isWorkspaceType) router.push(`/workspaces/tasks?workspaceId=${node.id}`);
@@ -689,33 +679,21 @@ export function WorkspaceMasterTable({
               }}
             >
               <h4 
-                className="text-[13px] font-bold text-foreground break-words whitespace-normal leading-snug hover:text-theme-icon"
+                className="whitespace-normal break-words text-[14px] font-semibold leading-snug text-foreground"
                 title={node.subject || node.name || 'Untitled Entity'}
               >
                 {node.subject || node.name || 'Untitled Entity'}
               </h4>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                 {isWorkspaceType && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-theme-btn-primary/10 text-theme-icon">
-                    {totalTaskCount} Tasks ({directTaskCount} Direct)
+                  <span className="text-[12.5px] text-muted tabular">
+                    {totalTaskCount} {totalTaskCount === 1 ? "task" : "tasks"} · {directTaskCount} direct
                   </span>
                 )}
                 {isTask && (
                   <>
-                    <span 
-                      className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded border"
-                      style={{ borderColor: `${statusColor}40`, backgroundColor: `${statusColor}15`, color: statusColor }}
-                    >
-                      {statusName}
-                    </span>
-                    {priority && (
-                      <span 
-                        className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded border"
-                        style={{ borderColor: `${priority.color}40`, backgroundColor: `${priority.color}15`, color: priority.color }}
-                      >
-                        {priority.name}
-                      </span>
-                    )}
+                    <StatusBadge status={statusName === "Unknown" ? null : statusName} size="sm" />
+                    {priority && <PriorityIndicator priority={priority.name} className="text-[12.5px]" />}
                   </>
                 )}
               </div>
@@ -729,10 +707,10 @@ export function WorkspaceMasterTable({
                 e.stopPropagation();
                 setActiveMenu(prev => prev === menuKey ? null : menuKey);
               }}
-              className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors active:scale-95 ${
-                isMenuOpen ? 'bg-surface-hover text-foreground' : 'text-muted hover:text-foreground hover:bg-surface-hover'
-              }`}
+              className={cn(ICON_BTN, "h-8 w-8", isMenuOpen && "bg-surface-hover text-foreground")}
               aria-label="More actions"
+              aria-haspopup="menu"
+              aria-expanded={isMenuOpen}
             >
               <MoreVertical className="h-4 w-4" />
             </button>
@@ -740,7 +718,8 @@ export function WorkspaceMasterTable({
             {isMenuOpen && (
               <div 
                 data-dropdown-menu="true"
-                className="absolute right-0 top-full mt-1.5 w-48 rounded-xl shadow-2xl border border-border bg-surface dark:bg-[#111827] p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                role="menu"
+                className="absolute right-0 top-full z-[var(--z-popover)] mt-1 w-52 rounded-[10px] border border-border bg-elevated p-1 shadow-lg"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -754,10 +733,11 @@ export function WorkspaceMasterTable({
                     else if (onOpenTask) onOpenTask(node);
                     else router.push(`/tasks/${node.id}`);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
+                  role="menuitem"
+                  className={MENU_ITEM}
                 >
-                  <Eye className="h-4 w-4 text-theme-icon" />
-                  <span>Open Item</span>
+                  <Eye className="h-4 w-4 text-muted" aria-hidden />
+                  <span>Open</span>
                 </button>
                 {canEditNode && (
                   <button
@@ -770,10 +750,11 @@ export function WorkspaceMasterTable({
                       else if (onOpenTask) onOpenTask(node);
                       else router.push(`/tasks/${node.id}`);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
+                    role="menuitem"
+                  className={MENU_ITEM}
                   >
-                    <Edit2 className="h-4 w-4 text-theme-icon" />
-                    <span>{isWorkspaceType ? 'Edit Workspace' : 'Edit Task'}</span>
+                    <Edit2 className="h-4 w-4 text-muted" aria-hidden />
+                    <span>{isWorkspaceType ? 'Edit workspace' : 'Edit task'}</span>
                   </button>
                 )}
                 {onShareNode && canShare && (
@@ -785,10 +766,11 @@ export function WorkspaceMasterTable({
                       setActiveMenu(null);
                       onShareNode(node);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-success hover:bg-success/10 transition-colors text-left"
+                    role="menuitem"
+                    className={MENU_ITEM}
                   >
-                    <Share2 className="h-4 w-4" />
-                    <span>Transfer Workspace</span>
+                    <Share2 className="h-4 w-4 text-muted" aria-hidden />
+                    <span>Transfer workspace</span>
                   </button>
                 )}
                 {onDeleteNode && canDelete && (
@@ -800,9 +782,10 @@ export function WorkspaceMasterTable({
                       setActiveMenu(null);
                       onDeleteNode(node);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-danger hover:bg-danger/10 transition-colors text-left"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-danger-text hover:bg-danger-soft"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden />
                     <span>Delete</span>
                   </button>
                 )}
@@ -811,25 +794,25 @@ export function WorkspaceMasterTable({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 mt-2.5 pt-2 border-t border-border/40">
-          <span className="text-[10px] text-muted">Created: {shortDate}</span>
+        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-border pt-2">
+          <span className="text-[12px] text-muted">Created {shortDate}</span>
           <div className="flex items-center gap-1.5">
             {isWorkspaceType && onCreateSubWorkspace && canCreateWs && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
-                className="h-6 px-2.5 rounded-md text-[10px] font-bold uppercase bg-theme-btn-primary/10 text-theme-icon border border-theme-icon/30 active:scale-95 transition-transform"
+                className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-surface px-2.5 text-[12.5px] font-medium text-foreground hover:bg-surface-hover"
               >
-                + Sub WS
+                <Plus className="h-3.5 w-3.5" aria-hidden /> Sub-workspace
               </button>
             )}
             {onCreateTask && canCreateTsk && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
-                className="h-6 px-2.5 rounded-md text-[10px] font-bold uppercase bg-foreground/5 text-foreground border border-border active:scale-95 transition-transform"
+                className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-surface px-2.5 text-[12.5px] font-medium text-foreground hover:bg-surface-hover"
               >
-                {isWorkspaceType ? '+ Task' : '+ Sub'}
+                <Plus className="h-3.5 w-3.5" aria-hidden /> {isWorkspaceType ? "Task" : "Sub-task"}
               </button>
             )}
           </div>
@@ -845,7 +828,7 @@ export function WorkspaceMasterTable({
         <React.Fragment key={node.id}>
           {renderHierarchyRow(node, parentNode, depth, isActuallyExpanded)}
           {isActuallyExpanded && Array.isArray(node.children) && node.children.length > 0 && (
-            <div className="flex flex-col animate-accordion-down">
+            <div className="flex flex-col">
               {renderTree(node.children, depth + 1, node)}
             </div>
           )}
@@ -861,7 +844,7 @@ export function WorkspaceMasterTable({
         <React.Fragment key={node.id}>
           {renderMobileRow(node, parentNode, depth, isActuallyExpanded)}
           {isActuallyExpanded && Array.isArray(node.children) && node.children.length > 0 && (
-            <div className="flex flex-col animate-accordion-down">
+            <div className="flex flex-col">
               {renderMobileTree(node.children, depth + 1, node)}
             </div>
           )}
@@ -871,40 +854,36 @@ export function WorkspaceMasterTable({
   };
 
   return (
-    <div className="w-full font-sans relative">
+    <div className="relative w-full">
       <div className="block lg:hidden w-full pb-8">
         {hierarchy.length > 0 ? (
           renderMobileTree(hierarchy)
         ) : (
-          <div className="py-12 text-center text-sm text-muted">
-            No Execution Hierarchy Available.
-          </div>
+          <EmptyState kind="no-results" compact title="Nothing to show here" description="No workspaces or tasks match this scope and these filters." />
         )}
       </div>
 
-      <div className="hidden lg:block w-full overflow-x-auto pb-10">
+      <div className="hidden w-full overflow-x-auto lg:block">
         <div className="w-full flex flex-col min-w-[1040px]">
           <div 
-            className="sticky top-0 z-30 grid items-center text-[11px] tracking-wider font-bold uppercase text-muted border-b border-border bg-surface/95 dark:bg-[#0B0F19]/95 backdrop-blur-md pb-2.5 pt-2.5 mb-1 shadow-xs" 
+            className="sticky top-0 z-[var(--z-sticky)] grid items-center border-b border-border bg-sunken text-[12px] font-semibold text-subtle"
             style={{ gridTemplateColumns: gridCols }}
           >
-            <div className="py-2 px-4 pl-[54px]">Entity Name</div>
-            <div className="py-2 px-3">Created Date</div>
-            <div className="py-2 px-2 text-center">Creator</div>
-            <div className="py-2 px-2 text-center">Owner</div>
-            <div className="py-2 px-2 text-center">Executives</div>
-            <div className="py-2 px-2 text-center">Watchers</div>
-            <div className="py-2 px-2 text-center">Create</div>
-            <div className="sticky right-0 bg-surface/95 dark:bg-[#0B0F19]/95 py-2 px-2 text-center z-30 shadow-[-6px_0_12px_rgba(0,0,0,0.06)]">Actions</div>
+            <div className="px-4 py-2.5 pl-[72px]">Name</div>
+            <div className="px-3 py-2.5">Created</div>
+            <div className="px-3 py-2.5">Creator</div>
+            <div className="px-3 py-2.5">Owner</div>
+            <div className="px-3 py-2.5">Executives</div>
+            <div className="px-3 py-2.5">Watchers</div>
+            <div className="px-3 py-2.5">Add</div>
+            <div className="sticky right-0 z-[1] bg-sunken px-3 py-2.5 text-right shadow-[inset_1px_0_0_var(--border-subtle)]">Actions</div>
           </div>
 
           <div className="flex flex-col">
             {hierarchy.length > 0 ? (
               renderTree(hierarchy)
             ) : (
-              <div className="py-12 text-center text-sm text-muted">
-                No Execution Hierarchy Available.
-              </div>
+              <EmptyState kind="no-results" compact title="Nothing to show here" description="No workspaces or tasks match this scope and these filters." />
             )}
           </div>
         </div>

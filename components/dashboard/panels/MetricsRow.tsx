@@ -31,14 +31,14 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
   const cards = [
     {
       id: "total",
-      label: "Total Operations",
+      label: "Total operations",
       value: stats.total,
       delta: "Live tracking",
       isUp: true,
       icon: Activity,
       color: "accent", // Using global accent
-      gradientLight: "from-white to-accent/10",
-      gradientDark: "from-white/5 to-accent/10",
+      gradientLight: "to-accent/10",
+      gradientDark: "to-accent/10",
       textColor: "text-theme-icon",
     },
     {
@@ -49,8 +49,8 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       isUp: true,
       icon: CheckCircle2,
       color: "emerald-500",
-      gradientLight: "from-white to-emerald-50",
-      gradientDark: "from-white/5 to-emerald-500/10",
+      gradientLight: "to-success-soft",
+      gradientDark: "to-success-soft",
       textColor: "text-success dark:text-success",
     },
     {
@@ -61,20 +61,20 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       isUp: false,
       icon: Clock,
       color: "amber-500",
-      gradientLight: "from-white to-amber-50",
-      gradientDark: "from-white/5 to-amber-500/10",
+      gradientLight: "to-warning-soft",
+      gradientDark: "to-warning-soft",
       textColor: "text-warning dark:text-warning",
     },
     {
       id: "blocked",
-      label: "Blocked Issues",
+      label: "Blocked issues",
       value: stats.blocked,
       delta: "Needs attention",
       isUp: false,
       icon: AlertCircle,
       color: "rose-500",
-      gradientLight: "from-white to-rose-50",
-      gradientDark: "from-white/5 to-rose-500/10",
+      gradientLight: "to-danger-soft",
+      gradientDark: "to-danger-soft",
       textColor: "text-danger dark:text-danger",
     }
   ];
@@ -86,7 +86,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
         return (
           <AppCard 
             key={card.id}
-            className={`relative overflow-hidden group transition-all duration-300 hover:-translate-y-1.5 hover: ${
+            className={`relative overflow-hidden group transition-all duration-300 ${
               "theme-card-structural"
             }`}
           >
@@ -102,16 +102,16 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
-                <span className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground mix-blend-luminosity opacity-80">
+                <span className="text-[11px] font-bold text-muted-foreground mix-blend-luminosity opacity-80">
                   {card.label}
                 </span>
-                <div className={`p-2 rounded-xl bg-surface/50 shadow-sm ring-1 ring-inset ring-black/5 ${card.textColor}`}>
+                <div className={`p-2 rounded-xl bg-surface/50 shadow-sm ring-1 ring-inset ring-border ${card.textColor}`}>
                   <Icon className="h-5 w-5" />
                 </div>
               </div>
               
               <div className="mt-auto">
-                <div className={`text-3xl font-black tracking-tight mb-2 text-foreground`}>
+                <div className={`text-3xl font-semibold tracking-tight mb-2 text-foreground`}>
                   {card.value}
                 </div>
                 

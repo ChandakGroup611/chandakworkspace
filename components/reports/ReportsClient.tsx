@@ -65,7 +65,7 @@ function DraggableTableHead({ col, isFirst, filterValue, onFilterChange }: { col
             value={filterValue || ""} 
             onChange={(e) => onFilterChange(e.target.value)} 
             placeholder={`Filter ${col.display_name}...`}
-            className="w-full text-[10px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-border text-foreground focus:outline-none focus:border-theme-btn-primary placeholder:text-muted"
+            className="w-full text-[11px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-border text-foreground focus:outline-none focus:border-theme-btn-primary placeholder:text-muted"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -336,16 +336,16 @@ export default function ReportsClient() {
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border pb-3">
         {/* Entity Selection Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar flex-nowrap sm:flex-wrap">
-          <AppButton variant="secondary" onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-accent-soft text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <Briefcase className="h-3.5 w-3.5" /> Workspaces
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-accent-soft text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <Layers className="h-3.5 w-3.5" /> Sub-Workspaces
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-accent-soft text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <LayoutList className="h-3.5 w-3.5" /> Tasks
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-accent-soft text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <AlignLeft className="h-3.5 w-3.5" /> Sub-Tasks
           </AppButton>
         </div>
@@ -386,14 +386,14 @@ export default function ReportsClient() {
                 }}
                 className="ml-2 px-2 py-1 theme-label font-bold text-danger hover:bg-danger-soft rounded transition-colors"
               >
-                Clear Filters
+                Clear filters
               </AppButton>
             )}
           </div>
 
           {(entityType === "TASK" || entityType === "SUB_TASK") && (
             <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl theme-card-structural text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary`}>
-              <option value="">All Statuses</option>
+              <option value="">All statuses</option>
               {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           )}
@@ -413,7 +413,7 @@ export default function ReportsClient() {
           )}
 
           <div className="flex items-center gap-2">
-            <AppInput placeholder="Search records..." value={query} onChange={(e:any) => setQuery(e.target.value)} className="w-64 text-sm" />
+            <AppInput placeholder="Search records…" value={query} onChange={(e:any) => setQuery(e.target.value)} className="w-64 text-sm" />
             <div className="flex gap-2">
               <AppButton variant="outline" leftIcon={<Loader2 className={`w-4 h-4 ${loading ? 'animate-spin' : 'hidden'}`} />} onClick={refreshData} disabled={loading}>
                 Refresh
@@ -440,7 +440,7 @@ export default function ReportsClient() {
 
       {/* Results Summary */}
       <ReportKPIBar kpis={[
-        { label: "Total Records", value: filtered.length },
+        { label: "Total records", value: filtered.length },
         { label: "Entity Type", value: getEntityDisplayName() },
       ]} className="mb-2" />
 
@@ -457,12 +457,12 @@ export default function ReportsClient() {
               className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all select-none space-y-2.5"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
+                <span className="font-mono text-xs font-bold text-theme-icon bg-accent-soft px-2 py-0.5 rounded-md shrink-0">
                   {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
                 </span>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {item.priority && item.priority !== "—" && (
-                    <AppBadge variant={item.priority_color ? "custom" : "info"} customColor={item.priority_color} isOutline={true} className="text-[10px] py-0 px-1.5">
+                    <AppBadge variant={item.priority_color ? "custom" : "info"} customColor={item.priority_color} isOutline={true} className="text-[11px] py-0 px-1.5">
                       {item.priority}
                     </AppBadge>
                   )}
@@ -471,7 +471,7 @@ export default function ReportsClient() {
                       variant={item.status_color ? "custom" : (item.status === "Closed" || item.status === "Completed" ? "success" : "neutral")}
                       customColor={item.status_color}
                       isOutline={true}
-                      className="text-[10px] py-0.5 px-2"
+                      className="text-[11px] py-0.5 px-2"
                     >
                       {item.status}
                     </AppBadge>
@@ -496,7 +496,7 @@ export default function ReportsClient() {
                     <span className="font-semibold text-foreground/80 truncate max-w-[120px]">{item.workspace}</span>
                   )}
                   {item.department && (
-                    <span className="bg-elevated px-1.5 py-0.5 rounded text-[10px] font-bold">{item.department}</span>
+                    <span className="bg-elevated px-1.5 py-0.5 rounded text-[11px] font-bold">{item.department}</span>
                   )}
                 </div>
                 <div className="text-[11px] font-medium shrink-0">

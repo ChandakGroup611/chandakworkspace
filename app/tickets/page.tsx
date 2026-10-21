@@ -14,13 +14,15 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppTable, AppTableBody, AppTableCell, AppTableContainer, AppTableHead, AppTableHeader, AppTableRow } from "@/components/ui/AppTable";
 import { AppBadge } from "@/components/ui/AppBadge";
-import { StatusBadge, formatDate } from "@/components/ui/data";
+import { StatusBadge, PriorityIndicator, DateCell, UserCell, StatTile, StatTileRow, statusTone } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function TicketsPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><ChandakLoader size="lg" title="Loading Tickets..." /></div>}>
+    <Suspense fallback={<div className="flex h-[60vh] items-center justify-center"><ChandakLoader size="lg" title="Loading tickets…" /></div>}>
       <TicketsPageContent />
     </Suspense>
   );
@@ -118,7 +120,7 @@ function TicketsPageContent() {
           categoryObj: activeCats.find(c => c.id === custom.category_id),
           subcategoryObj: activeSubcats.find(sc => sc.id === custom.subcategory_id),
           issueTypeObj: activeTypes.find(it => it.id === custom.issue_type_id),
-          assignedTo: t.assignee?.full_name || "Unassigned Operations Swarm",
+          assignedTo: t.assignee?.full_name || "",
           createdAt: t.created_at
         };
       });
@@ -154,26 +156,28 @@ function TicketsPageContent() {
   // End User Role Visibility: Can only see their own created or assigned tickets is handled on the server side using the existing getVisibleTickets logic, but we still apply it here just in case, though the DB already enforces it. Actually, wait. The DB filters for ends users as well? Yes, getVisibleTickets handles user isolation. So we can just use tickets directly.
   const filteredTickets = tickets;
 
+  const SEG_ON = "bg-surface text-foreground font-semibold shadow-sm";
+  const SEG_OFF = "text-muted hover:text-foreground";
+  const SEG_BTN = "inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors";
+  const toneCount = (tone: string) => tickets.filter((t) => statusTone(t.statusObj?.name) === tone).length;
+  const filtersActive = !!searchQuery || selectedStatus !== "ALL" || selectedPriority !== "ALL" || selectedScope !== "ALL";
+
   if (!mounted || permissionsLoading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-surface text-foreground`}>
-        <ChandakLoader
-          size="lg"
-          title="Verifying Capabilities..."
-          subtitle="Loading enterprise ticketing system"
-        />
+      <div className="flex h-[60vh] flex-col items-center justify-center text-foreground">
+        <ChandakLoader size="lg" title="Loading tickets…" />
       </div>
     );
   }
 
   if (!hasPermission("TICKETS_VIEW")) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-surface text-foreground`}>
-        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger">
-          <Database className="h-10 w-10" />
+      <div className="flex h-[60vh] flex-col items-center justify-center space-y-3 text-center text-foreground">
+        <div className="rounded-full bg-warning-soft p-3 text-warning-text">
+          <Database className="h-6 w-6" aria-hidden />
         </div>
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view Operations Tickets.</p>
+        <h2 className="text-[15px] font-semibold text-heading">You don't have access to tickets</h2>
+        <p className="text-[13px] text-muted">Ask your administrator to grant Tickets view access in RBAC access policies.</p>
       </div>
     );
   }
@@ -181,331 +185,190 @@ function TicketsPageContent() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Operations Control Center"
-        icon={<Database className="h-6 w-6" />}
-        children={
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-              <span className="text-[0.65rem] font-bold tracking-widest text-muted">Live Node: Chandak Workspace-ENTERPRISE-01</span>
-            </div>
-            <div className={`h-4 w-px bg-elevated`} />
-            <div className="flex items-center gap-4 text-xs">
-              <span className="font-semibold text-muted tracking-wide">Active: <span className="text-foreground">{tickets.length}</span></span>
-              <span className="font-semibold text-success tracking-wide">SLA Stability: 98.4%</span>
-            </div>
-          </div>
-        }
+        title="Tickets"
+        description="Support and operations requests raised across Chandak Group"
         actions={
           <>
-            <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
-              Back
-            </AppButton>
-            <AppButton 
-              variant="outline" 
-              size="sm" 
+            <AppButton
+              variant="ghost"
               onClick={() => window.open("/masters?scope=ERP_SOFTWARE", "_blank")}
               leftIcon={<Database className="h-4 w-4" />}
+              title="Open the ticket categories and scopes master in a new tab"
             >
-              Registry
+              Categories
             </AppButton>
-            <AppButton 
-              variant="outline" 
-              size="sm" 
+            <AppButton
+              variant="ghost"
+              size="icon"
               onClick={() => fetchData()}
-              leftIcon={<RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />}
+              aria-label="Refresh tickets"
+              title="Refresh"
             >
-              Sync
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             </AppButton>
             {hasPermission("TICKETS_CREATE") && (
-              <AppButton 
-                variant="primary" 
-                size="sm" 
+              <AppButton
+                variant="primary"
                 onClick={() => setShowWizard(true)}
                 leftIcon={<Plus className="h-4 w-4" />}
-                className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text font-bold"
               >
-                Create Ticket
+                New ticket
               </AppButton>
             )}
           </>
         }
       />
 
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-4 sm:gap-6 p-3 sm:p-6">
-        {/* Filters Top Bar */}
-        <div className={`p-3 sm:p-4 space-y-3 sm:space-y-4 rounded-xl ${
-          "theme-card-structural"
-        }`}>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
-            <div className="relative w-full sm:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-              <input 
-                type="text"
-                placeholder="Search tickets by ID or title..."
-                className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${
-                  "bg-elevated border-border text-foreground placeholder:text-muted"
-                }`}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+        <StatTileRow>
+          <StatTile label="Total" value={tickets.length} tone="neutral" />
+          <StatTile label="Open" value={toneCount("info")} tone="info" />
+          <StatTile label="In progress" value={toneCount("accent") + toneCount("warning")} tone="accent" />
+          <StatTile label="Resolved" value={toneCount("success")} tone="success" />
+        </StatTileRow>
+
+        {/* Toolbar: search, status, priority, scope */}
+        <div className="theme-card-structural flex flex-col gap-3 p-3">
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+            <div className="relative w-full sm:max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+              <input
+                type="search"
+                aria-label="Search tickets"
+                placeholder="Search by ticket code or title"
+                className="h-9 w-full pl-9 pr-3 text-[13.5px]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="h-4 w-4 text-muted shrink-0" />
-              <span className="text-xs font-semibold text-muted hidden md:inline shrink-0">Status:</span>
-              <select 
-                value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value)}
-                className="flex-1 sm:flex-initial min-w-0 h-9 pl-2.5 pr-6 sm:pr-8 rounded-lg text-xs sm:text-sm border outline-none cursor-pointer truncate bg-surface border-border text-foreground"
-              >
-                <option value="ALL">All Statuses</option>
+            <div className="flex items-center gap-2">
+              <label className="sr-only" htmlFor="tk-status">Status</label>
+              <select id="tk-status" value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="h-9 min-w-0 flex-1 px-3 text-[13.5px] sm:flex-initial">
+                <option value="ALL">All statuses</option>
                 {states.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
-
-              <select 
-                value={selectedPriority}
-                onChange={e => setSelectedPriority(e.target.value)}
-                className="flex-1 sm:flex-initial min-w-0 h-9 pl-2.5 pr-6 sm:pr-8 rounded-lg text-xs sm:text-sm border outline-none cursor-pointer truncate bg-surface border-border text-foreground"
-              >
-                <option value="ALL">All Priorities</option>
+              <label className="sr-only" htmlFor="tk-priority">Priority</label>
+              <select id="tk-priority" value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="h-9 min-w-0 flex-1 px-3 text-[13.5px] sm:flex-initial">
+                <option value="ALL">All priorities</option>
                 {priorities.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>
+            {filtersActive && (
+              <button
+                type="button"
+                onClick={() => { setSearchQuery(""); setSelectedStatus("ALL"); setSelectedPriority("ALL"); setSelectedScope("ALL"); }}
+                className="text-[12.5px] font-medium text-accent-soft-text hover:underline sm:ml-auto"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pt-2 pb-1 border-t border-border no-scrollbar w-full">
-            <AppButton 
-              onClick={() => setSelectedScope("ALL")}
-              variant={selectedScope === "ALL" ? "primary" : "ghost"}
-              size="sm"
-              className="px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0"
-            >
-              All Scopes
-            </AppButton>
-            {scopesList.map(scope => (
-              <AppButton 
-                key={scope.id}
-                onClick={() => setSelectedScope(scope.id)}
-                variant={selectedScope === scope.id ? "primary" : "ghost"}
-                size="sm"
-                className="px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0"
-              >
-                {scope.name}
-              </AppButton>
-            ))}
-          </div>
+          {scopesList.length > 0 && (
+            <div className="flex items-center gap-2 border-t border-border pt-3">
+              <span className="theme-label shrink-0">Scope</span>
+              <div className="inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg border border-border bg-sunken p-0.5 no-scrollbar" role="radiogroup" aria-label="Scope">
+                <button type="button" role="radio" aria-checked={selectedScope === "ALL"} onClick={() => setSelectedScope("ALL")} className={cn(SEG_BTN, selectedScope === "ALL" ? SEG_ON : SEG_OFF)}>
+                  All scopes
+                </button>
+                {scopesList.map(scope => (
+                  <button key={scope.id} type="button" role="radio" aria-checked={selectedScope === scope.id} onClick={() => setSelectedScope(scope.id)} className={cn(SEG_BTN, selectedScope === scope.id ? SEG_ON : SEG_OFF)}>
+                    {scope.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Data Container: Mobile Cards (<1024px) + Desktop Table (>=1024px) */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {loading && tickets.length === 0 ? (
-            <div className="flex-1 h-64 flex items-center justify-center">
-              <ChandakLoader
-                size="md"
-                title="Loading Tickets..."
-                subtitle="Fetching active enterprise operational requests"
+            <div className="theme-card-structural flex h-64 items-center justify-center">
+              <ChandakLoader size="md" title="Loading tickets…" />
+            </div>
+          ) : filteredTickets.length === 0 ? (
+            <div className="theme-card-structural">
+              <EmptyState
+                kind={filtersActive ? "no-results" : "empty"}
+                title={filtersActive ? "No tickets match these filters" : "No tickets yet"}
+                description={filtersActive ? "Clear filters or try a different ticket code." : "Raise a ticket when something needs the IT or operations team."}
+                action={!filtersActive && hasPermission("TICKETS_CREATE") ? (
+                  <AppButton variant="secondary" onClick={() => setShowWizard(true)} leftIcon={<Plus className="h-4 w-4" />}>New ticket</AppButton>
+                ) : undefined}
               />
             </div>
           ) : (
             <>
-              {/* Mobile Card List (<1024px) */}
-              <div className="block lg:hidden space-y-3">
-                {filteredTickets.length === 0 ? (
-                  <div className="text-center py-12 text-muted text-sm border border-border rounded-xl bg-sunken/50 animate-in fade-in duration-300">
-                    No tickets found matching your criteria.
-                  </div>
-                ) : (
-                  filteredTickets.map((ticket, index) => {
-                    const isCritical = ticket.priorityObj?.code?.includes("CRITICAL") || ticket.priorityObj?.code === "PRIO_CRIT_P1" || ticket.priorityObj?.code === "P1";
-                    const isUrgent = isCritical || ticket.priorityObj?.code?.includes("HIGH") || ticket.priorityObj?.code === "P2";
-                    const staggerClass = index < 8 ? `delay-${index + 1}` : "";
-
-                    return (
-                      <div 
-                        key={ticket.dbId}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            handleTicketClick(ticket);
-                          }
-                        }}
-                        onClick={() => handleTicketClick(ticket)}
-                        className={`rounded-2xl border border-border bg-surface p-4 shadow-xs hover:border-border-strong hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 relative active:scale-[0.99] animate-stagger-in ${staggerClass}`}
-                      >
-                        {/* Top Row: Code, Priority, Status */}
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-xs font-bold text-accent-soft-text bg-accent-soft px-2 py-0.5 rounded-md shrink-0">
-                            {ticket.id}
-                          </span>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <AppBadge 
-                              variant={isCritical ? "danger" : isUrgent ? "warning" : "neutral"}
-                              withPulse={isCritical}
-                              className="text-[10px] font-semibold"
-                            >
-                              {ticket.priorityObj?.name || "Standard"}
-                            </AppBadge>
-                            <StatusBadge status={ticket.statusObj?.name || "Unknown"} size="sm" />
-                          </div>
-                        </div>
-
-                        {/* Title */}
-                        <div>
-                          <h3 className="text-sm font-semibold text-foreground line-clamp-2 hover:text-accent-soft-text transition-colors">
-                            {ticket.title}
-                          </h3>
-                        </div>
-
-                        {/* Department & Assignee */}
-                        <div className="flex items-center justify-between gap-2 text-xs text-muted flex-wrap">
-                          <div className="flex items-center gap-1.5 truncate">
-                            {ticket.departmentObj?.name && (
-                              <span className="bg-elevated px-2 py-0.5 rounded-md text-[10px] font-semibold text-foreground truncate max-w-[140px]">
-                                {ticket.departmentObj.name}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 text-[11px] font-medium text-foreground truncate max-w-[160px]">
-                            <span className="text-muted">Assignee:</span>
-                            <span className="font-semibold truncate">{ticket.assignedTo}</span>
-                          </div>
-                        </div>
-
-                        {/* Bottom Row: Created Date & Quick Action Buttons */}
-                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
-                          <span className="text-[11px] text-muted">
-                            {formatDate(ticket.createdAt)}
-                          </span>
-                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                            <AppButton 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 px-2.5 text-xs rounded-lg flex items-center gap-1"
-                              onClick={() => handleTicketClick(ticket)}
-                            >
-                              <Search className="h-3.5 w-3.5" /> View
-                            </AppButton>
-                            {ticket.statusObj?.code !== "ST_RESOLVED" && ticket.statusObj?.name !== "Resolved" && (
-                              <AppButton 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-7 px-2.5 text-xs text-success hover:bg-success-soft rounded-lg flex items-center gap-1"
-                                onClick={() => handleTicketClick(ticket)}
-                              >
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
-                              </AppButton>
-                            )}
-                          </div>
-                        </div>
+              {/* Mobile cards */}
+              <ul className="space-y-2 lg:hidden">
+                {filteredTickets.map((ticket) => (
+                  <li key={ticket.dbId}>
+                    <button
+                      type="button"
+                      onClick={() => handleTicketClick(ticket)}
+                      className="theme-card-structural w-full space-y-2 p-4 text-left transition-[border-color,box-shadow] hover:border-border-active hover:shadow-md"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{ticket.id}</span>
+                        <StatusBadge status={ticket.statusObj?.name || null} size="sm" />
                       </div>
-                    );
-                  })
-                )}
-              </div>
+                      <div className="line-clamp-2 text-[14px] font-semibold text-foreground">{ticket.title}</div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-muted">
+                        <PriorityIndicator priority={ticket.priorityObj?.name} className="text-[12.5px]" />
+                        {ticket.departmentObj?.name && <span className="truncate">{ticket.departmentObj.name}</span>}
+                        <DateCell value={ticket.createdAt} className="ml-auto" />
+                      </div>
+                      <div className="border-t border-border pt-2 text-[12.5px]">
+                        <UserCell name={ticket.assignedTo || null} />
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
 
-              {/* Desktop Table View (>=1024px) */}
+              {/* Desktop table */}
               <div className="hidden lg:block">
                 <AppTableContainer>
                   <AppTable>
                     <AppTableHeader>
                       <AppTableRow>
-                        <AppTableHead>Ticket ID</AppTableHead>
+                        <AppTableHead>Ticket</AppTableHead>
                         <AppTableHead>Title</AppTableHead>
                         <AppTableHead>Priority</AppTableHead>
                         <AppTableHead>Status</AppTableHead>
                         <AppTableHead>Department</AppTableHead>
                         <AppTableHead>Assignee</AppTableHead>
-                        <AppTableHead>Created At</AppTableHead>
+                        <AppTableHead>Created</AppTableHead>
                         <AppTableHead className="text-right">Actions</AppTableHead>
                       </AppTableRow>
                     </AppTableHeader>
                     <AppTableBody>
-                      {filteredTickets.length > 0 ? (
-                        filteredTickets.map((ticket, index) => {
-                          const isCritical = ticket.priorityObj?.code?.includes("CRITICAL") || ticket.priorityObj?.code === "PRIO_CRIT_P1" || ticket.priorityObj?.code === "P1";
-                          const isUrgent = isCritical || ticket.priorityObj?.code?.includes("HIGH") || ticket.priorityObj?.code === "P2";
-                          const staggerClass = index < 10 ? `delay-${index + 1}` : "";
-
-                          return (
-                            <AppTableRow 
-                              key={ticket.dbId} 
-                              onClick={() => handleTicketClick(ticket)}
-                              className={`cursor-pointer hover:bg-surface-hover/80 transition-colors animate-stagger-in ${staggerClass}`}
+                      {filteredTickets.map((ticket) => (
+                        <AppTableRow key={ticket.dbId} onClick={() => handleTicketClick(ticket)} className="cursor-pointer">
+                          <AppTableCell className="whitespace-nowrap font-mono text-[12.5px] font-medium text-accent-soft-text">{ticket.id}</AppTableCell>
+                          <AppTableCell className="max-w-xs truncate font-medium text-foreground" title={ticket.title}>{ticket.title}</AppTableCell>
+                          <AppTableCell><PriorityIndicator priority={ticket.priorityObj?.name} /></AppTableCell>
+                          <AppTableCell><StatusBadge status={ticket.statusObj?.name || null} /></AppTableCell>
+                          <AppTableCell className="text-subtle">{ticket.departmentObj?.name || "—"}</AppTableCell>
+                          <AppTableCell><UserCell name={ticket.assignedTo || null} /></AppTableCell>
+                          <AppTableCell className="whitespace-nowrap"><DateCell value={ticket.createdAt} /></AppTableCell>
+                          <AppTableCell className="text-right">
+                            <button
+                              type="button"
+                              aria-label={`Open ${ticket.id}`}
+                              title="Open ticket"
+                              onClick={(e) => { e.stopPropagation(); handleTicketClick(ticket); }}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
                             >
-                              <AppTableCell className="font-mono text-xs font-bold text-accent-soft-text">
-                                {ticket.id}
-                              </AppTableCell>
-                              <AppTableCell className="font-semibold max-w-xs truncate">
-                                {ticket.title}
-                              </AppTableCell>
-                              <AppTableCell>
-                                <AppBadge 
-                                  variant={isCritical ? "danger" : isUrgent ? "warning" : "neutral"}
-                                  withPulse={isCritical}
-                                  className="text-[10px] font-semibold"
-                                >
-                                  {ticket.priorityObj?.name || "Standard"}
-                                </AppBadge>
-                              </AppTableCell>
-                              <AppTableCell>
-                                <StatusBadge status={ticket.statusObj?.name || "Unknown"} size="sm" />
-                              </AppTableCell>
-                              <AppTableCell className="text-xs text-muted">
-                                {ticket.departmentObj?.name || "-"}
-                              </AppTableCell>
-                              <AppTableCell className="text-xs font-medium">
-                                {ticket.assignedTo}
-                              </AppTableCell>
-                              <AppTableCell className="text-xs text-muted">
-                                {formatDate(ticket.createdAt)}
-                              </AppTableCell>
-                              <AppTableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <AppButton 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-8 px-2.5"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleTicketClick(ticket);
-                                    }}
-                                    title="View details"
-                                  >
-                                    <Search className="h-4 w-4" />
-                                  </AppButton>
-                                  {ticket.statusObj?.code !== "ST_RESOLVED" && ticket.statusObj?.name !== "Resolved" && (
-                                    <AppButton 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-8 px-2.5 text-success hover:bg-success-soft"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleTicketClick(ticket);
-                                      }}
-                                      title="Resolve ticket"
-                                    >
-                                      <CheckCircle2 className="h-4 w-4" />
-                                    </AppButton>
-                                  )}
-                                </div>
-                              </AppTableCell>
-                            </AppTableRow>
-                          );
-                        })
-                      ) : (
-                        <AppTableRow>
-                          <AppTableCell colSpan={8} className="h-32 text-center text-muted animate-in fade-in duration-300">
-                            No tickets found matching your criteria.
+                              <ArrowLeft className="h-4 w-4 rotate-180" aria-hidden />
+                            </button>
                           </AppTableCell>
                         </AppTableRow>
-                      )}
+                      ))}
                     </AppTableBody>
                   </AppTable>
                 </AppTableContainer>
@@ -515,11 +378,8 @@ function TicketsPageContent() {
         </div>
       </div>
 
-      {/* Drawer removed in favor of full page routing */}
-
-      {/* Creation Wizard */}
       {showWizard && (
-        <TicketCreationWizard 
+        <TicketCreationWizard
           onClose={() => setShowWizard(false)}
           onSuccess={(id) => {
             setShowWizard(false);
@@ -527,22 +387,18 @@ function TicketsPageContent() {
               router.push("/requirements");
             } else {
               fetchData();
-              setToastMessage(`Ticket ${id} initialized successfully.`);
+              setToastMessage(`Ticket ${id} created`);
             }
           }}
         />
       )}
 
-      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[var(--z-toast)] animate-in slide-in-from-bottom-4 duration-300">
-          <div className="px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl shadow-lg border border-primary flex items-center gap-3">
-            <CheckCircle2 className="h-4 w-4" />
-            {toastMessage}
-          </div>
+        <div role="status" className="fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-[10px] border border-border border-l-[3px] border-l-success bg-elevated px-4 py-3 text-[13.5px] text-foreground shadow-lg">
+          <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+          {toastMessage}
         </div>
       )}
     </PageContainer>
   );
 }
-

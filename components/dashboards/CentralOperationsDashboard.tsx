@@ -26,28 +26,28 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
         
         {/* Task KPI */}
         <Link href="/workspaces/tasks" className="block h-full">
-          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover: theme-card-structural text-foreground shadow-sm">
+          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white to-accent/10 dark:from-white/5 dark:to-accent/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="absolute inset-0 bg-gradient-to-br to-accent/10 dark:to-accent/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-theme-btn-primary" />
 
-            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform text-theme-icon">
+            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 transition-transform text-theme-icon">
               <Target className="h-24 w-24" />
             </div>
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Total Tasks</h3>
-                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-theme-icon">
+                <h3 className="text-[11px] font-bold text-muted-foreground mb-1 opacity-80 mix-blend-luminosity">Total tasks</h3>
+                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-border text-theme-icon">
                   <Target className="h-5 w-5" />
                 </div>
               </div>
               
               <div className="mt-auto">
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-black tracking-tight text-theme-icon dark:text-theme-icon drop-shadow-sm">{kpis.tasks?.total || 0}</span>
+                  <span className="text-4xl font-semibold tracking-tight text-theme-icon dark:text-theme-icon drop-shadow-sm">{kpis.tasks?.total || 0}</span>
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-xs font-semibold">
                   <span className="text-success flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5" /> {kpis.tasks?.resolved || 0} Resolved</span>
@@ -60,28 +60,28 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
 
         {/* Workspace KPI */}
         <Link href="/workspaces/enrolled" className="block h-full">
-          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover: theme-card-structural text-foreground shadow-sm">
+          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white to-emerald-500/10 dark:from-white/5 dark:to-emerald-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="absolute inset-0 bg-gradient-to-br to-success-soft opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-success" />
 
-            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform text-success">
+            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 transition-transform text-success">
               <FolderOpen className="h-24 w-24" />
             </div>
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Enrolled Workspaces</h3>
-                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-success">
+                <h3 className="text-[11px] font-bold text-muted-foreground mb-1 opacity-80 mix-blend-luminosity">Enrolled workspaces</h3>
+                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-border text-success">
                   <FolderOpen className="h-5 w-5" />
                 </div>
               </div>
               
               <div className="mt-auto">
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-black tracking-tight text-success dark:text-success drop-shadow-sm">{kpis.workspaces?.enrolled_workspaces || 0}</span>
+                  <span className="text-4xl font-semibold tracking-tight text-success dark:text-success drop-shadow-sm">{kpis.workspaces?.enrolled_workspaces || 0}</span>
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                   <span>Also enrolled in {kpis.workspaces?.enrolled_sub_workspaces || 0} Sub-Workspaces</span>
@@ -93,28 +93,28 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
 
         {/* Requirement & Ticket KPI */}
         <Link href="/tickets" className="block h-full">
-          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover: theme-card-structural text-foreground shadow-sm">
+          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white to-purple-500/10 dark:from-white/5 dark:to-purple-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="absolute inset-0 bg-gradient-to-br to-accent-soft opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-theme-btn-primary" />
 
-            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform text-theme-icon">
+            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 transition-transform text-theme-icon">
               <LayoutDashboard className="h-24 w-24" />
             </div>
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Tickets & Reqs</h3>
-                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-theme-icon">
+                <h3 className="text-[11px] font-bold text-muted-foreground mb-1 opacity-80 mix-blend-luminosity">Tickets & reqs</h3>
+                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-border text-theme-icon">
                   <LayoutDashboard className="h-5 w-5" />
                 </div>
               </div>
               
               <div className="mt-auto">
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-black tracking-tight text-theme-icon dark:text-theme-icon drop-shadow-sm">{kpis.tickets_reqs?.total_tickets || 0}</span>
+                  <span className="text-4xl font-semibold tracking-tight text-theme-icon dark:text-theme-icon drop-shadow-sm">{kpis.tickets_reqs?.total_tickets || 0}</span>
                   <span className="text-sm font-semibold text-muted-foreground">Tickets</span>
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-theme-icon dark:text-theme-icon">
@@ -128,28 +128,28 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
 
         {/* SLA KPI */}
         <Link href="/sla" className="block h-full">
-          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover: border bg-card text-card-foreground shadow-sm">
+          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 border bg-card text-card-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white to-rose-500/10 dark:from-white/5 dark:to-rose-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="absolute inset-0 bg-gradient-to-br to-danger-soft opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-danger" />
 
-            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform text-danger">
+            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 transition-transform text-danger">
               <AlertTriangle className="h-24 w-24" />
             </div>
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Escalated / SLA</h3>
-                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-danger">
+                <h3 className="text-[11px] font-bold text-muted-foreground mb-1 opacity-80 mix-blend-luminosity">Escalated / SLA</h3>
+                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-border text-danger">
                   <AlertTriangle className="h-5 w-5" />
                 </div>
               </div>
               
               <div className="mt-auto">
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-black tracking-tight text-danger dark:text-danger drop-shadow-sm">{kpis.sla?.escalated_or_breached || 0}</span>
+                  <span className="text-4xl font-semibold tracking-tight text-danger dark:text-danger drop-shadow-sm">{kpis.sla?.escalated_or_breached || 0}</span>
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-danger dark:text-danger">
                   <AlertTriangle className="h-3.5 w-3.5" />

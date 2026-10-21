@@ -117,17 +117,17 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     if (e) e.preventDefault();
     if (!pkgProjectId || !pkgTowerId || !pkgId) {
       setPkgError("Please select Project, Tower Wing, and Work Package.");
-      toast.error("Please select Project, Tower Wing, and Work Package.");
+      toast.error("Please select project, tower wing, and work package.");
       return;
     }
     if (!pkgPlannedDate.trim()) {
       setPkgError("Planned Date is mandatory.");
-      toast.error("Planned Date is mandatory.");
+      toast.error("Planned date is mandatory.");
       return;
     }
     if (!pkgActualDate.trim()) {
       setPkgError("Actual Date is mandatory.");
-      toast.error("Actual Date is mandatory.");
+      toast.error("Actual date is mandatory.");
       return;
     }
 
@@ -180,7 +180,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
   const handleSaveLiaison = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!liaisonProjectId || !liaisonTowerId || !liaisonAuthorityId) {
-      toast.error("Please select Project, Tower Wing, and Statutory Authority.");
+      toast.error("Please select project, tower wing, and statutory authority.");
       return;
     }
 
@@ -196,7 +196,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       liaisonRemarks || undefined
     );
 
-    toast.success("Statutory Authority onboarding updated successfully!");
+    toast.success("Statutory authority onboarding updated successfully!");
     onClose();
   };
 
@@ -240,9 +240,9 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
   const Icon = activeTab === "PACKAGE" ? Layers : activeTab === "LOOK_AHEAD" ? Clock : ShieldCheck;
   const iconBg = activeTab === "PACKAGE" 
-    ? "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/25" 
+    ? "bg-info-soft text-info-text border-info-border" 
     : activeTab === "LOOK_AHEAD" 
-    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25" 
+    ? "bg-warning-soft text-warning-text border-warning-border" 
     : "bg-surface text-theme-icon border-border";
 
   const saveLabel = activeTab === "PACKAGE" 
@@ -281,8 +281,8 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Layers className="h-4 w-4 text-teal-500" />
-          <span>Tender Status Entry</span>
+          <Layers className="h-4 w-4 text-info-text" />
+          <span>Tender status entry</span>
         </button>
         <button
           type="button"
@@ -293,7 +293,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Clock className="h-4 w-4 text-amber-500" />
+          <Clock className="h-4 w-4 text-warning-text" />
           <span>30/60 Day Look-Ahead</span>
         </button>
         <button
@@ -306,7 +306,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
           }`}
         >
           <ShieldCheck className="h-4 w-4 text-theme-icon" />
-          <span>Statutory Authority NOC</span>
+          <span>Statutory authority NOC</span>
         </button>
       </div>
 
@@ -316,14 +316,14 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
               <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-                <span>Project & Location Mapping</span>
+                <Building2 className="h-4 w-4 text-info-text" />
+                <span>Project & location mapping</span>
               </AppCardTitle>
             </AppCardHeader>
             <AppCardContent className="p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Target Project *</label>
+                  <label className="text-xs font-bold text-foreground">Target project *</label>
                   <select
                     required
                     value={pkgProjectId}
@@ -333,7 +333,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     }}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    <option value="">Select Project</option>
+                    <option value="">Select project</option>
                     {accessibleProjects.map((p: ProjectMaster) => (
                       <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
                     ))}
@@ -342,7 +342,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-foreground">Tower / Wing *</label>
+                    <label className="text-xs font-bold text-foreground">Tower / wing *</label>
                     {pkgProjectId && pkgAvailableTowers.length === 0 && (
                       <button
                         type="button"
@@ -354,10 +354,10 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setPkgTowerId(newTwr.id);
                         }}
-                        className="h-5 px-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
-                        <span>Quick Add Wing A</span>
+                        <span>Quick add wing a</span>
                       </button>
                     )}
                   </div>
@@ -376,7 +376,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Sub-Package Deliverable Scope *</label>
+                <label className="text-xs font-bold text-foreground">Sub-package deliverable scope *</label>
                 <select
                   required
                   value={pkgId}
@@ -391,7 +391,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               {pkgError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span>{pkgError}</span>
                 </div>
@@ -402,31 +402,31 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
               <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-                <span>Execution Timeline & Status Parameters</span>
+                <Calendar className="h-4 w-4 text-info-text" />
+                <span>Execution timeline & status parameters</span>
               </AppCardTitle>
             </AppCardHeader>
             <AppCardContent className="p-5 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Delivery Status *</label>
+                <label className="text-xs font-bold text-foreground">Delivery status *</label>
                 <select
                   value={pkgStatus}
                   onChange={e => setPkgStatus(e.target.value as any)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  <option value="Received">✅ Received (Tender / GFC)</option>
-                  <option value="In progress">⏳ In Progress / Onboard</option>
-                  <option value="Pending">⚠️ Pending / Bottleneck</option>
-                  <option value="Target Date">📅 Target Date Forecast</option>
-                  <option value="NA">⚪ Not Applicable (NA)</option>
+                  <option value="Received">Received (Tender / GFC)</option>
+                  <option value="In progress">⏳ In progress / onboard</option>
+                  <option value="Pending">Pending / bottleneck</option>
+                  <option value="Target Date">📅 Target date forecast</option>
+                  <option value="NA">⚪ Not applicable (NA)</option>
                 </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-muted/20 border border-border">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-foreground flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                    <span>Planned Baseline Date * (Mandatory)</span>
+                    <Calendar className="h-3.5 w-3.5 text-info-text" />
+                    <span>Planned baseline date * (mandatory)</span>
                   </label>
                   <input
                     type="date"
@@ -439,8 +439,8 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-foreground flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Actual / Certified Delivery Date * (Mandatory)</span>
+                    <Clock className="h-3.5 w-3.5 text-success-text" />
+                    <span>Actual / certified delivery date * (mandatory)</span>
                   </label>
                   <input
                     type="date"
@@ -453,13 +453,13 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Assigned Consultant Partner</label>
+                <label className="text-xs font-bold text-foreground">Assigned consultant partner</label>
                 <select
                   value={pkgConsultantId}
                   onChange={e => setPkgConsultantId(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  <option value="">None / Internal Team</option>
+                  <option value="">None / internal team</option>
                   {storeState.consultants.map(c => (
                     <option key={c.id} value={c.id}>{c.name} ({c.category}) - {c.onboardingStatus}</option>
                   ))}
@@ -467,7 +467,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Remarks / Audit Note</label>
+                <label className="text-xs font-bold text-foreground">Remarks / audit note</label>
                 <input
                   type="text"
                   value={pkgRemarks}
@@ -487,8 +487,8 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
               <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <span>Project Target & Wing Selection</span>
+                <Building2 className="h-4 w-4 text-warning-text" />
+                <span>Project target & wing selection</span>
               </AppCardTitle>
             </AppCardHeader>
             <AppCardContent className="p-5 space-y-4">
@@ -504,7 +504,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     }}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    <option value="">Select Project</option>
+                    <option value="">Select project</option>
                     {accessibleProjects.map((p: ProjectMaster) => (
                       <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
                     ))}
@@ -513,7 +513,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-foreground">Tower / Wing *</label>
+                    <label className="text-xs font-bold text-foreground">Tower / wing *</label>
                     {laProjectId && laAvailableTowers.length === 0 && (
                       <button
                         type="button"
@@ -525,10 +525,10 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setLaTowerId(newTwr.id);
                         }}
-                        className="h-5 px-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
-                        <span>Quick Add Wing A</span>
+                        <span>Quick add wing a</span>
                       </button>
                     )}
                   </div>
@@ -547,7 +547,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Deliverable Milestone Description *</label>
+                <label className="text-xs font-bold text-foreground">Deliverable milestone description *</label>
                 <textarea
                   required
                   rows={3}
@@ -560,27 +560,27 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Timeframe Window *</label>
+                  <label className="text-xs font-bold text-foreground">Timeframe window *</label>
                   <select
                     value={laTimeframe}
                     onChange={e => setLaTimeframe(e.target.value as any)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    <option value="30_DAYS">🚨 In 30 Days (Immediate Action)</option>
-                    <option value="60_DAYS">⏳ In 60 Days (Mid-Term Forecast)</option>
+                    <option value="30_DAYS">🚨 In 30 days (immediate action)</option>
+                    <option value="60_DAYS">⏳ In 60 days (mid-term forecast)</option>
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Priority Level</label>
+                  <label className="text-xs font-bold text-foreground">Priority level</label>
                   <select
                     value={laPriority}
                     onChange={e => setLaPriority(e.target.value as any)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     <option value="CRITICAL">Critical (High Urgency)</option>
-                    <option value="HIGH">High Priority</option>
-                    <option value="NORMAL">Normal Schedule</option>
+                    <option value="HIGH">High priority</option>
+                    <option value="NORMAL">Normal schedule</option>
                   </select>
                 </div>
               </div>
@@ -596,7 +596,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
             <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
               <AppCardTitle className="text-sm font-bold flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
-                <span>Statutory Authority & Compliance Status</span>
+                <span>Statutory authority & compliance status</span>
               </AppCardTitle>
             </AppCardHeader>
             <AppCardContent className="p-5 space-y-4">
@@ -612,7 +612,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     }}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    <option value="">Select Project</option>
+                    <option value="">Select project</option>
                     {accessibleProjects.map((p: ProjectMaster) => (
                       <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
                     ))}
@@ -621,7 +621,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-foreground">Tower / Wing *</label>
+                    <label className="text-xs font-bold text-foreground">Tower / wing *</label>
                     {liaisonProjectId && liaisonAvailableTowers.length === 0 && (
                       <button
                         type="button"
@@ -633,10 +633,10 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setLiaisonTowerId(newTwr.id);
                         }}
-                        className="h-5 px-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
-                        <span>Quick Add Wing A</span>
+                        <span>Quick add wing a</span>
                       </button>
                     )}
                   </div>
@@ -655,14 +655,14 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Statutory Authority *</label>
+                <label className="text-xs font-bold text-foreground">Statutory authority *</label>
                 <select
                   required
                   value={liaisonAuthorityId}
                   onChange={e => setLiaisonAuthorityId(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  <option value="">Select Authority</option>
+                  <option value="">Select authority</option>
                   {storeState.authorities.map(a => (
                     <option key={a.id} value={a.id}>{a.authorityName} ({a.category})</option>
                   ))}
@@ -670,26 +670,26 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Onboarding / NOC Status *</label>
+                <label className="text-xs font-bold text-foreground">Onboarding / NOC status *</label>
                 <select
                   value={liaisonStatus}
                   onChange={e => setLiaisonStatus(e.target.value as any)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  <option value="Onboard">✅ Onboard (Clearance Active)</option>
-                  <option value="Fixed consultant">🔷 Fixed Corporate Partner</option>
-                  <option value="Not Onboard">⚠️ Not Onboard (Action Needed)</option>
-                  <option value="Compliance Pending">⏳ Compliance Pending</option>
+                  <option value="Onboard">Onboard (Clearance Active)</option>
+                  <option value="Fixed consultant">🔷 Fixed corporate partner</option>
+                  <option value="Not Onboard">Not onboard (action needed)</option>
+                  <option value="Compliance Pending">⏳ Compliance pending</option>
                 </select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Consultant Name / File Ref</label>
+                <label className="text-xs font-bold text-foreground">Consultant name / file ref</label>
                 <input
                   type="text"
                   value={liaisonRemarks}
                   onChange={e => setLiaisonRemarks(e.target.value)}
-                  placeholder="e.g. MPCB Consent to Establish Ref #2026/09"
+                  placeholder="e.g. MPCB consent to establish ref #2026/09"
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>

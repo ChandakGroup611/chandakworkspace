@@ -52,10 +52,10 @@ export default function AMCReportsPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center text-muted">
         <Lock className="h-12 w-12 mb-4 opacity-50" />
-        <h2 className="text-xl font-semibold text-foreground">Access Denied</h2>
+        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
         <p className="text-sm mt-2 text-muted">You do not have permission to view AMC Reports.</p>
         <Link href="/" className="mt-4">
-          <AppButton variant="primary" size="sm">Return to Dashboard</AppButton>
+          <AppButton variant="primary" size="sm">Return to dashboard</AppButton>
         </Link>
       </div>
     );
@@ -218,7 +218,7 @@ export default function AMCReportsPage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <ChandakLoader size="lg" title="Loading Financial & Amortization Reports..." subtitle="Fetching expense accruals and cashflow data" />
+        <ChandakLoader size="lg" title="Loading financial & amortization reports…" subtitle="Fetching expense accruals and cashflow data" />
       </div>
     );
   }
@@ -226,7 +226,7 @@ export default function AMCReportsPage() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Financial & Amortization Reports"
+        title="Financial & amortization reports"
         icon={<PieChart className="h-6 w-6" />}
         actions={
           <>
@@ -235,7 +235,7 @@ export default function AMCReportsPage() {
             </AppButton>
             <Link href="/amc">
               <AppButton variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
-                Back to Contracts
+                Back to contracts
               </AppButton>
             </Link>
           </>
@@ -247,11 +247,11 @@ export default function AMCReportsPage() {
         <div>
           <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-foreground">
             <span className="bg-theme-btn-primary text-theme-btn-primary-text h-5 w-5 rounded flex items-center justify-center text-xs font-bold">L1</span>
-            Global Portfolio Summary
+            Global portfolio summary
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <AppCard className="p-5 border-l-4 border-l-info bg-surface rounded-xl shadow-xs">
-              <p className="theme-label text-muted">Total Portfolio Value</p>
+              <p className="theme-label text-muted">Total portfolio value</p>
               <h4 className="text-2xl font-bold mt-1 text-foreground font-mono">{formatCurrency(reportData.totalContractValue)}</h4>
             </AppCard>
 
@@ -261,17 +261,17 @@ export default function AMCReportsPage() {
             </AppCard>
 
             <AppCard className="p-5 border-l-4 border-l-theme-btn-primary bg-surface rounded-xl shadow-xs">
-              <p className="theme-label text-muted">Total Cash Disbursed</p>
+              <p className="theme-label text-muted">Total cash disbursed</p>
               <h4 className="text-2xl font-bold mt-1 text-foreground font-mono">{formatCurrency(reportData.totalPaid)}</h4>
             </AppCard>
 
             <AppCard className="p-5 border-l-4 border-l-warning bg-surface rounded-xl shadow-xs">
-              <p className="theme-label text-warning-text">Upcoming Scheduled</p>
+              <p className="theme-label text-warning-text">Upcoming scheduled</p>
               <h4 className="text-2xl font-bold mt-1 text-warning-text font-mono">{formatCurrency(reportData.totalPending - reportData.totalOverdue)}</h4>
             </AppCard>
 
             <AppCard className="p-5 border-l-4 border-l-danger bg-surface rounded-xl shadow-xs">
-              <p className="theme-label text-danger-text">Overdue Invoices</p>
+              <p className="theme-label text-danger-text">Overdue invoices</p>
               <h4 className="text-2xl font-bold mt-1 text-danger-text font-mono">{formatCurrency(reportData.totalOverdue)}</h4>
             </AppCard>
           </div>
@@ -281,7 +281,7 @@ export default function AMCReportsPage() {
         <div>
           <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-foreground">
             <span className="bg-theme-btn-primary text-theme-btn-primary-text h-5 w-5 rounded flex items-center justify-center text-xs font-bold">L2</span>
-            Cost Center & License Utilization Breakdown
+            Cost center & license utilisation breakdown
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {reportData.deptMetrics.map((dept, idx) => (
@@ -291,7 +291,7 @@ export default function AMCReportsPage() {
                   <div className="text-sm font-semibold font-mono text-theme-icon">{formatCurrency(dept.contracted)}</div>
                 </div>
                 <div className="flex justify-between items-end mt-auto pt-3 border-t border-border text-xs text-muted">
-                  <span className="theme-label text-muted">Seats Utilization</span>
+                  <span className="theme-label text-muted">Seats utilisation</span>
                   <span className="font-bold text-foreground font-mono">
                     {dept.used} / {dept.licenses} ({dept.licenses > 0 ? Math.round((dept.used / dept.licenses) * 100) : 0}%)
                   </span>
@@ -306,7 +306,7 @@ export default function AMCReportsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <h3 className="text-base font-bold flex items-center gap-2 text-foreground">
               <span className="bg-theme-btn-primary text-theme-btn-primary-text h-5 w-5 rounded flex items-center justify-center text-xs font-bold">L3</span>
-              Detailed Audit Ledger
+              Detailed audit ledger
             </h3>
 
             <div className="flex rounded-xl border border-border p-1 bg-elevated text-xs">
@@ -318,7 +318,7 @@ export default function AMCReportsPage() {
                 leftIcon={<List className="h-3.5 w-3.5" />}
                 className="h-7 px-3 text-xs font-semibold rounded-lg"
               >
-                Invoices & Cashflow
+                Invoices & cashflow
               </AppButton>
               <AppButton
                 type="button"
@@ -328,7 +328,7 @@ export default function AMCReportsPage() {
                 leftIcon={<Activity className="h-3.5 w-3.5" />}
                 className="h-7 px-3 text-xs font-semibold rounded-lg"
               >
-                Expense Amortization Schedule
+                Expense amortization schedule
               </AppButton>
             </div>
           </div>
@@ -340,11 +340,11 @@ export default function AMCReportsPage() {
                   <AppTableHeader className="bg-surface">
                     <AppTableRow>
                       <AppTableHead className="p-3 font-semibold text-muted">Software</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Invoice Description</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Due Date</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Invoice description</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Due date</AppTableHead>
                       <AppTableHead className="p-3 font-semibold text-muted">Amount</AppTableHead>
                       <AppTableHead className="p-3 font-semibold text-muted">Status</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Paid Date</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Paid date</AppTableHead>
                     </AppTableRow>
                   </AppTableHeader>
                   <AppTableBody>
@@ -366,7 +366,7 @@ export default function AMCReportsPage() {
                               ₹ {(parseFloat(inv.amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </AppTableCell>
                             <AppTableCell className="p-3">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                                 inv.status === 'Paid' ? 'bg-success/15 text-success border-success/30' :
                                 isOverdue ? 'bg-danger/15 text-danger border-danger/30' :
                                 'bg-warning/15 text-warning border-warning/30'
@@ -389,12 +389,12 @@ export default function AMCReportsPage() {
                     <AppTableRow>
                       <AppTableHead className="p-3 font-semibold text-muted">Software</AppTableHead>
                       <AppTableHead className="p-3 font-semibold text-muted">Provider</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Contract Type</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Total Cost</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Monthly Accrual</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Start Date</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Expiry Date</AppTableHead>
-                      <AppTableHead className="p-3 font-semibold text-muted">Remaining Balance</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Contract type</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Total cost</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Monthly accrual</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Start date</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Expiry date</AppTableHead>
+                      <AppTableHead className="p-3 font-semibold text-muted">Remaining balance</AppTableHead>
                     </AppTableRow>
                   </AppTableHeader>
                   <AppTableBody>
@@ -435,7 +435,7 @@ export default function AMCReportsPage() {
                               ₹ {cost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                             </AppTableCell>
                             <AppTableCell className="p-3 font-mono font-bold text-success-text">
-                              ₹ {monthly.toLocaleString('en-IN', { maximumFractionDigits: 0 })}<span className="text-[10px] text-muted font-normal">/mo</span>
+                              ₹ {monthly.toLocaleString('en-IN', { maximumFractionDigits: 0 })}<span className="text-[11px] text-muted font-normal">/mo</span>
                             </AppTableCell>
                             <AppTableCell className="p-3 text-muted">{amc.purchase_date || '-'}</AppTableCell>
                             <AppTableCell className="p-3 text-muted">{amc.expiry_date || '-'}</AppTableCell>

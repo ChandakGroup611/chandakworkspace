@@ -51,10 +51,10 @@ export default function AMCAnalyticsPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center text-muted">
         <Lock className="h-12 w-12 mb-4 opacity-50" />
-        <h2 className="text-xl font-semibold text-foreground">Access Denied</h2>
+        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
         <p className="text-sm mt-2 text-muted">You do not have permission to view AMC Analytics.</p>
         <Link href="/" className="mt-4">
-          <AppButton variant="primary" size="sm">Return to Dashboard</AppButton>
+          <AppButton variant="primary" size="sm">Return to dashboard</AppButton>
         </Link>
       </div>
     );
@@ -190,8 +190,8 @@ export default function AMCAnalyticsPage() {
       <div className="h-screen flex items-center justify-center">
         <ChandakLoader
           size="lg"
-          title="AMC & Contract Analytics"
-          subtitle="Aggregating financial metrics and performance trends..."
+          title="AMC & contract analytics"
+          subtitle="Aggregating financial metrics and performance trends…"
         />
       </div>
     );
@@ -200,12 +200,12 @@ export default function AMCAnalyticsPage() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="AMC & Subscription Analytics"
+        title="AMC & subscription analytics"
         icon={<BarChart2 className="h-6 w-6" />}
         actions={
           <Link href="/amc">
             <AppButton variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
-              Back to Contracts
+              Back to contracts
             </AppButton>
           </Link>
         }
@@ -216,7 +216,7 @@ export default function AMCAnalyticsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="theme-label text-muted">Active Contract Value</span>
+              <span className="theme-label text-muted">Active contract value</span>
               <div className="p-2 rounded-xl bg-info-soft text-info-text">
                 <DollarSign className="h-4 w-4" />
               </div>
@@ -224,7 +224,7 @@ export default function AMCAnalyticsPage() {
             <div className="text-2xl font-bold text-foreground font-mono">
               {formatCurrency(analyticsData.totalSpend)}
             </div>
-            <span className="text-[10px] text-muted">{analyticsData.activeContracts} Active Contracts</span>
+            <span className="text-[11px] text-muted">{analyticsData.activeContracts} Active contracts</span>
           </AppCard>
 
           <AppCard className="p-5 border border-success/30 bg-success-soft/30 flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
@@ -237,12 +237,12 @@ export default function AMCAnalyticsPage() {
             <div className="text-2xl font-bold text-success-text font-mono">
               {formatCurrency(analyticsData.monthlyBurn)}<span className="text-xs text-muted font-normal">/mo</span>
             </div>
-            <span className="text-[10px] text-muted">Amortized Accruals</span>
+            <span className="text-[11px] text-muted">Amortized accruals</span>
           </AppCard>
 
           <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="theme-label text-muted">License Utilization</span>
+              <span className="theme-label text-muted">License utilisation</span>
               <div className="p-2 rounded-xl bg-surface text-theme-icon">
                 <Users className="h-4 w-4" />
               </div>
@@ -250,12 +250,12 @@ export default function AMCAnalyticsPage() {
             <div className="text-2xl font-bold text-foreground font-mono">
               {analyticsData.totalLicenses > 0 ? Math.round((analyticsData.usedLicenses / analyticsData.totalLicenses) * 100) : 0}%
             </div>
-            <span className="text-[10px] text-muted">{analyticsData.usedLicenses} / {analyticsData.totalLicenses} Allocated</span>
+            <span className="text-[11px] text-muted">{analyticsData.usedLicenses} / {analyticsData.totalLicenses} Allocated</span>
           </AppCard>
 
           <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="theme-label text-muted">Vendor Quality</span>
+              <span className="theme-label text-muted">Vendor quality</span>
               <div className="p-2 rounded-xl bg-warning-soft text-warning-text">
                 <Star className="h-4 w-4 fill-warning" />
               </div>
@@ -264,12 +264,12 @@ export default function AMCAnalyticsPage() {
               <span>{analyticsData.avgRating}</span>
               <span className="text-xs text-muted font-normal">/ 5.0</span>
             </div>
-            <span className="text-[10px] text-muted">Average Partner Rating</span>
+            <span className="text-[11px] text-muted">Average partner rating</span>
           </AppCard>
 
           <AppCard className="p-5 border border-danger/30 bg-danger-soft/30 flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="theme-label text-danger-text">Critical / High Risk</span>
+              <span className="theme-label text-danger-text">Critical / high risk</span>
               <div className="p-2 rounded-xl bg-danger-soft text-danger-text">
                 <AlertTriangle className="h-4 w-4" />
               </div>
@@ -277,7 +277,7 @@ export default function AMCAnalyticsPage() {
             <div className="text-2xl font-bold text-danger-text font-mono">
               {analyticsData.criticalCount + analyticsData.highCount}
             </div>
-            <span className="text-[10px] text-muted">Expiring &lt;30d or Overdue</span>
+            <span className="text-[11px] text-muted">Expiring &lt;30d or overdue</span>
           </AppCard>
         </div>
 
@@ -291,11 +291,11 @@ export default function AMCAnalyticsPage() {
                   <Clock className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">Upcoming Renewals (Next 60 Days)</h3>
+                  <h3 className="text-sm font-bold text-foreground">Upcoming renewals (next 60 days)</h3>
                   <p className="text-xs text-muted">Contracts approaching expiration requiring renewal decision.</p>
                 </div>
               </div>
-              <span className="text-xs font-bold font-mono text-theme-icon">{analyticsData.upcomingRenewals.length} Action Items</span>
+              <span className="text-xs font-bold font-mono text-theme-icon">{analyticsData.upcomingRenewals.length} Action items</span>
             </div>
 
             <div className="space-y-3 flex-1 overflow-y-auto max-h-[380px]">
@@ -312,7 +312,7 @@ export default function AMCAnalyticsPage() {
                       <div className={`text-xs font-semibold font-mono ${rec.daysLeft <= 15 ? 'text-danger-text' : 'text-warning-text'}`}>
                         {rec.daysLeft} days left
                       </div>
-                      <div className="text-[10px] text-muted">{String(rec.expiry_date).slice(0, 10)}</div>
+                      <div className="text-[11px] text-muted">{String(rec.expiry_date).slice(0, 10)}</div>
                     </div>
                   </div>
                 ))
@@ -324,11 +324,11 @@ export default function AMCAnalyticsPage() {
           <AppCard className="p-6 flex flex-col bg-surface border border-border rounded-2xl space-y-4 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-theme-btn-primary/10 text-theme-icon">
+                <div className="p-2 rounded-xl bg-accent-soft text-theme-icon">
                   <Building2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">Cost Center Spend Allocation</h3>
+                  <h3 className="text-sm font-bold text-foreground">Cost center spend allocation</h3>
                   <p className="text-xs text-muted">Distribution of software subscription capital across departments.</p>
                 </div>
               </div>
@@ -352,7 +352,7 @@ export default function AMCAnalyticsPage() {
                           style={{ width: `${percent}%` }}
                         />
                       </div>
-                      <div className="text-[10px] text-muted text-right font-medium">{percent}% of portfolio</div>
+                      <div className="text-[11px] text-muted text-right font-medium">{percent}% of portfolio</div>
                     </div>
                   );
                 })

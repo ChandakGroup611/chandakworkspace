@@ -252,7 +252,7 @@ export default function UserProfileEditor() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <ChandakLoader size="md" title="Loading Profile Data..." subtitle="Fetching user identity and credentials" />
+        <ChandakLoader size="md" title="Loading profile data…" subtitle="Fetching user identity and credentials" />
       </div>
     );
   }
@@ -278,9 +278,9 @@ export default function UserProfileEditor() {
       )}
       
       {isMissingDetails && (
-        <div className="mb-6 p-4 rounded-xl bg-warning/10 border border-amber-500/20 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between animate-in slide-in-from-top-4">
+        <div className="mb-6 p-4 rounded-xl bg-warning/10 border border-warning-border flex flex-col md:flex-row gap-4 items-start md:items-center justify-between animate-in slide-in-from-top-4">
            <div>
-              <h3 className="text-warning font-semibold text-sm">Action Required: Complete Your Profile</h3>
+              <h3 className="text-warning font-semibold text-sm">Action required: complete your profile</h3>
               <p className="text-warning/80 text-xs mt-1">Please fill out your organizational details below to proceed to your dashboard.</p>
            </div>
         </div>
@@ -302,7 +302,7 @@ export default function UserProfileEditor() {
                   className="relative group cursor-pointer"
                   onClick={() => !photoUploading && fileInputRef.current?.click()}
                 >
-                  <div className={`h-32 w-32 rounded-full p-1 bg-card  transition-transform duration-300 ${!photoUploading ? 'group-hover:scale-105' : ''}`}>
+                  <div className={`h-32 w-32 rounded-full p-1 bg-card  transition-transform duration-300 ${!photoUploading ? '' : ''}`}>
                     <div className="h-full w-full rounded-full overflow-hidden relative bg-elevated">
                       <img 
                         src={getAvatarUrl(profile?.full_name || "User", formPhoto)}
@@ -356,17 +356,17 @@ export default function UserProfileEditor() {
 
                 {/* Role & User Code Badges */}
                 <div className="flex items-center justify-center gap-2 mt-3">
-                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
+                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
                      {profile?.role?.name || "No Role Assigned"}
                    </span>
-                   <span className="text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-elevated border border-border text-muted-foreground">
+                   <span className="text-[11px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-elevated border border-border text-muted-foreground">
                      {profile?.user_code}
                    </span>
                 </div>
 
                 {/* Preset Avatars */}
                 <div className="pt-6 mt-6 border-t border-border">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-3">Or choose a preset</p>
+                  <p className="text-[11px] font-bold text-muted mb-3">Or choose a preset</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {PRESET_AVATARS.map((avatar, idx) => (
                       <img 
@@ -374,7 +374,7 @@ export default function UserProfileEditor() {
                         src={avatar} 
                         alt="Preset" 
                         onClick={() => !photoUploading && handlePresetAvatarSelect(avatar)}
-                        className={`w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-theme-btn-primary transition-all ${photoUploading ? 'opacity-50 cursor-not-allowed' : 'opacity-80 hover:opacity-100 hover:scale-110'}`} 
+                        className={`w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-theme-btn-primary transition-all ${photoUploading ? 'opacity-50 cursor-not-allowed' : 'opacity-80 hover:opacity-100'}`} 
                       />
                     ))}
                   </div>
@@ -389,11 +389,11 @@ export default function UserProfileEditor() {
           <AppCard className="border-0 shadow-lg bg-card/60">
             <AppCardHeader className="pb-4 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
+                <div className="p-2 rounded-lg bg-accent-soft text-theme-icon">
                   <User className="h-5 w-5" />
                 </div>
                 <div>
-                  <AppCardTitle className="text-lg">Personal Information</AppCardTitle>
+                  <AppCardTitle className="text-lg">Personal information</AppCardTitle>
                   <p className="text-xs text-muted mt-0.5">
                     Your personal details are securely managed via Single Sign-On (SSO).
                   </p>
@@ -404,8 +404,8 @@ export default function UserProfileEditor() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Full Name */}
                 <div className="space-y-2 relative group">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center justify-between">
-                    Full Name *
+                  <label className="text-[11px] font-bold text-muted flex items-center justify-between">
+                    Full name *
                     <Lock className="h-3 w-3 opacity-50" />
                   </label>
                   <AppInput
@@ -418,8 +418,8 @@ export default function UserProfileEditor() {
 
                 {/* Email */}
                 <div className="space-y-2 relative">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center justify-between">
-                    Email Address *
+                  <label className="text-[11px] font-bold text-muted flex items-center justify-between">
+                    Email address *
                     <Lock className="h-3 w-3 opacity-50" />
                   </label>
                   <AppInput
@@ -440,7 +440,7 @@ export default function UserProfileEditor() {
                   <Building className="h-5 w-5" />
                 </div>
                 <div>
-                  <AppCardTitle className="text-lg">Organizational Details</AppCardTitle>
+                  <AppCardTitle className="text-lg">Organizational details</AppCardTitle>
                   <p className="text-xs text-muted mt-0.5">
                     {isMissingDetails 
                       ? "Please select your organizational details to proceed."
@@ -457,7 +457,7 @@ export default function UserProfileEditor() {
                    <>
                       {/* Department Dropdown */}
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-warning flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-warning flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" /> Department *</span>
                         </label>
                         <div className="relative">
@@ -467,9 +467,9 @@ export default function UserProfileEditor() {
                               setSelectedDept(e.target.value);
                               setSelectedDesig(""); // Clear designation
                             }}
-                            className="h-10 w-full appearance-none rounded-[var(--radius-input,4px)] border-amber-500/50 theme-card-structural px-3 text-[14px] text-foreground shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="h-10 w-full appearance-none rounded-[var(--radius-input,4px)] border-warning-border theme-card-structural px-3 text-[14px] text-foreground shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-warning-border"
                           >
-                            <option value="" disabled>Select Department...</option>
+                            <option value="" disabled>Select Department…</option>
                             {departments.map((d) => (
                               <option key={d.id} value={d.id}>{d.name}</option>
                             ))}
@@ -482,16 +482,16 @@ export default function UserProfileEditor() {
 
                       {/* Designation Dropdown */}
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-warning flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-warning flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Designation *</span>
                         </label>
                         <div className="relative">
                           <select
                             value={selectedDesig}
                             onChange={(e) => setSelectedDesig(e.target.value)}
-                            className="h-10 w-full appearance-none rounded-[var(--radius-input,4px)] border-amber-500/50 theme-card-structural px-3 text-[14px] text-foreground shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="h-10 w-full appearance-none rounded-[var(--radius-input,4px)] border-warning-border theme-card-structural px-3 text-[14px] text-foreground shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-warning-border"
                           >
-                            <option value="" disabled>Select Designation...</option>
+                            <option value="" disabled>Select Designation…</option>
                             {designations
                               .filter((d) => !selectedDept || d.department_id === selectedDept || !d.department_id)
                               .map((d) => (
@@ -506,12 +506,12 @@ export default function UserProfileEditor() {
 
                       {/* Custom Manager Dropdown */}
                       <div className="space-y-2 md:col-span-2 relative" ref={managerDropdownRef}>
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-warning flex items-center gap-1.5">
-                          <Users className="h-3.5 w-3.5" /> Reporting Manager *
+                        <label className="text-[11px] font-bold text-warning flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5" /> Reporting manager *
                         </label>
                         
                         <div 
-                          className="h-10 w-full flex items-center justify-between rounded-[var(--radius-input,4px)] border-amber-500/50 theme-card-structural px-3 text-[14px] text-foreground shadow-sm cursor-pointer hover:border-amber-500 transition-colors"
+                          className="h-10 w-full flex items-center justify-between rounded-[var(--radius-input,4px)] border-warning-border theme-card-structural px-3 text-[14px] text-foreground shadow-sm cursor-pointer hover:border-warning-border transition-colors"
                           onClick={() => setManagerDropdownOpen(!managerDropdownOpen)}
                         >
                           {selectedManagerObj ? (
@@ -525,18 +525,18 @@ export default function UserProfileEditor() {
                               <span className="font-medium">{selectedManagerObj.full_name}</span>
                             </div>
                           ) : (
-                            <span className="text-muted">Select Reporting Manager...</span>
+                            <span className="text-muted">Select reporting manager…</span>
                           )}
                           <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${managerDropdownOpen ? 'rotate-180' : ''}`} />
                         </div>
 
                         {managerDropdownOpen && (
-                          <div className="absolute z-50 w-full mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-card  shadow-black/20 animate-in fade-in zoom-in-95 duration-200">
+                          <div className="absolute z-50 w-full mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-card animate-in fade-in zoom-in-95 duration-200">
                             <div className="p-1 space-y-0.5">
                               {managers.map((m) => (
                                 <div 
                                   key={m.id}
-                                  className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${selectedManager === m.id ? 'bg-theme-btn-primary/10 text-theme-icon font-medium' : 'hover:bg-elevated text-foreground'}`}
+                                  className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${selectedManager === m.id ? 'bg-accent-soft text-theme-icon font-medium' : 'hover:bg-elevated text-foreground'}`}
                                   onClick={() => { setSelectedManager(m.id); setManagerDropdownOpen(false); }}
                                 >
                                   <img 
@@ -558,7 +558,7 @@ export default function UserProfileEditor() {
                    <>
                       {/* Department ReadOnly */}
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-muted flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" /> Department *</span>
                           <Lock className="h-3 w-3 opacity-50" />
                         </label>
@@ -571,7 +571,7 @@ export default function UserProfileEditor() {
 
                       {/* Designation ReadOnly */}
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-muted flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Designation *</span>
                           <Lock className="h-3 w-3 opacity-50" />
                         </label>
@@ -584,14 +584,14 @@ export default function UserProfileEditor() {
 
                       {/* Manager ReadOnly */}
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center justify-between">
-                          <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> Reporting Manager *</span>
+                        <label className="text-[11px] font-bold text-muted flex items-center justify-between">
+                          <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> Reporting manager *</span>
                           <Lock className="h-3 w-3 opacity-50" />
                         </label>
                         <div className="h-10 px-3 rounded-[var(--radius-input,4px)] bg-elevated/50 border border-border flex items-center gap-2 opacity-80 cursor-default">
                           <img 
                             src={getAvatarUrl(profile?.manager?.full_name || "Manager", profile?.manager?.profile_photo)} 
-                            className="h-5 w-5 rounded-full object-cover bg-theme-btn-primary/20"
+                            className="h-5 w-5 rounded-full object-cover bg-accent-soft"
                             onError={(e) => { (e.target as any).src = getAvatarUrl(profile?.manager?.full_name || "Manager"); }}
                             alt=""
                           />

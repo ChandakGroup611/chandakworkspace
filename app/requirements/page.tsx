@@ -87,7 +87,7 @@ interface RequirementItem {
 
 export default function RequirementsPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><ChandakLoader size="lg" title="Loading Requirements..." /></div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><ChandakLoader size="lg" title="Loading Requirements…" /></div>}>
       <RequirementsPageContent />
     </Suspense>
   );
@@ -255,7 +255,7 @@ function RequirementsPageContent() {
       <div className="h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-background">
         <ChandakLoader
           size="lg"
-          title="Verifying Permissions..."
+          title="Verifying Permissions…"
           subtitle="Loading requirements pipeline"
         />
       </div>
@@ -268,7 +268,7 @@ function RequirementsPageContent() {
         <div className="p-4 rounded-full bg-danger-soft border border-danger/30 text-danger">
           <ShieldAlert className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold">Access Denied</h2>
+        <h2 className="text-xl font-bold">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view the Requirement Module.</p>
       </div>
     );
@@ -277,8 +277,8 @@ function RequirementsPageContent() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Requirement Registration Repository"
-        badge={<AppBadge variant="info">List View</AppBadge>}
+        title="Requirement registration repository"
+        badge={<AppBadge variant="info">List view</AppBadge>}
         actions={
           <>
             <Link href="/">
@@ -303,7 +303,7 @@ function RequirementsPageContent() {
               onClick={() => router.push('/requirements/approvals')}
               className="border-warning/30 bg-warning-soft hover:bg-warning-soft text-warning-text"
             >
-              Go to Approvals
+              Go to approvals
             </AppButton>
             {hasPermission("REQUIREMENTS_REPORTS_VIEW") && (
               <AppButton 
@@ -313,7 +313,7 @@ function RequirementsPageContent() {
                 onClick={() => router.push('/requirements/reports')}
                 className="border-primary/30 bg-primary-soft hover:bg-primary-soft text-primary-text"
               >
-                Analysis & Reports
+                Analysis & reports
               </AppButton>
             )}
             <AppButton 
@@ -324,7 +324,7 @@ function RequirementsPageContent() {
               disabled={!hasPermission("REQUIREMENTS_CREATE")}
               onClick={() => setShowWizard(true)}
             >
-              Create Requirement
+              Create requirement
             </AppButton>
           </>
         }
@@ -356,13 +356,13 @@ function RequirementsPageContent() {
         <div className="col-span-2 sm:col-span-1">
           <label className="theme-label block mb-1 ml-1">Search</label>
           <AppInput 
-            placeholder="Search Title or Req #..." 
+            placeholder="Search title or req #…" 
             value={filter.search}
             onChange={(e: any) => setFilter(f => ({ ...f, search: e.target.value }))}
           />
         </div>
         <div>
-          <label className="theme-label block mb-1 ml-1">System / Asset</label>
+          <label className="theme-label block mb-1 ml-1">System / asset</label>
           <select 
             className="w-full text-xs sm:text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary h-9 outline-none"
             value={filter.system}
@@ -473,7 +473,7 @@ function RequirementsPageContent() {
                         <AppBadge 
                           variant="custom"
                           customColor={r.priorityColor || 'var(--muted)'}
-                          className="text-[10px]"
+                          className="text-[11px]"
                         >
                           {r.priority}
                         </AppBadge>
@@ -482,7 +482,7 @@ function RequirementsPageContent() {
                     <AppBadge 
                       variant={r.approvalStatus === 'APPROVED' ? 'success' : r.approvalStatus === 'REJECTED' ? 'danger' : 'warning'}
                       withPulse={r.approvalStatus === 'PENDING' || r.approvalStatus === 'IN_REVIEW'}
-                      className="text-[10px]"
+                      className="text-[11px]"
                     >
                       {r.approvalStatus}
                     </AppBadge>
@@ -498,7 +498,7 @@ function RequirementsPageContent() {
                   {/* System, Module, Department */}
                   <div className="flex items-center gap-2 text-xs text-muted flex-wrap">
                     {r.softwareSystem && r.softwareSystem !== '-' && (
-                      <span className="bg-elevated px-2 py-0.5 rounded text-[10px] font-bold text-foreground/80">
+                      <span className="bg-elevated px-2 py-0.5 rounded text-[11px] font-bold text-foreground/80">
                         {r.softwareSystem}
                       </span>
                     )}
@@ -506,7 +506,7 @@ function RequirementsPageContent() {
                       <span className="text-muted text-[11px]">› {r.module}</span>
                     )}
                     {r.department && r.department !== '-' && (
-                      <span className="bg-elevated px-2 py-0.5 rounded text-[10px] font-semibold text-muted ml-auto">
+                      <span className="bg-elevated px-2 py-0.5 rounded text-[11px] font-semibold text-muted ml-auto">
                         {r.department}
                       </span>
                     )}
@@ -521,7 +521,7 @@ function RequirementsPageContent() {
                       <AppButton 
                         variant="ghost" 
                         size="sm" 
-                        className="h-7 px-2 text-xs text-accent hover:bg-accent/10 rounded-lg flex items-center gap-1 active:scale-95 transition-all"
+                        className="h-7 px-2 text-xs text-accent hover:bg-accent/10 rounded-lg flex items-center gap-1 transition-all"
                         onClick={() => router.push(`/requirements/${r.dbId}?mode=view`)}
                       >
                         <Eye className="h-3.5 w-3.5" /> View
@@ -530,17 +530,17 @@ function RequirementsPageContent() {
                         <AppButton 
                           variant="ghost" 
                           size="sm" 
-                          className="h-7 px-2 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center gap-1 active:scale-95 transition-all"
+                          className="h-7 px-2 text-xs text-theme-icon hover:bg-accent-soft rounded-lg flex items-center gap-1 transition-all"
                           onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
                         >
                           <Edit2 className="h-3.5 w-3.5" /> Analysis
                         </AppButton>
                       )}
                       {(isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
-                        <AppButton 
+                        <AppButton aria-label="Delete" 
                           variant="ghost" 
                           size="sm" 
-                          className="h-7 w-7 p-0 text-muted hover:text-danger rounded-lg flex items-center justify-center active:scale-95 transition-all"
+                          className="h-7 w-7 p-0 text-muted hover:text-danger rounded-lg flex items-center justify-center transition-all"
                           onClick={(e) => handleDeleteClick(e, r.dbId)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -562,7 +562,7 @@ function RequirementsPageContent() {
                 <AppTableRow className="bg-surface/50 dark:bg-surface/10 hover:bg-transparent">
                   <AppTableHead className="w-[150px]">REQ #</AppTableHead>
                   <AppTableHead className="min-w-[200px]">Title</AppTableHead>
-                  <AppTableHead>System / Asset</AppTableHead>
+                  <AppTableHead>System / asset</AppTableHead>
                   <AppTableHead>Module</AppTableHead>
                   <AppTableHead>Submodule</AppTableHead>
                   <AppTableHead>Particulars</AppTableHead>
@@ -570,8 +570,8 @@ function RequirementsPageContent() {
                   <AppTableHead>Est. Pts</AppTableHead>
                   <AppTableHead>Release</AppTableHead>
                   <AppTableHead>Department</AppTableHead>
-                  <AppTableHead>Created By</AppTableHead>
-                  <AppTableHead>Created Date</AppTableHead>
+                  <AppTableHead>Created by</AppTableHead>
+                  <AppTableHead>Created date</AppTableHead>
                   <AppTableHead>Approval</AppTableHead>
                   <AppTableHead className="w-24 text-center">Action</AppTableHead>
                 </AppTableRow>
@@ -619,7 +619,7 @@ function RequirementsPageContent() {
                             <AppBadge 
                               variant="custom"
                               customColor={r.priorityColor || 'var(--muted)'}
-                              className="text-[10px]"
+                              className="text-[11px]"
                             >
                               {r.priority}
                             </AppBadge>
@@ -640,7 +640,7 @@ function RequirementsPageContent() {
                           <AppBadge 
                             variant={r.approvalStatus === 'Approved' ? 'success' : r.approvalStatus === 'Rejected' ? 'danger' : r.approvalStatus?.includes('Pending') ? 'warning' : 'neutral'}
                             withPulse={r.approvalStatus?.includes('Pending')}
-                            className="text-[10px]"
+                            className="text-[11px]"
                           >
                             {r.approvalStatus}
                           </AppBadge>
@@ -663,9 +663,9 @@ function RequirementsPageContent() {
                                 type="button"
                                 variant="ghost" 
                                 size="sm" 
-                                title="Edit Business Analysis"
-                                aria-label="Edit Business Analysis"
-                                className="h-7 w-7 p-0 text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center justify-center transition-all"
+                                title="Edit business analysis"
+                                aria-label="Edit business analysis"
+                                className="h-7 w-7 p-0 text-theme-icon hover:text-theme-icon hover:bg-accent-soft rounded-lg flex items-center justify-center transition-all"
                                 onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
                               >
                                 <Edit2 className="h-4 w-4" />
@@ -700,7 +700,7 @@ function RequirementsPageContent() {
         open={!!deleteTargetId}
         onClose={() => setDeleteTargetId(null)}
         onConfirm={confirmDelete}
-        title="Delete Requirement"
+        title="Delete requirement"
         description="Are you sure you want to permanently delete this requirement? This action cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"

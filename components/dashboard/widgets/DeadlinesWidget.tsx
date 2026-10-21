@@ -49,40 +49,40 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
     if (diff < 0) {
       return (
         <div className="flex flex-col items-end gap-1">
-          <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-danger/10 text-danger border border-red-500/20">Overdue</span>
-          <span className="text-[10px] font-semibold text-danger">Overdue by {Math.abs(diff)} days</span>
+          <span className="inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold bg-danger/10 text-danger border border-danger-border">Overdue</span>
+          <span className="text-[11px] font-semibold text-danger">Overdue by {Math.abs(diff)} days</span>
         </div>
       );
     }
     if (diff === 0) {
       return (
         <div className="flex flex-col items-end gap-1">
-          <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-danger/10 text-danger border border-red-500/20">Due Today</span>
-          <span className="text-[10px] font-semibold text-danger">Today should be close</span>
+          <span className="inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold bg-danger/10 text-danger border border-danger-border">Due today</span>
+          <span className="text-[11px] font-semibold text-danger">Today should be close</span>
         </div>
       );
     }
     if (diff === 1) {
       return (
         <div className="flex flex-col items-end gap-1">
-          <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-warning/10 text-warning border border-amber-500/20">Due Tomorrow</span>
-          <span className="text-[10px] font-semibold text-warning">This has to be complete</span>
+          <span className="inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold bg-warning/10 text-warning border border-warning-border">Due tomorrow</span>
+          <span className="text-[11px] font-semibold text-warning">This has to be complete</span>
         </div>
       );
     }
     if (diff === 2) {
       return (
         <div className="flex flex-col items-end gap-1">
-          <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-warning/10 text-warning border border-amber-500/20">Due in 2 Days</span>
-          <span className="text-[10px] font-semibold text-warning">This has to be complete</span>
+          <span className="inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold bg-warning/10 text-warning border border-warning-border">Due in 2 days</span>
+          <span className="text-[11px] font-semibold text-warning">This has to be complete</span>
         </div>
       );
     }
     if (diff === 3) {
       return (
         <div className="flex flex-col items-end gap-1">
-          <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-warning/10 text-warning border border-amber-500/20">Due in 3 Days</span>
-          <span className="text-[10px] font-semibold text-warning">In 3 days need to complete</span>
+          <span className="inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold bg-warning/10 text-warning border border-warning-border">Due in 3 days</span>
+          <span className="text-[11px] font-semibold text-warning">In 3 days need to complete</span>
         </div>
       );
     }
@@ -90,8 +90,8 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
   };
 
   const getIconData = (diff: number) => {
-    if (diff <= 0) return { icon: <Flame className="h-4 w-4 text-danger" />, bg: "bg-danger/10 border-red-500/20" };
-    if (diff <= 3) return { icon: <AlertCircle className="h-4 w-4 text-warning" />, bg: "bg-warning/10 border-amber-500/20" };
+    if (diff <= 0) return { icon: <Flame className="h-4 w-4 text-danger" />, bg: "bg-danger/10 border-danger-border" };
+    if (diff <= 3) return { icon: <AlertCircle className="h-4 w-4 text-warning" />, bg: "bg-warning/10 border-warning-border" };
     return { icon: <Calendar className="h-4 w-4 text-muted-foreground" />, bg: "bg-surface-hover border-border/50" };
   };
 
@@ -103,11 +103,11 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
   return (
     <BaseWidget
       id="deadlines"
-      title="Upcoming Deadlines"
+      title="Upcoming deadlines"
       subtitle="Items due in next 3 days & overdue"
-      icon={<CalendarClock className="w-5 h-5 text-amber-500" />}
+      icon={<CalendarClock className="w-5 h-5 text-warning-text" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border shrink-0">
           {upcoming.length} Approaching
         </span>
       }
@@ -135,25 +135,25 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
               key={m.id} 
               className={cn(
                 "flex flex-col gap-2 p-3 rounded-xl border transition-all cursor-pointer group",
-                diff <= 0 ? "bg-danger/5 hover:bg-danger/10 border-red-500/20" : 
-                diff <= 3 ? "bg-warning/5 hover:bg-warning/10 border-amber-500/20" : 
+                diff <= 0 ? "bg-danger/5 hover:bg-danger/10 border-danger-border" : 
+                diff <= 3 ? "bg-warning/5 hover:bg-warning/10 border-warning-border" : 
                 "bg-surface-hover/30 hover:bg-surface-hover/80 border-transparent hover:border-border/50"
               )}
               onClick={handleItemClick}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg border shadow-sm group-hover:scale-105 transition-transform ${bg}`}>
+                  <div className={`p-2 rounded-lg border shadow-sm transition-transform ${bg}`}>
                     {icon}
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1" title={m.title || `${m.module} Assignment`}>
                       {m.title || `${m.module} Assignment`}
                     </div>
-                    <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+                    <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
                       <span className="font-mono text-primary/80">{m.code || `ID-${shortId}`}</span>
                       <span>·</span>
-                      <span className="font-medium text-[9px] uppercase tracking-wider">{m.module}</span>
+                      <span className="font-medium text-[11px]">{m.module}</span>
                       {m.priority && m.priority !== "N/A" && (
                         <>
                           <span>·</span>
@@ -168,7 +168,7 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
                 </div>
               </div>
               
-              <div className="flex items-center justify-between mt-1 pt-2 border-t border-border/40 text-[10px] text-muted-foreground">
+              <div className="flex items-center justify-between mt-1 pt-2 border-t border-border/40 text-[11px] text-muted-foreground">
                 <div className="flex items-center gap-3">
                   {m.startDate && (
                     <div className="flex items-center gap-1">

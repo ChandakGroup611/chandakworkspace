@@ -74,7 +74,7 @@ export function MasterOptionsManager({
                 {options.map((opt) => (
                   <li
                     key={opt.id}
-                    className="flex items-center justify-between p-2.5 rounded-lg hover:bg-hover group transition-colors border border-border"
+                    className="flex items-center justify-between p-2.5 rounded-lg hover:bg-surface-hover group transition-colors border border-border"
                   >
                     <div className="flex flex-col min-w-0 pr-2">
                       <span className="text-xs font-semibold text-foreground truncate">{opt.name}</span>

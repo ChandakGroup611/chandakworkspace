@@ -140,11 +140,11 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
       {/* ACTIVE ITEMS TREND - 2D Modern Bar */}
       <BaseWidget
         id="chart-trend"
-        title="Active Items Trend"
+        title="Active items trend"
         subtitle="14-day cumulative workload"
-        icon={<Activity className="w-5 h-5 text-blue-500" />}
+        icon={<Activity className="w-5 h-5 text-info-text" />}
         collapsible={true}
-        headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">View Details</span>}
+        headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">View details</span>}
         overflowHidden
       >
         <div className="flex-1 w-full h-full pt-4 min-h-[280px] pb-2">
@@ -167,11 +167,11 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
       {/* DONUT CHART - 2D Modern Donut */}
       <BaseWidget
         id="chart-distribution"
-        title="Volume Distribution"
+        title="Volume distribution"
         subtitle="Deliverables segmented by module"
-        icon={<LineChart className="w-5 h-5 text-emerald-500" />}
+        icon={<LineChart className="w-5 h-5 text-success-text" />}
         collapsible={true}
-        headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">By Type</span>}
+        headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">By type</span>}
         overflowHidden
       >
         <div className="flex items-center flex-1 w-full h-full min-h-[280px] pt-2 pb-2">

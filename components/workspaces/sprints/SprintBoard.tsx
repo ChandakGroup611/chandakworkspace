@@ -9,6 +9,13 @@ import { Plus, GripVertical, Calendar, Edit2, Check, X, Filter } from "lucide-re
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
+import { PriorityIndicator, formatDate } from "@/components/ui/data";
+
+const COLUMN = "flex w-80 flex-shrink-0 flex-col rounded-[10px] border border-border bg-sunken";
+const CARD = "theme-card-structural flex gap-2 p-3 shadow-sm";
+const DROP_HINT = "rounded-md border border-border bg-surface/60 p-4 text-center text-[12.5px] text-muted";
+const FIELD = "h-9 w-full px-3 text-[13.5px]";
+const LABEL = "text-[13px] font-medium text-subtle";
 
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { isLight: isLightMode } = useTheme();
@@ -61,7 +68,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
 
     const taskToMove = tasks.find(t => t.id === taskId);
     if (!taskToMove || !canMoveTask(taskToMove)) {
-      toast.error("You do not have permission to move this task.");
+      toast.error("You can't move this task. Only its owner or a workspace manager can.");
       return;
     }
 
@@ -100,7 +107,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       setNewSprintEnd("");
     } catch (e) {
       console.error(e);
-      toast.error("Failed to create sprint");
+      toast.error("Couldn't create the sprint. Try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -121,13 +128,13 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       setEditingSprintId(null);
     } catch (e) {
       console.error(e);
-      toast.error("Failed to update sprint");
+      toast.error("Couldn't update the sprint. Try again.");
     } finally {
       setIsUpdatingSprint(false);
     }
   };
 
-  if (loading) return <div className="p-10 text-center animate-pulse">Loading Sprint Board...</div>;
+  if (loading) return <div className="p-10 text-center text-[13.5px] text-muted" role="status">Loading sprints…</div>;
 
   const activeSprints = sprints.filter(s => s.status !== 'CLOSED');
 
@@ -141,62 +148,69 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
   });
   
   return (
-    <div className="flex flex-col h-full space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-theme-icon" />
-          Agile Sprint Planning
+    <div className="flex h-full flex-col space-y-4 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-[14px] font-semibold text-heading">
+          <Calendar className="h-4 w-4 text-muted" aria-hidden />
+          Sprint planning
         </h3>
-        <div className="flex items-center gap-3">
-          <select 
-            value={taskFilter} 
+        <div className="flex items-center gap-2">
+          <label className="sr-only" htmlFor="sprint-task-filter">Show tasks</label>
+          <select
+            id="sprint-task-filter"
+            value={taskFilter}
             onChange={(e) => setTaskFilter(e.target.value as any)}
-            className={`text-xs p-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-theme-btn-primary theme-card-structural`}
+            className="h-9 px-3 text-[13.5px]"
           >
-            <option value="ALL">All Tasks</option>
-            <option value="ASSIGNED">Assigned To Me</option>
-            <option value="TEAM">Execution Team</option>
-            <option value="CREATED">Created By Me</option>
-            <option value="OVERDUE">Overdue Tasks</option>
+            <option value="ALL">All tasks</option>
+            <option value="ASSIGNED">Assigned to me</option>
+            <option value="TEAM">I'm on the team</option>
+            <option value="CREATED">Created by me</option>
+            <option value="OVERDUE">Overdue</option>
           </select>
           {canManageSprints && (
-            <AppButton variant="primary" size="sm" onClick={() => setIsCreatingSprint(true)}>
-              <Plus className="h-3 w-3 mr-1" /> New Sprint
+            <AppButton variant="secondary" onClick={() => setIsCreatingSprint(true)} leftIcon={<Plus className="h-4 w-4" />}>
+              New sprint
             </AppButton>
           )}
         </div>
       </div>
 
       {canManageSprints && isCreatingSprint && (
-        <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-theme-btn-primary/10/50 border-indigo-100`}>
-          <div className="space-y-1.5 flex-1">
-            <label className="text-sm font-bold text-muted uppercase tracking-wider">Sprint Name</label>
-            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary theme-card-structural`} />
+        <form onSubmit={handleCreateSprint} className="theme-card-structural flex flex-col gap-4 p-4 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-1.5">
+            <label htmlFor="new-sprint-name" className={LABEL}>Name <span className="text-danger-text" aria-hidden>*</span></label>
+            <input id="new-sprint-name" required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 – Platform core" className={FIELD} />
           </div>
-          <div className="space-y-1.5 w-40">
-            <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date</label>
-            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary theme-card-structural`} />
+          <div className="space-y-1.5 sm:w-40">
+            <label htmlFor="new-sprint-start" className={LABEL}>Start date</label>
+            {/* ui-audit-ignore-next-line html-date-input */}
+            <input id="new-sprint-start" type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={FIELD} />
           </div>
-          <div className="space-y-1.5 w-40">
-            <label className="text-sm font-bold text-muted uppercase tracking-wider">End Date</label>
-            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary theme-card-structural`} />
+          <div className="space-y-1.5 sm:w-40">
+            <label htmlFor="new-sprint-end" className={LABEL}>End date</label>
+            {/* ui-audit-ignore-next-line html-date-input */}
+            <input id="new-sprint-end" type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={FIELD} />
           </div>
-          <div className="flex gap-2 h-9">
+          <div className="flex gap-2">
             <AppButton type="button" variant="ghost" onClick={() => setIsCreatingSprint(false)}>Cancel</AppButton>
-            <AppButton type="submit" variant="primary" disabled={isSubmitting}>{isSubmitting ? "Creating..." : "Create"}</AppButton>
+            <AppButton type="submit" variant="primary" disabled={isSubmitting} isLoading={isSubmitting}>{isSubmitting ? "Creating…" : "Create sprint"}</AppButton>
           </div>
         </form>
       )}
 
-      <div className="flex gap-4 overflow-x-auto pb-4 flex-1">
+      <div className="flex flex-1 gap-3 overflow-x-auto pb-2">
         
         {/* Backlog */}
-        <div 
-          className={`flex-shrink-0 w-80 rounded-xl border flex flex-col bg-elevated/50 border-border`}
+        <div
+          className={COLUMN}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => handleDrop(e, null)}
         >
-          <div className="p-3 border-b font-bold text-sm">Product Backlog</div>
+          <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+            <span className="text-[13.5px] font-semibold text-heading">Backlog</span>
+            <span className="rounded bg-surface px-1.5 text-[12px] text-subtle tabular">{filteredTasks.filter(t => !t.sprint_id).length}</span>
+          </div>
           <div className="p-2 space-y-2 overflow-y-auto flex-1">
             {filteredTasks.filter(t => !t.sprint_id).map(t => {
               const draggable = canMoveTask(t);
@@ -205,25 +219,18 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   key={t.id} 
                   draggable={draggable} 
                   onDragStart={(e) => handleDragStart(e, t.id)}
-                  className={`p-3 rounded-lg border-smooth ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} flex gap-2 theme-card-structural shadow-sm`}
+                  className={`${CARD} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
                 >
-                  {draggable && <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />}
+                  {draggable && <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-label="Drag to move" />}
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
-                    <AppBadge 
-                      variant={t.priority?.priority_color ? "custom" : "info"} 
-                      customColor={t.priority?.priority_color || null}
-                      isOutline={true}
-                      className="text-[10px] py-0 px-1.5 mt-1"
-                    >
-                      {t.priority?.priority_name || 'Standard'}
-                    </AppBadge>
+                    <div className="whitespace-normal break-words text-[13.5px] font-medium leading-snug text-foreground" title={t.title || t.subject}>{t.title || t.subject}</div>
+                    <div className="mt-1.5"><PriorityIndicator priority={t.priority?.priority_name || null} className="text-[12.5px] text-subtle" /></div>
                   </div>
                 </div>
               );
             })}
             {filteredTasks.filter(t => !t.sprint_id).length === 0 && (
-              <div className="p-4 text-center text-xs text-muted border border-dashed rounded-lg">Backlog is empty</div>
+              <div className={DROP_HINT}>Backlog is empty. Drag tasks here to take them out of a sprint.</div>
             )}
           </div>
         </div>
@@ -232,43 +239,44 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
         {activeSprints.map(sprint => (
           <div 
             key={sprint.id}
-            className={`flex-shrink-0 w-80 rounded-xl border flex flex-col bg-theme-btn-primary/10/30 border-indigo-100`}
+            className={COLUMN}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, sprint.id)}
           >
-            <div className="p-3 border-b border-theme-btn-primary/20 group relative">
+            <div className="group relative border-b border-border px-3 py-2.5">
               {canManageSprints && editingSprintId === sprint.id ? (
                 <div className="space-y-2">
                   <input 
                     type="text" 
                     value={editSprintName} 
                     onChange={e => setEditSprintName(e.target.value)} 
-                    className={`w-full text-sm font-bold p-1 rounded focus:outline-none focus:ring-1 focus:ring-theme-btn-primary theme-card-structural`}
-                    placeholder="Sprint Name"
+                    aria-label="Sprint name"
+                    className="h-8 w-full px-2 text-[13.5px] font-medium"
+                    placeholder="Sprint name"
                   />
                   <div className="flex gap-2">
                     <input 
                       type="date" 
                       value={editSprintStart} 
                       onChange={e => setEditSprintStart(e.target.value)} 
-                      className={`w-full text-[10px] p-1 rounded focus:outline-none theme-card-structural`}
+                      className="h-8 w-full px-2 text-[12.5px]"
                     />
                     <input 
                       type="date" 
                       value={editSprintEnd} 
                       onChange={e => setEditSprintEnd(e.target.value)} 
-                      className={`w-full text-[10px] p-1 rounded focus:outline-none theme-card-structural`}
+                      className="h-8 w-full px-2 text-[12.5px]"
                     />
                   </div>
                   <div className="flex justify-end gap-1">
-                    <AppButton variant="secondary" onClick={() => setEditingSprintId(null)} className="p-1 text-muted hover:bg-elevated rounded transition-colors"><X className="h-3.5 w-3.5" /></AppButton>
-                    <AppButton variant="secondary" onClick={() => handleUpdateSprint(sprint.id)} disabled={isUpdatingSprint} className="p-1 text-success hover:bg-emerald-100 rounded transition-colors disabled:opacity-50"><Check className="h-3.5 w-3.5" /></AppButton>
+                    <AppButton variant="ghost" size="icon-sm" onClick={() => setEditingSprintId(null)} aria-label="Cancel editing" title="Cancel"><X className="h-4 w-4" /></AppButton>
+                    <AppButton variant="secondary" size="icon-sm" onClick={() => handleUpdateSprint(sprint.id)} disabled={isUpdatingSprint} aria-label="Save sprint" title="Save"><Check className="h-4 w-4" /></AppButton>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-start">
-                    <div className="font-bold text-sm text-theme-icon dark:text-theme-icon">{sprint.name}</div>
+                    <div className="text-[13.5px] font-semibold text-heading">{sprint.name}</div>
                     {canManageSprints && (
                       <AppButton variant="secondary" 
                         onClick={() => {
@@ -277,15 +285,17 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                           setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
                           setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
                         }} 
-                        className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-muted hover:theme-input-structural hover:text-theme-icon`}
-                        title="Edit Sprint"
+                        size="icon-sm"
+                        className="opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+                        title="Edit sprint"
+                        aria-label={`Edit ${sprint.name}`}
                       >
-                        <Edit2 className="h-3.5 w-3.5" />
+                        <Edit2 className="h-4 w-4" />
                       </AppButton>
                     )}
                   </div>
-                  <div className="text-[10px] text-muted mt-0.5">
-                    {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : '?'} - {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : '?'}
+                  <div className="mt-0.5 text-[12px] text-muted tabular">
+                    {formatDate(sprint.start_date, "No start date")} – {formatDate(sprint.end_date, "no end date")}
                   </div>
                 </>
               )}
@@ -298,25 +308,18 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                     key={t.id} 
                     draggable={draggable} 
                     onDragStart={(e) => handleDragStart(e, t.id)}
-                    className={`p-3 rounded-lg border-smooth ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} flex gap-2 theme-card-structural shadow-sm`}
+                    className={`${CARD} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
                   >
-                    {draggable && <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />}
+                    {draggable && <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-label="Drag to move" />}
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
-                      <AppBadge 
-                        variant={t.priority?.priority_color ? "custom" : "info"} 
-                        customColor={t.priority?.priority_color || null}
-                        isOutline={true}
-                        className="text-[10px] py-0 px-1.5 mt-1"
-                      >
-                        {t.priority?.priority_name || 'Standard'}
-                      </AppBadge>
+                      <div className="whitespace-normal break-words text-[13.5px] font-medium leading-snug text-foreground" title={t.title || t.subject}>{t.title || t.subject}</div>
+                      <div className="mt-1.5"><PriorityIndicator priority={t.priority?.priority_name || null} className="text-[12.5px] text-subtle" /></div>
                     </div>
                   </div>
                 );
               })}
               {filteredTasks.filter(t => t.sprint_id === sprint.id).length === 0 && (
-                <div className="p-4 text-center text-xs text-muted border border-dashed rounded-lg">Drag tasks here</div>
+                <div className={DROP_HINT}>Drag tasks here to plan them into this sprint</div>
               )}
             </div>
           </div>

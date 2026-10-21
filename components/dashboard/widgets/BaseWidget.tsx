@@ -39,7 +39,7 @@ export function BaseWidget({
       className={cn(
         "flex flex-col rounded-2xl theme-card-structural border border-border/70",
         "text-foreground transition-all duration-300 shadow-xs",
-        isCollapsed ? "!h-auto !min-h-0 overflow-hidden" : "h-full overflow-hidden hover:-translate-y-0.5 hover:shadow-md hover:border-border-active",
+        isCollapsed ? "!h-auto !min-h-0 overflow-hidden" : "h-full overflow-hidden hover:shadow-md hover:border-border-active",
         "group",
         className
       )}
@@ -58,11 +58,11 @@ export function BaseWidget({
           aria-expanded={!isCollapsed}
         >
           <div className="flex items-center gap-2.5 text-foreground/90 group-hover:text-foreground transition-colors min-w-0 flex-1">
-            {icon && <div className="text-theme-icon shrink-0 group-hover:scale-110 transition-transform duration-200">{icon}</div>}
+            {icon && <div className="text-theme-icon shrink-0 transition-transform duration-200">{icon}</div>}
             {title && (
               <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-xs sm:text-sm font-bold tracking-wide uppercase truncate">{title}</h3>
+                  <h3 className="text-xs sm:text-sm font-bold tracking-wide truncate">{title}</h3>
                   {badge}
                 </div>
                 {subtitle && <span className="text-[11px] text-muted font-normal tracking-normal truncate">{subtitle}</span>}
@@ -75,7 +75,7 @@ export function BaseWidget({
               <button
                 type="button"
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover transition-all bg-surface/40 border border-border/40 active:scale-95"
+                className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover transition-all bg-surface/40 border border-border/40"
                 title={isCollapsed ? "Maximize widget" : "Minimize widget"}
                 aria-label={isCollapsed ? "Maximize widget" : "Minimize widget"}
               >

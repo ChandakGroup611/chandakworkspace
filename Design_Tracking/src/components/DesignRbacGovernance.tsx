@@ -68,41 +68,41 @@ import { TransactionFormLayout } from "./DesignTransactionLayout";
 
 // Clean badge colors
 const ROLE_BADGE_COLORS = [
-  { id: "amber", label: "Amber", class: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
+  { id: "amber", label: "Amber", class: "bg-warning-soft text-warning-text border-warning-border" },
   { id: "indigo", label: "Indigo", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
-  { id: "blue", label: "Sky Blue", class: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
-  { id: "emerald", label: "Emerald", class: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
+  { id: "blue", label: "Sky Blue", class: "bg-info-soft text-info-text border-info-border" },
+  { id: "emerald", label: "Emerald", class: "bg-success-soft text-success-text border-success-border" },
   { id: "cyan", label: "Cyan", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
-  { id: "orange", label: "Orange", class: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30" },
+  { id: "orange", label: "Orange", class: "bg-warning-soft text-warning-text border-warning-border" },
   { id: "purple", label: "Purple", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
-  { id: "slate", label: "Slate", class: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/30" },
-  { id: "rose", label: "Rose", class: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" }
+  { id: "slate", label: "Slate", class: "bg-sunken text-subtle border-border" },
+  { id: "rose", label: "Rose", class: "bg-danger-soft text-danger-text border-danger-border" }
 ];
 
 const TICKET_SCOPE_OPTIONS: Array<{ value: DesignTicketAccessScope; label: string }> = [
-  { value: "ALL", label: "All Items (Global)" },
-  { value: "ASSIGNED_ONLY", label: "Assigned to Me / Consultant" },
-  { value: "CREATED_ONLY", label: "Created by Me Only" },
-  { value: "PROJECT_ONLY", label: "Project Scoped" },
+  { value: "ALL", label: "All items (global)" },
+  { value: "ASSIGNED_ONLY", label: "Assigned to me / consultant" },
+  { value: "CREATED_ONLY", label: "Created by me only" },
+  { value: "PROJECT_ONLY", label: "Project scoped" },
   { value: "DEPARTMENT_ONLY", label: "Department Scoped" },
-  { value: "NONE", label: "No Access" }
+  { value: "NONE", label: "No access" }
 ];
 
 type FunctionalModuleCode = Exclude<DesignRbacPolicy["module"], "ALL">;
 
 const MODULE_LIST: Array<{ code: FunctionalModuleCode; label: string; icon: any }> = [
-  { code: "BUILDING_MATRIX", label: "Building Section Matrix", icon: Building2 },
-  { code: "DESIGN_MATRIX", label: "Tender Matrix", icon: Layers },
-  { code: "DMS", label: "Enterprise DMS Folder Vault", icon: FolderTree },
+  { code: "BUILDING_MATRIX", label: "Building section matrix", icon: Building2 },
+  { code: "DESIGN_MATRIX", label: "Tender matrix", icon: Layers },
+  { code: "DMS", label: "Enterprise DMS folder vault", icon: FolderTree },
   { code: "LOOK_AHEAD", label: "Look-Ahead Forecast", icon: Sparkles },
   { code: "LIAISON", label: "Statutory Liaisoning", icon: ShieldCheck },
-  { code: "STAGES", label: "Design Stages Roadmap", icon: Calendar },
+  { code: "STAGES", label: "Design stages roadmap", icon: Calendar },
   { code: "DRAWINGS", label: "Drawing Register", icon: FileText },
-  { code: "TRANSMITTALS", label: "Transmittals & GFC Handover", icon: Send },
-  { code: "RFIS", label: "RFI & Site Queries (Tickets)", icon: HelpCircle },
+  { code: "TRANSMITTALS", label: "Transmittals & GFC handover", icon: Send },
+  { code: "RFIS", label: "RFI & site queries (tickets)", icon: HelpCircle },
   { code: "CONSULTANTS", label: "Consultant Directory", icon: Users },
-  { code: "REPORTS", label: "Design Reports & Analytics", icon: LineChart },
-  { code: "LEARNING", label: "Learning & Lifecycle Guide", icon: BookOpen },
+  { code: "REPORTS", label: "Design reports & analytics", icon: LineChart },
+  { code: "LEARNING", label: "Learning & lifecycle guide", icon: BookOpen },
   { code: "MASTERS", label: "Masters Setup", icon: Settings }
 ];
 
@@ -458,7 +458,7 @@ export const DesignRbacGovernance: React.FC = () => {
 
   const handleSaveRoleModal = async () => {
     if (!roleFormLabel.trim()) {
-      toast.error("Please enter a Role Name.");
+      toast.error("Please enter a role name.");
       return;
     }
     const cleanCode = roleFormCode.trim() || roleFormLabel.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
@@ -770,12 +770,12 @@ export const DesignRbacGovernance: React.FC = () => {
           {/* 1. Platform Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-accent-soft text-theme-icon flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
             <Key className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              Design & Tracking RBAC Governance
+              Design & tracking RBAC governance
             </h1>
           </div>
         </div>
@@ -785,7 +785,7 @@ export const DesignRbacGovernance: React.FC = () => {
             type="button"
             onClick={loadWorkspaceUsers}
             disabled={isLoading}
-            className="px-3 py-2 text-xs font-semibold text-foreground bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 border border-border rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-2 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin text-theme-icon" : ""}`} />
             <span>Sync</span>
@@ -794,10 +794,10 @@ export const DesignRbacGovernance: React.FC = () => {
           <button
             type="button"
             onClick={handleOpenCreateRole}
-            className="px-4 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            className="px-4 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            <span>Create Role</span>
+            <span>Create role</span>
           </button>
         </div>
       </div>
@@ -806,14 +806,14 @@ export const DesignRbacGovernance: React.FC = () => {
       {feedbackMessage && (
         <div className={`p-3.5 rounded-xl border flex items-center justify-between text-xs animate-in slide-in-from-top-2 duration-200 ${
           feedbackMessage.type === "success" 
-            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
-            : "bg-rose-500/10 border-rose-500/30 text-rose-800 dark:text-rose-300"
+            ? "bg-success-soft border-success-border text-success-text"
+            : "bg-danger-soft border-danger-border text-danger-text"
         }`}>
           <div className="flex items-center gap-2">
-            {feedbackMessage.type === "success" ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <AlertCircle className="h-4 w-4 text-rose-600" />}
+            {feedbackMessage.type === "success" ? <CheckCircle2 className="h-4 w-4 text-success-text" /> : <AlertCircle className="h-4 w-4 text-danger-text" />}
             <span className="font-semibold">{feedbackMessage.text}</span>
           </div>
-          <button type="button" onClick={() => setFeedbackMessage(null)} className="hover:opacity-75 p-1">
+          <button aria-label="Close" type="button" onClick={() => setFeedbackMessage(null)} className="hover:opacity-75 p-1">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -826,13 +826,13 @@ export const DesignRbacGovernance: React.FC = () => {
           onClick={() => setActiveTab("ROLES_BUILDER")}
           className={`py-2.5 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "ROLES_BUILDER"
-              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/10 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
           <Shield className="h-4 w-4" />
-          <span>Roles & Permissions</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface text-muted font-bold">
+          <span>Roles & permissions</span>
+          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface text-muted font-bold">
             {allRoles.length}
           </span>
         </button>
@@ -842,13 +842,13 @@ export const DesignRbacGovernance: React.FC = () => {
           onClick={() => setActiveTab("PERSONNEL")}
           className={`py-2.5 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "PERSONNEL"
-              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/10 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
           <Users className="h-4 w-4" />
-          <span>Personnel Directory</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface text-muted font-bold">
+          <span>Personnel directory</span>
+          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface text-muted font-bold">
             {filteredUsers.length}
           </span>
         </button>
@@ -858,12 +858,12 @@ export const DesignRbacGovernance: React.FC = () => {
           onClick={() => setActiveTab("POLICY_MATRIX")}
           className={`py-2.5 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "POLICY_MATRIX"
-              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/10 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
           <ShieldCheck className="h-4 w-4" />
-          <span>Policy Matrix</span>
+          <span>Policy matrix</span>
         </button>
 
         <button
@@ -871,12 +871,12 @@ export const DesignRbacGovernance: React.FC = () => {
           onClick={() => setActiveTab("SIMULATOR")}
           className={`py-2.5 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "SIMULATOR"
-              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/10 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
           <Play className="h-4 w-4" />
-          <span>Permission Tester</span>
+          <span>Permission tester</span>
         </button>
       </div>
 
@@ -888,13 +888,13 @@ export const DesignRbacGovernance: React.FC = () => {
           {/* Left: Roles List */}
           <div className="lg:col-span-4 space-y-2">
             <div className="flex items-center justify-between px-1 mb-2">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider">Defined Roles</span>
+              <span className="text-xs font-bold text-muted">Defined roles</span>
               <button
                 type="button"
                 onClick={handleOpenCreateRole}
                 className="text-xs font-bold text-theme-icon hover:underline flex items-center gap-1"
               >
-                <Plus className="h-3.5 w-3.5" /> New Role
+                <Plus className="h-3.5 w-3.5" /> New role
               </button>
             </div>
 
@@ -909,7 +909,7 @@ export const DesignRbacGovernance: React.FC = () => {
                     onClick={() => setSelectedBuilderRoleCode(role.code)}
                     className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? "bg-theme-btn-primary/10 border-theme-btn-primary/40 ring-1 ring-theme-btn-primary/30 shadow-xs"
+                        ? "bg-accent-soft border-theme-btn-primary/40 ring-1 ring-theme-btn-primary/30 shadow-xs"
                         : "bg-surface border-border/80 hover:border-border hover:bg-surface/80"
                     }`}
                   >
@@ -917,11 +917,11 @@ export const DesignRbacGovernance: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-foreground truncate">{role.label}</span>
                         {role.isSystem ? (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
+                          <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-sunken text-subtle border border-border">
                             System
                           </span>
                         ) : (
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${role.badgeColor || "bg-surface text-theme-icon"}`}>
+                          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded border ${role.badgeColor || "bg-surface text-theme-icon"}`}>
                             Custom
                           </span>
                         )}
@@ -961,7 +961,7 @@ export const DesignRbacGovernance: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleOpenCloneRole(currentBuilderRole)}
-                      className="px-3 py-1.5 text-xs font-semibold text-foreground bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 border border-border rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                      className="px-3 py-1.5 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-xl transition-all flex items-center gap-1 cursor-pointer"
                       title="Clone role into a new custom role"
                     >
                       <Copy className="h-3.5 w-3.5 text-theme-icon" />
@@ -971,17 +971,17 @@ export const DesignRbacGovernance: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleOpenEditRole(currentBuilderRole)}
-                      className="px-3 py-1.5 text-xs font-semibold text-foreground bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 border border-border rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                      className="px-3 py-1.5 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-xl transition-all flex items-center gap-1 cursor-pointer"
                     >
-                      <Edit3 className="h-3.5 w-3.5 text-amber-500" />
+                      <Edit3 className="h-3.5 w-3.5 text-warning-text" />
                       <span>Edit</span>
                     </button>
 
                     {!currentBuilderRole.isSystem && (
-                      <button
+                      <button aria-label="Delete custom role"
                         type="button"
                         onClick={() => setRoleToDelete(currentBuilderRole)}
-                        className="p-1.5 text-xs text-danger hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer"
+                        className="p-1.5 text-xs text-danger hover:bg-danger-soft rounded-xl transition-all cursor-pointer"
                         title="Delete custom role"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -992,11 +992,11 @@ export const DesignRbacGovernance: React.FC = () => {
 
                 {/* Module Permissions Matrix */}
                 <div className="space-y-2.5">
-                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">Module Permissions & Ticket Scopes</span>
+                  <span className="text-xs font-bold text-foreground">Module permissions & ticket scopes</span>
                   <div className="border border-border/80 rounded-xl overflow-hidden">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border/80 text-[11px] font-bold text-muted uppercase">
+                        <tr className="bg-sunken border-b border-border/80 text-[11px] font-bold text-muted">
                           <th className="py-2.5 px-3">Module</th>
                           <th className="py-2.5 px-2 text-center">View</th>
                           <th className="py-2.5 px-2 text-center">Create</th>
@@ -1004,7 +1004,7 @@ export const DesignRbacGovernance: React.FC = () => {
                           <th className="py-2.5 px-2 text-center">Delete</th>
                           <th className="py-2.5 px-2 text-center">Approve</th>
                           <th className="py-2.5 px-2 text-center">Export</th>
-                          <th className="py-2.5 px-3">Ticket Scope</th>
+                          <th className="py-2.5 px-3">Ticket scope</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/60">
@@ -1019,22 +1019,22 @@ export const DesignRbacGovernance: React.FC = () => {
                           const tScope = pol?.ticketAccessScope || currentBuilderRole.ticketAccessScope || "ALL";
 
                           return (
-                            <tr key={m.code} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                            <tr key={m.code} className="hover:bg-sunken">
                               <td className="py-2.5 px-3 font-semibold text-foreground flex items-center gap-2">
                                 <m.icon className="h-3.5 w-3.5 text-muted" />
                                 <span>{m.label}</span>
                               </td>
-                              <td className="py-2.5 px-2 text-center">{canR ? <Check className="h-3.5 w-3.5 text-emerald-500 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
-                              <td className="py-2.5 px-2 text-center">{canC ? <Check className="h-3.5 w-3.5 text-emerald-500 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
-                              <td className="py-2.5 px-2 text-center">{canU ? <Check className="h-3.5 w-3.5 text-emerald-500 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
-                              <td className="py-2.5 px-2 text-center">{canD ? <Check className="h-3.5 w-3.5 text-emerald-500 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
-                              <td className="py-2.5 px-2 text-center">{canA ? <Check className="h-3.5 w-3.5 text-emerald-500 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
-                              <td className="py-2.5 px-2 text-center">{canE ? <Check className="h-3.5 w-3.5 text-emerald-500 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
+                              <td className="py-2.5 px-2 text-center">{canR ? <Check className="h-3.5 w-3.5 text-success-text mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
+                              <td className="py-2.5 px-2 text-center">{canC ? <Check className="h-3.5 w-3.5 text-success-text mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
+                              <td className="py-2.5 px-2 text-center">{canU ? <Check className="h-3.5 w-3.5 text-success-text mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
+                              <td className="py-2.5 px-2 text-center">{canD ? <Check className="h-3.5 w-3.5 text-success-text mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
+                              <td className="py-2.5 px-2 text-center">{canA ? <Check className="h-3.5 w-3.5 text-success-text mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
+                              <td className="py-2.5 px-2 text-center">{canE ? <Check className="h-3.5 w-3.5 text-success-text mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
                               <td className="py-2.5 px-3">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                                  tScope === "ALL" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
-                                  tScope === "ASSIGNED_ONLY" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" :
-                                  tScope === "NONE" ? "bg-rose-500/10 text-danger" :
+                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                                  tScope === "ALL" ? "bg-info-soft text-info-text" :
+                                  tScope === "ASSIGNED_ONLY" ? "bg-warning-soft text-warning-text" :
+                                  tScope === "NONE" ? "bg-danger-soft text-danger" :
                                   "bg-surface text-theme-icon"
                                 }`}>
                                   {TICKET_SCOPE_OPTIONS.find(o => o.value === tScope)?.label || tScope}
@@ -1051,8 +1051,8 @@ export const DesignRbacGovernance: React.FC = () => {
                 {/* Assigned Users List */}
                 <div className="space-y-2 pt-2 border-t border-border/80">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground uppercase tracking-wider">
-                      Assigned Personnel ({mergedUsers.filter(u => u.designAccess?.designRole === currentBuilderRole.code).length})
+                    <span className="text-xs font-bold text-foreground">
+                      Assigned personnel ({mergedUsers.filter(u => u.designAccess?.designRole === currentBuilderRole.code).length})
                     </span>
                   </div>
 
@@ -1063,7 +1063,7 @@ export const DesignRbacGovernance: React.FC = () => {
                       mergedUsers.filter(u => u.designAccess?.designRole === currentBuilderRole.code).map(u => (
                         <div key={u.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border text-xs font-semibold">
                           <span className="text-foreground">{u.fullName}</span>
-                          <span className="text-[10px] text-muted font-normal">({u.designAccess?.projectAccessType === "SPECIFIC" ? "Specific Projects" : "Global"})</span>
+                          <span className="text-[11px] text-muted font-normal">({u.designAccess?.projectAccessType === "SPECIFIC" ? "Specific Projects" : "Global"})</span>
                         </div>
                       ))
                     )}
@@ -1085,13 +1085,13 @@ export const DesignRbacGovernance: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search personnel by name, email, department..."
+                placeholder="Search personnel by name, email, department…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-8 py-2 text-xs bg-background border border-border rounded-xl focus:outline-none text-foreground"
               />
               {searchQuery && (
-                <button type="button" onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
+                <button aria-label="Close" type="button" onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
@@ -1103,7 +1103,7 @@ export const DesignRbacGovernance: React.FC = () => {
                 onChange={(e) => setRoleFilter(e.target.value)}
                 className="text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none cursor-pointer"
               >
-                <option value="ALL">All Roles</option>
+                <option value="ALL">All roles</option>
                 {allRoles.map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
               </select>
 
@@ -1112,9 +1112,9 @@ export const DesignRbacGovernance: React.FC = () => {
                 onChange={(e) => setScopeFilter(e.target.value)}
                 className="text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none cursor-pointer"
               >
-                <option value="ALL">All Scopes</option>
+                <option value="ALL">All scopes</option>
                 <option value="GLOBAL">Global</option>
-                <option value="SPECIFIC">Specific Projects</option>
+                <option value="SPECIFIC">Specific projects</option>
               </select>
             </div>
           </div>
@@ -1122,11 +1122,11 @@ export const DesignRbacGovernance: React.FC = () => {
           <div className="bg-surface border border-border/80 rounded-2xl shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs border-collapse min-w-[700px]">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border/80 text-[11px] font-bold text-muted uppercase">
+                <tr className="bg-sunken border-b border-border/80 text-[11px] font-bold text-muted">
                   <th className="py-3 px-4">Personnel</th>
                   <th className="py-3 px-3">Role</th>
-                  <th className="py-3 px-3">Project Scope</th>
-                  <th className="py-3 px-3">Module Access</th>
+                  <th className="py-3 px-3">Project scope</th>
+                  <th className="py-3 px-3">Module access</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -1142,14 +1142,14 @@ export const DesignRbacGovernance: React.FC = () => {
                     const isToggling = togglingUserId === user.id;
 
                     return (
-                      <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                      <tr key={user.id} className="hover:bg-sunken">
                         <td className="py-3 px-4">
                           <div className="font-bold text-foreground">{user.fullName}</div>
                           <div className="text-[11px] text-muted">{user.email}</div>
                         </td>
                         <td className="py-3 px-3">
                           {roleMeta ? (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${roleMeta.badgeColor || "bg-surface text-theme-icon"}`}>
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${roleMeta.badgeColor || "bg-surface text-theme-icon"}`}>
                               {roleMeta.label}
                             </span>
                           ) : (
@@ -1158,7 +1158,7 @@ export const DesignRbacGovernance: React.FC = () => {
                         </td>
                         <td className="py-3 px-3">
                           {access?.projectAccessType === "SPECIFIC" ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border">
                               <Building2 className="h-3 w-3 shrink-0" />
                               <span className="max-w-[180px] truncate" title={access.assignedProjectIds?.map(pid => projectMap.get(pid)?.name || pid).join(", ") || ""}>
                                 {access.assignedProjectIds && access.assignedProjectIds.length > 0
@@ -1167,7 +1167,7 @@ export const DesignRbacGovernance: React.FC = () => {
                               </span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-success-soft text-success-text border border-success-border">
                               <ShieldCheck className="h-3 w-3 shrink-0" />
                               <span>Global (All Projects)</span>
                             </span>
@@ -1180,8 +1180,8 @@ export const DesignRbacGovernance: React.FC = () => {
                             disabled={isToggling}
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
                               user.hasModuleAccess
-                                ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 hover:bg-rose-500/10 hover:text-danger"
-                                : "bg-slate-500/10 text-muted border border-slate-500/20 hover:bg-emerald-500/10 hover:text-emerald-600"
+                                ? "bg-success-soft text-success-text border border-success-border hover:bg-danger-soft hover:text-danger"
+                                : "bg-sunken text-muted border border-border hover:bg-success-soft hover:text-success-text"
                             }`}
                           >
                             {user.hasModuleAccess ? "Enabled" : "Disabled"}
@@ -1191,7 +1191,7 @@ export const DesignRbacGovernance: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleOpenDrawer(user)}
-                            className="px-3 py-1 text-xs font-semibold text-foreground bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 border border-border rounded-lg transition-all"
+                            className="px-3 py-1 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-lg transition-all"
                           >
                             Configure
                           </button>
@@ -1251,7 +1251,7 @@ export const DesignRbacGovernance: React.FC = () => {
           <div className="bg-surface border border-border/80 rounded-2xl shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border/80 text-[11px] font-bold text-muted uppercase">
+                <tr className="bg-sunken border-b border-border/80 text-[11px] font-bold text-muted">
                   <th className="py-3 px-4">Module</th>
                   <th className="py-3 px-3 text-center">View</th>
                   <th className="py-3 px-3 text-center">Create</th>
@@ -1259,14 +1259,14 @@ export const DesignRbacGovernance: React.FC = () => {
                   <th className="py-3 px-3 text-center">Delete</th>
                   <th className="py-3 px-3 text-center">Approve</th>
                   <th className="py-3 px-3 text-center">Export</th>
-                  <th className="py-3 px-4">Ticket Access Scope</th>
+                  <th className="py-3 px-4">Ticket access scope</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
                 {MODULE_LIST.map(m => {
                   const pol = getPolicy(m.code);
                   return (
-                    <tr key={m.code} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                    <tr key={m.code} className="hover:bg-sunken">
                       <td className="py-3 px-4 font-semibold text-foreground flex items-center gap-2">
                         <m.icon className="h-4 w-4 text-muted" />
                         <span>{m.label}</span>
@@ -1314,7 +1314,7 @@ export const DesignRbacGovernance: React.FC = () => {
         <div className="bg-surface border border-border/80 rounded-2xl p-5 shadow-xs space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted">Test User</label>
+              <label className="text-xs font-bold text-muted">Test user</label>
               <select
                 value={simUserId}
                 onChange={(e) => setSimUserId(e.target.value)}
@@ -1325,7 +1325,7 @@ export const DesignRbacGovernance: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted">Target Project</label>
+              <label className="text-xs font-bold text-muted">Target project</label>
               <select
                 value={simProjectId}
                 onChange={(e) => setSimProjectId(e.target.value)}
@@ -1337,7 +1337,7 @@ export const DesignRbacGovernance: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted">Target Module</label>
+              <label className="text-xs font-bold text-muted">Target module</label>
               <select
                 value={simModule}
                 onChange={(e) => setSimModule(e.target.value as any)}
@@ -1351,11 +1351,11 @@ export const DesignRbacGovernance: React.FC = () => {
           <div className="flex items-center gap-4 pt-2">
             <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
               <input type="checkbox" checked={simIsAssignee} onChange={e => setSimIsAssignee(e.target.checked)} className="rounded text-theme-icon" />
-              <span>Simulate User as Ticket Assignee</span>
+              <span>Simulate user as ticket assignee</span>
             </label>
             <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
               <input type="checkbox" checked={simIsCreator} onChange={e => setSimIsCreator(e.target.checked)} className="rounded text-theme-icon" />
-              <span>Simulate User as Ticket Creator</span>
+              <span>Simulate user as ticket creator</span>
             </label>
           </div>
         </div>
@@ -1370,14 +1370,14 @@ export const DesignRbacGovernance: React.FC = () => {
       {/* ALL-IN-ONE CREATE / EDIT ROLE TRANSACTION FORM LAYOUT */}
       {isRoleModalOpen && (
         <TransactionFormLayout
-          title={modalMode === "CREATE" ? "Create New Design Role" : modalMode === "CLONE" ? "Clone Design Role" : `Edit Role: ${roleFormLabel}`}
+          title={modalMode === "CREATE" ? "Create new design role" : modalMode === "CLONE" ? "Clone Design Role" : `Edit Role: ${roleFormLabel}`}
           icon={Shield}
           description="Configure enterprise permissions, ticket lifecycle authority, and assign user rosters"
           onBack={() => setIsRoleModalOpen(false)}
           backLabel="Back to RBAC Matrix"
           breadcrumbs={[
             { label: "Design Tracking", onClick: () => setIsRoleModalOpen(false) },
-            { label: "RBAC Governance", onClick: () => setIsRoleModalOpen(false) },
+            { label: "RBAC governance", onClick: () => setIsRoleModalOpen(false) },
             { label: modalMode === "CREATE" ? "Create Role" : roleFormLabel }
           ]}
           onSave={handleSaveRoleModal}
@@ -1394,10 +1394,10 @@ export const DesignRbacGovernance: React.FC = () => {
               {/* 1. Basic Info */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1 sm:col-span-1">
-                  <label className="text-xs font-bold text-foreground">Role Name *</label>
+                  <label className="text-xs font-bold text-foreground">Role name *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Façade Consultant"
+                    placeholder="e.g. Façade consultant"
                     value={roleFormLabel}
                     onChange={(e) => {
                       setRoleFormLabel(e.target.value);
@@ -1410,7 +1410,7 @@ export const DesignRbacGovernance: React.FC = () => {
                 </div>
 
                 <div className="space-y-1 sm:col-span-1">
-                  <label className="text-xs font-bold text-foreground">Role Code *</label>
+                  <label className="text-xs font-bold text-foreground">Role code *</label>
                   <input
                     type="text"
                     placeholder="e.g. FACADE_CONSULTANT"
@@ -1425,7 +1425,7 @@ export const DesignRbacGovernance: React.FC = () => {
                   <label className="text-xs font-bold text-foreground">Description</label>
                   <input
                     type="text"
-                    placeholder="Brief description..."
+                    placeholder="Brief description…"
                     value={roleFormDesc}
                     onChange={(e) => setRoleFormDesc(e.target.value)}
                     className="w-full text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none"
@@ -1435,14 +1435,14 @@ export const DesignRbacGovernance: React.FC = () => {
 
               {/* Badge Theme */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Badge Theme</label>
+                <label className="text-xs font-bold text-foreground">Badge theme</label>
                 <div className="flex flex-wrap gap-1.5">
                   {ROLE_BADGE_COLORS.map(c => (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => setRoleFormBadgeColor(c.class)}
-                      className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-all ${c.class} ${roleFormBadgeColor === c.class ? "ring-2 ring-theme-btn-primary" : "opacity-75"}`}
+                      className={`text-[11px] font-bold px-2 py-1 rounded-md border transition-all ${c.class} ${roleFormBadgeColor === c.class ? "ring-2 ring-theme-btn-primary" : "opacity-75"}`}
                     >
                       {c.label}
                     </button>
@@ -1453,20 +1453,20 @@ export const DesignRbacGovernance: React.FC = () => {
               {/* 2. Module Permissions & Ticket Scopes */}
               <div className="space-y-2.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">Module Permissions & Ticket Scopes</span>
+                  <span className="text-xs font-bold text-foreground">Module permissions & ticket scopes</span>
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-bold text-muted mr-1">Presets:</span>
-                    <button type="button" onClick={() => handleApplyPreset("READ_ONLY")} className="text-[10px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-slate-100 dark:hover:bg-slate-800">
-                      Read Only
+                    <span className="text-[11px] font-bold text-muted mr-1">Presets:</span>
+                    <button type="button" onClick={() => handleApplyPreset("READ_ONLY")} className="text-[11px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
+                      Read only
                     </button>
-                    <button type="button" onClick={() => handleApplyPreset("FULL_ACCESS")} className="text-[10px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-slate-100 dark:hover:bg-slate-800">
-                      Full Access
+                    <button type="button" onClick={() => handleApplyPreset("FULL_ACCESS")} className="text-[11px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
+                      Full access
                     </button>
-                    <button type="button" onClick={() => handleApplyPreset("CONSULTANT")} className="text-[10px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <button type="button" onClick={() => handleApplyPreset("CONSULTANT")} className="text-[11px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
                       Consultant
                     </button>
-                    <button type="button" onClick={() => handleApplyPreset("SITE_ENGINEER")} className="text-[10px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-slate-100 dark:hover:bg-slate-800">
-                      Site Engineer
+                    <button type="button" onClick={() => handleApplyPreset("SITE_ENGINEER")} className="text-[11px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
+                      Site engineer
                     </button>
                   </div>
                 </div>
@@ -1474,7 +1474,7 @@ export const DesignRbacGovernance: React.FC = () => {
                 <div className="border border-border/80 rounded-xl overflow-hidden">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border/80 text-[11px] font-bold text-muted uppercase">
+                      <tr className="bg-sunken border-b border-border/80 text-[11px] font-bold text-muted">
                         <th className="py-2.5 px-3">Module</th>
                         <th className="py-2.5 px-2 text-center">View</th>
                         <th className="py-2.5 px-2 text-center">Create</th>
@@ -1482,7 +1482,7 @@ export const DesignRbacGovernance: React.FC = () => {
                         <th className="py-2.5 px-2 text-center">Delete</th>
                         <th className="py-2.5 px-2 text-center">Approve</th>
                         <th className="py-2.5 px-2 text-center">Export</th>
-                        <th className="py-2.5 px-3">Ticket / Item Scope</th>
+                        <th className="py-2.5 px-3">Ticket / item scope</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
@@ -1496,7 +1496,7 @@ export const DesignRbacGovernance: React.FC = () => {
                         };
 
                         return (
-                          <tr key={m.code} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                          <tr key={m.code} className="hover:bg-sunken">
                             <td className="py-2.5 px-3 font-semibold text-foreground flex items-center gap-2">
                               <m.icon className="h-3.5 w-3.5 text-muted" />
                               <span>{m.label}</span>
@@ -1538,7 +1538,7 @@ export const DesignRbacGovernance: React.FC = () => {
 
               {/* 3. Project Governance Scope */}
               <div className="space-y-2.5 pt-2 border-t border-border/80">
-                <span className="text-xs font-bold text-foreground uppercase tracking-wider">Project Access Scope</span>
+                <span className="text-xs font-bold text-foreground">Project access scope</span>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
                     <input
@@ -1548,7 +1548,7 @@ export const DesignRbacGovernance: React.FC = () => {
                       onChange={() => setRoleFormProjectType("ALL")}
                       className="text-theme-icon"
                     />
-                    <span>All Projects (Global)</span>
+                    <span>All projects (global)</span>
                   </label>
                   <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
                     <input
@@ -1558,7 +1558,7 @@ export const DesignRbacGovernance: React.FC = () => {
                       onChange={() => setRoleFormProjectType("SPECIFIC")}
                       className="text-theme-icon"
                     />
-                    <span>Specific Projects</span>
+                    <span>Specific projects</span>
                   </label>
                 </div>
 
@@ -1567,16 +1567,16 @@ export const DesignRbacGovernance: React.FC = () => {
                     <div className="flex items-center justify-between gap-2">
                       <input
                         type="text"
-                        placeholder="Search projects..."
+                        placeholder="Search projects…"
                         value={roleFormProjectSearch}
                         onChange={e => setRoleFormProjectSearch(e.target.value)}
                         className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1 text-foreground flex-1 focus:outline-none"
                       />
                       <div className="flex items-center gap-1.5">
-                        <button type="button" onClick={() => setRoleFormProjectIds(projects.map(p => p.id))} className="text-[10px] font-bold text-theme-icon hover:underline">
-                          Select All
+                        <button type="button" onClick={() => setRoleFormProjectIds(projects.map(p => p.id))} className="text-[11px] font-bold text-theme-icon hover:underline">
+                          Select all
                         </button>
-                        <button type="button" onClick={() => setRoleFormProjectIds([])} className="text-[10px] font-bold text-muted hover:underline">
+                        <button type="button" onClick={() => setRoleFormProjectIds([])} className="text-[11px] font-bold text-muted hover:underline">
                           Clear
                         </button>
                       </div>
@@ -1608,10 +1608,10 @@ export const DesignRbacGovernance: React.FC = () => {
 
               {/* 4. Assign Personnel (Optional) */}
               <div className="space-y-2.5 pt-2 border-t border-border/80">
-                <span className="text-xs font-bold text-foreground uppercase tracking-wider">Assign Users to this Role</span>
+                <span className="text-xs font-bold text-foreground">Assign users to this role</span>
                 <input
                   type="text"
-                  placeholder="Search users..."
+                  placeholder="Search users…"
                   value={roleFormUserSearch}
                   onChange={e => setRoleFormUserSearch(e.target.value)}
                   className="text-xs bg-background border border-border rounded-lg px-2.5 py-1.5 text-foreground w-full focus:outline-none"
@@ -1633,7 +1633,7 @@ export const DesignRbacGovernance: React.FC = () => {
                             className="rounded text-theme-icon h-3.5 w-3.5"
                           />
                           <span className="font-semibold text-foreground truncate">{u.fullName}</span>
-                          <span className="text-[10px] text-muted truncate">({u.email})</span>
+                          <span className="text-[11px] text-muted truncate">({u.email})</span>
                         </label>
                       );
                     })}
@@ -1645,7 +1645,7 @@ export const DesignRbacGovernance: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsRoleModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-border cursor-pointer transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-sunken rounded-xl border border-border cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1673,7 +1673,7 @@ export const DesignRbacGovernance: React.FC = () => {
           backLabel="Back to User Governance"
           breadcrumbs={[
             { label: "Design Tracking", onClick: () => setIsDrawerOpen(false) },
-            { label: "User Governance", onClick: () => setIsDrawerOpen(false) },
+            { label: "User governance", onClick: () => setIsDrawerOpen(false) },
             { label: selectedDrawerUser?.fullName || "Configure Access" }
           ]}
           onSave={handleSaveDrawerAccess}
@@ -1705,7 +1705,7 @@ export const DesignRbacGovernance: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Ticket Scope</label>
+                <label className="font-bold text-foreground">Ticket scope</label>
                 <select
                   value={drawerTicketScope}
                   onChange={(e) => setDrawerTicketScope(e.target.value as DesignTicketAccessScope)}
@@ -1716,7 +1716,7 @@ export const DesignRbacGovernance: React.FC = () => {
               </div>
 
               <div className="space-y-2 pt-2 border-t border-border">
-                <span className="font-bold text-foreground">Project Scope</span>
+                <span className="font-bold text-foreground">Project scope</span>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input type="radio" name="drProj" checked={drawerProjectAccessType === "ALL"} onChange={() => setDrawerProjectAccessType("ALL")} />
@@ -1752,7 +1752,7 @@ export const DesignRbacGovernance: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-border cursor-pointer transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-sunken rounded-xl border border-border cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1771,13 +1771,13 @@ export const DesignRbacGovernance: React.FC = () => {
 
       {/* Delete Confirmation */}
       {roleToDelete && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-rose-500/30 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-            <h3 className="text-sm font-bold text-foreground">Delete Custom Role?</h3>
+        <div className="fixed inset-0 z-50 bg-[var(--overlay)] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-danger-border rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-lg">
+            <h3 className="text-sm font-bold text-foreground">Delete custom role?</h3>
             <p className="text-xs text-muted">This will remove '{roleToDelete.label}' ({roleToDelete.code}) and its policies.</p>
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
               <button type="button" onClick={() => setRoleToDelete(null)} className="px-4 py-2 text-xs font-semibold rounded-xl">Cancel</button>
-              <button type="button" onClick={handleConfirmDeleteRole} className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl">Confirm Delete</button>
+              <button type="button" onClick={handleConfirmDeleteRole} className="px-4 py-2 text-xs font-bold text-white bg-danger-solid hover:bg-danger-solid rounded-xl">Confirm delete</button>
             </div>
           </div>
         </div>

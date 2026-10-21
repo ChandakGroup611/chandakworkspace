@@ -7,6 +7,7 @@ import { Activity, Clock, CheckSquare, Edit, MessageSquare, AlertCircle } from "
 import { createClient } from "@/utils/supabase/client";
 
 import SafeHtml from "@/components/ui/SafeHtml";
+import { formatDateTime } from "@/components/ui/data";
 
 export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const { isLight: isLightMode } = useTheme();
@@ -91,16 +92,16 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
     <AppCard className={`p-5 space-y-4 border-smooth theme-card-structural shadow-sm`}>
       <div className="flex items-center gap-2 border-b pb-3 mb-4 border-border dark:border-border">
         <Clock className={`h-4 w-4 text-theme-icon`} />
-        <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity Timeline</h3>
+        <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity timeline</h3>
       </div>
 
       {loading ? (
-        <div className="py-8 text-center text-xs text-muted animate-pulse">Loading timeline...</div>
+        <div className="py-8 text-center text-xs text-muted animate-pulse">Loading timeline…</div>
       ) : (
         <div className="relative border-l border-border dark:border-border ml-3 space-y-6">
           {logs.map((log, idx) => (
             <div key={log.id || idx} className="relative pl-6 animate-in fade-in slide-in-from-bottom-2">
-              <span className={`absolute -left-3.5 top-0.5 h-7 w-7 rounded-full border-4 flex items-center justify-center ${ "theme-card-structural border-white shadow-[var(--shadow-ambient)]" }`}>
+              <span className={`absolute -left-3.5 top-0.5 h-7 w-7 rounded-full border-4 flex items-center justify-center ${ "theme-card-structural border-border shadow-sm" }`}>
                 {getActionIcon(log.action)}
               </span>
               <div className={`p-3 rounded-xl border ${
@@ -117,7 +118,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
                   </div>
                 )}
                 <span className="text-xs text-muted font-mono mt-1 block">
-                  {new Date(log.created_at).toLocaleString()}
+                  {formatDateTime(log.created_at)}
                 </span>
               </div>
             </div>

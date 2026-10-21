@@ -29,7 +29,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error("Authentication error: Please log in again.");
+        toast.error("Authentication error: please log in again.");
         return;
       }
       try {
@@ -77,7 +77,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               onClick={() => setActiveTab("details")}
             >
               <ListTodo className="w-4 h-4 mr-2" />
-              Execution Details
+              Execution details
             </AppButton>
             <AppButton
               type="button"
@@ -85,25 +85,25 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               onClick={() => setActiveTab("collaboration")}
             >
               <MessageSquare className="w-4 h-4 mr-2" />
-              Collaboration Chat
+              Collaboration chat
             </AppButton>
           </div>
 
           {activeTab === "details" && (
             <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
               <section className="bg-surface rounded-2xl p-6 border border-border">
-                <h3 className="theme-label text-theme-icon mb-3">Business Justification</h3>
+                <h3 className="theme-label text-theme-icon mb-3">Business justification</h3>
                 <div className="theme-data-value text-muted leading-relaxed">
                   <SafeHtml html={requirement.business_justification} />
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="theme-label text-foreground mb-1">Functional Scope</h3>
+                <h3 className="theme-label text-foreground mb-1">Functional scope</h3>
                 <div className="theme-data-value text-muted leading-relaxed bg-surface rounded-xl p-4 border border-border mb-4">
                   {requirement.functional_scope || requirement.custom_fields?.functional_scope || 'Functional breakdown of the requirement.'}
                 </div>
-                <h3 className="theme-label text-foreground">Technical Description & Scope</h3>
+                <h3 className="theme-label text-foreground">Technical description & scope</h3>
                 <div className="theme-data-value text-muted leading-relaxed bg-surface rounded-xl p-4 border border-border">
                   <SafeHtml html={requirement.description} />
                 </div>
@@ -112,14 +112,14 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               {/* UAT Block (Conditionally visible based on status and permissions) */}
               {requirement.status?.status_name === 'UAT' && (
                 <section className="bg-warning-soft rounded-2xl p-6 border border-warning/30">
-                  <h3 className="theme-label text-warning mb-2">User Acceptance Testing (UAT)</h3>
+                  <h3 className="theme-label text-warning mb-2">User acceptance testing (UAT)</h3>
                   
                   
                   {canPerformUAT ? (
                     <>
                       <textarea 
                         className="w-full bg-surface border border-border rounded-xl p-3 text-sm text-foreground mb-4 focus:outline-none focus:border-theme-btn-primary resize-none"
-                        placeholder="Enter UAT feedback or remarks..."
+                        placeholder="Enter UAT feedback or remarks…"
                         rows={3}
                         value={uatComment}
                         onChange={e => setUatComment(e.target.value)}
@@ -132,7 +132,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                           disabled={isPending}
                           className="bg-success hover:bg-success text-primary-foreground font-semibold border-none"
                         >
-                          Approve & Close
+                          Approve & close
                         </AppButton>
                         <AppButton 
                           type="button"
@@ -140,7 +140,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                           disabled={isPending}
                           variant="destructive"
                         >
-                          Fail & Reopen
+                          Fail & reopen
                         </AppButton>
                       </div>
                     </>
@@ -159,7 +159,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               {/* Realtime Chat Engine */}
               <section className="h-[500px] flex flex-col border border-border rounded-2xl overflow-hidden">
                 <div className="bg-surface p-4 border-b border-border">
-                  <h3 className="theme-label text-foreground">Execution Collaboration</h3>
+                  <h3 className="theme-label text-foreground">Execution collaboration</h3>
                 </div>
                 <div className="flex-1 bg-surface">
                   <RealtimeChat recordId={requirement.id} moduleType="REQUIREMENT" />
@@ -173,9 +173,9 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
         {/* Sidebar Metadata */}
         <div className="col-span-1 space-y-3">
           <div className="flex flex-col p-3 rounded-lg bg-surface border border-border shadow-sm">
-            <span className="theme-label text-muted mb-1">Business Analyst</span>
+            <span className="theme-label text-muted mb-1">Business analyst</span>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold text-theme-icon border border-theme-btn-primary/50">
+              <div className="w-6 h-6 rounded-full bg-accent-soft flex items-center justify-center text-[11px] font-bold text-theme-icon border border-theme-btn-primary/50">
                 {requirement.analyst?.full_name?.charAt(0) || '?'}
               </div>
               <span className="theme-data-value text-sm font-semibold text-foreground truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
@@ -225,7 +225,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                             {fileName}
                           </p>
                           {att.file_size ? (
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground">
                               {(att.file_size / 1024).toFixed(1)} KB
                             </p>
                           ) : null}

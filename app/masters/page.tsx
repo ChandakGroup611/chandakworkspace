@@ -63,7 +63,7 @@ const MASTER_TABLES = [
   { id: "assets", table: "assets", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Assets", category: "IT INFRA", icon: ShieldCheck, desc: "Physical hardware devices and asset tags", parentTable: "departments", parentKey: "department_id", parentRequired: false },
 
   // ── ERP Category (Tier 2) ──
-  { id: "erp_software_systems", table: "software_systems", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Software System", category: "ERP", icon: Server, desc: "Internal software applications and platforms", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "erp_software_systems", table: "software_systems", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Software system", category: "ERP", icon: Server, desc: "Internal software applications and platforms", parentTable: null, parentKey: null, parentRequired: false },
   { id: "erp_software_modules", table: "software_modules", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Module", category: "ERP", icon: Cpu, desc: "Features within a software system", parentTable: "software_systems", parentKey: "system_id", parentRequired: true },
   { id: "erp_software_submodules", table: "software_submodules", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Sub Module", category: "ERP", icon: Database, desc: "Specific actions inside a module", parentTable: "software_modules", parentKey: "module_id", parentRequired: true },
   { id: "erp_ticket_categories", table: "ticket_categories", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Issue Category", category: "ERP", icon: FolderTree, desc: "Main categories for software logging", parentTable: null, parentKey: null, parentRequired: false },
@@ -76,7 +76,7 @@ const MASTER_TABLES = [
 
   // ── USERS Category ──
   { id: "departments", table: "departments", scopeId: null, label: "Department", category: "USERS", icon: Layers, desc: "Company departments and business units", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "designations", table: "designations", scopeId: null, label: "Job Roles", category: "USERS", icon: UsersIcon, desc: "Employee job titles and designations", parentTable: "departments", parentKey: "department_id", parentRequired: true },
+  { id: "designations", table: "designations", scopeId: null, label: "Job roles", category: "USERS", icon: UsersIcon, desc: "Employee job titles and designations", parentTable: "departments", parentKey: "department_id", parentRequired: true },
 
   // ── OTHERS Category (Tier 3) ──
   { id: "other_software_modules", table: "software_modules", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Module", category: "OTHERS", icon: Cpu, desc: "General feature sets", parentTable: "software_systems", parentKey: "system_id", parentRequired: false },
@@ -111,7 +111,7 @@ function UsersIcon(props: any) {
 
 export default function MastersPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><ChandakLoader size="lg" title="Loading Masters Directory..." /></div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><ChandakLoader size="lg" title="Loading masters directory…" /></div>}>
       <MastersPageContent />
     </Suspense>
   );
@@ -540,7 +540,7 @@ function MastersPageContent() {
       }`}>
         <ChandakLoader
           size="lg"
-          title="Verifying Credentials..."
+          title="Verifying Credentials…"
           subtitle="Securing master directory access"
         />
       </div>
@@ -552,10 +552,10 @@ function MastersPageContent() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
+        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
           <Lock className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold">Access Denied</h2>
+        <h2 className="text-xl font-bold">Access denied</h2>
       </div>
     );
   }
@@ -563,14 +563,14 @@ function MastersPageContent() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Master Data Configuration"
+        title="Master data configuration"
         icon={<Database className="h-6 w-6" />}
         actions={
           <>
             <AppButton 
               variant="outline" 
               size="sm" 
-              leftIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />}
+              leftIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-success-text" />}
               onClick={() => setIsImportModalOpen(true)}
               disabled={!hasPermission("MASTERS_CREATE")}
             >
@@ -591,7 +591,7 @@ function MastersPageContent() {
               onClick={openCreateModal}
               disabled={!hasPermission("MASTERS_CREATE")}
             >
-              Add Record
+              Add record
             </AppButton>
           </>
         }
@@ -599,24 +599,24 @@ function MastersPageContent() {
 
       {/* Global Event Trigger Banners */}
       {errorAlert && (
-        <div className="p-4 rounded-xl bg-danger/10 border border-rose-500/20 flex items-start gap-3 animate-in fade-in-20">
+        <div className="p-4 rounded-xl bg-danger/10 border border-danger-border flex items-start gap-3 animate-in fade-in-20">
           <AlertTriangle className="h-4 w-4 text-danger dark:text-danger shrink-0 mt-0.5" />
-          <div className="flex-1 text-xs text-rose-700 dark:text-rose-200">
+          <div className="flex-1 text-xs text-danger-text">
             {errorAlert}
           </div>
-          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-foreground dark:hover:text-white">
+          <AppButton aria-label="Close" variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-foreground">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-success/10 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in-20">
+        <div className="p-4 rounded-xl bg-success/10 border border-success-border flex items-center justify-between text-xs text-success-text animate-in fade-in-20">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-success dark:text-success" />
             <span>{successAlert}</span>
           </div>
-          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-foreground dark:hover:text-white">
+          <AppButton aria-label="Close" variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-foreground">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
@@ -686,7 +686,7 @@ function MastersPageContent() {
               "bg-elevated/80 text-muted"
             }`}>
               {[
-                { id: "ALL", label: "All Configs" },
+                { id: "ALL", label: "All configs" },
                 { id: "IT INFRA", label: "IT Infra" },
                 { id: "ERP", label: "Software" },
                 { id: "FLEET", label: "Fleet" },
@@ -729,7 +729,7 @@ function MastersPageContent() {
                 return (
                   <div key={groupCategory} className="space-y-1.5 mb-4">
                     <div className="flex items-center gap-2 px-1 pb-1">
-                      <span className={`text-[10px] font-bold tracking-widest uppercase ${
+                      <span className={`text-[11px] font-bold ${
                         "text-theme-icon opacity-80"
                       }`}>
                         {groupCategory}
@@ -758,7 +758,7 @@ function MastersPageContent() {
                           )}
                           <div className={`p-2.5 rounded-xl mt-0.5 transition-colors ${
                             isActive 
-                              ? "bg-theme-btn-primary/10 text-theme-icon" 
+                              ? "bg-accent-soft text-theme-icon" 
                               : "bg-elevated/80 text-muted group-hover:text-foreground group-hover:bg-surface"
                           }`}>
                             <IconComponent className="h-4 w-4 shrink-0" />
@@ -773,9 +773,9 @@ function MastersPageContent() {
                             </div>
                             <p className="text-[11px] text-muted font-medium line-clamp-2 leading-relaxed opacity-80">{tab.desc}</p>
                             {tab.parentTable && (
-                              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md border inline-flex items-center gap-1 mt-1.5 transition-colors ${
+                              <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded-md border inline-flex items-center gap-1 mt-1.5 transition-colors ${
                                 isActive
-                                  ? "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
+                                  ? "text-theme-icon bg-accent-soft border-theme-btn-primary/30"
                                   : "text-muted bg-surface/50 border-border/50"
                               }`}>
                                 <div className="w-1 h-1 rounded-full bg-current opacity-50" />
@@ -806,7 +806,7 @@ function MastersPageContent() {
                   <h2 className="text-lg font-bold text-foreground tracking-tight">
                     {currentConfig.label}
                   </h2>
-                  <AppBadge variant="info" className="uppercase font-mono text-[10px] tracking-wider border border-theme-btn-primary/20">
+                  <AppBadge variant="info" className="font-mono text-[11px] border border-theme-btn-primary/20">
                     {activeTab.replace(/_/g, ' ')}
                   </AppBadge>
                 </div>
@@ -814,7 +814,7 @@ function MastersPageContent() {
                 {/* Dynamic Quick Text Search bar */}
                 <div className="w-full sm:w-64">
                   <AppInput 
-                    placeholder="Search records..." 
+                    placeholder="Search records…" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     leftIcon={<Search className="h-4 w-4 text-muted" />}
@@ -830,7 +830,7 @@ function MastersPageContent() {
                 <div className="py-16 flex flex-col items-center justify-center">
                   <ChandakLoader
                     size="md"
-                    title="Loading Master Catalog..."
+                    title="Loading master catalogue…"
                     subtitle="Resolving normalized records live from database schema"
                   />
                 </div>
@@ -844,7 +844,7 @@ function MastersPageContent() {
                           <span className="text-2xl font-bold text-theme-icon">!</span>
                         </div>
                         <div className="space-y-2 max-w-md">
-                          <h4 className="text-lg font-bold text-foreground tracking-tight">No Master Data Configured</h4>
+                          <h4 className="text-lg font-bold text-foreground tracking-tight">No master data configured</h4>
                           <p className="text-sm text-muted leading-relaxed">
                             No operational items are currently defined in this directory. Add your first record to make it available for workspace selection.
                           </p>
@@ -856,7 +856,7 @@ function MastersPageContent() {
                           onClick={openCreateModal}
                           className="shadow-[0_0_20px_rgba(var(--theme-accent-raw),0.3)] hover:shadow-[0_0_30px_rgba(var(--theme-accent-raw),0.5)] transition-all duration-300"
                         >
-                          Create Initial Record
+                          Create initial record
                         </AppButton>
                       </div>
                     </div>
@@ -870,7 +870,7 @@ function MastersPageContent() {
                             className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all space-y-3 relative"
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
+                              <span className="font-mono text-xs font-bold text-theme-icon bg-accent-soft px-2 py-0.5 rounded-md shrink-0">
                                 {rec.code}
                               </span>
                               <div className="flex items-center gap-1.5 shrink-0">
@@ -878,9 +878,9 @@ function MastersPageContent() {
                                   type="button"
                                   onClick={() => toggleActive(rec)}
                                   disabled={!hasPermission("MASTERS_UPDATE")}
-                                  className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  className={`px-2 py-0.5 rounded-md border text-[11px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     rec.is_active 
-                                      ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                                      ? "bg-success-soft border-success-border text-success-text hover:bg-success-soft"
                                       : "bg-elevated border-border text-muted line-through hover:bg-elevated"
                                   }`}
                                 >
@@ -903,17 +903,17 @@ function MastersPageContent() {
                             {/* Additional metadata tags if available */}
                             <div className="flex items-center gap-2 text-xs text-muted flex-wrap">
                               {currentConfig.parentTable && (
-                                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded border text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30">
+                                <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded border text-theme-icon bg-accent-soft border-theme-btn-primary/30">
                                   Parent: {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.code || "Unmapped"}
                                 </span>
                               )}
                               {activeTab === "master_priorities" && rec.max_sla_hours !== undefined && (
-                                <span className="text-[10px] font-semibold text-warning bg-amber-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                                <span className="text-[11px] font-semibold text-warning bg-warning-soft px-2 py-0.5 rounded flex items-center gap-1">
                                   <Clock className="h-3 w-3" /> {rec.max_sla_hours * 60}m SLA
                                 </span>
                               )}
                               {activeTab === "assets" && rec.asset_tag && (
-                                <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                <span className="text-[11px] font-mono font-bold text-success-text bg-success-soft px-2 py-0.5 rounded">
                                   Tag: {rec.asset_tag}
                                 </span>
                               )}
@@ -948,19 +948,19 @@ function MastersPageContent() {
                           <AppTable>
                             <AppTableHeader>
                               <tr>
-                                <AppTableHead>Short Code</AppTableHead>
-                                <AppTableHead>Display Name</AppTableHead>
+                                <AppTableHead>Short code</AppTableHead>
+                                <AppTableHead>Display name</AppTableHead>
                                 {currentConfig.parentTable && (
-                                  <AppTableHead>Parent Link</AppTableHead>
+                                  <AppTableHead>Parent link</AppTableHead>
                                 )}
                                 {activeTab === "master_priorities" && (
-                                  <AppTableHead>SLA Target</AppTableHead>
+                                  <AppTableHead>SLA target</AppTableHead>
                                 )}
                                 {activeTab === "assets" && (
-                                  <AppTableHead>Asset Tag</AppTableHead>
+                                  <AppTableHead>Asset tag</AppTableHead>
                                 )}
                                 {activeTab === "workflow_states" && (
-                                  <AppTableHead>Module Scope</AppTableHead>
+                                  <AppTableHead>Module scope</AppTableHead>
                                 )}
                                 <AppTableHead className="text-center">Status</AppTableHead>
                                 <AppTableHead className="text-right">Actions</AppTableHead>
@@ -980,10 +980,10 @@ function MastersPageContent() {
                                         <span className={`font-bold text-xs block ${"text-foreground"}`}>{rec.name}</span>
                                         <span className={`text-[0.65rem] font-bold px-1 rounded border tracking-tighter ${
                                           rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
-                                            ? "text-theme-icon border-theme-btn-primary/30 bg-theme-btn-primary/5"
+                                            ? "text-theme-icon border-theme-btn-primary/30 bg-accent-soft"
                                             : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
-                                            ? "text-warning border-amber-500/30 bg-warning/5"
-                                            : "text-theme-icon border-theme-btn-primary/30 bg-theme-btn-primary/5"
+                                            ? "text-warning border-warning-border bg-warning/5"
+                                            : "text-theme-icon border-theme-btn-primary/30 bg-accent-soft"
                                         }`}>
                                           {rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
                                             ? "FLAG 2 (ERP)"
@@ -1002,7 +1002,7 @@ function MastersPageContent() {
                                   {currentConfig.parentTable && (
                                     <AppTableCell>
                                       <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block whitespace-normal break-words ${
-                                        "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
+                                        "text-theme-icon bg-accent-soft border-theme-btn-primary/30"
                                       }`} title={rec[currentConfig.parentKey!]}>
                                         {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || 
                                          parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.code || 
@@ -1015,11 +1015,11 @@ function MastersPageContent() {
                                     <AppTableCell>
                                       {rec.max_sla_hours !== undefined ? (
                                         <div className="flex items-center gap-2">
-                                          <div className={`p-1 rounded-md bg-amber-100`}>
+                                          <div className={`p-1 rounded-md bg-warning-soft`}>
                                             <Clock className="h-3 w-3 text-warning" />
                                           </div>
-                                          <span className="font-semibold">{rec.max_sla_hours * 60}m Target</span>
-                                          <div className="flex gap-2 text-[0.65rem] opacity-60 uppercase font-bold tracking-tighter">
+                                          <span className="font-semibold">{rec.max_sla_hours * 60}m target</span>
+                                          <div className="flex gap-2 text-[0.65rem] opacity-60 font-bold tracking-tighter">
                                             <span>Min: {rec.min_sla_hours || 0}h</span>
                                             <span>Max: {rec.max_sla_hours || 0}h</span>
                                           </div>
@@ -1032,7 +1032,7 @@ function MastersPageContent() {
 
                                   {activeTab === "assets" && (
                                     <AppTableCell>
-                                      <span className={`text-xs font-mono font-bold text-emerald-700`}>
+                                      <span className={`text-xs font-mono font-bold text-success-text`}>
                                         {rec.asset_tag}
                                       </span>
                                     </AppTableCell>
@@ -1040,8 +1040,8 @@ function MastersPageContent() {
 
                                   {activeTab === "workflow_states" && (
                                     <AppTableCell>
-                                      <span className={`text-xs font-mono font-bold uppercase px-2 py-0.5 rounded border ${
-                                        "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
+                                      <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                                        "text-theme-icon bg-accent-soft border-theme-btn-primary/30"
                                       }`}>
                                         {(rec.module || "Universal").replace(/_/g, ' ')}
                                       </span>
@@ -1053,9 +1053,9 @@ function MastersPageContent() {
                                       type="button"
                                       onClick={() => toggleActive(rec)}
                                       disabled={!hasPermission("MASTERS_UPDATE")}
-                                      className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                      className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                         rec.is_active 
-                                          ? ("bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100")
+                                          ? ("bg-success-soft border-success-border text-success-text hover:bg-success-soft")
                                           : ("bg-elevated border-border text-muted line-through hover:bg-elevated")
                                       }`}
                                     >
@@ -1065,25 +1065,25 @@ function MastersPageContent() {
 
                                   <AppTableCell className="text-right">
                                     <div className="flex items-center justify-end gap-1">
-                                      <AppButton variant="secondary"
+                                      <AppButton aria-label="Edit record details" variant="secondary"
                                         type="button"
                                         onClick={() => openEditModal(rec)}
                                         disabled={!hasPermission("MASTERS_UPDATE")}
                                         className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                           "bg-surface border-border text-muted hover:text-theme-icon hover:border-theme-btn-primary/30"
                                         }`}
-                                        title="Edit Record Details"
+                                        title="Edit record details"
                                       >
                                         <Edit className="h-3.5 w-3.5" />
                                       </AppButton>
-                                      <AppButton variant="secondary"
+                                      <AppButton aria-label="Delete record" variant="secondary"
                                         type="button"
                                         onClick={() => handleDelete(rec)}
                                         disabled={!hasPermission("MASTERS_DELETE")}
                                         className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                          "bg-surface border-border text-muted hover:text-danger hover:border-rose-300"
+                                          "bg-surface border-border text-muted hover:text-danger hover:border-danger-border"
                                         }`}
-                                        title="Delete Record"
+                                        title="Delete record"
                                       >
                                         <Trash2 className="h-3.5 w-3.5" />
                                       </AppButton>
@@ -1122,7 +1122,7 @@ function MastersPageContent() {
         >
           <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl theme-card-structural border border-border/50 shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in-95 duration-300">
             {/* Header */}
-            <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-border/50 bg-surface/80 backdrop-blur-xl">
+            <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-border/50 bg-surface/80">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-theme-btn-primary shadow-[0_0_10px_rgba(var(--theme-accent-raw),0.8)]" />
@@ -1132,7 +1132,7 @@ function MastersPageContent() {
                   {editRecordId ? "Modify specific attributes of this pre-existing record." : "Enter the specific details to create this record in the company directory."}
                 </p>
               </div>
-              <AppButton variant="secondary" 
+              <AppButton aria-label="Close" variant="secondary" 
                 type="button" 
                 onClick={() => setShowModal(false)}
                 className="p-2 rounded-xl bg-elevated/50 hover:bg-elevated border-transparent hover:border-border/50 transition-all text-muted hover:text-foreground"
@@ -1145,14 +1145,14 @@ function MastersPageContent() {
             <form onSubmit={handleCreate} className="p-6 space-y-6">
               {/* Code */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                  Short Code <span className="text-danger">*</span>
+                <label className="text-[0.8rem] font-bold text-muted block">
+                  Short code <span className="text-danger">*</span>
                 </label>
                 <AppInput 
                   placeholder="e.g. SEC_INC"
                   value={formCode}
                   onChange={(e) => setFormCode(e.target.value)}
-                  className="font-mono text-xs uppercase"
+                  className="font-mono text-xs"
                   required
                 />
                 <span className="text-[0.7rem] text-muted block">A unique short abbreviation used to quickly reference this item.</span>
@@ -1160,11 +1160,11 @@ function MastersPageContent() {
 
               {/* Full Display Name */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                  Display Name <span className="text-danger">*</span>
+                <label className="text-[0.8rem] font-bold text-muted block">
+                  Display name <span className="text-danger">*</span>
                 </label>
                 <AppInput 
-                  placeholder="e.g. Security Incident"
+                  placeholder="e.g. Security incident"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   className="text-xs"
@@ -1174,16 +1174,16 @@ function MastersPageContent() {
 
               {/* Description Context */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                  Description & Internal Notes
+                <label className="text-[0.8rem] font-bold text-muted block">
+                  Description & internal notes
                 </label>
                 <textarea 
-                  placeholder="Provide helpful context or guidelines for your team..."
+                  placeholder="Provide helpful context or guidelines for your team…"
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   rows={2}
                   className={`w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-theme-btn-primary/50 resize-none transition-all ${
-                    "bg-surface border-border text-foreground placeholder-gray-400"
+                    "bg-surface border-border text-foreground"
                   }`}
                 />
               </div>
@@ -1191,8 +1191,8 @@ function MastersPageContent() {
               {/* Color Assignment */}
               {(currentConfig.table === "status_master" || currentConfig.table === "priority_master") && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                    Display Color <span className="text-danger">*</span>
+                  <label className="text-[0.8rem] font-bold text-muted block">
+                    Display colour <span className="text-danger">*</span>
                   </label>
                   <div className="flex items-center gap-3">
                     <input 
@@ -1204,7 +1204,7 @@ function MastersPageContent() {
                     <AppInput 
                       value={formColor.toUpperCase()}
                       onChange={(e) => setFormColor(e.target.value)}
-                      className="font-mono text-xs w-32 uppercase"
+                      className="font-mono text-xs w-32"
                     />
                   </div>
                   <span className="text-[0.7rem] text-muted block">Globally used to style this tag across all dashboards and boards.</span>
@@ -1214,8 +1214,8 @@ function MastersPageContent() {
               {/* Conditional Cascading Mapping dropmenus */}
               {currentConfig.parentTable && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-theme-icon uppercase tracking-wider block">
-                    Parent Record Link <span className="text-danger">*</span>
+                  <label className="text-[0.8rem] font-bold text-theme-icon block">
+                    Parent record link <span className="text-danger">*</span>
                   </label>
                   <select
                     value={formParentId}
@@ -1227,7 +1227,7 @@ function MastersPageContent() {
                   >
                     {!currentConfig.parentRequired && <option value="" className={"bg-surface text-muted"}>-- Optional (Global Scope) --</option>}
                     {parentOptions.length === 0 ? (
-                      currentConfig.parentRequired && <option value="" className="bg-surface dark:bg-[#0A0D14] text-muted">-- No available parent records --</option>
+                      currentConfig.parentRequired && <option value="" className="bg-surface text-muted">-- No available parent records --</option>
                     ) : (
                       parentOptions.map(p => (
                         <option key={p.id} value={p.id} className={"bg-surface text-foreground"}>
@@ -1242,10 +1242,10 @@ function MastersPageContent() {
 
               {/* Target SLA target minutes input */}
               {currentConfig.table === "master_priorities" && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 rounded-lg border border-emerald-500/20 bg-success/5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 rounded-lg border border-success-border bg-success/5">
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-success uppercase tracking-wider block">
-                      Min Time (Mins)
+                    <label className="text-[0.8rem] font-bold text-success block">
+                      Min time (mins)
                     </label>
                     <AppInput 
                       type="number" 
@@ -1255,8 +1255,8 @@ function MastersPageContent() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-success uppercase tracking-wider block">
-                      Standard Time (Mins)
+                    <label className="text-[0.8rem] font-bold text-success block">
+                      Standard time (mins)
                     </label>
                     <AppInput 
                       type="number" 
@@ -1266,8 +1266,8 @@ function MastersPageContent() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-success uppercase tracking-wider block">
-                      Max Time (Mins)
+                    <label className="text-[0.8rem] font-bold text-success block">
+                      Max time (mins)
                     </label>
                     <AppInput 
                       type="number" 
@@ -1283,8 +1283,8 @@ function MastersPageContent() {
 
               {/* Operational Scope Flag (1=INFRA, 2=ERP) */}
               <div className="space-y-1.5 p-3 rounded-xl bg-surface/[0.02] border border-border">
-                <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                  Operational Governance Scope <span className="text-danger">*</span>
+                <label className="text-[0.8rem] font-bold text-muted block">
+                  Operational governance scope <span className="text-danger">*</span>
                 </label>
                 <select
                   value={formScopeId || ""}
@@ -1304,14 +1304,14 @@ function MastersPageContent() {
               {/* Custom asset tags */}
               {activeTab === "assets" && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-success uppercase tracking-wider block">
-                    Hardware Tag Reference ID
+                  <label className="text-[0.8rem] font-bold text-success block">
+                    Hardware tag reference ID
                   </label>
                   <AppInput 
                     placeholder="e.g. TAG-SRV-9901"
                     value={formAssetTag}
                     onChange={(e) => setFormAssetTag(e.target.value)}
-                    className="font-mono text-xs uppercase"
+                    className="font-mono text-xs"
                   />
                 </div>
               )}

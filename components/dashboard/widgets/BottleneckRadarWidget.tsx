@@ -70,16 +70,16 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
   return (
     <BaseWidget 
       id="bottleneck-radar" 
-      title="Bottleneck & Aging Analysis"
+      title="Bottleneck & aging analysis"
       subtitle="Stage duration tracking and review/approval aging radar"
-      icon={<Hourglass className="w-5 h-5 text-amber-500" />}
+      icon={<Hourglass className="w-5 h-5 text-warning-text" />}
       badge={
         agingAnalysis.severeCount > 0 ? (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-danger/15 text-danger border border-red-500/30 shrink-0">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-danger/15 text-danger border border-danger-border shrink-0">
             {agingAnalysis.severeCount} Stalled &gt;10d
           </span>
         ) : (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border shrink-0">
             {agingAnalysis.activeItemCount} Active
           </span>
         )
@@ -101,14 +101,14 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
         {/* Visual Progress Bar Breakdown */}
         <div>
           <div className="flex justify-between items-center text-xs font-semibold mb-2">
-            <span className="text-muted-foreground">Time-in-Status Distribution</span>
-            <span className="text-muted-foreground">{agingAnalysis.activeItemCount} Active Items</span>
+            <span className="text-muted-foreground">Time-in-status distribution</span>
+            <span className="text-muted-foreground">{agingAnalysis.activeItemCount} Active items</span>
           </div>
 
           <div className="h-3 w-full rounded-full bg-surface overflow-hidden flex border border-border/50">
-            <div style={{ width: `${freshPct}%` }} className="bg-emerald-500 transition-all" title={`< 2 Days: ${agingAnalysis.freshCount} items (${freshPct}%)`} />
-            <div style={{ width: `${attentionPct}%` }} className="bg-amber-400 transition-all" title={`3-5 Days: ${agingAnalysis.attentionCount} items (${attentionPct}%)`} />
-            <div style={{ width: `${stalePct}%` }} className="bg-orange-500 transition-all" title={`6-10 Days: ${agingAnalysis.staleCount} items (${stalePct}%)`} />
+            <div style={{ width: `${freshPct}%` }} className="bg-success transition-all" title={`< 2 Days: ${agingAnalysis.freshCount} items (${freshPct}%)`} />
+            <div style={{ width: `${attentionPct}%` }} className="bg-warning-soft transition-all" title={`3-5 Days: ${agingAnalysis.attentionCount} items (${attentionPct}%)`} />
+            <div style={{ width: `${stalePct}%` }} className="bg-warning transition-all" title={`6-10 Days: ${agingAnalysis.staleCount} items (${stalePct}%)`} />
             <div style={{ width: `${severePct}%` }} className="bg-danger transition-all" title={`> 10 Days: ${agingAnalysis.severeCount} items (${severePct}%)`} />
           </div>
 
@@ -116,50 +116,50 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             <div
               onClick={() => onDrillDown && onDrillDown({ title: "Fresh Flow (<2 Days)", description: "Items modified or progressing in the last 48 hours." })}
-              className="p-3 rounded-xl bg-surface/50 border border-border/50 hover:border-emerald-500/50 cursor-pointer transition-all group"
+              className="p-3 rounded-xl bg-surface/50 border border-border/50 hover:border-success-border cursor-pointer transition-all group"
             >
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 uppercase">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-success-text">
+                <span className="w-2 h-2 rounded-full bg-success" />
                 &lt; 2 Days
               </div>
-              <div className="text-xl font-bold text-foreground mt-1 group-hover:text-emerald-500 transition-colors">{agingAnalysis.freshCount}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">{freshPct}% of workload</div>
+              <div className="text-xl font-bold text-foreground mt-1 group-hover:text-success-text transition-colors">{agingAnalysis.freshCount}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">{freshPct}% of workload</div>
             </div>
 
             <div
-              onClick={() => onDrillDown && onDrillDown({ title: "Needs Attention (3-5 Days)", description: "Items inactive for 3 to 5 days.", agingDaysMin: 3 })}
-              className="p-3 rounded-xl bg-surface/50 border border-border/50 hover:border-amber-400/50 cursor-pointer transition-all group"
+              onClick={() => onDrillDown && onDrillDown({ title: "Needs attention (3-5 days)", description: "Items inactive for 3 to 5 days.", agingDaysMin: 3 })}
+              className="p-3 rounded-xl bg-surface/50 border border-border/50 hover:border-warning-border cursor-pointer transition-all group"
             >
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500 uppercase">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-warning-text">
+                <span className="w-2 h-2 rounded-full bg-warning-soft" />
                 3 - 5 Days
               </div>
-              <div className="text-xl font-bold text-foreground mt-1 group-hover:text-amber-500 transition-colors">{agingAnalysis.attentionCount}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">{attentionPct}% of workload</div>
+              <div className="text-xl font-bold text-foreground mt-1 group-hover:text-warning-text transition-colors">{agingAnalysis.attentionCount}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">{attentionPct}% of workload</div>
             </div>
 
             <div
-              onClick={() => onDrillDown && onDrillDown({ title: "Stale Items (6-10 Days)", description: "Items inactive for 6 to 10 days.", agingDaysMin: 6 })}
-              className="p-3 rounded-xl bg-surface/50 border border-border/50 hover:border-orange-500/50 cursor-pointer transition-all group"
+              onClick={() => onDrillDown && onDrillDown({ title: "Stale items (6-10 days)", description: "Items inactive for 6 to 10 days.", agingDaysMin: 6 })}
+              className="p-3 rounded-xl bg-surface/50 border border-border/50 hover:border-warning-border cursor-pointer transition-all group"
             >
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-orange-500 uppercase">
-                <span className="w-2 h-2 rounded-full bg-orange-500" />
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-warning-text">
+                <span className="w-2 h-2 rounded-full bg-warning" />
                 6 - 10 Days
               </div>
-              <div className="text-xl font-bold text-foreground mt-1 group-hover:text-orange-500 transition-colors">{agingAnalysis.staleCount}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">{stalePct}% of workload</div>
+              <div className="text-xl font-bold text-foreground mt-1 group-hover:text-warning-text transition-colors">{agingAnalysis.staleCount}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">{stalePct}% of workload</div>
             </div>
 
             <div
               onClick={() => onDrillDown && onDrillDown({ title: "Severe Bottlenecks (>10 Days)", description: "Items stalled in their current status for over 10 days.", agingDaysMin: 10 })}
-              className="p-3 rounded-xl bg-surface/50 border border-border/50 hover:border-red-500/50 cursor-pointer transition-all group"
+              className="p-3 rounded-xl bg-surface/50 border border-border/50 hover:border-danger-border cursor-pointer transition-all group"
             >
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-danger uppercase">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-danger">
                 <span className="w-2 h-2 rounded-full bg-danger animate-ping" />
                 &gt; 10 Days
               </div>
               <div className="text-xl font-bold text-danger mt-1">{agingAnalysis.severeCount}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">{severePct}% of workload</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">{severePct}% of workload</div>
             </div>
           </div>
         </div>
@@ -169,21 +169,21 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
           <div className="pt-3 border-t border-border/50">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <AlertOctagon className="w-4 h-4 text-amber-500" />
-                <h3 className="text-xs font-bold text-foreground uppercase tracking-wide">Approval & Sign-Off Blockages (&gt;3 Days)</h3>
+                <AlertOctagon className="w-4 h-4 text-warning-text" />
+                <h3 className="text-xs font-bold text-foreground tracking-wide">Approval & sign-off blockages (&gt;3 days)</h3>
               </div>
               {onDrillDown && (
                 <button
                   type="button"
                   onClick={() => onDrillDown({
-                    title: "Stalled Approvals & Reviews",
+                    title: "Stalled approvals & reviews",
                     description: "All requirements, tickets, and tasks pending approval or review for over 3 days.",
                     status: "Review",
                     agingDaysMin: 3
                   })}
                   className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1"
                 >
-                  View All ({agingAnalysis.stuckApprovals.length}) <ChevronRight className="w-3 h-3" />
+                  View all ({agingAnalysis.stuckApprovals.length}) <ChevronRight className="w-3 h-3" />
                 </button>
               )}
             </div>
@@ -201,8 +201,8 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
                     className="flex items-center justify-between p-2.5 rounded-xl bg-surface border border-border/40 hover:bg-surface-hover/60 transition-colors group"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span className="font-mono text-[10px] font-bold text-muted-foreground uppercase">{item.code}</span>
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                      <span className="font-mono text-[11px] font-bold text-muted-foreground">{item.code}</span>
+                      <span className="px-1.5 py-0.2 rounded text-[11px] font-bold bg-warning-soft text-warning-text border border-warning-border">
                         {item.module}
                       </span>
                       <span className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">
@@ -212,7 +212,7 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
 
                     <div className="flex items-center gap-3 shrink-0 ml-2">
                       <span className="text-[11px] text-muted-foreground truncate hidden sm:inline">{item.user}</span>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-danger/10 text-danger border border-red-500/20">
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-danger/10 text-danger border border-danger-border">
                         {item.daysInStatus}d in {item.rawStatus || item.status}
                       </span>
                     </div>

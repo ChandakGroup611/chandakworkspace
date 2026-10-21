@@ -5,7 +5,7 @@ import { getUserAllowedModules } from "@/lib/actions/module-switcher";
 import IAMGovernanceCockpit from "@/components/iam/IAMGovernanceCockpit";
 
 export const metadata = {
-  title: "Workspace RBAC Access Policies | Chandak Workspace",
+  title: "Workspace RBAC access policies | Chandak Workspace",
   description: "Enterprise Role-Based Access Control, Workspace Permissions, and IAM Governance."
 };
 

@@ -100,7 +100,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
       >
         <div className="max-h-[60vh] overflow-y-auto">
           {loading ? (
-            <div className="text-center py-8 text-xs text-muted">Loading cities...</div>
+            <div className="text-center py-8 text-xs text-muted">Loading cities…</div>
           ) : cities.length === 0 ? (
             <div className="text-center py-8 text-xs text-muted">No cities registered for this state yet.</div>
           ) : (
@@ -108,7 +108,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
               {cities.map((c) => (
                 <div
                   key={c.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface hover:bg-hover transition-colors group"
+                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface hover:bg-surface-hover transition-colors group"
                 >
                   <div className="min-w-0 pr-2">
                     <div className="font-semibold text-foreground text-xs flex items-center gap-2">

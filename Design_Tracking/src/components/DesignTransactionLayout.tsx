@@ -80,14 +80,14 @@ export function TransactionFormLayout({
             ))}
           </div>
           <div className="flex items-center gap-3 pt-1">
-            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"}`}>
+            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-success-soft text-success-text border-success-border"}`}>
               <Icon className="h-6 w-6" />
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
                 <span>{title}</span>
                 {badge && (
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-theme-btn-primary/10 text-theme-btn-primary border-theme-btn-primary/20"}`}>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-accent-soft text-theme-btn-primary border-theme-btn-primary/20"}`}>
                     {badge}
                   </span>
                 )}
@@ -117,7 +117,7 @@ export function TransactionFormLayout({
               className="text-xs h-9 text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="h-3.5 w-3.5 mr-1" />
-              Reset Form
+              Reset form
             </AppButton>
           )}
           {saveButton ? (
@@ -182,7 +182,7 @@ export function TransactionFormLayout({
               className="text-xs h-9 text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="h-3.5 w-3.5 mr-1" />
-              Reset Form
+              Reset form
             </AppButton>
           )}
           {saveButton ? (
@@ -274,14 +274,14 @@ export function WorkingDocumentLayout({
             ))}
           </div>
           <div className="flex items-center gap-3 pt-1">
-            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"}`}>
+            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-success-soft text-success-text border-success-border"}`}>
               <Icon className="h-6 w-6" />
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
                 <span>{title}</span>
                 {badge && (
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-theme-btn-primary/10 text-theme-btn-primary border-theme-btn-primary/20"}`}>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-accent-soft text-theme-btn-primary border-theme-btn-primary/20"}`}>
                     {badge}
                   </span>
                 )}

@@ -6,6 +6,7 @@ import { MessageCircle, ActivitySquare, Clock, Send, Loader2, StickyNote } from 
 import { fetchTicketAuditLogs } from "@/lib/actions/tickets";
 import { AppButton } from "@/components/ui/AppButton";
 import TicketRealtimeChat from "./TicketRealtimeChat";
+import { formatDateTime } from "@/components/ui/data";
 
 const escapeHTML = (str: string) => {
   return str.replace(/[&<>'"]/g, 
@@ -53,14 +54,14 @@ export function TicketRightPanel({ ticketId, dbId }: { ticketId: string, dbId: s
           <TabsList className="w-full grid grid-cols-2 shrink-0 gap-2 bg-transparent p-0 h-auto">
             <TabsTrigger 
               value="chat" 
-              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl bg-background hover:theme-card-structural data-[state=active]:bg-theme-btn-primary data-[state=active]:text-theme-btn-primary-text data-[state=active]:border-theme-btn-primary data-[state=active]:shadow-md transition-all"
+              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl bg-background data-[state=active]:bg-theme-btn-primary data-[state=active]:text-theme-btn-primary-text data-[state=active]:border-theme-btn-primary data-[state=active]:shadow-md transition-all"
             >
               <MessageCircle className="h-4 w-4" />
               Chat
             </TabsTrigger>
             <TabsTrigger 
               value="audit" 
-              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl bg-background hover:theme-card-structural data-[state=active]:bg-theme-btn-primary data-[state=active]:text-theme-btn-primary-text data-[state=active]:border-theme-btn-primary data-[state=active]:shadow-md transition-all"
+              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl bg-background data-[state=active]:bg-theme-btn-primary data-[state=active]:text-theme-btn-primary-text data-[state=active]:border-theme-btn-primary data-[state=active]:shadow-md transition-all"
             >
               <ActivitySquare className="h-4 w-4" />
               Audit
@@ -80,17 +81,17 @@ export function TicketRightPanel({ ticketId, dbId }: { ticketId: string, dbId: s
                 return (
                   <div key={log.id} className="relative">
                     <div className={`absolute -left-4 w-2 h-2 rounded-full border-2 border-background top-1.5 ${
-                      isStatusChange ? "bg-theme-btn-primary" : isAssigneeChange ? "bg-theme-btn-primary" : "bg-gray-400"
+                      isStatusChange ? "bg-theme-btn-primary" : isAssigneeChange ? "bg-theme-btn-primary" : "bg-border-active"
                     }`} />
                     <div className="bg-background border border-border p-3 rounded-xl shadow-sm text-[11px]">
                       <div className="font-semibold text-foreground flex items-center justify-between mb-1">
                         <span>{log.actor?.full_name || "System"} updated ticket</span>
-                        <span className="text-[10px] text-muted-foreground">{new Date(log.created_at).toLocaleString()}</span>
+                        <span className="text-[11px] text-muted-foreground">{formatDateTime(log.created_at)}</span>
                       </div>
                       <div className="text-muted-foreground">
                         {log.changed_fields?.map((field: string) => (
                           <div key={field}>
-                            Changed <span className="font-mono text-[10px] theme-card-structural px-1 py-0.5 rounded">{field}</span>
+                            Changed <span className="font-mono text-[11px] theme-card-structural px-1 py-0.5 rounded">{field}</span>
                           </div>
                         ))}
                       </div>

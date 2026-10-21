@@ -11,7 +11,6 @@ export async function saveDesignPreferences(payload: any) {
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    console.error("[Server Action] saveDesignPreferences Auth Error:", authError?.message || "No user found");
     return { success: false, error: "Unauthenticated request. Please log in." };
   }
 
@@ -39,7 +38,7 @@ export async function fetchDesignPreferences() {
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    console.error("[Server Action] fetchDesignPreferences Auth Error:", authError?.message || "No user found");
+    // Unauthenticated or no session: return null quietly without emitting false-positive console error
     return { success: false, data: null };
   }
 

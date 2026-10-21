@@ -8,7 +8,7 @@ export default async function MigrationPage() {
     return (
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
           <p className="text-muted">You do not have permission to view this page.</p>
         </div>
       </div>
@@ -19,7 +19,7 @@ export default async function MigrationPage() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Data Migration
+          Data migration
         </h1>
         <p className="text-sm text-muted">Generate intelligent import templates and upload bulk data.</p>
       </div>

@@ -352,7 +352,7 @@ export function AMCTCOSpendHistoryTab({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("TCO Financial Statement exported successfully.");
+    toast.success("TCO financial statement exported successfully.");
   };
 
   // Formal Print TCO Dossier
@@ -479,7 +479,7 @@ export function AMCTCOSpendHistoryTab({
     return (
       <div className="p-12 flex flex-col items-center justify-center space-y-3 text-muted">
         <RefreshCw className="h-8 w-8 animate-spin text-theme-icon" />
-        <p className="text-sm font-semibold">Aggregating Total Cost of Ownership (TCO) ledger...</p>
+        <p className="text-sm font-semibold">Aggregating total cost of ownership (TCO) ledger…</p>
       </div>
     );
   }
@@ -520,9 +520,9 @@ export function AMCTCOSpendHistoryTab({
               size="sm"
               onClick={handlePrintTCOReport}
               leftIcon={<FileText className="h-4 w-4" />}
-              className="h-10 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-md shadow-emerald-600/20"
+              className="h-10 text-xs font-bold bg-success hover:bg-success text-white border-none shadow-md"
             >
-              Audit Dossier
+              Audit dossier
             </AppButton>
           </div>
         </div>
@@ -532,39 +532,39 @@ export function AMCTCOSpendHistoryTab({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+                <span className="w-3 h-3 rounded-full bg-info inline-block"></span>
                 <span className="text-muted font-medium">Initial Purchase:</span>
                 <span className="font-bold text-foreground">₹ {formatAmount(kpiMetrics.baseCost)} ({baseShare.toFixed(1)}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                <span className="w-3 h-3 rounded-full bg-warning inline-block"></span>
                 <span className="text-muted font-medium">Mid-Year Add-ons:</span>
                 <span className="font-bold text-foreground">₹ {formatAmount(kpiMetrics.transactionTotal)} ({txShare.toFixed(1)}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                <span className="w-3 h-3 rounded-full bg-success inline-block"></span>
                 <span className="text-muted font-medium">Renewals Outlay:</span>
                 <span className="font-bold text-foreground">₹ {formatAmount(kpiMetrics.renewalTotal)} ({rnShare.toFixed(1)}%)</span>
               </div>
             </div>
-            <div className="text-xs font-bold text-emerald-400">
-              +{kpiMetrics.growthPercent}% Capital Growth ({kpiMetrics.multiplier}x)
+            <div className="text-xs font-bold text-success-text">
+              +{kpiMetrics.growthPercent}% Capital growth ({kpiMetrics.multiplier}x)
             </div>
           </div>
 
           <div className="w-full h-3 bg-elevated rounded-full overflow-hidden flex shadow-inner">
             <div
-              className="h-full bg-blue-500 transition-all duration-700"
+              className="h-full bg-info transition-all duration-700"
               style={{ width: `${baseShare}%` }}
               title={`Initial Purchase: ₹ ${formatAmount(kpiMetrics.baseCost)}`}
             ></div>
             <div
-              className="h-full bg-amber-500 transition-all duration-700"
+              className="h-full bg-warning transition-all duration-700"
               style={{ width: `${txShare}%` }}
               title={`Add-on Transactions: ₹ ${formatAmount(kpiMetrics.transactionTotal)}`}
             ></div>
             <div
-              className="h-full bg-emerald-500 transition-all duration-700"
+              className="h-full bg-success transition-all duration-700"
               style={{ width: `${rnShare}%` }}
               title={`Renewals Outlay: ₹ ${formatAmount(kpiMetrics.renewalTotal)}`}
             ></div>
@@ -575,86 +575,86 @@ export function AMCTCOSpendHistoryTab({
       {/* 2. 6 EXECUTIVE KPI STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* KPI 1: Lifetime TCO */}
-        <AppCard className="p-4 border border-emerald-500/30 bg-emerald-500/5 rounded-2xl flex flex-col justify-between space-y-2">
+        <AppCard className="p-4 border border-success-border bg-success-soft rounded-2xl flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Total Spend (TCO)</span>
-            <DollarSign className="h-4 w-4 text-emerald-500" />
+            <span className="text-[11px] font-bold text-success-text">Total spend (TCO)</span>
+            <DollarSign className="h-4 w-4 text-success-text" />
           </div>
           <div>
-            <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+            <div className="text-xl font-semibold text-success-text font-mono">
               ₹ {formatAmount(kpiMetrics.lifetimeTCO)}
             </div>
-            <p className="text-[10px] text-muted mt-0.5">Cumulative till date</p>
+            <p className="text-[11px] text-muted mt-0.5">Cumulative till date</p>
           </div>
         </AppCard>
 
         {/* KPI 2: Initial Baseline */}
         <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Initial Purchase</span>
-            <Receipt className="h-4 w-4 text-blue-500" />
+            <span className="text-[11px] font-bold">Initial purchase</span>
+            <Receipt className="h-4 w-4 text-info-text" />
           </div>
           <div>
-            <div className="text-xl font-black text-foreground font-mono">
+            <div className="text-xl font-semibold text-foreground font-mono">
               ₹ {formatAmount(kpiMetrics.baseCost)}
             </div>
-            <p className="text-[10px] text-muted mt-0.5">Base contract cost</p>
+            <p className="text-[11px] text-muted mt-0.5">Base contract cost</p>
           </div>
         </AppCard>
 
         {/* KPI 3: Mid-Year Add-ons */}
         <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Mid-Year Add-ons</span>
-            <Layers className="h-4 w-4 text-amber-500" />
+            <span className="text-[11px] font-bold">Mid-Year Add-ons</span>
+            <Layers className="h-4 w-4 text-warning-text" />
           </div>
           <div>
-            <div className="text-xl font-black text-foreground font-mono">
+            <div className="text-xl font-semibold text-foreground font-mono">
               ₹ {formatAmount(kpiMetrics.transactionTotal)}
             </div>
-            <p className="text-[10px] text-muted mt-0.5">{transactions.length} mid-term changes</p>
+            <p className="text-[11px] text-muted mt-0.5">{transactions.length} mid-term changes</p>
           </div>
         </AppCard>
 
         {/* KPI 4: Renewal Outlays */}
         <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Renewals Outlay</span>
+            <span className="text-[11px] font-bold">Renewals outlay</span>
             <CalendarClock className="h-4 w-4 text-theme-icon" />
           </div>
           <div>
-            <div className="text-xl font-black text-foreground font-mono">
+            <div className="text-xl font-semibold text-foreground font-mono">
               ₹ {formatAmount(kpiMetrics.renewalTotal)}
             </div>
-            <p className="text-[10px] text-muted mt-0.5">{renewals.length} renewal cycles</p>
+            <p className="text-[11px] text-muted mt-0.5">{renewals.length} renewal cycles</p>
           </div>
         </AppCard>
 
         {/* KPI 5: Growth Multiplier */}
         <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Spend Multiplier</span>
+            <span className="text-[11px] font-bold">Spend multiplier</span>
             <TrendingUp className="h-4 w-4 text-theme-icon" />
           </div>
           <div>
-            <div className="text-xl font-black text-theme-icon font-mono">
+            <div className="text-xl font-semibold text-theme-icon font-mono">
               {kpiMetrics.multiplier}x
             </div>
-            <p className="text-[10px] text-muted mt-0.5">vs Acquisition baseline</p>
+            <p className="text-[11px] text-muted mt-0.5">vs acquisition baseline</p>
           </div>
         </AppCard>
 
         {/* KPI 6: Annualized Run Rate */}
         <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Annual Run Rate</span>
+            <span className="text-[11px] font-bold">Annual run rate</span>
             <Activity className="h-4 w-4 text-theme-icon" />
           </div>
           <div>
-            <div className="text-xl font-black text-foreground font-mono">
+            <div className="text-xl font-semibold text-foreground font-mono">
               ₹ {formatAmount(kpiMetrics.annualRunRate)}
             </div>
-            <p className="text-[10px] text-muted mt-0.5">Effective cost / year</p>
+            <p className="text-[11px] text-muted mt-0.5">Effective cost / year</p>
           </div>
         </AppCard>
       </div>
@@ -664,17 +664,17 @@ export function AMCTCOSpendHistoryTab({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
           <div>
             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-emerald-500" />
-              Cumulative Capital Progression Curve
+              <TrendingUp className="h-5 w-5 text-success-text" />
+              Cumulative capital progression curve
             </h3>
             <p className="text-xs text-muted mt-1">
               Visual trajectory of cumulative expenditures as milestones, add-ons, and renewals are logged over time.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-semibold">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success-soft text-success-text border border-success-border font-semibold">
               <Activity className="h-3.5 w-3.5" />
-              <span>{chartData.length} Financial Milestone Events</span>
+              <span>{chartData.length} Financial milestone events</span>
             </div>
           </div>
         </div>
@@ -718,8 +718,8 @@ export function AMCTCOSpendHistoryTab({
                           <strong className="text-theme-icon font-mono">+₹ {formatAmount(data.eventAmount)}</strong>
                         </div>
                         <div className="pt-1 border-t border-border flex items-center gap-2">
-                          <span className="font-semibold text-emerald-500">Cumulative TCO:</span>
-                          <strong className="text-emerald-500 font-mono text-sm">₹ {formatAmount(data.cumulativeTCO)}</strong>
+                          <span className="font-semibold text-success-text">Cumulative TCO:</span>
+                          <strong className="text-success-text font-mono text-sm">₹ {formatAmount(data.cumulativeTCO)}</strong>
                         </div>
                       </div>
                     );
@@ -747,7 +747,7 @@ export function AMCTCOSpendHistoryTab({
           <div>
             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
               <History className="h-5 w-5 text-theme-icon" />
-              Chronological Financial Event Ledger & Audit Stream
+              Chronological financial event ledger & audit stream
             </h3>
             <p className="text-xs text-muted mt-1">
               Line-by-line historical breakdown from purchase date with calculated running balance total.
@@ -758,7 +758,7 @@ export function AMCTCOSpendHistoryTab({
             {/* Filter Pills */}
             <div className="flex items-center bg-elevated p-1 rounded-xl border border-border">
               {[
-                { key: 'all', label: 'All Events' },
+                { key: 'all', label: 'All events' },
                 { key: 'acquisition', label: 'Acquisition' },
                 { key: 'transaction', label: 'Add-ons' },
                 { key: 'renewal', label: 'Renewals' }
@@ -779,7 +779,7 @@ export function AMCTCOSpendHistoryTab({
             {/* Search Input */}
             <div className="relative">
               <AppInput
-                placeholder="Search PO, author, notes..."
+                placeholder="Search PO, author, notes…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-48 sm:w-64 h-8 text-xs pl-8"
@@ -793,16 +793,16 @@ export function AMCTCOSpendHistoryTab({
         <div className="overflow-x-auto">
           <AppTable className="w-full text-left text-xs whitespace-nowrap">
             <AppTableHeader>
-              <AppTableRow className="border-b border-border text-muted font-bold uppercase tracking-wider">
+              <AppTableRow className="border-b border-border text-muted font-bold">
                 <AppTableHead className="pb-3 pr-3">#</AppTableHead>
                 <AppTableHead className="pb-3 px-3">Date</AppTableHead>
-                <AppTableHead className="pb-3 px-3">Milestone / Event</AppTableHead>
+                <AppTableHead className="pb-3 px-3">Milestone / event</AppTableHead>
                 <AppTableHead className="pb-3 px-3">Category</AppTableHead>
-                <AppTableHead className="pb-3 px-3">PO / Ref #</AppTableHead>
-                <AppTableHead className="pb-3 px-3 text-right">Delta Outlay (+₹)</AppTableHead>
-                <AppTableHead className="pb-3 px-3 text-right text-emerald-500 font-bold">Running Balance (₹)</AppTableHead>
+                <AppTableHead className="pb-3 px-3">PO / ref #</AppTableHead>
+                <AppTableHead className="pb-3 px-3 text-right">Delta outlay (+₹)</AppTableHead>
+                <AppTableHead className="pb-3 px-3 text-right text-success-text font-bold">Running balance (₹)</AppTableHead>
                 <AppTableHead className="pb-3 px-3 text-center">% Share</AppTableHead>
-                <AppTableHead className="pb-3 px-3">Logged By</AppTableHead>
+                <AppTableHead className="pb-3 px-3">Logged by</AppTableHead>
                 <AppTableHead className="pb-3 pl-3 text-right">Proof</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
@@ -837,7 +837,7 @@ export function AMCTCOSpendHistoryTab({
                           </div>
                           <div className="text-[11px] text-muted truncate">{evt.description}</div>
                           {evt.notes && (
-                            <div className="text-[10px] text-muted italic truncate">Note: {evt.notes}</div>
+                            <div className="text-[11px] text-muted italic truncate">Note: {evt.notes}</div>
                           )}
                         </div>
                       </AppTableCell>
@@ -866,7 +866,7 @@ export function AMCTCOSpendHistoryTab({
                         +₹ {formatAmount(evt.amount)}
                       </AppTableCell>
 
-                      <AppTableCell className="py-3.5 px-3 text-right font-mono font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 px-2.5 rounded-lg">
+                      <AppTableCell className="py-3.5 px-3 text-right font-mono font-semibold text-success-text bg-success-soft px-2.5 rounded-lg">
                         ₹ {formatAmount(evt.runningTotal)}
                       </AppTableCell>
 
@@ -891,7 +891,7 @@ export function AMCTCOSpendHistoryTab({
                             size="sm"
                             onClick={() => handleDownloadAttachment(evt.attachmentUrl!)}
                             className="text-theme-icon hover:underline text-xs h-7 px-2"
-                            title="Download Invoice / Proof"
+                            title="Download invoice / proof"
                             leftIcon={<Paperclip className="h-3 w-3" />}
                           >
                             Proof

@@ -73,11 +73,11 @@ export function QuickApprovalModal({
             {/* Requirement Details Read-Only View */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm border-b pb-4 border-border">
                <div>
-                  <span className="theme-label block mb-1">System / Module</span>
+                  <span className="theme-label block mb-1">System / module</span>
                   <div className="font-medium text-foreground">{reqDetails.software_system?.name || '-'} / {reqDetails.module?.name || '-'}</div>
                </div>
                <div>
-                  <span className="theme-label block mb-1">Priority & Stage</span>
+                  <span className="theme-label block mb-1">Priority & stage</span>
                   <div className="font-medium text-warning">{reqDetails.priority?.priority_name || '-'} • {reqDetails.current_stage || '-'}</div>
                </div>
                <div className="md:col-span-2">
@@ -93,14 +93,14 @@ export function QuickApprovalModal({
             {/* Approval Action Form */}
             <div>
               <label className="theme-label block mb-2">
-                Mandatory Remarks *
+                Mandatory remarks *
               </label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 className="w-full text-sm p-3 border border-border rounded-md bg-elevated text-foreground placeholder:text-muted focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary min-h-[100px] outline-none"
                 rows={3}
-                placeholder="Enter your approval, rejection, or hold remarks here..."
+                placeholder="Enter your approval, rejection, or hold remarks here…"
               />
             </div>
             <div className="flex flex-wrap gap-2 justify-end pt-2 border-t border-border">

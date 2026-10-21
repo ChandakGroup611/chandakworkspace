@@ -7,8 +7,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: "Identity & Access | Enterprise Operations",
-  description: "Configure Microsoft 365 Single Sign-On and enterprise authentication policies.",
+  title: "Identity & access | enterprise operations",
+  description: "Configure Microsoft 365 single sign-on and enterprise authentication policies.",
 };
 
 export default async function IdentitySettingsPage() {
@@ -17,7 +17,7 @@ export default async function IdentitySettingsPage() {
     return (
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
           <p className="text-muted">You do not have permission to view this page.</p>
         </div>
       </div>
@@ -28,7 +28,7 @@ export default async function IdentitySettingsPage() {
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-12">
       <header className="border-b border-border pb-4 animate-in fade-in duration-500">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Identity & Access Management
+          Identity & access management
         </h1>
         </header>
 

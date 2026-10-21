@@ -82,11 +82,11 @@ export default function SettingsGallery() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sliders className="h-4 w-4 text-accent" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
-              1. Theme & Appearance
+            <h2 className="text-sm font-semibold text-muted">
+              1. Theme & appearance
             </h2>
           </div>
-          <AppBadge variant="info">WCAG-AA Compliant</AppBadge>
+          <AppBadge variant="info">WCAG-AA compliant</AppBadge>
         </div>
 
         <AppCard className="p-6">
@@ -99,18 +99,18 @@ export default function SettingsGallery() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Type className="h-4 w-4 text-accent" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
-              2. Typography Engine & Font Scale
+            <h2 className="text-sm font-semibold text-muted">
+              2. Typography engine & font scale
             </h2>
           </div>
-          <AppBadge variant="info">Hardware Accelerated</AppBadge>
+          <AppBadge variant="info">Hardware accelerated</AppBadge>
         </div>
 
         {/* Sub-grid A: Font Families Selection */}
         <div className="space-y-2">
-          <span className="text-[0.8rem] font-bold tracking-wider text-muted uppercase">A. Base Typeface Selector</span>
+          <span className="text-[0.8rem] font-bold text-muted">A. Base typeface selector</span>
           <div className="p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border">
-            <label className="block text-sm font-bold mb-2 text-foreground">System Font Style</label>
+            <label className="block text-sm font-bold mb-2 text-foreground">System font style</label>
             <div className="relative">
               <select
                 value={fontFamily}
@@ -141,11 +141,11 @@ export default function SettingsGallery() {
 
         {/* Sub-grid B: Custom Font Sizer */}
         <div className="space-y-2 pt-2">
-          <span className="text-[0.8rem] font-bold tracking-wider text-muted uppercase">B. Custom Numeric Sizing</span>
+          <span className="text-[0.8rem] font-bold text-muted">B. Custom numeric sizing</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border">
               <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
-                <span className="text-xs font-bold text-foreground">Base Text Size</span>
+                <span className="text-xs font-bold text-foreground">Base text size</span>
                 <AppBadge variant="info">{baseFontSize}px</AppBadge>
               </div>
               <div className="flex items-center gap-3">
@@ -170,7 +170,7 @@ export default function SettingsGallery() {
 
             <div className="p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border">
               <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
-                <span className="text-xs font-bold text-foreground">Subtext / UI Size</span>
+                <span className="text-xs font-bold text-foreground">Subtext / UI size</span>
                 <AppBadge variant="info">{subtextFontSize}px</AppBadge>
               </div>
               <div className="flex items-center gap-3">
@@ -197,7 +197,7 @@ export default function SettingsGallery() {
 
         {/* Sub-grid C: Font Weight Intensity */}
         <div className="space-y-2 pt-2">
-          <span className="text-[0.8rem] font-bold tracking-wider text-muted uppercase">C. Global Font Weight Intensity</span>
+          <span className="text-[0.8rem] font-bold text-muted">C. Global font weight intensity</span>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {weightProfilesList.map((w) => {
               const isSelected = fontWeightProfile === w.id;
@@ -242,12 +242,12 @@ export default function SettingsGallery() {
           <div className="space-y-1 max-w-xl">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-sm tracking-tight text-foreground">
-                Persistent Database Saving
+                Persistent database saving
               </h3>
-              <AppBadge variant="success">Cloud Sync</AppBadge>
+              <AppBadge variant="success">Cloud sync</AppBadge>
             </div>
             <p className="text-xs text-muted">
-              Save your layout, theme, color combination, and density settings to your account. These preferences will automatically be downloaded and applied whenever you log in from any device.
+              Save your layout, theme, colour combination, and density settings to your account. These preferences will automatically be downloaded and applied whenever you log in from any device.
             </p>
           </div>
 
@@ -260,11 +260,11 @@ export default function SettingsGallery() {
               disabled={isSaving}
             >
               {isSaving ? (
-                <span className="animate-pulse">Saving...</span>
+                <span className="animate-pulse">Saving…</span>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  <span>Set as Default Account Preferences</span>
+                  <span>Set as default account preferences</span>
                 </>
               )}
             </AppButton>

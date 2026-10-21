@@ -1,39 +1,26 @@
 import React from "react";
 import Link from "next/link";
-import { AppButton } from "@/components/ui/AppButton";
 import { Compass, Home, ArrowLeft } from "lucide-react";
+
+const btn = "inline-flex h-9 items-center gap-2 rounded-md px-4 text-[13.5px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 export default function NotFound() {
   return (
-    <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-16">
-      <div className="h-16 w-16 rounded-2xl bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center mb-6 border border-theme-btn-primary/20">
-        <Compass className="h-8 w-8 animate-pulse" />
+    <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 py-16 text-center">
+      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-soft-text">
+        <Compass className="h-6 w-6" aria-hidden />
       </div>
-
-      <span className="text-xs font-bold uppercase tracking-widest text-theme-icon mb-2">
-        404 — Page Not Found
-      </span>
-
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-3">
-        The requested resource does not exist
-      </h1>
-
-      <p className="text-sm text-muted max-w-md mb-8">
-        The page you are looking for may have been moved, renamed, or is unavailable in your current module context.
+      <span className="theme-label mb-2">Error 404</span>
+      <h1 className="mb-2 text-[22px] font-semibold text-heading">We couldn&apos;t find that page</h1>
+      <p className="mb-7 max-w-md text-[14px] text-muted">
+        It may have moved, or it belongs to a module you don&apos;t have open. Cheque the address, or go back to your workspace.
       </p>
-
-      <div className="flex items-center gap-3 flex-wrap justify-center">
-        <Link href="/">
-          <AppButton variant="primary" className="flex items-center gap-2">
-            <Home className="h-4 w-4" />
-            <span>Return to Workspace</span>
-          </AppButton>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Link href="/" className={`${btn} bg-primary text-primary-foreground hover:bg-primary-hover`}>
+          <Home className="h-4 w-4" aria-hidden /> Go to my workspace
         </Link>
-        <Link href="/select-module">
-          <AppButton variant="outline" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Switch Module</span>
-          </AppButton>
+        <Link href="/select-module" className={`${btn} text-foreground hover:bg-surface-hover`}>
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Switch module
         </Link>
       </div>
     </div>

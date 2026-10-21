@@ -115,16 +115,16 @@ export default function ProviderDashboard() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-card border border-border p-4 rounded-xl shadow-sm">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Routing Infrastructure</h2>
+          <h2 className="text-lg font-bold text-foreground">Routing infrastructure</h2>
           </div>
       </div>
 
       <div className="space-y-6">
         {providers.map((prov) => (
           <div key={prov.id || prov.priority_level} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-            <div className={`p-4 border-b border-border flex items-center justify-between ${prov.priority_level === 1 ? 'bg-theme-btn-primary/5' : 'bg-muted/30'}`}>
+            <div className={`p-4 border-b border-border flex items-center justify-between ${prov.priority_level === 1 ? 'bg-accent-soft' : 'bg-muted/30'}`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-theme-btn-primary/20' : 'bg-muted'}`}>
+                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-accent-soft' : 'bg-muted'}`}>
                   <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-theme-icon' : 'text-muted-foreground'}`} />
                 </div>
                 <div>
@@ -154,7 +154,7 @@ export default function ProviderDashboard() {
                     checked={prov.is_active} 
                     onChange={(e) => updateProviderField(prov.priority_level, "is_active", e.target.checked)}
                   />
-                  <span className="text-xs font-bold text-muted-foreground uppercase">Active</span>
+                  <span className="text-xs font-bold text-muted-foreground">Active</span>
                 </label>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function ProviderDashboard() {
               {(prov.provider_name === "SMTP" || prov.provider_name === "Microsoft 365") && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground uppercase">SMTP Host</label>
+                    <label className="text-sm font-bold text-muted-foreground">SMTP host</label>
                     <input 
                       type="text" 
                       value={prov.config.host || ""}
@@ -173,7 +173,7 @@ export default function ProviderDashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground uppercase">SMTP Port</label>
+                    <label className="text-sm font-bold text-muted-foreground">SMTP port</label>
                     <input 
                       type="number" 
                       value={prov.config.port || ""}
@@ -183,7 +183,7 @@ export default function ProviderDashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground uppercase">Username / Email</label>
+                    <label className="text-sm font-bold text-muted-foreground">Username / email</label>
                     <input 
                       type="text" 
                       value={prov.config.username || ""}
@@ -193,7 +193,7 @@ export default function ProviderDashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground uppercase">Password / App Password</label>
+                    <label className="text-sm font-bold text-muted-foreground">Password / app password</label>
                     <div className="relative">
                       <input 
                         type="password" 
@@ -210,7 +210,7 @@ export default function ProviderDashboard() {
 
               {(prov.provider_name === "Resend" || prov.provider_name === "SendGrid") && (
                 <div className="md:col-span-2 space-y-2">
-                  <label className="text-sm font-bold text-muted-foreground uppercase">API Key</label>
+                  <label className="text-sm font-bold text-muted-foreground">API key</label>
                   <div className="relative">
                     <input 
                       type="password" 
@@ -233,7 +233,7 @@ export default function ProviderDashboard() {
                 <AppButton 
                   onClick={() => handleTestConnection(prov)}
                   disabled={testingId === (prov.id || prov.priority_level.toString())}
-                  className="flex items-center gap-2 bg-background hover:opacity-90/10 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border disabled:opacity-50"
+                  className="flex items-center gap-2 bg-background hover:bg-surface-hover text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border disabled:opacity-50"
                 >
                   {testingId === (prov.id || prov.priority_level.toString()) ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -247,7 +247,7 @@ export default function ProviderDashboard() {
                 onClick={() => handleSave(prov)}
                 className="flex items-center gap-2 bg-theme-btn-primary hover:opacity-90/90 text-theme-btn-primary-text px-4 py-1.5 rounded text-sm font-bold transition-colors shadow-sm"
               >
-                <Save className="w-4 h-4" /> Save Details
+                <Save className="w-4 h-4" /> Save details
               </AppButton>
             </div>
           </div>

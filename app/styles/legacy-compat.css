@@ -63,6 +63,8 @@
   [class*="bg-emerald-"], [class*="bg-green-"], [class*="bg-teal-"], [class*="bg-cyan-"], [class*="bg-sky-"],
   [class*="bg-rose-"], [class*="bg-red-"], [class*="bg-amber-"], [class*="bg-orange-"],
   [class*="bg-slate-8"], [class*="bg-slate-9"], [class*="bg-primary"], [class*="bg-theme-btn-primary"],
-  [class*="bg-danger"], [class*="bg-accent"], [class*="bg-sidebar"], [class*="from-"]) .text-white {
+  [class*="bg-danger"], [class*="bg-accent"], [class*="bg-sidebar"], [class*="from-"],
+  .bg-success, .bg-warning, .bg-info, .bg-danger-solid) .text-white,
+[data-mode="light"] :is(.bg-success, .bg-warning, .bg-info, .bg-danger-solid, .bg-primary).text-white {
   color: #ffffff;
 }

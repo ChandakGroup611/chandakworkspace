@@ -22,23 +22,23 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
   return (
     <BaseWidget
       id="workload"
-      title="Tactical Workload"
+      title="Tactical workload"
       subtitle="Active assignments across tickets, tasks & reqs"
       icon={<Briefcase className="w-5 h-5 text-theme-icon" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 shrink-0">
-          {totalWorkload} In Progress
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 shrink-0">
+          {totalWorkload} In progress
         </span>
       }
       collapsible={true}
-      headerRight={<span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Active Assignments</span>}
+      headerRight={<span className="text-[11px] font-semibold text-muted-foreground">Active assignments</span>}
     >
       <div className="space-y-5 mt-2">
         {/* Workload Bars */}
         <div className="space-y-2 group cursor-pointer">
           <div className="flex justify-between text-xs font-semibold">
             <span className="flex items-center gap-2 text-foreground/80 group-hover:text-foreground transition-colors">
-              <ListTodo className="w-4 h-4 text-theme-icon" /> Active Tickets
+              <ListTodo className="w-4 h-4 text-theme-icon" /> Active tickets
             </span>
             <span className="font-bold">{workload.active_tickets}</span>
           </div>
@@ -53,7 +53,7 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
         <div className="space-y-2 group cursor-pointer">
           <div className="flex justify-between text-xs font-semibold">
             <span className="flex items-center gap-2 text-foreground/80 group-hover:text-foreground transition-colors">
-              <Layers className="w-4 h-4 text-theme-icon" /> Active Tasks
+              <Layers className="w-4 h-4 text-theme-icon" /> Active tasks
             </span>
             <span className="font-bold">{workload.active_tasks}</span>
           </div>
@@ -68,7 +68,7 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
         <div className="space-y-2 group cursor-pointer">
           <div className="flex justify-between text-xs font-semibold">
             <span className="flex items-center gap-2 text-foreground/80 group-hover:text-foreground transition-colors">
-              <Briefcase className="w-4 h-4 text-success" /> Active Requirements
+              <Briefcase className="w-4 h-4 text-success" /> Active requirements
             </span>
             <span className="font-bold">{workload.active_requirements}</span>
           </div>
@@ -82,10 +82,10 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
       </div>
       <AppButton 
         variant="primary" 
-        className="w-full mt-6 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors py-2.5 bg-primary/5 hover:bg-primary/10 rounded-xl"
+        className="w-full mt-6 flex items-center justify-center gap-2 text-[11px] font-bold text-primary hover:text-primary/80 transition-colors py-2.5 bg-primary/5 hover:bg-primary/10 rounded-xl"
         onClick={() => router.push('/workspaces/tasks')}
       >
-        View Assignment Queue <ArrowUpRight className="w-3 h-3" />
+        View assignment queue <ArrowUpRight className="w-3 h-3" />
       </AppButton>
     </BaseWidget>
   );

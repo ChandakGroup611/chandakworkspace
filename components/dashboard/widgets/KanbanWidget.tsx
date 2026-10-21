@@ -48,7 +48,7 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
     if (isBug) href = `/tickets/${m.id}`;
     if (isReq) href = `/requirements/${m.id}`;
     
-    const tagBg = isBug ? 'bg-danger/10 text-danger border-red-500/20' : isTask ? 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20' : 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20';
+    const tagBg = isBug ? 'bg-danger/10 text-danger border-danger-border' : isTask ? 'bg-accent-soft text-theme-icon border-theme-btn-primary/20' : 'bg-accent-soft text-theme-icon border-theme-btn-primary/20';
     const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
     const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
@@ -64,14 +64,14 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
         </div>
         
         <div className="flex items-center justify-between gap-1.5 mt-auto pt-1 min-w-0">
-          <span className="text-[10px] font-mono text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded border border-border/40 truncate max-w-[90px]">
+          <span className="text-[11px] font-mono text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded border border-border/40 truncate max-w-[90px]">
             {m.code || `TF-${shortId}`}
           </span>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border ${tagBg}`}>
+            <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded border ${tagBg}`}>
               {m.module.substring(0,4)}
             </span>
-            <div className="w-5 h-5 rounded-full bg-surface-hover border border-border/50 flex items-center justify-center text-[9px] font-bold text-foreground shrink-0" title={m.user}>
+            <div className="w-5 h-5 rounded-full bg-surface-hover border border-border/50 flex items-center justify-center text-[11px] font-bold text-foreground shrink-0" title={m.user}>
               {initials}
             </div>
           </div>
@@ -93,12 +93,12 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
   return (
     <BaseWidget
       id="kanban"
-      title="Active Sprint"
+      title="Active sprint"
       subtitle="Sprint Kanban board & flow stages"
       icon={<LayoutDashboard className="w-5 h-5 text-theme-icon" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 shrink-0">
-          {totalActive} Active Items
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 shrink-0">
+          {totalActive} Active items
         </span>
       }
       className="min-h-[480px] h-[500px]"
@@ -106,7 +106,7 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
       headerRight={
         <div className="flex items-center gap-3">
           <span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1" onClick={onOpenList || (() => router.push('/workspaces/tasks'))}>
-            Full Board <ArrowUpRight className="w-3.5 h-3.5" />
+            Full board <ArrowUpRight className="w-3.5 h-3.5" />
           </span>
         </div>
       }
@@ -115,8 +115,8 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
         {/* Backlog */}
         <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-surface/40 rounded-xl p-2.5 border border-border/50">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Backlog</h4>
-            <span className="bg-surface text-muted-foreground text-[10px] font-bold px-2 py-0.5 rounded-full border border-border/40">{board.backlog.length}</span>
+            <h4 className="text-[11px] font-bold text-muted-foreground">Backlog</h4>
+            <span className="bg-surface text-muted-foreground text-[11px] font-bold px-2 py-0.5 rounded-full border border-border/40">{board.backlog.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.backlog.map(m => renderCard(m, false))}
@@ -127,8 +127,8 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
         {/* In Progress */}
         <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-primary/5 rounded-xl p-2.5 border border-primary/20">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-primary">In Progress</h4>
-            <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20">{board.inProgress.length}</span>
+            <h4 className="text-[11px] font-bold text-primary">In progress</h4>
+            <span className="bg-primary/10 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full border border-primary/20">{board.inProgress.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.inProgress.map(m => renderCard(m, true))}
@@ -137,10 +137,10 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
         </div>
 
         {/* In Review */}
-        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-warning/5 rounded-xl p-2.5 border border-amber-500/20">
+        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-warning/5 rounded-xl p-2.5 border border-warning-border">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-warning dark:text-warning">In Review</h4>
-            <span className="bg-warning/10 text-warning dark:text-warning text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/20">{board.inReview.length}</span>
+            <h4 className="text-[11px] font-bold text-warning dark:text-warning">In review</h4>
+            <span className="bg-warning/10 text-warning dark:text-warning text-[11px] font-bold px-2 py-0.5 rounded-full border border-warning-border">{board.inReview.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.inReview.map(m => renderCard(m, false))}
@@ -149,10 +149,10 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
         </div>
 
         {/* Done */}
-        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-success/5 rounded-xl p-2.5 border border-emerald-500/20 opacity-80 hover:opacity-100 transition-opacity">
+        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-success/5 rounded-xl p-2.5 border border-success-border opacity-80 hover:opacity-100 transition-opacity">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-success dark:text-success">Done</h4>
-            <span className="bg-success/10 text-success dark:text-success text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">{board.done.length}</span>
+            <h4 className="text-[11px] font-bold text-success dark:text-success">Done</h4>
+            <span className="bg-success/10 text-success dark:text-success text-[11px] font-bold px-2 py-0.5 rounded-full border border-success-border">{board.done.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.done.map(m => renderCard(m, false))}

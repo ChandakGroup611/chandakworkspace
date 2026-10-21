@@ -224,7 +224,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
     e.preventDefault();
     if (!projectName.trim()) {
       setFormError("Project Name is required.");
-      toast.error("Project Name is required.");
+      toast.error("Project name is required.");
       return;
     }
 
@@ -353,12 +353,12 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
             <Building2 className="h-4 w-4" />
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-bold text-foreground">
-              Project Master (Parent Development Projects)
+              Project master (parent development projects)
             </h3>
             
           </div>
@@ -368,18 +368,18 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
           <button
             type="button"
             onClick={() => setIsImportModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
           >
-            <Upload className="h-3.5 w-3.5 text-emerald-600" />
-            <span>Import Projects (Excel)</span>
+            <Upload className="h-3.5 w-3.5 text-success-text" />
+            <span>Import projects (Excel)</span>
           </button>
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-xl bg-success hover:bg-success text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Add Project</span>
+            <span>Add project</span>
           </button>
         </div>
       </div>
@@ -388,15 +388,15 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Parent Projects</span>
-            <span className="text-lg font-black text-foreground">{projects.length}</span>
+            <span className="text-[11px] font-semibold text-muted-foreground block">Parent projects</span>
+            <span className="text-lg font-semibold text-foreground">{projects.length}</span>
           </div>
-          <Building2 className="h-4 w-4 text-emerald-500" />
+          <Building2 className="h-4 w-4 text-success-text" />
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Total Sub-Projects / Wings</span>
-            <span className="text-lg font-black text-theme-icon dark:text-muted-foreground">
+            <span className="text-[11px] font-semibold text-muted-foreground block">Total sub-projects / wings</span>
+            <span className="text-lg font-semibold text-theme-icon dark:text-muted-foreground">
               {allTowers.length}
             </span>
           </div>
@@ -404,21 +404,21 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Registered Consultants</span>
-            <span className="text-lg font-black text-blue-600 dark:text-blue-400">
+            <span className="text-[11px] font-semibold text-muted-foreground block">Registered consultants</span>
+            <span className="text-lg font-semibold text-info-text">
               {consultants.length}
             </span>
           </div>
-          <Users className="h-4 w-4 text-blue-500" />
+          <Users className="h-4 w-4 text-info-text" />
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Active Packages</span>
-            <span className="text-lg font-black text-amber-600 dark:text-amber-400">
+            <span className="text-[11px] font-semibold text-muted-foreground block">Active packages</span>
+            <span className="text-lg font-semibold text-warning-text">
               {categories.length}
             </span>
           </div>
-          <Tag className="h-4 w-4 text-amber-500" />
+          <Tag className="h-4 w-4 text-warning-text" />
         </div>
       </div>
 
@@ -431,10 +431,10 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
             />
             {searchQuery && (
-              <button
+              <button aria-label="Close"
                 type="button"
                 onClick={() => setSearchQuery("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
@@ -450,7 +450,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               onChange={e => setSelectedStatusFilter(e.target.value)}
               className="px-2.5 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden"
             >
-              <option value="ALL">All Statuses</option>
+              <option value="ALL">All statuses</option>
               {PROJECT_STATUS_OPTIONS.map(st => (
                 <option key={st} value={st}>{st}</option>
               ))}
@@ -461,7 +461,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               onChange={e => setSelectedTypeFilter(e.target.value)}
               className="px-2.5 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden"
             >
-              <option value="ALL">All Types</option>
+              <option value="ALL">All types</option>
               {PROJECT_TYPE_OPTIONS.map(tp => (
                 <option key={tp} value={tp}>{tp}</option>
               ))}
@@ -481,7 +481,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
             <Building2 className="h-5 w-5" />
           </div>
           <div>
-            <h5 className="text-sm font-bold text-foreground">No Projects Found</h5>
+            <h5 className="text-sm font-bold text-foreground">No projects found</h5>
             <p className="text-xs text-muted-foreground mt-0.5">
               {searchQuery || selectedStatusFilter !== "ALL"
                 ? "Try adjusting your search query or filter options."
@@ -491,10 +491,10 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+            className="px-4 py-1.5 rounded-xl bg-success hover:bg-success text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Create First Project</span>
+            <span>Create first project</span>
           </button>
         </div>
       ) : (
@@ -507,28 +507,28 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
             return (
               <div
                 key={proj.id}
-                className="p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4 flex flex-col justify-between hover:border-emerald-500/40 transition-all"
+                className="p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4 flex flex-col justify-between hover:border-success-border transition-all"
               >
                 <div className="space-y-3.5">
                   {/* Top: Code, Type, Status, Actions */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">
+                        <span className="text-[11px] font-mono font-bold text-success-text bg-success-soft px-2 py-0.5 rounded border border-success-border whitespace-nowrap">
                           {proj.code}
                         </span>
                         {proj.projectType && (
-                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 whitespace-nowrap">
+                          <span className="text-[11px] font-bold text-info-text bg-info-soft px-2 py-0.5 rounded border border-info-border whitespace-nowrap">
                             {proj.projectType}
                           </span>
                         )}
                         {proj.projectStatus && (
-                          <span className="text-[10px] font-bold text-theme-icon dark:text-muted-foreground bg-surface px-2 py-0.5 rounded border border-border whitespace-nowrap">
+                          <span className="text-[11px] font-bold text-theme-icon dark:text-muted-foreground bg-surface px-2 py-0.5 rounded border border-border whitespace-nowrap">
                             {proj.projectStatus}
                           </span>
                         )}
                       </div>
-                      <h4 className="text-base font-black text-foreground mt-1 truncate">
+                      <h4 className="text-base font-semibold text-foreground mt-1 truncate">
                         {proj.name}
                       </h4>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
@@ -545,19 +545,19 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
 
                     {/* Actions */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <button
+                      <button aria-label="Edit project specs & mappings"
                         type="button"
                         onClick={() => handleOpenEdit(proj)}
-                        className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
-                        title="Edit Project Specs & Mappings"
+                        className="h-7 w-7 rounded-lg hover:bg-sunken text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+                        title="Edit project specs & mappings"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
-                      <button
+                      <button aria-label="Delete project & cascade"
                         type="button"
                         onClick={() => handleTriggerDelete(proj)}
-                        className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                        title="Delete Project & Cascade"
+                        className="h-7 w-7 rounded-lg hover:bg-danger-soft text-muted-foreground hover:text-danger-text flex items-center justify-center transition-colors cursor-pointer"
+                        title="Delete project & cascade"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -565,34 +565,34 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   </div>
 
                   {/* Project Specs Grid */}
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="p-3 rounded-xl bg-sunken border border-border grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
                     {proj.builtUpArea && (
                       <div>
-                        <span className="text-[10px] text-muted-foreground block font-medium">Built-Up Area:</span>
+                        <span className="text-[11px] text-muted-foreground block font-medium">Built-Up Area:</span>
                         <span className="font-bold text-foreground">{proj.builtUpArea}</span>
                       </div>
                     )}
                     {proj.plotArea && (
                       <div>
-                        <span className="text-[10px] text-muted-foreground block font-medium">Plot Area:</span>
+                        <span className="text-[11px] text-muted-foreground block font-medium">Plot Area:</span>
                         <span className="font-bold text-foreground">{proj.plotArea}</span>
                       </div>
                     )}
                     {proj.estimatedBudget && (
                       <div>
-                        <span className="text-[10px] text-muted-foreground block font-medium">Budget:</span>
+                        <span className="text-[11px] text-muted-foreground block font-medium">Budget:</span>
                         <span className="font-bold text-foreground">{proj.estimatedBudget}</span>
                       </div>
                     )}
                     {proj.targetCompletionDate && (
                       <div>
-                        <span className="text-[10px] text-muted-foreground block font-medium">Target Handover:</span>
+                        <span className="text-[11px] text-muted-foreground block font-medium">Target Handover:</span>
                         <span className="font-bold text-foreground">{proj.targetCompletionDate}</span>
                       </div>
                     )}
                     {proj.leadManager && (
                       <div className="col-span-2">
-                        <span className="text-[10px] text-muted-foreground block font-medium">Lead Manager:</span>
+                        <span className="text-[11px] text-muted-foreground block font-medium">Lead Manager:</span>
                         <span className="font-bold text-foreground truncate block">{proj.leadManager}</span>
                       </div>
                     )}
@@ -605,7 +605,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
                           <Users className="h-3 w-3 text-theme-icon" />
-                          <span>Mapped Consultants ({taggedCons.length}):</span>
+                          <span>Mapped consultants ({taggedCons.length}):</span>
                         </span>
                         <button
                           type="button"
@@ -613,7 +613,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                             handleOpenEdit(proj);
                             setFormTab("CONSULTANTS_CATEGORIES");
                           }}
-                          className="h-5 px-2 rounded-md bg-surface hover:bg-surface text-theme-icon dark:text-muted-foreground border border-border text-[10px] font-bold inline-flex items-center transition-colors cursor-pointer"
+                          className="h-5 px-2 rounded-md bg-surface hover:bg-surface text-theme-icon dark:text-muted-foreground border border-border text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer"
                         >
                           Manage
                         </button>
@@ -623,7 +623,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                           taggedCons.map((consName, idx) => (
                             <span
                               key={idx}
-                              className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border"
+                              className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border"
                             >
                               {consName}
                             </span>
@@ -640,15 +640,15 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
-                          <Tag className="h-3 w-3 text-blue-500" />
-                          <span>Tagged Packages ({taggedCats.length}):</span>
+                          <Tag className="h-3 w-3 text-info-text" />
+                          <span>Tagged packages ({taggedCats.length}):</span>
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1 max-h-14 overflow-y-auto custom-scrollbar">
                         {taggedCats.map((catName, idx) => (
                           <span
                             key={idx}
-                            className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
+                            className="px-1.5 py-0.2 rounded text-[11px] font-semibold bg-info-soft text-info-text border border-info-border"
                           >
                             {catName}
                           </span>
@@ -661,17 +661,17 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                 {/* Card Footer: Sub-Projects Link */}
                 <div className="pt-3 border-t border-border flex items-center justify-between">
                   <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5">
-                    <Layers className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>{projTowers.length} Sub-Project Wing{projTowers.length !== 1 ? "s" : ""}</span>
+                    <Layers className="h-3.5 w-3.5 text-success-text" />
+                    <span>{projTowers.length} Sub-project wing{projTowers.length !== 1 ? "s" : ""}</span>
                   </span>
 
                   <button
                     type="button"
                     onClick={() => onNavigateToSubProjects ? onNavigateToSubProjects(proj.id) : handleOpenEdit(proj)}
-                    className="h-6 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                    className="h-6 px-2.5 rounded-lg bg-success hover:bg-success text-white text-[11px] font-bold inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                   >
-                    <span>View Wings</span>
-                    <span className="text-[10px]">→</span>
+                    <span>View wings</span>
+                    <span className="text-[11px]">→</span>
                   </button>
                 </div>
               </div>
@@ -686,7 +686,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
       {/* Add / Edit Project Transaction Form Layout (Attached directly to sidebar) */}
       {isModalOpen && (
         <TransactionFormLayout
-          title={editingProject ? `Edit Project: ${projectName || editingProject.name}` : "Create New Project Master"}
+          title={editingProject ? `Edit Project: ${projectName || editingProject.name}` : "Create new project master"}
           icon={Building2}
           description="Configure specifications, map consultant partners, and define package scopes"
           onBack={() => setIsModalOpen(false)}
@@ -708,29 +708,29 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                 onClick={() => setFormTab("SPECS")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   formTab === "SPECS"
-                    ? "bg-emerald-600 text-white shadow-xs"
+                    ? "bg-success text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground bg-muted/40"
                 }`}
               >
                 <Building2 className="h-4 w-4" />
-                <span>1. Project Specs</span>
+                <span>1. Project specs</span>
               </button>
               <button
                 type="button"
                 onClick={() => setFormTab("CONSULTANTS_CATEGORIES")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   formTab === "CONSULTANTS_CATEGORIES"
-                    ? "bg-emerald-600 text-white shadow-xs"
+                    ? "bg-success text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground bg-muted/40"
                 }`}
               >
                 <Users className="h-4 w-4" />
-                <span>2. Map Consultants & Packages ({selectedConsultants.length} Cons / {selectedCategories.length} Pkgs)</span>
+                <span>2. Map consultants & packages ({selectedConsultants.length} Cons / {selectedCategories.length} Pkgs)</span>
               </button>
             </div>
 
             {formError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
@@ -743,25 +743,25 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-2 space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Project Name <span className="text-rose-500">*</span>
+                        Project name <span className="text-danger-text">*</span>
                       </label>
                       <input
                         type="text"
                         value={projectName}
                         onChange={e => setProjectName(e.target.value)}
                         required
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Project Code
+                        Project code
                       </label>
                       <input
                         type="text"
                         value={projectCode}
                         onChange={e => setProjectCode(e.target.value.toUpperCase())}
-                        className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                   </div>
@@ -776,13 +776,13 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={location}
                         onChange={e => setLocation(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
 
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Project Type
+                        Project type
                       </label>
                       <select
                         value={projectType}
@@ -797,7 +797,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
 
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Project Lifecycle Status
+                        Project lifecycle status
                       </label>
                       <select
                         value={projectStatus}
@@ -815,46 +815,46 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Built-Up Area
+                        Built-up area
                       </label>
                       <input
                         type="text"
                         value={builtUpArea}
                         onChange={e => setBuiltUpArea(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Plot Area
+                        Plot area
                       </label>
                       <input
                         type="text"
                         value={plotArea}
                         onChange={e => setPlotArea(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Estimated Budget
+                        Estimated budget
                       </label>
                       <input
                         type="text"
                         value={estimatedBudget}
                         onChange={e => setEstimatedBudget(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        MahaRERA Number
+                        MahaRERA number
                       </label>
                       <input
                         type="text"
                         value={reraNumber}
                         onChange={e => setReraNumber(e.target.value)}
-                        className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                   </div>
@@ -863,35 +863,35 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Target Completion Date
+                        Target completion date
                       </label>
                       <input
                         type="date"
                         value={targetDate}
                         onChange={e => setTargetDate(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Lead Design Manager
+                        Lead design manager
                       </label>
                       <input
                         type="text"
                         value={leadManager}
                         onChange={e => setLeadManager(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-foreground">
-                        Manager Email
+                        Manager email
                       </label>
                       <input
                         type="email"
                         value={leadManagerEmail}
                         onChange={e => setLeadManagerEmail(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                       />
                     </div>
                   </div>
@@ -899,13 +899,13 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   {/* Description */}
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-foreground">
-                      Project Scope & Description
+                      Project scope & description
                     </label>
                     <textarea
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-success-border"
                     />
                   </div>
                 </div>
@@ -915,15 +915,15 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               {formTab === "CONSULTANTS_CATEGORIES" && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Column 1: Consultants Mapping */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3 flex flex-col justify-between">
+                  <div className="p-4 rounded-2xl bg-sunken border border-border space-y-3 flex flex-col justify-between">
                     <div className="space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
                           <Users className="h-4 w-4 text-theme-icon" />
                           <label className="text-xs font-bold text-foreground">
-                            Map Consultant Partners
+                            Map consultant partners
                           </label>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface text-theme-icon dark:text-muted-foreground font-bold">
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface text-theme-icon dark:text-muted-foreground font-bold">
                             {selectedConsultants.length} of {consultants.length} Selected
                           </span>
                         </div>
@@ -932,18 +932,18 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                           <button
                             type="button"
                             onClick={handleSelectAllConsultants}
-                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors cursor-pointer inline-flex items-center gap-1"
+                            className="px-2 py-1 rounded-lg text-[11px] font-bold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors cursor-pointer inline-flex items-center gap-1"
                           >
                             <CheckSquare className="h-3 w-3" />
-                            <span>Select All</span>
+                            <span>Select all</span>
                           </button>
                           <button
                             type="button"
                             onClick={handleRemoveAllConsultants}
-                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            className="px-2 py-1 rounded-lg text-[11px] font-bold bg-sunken text-subtle hover:bg-sunken transition-colors cursor-pointer inline-flex items-center gap-1"
                           >
                             <Square className="h-3 w-3" />
-                            <span>Remove All</span>
+                            <span>Remove all</span>
                           </button>
                         </div>
                       </div>
@@ -954,7 +954,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                           type="text"
                           value={consultantSearch}
                           onChange={e => setConsultantSearch(e.target.value)}
-                          className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                          className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                         />
                       </div>
 
@@ -975,19 +975,19 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                                 onClick={() => handleToggleConsultant(c.name)}
                                 className={`w-full p-2.5 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
                                   isSelected
-                                    ? "bg-surface dark:bg-surface border-border text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
-                                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    ? "bg-surface dark:bg-surface border-border text-accent-soft-text font-bold shadow-2xs"
+                                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-sunken"
                                 }`}
                               >
                                 <div className="min-w-0">
                                   <div className="truncate font-semibold text-foreground">{c.name}</div>
-                                  <div className="text-[10px] text-muted-foreground truncate font-normal mt-0.5">
+                                  <div className="text-[11px] text-muted-foreground truncate font-normal mt-0.5">
                                     {cCats.length > 0 ? cCats.join(" • ") : "No packages defined"}
                                   </div>
                                 </div>
                                 <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border ${
                                   isSelected
-                                    ? "bg-purple-600 border-purple-600 text-white"
+                                    ? "bg-primary border-border-active text-white"
                                     : "border-border bg-background"
                                 }`}>
                                   {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
@@ -1001,15 +1001,15 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   </div>
 
                   {/* Column 2: Tagged Packages Scope Mapping */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3 flex flex-col justify-between">
+                  <div className="p-4 rounded-2xl bg-sunken border border-border space-y-3 flex flex-col justify-between">
                     <div className="space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
-                          <Tag className="h-4 w-4 text-blue-500" />
+                          <Tag className="h-4 w-4 text-info-text" />
                           <label className="text-xs font-bold text-foreground">
-                            Tagged Packages Scope
+                            Tagged packages scope
                           </label>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 font-bold">
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-info-soft text-info-text font-bold">
                             {selectedCategories.length} of {availableCategoriesList.length} Selected
                           </span>
                         </div>
@@ -1019,18 +1019,18 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                             <button
                               type="button"
                               onClick={() => handleSelectAllCategories(availableCategoriesList.map(c => c.name))}
-                              className="px-2 py-1 rounded-lg text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                              className="px-2 py-1 rounded-lg text-[11px] font-bold bg-info-soft text-info-text hover:bg-info-soft transition-colors cursor-pointer inline-flex items-center gap-1"
                             >
                               <CheckSquare className="h-3 w-3" />
-                              <span>Select All</span>
+                              <span>Select all</span>
                             </button>
                             <button
                               type="button"
                               onClick={handleRemoveAllCategories}
-                              className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                              className="px-2 py-1 rounded-lg text-[11px] font-bold bg-sunken text-subtle hover:bg-sunken transition-colors cursor-pointer inline-flex items-center gap-1"
                             >
                               <Square className="h-3 w-3" />
-                              <span>Remove All</span>
+                              <span>Remove all</span>
                             </button>
                           </div>
                         )}
@@ -1043,7 +1043,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                             type="text"
                             value={categorySearch}
                             onChange={e => setCategorySearch(e.target.value)}
-                            className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                            className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
                           />
                         </div>
                       )}
@@ -1051,19 +1051,19 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                       {/* Empty State when no consultants selected */}
                       {selectedConsultants.length === 0 && !showAllMasterCategories ? (
                         <div className="p-8 rounded-2xl border border-dashed border-border bg-background/50 text-center space-y-2.5 my-4">
-                          <div className="h-10 w-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+                          <div className="h-10 w-10 rounded-full bg-info-soft text-info-text flex items-center justify-center mx-auto">
                             <Tag className="h-5 w-5" />
                           </div>
-                          <h4 className="text-xs font-bold text-foreground">No Consultants Selected Yet</h4>
+                          <h4 className="text-xs font-bold text-foreground">No consultants selected yet</h4>
                           <p className="text-[11px] text-muted-foreground max-w-xs mx-auto leading-relaxed">
                             Select one or more consultant partners on the left to auto-load their mapped packages here.
                           </p>
                           <button
                             type="button"
                             onClick={() => setShowAllMasterCategories(true)}
-                            className="h-6 px-2.5 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer mt-1"
+                            className="h-6 px-2.5 rounded-lg border border-info-border bg-info-soft hover:bg-info-soft text-info-text text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer mt-1"
                           >
-                            Browse all {categories.length} Package Master packages →
+                            Browse all {categories.length} Package master packages →
                           </button>
                         </div>
                       ) : (
@@ -1083,8 +1083,8 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                                     onClick={() => handleToggleCategory(cat.name)}
                                     className={`p-2 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
                                       isSelected
-                                        ? "bg-blue-50 dark:bg-blue-950/40 border-blue-500/60 text-blue-900 dark:text-blue-100 font-bold shadow-2xs"
-                                        : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        ? "bg-info-soft border-info-border text-info-text font-bold shadow-2xs"
+                                        : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-sunken"
                                     }`}
                                   >
                                     <div className="flex items-center gap-1.5 min-w-0">
@@ -1093,7 +1093,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                                     </div>
                                     <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border ${
                                       isSelected
-                                        ? "bg-blue-600 border-blue-600 text-white"
+                                        ? "bg-info border-info-border text-white"
                                         : "border-border bg-background"
                                     }`}>
                                       {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
@@ -1115,7 +1115,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                       <button
                         type="button"
                         onClick={() => setShowAllMasterCategories(!showAllMasterCategories)}
-                        className="h-5 px-2 rounded-md border border-border bg-surface hover:bg-surface-hover text-foreground text-[10px] font-bold inline-flex items-center transition-colors cursor-pointer"
+                        className="h-5 px-2 rounded-md border border-border bg-surface hover:bg-surface-hover text-foreground text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer"
                       >
                         {showAllMasterCategories ? "Filter by selected consultants" : "View all master packages"}
                       </button>
@@ -1131,9 +1131,9 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     <button
                       type="button"
                       onClick={() => setFormTab("CONSULTANTS_CATEGORIES")}
-                      className="h-7 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                      className="h-7 px-3 rounded-lg bg-success hover:bg-success text-white font-bold text-xs inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                     >
-                      Next: Map Consultants & Packages →
+                      Next: map consultants & packages →
                     </button>
                   ) : (
                     <button
@@ -1141,7 +1141,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                       onClick={() => setFormTab("SPECS")}
                       className="h-7 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer"
                     >
-                      ← Back to Specs
+                      ← Back to specs
                     </button>
                   )}
                 </div>
@@ -1150,13 +1150,13 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                    className="px-5 py-2 rounded-xl bg-success hover:bg-success text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                   >
                     {editingProject ? "Save Changes" : "Create Project"}
                   </button>

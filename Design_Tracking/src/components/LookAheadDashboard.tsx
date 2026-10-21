@@ -26,6 +26,7 @@ import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactio
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { toast } from "react-toastify";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 export const LookAheadDashboard: React.FC = () => {
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
@@ -155,14 +156,14 @@ export const LookAheadDashboard: React.FC = () => {
     return [
       {
         value: "30_DAYS",
-        label: "30-Day Critical Window",
+        label: "30-Day critical window",
         count: count30,
         colorDot: "#f43f5e",
         subtitle: "Immediate action required"
       },
       {
         value: "60_DAYS",
-        label: "60-Day Scheduled Window",
+        label: "60-Day scheduled window",
         count: count60,
         colorDot: "#f59e0b",
         subtitle: "Planned forecast milestones"
@@ -187,8 +188,8 @@ export const LookAheadDashboard: React.FC = () => {
     }
   };
 
-  const handleDeleteItem = (id: string) => {
-    if (confirm("Are you sure you want to remove this milestone from the look-ahead schedule?")) {
+  const handleDeleteItem = async (id: string) => {
+    if (await confirmAction("Remove this milestone from the look-ahead schedule?")) {
       DesignMasterStore.deleteLookAhead(id);
       setSelectedItem(null);
     }
@@ -226,12 +227,12 @@ export const LookAheadDashboard: React.FC = () => {
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20 shrink-0">
+            <div className="h-9 w-9 rounded-xl bg-warning-soft text-warning-text flex items-center justify-center border border-warning-border shrink-0">
               <Clock className="h-4 w-4" />
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">
-                Look-Ahead Forecast
+                Look-ahead forecast
               </h2>
             </div>
           </div>
@@ -251,17 +252,17 @@ export const LookAheadDashboard: React.FC = () => {
                 setNewTargetDate("");
                 setIsAddModalOpen(true);
               }}
-              className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="h-8 px-3 rounded-lg bg-success hover:bg-success text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>Add Milestone</span>
+              <span>Add milestone</span>
             </button>
 
             {/* CSV Export */}
             <button
               type="button"
               onClick={handleExportCsv}
-              className="h-8 px-3 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="h-8 px-3 rounded-lg border border-border bg-surface hover:bg-sunken text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-muted-foreground" />
               <span>Export CSV</span>
@@ -292,7 +293,7 @@ export const LookAheadDashboard: React.FC = () => {
               selectedValues={selectedTimeframeFilters}
               onChange={setSelectedTimeframeFilters}
               colorTheme="amber"
-              placeholder="All Milestone Windows"
+              placeholder="All milestone windows"
               searchPlaceholder="Filter timeframe..."
               showSearch={false}
             />
@@ -302,11 +303,11 @@ export const LookAheadDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={handleClearAllFilters}
-                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                className="h-9 px-3 rounded-xl border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
                 title="Reset all active filters"
               >
                 <X className="h-3.5 w-3.5" />
-                <span>Reset Filters ({totalActiveFilterCount})</span>
+                <span>Reset filters ({totalActiveFilterCount})</span>
               </button>
             )}
           </div>
@@ -319,7 +320,7 @@ export const LookAheadDashboard: React.FC = () => {
         {/* 🏷️ Active Selected Filter Badges */}
         {totalActiveFilterCount > 0 && (
           <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
-            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
               Active Filters:
             </span>
 
@@ -327,14 +328,14 @@ export const LookAheadDashboard: React.FC = () => {
             {selectedProjectFilters.map(p => (
               <span
                 key={`proj-${p}`}
-                className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                className="px-2 py-0.5 rounded-lg bg-info-soft text-info-text border border-info-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
               >
                 <Building className="h-2.5 w-2.5" />
                 <span>{p}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedProjectFilters(prev => prev.filter(x => x !== p))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -345,14 +346,14 @@ export const LookAheadDashboard: React.FC = () => {
             {selectedTimeframeFilters.map(tf => (
               <span
                 key={`tf-${tf}`}
-                className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                className="px-2 py-0.5 rounded-lg bg-warning-soft text-warning-text border border-warning-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
               >
                 <Clock className="h-2.5 w-2.5" />
                 <span>{tf === "30_DAYS" ? "30-Day Critical" : "60-Day Scheduled"}</span>
-                <button
+                <button aria-label="Close"
                   type="button"
                   onClick={() => setSelectedTimeframeFilters(prev => prev.filter(x => x !== tf))}
-                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                  className="hover:text-danger-text cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -362,7 +363,7 @@ export const LookAheadDashboard: React.FC = () => {
             <button
               type="button"
               onClick={handleClearAllFilters}
-              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+              className="text-[11px] text-muted-foreground hover:text-danger-text underline ml-1 cursor-pointer font-medium"
             >
               Clear all
             </button>
@@ -373,30 +374,30 @@ export const LookAheadDashboard: React.FC = () => {
       {/* Critical Packages & Consultant Bottlenecks Strip */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Critical Design Packages */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-rose-500/25 bg-rose-500/5 shadow-xs space-y-3">
+        <div className="p-4 sm:p-5 rounded-2xl border border-danger-border bg-danger-soft shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 whitespace-nowrap">
-                Critical Design Package Blockers
+              <span className="h-2 w-2 rounded-full bg-danger-solid shrink-0" />
+              <h3 className="text-xs font-bold text-danger-text whitespace-nowrap">
+                Critical design package blockers
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25 shrink-0 whitespace-nowrap">
-              High Priority
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-danger-soft text-danger-text border border-danger-border shrink-0 whitespace-nowrap">
+              High priority
             </span>
           </div>
 
           <div className="space-y-2">
             {criticalDesignBlockers.length === 0 ? (
-              <div className="p-3 rounded-xl bg-surface/60 border border-rose-500/10 text-center text-muted-foreground text-xs">
+              <div className="p-3 rounded-xl bg-surface/60 border border-danger-border text-center text-muted-foreground text-xs">
                 No critical package blockers logged
               </div>
             ) : (
               criticalDesignBlockers.map((blk, idx) => (
-                <div key={idx} className="p-2.5 rounded-xl bg-surface border border-rose-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
+                <div key={idx} className="p-2.5 rounded-xl bg-surface border border-danger-border text-xs flex items-center justify-between gap-3 shadow-2xs">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground whitespace-nowrap">
-                      <span className="text-rose-600 dark:text-rose-400">{blk.project}</span>
+                      <span className="text-danger-text">{blk.project}</span>
                       <span className="text-muted-foreground">•</span>
                       <span>{blk.tower}</span>
                     </div>
@@ -405,10 +406,10 @@ export const LookAheadDashboard: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400 block whitespace-nowrap">
+                    <span className="text-[11px] font-mono font-bold text-danger-text block whitespace-nowrap">
                       {blk.target}
                     </span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500 text-white font-bold inline-block mt-0.5 whitespace-nowrap">
+                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-danger-solid text-white font-bold inline-block mt-0.5 whitespace-nowrap">
                       {blk.status}
                     </span>
                   </div>
@@ -419,42 +420,42 @@ export const LookAheadDashboard: React.FC = () => {
         </div>
 
         {/* Critical Consultant Bottlenecks */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-amber-500/25 bg-amber-500/5 shadow-xs space-y-3">
+        <div className="p-4 sm:p-5 rounded-2xl border border-warning-border bg-warning-soft shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 whitespace-nowrap">
-                Consultant Onboarding Bottlenecks
+              <span className="h-2 w-2 rounded-full bg-warning shrink-0" />
+              <h3 className="text-xs font-bold text-warning-text whitespace-nowrap">
+                Consultant onboarding bottlenecks
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 shrink-0 whitespace-nowrap">
-              Work Order Gates
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border shrink-0 whitespace-nowrap">
+              Work order gates
             </span>
           </div>
 
           <div className="space-y-2">
             {criticalConsultantBottlenecks.length === 0 ? (
-              <div className="p-3 rounded-xl bg-surface/60 border border-amber-500/10 text-center text-muted-foreground text-xs">
+              <div className="p-3 rounded-xl bg-surface/60 border border-warning-border text-center text-muted-foreground text-xs">
                 No consultant onboarding blockers logged
               </div>
             ) : (
               criticalConsultantBottlenecks.map((cst, idx) => (
-                <div key={idx} className="p-2.5 rounded-xl bg-surface border border-amber-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
+                <div key={idx} className="p-2.5 rounded-xl bg-surface border border-warning-border text-xs flex items-center justify-between gap-3 shadow-2xs">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground whitespace-nowrap">
-                      <span className="text-amber-600 dark:text-amber-400">{cst.project}</span>
+                      <span className="text-warning-text">{cst.project}</span>
                       <span className="text-muted-foreground">•</span>
                       <span>{cst.tower}</span>
                     </div>
                     <div className="text-xs font-bold text-foreground mt-0.5 truncate">
                       {cst.consultant}
                     </div>
-                    <div className="text-[10px] text-muted-foreground truncate">
+                    <div className="text-[11px] text-muted-foreground truncate">
                       {cst.issue}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border whitespace-nowrap">
                       {cst.severity}
                     </span>
                   </div>
@@ -469,7 +470,7 @@ export const LookAheadDashboard: React.FC = () => {
       {lookAheads.length === 0 && (
         <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
           <Calendar className="h-10 w-10 text-muted-foreground/40 mx-auto" />
-          <h4 className="text-sm font-bold text-foreground">No Look-Ahead Milestones Configured</h4>
+          <h4 className="text-sm font-bold text-foreground">No look-ahead milestones configured</h4>
           
         </div>
       )}
@@ -482,18 +483,18 @@ export const LookAheadDashboard: React.FC = () => {
             <div 
               key={idx} 
               className={`p-4 sm:p-5 rounded-2xl border bg-surface shadow-xs flex flex-col justify-between space-y-4 transition-all hover:shadow-md ${
-                has30 ? "border-rose-500/30 hover:border-rose-500/50" : "border-border hover:border-border/80"
+                has30 ? "border-danger-border hover:border-danger-border" : "border-border hover:border-border/80"
               }`}
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-black text-foreground">
-                    <Building className="h-4 w-4 text-emerald-500" />
+                  <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                    <Building className="h-4 w-4 text-success-text" />
                     <span>{key}</span>
                   </div>
                   {has30 && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-danger-soft text-danger-text border border-danger-border flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-danger-solid" />
                       <span>Urgent</span>
                     </span>
                   )}
@@ -508,28 +509,28 @@ export const LookAheadDashboard: React.FC = () => {
                         onClick={() => setSelectedItem(item)}
                         className={`p-2.5 rounded-xl border text-xs flex flex-col gap-1.5 transition-all cursor-pointer group ${
                           item.timeframe === "30_DAYS"
-                            ? "bg-rose-500/10 hover:bg-rose-500/15 border-rose-500/20 text-foreground"
-                            : "bg-amber-500/10 hover:bg-amber-500/15 border-amber-500/20 text-foreground"
+                            ? "bg-danger-soft hover:bg-danger-soft border-danger-border text-foreground"
+                            : "bg-warning-soft hover:bg-warning-soft border-warning-border text-foreground"
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                            item.timeframe === "30_DAYS" ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
+                          <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
+                            item.timeframe === "30_DAYS" ? "bg-danger-solid text-white" : "bg-warning text-white"
                           }`}>
                             {item.timeframe === "30_DAYS" ? "30-Day Critical" : "60-Day Forecast"}
                           </span>
                           {isExpedited && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500 text-white flex items-center gap-1">
+                            <span className="text-[11px] font-bold px-1.5 py-0.2 rounded bg-success text-white flex items-center gap-1">
                               <span>Expedited</span>
                             </span>
                           )}
                         </div>
 
-                        <span className="leading-snug font-semibold text-foreground group-hover:text-emerald-500 transition-colors">
+                        <span className="leading-snug font-semibold text-foreground group-hover:text-success-text transition-colors">
                           {item.deliverableDescription}
                         </span>
                         {item.targetDate && (
-                          <span className="text-[10px] text-muted-foreground font-mono">
+                          <span className="text-[11px] text-muted-foreground font-mono">
                             Target: {item.targetDate}
                           </span>
                         )}
@@ -544,9 +545,9 @@ export const LookAheadDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedItem(items[0])}
-                  className="h-6 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                  className="h-6 px-2.5 rounded-lg bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <span>Manage Milestones</span>
+                  <span>Manage milestones</span>
                   <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
@@ -562,10 +563,10 @@ export const LookAheadDashboard: React.FC = () => {
         <WorkingDocumentLayout
           title={`Milestone Action: ${selectedItem.deliverableDescription}`}
           badge={selectedItem.isExpedited ? "Fast-Track Expedited" : "Normal Schedule"}
-          badgeColor={selectedItem.isExpedited ? "bg-amber-500/10 text-amber-600 border border-amber-500/30" : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"}
+          badgeColor={selectedItem.isExpedited ? "bg-warning-soft text-warning-text border border-warning-border" : "bg-success-soft text-success-text border border-success-border"}
           category="Look-Ahead Schedule"
           icon={Clock}
-          iconBg="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          iconBg="bg-warning-soft text-warning-text"
           description="Inspect deliverable readiness, manage expedite acceleration, or adjust milestone commitments."
           breadcrumbs={[
             { label: "Design Tracking Desk" },
@@ -583,8 +584,8 @@ export const LookAheadDashboard: React.FC = () => {
                 onClick={() => handleToggleExpedite(selectedItem.id)}
                 className={`text-xs h-9 font-semibold gap-1.5 ${
                   selectedItem.isExpedited
-                    ? "border-amber-500/40 text-amber-600 hover:bg-amber-500/10"
-                    : "border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10"
+                    ? "border-warning-border text-warning-text hover:bg-warning-soft"
+                    : "border-success-border text-success-text hover:bg-success-soft"
                 }`}
               >
                 <Zap className="h-3.5 w-3.5" />
@@ -598,10 +599,10 @@ export const LookAheadDashboard: React.FC = () => {
                   handleDeleteItem(selectedItem.id);
                   setSelectedItem(null);
                 }}
-                className="text-xs h-9 font-semibold text-rose-600 border-rose-500/30 hover:bg-rose-500/10 gap-1.5"
+                className="text-xs h-9 font-semibold text-danger-text border-danger-border hover:bg-danger-soft gap-1.5"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                <span>Remove Milestone</span>
+                <span>Remove milestone</span>
               </AppButton>
             </div>
           }
@@ -610,22 +611,22 @@ export const LookAheadDashboard: React.FC = () => {
             <div className="md:col-span-2 space-y-6">
               <AppCard>
                 <AppCardHeader>
-                  <AppCardTitle className="text-sm font-bold text-foreground">Deliverable Overview</AppCardTitle>
+                  <AppCardTitle className="text-sm font-bold text-foreground">Deliverable overview</AppCardTitle>
                 </AppCardHeader>
                 <AppCardContent className="space-y-4 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="p-3 rounded-xl bg-muted/20 border border-border space-y-1">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Project / Development</span>
+                      <span className="text-[11px] font-bold text-muted-foreground block">Project / development</span>
                       <span className="text-xs font-bold text-foreground">{projectMap.get(selectedItem.projectId) || "Development"}</span>
                     </div>
                     <div className="p-3 rounded-xl bg-muted/20 border border-border space-y-1">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Tower / Wing</span>
+                      <span className="text-[11px] font-bold text-muted-foreground block">Tower / wing</span>
                       <span className="text-xs font-bold text-foreground">Wing {towerMap.get(selectedItem.towerId) || "Wing"}</span>
                     </div>
                   </div>
 
                   <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Milestone Deliverable Description</span>
+                    <span className="text-[11px] font-bold text-muted-foreground block">Milestone deliverable description</span>
                     <p className="text-sm font-semibold text-foreground leading-relaxed">{selectedItem.deliverableDescription}</p>
                   </div>
                 </AppCardContent>
@@ -635,13 +636,13 @@ export const LookAheadDashboard: React.FC = () => {
             <div className="space-y-6">
               <AppCard>
                 <AppCardHeader>
-                  <AppCardTitle className="text-sm font-bold text-foreground">Schedule Timeline</AppCardTitle>
+                  <AppCardTitle className="text-sm font-bold text-foreground">Schedule timeline</AppCardTitle>
                 </AppCardHeader>
                 <AppCardContent className="space-y-3 text-xs">
                   <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-background">
                     <span className="text-muted-foreground">Execution Window:</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      selectedItem.timeframe === "30_DAYS" ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                      selectedItem.timeframe === "30_DAYS" ? "bg-danger-solid text-white" : "bg-warning text-white"
                     }`}>
                       {selectedItem.timeframe === "30_DAYS" ? "Immediate 30 Days" : "Forecast 60 Days"}
                     </span>
@@ -670,15 +671,15 @@ export const LookAheadDashboard: React.FC = () => {
       {/* Add Milestone Transaction Form */}
       {isAddModalOpen && (
         <TransactionFormLayout
-          title="Add Look-Ahead Milestone"
+          title="Add look-ahead milestone"
           category="Milestone Management"
           icon={Plus}
-          iconBg="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          iconBg="bg-success-soft text-success-text"
           description="Record upcoming tender package deliverable or consultant target to track horizon commitments."
           breadcrumbs={[
             { label: "Design Tracking Desk" },
             { label: "Look-Ahead Forecast", onClick: () => setIsAddModalOpen(false) },
-            { label: "New Milestone" }
+            { label: "New milestone" }
           ]}
           onBack={() => setIsAddModalOpen(false)}
           backLabel="Back to Look-Ahead Forecast"
@@ -709,12 +710,12 @@ export const LookAheadDashboard: React.FC = () => {
           <div className="max-w-4xl space-y-6">
             <AppCard>
               <AppCardHeader>
-                <AppCardTitle className="text-sm font-bold text-foreground">Milestone Details</AppCardTitle>
+                <AppCardTitle className="text-sm font-bold text-foreground">Milestone details</AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="space-y-4 text-xs">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Project / Development *</label>
+                    <label className="font-bold text-foreground block">Project / development *</label>
                     <select
                       value={newProjectId}
                       onChange={e => {
@@ -732,7 +733,7 @@ export const LookAheadDashboard: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Tower / Wing *</label>
+                    <label className="font-bold text-foreground block">Tower / wing *</label>
                     <select
                       value={newTowerId}
                       onChange={e => setNewTowerId(e.target.value)}
@@ -746,12 +747,12 @@ export const LookAheadDashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Deliverable Description *</label>
+                  <label className="font-bold text-foreground block">Deliverable description *</label>
                   <textarea
                     rows={3}
                     value={newDesc}
                     onChange={e => setNewDesc(e.target.value)}
-                    placeholder="e.g., Structural Foundation GFC Drawings & Schedule of Finishes"
+                    placeholder="e.g., structural foundation GFC drawings & schedule of finishes"
                     className="w-full p-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                     required
                   />
@@ -759,35 +760,35 @@ export const LookAheadDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Urgency Horizon Window *</label>
+                    <label className="font-bold text-foreground block">Urgency horizon window *</label>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => setNewTimeframe("30_DAYS")}
                         className={`py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                           newTimeframe === "30_DAYS"
-                            ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500"
+                            ? "border-danger-border bg-danger-soft text-danger-text ring-1 ring-danger-border"
                             : "border-border text-muted-foreground hover:bg-muted"
                         }`}
                       >
-                        🚨 In 30 Days
+                        🚨 In 30 days
                       </button>
                       <button
                         type="button"
                         onClick={() => setNewTimeframe("60_DAYS")}
                         className={`py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                           newTimeframe === "60_DAYS"
-                            ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500"
+                            ? "border-warning-border bg-warning-soft text-warning-text ring-1 ring-warning-border"
                             : "border-border text-muted-foreground hover:bg-muted"
                         }`}
                       >
-                        ⏳ In 60 Days
+                        ⏳ In 60 days
                       </button>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Target Delivery Date / Milestone</label>
+                    <label className="font-bold text-foreground block">Target delivery date / milestone</label>
                     <input
                       type="text"
                       value={newTargetDate}

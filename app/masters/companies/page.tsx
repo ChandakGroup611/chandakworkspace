@@ -13,13 +13,14 @@ import { Save, Plus, Edit2, Trash2, MapPin, Globe, Phone, FileText, CheckCircle2
 import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
 import { SystemMasterBulkImportModal, MasterTableConfig } from "@/components/masters/SystemMasterBulkImportModal";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { confirmAction } from "@/components/ui/feedback/confirm";
 
 const COMPANY_MASTER_CONFIG: MasterTableConfig[] = [
   {
     id: "company_master",
     table: "company_master",
     scopeId: null,
-    label: "Company Master",
+    label: "Company master",
     category: "ORGANIZATION",
     icon: Building2,
     desc: "Companies, subsidiaries & sister business entities",
@@ -163,7 +164,7 @@ export default function CompanyMasterPage() {
   };
 
   const handleDelete = async (company: any) => {
-    if (!confirm(`Are you sure you want to delete ${company.name}?`)) return;
+    if (!(await confirmAction(`Are you sure you want to delete ${company.name}?`))) return;
     try {
       const res = await saveMasterEntity('company_master', { is_deleted: true, is_active: false }, company.id);
       if (!res.success) throw new Error(res.error);
@@ -184,7 +185,7 @@ export default function CompanyMasterPage() {
       <div className="h-screen flex items-center justify-center bg-surface">
         <ChandakLoader
           size="lg"
-          title="Loading Company Architecture..."
+          title="Loading company architecture…"
           subtitle="Fetching enterprise entities & subsidiary records"
         />
       </div>
@@ -196,10 +197,10 @@ export default function CompanyMasterPage() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface"
       }`}>
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
+        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
           <Lock className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view the Company Master.</p>
       </div>
     );
@@ -213,17 +214,17 @@ export default function CompanyMasterPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Building2 className={`h-6 w-6 text-theme-icon`} />
-            <h1 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Company Master</h1>
-            <AppBadge variant="info">Global Enterprise</AppBadge>
+            <h1 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Company master</h1>
+            <AppBadge variant="info">Global enterprise</AppBadge>
           </div>
-          <p className="text-xs text-muted">Manage client engagements, sister organizations, and enterprise structures.</p>
+          <p className="text-xs text-muted">Manage client engagements, sister organisations, and enterprise structures.</p>
         </div>
         
         <div className="flex items-center gap-3">
           <AppButton 
             variant="outline" 
             size="sm" 
-            leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" />}
+            leftIcon={<FileSpreadsheet className="h-4 w-4 text-success-text" />}
             onClick={() => setIsImportModalOpen(true)}
           >
             Import Excel
@@ -237,19 +238,19 @@ export default function CompanyMasterPage() {
             Refresh
           </AppButton>
           <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={openCreateModal}>
-            Register Company
+            Register company
           </AppButton>
         </div>
       </div>
 
       {errorAlert && (
-        <div className="p-4 rounded-xl bg-danger/10 border border-rose-500/20 text-rose-300 text-sm flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-danger/10 border border-danger-border text-danger-text text-sm flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" /> {errorAlert}
         </div>
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-success/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-success/10 border border-success-border text-success-text text-sm flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4" /> {successAlert}
         </div>
       )}
@@ -259,7 +260,7 @@ export default function CompanyMasterPage() {
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <AppInput 
-              placeholder="Search by code or name..." 
+              placeholder="Search by code or name…" 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -271,9 +272,9 @@ export default function CompanyMasterPage() {
         <div className="overflow-x-auto">
           <AppTableContainer><AppTable className="w-full text-left border-collapse">
             <AppTableHeader>
-              <AppTableRow className={`border-b text-xs uppercase tracking-wider border-border text-muted`}>
+              <AppTableRow className={`border-b text-xs border-border text-muted`}>
                 <AppTableHead className="pb-3 px-4 font-semibold">Code</AppTableHead>
-                <AppTableHead className="pb-3 px-4 font-semibold">Company Name</AppTableHead>
+                <AppTableHead className="pb-3 px-4 font-semibold">Company name</AppTableHead>
                 <AppTableHead className="pb-3 px-4 font-semibold">Contact</AppTableHead>
                 <AppTableHead className="pb-3 px-4 font-semibold">Status</AppTableHead>
                 <AppTableHead className="pb-3 px-4 font-semibold text-right">Actions</AppTableHead>
@@ -307,10 +308,10 @@ export default function CompanyMasterPage() {
                       <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-danger hover:bg-danger/10' : 'text-success hover:bg-success/10'}`}>
                         {c.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                       </AppButton>
-                      <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-theme-icon hover:bg-theme-btn-primary/10 transition-colors">
+                      <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-theme-icon hover:bg-accent-soft transition-colors">
                         Edit
                       </AppButton>
-                      <AppButton variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger/10 transition-colors">
+                      <AppButton aria-label="Delete" variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger/10 transition-colors">
                         <Trash2 className="h-4 w-4" />
                       </AppButton>
                     </div>
@@ -331,40 +332,40 @@ export default function CompanyMasterPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 bg-surface/60 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
-          <AppCard className="w-full max-w-xl p-6 shadow-2xl border-theme-btn-primary/20">
+          <AppCard className="w-full max-w-xl p-6 shadow-lg border-theme-btn-primary/20">
             <h2 className="text-xl font-bold text-foreground mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm uppercase tracking-wider text-muted font-bold">Company Code</label>
+                  <label className="text-sm text-muted font-bold">Company code</label>
                   <AppInput disabled placeholder="[Auto-Generated]" value={editId ? formCode : "[Auto-Generated]"} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm uppercase tracking-wider text-muted font-bold">Company Name *</label>
-                  <AppInput required placeholder="Acme Corporation" value={formName} onChange={e => setFormName(e.target.value)} />
+                  <label className="text-sm text-muted font-bold">Company name *</label>
+                  <AppInput required placeholder="Acme corporation" value={formName} onChange={e => setFormName(e.target.value)} />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm uppercase tracking-wider text-muted font-bold">Short Name</label>
+                  <label className="text-sm text-muted font-bold">Short name</label>
                   <AppInput placeholder="Acme" value={formShortName} onChange={e => setFormShortName(e.target.value)} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm uppercase tracking-wider text-muted font-bold">Email Address</label>
+                  <label className="text-sm text-muted font-bold">Email address</label>
                   <AppInput type="email" placeholder="contact@acme.com" value={formEmail} onChange={e => setFormEmail(e.target.value)} />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm uppercase tracking-wider text-muted font-bold">Contact Number</label>
+                <label className="text-sm text-muted font-bold">Contact number</label>
                 <AppInput placeholder="+1 (555) 000-0000" value={formContact} onChange={e => setFormContact(e.target.value)} />
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm uppercase tracking-wider text-muted font-bold">Physical Address</label>
+                <label className="text-sm text-muted font-bold">Physical address</label>
                 <textarea 
-                  className="w-full bg-surface dark:bg-[#0a0d14] border border-border dark:border-border rounded-xl p-3 text-sm text-foreground dark:text-white focus:border-theme-btn-primary focus:outline-none"
+                  className="w-full bg-surface border border-border dark:border-border rounded-xl p-3 text-sm text-foreground focus:border-theme-btn-primary focus:outline-none"
                   rows={2}
                   value={formAddress}
                   onChange={e => setFormAddress(e.target.value)}
@@ -372,9 +373,9 @@ export default function CompanyMasterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm uppercase tracking-wider text-muted font-bold">Remarks</label>
+                <label className="text-sm text-muted font-bold">Remarks</label>
                 <textarea 
-                  className="w-full bg-surface dark:bg-[#0a0d14] border border-border dark:border-border rounded-xl p-3 text-sm text-foreground dark:text-white focus:border-theme-btn-primary focus:outline-none"
+                  className="w-full bg-surface border border-border dark:border-border rounded-xl p-3 text-sm text-foreground focus:border-theme-btn-primary focus:outline-none"
                   rows={2}
                   value={formRemarks}
                   onChange={e => setFormRemarks(e.target.value)}
@@ -383,7 +384,7 @@ export default function CompanyMasterPage() {
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                 <AppButton variant="outline" type="button" onClick={() => setShowModal(false)} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
-                <AppButton variant="primary" type="submit">Save Company Record</AppButton>
+                <AppButton variant="primary" type="submit">Save company record</AppButton>
               </div>
             </form>
           </AppCard>

@@ -16,6 +16,7 @@ import Navbar from "./Navbar";
 import GlobalShortcuts from "./GlobalShortcuts";
 import MobileBottomNav from "./MobileBottomNav";
 import DeploymentVersionBanner from "./DeploymentVersionBanner";
+import { ConfirmHost } from "@/components/ui/feedback/confirm";
 import { cn } from "@/lib/utils";
 
 const AUTH_ROUTES = new Set(["/login", "/register", "/select-module"]);
@@ -47,6 +48,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
       <div className="min-h-dvh bg-background text-foreground">
         <DeploymentVersionBanner />
         {children}
+        <ConfirmHost />
       </div>
     );
   }
@@ -76,6 +78,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
 
       <MobileBottomNav onOpenMobileMenu={() => setMobileMenuOpen(true)} />
       <GlobalShortcuts />
+      <ConfirmHost />
     </div>
   );
 }

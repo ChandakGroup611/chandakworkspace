@@ -69,12 +69,12 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
   return (
     <BaseWidget
       id="activity-feed"
-      title="Recent Activity"
+      title="Recent activity"
       subtitle="Real-time operational events & state transitions"
-      icon={<Activity className="w-5 h-5 text-emerald-500" />}
+      icon={<Activity className="w-5 h-5 text-success-text" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
-          Live Stream
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success-soft text-success-text border border-success-border shrink-0">
+          Live stream
         </span>
       }
       className="h-[400px]"
@@ -88,22 +88,22 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
           
           if (act.type === 'closed') {
             iconElement = <CheckCircle2 className="h-4 w-4 text-success" />;
-            iconBg = "bg-success/10 border-emerald-500/20";
+            iconBg = "bg-success/10 border-success-border";
           } else if (act.type === 'blocked') {
             iconElement = <AlertCircle className="h-4 w-4 text-danger" />;
-            iconBg = "bg-danger/10 border-red-500/20";
+            iconBg = "bg-danger/10 border-danger-border";
           } else if (act.type === 'comment') {
             iconElement = <MessageSquare className="h-4 w-4 text-theme-icon" />;
             iconBg = "bg-surface border-border";
           } else {
-            iconElement = <Plus className="h-4 w-4 text-blue-500 dark:text-blue-400" />;
-            iconBg = "bg-blue-500/10 border-blue-500/20";
+            iconElement = <Plus className="h-4 w-4 text-info-text" />;
+            iconBg = "bg-info-soft border-info-border";
           }
 
           return (
             <div key={act.id || i} className="flex gap-4 group cursor-default">
               <div className="relative">
-                <div className={`p-2 rounded-full border ${iconBg} shadow-sm group-hover:scale-110 transition-transform`}>
+                <div className={`p-2 rounded-full border ${iconBg} shadow-sm transition-transform`}>
                   {iconElement}
                 </div>
                 {i !== activities.length - 1 && (
@@ -112,9 +112,9 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
               </div>
               <div className="flex flex-col justify-center pb-2">
                 <div className="text-sm text-foreground/90">
-                  <strong className="text-foreground">{act.user}</strong> {act.action} <span className="font-mono text-xs px-1 py-0.5 rounded theme-card-structural /50">{act.target}</span>
+                  <strong className="text-foreground">{act.user}</strong> {act.action} <span className="font-mono text-xs px-1 py-0.5 rounded theme-card-structural">{act.target}</span>
                 </div>
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-1">{act.time}</div>
+                <div className="text-[11px] font-semibold text-muted-foreground mt-1">{act.time}</div>
               </div>
             </div>
           );

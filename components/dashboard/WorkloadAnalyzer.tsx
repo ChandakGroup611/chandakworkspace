@@ -47,22 +47,22 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
         
         <div className="flex items-center justify-between border-b pb-4 mb-5 border-border dark:border-border">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
+            <div className="p-2 bg-accent-soft rounded-lg">
               <Activity className="h-5 w-5 text-theme-icon" />
             </div>
             <div>
-              <h3 className={`font-bold text-theme-icon`}>Workload Intelligence</h3>
+              <h3 className={`font-bold text-theme-icon`}>Workload intelligence</h3>
               <p className="text-xs text-muted">Capacity & bandwidth analysis</p>
             </div>
           </div>
-          <AppButton variant="ghost" onClick={onClose} className="p-1 rounded hover:bg-surface dark:hover:bg-surface/10 text-muted transition-colors">
+          <AppButton aria-label="Close" variant="ghost" onClick={onClose} className="p-1 rounded hover:bg-surface dark:hover:bg-surface/10 text-muted transition-colors">
             <X className="h-4 w-4" />
           </AppButton>
         </div>
 
         {loading ? (
           <div className="py-12 text-center text-xs text-muted animate-pulse font-mono">
-            Analyzing operational bandwidth matrix...
+            Analyzing operational bandwidth matrix…
           </div>
         ) : (
           <div className="space-y-6">
@@ -70,7 +70,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             {/* Primary Capacity Meter */}
             <div className="space-y-2">
               <div className="flex items-end justify-between">
-                <span className="text-xs font-bold text-theme-icon uppercase tracking-wider">Utilization</span>
+                <span className="text-xs font-bold text-theme-icon">Utilisation</span>
                 <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-danger' : 'text-theme-icon'}`}>
                   {metrics.capacity_percentage}%
                 </span>
@@ -79,8 +79,8 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
                 <div 
                   className={`h-full rounded-full transition-all duration-1000 ${
                     metrics.capacity_percentage > 80 
-                      ? 'bg-gradient-to-r from-rose-500 to-red-500' 
-                      : 'bg-gradient-to-r from-accent to-indigo-500'
+                      ? 'bg-gradient-to-r from-danger to-danger' 
+                      : 'bg-gradient-to-r from-accent to-primary'
                   }`} 
                   style={{ width: `${metrics.capacity_percentage}%` }} 
                 />
@@ -97,21 +97,21 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
                 <CheckCircle2 className="h-4 w-4 text-success mb-2" />
                 <span className="block text-2xl font-bold text-theme-icon mb-1">{metrics.active_tasks}</span>
-                <span className="text-xs text-muted uppercase tracking-wider font-bold">Active Directives</span>
+                <span className="text-xs text-muted font-bold">Active directives</span>
               </div>
-              <div className={`p-4 rounded-xl border bg-rose-50 border-rose-100`}>
+              <div className={`p-4 rounded-xl border bg-danger-soft border-danger-border`}>
                 <AlertTriangle className="h-4 w-4 text-danger mb-2" />
                 <span className="block text-2xl font-bold text-danger dark:text-danger mb-1">{metrics.overdue_tasks}</span>
-                <span className="text-xs text-danger/70 uppercase tracking-wider font-bold">Overdue SLA</span>
+                <span className="text-xs text-danger/70 font-bold">Overdue SLA</span>
               </div>
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
                 <Clock className="h-4 w-4 text-theme-icon mb-2" />
                 <span className="block text-2xl font-bold text-theme-icon mb-1">{metrics.estimated_hours}h</span>
-                <span className="text-xs text-muted uppercase tracking-wider font-bold">Estimated Load</span>
+                <span className="text-xs text-muted font-bold">Estimated load</span>
               </div>
-              <div className={`p-4 rounded-xl border flex flex-col justify-center bg-theme-btn-primary/10 border-blue-100`}>
-                <span className="text-xs text-theme-icon dark:text-theme-icon uppercase tracking-wider font-bold mb-1">Available Bandwidth</span>
-                <span className="text-xl font-bold text-theme-icon dark:text-blue-300">{metrics.available_capacity}%</span>
+              <div className={`p-4 rounded-xl border flex flex-col justify-center bg-accent-soft border-info-border`}>
+                <span className="text-xs text-theme-icon dark:text-theme-icon font-bold mb-1">Available bandwidth</span>
+                <span className="text-xl font-bold text-theme-icon">{metrics.available_capacity}%</span>
               </div>
             </div>
 
@@ -121,7 +121,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
                 "bg-elevated text-muted hover:bg-elevated"
               }`}
             >
-              Close Analysis
+              Close analysis
             </AppButton>
           </div>
         )}

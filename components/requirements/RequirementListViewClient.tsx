@@ -68,7 +68,7 @@ function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
       ref={setNodeRef} 
       style={style} 
       className={cn(
-        "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:opacity-90/10 transition-colors", 
+        "select-none bg-elevated border-b border-border font-bold text-xs text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-surface-hover transition-colors", 
         col.field_key === "actions" ? "w-[50px]" : "", 
         !isTitle ? "text-center" : "text-left",
         ["code", "due_date", "created_at", "updated_at", "status_name", "priority_name", "department_name"].includes(col.field_key) ? "whitespace-nowrap" : ""
@@ -275,10 +275,10 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
     });
 
     return [
-      { label: "Total Reqs", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-theme-btn-primary/10", iconColorClass: "text-theme-icon" },
-      { label: "Pending", value: pending, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-amber-500/10", iconColorClass: "text-amber-600" },
-      { label: "Approved", value: approved, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-emerald-500/10", iconColorClass: "text-emerald-600" },
-      { label: "Linked Tasks Progress", value: totalTasks > 0 ? `${Math.round((closedTasks / totalTasks) * 100)}%` : "0%", icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-theme-btn-primary/10", iconColorClass: "text-theme-icon" },
+      { label: "Total reqs", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-accent-soft", iconColorClass: "text-theme-icon" },
+      { label: "Pending", value: pending, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-warning-soft", iconColorClass: "text-warning-text" },
+      { label: "Approved", value: approved, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-success-soft", iconColorClass: "text-success-text" },
+      { label: "Linked tasks progress", value: totalTasks > 0 ? `${Math.round((closedTasks / totalTasks) * 100)}%` : "0%", icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-accent-soft", iconColorClass: "text-theme-icon" },
     ];
   }, [filtered]);
 
@@ -404,7 +404,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   if (permsLoading) {
     return (
       <div className="py-12 flex justify-center">
-        <ChandakLoader size="md" title="Verifying Permissions..." subtitle="Loading requirements matrix" />
+        <ChandakLoader size="md" title="Verifying Permissions…" subtitle="Loading requirements matrix" />
       </div>
     );
   }
@@ -412,10 +412,10 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   if (!hasPermission("REQUIREMENTS_REPORTS_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view Requirement Analytics.</p>
       </div>
     );
@@ -426,7 +426,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
       <div className="space-y-6">
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-1 shrink-0">
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Requirement Analysis &amp; Reports</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Requirement analysis &amp; reports</h1>
           </div>
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
             <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
@@ -482,7 +482,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
 
             <div className="flex items-center gap-4 pb-2">
               <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
-                <option value="">All Statuses</option>
+                <option value="">All statuses</option>
                 {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
@@ -490,7 +490,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
 
           <div className="flex items-center gap-3 px-4 py-3 bg-surface/50 dark:bg-surface/[0.02]">
             <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-9 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
-              <option value="">All Priorities</option>
+              <option value="">All priorities</option>
               {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
             
@@ -503,7 +503,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <input 
-                placeholder="Search requirements, code, department..." 
+                placeholder="Search requirements, code, department…" 
                 value={query} 
                 onChange={(e:any) => setQuery(e.target.value)} 
                 className="w-full text-sm font-medium h-9 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary placeholder:text-muted" 
@@ -537,11 +537,11 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                   {/* Top Row: Code, Version, Status, Priority */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-mono text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md shrink-0">
+                      <span className="font-mono text-xs font-bold text-warning-text bg-warning-soft px-2 py-0.5 rounded-md shrink-0">
                         {r.code || r.id}
                       </span>
                       {r.amendmentVersion > 0 && (
-                        <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[9px] font-bold uppercase shrink-0">
+                        <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[11px] font-bold shrink-0">
                           v{r.amendmentVersion}
                         </span>
                       )}
@@ -549,11 +549,11 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {r.priority_name && r.priority_name !== "—" && (
-                        <AppBadge variant={getPriorityVariant(r.priority_name)} className="text-[10px] py-0.5 px-2">
+                        <AppBadge variant={getPriorityVariant(r.priority_name)} className="text-[11px] py-0.5 px-2">
                           {r.priority_name}
                         </AppBadge>
                       )}
-                      <AppBadge variant={getStatusVariant(r.status_name)} className="text-[10px] py-0.5 px-2">
+                      <AppBadge variant={getStatusVariant(r.status_name)} className="text-[11px] py-0.5 px-2">
                         {r.status_name || 'Draft'}
                       </AppBadge>
                     </div>
@@ -570,7 +570,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                   <div className="flex items-center justify-between gap-2 text-xs text-muted flex-wrap">
                     <div className="flex items-center gap-2 truncate">
                       {r.department_name && (
-                        <span className="bg-elevated px-2 py-0.5 rounded text-[10px] font-bold text-foreground/80">
+                        <span className="bg-elevated px-2 py-0.5 rounded text-[11px] font-bold text-foreground/80">
                           {r.department_name}
                         </span>
                       )}
@@ -581,7 +581,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                       )}
                     </div>
                     {r.task_count !== undefined && (
-                      <span className="font-bold text-[10px] text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-full">
+                      <span className="font-bold text-[11px] text-theme-icon bg-accent-soft px-2 py-0.5 rounded-full">
                         {r.task_count} Tasks
                       </span>
                     )}
@@ -591,7 +591,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
                     <div className="text-[11px] font-semibold text-muted flex items-center gap-2">
                       {r.due_days && (
-                        <span className={r.due_days.includes("Overdue") ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>
+                        <span className={r.due_days.includes("Overdue") ? "text-danger-text font-bold" : "text-success-text font-bold"}>
                           {r.due_days}
                         </span>
                       )}
@@ -601,10 +601,10 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                       <AppButton 
                         variant="ghost" 
                         size="sm" 
-                        className="h-7 px-2.5 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center gap-1"
+                        className="h-7 px-2.5 text-xs text-theme-icon hover:bg-accent-soft rounded-lg flex items-center gap-1"
                         onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
                       >
-                        <Eye className="h-3.5 w-3.5" /> View Analysis
+                        <Eye className="h-3.5 w-3.5" /> View analysis
                       </AppButton>
                     </div>
                   </div>
@@ -634,7 +634,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                         <AppTableRow 
                           key={r.id} 
                           style={{ height: `${virtualRow.size}px` }} 
-                          className="hover:opacity-90/10/50 dark:hover:bg-surface/[0.02] cursor-pointer"
+                          className="hover:bg-surface-hover dark:hover:bg-surface/[0.02] cursor-pointer"
                           onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
                         >
                           {visibleColumns.map((col, i) => {
@@ -650,7 +650,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                                 )}
                               >
                                 {col.field_key === "actions" ? (
-                                  <AppButton 
+                                  <AppButton aria-label="View" 
                                     variant="ghost" 
                                     size="sm" 
                                     className="h-7 w-7 p-0" 
@@ -667,20 +667,20 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                                     {r.priority_name !== "—" ? r.priority_name : "-"}
                                   </AppBadge>
                                 ) : col.field_key === "code" ? (
-                                  <span className="font-mono font-bold text-amber-500">{r.code || r.id}</span>
+                                  <span className="font-mono font-bold text-warning-text">{r.code || r.id}</span>
                                 ) : col.field_key === "title" ? (
                                   <div className="font-medium flex items-center gap-2 max-w-[250px] md:max-w-none" title={r.title}>
                                     <span className="truncate flex-1 min-w-0">{r.title}</span>
                                     {r.amendmentVersion > 0 && (
-                                      <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[9px] font-bold tracking-wider uppercase shrink-0">
+                                      <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[11px] font-bold shrink-0">
                                         v{r.amendmentVersion}
                                       </span>
                                     )}
                                   </div>
                                 ) : col.field_key === "task_count" ? (
-                                  <div className="font-bold text-theme-icon bg-theme-btn-primary/10 dark:bg-theme-btn-primary/10 px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
+                                  <div className="font-bold text-theme-icon bg-accent-soft dark:bg-accent-soft px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
                                 ) : col.field_key === "due_days" ? (
-                                  <div className={cn("font-semibold", r.due_days?.includes("Overdue") ? "text-rose-500" : "text-emerald-500")}>
+                                  <div className={cn("font-semibold", r.due_days?.includes("Overdue") ? "text-danger-text" : "text-success-text")}>
                                     {r.due_days}
                                   </div>
                                 ) : (
