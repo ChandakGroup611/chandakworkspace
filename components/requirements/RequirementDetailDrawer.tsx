@@ -50,7 +50,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
       title={requirement.title}
       subtitle={
         <div className="flex items-center gap-3 mt-2">
-          <span className="theme-label text-muted font-mono font-bold text-amber-500">{requirement.requirement_code || 'REQ-0000'}</span>
+          <span className="theme-label font-mono font-bold text-foreground">{requirement.requirement_code || 'REQ-0000'}</span>
           <AppBadge 
             variant={requirement.status?.status_color ? "custom" : "neutral"} 
             customColor={requirement.status?.status_color || null}
@@ -72,34 +72,26 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
           {/* Tabs */}
           <div className="flex gap-3 mb-2">
             <AppButton
+              type="button"
               variant={activeTab === "details" ? "primary" : "ghost"}
               onClick={() => setActiveTab("details")}
-              className={`theme-tab-standard tracking-wide ${
-                activeTab === "details"
-                  ? "shadow-theme-btn-primary/20 shadow-md scale-[1.02]"
-                  : "text-muted hover:text-foreground border border-transparent hover:border-border/60"
-              }`}
             >
-              <ListTodo className="w-4 h-4" />
+              <ListTodo className="w-4 h-4 mr-2" />
               Execution Details
             </AppButton>
             <AppButton
+              type="button"
               variant={activeTab === "collaboration" ? "primary" : "ghost"}
               onClick={() => setActiveTab("collaboration")}
-              className={`theme-tab-standard tracking-wide ${
-                activeTab === "collaboration"
-                  ? "shadow-theme-btn-primary/20 shadow-md scale-[1.02]"
-                  : "text-muted hover:text-foreground border border-transparent hover:border-border/60"
-              }`}
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-4 h-4 mr-2" />
               Collaboration Chat
             </AppButton>
           </div>
 
           {activeTab === "details" && (
             <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
-              <section className="theme-card-structural /20 rounded-2xl p-6 border-white/5">
+              <section className="bg-surface rounded-2xl p-6 border border-border">
                 <h3 className="theme-label text-theme-icon mb-3">Business Justification</h3>
                 <div className="theme-data-value text-muted leading-relaxed">
                   <SafeHtml html={requirement.business_justification} />
@@ -108,25 +100,25 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
 
               <section className="space-y-4">
                 <h3 className="theme-label text-foreground mb-1">Functional Scope</h3>
-                <div className="theme-data-value text-muted leading-relaxed theme-card-structural /20 rounded-xl p-4 border-white/5 mb-4">
+                <div className="theme-data-value text-muted leading-relaxed bg-surface rounded-xl p-4 border border-border mb-4">
                   {requirement.functional_scope || requirement.custom_fields?.functional_scope || 'Functional breakdown of the requirement.'}
                 </div>
                 <h3 className="theme-label text-foreground">Technical Description & Scope</h3>
-                <div className="theme-data-value text-muted leading-relaxed theme-card-structural /20 rounded-xl p-4 border-white/5">
+                <div className="theme-data-value text-muted leading-relaxed bg-surface rounded-xl p-4 border border-border">
                   <SafeHtml html={requirement.description} />
                 </div>
               </section>
 
               {/* UAT Block (Conditionally visible based on status and permissions) */}
               {requirement.status?.status_name === 'UAT' && (
-                <section className="bg-amber-900/20 rounded-2xl p-6 border border-amber-500/20">
-                  <h3 className="theme-label text-amber-500 mb-2">User Acceptance Testing (UAT)</h3>
+                <section className="bg-warning-soft rounded-2xl p-6 border border-warning/30">
+                  <h3 className="theme-label text-warning mb-2">User Acceptance Testing (UAT)</h3>
                   
                   
                   {canPerformUAT ? (
                     <>
                       <textarea 
-                        className="w-full theme-card-structural /40 border-white/10 rounded-xl p-3 text-sm text-foreground mb-4 focus:outline-none focus:border-amber-500 theme-input-structural resize-none"
+                        className="w-full bg-surface border border-border rounded-xl p-3 text-sm text-foreground mb-4 focus:outline-none focus:border-theme-btn-primary resize-none"
                         placeholder="Enter UAT feedback or remarks..."
                         rows={3}
                         value={uatComment}
@@ -134,13 +126,16 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                       />
                       <div className="flex gap-3">
                         <AppButton 
+                          type="button"
+                          variant="primary"
                           onClick={() => handleUAT('PASS')}
                           disabled={isPending}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                          className="bg-success hover:bg-success text-primary-foreground font-semibold border-none"
                         >
                           Approve & Close
                         </AppButton>
                         <AppButton 
+                          type="button"
                           onClick={() => handleUAT('FAIL')}
                           disabled={isPending}
                           variant="destructive"
@@ -150,7 +145,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                       </div>
                     </>
                   ) : (
-                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-600 dark:text-amber-400">
+                    <div className="p-3 rounded-xl bg-warning-soft border border-warning/30 text-xs text-warning-text">
                       UAT sign-off is pending review by the assigned Business Analyst or Requester.
                     </div>
                   )}
@@ -162,11 +157,11 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
           {activeTab === "collaboration" && (
             <div className="animate-in fade-in zoom-in-95 duration-200">
               {/* Realtime Chat Engine */}
-              <section className="h-[500px] flex flex-col border border-white/10 rounded-2xl overflow-hidden ">
-                <div className="theme-card-structural p-4 border-b border-white/5">
+              <section className="h-[500px] flex flex-col border border-border rounded-2xl overflow-hidden">
+                <div className="bg-surface p-4 border-b border-border">
                   <h3 className="theme-label text-foreground">Execution Collaboration</h3>
                 </div>
-                <div className="flex-1 bg-surface/20">
+                <div className="flex-1 bg-surface">
                   <RealtimeChat recordId={requirement.id} moduleType="REQUIREMENT" />
                 </div>
               </section>
@@ -177,7 +172,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
 
         {/* Sidebar Metadata */}
         <div className="col-span-1 space-y-3">
-          <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
+          <div className="flex flex-col p-3 rounded-lg bg-surface border border-border shadow-sm">
             <span className="theme-label text-muted mb-1">Business Analyst</span>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold text-theme-icon border border-theme-btn-primary/50">
@@ -186,15 +181,15 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               <span className="theme-data-value text-sm font-semibold text-foreground truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
             </div>
           </div>
-          <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
+          <div className="flex flex-col p-3 rounded-lg bg-surface border border-border shadow-sm">
             <span className="theme-label text-muted mb-1">Department</span>
             <span className="theme-data-value text-sm font-semibold text-foreground truncate">{requirement.department?.name || 'Enterprise Global'}</span>
           </div>
-          <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
+          <div className="flex flex-col p-3 rounded-lg bg-surface border border-border shadow-sm">
             <span className="theme-label text-muted mb-1">Priority SLA</span>
             <span className="theme-data-value text-sm font-semibold text-foreground truncate">{requirement.priority?.priority_name || 'Standard'}</span>
           </div>
-          <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
+          <div className="flex flex-col p-3 rounded-lg bg-surface border border-border shadow-sm">
             <span className="theme-label text-muted mb-1">Estimations</span>
             <div className="space-y-1 theme-data-value text-sm font-semibold text-foreground mt-1">
               <div className="flex justify-between"><span>Hours:</span> <span>{requirement.estimated_hours || 0}</span></div>
@@ -203,8 +198,8 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
           </div>
 
           {/* Attachments */}
-          <div className="bg-surface/60 rounded-xl p-4 border border-border">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center mb-3">
+          <div className="bg-surface rounded-xl p-4 border border-border">
+            <h3 className="theme-label flex justify-between items-center mb-3">
               <span className="flex items-center gap-1.5">
                 <Paperclip className="h-3.5 w-3.5" />
                 Attachments ({attachments.length})

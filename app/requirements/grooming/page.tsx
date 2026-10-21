@@ -14,6 +14,7 @@ import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor,
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { formatDate } from "@/components/ui/data";
 
 export default function RequirementsGroomingBoard() {
   const router = useRouter();
@@ -30,10 +31,10 @@ export default function RequirementsGroomingBoard() {
 
   const columns = useMemo(() => {
     const statuses = [
-      { id: "Draft", name: "Backlog / Draft", color: "#6B7280" },
-      { id: "Pending Approval", name: "In Review (Grooming)", color: "#F59E0B" },
-      { id: "Approved", name: "Ready for Dev (Approved)", color: "#10B981" },
-      { id: "Rejected", name: "Rejected / Cancelled", color: "#EF4444" }
+      { id: "Draft", name: "Backlog / Draft", color: "var(--muted)" },
+      { id: "Pending Approval", name: "In Review (Grooming)", color: "var(--warning)" },
+      { id: "Approved", name: "Ready for Dev (Approved)", color: "var(--success)" },
+      { id: "Rejected", name: "Rejected / Cancelled", color: "var(--danger)" }
     ];
 
     return statuses.map(s => {
@@ -135,13 +136,13 @@ function BoardColumn({ column, onClick }: { column: any, onClick: (req: any) => 
   });
 
   return (
-    <div className="flex flex-col w-[350px] min-w-[350px] bg-surface dark:bg-surface/[0.02] rounded-2xl border border-border dark:border-white/5 h-full">
-      <div className="p-4 border-b border-border dark:border-white/5 flex items-center justify-between bg-surface dark:bg-[#0B0F19] shrink-0 shadow-sm">
+    <div className="flex flex-col w-[350px] min-w-[350px] bg-surface rounded-2xl border border-border h-full">
+      <div className="p-4 border-b border-border flex items-center justify-between bg-surface shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: column.color }} />
           <h3 className="font-bold text-[15px] text-foreground tracking-tight">{column.name}</h3>
         </div>
-        <div className="bg-surface dark:bg-surface/10 text-subtle dark:text-muted px-2 py-0.5 rounded-full text-xs font-bold">
+        <div className="bg-elevated text-muted px-2 py-0.5 rounded-full text-xs font-bold">
           {column.items.length}
         </div>
       </div>
@@ -154,7 +155,7 @@ function BoardColumn({ column, onClick }: { column: any, onClick: (req: any) => 
         </SortableContext>
         
         {column.items.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-border dark:border-white/10 rounded-xl m-2">
+          <div className="flex-1 flex flex-col items-center justify-center border border-border rounded-xl m-2 bg-elevated/40">
             <span className="text-sm font-medium text-muted">Empty Queue</span>
           </div>
         )}
@@ -173,11 +174,21 @@ function SortableReqCard({ req, onClick }: { req: any, onClick: () => void }) {
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   if (isDragging) {
-    return <div ref={setNodeRef} style={style} className="opacity-40 border-2 border-theme-btn-primary border-dashed rounded-xl h-[140px] bg-theme-btn-primary/5" />;
+    return <div ref={setNodeRef} style={style} className="opacity-40 border-2 border-theme-btn-primary rounded-xl h-[140px] bg-theme-btn-primary/5" />;
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={(e) => { if (!isDragging) onClick(); }} className="cursor-grab active:cursor-grabbing">
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners} 
+      role="button"
+      tabIndex={0}
+      onClick={() => { if (!isDragging) onClick(); }} 
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!isDragging) onClick(); } }}
+      className="cursor-grab active:cursor-grabbing"
+    >
       <ReqCard req={req} />
     </div>
   );
@@ -185,7 +196,7 @@ function SortableReqCard({ req, onClick }: { req: any, onClick: () => void }) {
 
 function ReqCard({ req }: { req: any }) {
   return (
-    <AppCard className="hover:shadow-lg hover:border-theme-btn-primary/40 transition-all group overflow-hidden bg-surface dark:bg-[#0f111a] border-border dark:border-white/10">
+    <AppCard className="hover:shadow-md hover:border-theme-btn-primary/40 transition-all group overflow-hidden bg-surface border-border">
       <div className="p-4">
         <div className="flex justify-between items-start mb-3 gap-2">
           <div className="flex items-center gap-2">
@@ -195,9 +206,13 @@ function ReqCard({ req }: { req: any }) {
             </div>
           </div>
           {req.priority?.name && (
-            <span className="text-[10px] font-bold px-2 py-1 rounded shadow-sm text-white" style={{ backgroundColor: req.priority.priority_color || '#6B7280' }}>
+            <AppBadge 
+              variant="custom"
+              customColor={req.priority.priority_color || 'var(--muted)'}
+              className="text-[10px]"
+            >
               {req.priority.name}
-            </span>
+            </AppBadge>
           )}
         </div>
         
@@ -206,20 +221,20 @@ function ReqCard({ req }: { req: any }) {
         </h4>
         
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Module:</span>
-          <span className="text-xs font-semibold text-subtle dark:text-muted truncate">{req.module?.name || '-'}</span>
+          <span className="theme-label">Module:</span>
+          <span className="text-xs font-semibold text-muted truncate">{req.module?.name || '-'}</span>
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-border/50 dark:border-white/5">
+        <div className="flex items-center justify-between pt-3 border-t border-border">
           <div className="flex items-center gap-2">
-             <div className="w-6 h-6 rounded-full bg-indigo-100 text-foreground flex items-center justify-center text-[10px] font-bold" title={req.creator?.full_name || 'Requester'}>
+             <div className="w-6 h-6 rounded-full bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold" title={req.creator?.full_name || 'Requester'}>
                {(req.creator?.full_name || req.requester?.full_name || 'U').substring(0, 2).toUpperCase()}
              </div>
-             <div className="text-[10px] font-medium text-muted">{new Date(req.created_at).toLocaleDateString()}</div>
+             <div className="text-[10px] font-medium text-muted">{formatDate(req.created_at)}</div>
           </div>
           
-          <div className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 bg-surface dark:bg-surface/5 rounded text-subtle dark:text-muted">
-             {req.approval_status?.includes('Pending') ? <Clock className="w-3.5 h-3.5 text-amber-500" /> : req.approval_status === 'Approved' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <AlertCircle className="w-3.5 h-3.5 text-muted" />}
+          <div className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 bg-elevated rounded text-muted">
+             {req.approval_status?.includes('Pending') ? <Clock className="w-3.5 h-3.5 text-warning" /> : req.approval_status === 'Approved' ? <CheckCircle2 className="w-3.5 h-3.5 text-success" /> : <AlertCircle className="w-3.5 h-3.5 text-muted" />}
              {req.approval_status || 'Draft'}
           </div>
         </div>

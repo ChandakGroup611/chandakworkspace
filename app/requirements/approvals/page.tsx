@@ -1,4 +1,3 @@
-// TODO(ui-v2): migrate to tokens
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -16,6 +15,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { QuickApprovalModal } from "@/components/requirements/QuickApprovalModal";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { formatDate } from "@/components/ui/data";
 
 interface RequirementItem {
   id: string;
@@ -157,7 +157,7 @@ export default function RequirementsPage() {
           approvalStatus: statusStr,
           currentApprover: d?.current_assignee_id ? 'Assigned' : '-', 
           currentApproverId: d.current_assignee_id,
-          createdAt: createdDate.toLocaleDateString(),
+          createdAt: formatDate(createdDate),
           ageing: ageingDays,
           storyPoints: d.estimated_effort ? parseInt(d.estimated_effort, 10) : 0,
           acceptanceCriteria: d.acceptance_criteria || '',
@@ -222,7 +222,7 @@ export default function RequirementsPage() {
 
   if (!mounted || permsLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-background dark:bg-[#070913]">
+      <div className="h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-background">
         <ChandakLoader
           size="lg"
           title="Verifying Permissions..."
@@ -234,8 +234,8 @@ export default function RequirementsPage() {
 
   if (!hasPermission("REQUIREMENTS_APPROVALS_VIEW")) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background dark:bg-[#070913] text-foreground dark:text-white">
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background text-foreground">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger/30 text-danger">
           <ShieldAlert className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
@@ -252,11 +252,12 @@ export default function RequirementsPage() {
         actions={
           <>
             <Link href="/">
-              <AppButton variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
+              <AppButton type="button" variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
                 Back
               </AppButton>
             </Link>
             <AppButton 
+              type="button"
               variant="outline" 
               size="sm" 
               leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loadingReqs ? 'animate-spin' : ''}`} />}
@@ -271,7 +272,7 @@ export default function RequirementsPage() {
       {/* Filters */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3 px-1">
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Search</div>
+          <label className="theme-label block mb-1 ml-1">Search</label>
           <AppInput 
             placeholder="Search by Title or Req #..." 
             value={filter.search}
@@ -279,9 +280,9 @@ export default function RequirementsPage() {
           />
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">System</div>
+          <label className="theme-label block mb-1 ml-1">System</label>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+            className="w-full text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary outline-none"
             value={filter.system}
             onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
           >
@@ -292,9 +293,9 @@ export default function RequirementsPage() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Priority</div>
+          <label className="theme-label block mb-1 ml-1">Priority</label>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+            className="w-full text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary outline-none"
             value={filter.priority}
             onChange={(e: any) => setFilter(f => ({ ...f, priority: e.target.value }))}
           >
@@ -305,9 +306,9 @@ export default function RequirementsPage() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Department</div>
+          <label className="theme-label block mb-1 ml-1">Department</label>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+            className="w-full text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary outline-none"
             value={filter.department}
             onChange={(e: any) => setFilter(f => ({ ...f, department: e.target.value }))}
           >
@@ -318,9 +319,9 @@ export default function RequirementsPage() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Status</div>
+          <label className="theme-label block mb-1 ml-1">Status</label>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+            className="w-full text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary outline-none"
             value={filter.status}
             onChange={(e: any) => setFilter(f => ({ ...f, status: e.target.value }))}
           >
@@ -379,10 +380,10 @@ export default function RequirementsPage() {
                 }).map((r) => (
                   <AppTableRow 
                     key={r.id} 
-                    className="cursor-pointer hover:bg-theme-btn-primary/10/50 dark:hover:bg-surface/[0.02] transition-colors"
+                    className="cursor-pointer hover:bg-surface-hover transition-colors"
                     onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis&from=approvals`)}
                   >
-                    <AppTableCell className="font-mono text-xs font-bold text-amber-400">{r.id}</AppTableCell>
+                    <AppTableCell className="font-mono text-xs font-bold text-foreground">{r.id}</AppTableCell>
                     <AppTableCell className="font-medium text-sm max-w-[200px] truncate" title={r.title}>{r.title}</AppTableCell>
                     <AppTableCell className="text-xs">{r.softwareSystem}</AppTableCell>
                     <AppTableCell className="text-xs">{r.module}</AppTableCell>
@@ -390,12 +391,13 @@ export default function RequirementsPage() {
                     <AppTableCell className="text-xs">{r.subCategory}</AppTableCell>
                     <AppTableCell>
                       {r.priority !== '-' ? (
-                        <span 
-                          className="px-2 py-1 rounded text-[10px] font-bold text-foreground shadow-sm"
-                          style={{ backgroundColor: r.priorityColor || '#6B7280' }}
+                        <AppBadge 
+                          variant="custom"
+                          customColor={r.priorityColor || 'var(--muted)'}
+                          className="text-[10px]"
                         >
                           {r.priority}
-                        </span>
+                        </AppBadge>
                       ) : (
                         <span className="text-muted">-</span>
                       )}
@@ -411,24 +413,28 @@ export default function RequirementsPage() {
                     <AppTableCell>
                       <div className="flex items-center justify-center gap-0">
                         <AppButton 
+                          type="button"
                           variant="ghost" 
                           size="sm" 
                           title="View Business Analysis"
+                          aria-label="View Business Analysis"
                           onClick={(e) => { e.stopPropagation(); router.push(`/requirements/${r.dbId}?tab=analysis`); }}
-                          className="text-muted hover:text-theme-icon dark:hover:text-theme-icon"
+                          className="text-muted hover:text-theme-icon"
                         >
                           <Eye className="h-4 w-4" />
                         </AppButton>
                         {r.approvalStatus === 'Pending Approval' && (isSuperAdmin || (r as any).currentApproverId === currentUserId) && (
                           <AppButton 
+                            type="button"
                             variant="ghost" 
                             size="sm" 
                             onClick={(e: any) => {
                               e.stopPropagation();
                               router.push(`/requirements/${r.dbId}?tab=analysis&from=approvals`);
                             }}
-                            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                            className="text-warning hover:text-warning hover:bg-warning-soft"
                             title="Process Approval"
+                            aria-label="Process Approval"
                           >
                             <ShieldAlert className="h-4 w-4" />
                           </AppButton>

@@ -1,4 +1,3 @@
-// TODO(ui-v2): migrate to tokens
 "use client";
 import { toast } from 'react-toastify';
 
@@ -17,6 +16,8 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 import { EditRequirementModal } from "@/components/requirements/EditRequirementModal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { formatDate } from "@/components/ui/data";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface RequirementItem {
@@ -102,6 +103,8 @@ function RequirementsPageContent() {
   const [loadingReqs, setLoadingReqs] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [editReqId, setEditReqId] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [filter, setFilter] = useState({ search: "", system: "", status: "", priority: "", department: "", stage: "" });
 
@@ -164,7 +167,7 @@ function RequirementsPageContent() {
           approvalStatus: statusStr,
           currentApprover: d?.current_assignee_id ? 'Assigned' : '-', 
           currentApproverId: d.current_assignee_id,
-          createdAt: createdDate.toLocaleDateString(),
+          createdAt: formatDate(createdDate),
           ageing: ageingDays,
           storyPoints: d.estimated_effort ? parseInt(d.estimated_effort, 10) : 0,
           acceptanceCriteria: d.acceptance_criteria || '',
@@ -219,17 +222,25 @@ function RequirementsPageContent() {
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, dbId: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, dbId: string) => {
     e.stopPropagation();
-    if (!confirm("Are you sure you want to permanently delete this requirement? This action cannot be undone.")) return;
+    setDeleteTargetId(dbId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
+    setIsDeleting(true);
     try {
       const { deleteRequirement } = await import("@/lib/actions/requirements");
       const { data: { user } } = await supabase.auth.getUser();
-      const res = await deleteRequirement(dbId, user!.id);
+      const res = await deleteRequirement(deleteTargetId, user!.id);
       if (res?.error) throw new Error(res.error);
+      setDeleteTargetId(null);
       await loadRequirements();
     } catch (err: any) {
       toast.error(err.message || "Failed to delete requirement.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -241,7 +252,7 @@ function RequirementsPageContent() {
 
   if (!mounted || permsLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-background dark:bg-[#070913]">
+      <div className="h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-background">
         <ChandakLoader
           size="lg"
           title="Verifying Permissions..."
@@ -253,8 +264,8 @@ function RequirementsPageContent() {
 
   if (!hasPermission("REQUIREMENTS_VIEW")) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background dark:bg-[#070913] text-foreground dark:text-white">
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background text-foreground">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger/30 text-danger">
           <ShieldAlert className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
@@ -271,11 +282,12 @@ function RequirementsPageContent() {
         actions={
           <>
             <Link href="/">
-              <AppButton variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
+              <AppButton type="button" variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
                 Back
               </AppButton>
             </Link>
             <AppButton 
+              type="button"
               variant="outline" 
               size="sm" 
               leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loadingReqs ? 'animate-spin' : ''}`} />}
@@ -284,25 +296,28 @@ function RequirementsPageContent() {
               Refresh
             </AppButton>
             <AppButton 
+              type="button"
               variant="outline" 
               size="sm" 
-              leftIcon={<ShieldAlert className="h-3.5 w-3.5 text-amber-500" />}
+              leftIcon={<ShieldAlert className="h-3.5 w-3.5 text-warning" />}
               onClick={() => router.push('/requirements/approvals')}
-              className="border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-100 dark:border-amber-800/50"
+              className="border-warning/30 bg-warning-soft hover:bg-warning-soft text-warning-text"
             >
               Go to Approvals
             </AppButton>
             {hasPermission("REQUIREMENTS_REPORTS_VIEW") && (
               <AppButton 
+                type="button"
                 variant="outline" 
                 size="sm" 
                 onClick={() => router.push('/requirements/reports')}
-                className="border-theme-btn-primary/30 bg-theme-btn-primary/10 hover:bg-theme-btn-primary/10 text-theme-icon-secondary dark:bg-theme-btn-primary/10 dark:text-indigo-100 dark:border-indigo-800/50"
+                className="border-primary/30 bg-primary-soft hover:bg-primary-soft text-primary-text"
               >
                 Analysis & Reports
               </AppButton>
             )}
             <AppButton 
+              type="button"
               variant="primary" 
               size="sm" 
               leftIcon={<Plus className="h-3.5 w-3.5" />}
@@ -339,7 +354,7 @@ function RequirementsPageContent() {
       {/* Filters Grid */}
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-1">
         <div className="col-span-2 sm:col-span-1">
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Search</div>
+          <label className="theme-label block mb-1 ml-1">Search</label>
           <AppInput 
             placeholder="Search Title or Req #..." 
             value={filter.search}
@@ -347,9 +362,9 @@ function RequirementsPageContent() {
           />
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">System / Asset</div>
+          <label className="theme-label block mb-1 ml-1">System / Asset</label>
           <select 
-            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
+            className="w-full text-xs sm:text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary h-9 outline-none"
             value={filter.system}
             onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
           >
@@ -360,9 +375,9 @@ function RequirementsPageContent() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Status</div>
+          <label className="theme-label block mb-1 ml-1">Status</label>
           <select 
-            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
+            className="w-full text-xs sm:text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary h-9 outline-none"
             value={filter.status}
             onChange={(e: any) => setFilter(f => ({ ...f, status: e.target.value }))}
           >
@@ -373,9 +388,9 @@ function RequirementsPageContent() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Priority</div>
+          <label className="theme-label block mb-1 ml-1">Priority</label>
           <select 
-            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
+            className="w-full text-xs sm:text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary h-9 outline-none"
             value={filter.priority}
             onChange={(e: any) => setFilter(f => ({ ...f, priority: e.target.value }))}
           >
@@ -386,9 +401,9 @@ function RequirementsPageContent() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Department</div>
+          <label className="theme-label block mb-1 ml-1">Department</label>
           <select 
-            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
+            className="w-full text-xs sm:text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary h-9 outline-none"
             value={filter.department}
             onChange={(e: any) => setFilter(f => ({ ...f, department: e.target.value }))}
           >
@@ -399,9 +414,9 @@ function RequirementsPageContent() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Flow/Stage</div>
+          <label className="theme-label block mb-1 ml-1">Flow/Stage</label>
           <select 
-            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
+            className="w-full text-xs sm:text-sm p-2 border border-border rounded-md bg-elevated text-foreground focus:ring-1 focus:ring-theme-btn-primary h-9 outline-none"
             value={filter.stage}
             onChange={(e: any) => setFilter(f => ({ ...f, stage: e.target.value }))}
           >
@@ -425,7 +440,7 @@ function RequirementsPageContent() {
             if (filter.stage && r.stage !== filter.stage) return false;
             return true;
           }).length === 0 ? (
-            <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
+            <div className="text-center py-12 text-muted text-sm border border-border rounded-xl bg-elevated/40">
               {loadingReqs ? "Loading requirements..." : "No requirements found."}
             </div>
           ) : (
@@ -442,22 +457,26 @@ function RequirementsPageContent() {
               return (
                 <div 
                   key={r.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
-                  className={`rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 relative active:scale-[0.99] animate-stagger-in ${staggerClass}`}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/requirements/${r.dbId}?tab=analysis`); } }}
+                  className={`rounded-2xl border border-border bg-surface p-4 shadow-xs hover:border-theme-btn-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 relative animate-stagger-in ${staggerClass}`}
                 >
                   {/* Top Row: Code, Priority, Approval Status */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-mono text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md shrink-0">
+                      <span className="font-mono text-xs font-bold text-foreground bg-elevated border border-border px-2 py-0.5 rounded-md shrink-0">
                         {r.id}
                       </span>
                       {r.priority !== '-' && (
-                        <span 
-                          className="px-2 py-0.5 rounded text-[10px] font-bold text-white shrink-0 shadow-2xs"
-                          style={{ backgroundColor: r.priorityColor || '#6B7280' }}
+                        <AppBadge 
+                          variant="custom"
+                          customColor={r.priorityColor || 'var(--muted)'}
+                          className="text-[10px]"
                         >
                           {r.priority}
-                        </span>
+                        </AppBadge>
                       )}
                     </div>
                     <AppBadge 
@@ -522,7 +541,7 @@ function RequirementsPageContent() {
                           variant="ghost" 
                           size="sm" 
                           className="h-7 w-7 p-0 text-muted hover:text-danger rounded-lg flex items-center justify-center active:scale-95 transition-all"
-                          onClick={(e) => handleDelete(e, r.dbId)}
+                          onClick={(e) => handleDeleteClick(e, r.dbId)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </AppButton>
@@ -589,7 +608,7 @@ function RequirementsPageContent() {
                         className={`cursor-pointer hover:bg-surface-hover/80 transition-colors animate-stagger-in ${staggerClass}`}
                         onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
                       >
-                        <AppTableCell className="font-mono text-xs font-bold text-amber-400">{r.id}</AppTableCell>
+                        <AppTableCell className="font-mono text-xs font-bold text-foreground">{r.id}</AppTableCell>
                         <AppTableCell className="font-medium text-sm max-w-[200px] truncate group-hover:text-theme-btn-primary transition-colors" title={r.title}>{r.title}</AppTableCell>
                         <AppTableCell className="text-xs">{r.softwareSystem}</AppTableCell>
                         <AppTableCell className="text-xs">{r.module}</AppTableCell>
@@ -597,12 +616,13 @@ function RequirementsPageContent() {
                         <AppTableCell className="text-xs">{r.subCategory}</AppTableCell>
                         <AppTableCell>
                           {r.priority !== '-' ? (
-                            <span 
-                              className="px-2 py-1 rounded text-[10px] font-bold text-white shadow-2xs"
-                              style={{ backgroundColor: r.priorityColor || '#6B7280' }}
+                            <AppBadge 
+                              variant="custom"
+                              customColor={r.priorityColor || 'var(--muted)'}
+                              className="text-[10px]"
                             >
                               {r.priority}
-                            </span>
+                            </AppBadge>
                           ) : '-'}
                         </AppTableCell>
                         <AppTableCell>
@@ -628,20 +648,24 @@ function RequirementsPageContent() {
                         <AppTableCell>
                           <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
                             <AppButton 
+                              type="button"
                               variant="ghost" 
                               size="sm" 
                               title="View"
-                              className="h-7 w-7 p-0 text-accent hover:text-accent/80 hover:bg-accent/10 rounded-lg flex items-center justify-center active:scale-95 transition-all"
+                              aria-label="View requirement"
+                              className="h-7 w-7 p-0 text-accent hover:text-accent/80 hover:bg-accent/10 rounded-lg flex items-center justify-center transition-all"
                               onClick={() => router.push(`/requirements/${r.dbId}?mode=view`)}
                             >
                               <Eye className="h-4 w-4" />
                             </AppButton>
                             {(isSuperAdmin || hasPermission('REQUIREMENTS_UPDATE')) && (
                               <AppButton 
+                                type="button"
                                 variant="ghost" 
                                 size="sm" 
                                 title="Edit Business Analysis"
-                                className="h-7 w-7 p-0 text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center justify-center active:scale-95 transition-all"
+                                aria-label="Edit Business Analysis"
+                                className="h-7 w-7 p-0 text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center justify-center transition-all"
                                 onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
                               >
                                 <Edit2 className="h-4 w-4" />
@@ -649,11 +673,13 @@ function RequirementsPageContent() {
                             )}
                             {(isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
                               <AppButton 
+                                type="button"
                                 variant="ghost" 
                                 size="sm" 
                                 title="Delete"
-                                className="h-7 w-7 p-0 text-muted hover:text-rose-500 hover:bg-accent/10 rounded-lg flex items-center justify-center active:scale-95 transition-all"
-                                onClick={(e) => handleDelete(e, r.dbId)}
+                                aria-label="Delete requirement"
+                                className="h-7 w-7 p-0 text-muted hover:text-danger hover:bg-danger-soft rounded-lg flex items-center justify-center transition-all"
+                                onClick={(e) => handleDeleteClick(e, r.dbId)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </AppButton>
@@ -669,6 +695,17 @@ function RequirementsPageContent() {
           </AppTableContainer>
         </div>
       </div>
+
+      <ConfirmDialog 
+        open={!!deleteTargetId}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Requirement"
+        description="Are you sure you want to permanently delete this requirement? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        tone="danger"
+      />
     </PageContainer>
   );
 }

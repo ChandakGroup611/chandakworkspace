@@ -87,11 +87,11 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
     if (!isNaN(days) && days > 0) {
       let start = formData.start_date ? new Date(formData.start_date) : new Date();
       if (!formData.start_date) {
-        newFormData.start_date = start.toISOString().split('T')[0];
+        newFormData.start_date = start.toISOString().slice(0, 10);
       }
       const due = new Date(start);
       due.setDate(due.getDate() + days);
-      newFormData.due_date = due.toISOString().split('T')[0];
+      newFormData.due_date = due.toISOString().slice(0, 10);
     }
     setFormData(newFormData);
   };
@@ -169,27 +169,29 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
   const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 resize-none min-h-[80px] ${
     "bg-surface border-border text-foreground"
   }`;
-  const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-muted`;
+  const labelClass = "theme-label block mb-1.5";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/60 p-4 overflow-y-auto">
-      <AppCard className={`w-full max-w-5xl  relative my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col ${ "theme-card-structural " }`}>
-        <AppButton variant="secondary" 
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4 overflow-y-auto">
+      <AppCard className="w-full max-w-5xl relative my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col bg-surface border-border">
+        <AppButton 
+          type="button"
+          variant="ghost" 
+          size="sm"
+          aria-label="Close requirement analysis modal"
           onClick={onClose}
-          className={`absolute top-4 right-4 p-2 rounded-full transition-colors z-10 ${
-            "hover:bg-elevated text-muted"
-          }`}
+          className="absolute top-4 right-4 p-2 rounded-full transition-colors z-10 hover:bg-elevated text-muted"
         >
           <X className="h-5 w-5" />
         </AppButton>
 
-        <AppCardHeader className={`border-b shrink-0 pb-4 theme-card-structural`}>
+        <AppCardHeader className="border-b shrink-0 pb-4 border-border bg-surface">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
+            <div className="p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
               <LayoutDashboard className="h-5 w-5" />
             </div>
             <div>
-              <AppCardTitle className={`text-xl text-foreground`}>Requirement Analysis</AppCardTitle>
+              <AppCardTitle className="text-xl text-foreground">Requirement Analysis</AppCardTitle>
             </div>
           </div>
         </AppCardHeader>
@@ -197,22 +199,22 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
         <AppCardContent className="pt-6 overflow-y-auto custom-scrollbar flex-1">
           <form onSubmit={handleSubmit} className="space-y-8">
             {error && (
-              <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-950 dark:text-rose-100 text-sm font-semibold flex items-start gap-2.5">
-                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" />
+              <div className="p-3.5 bg-danger-soft border border-danger/30 rounded-xl text-danger-text text-sm font-semibold flex items-start gap-2.5">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-danger" />
                 <span>{sanitizeErrorMessage(error)}</span>
               </div>
             )}
 
             {/* Business Section */}
             <div className="space-y-4">
-              <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-theme-icon border-border`}>
+              <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-theme-icon border-border">
                 <Briefcase className="h-4 w-4" /> Business Classification
               </h3>
               
               
               <div className="grid grid-cols-1 mb-4">
                 <div>
-                  <label className={labelClass}>Requirement Domain (Scope) <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Requirement Domain (Scope) <span className="text-danger">*</span></label>
                   <select className={inputClass} value={formData.requirement_domain} onChange={e => setFormData({...formData, requirement_domain: e.target.value})} required>
                     <option value="General Business">General Business</option>
                     <option value="IT & Software System">IT & Software System</option>
@@ -223,7 +225,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Requirement Type <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Requirement Type <span className="text-danger">*</span></label>
                   <select className={inputClass} value={formData.requirement_type_id} onChange={e => setFormData({...formData, requirement_type_id: e.target.value})} required>
                     <option value="">Select Type</option>
                     {(masters?.issue_types || []).map((t: any) => (
@@ -232,7 +234,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Business Criticality <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Business Criticality <span className="text-danger">*</span></label>
                   <select className={inputClass} value={formData.business_criticality_id} onChange={e => setFormData({...formData, business_criticality_id: e.target.value})} required>
                     <option value="" disabled>Select Criticality</option>
                     {(masters?.priority_master || []).map((p: any) => (
@@ -248,7 +250,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Business Objective <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Business Objective <span className="text-danger">*</span></label>
                   <textarea className={textareaClass} value={formData.objective} onChange={e => setFormData({...formData, objective: e.target.value})} required />
                 </div>
                 <div>
@@ -264,24 +266,24 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Technical Section */}
             <div className="space-y-4">
-              <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-emerald-700 border-border`}>
+              <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-success border-border">
                 <Server className="h-4 w-4" /> Technical & Execution Scope
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Functional Scope <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Functional Scope <span className="text-danger">*</span></label>
                   <textarea className={textareaClass} value={formData.functional_scope} onChange={e => setFormData({...formData, functional_scope: e.target.value})} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Technical Scope / Architecture <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Technical Scope / Architecture <span className="text-danger">*</span></label>
                   <textarea className={textareaClass} value={formData.technical_scope} onChange={e => setFormData({...formData, technical_scope: e.target.value})} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Estimated Effort (Days) <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Estimated Effort (Days) <span className="text-danger">*</span></label>
                   <AppInput type="number" placeholder="e.g. 10" value={formData.estimated_effort} onChange={handleEffortChange} className={inputClass} required />
                 </div>
                 <div>
@@ -299,7 +301,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             {/* IT System Conditional Section */}
             {formData.requirement_domain === "IT & Software System" && (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-blue-700 border-border`}>
+                <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-info border-border">
                   <Server className="h-4 w-4" /> IT & Software System Scope
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -358,20 +360,20 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Governance & Dependency */}
             <div className="space-y-4">
-              <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-amber-700 border-border`}>
+              <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-warning border-border">
                 <Shield className="h-4 w-4" /> Governance & Dependencies
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className={labelClass}>Dependency Notes <span className="text-red-500">*</span></label>
+                  <label className={labelClass}>Dependency Notes <span className="text-danger">*</span></label>
                   <AppInput placeholder="e.g. Blocked by REQ-002" value={formData.dependency_notes} onChange={e => setFormData({...formData, dependency_notes: e.target.value})} className={inputClass} required />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className={labelClass}>Impacted Departments (Approval Sequence) <span className="text-red-500">*</span></label>
-                <div className={`p-4 rounded-xl flex flex-wrap gap-2 theme-card-structural`}>
+                <label className={labelClass}>Impacted Departments (Approval Sequence) <span className="text-danger">*</span></label>
+                <div className="p-4 rounded-xl flex flex-wrap gap-2 bg-elevated border border-border">
                   {(masters?.departments || []).map((d: any) => {
                     const isSelected = formData.impacted_departments.includes(d.id);
                     const index = formData.impacted_departments.indexOf(d.id);
@@ -383,7 +385,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
                           isSelected 
                             ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" 
-                            : "bg-elevated border-border text-muted hover:bg-elevated"
+                            : "bg-surface border-border text-muted hover:bg-surface-hover"
                         }`}
                       >
                         {isSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
@@ -395,15 +397,15 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
                 {formData.impacted_departments.length > 0 && (
                   <div className="mt-4 space-y-3">
-                    <label className={labelClass}>Define Approval Sequence <span className="text-red-500">*</span></label>
+                    <label className={labelClass}>Define Approval Sequence <span className="text-danger">*</span></label>
                     {formData.impacted_departments.map((deptId) => {
                       const deptName = masters.departments?.find((d: any) => d.id === deptId)?.name;
                       const deptUsers = masters.users?.filter((u: any) => u.department_id === deptId) || [];
                       const selectedApprovers = formData.department_approvers[deptId] || [];
                       
                       return (
-                        <div key={deptId} className={`p-3 border rounded-md border-theme-btn-primary/20 bg-theme-btn-primary/10/30`}>
-                          <div className={`theme-label mb-2 text-theme-icon`}>{deptName} Approvers</div>
+                        <div key={deptId} className="p-3 border rounded-md border-border bg-surface">
+                          <div className="theme-label mb-2 text-theme-icon">{deptName} Approvers</div>
                           <div className="flex flex-wrap gap-2">
                             {deptUsers.map((u: any) => {
                               const isUserSelected = selectedApprovers.includes(u.id);
@@ -423,7 +425,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                       }
                                     });
                                   }}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${ isUserSelected ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" : "theme-card-structural text-muted hover:bg-elevated" }`}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${ isUserSelected ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" : "bg-elevated border-border text-muted hover:bg-elevated" }`}
                                 >
                                   {isUserSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
                                   {u.full_name}
@@ -440,9 +442,9 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
               </div>
 
               {/* Sign-Off Approver */}
-              <div className="mt-4 pt-4 border-t border-border/60">
+              <div className="mt-4 pt-4 border-t border-border">
                 <label className={labelClass}>
-                  Designated Sign-Off Approver <span className="text-red-500">*</span>
+                  Designated Sign-Off Approver <span className="text-danger">*</span>
                 </label>
                 <select 
                   className={inputClass}
@@ -465,18 +467,18 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Stakeholders & Timelines */}
             <div className="space-y-4">
-              <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-pink-700 border-border`}>
+              <h3 className="theme-label flex items-center gap-2 pb-2 border-b text-theme-icon border-border">
                 <Calendar className="h-4 w-4" /> Schedule & Stakeholders
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Start Date <span className="text-red-500">*</span></label>
-                  <AppInput type="date" value={formData.start_date} min={new Date().toISOString().split('T')[0]} onChange={e => handleDateChange('start_date', e.target.value)} className={inputClass} required />
+                  <label className={labelClass}>Start Date <span className="text-danger">*</span></label>
+                  <AppInput type="date" value={formData.start_date} min={new Date().toISOString().slice(0, 10)} onChange={e => handleDateChange('start_date', e.target.value)} className={inputClass} required />
                 </div>
                 <div>
-                  <label className={labelClass}>Due Date <span className="text-red-500">*</span></label>
-                  <AppInput type="date" value={formData.due_date} min={formData.start_date || new Date().toISOString().split('T')[0]} onChange={e => handleDateChange('due_date', e.target.value)} className={inputClass} required />
+                  <label className={labelClass}>Due Date <span className="text-danger">*</span></label>
+                  <AppInput type="date" value={formData.due_date} min={formData.start_date || new Date().toISOString().slice(0, 10)} onChange={e => handleDateChange('due_date', e.target.value)} className={inputClass} required />
                 </div>
                 <div>
                   <label className={labelClass}>Expected Completion</label>
@@ -489,7 +491,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
               <AppButton variant="outline" type="button" onClick={onClose} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
                 Discard
               </AppButton>
-              <AppButton type="submit" variant="primary" disabled={loading} className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
+              <AppButton type="submit" variant="primary" disabled={loading} className="min-w-[140px]">
                 {loading ? "Submitting..." : "Submit Analysis"}
               </AppButton>
             </div>

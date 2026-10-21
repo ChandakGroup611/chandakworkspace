@@ -71,46 +71,46 @@ export function QuickApprovalModal({
           <div className="space-y-6 pt-4">
             
             {/* Requirement Details Read-Only View */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm border-b pb-4 border-border dark:border-white/10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm border-b pb-4 border-border">
                <div>
-                  <span className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">System / Module</span>
-                  <div className="font-medium">{reqDetails.software_system?.name || '-'} / {reqDetails.module?.name || '-'}</div>
+                  <span className="theme-label block mb-1">System / Module</span>
+                  <div className="font-medium text-foreground">{reqDetails.software_system?.name || '-'} / {reqDetails.module?.name || '-'}</div>
                </div>
                <div>
-                  <span className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">Priority & Stage</span>
-                  <div className="font-medium text-amber-600">{reqDetails.priority?.priority_name || '-'} • {reqDetails.current_stage || '-'}</div>
+                  <span className="theme-label block mb-1">Priority & Stage</span>
+                  <div className="font-medium text-warning">{reqDetails.priority?.priority_name || '-'} • {reqDetails.current_stage || '-'}</div>
                </div>
                <div className="md:col-span-2">
-                  <span className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">Scope</span>
-                  <div className="bg-surface dark:bg-surface/5 p-3 rounded-md text-foreground ">{reqDetails.scope || '-'}</div>
+                  <span className="theme-label block mb-1">Scope</span>
+                  <div className="bg-elevated p-3 rounded-md text-foreground">{reqDetails.scope || '-'}</div>
                </div>
                <div className="md:col-span-2">
-                  <span className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">Objective</span>
-                  <div className="bg-surface dark:bg-surface/5 p-3 rounded-md text-foreground  whitespace-pre-wrap">{reqDetails.objective || '-'}</div>
+                  <span className="theme-label block mb-1">Objective</span>
+                  <div className="bg-elevated p-3 rounded-md text-foreground whitespace-pre-wrap">{reqDetails.objective || '-'}</div>
                </div>
             </div>
 
             {/* Approval Action Form */}
             <div>
-              <label className="block text-sm font-medium text-subtle  mb-2">
+              <label className="theme-label block mb-2">
                 Mandatory Remarks *
               </label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full text-sm p-3 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground placeholder:text-muted focus:ring-theme-btn-primary focus:border-theme-btn-primary shadow-inner min-h-[100px]"
+                className="w-full text-sm p-3 border border-border rounded-md bg-elevated text-foreground placeholder:text-muted focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary min-h-[100px] outline-none"
                 rows={3}
                 placeholder="Enter your approval, rejection, or hold remarks here..."
               />
             </div>
-          <div className="flex flex-wrap gap-2 justify-end pt-2 border-t border-border dark:border-white/10">
-            <AppButton variant="secondary" onClick={() => submit('Hold')} isLoading={saving} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
-            <AppButton variant="destructive" onClick={() => submit('Reject')} isLoading={saving} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-            <AppButton variant="primary" onClick={() => submit('Approve')} isLoading={saving} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
-          </div>
+            <div className="flex flex-wrap gap-2 justify-end pt-2 border-t border-border">
+              <AppButton type="button" variant="secondary" onClick={() => submit('Hold')} isLoading={saving} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
+              <AppButton type="button" variant="destructive" onClick={() => submit('Reject')} isLoading={saving} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
+              <AppButton type="button" variant="primary" onClick={() => submit('Approve')} isLoading={saving} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+            </div>
           </div>
         ) : (
-          <div className="py-4 text-center text-rose-500">Failed to load requirement details.</div>
+          <div className="py-4 text-center text-danger">Failed to load requirement details.</div>
         )}
       </DialogContent>
     </Dialog>

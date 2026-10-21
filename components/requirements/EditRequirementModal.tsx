@@ -1,10 +1,9 @@
-// TODO(ui-v2): migrate to tokens
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { AppButton } from "@/components/ui/AppButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { X, Save } from "lucide-react";
+import { X, Save, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { sanitizeErrorMessage } from "@/lib/utils";
 
@@ -65,8 +64,8 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
             estimated_effort: reqRes.data.estimated_effort || "",
             estimated_cost: reqRes.data.estimated_cost || 0,
             budget_impact: reqRes.data.budget_impact || "",
-            start_date: reqRes.data.start_date ? new Date(reqRes.data.start_date).toISOString().split('T')[0] : "",
-            expected_completion_date: reqRes.data.expected_completion_date ? new Date(reqRes.data.expected_completion_date).toISOString().split('T')[0] : "",
+            start_date: reqRes.data.start_date ? new Date(reqRes.data.start_date).toISOString().slice(0, 10) : "",
+            expected_completion_date: reqRes.data.expected_completion_date ? new Date(reqRes.data.expected_completion_date).toISOString().slice(0, 10) : "",
             acceptance_criteria: reqRes.data.acceptance_criteria || "",
             dependency_notes: reqRes.data.dependency_notes || "",
             requirement_reason: reqRes.data.requirement_reason || ""
@@ -113,21 +112,21 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
-        <DialogHeader className="px-6 py-4 border-b border-border dark:border-white/10 bg-surface/50 dark:theme-card-structural /[0.02]">
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-surface border-border">
+        <DialogHeader className="px-6 py-4 border-b border-border bg-surface">
           <DialogTitle>Update Requirement</DialogTitle>
         </DialogHeader>
 
-        <div className="flex border-b dark:border-white/10 overflow-x-auto theme-card-structural /30 px-6 pt-2">
+        <div className="flex border-b border-border overflow-x-auto bg-surface px-6 pt-2">
           {['general', 'planning', 'details'].map(tab => {
             return (
-              // eslint-disable-next-line no-restricted-syntax
               <button
+                type="button"
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`theme-tab-standard border-b-2 ${
                   activeTab === tab 
-                    ? 'border-theme-btn-primary text-theme-icon' 
+                    ? 'border-theme-btn-primary text-theme-icon font-medium' 
                     : 'border-transparent text-muted hover:text-foreground hover:border-border'
                 }`}
               >
@@ -139,34 +138,34 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
 
         <div className="p-6 space-y-4 flex-1 overflow-y-auto max-h-[60vh]">
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-950 dark:text-rose-100 text-sm font-semibold">
+            <div className="p-3.5 rounded-xl bg-danger-soft border border-danger/30 text-danger-text text-sm font-semibold">
               {sanitizeErrorMessage(error)}
             </div>
           )}
 
           {loading ? (
-            <div className="py-8 flex justify-center"><div className="animate-spin h-6 w-6 border-2 border-theme-btn-primary border-t-transparent rounded-full" /></div>
+            <div className="py-8 flex justify-center"><Loader2 className="animate-spin h-6 w-6 text-theme-icon" /></div>
           ) : (
             <>
               {activeTab === 'general' && (
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-subtle ">Title <span className="text-rose-500">*</span></label>
+                    <label className="theme-label block">Title <span className="text-danger">*</span></label>
                     <input
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                      className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       placeholder="Requirement Title"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">System</label>
+                      <label className="theme-label block">System</label>
                       <select
                         value={formData.software_system_id}
                         onChange={(e) => setFormData({ ...formData, software_system_id: e.target.value })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       >
                         <option value="">Select System</option>
                         {masters.systems.map((s: any) => (
@@ -175,14 +174,14 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">
+                      <label className="theme-label block">
                         Priority <span className="text-danger">*</span>
                       </label>
                       <select
                         value={formData.priority_id}
                         onChange={(e) => setFormData({ ...formData, priority_id: e.target.value })}
                         required
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       >
                         <option value="" disabled>Select Priority</option>
                         {masters.priorities.map((p: any) => (
@@ -193,11 +192,11 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Department</label>
+                      <label className="theme-label block">Department</label>
                       <select
                         value={formData.department_id}
                         onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       >
                         <option value="">Select Department</option>
                         {masters.departments.map((d: any) => (
@@ -206,12 +205,12 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Target Release</label>
+                      <label className="theme-label block">Target Release</label>
                       <input
                         type="text"
                         value={formData.target_release}
                         onChange={(e) => setFormData({ ...formData, target_release: e.target.value })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                         placeholder="e.g. v2.4.0, Q3 Release"
                       />
                     </div>
@@ -223,66 +222,66 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Story Points</label>
+                      <label className="theme-label block">Story Points</label>
                       <input
                         type="number"
                         min="0"
                         value={formData.story_points}
                         onChange={(e) => setFormData({ ...formData, story_points: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Estimated Effort</label>
+                      <label className="theme-label block">Estimated Effort</label>
                       <input
                         type="text"
                         value={formData.estimated_effort}
                         onChange={(e) => setFormData({ ...formData, estimated_effort: e.target.value })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                         placeholder="e.g. 5 days, 2 sprints"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Estimated Cost ($)</label>
+                      <label className="theme-label block">Estimated Cost (₹)</label>
                       <input
                         type="number"
                         min="0"
                         step="0.01"
                         value={formData.estimated_cost}
                         onChange={(e) => setFormData({ ...formData, estimated_cost: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Budget Impact</label>
+                      <label className="theme-label block">Budget Impact</label>
                       <input
                         type="text"
                         value={formData.budget_impact}
                         onChange={(e) => setFormData({ ...formData, budget_impact: e.target.value })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                         placeholder="High, Low, OPEX..."
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Start Date</label>
+                      <label className="theme-label block">Start Date</label>
                       <input
                         type="date"
                         value={formData.start_date}
                         onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Target Completion</label>
+                      <label className="theme-label block">Target Completion</label>
                       <input
                         type="date"
                         value={formData.expected_completion_date}
                         onChange={(e) => setFormData({ ...formData, expected_completion_date: e.target.value })}
-                        className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
+                        className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none"
                       />
                     </div>
                   </div>
@@ -292,31 +291,31 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
               {activeTab === 'details' && (
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-subtle ">Acceptance Criteria</label>
+                    <label className="theme-label block">Acceptance Criteria</label>
                     <textarea
                       rows={3}
                       value={formData.acceptance_criteria}
                       onChange={(e) => setFormData({ ...formData, acceptance_criteria: e.target.value })}
-                      className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm resize-none"
+                      className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none resize-none"
                       placeholder="What defines this as done?"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-subtle ">Dependency Notes</label>
+                    <label className="theme-label block">Dependency Notes</label>
                     <textarea
                       rows={2}
                       value={formData.dependency_notes}
                       onChange={(e) => setFormData({ ...formData, dependency_notes: e.target.value })}
-                      className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm resize-none"
+                      className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none resize-none"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-subtle ">Requirement Reason</label>
+                    <label className="theme-label block">Requirement Reason</label>
                     <textarea
                       rows={2}
                       value={formData.requirement_reason}
                       onChange={(e) => setFormData({ ...formData, requirement_reason: e.target.value })}
-                      className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm resize-none"
+                      className="w-full px-3 py-2 bg-elevated border border-border rounded-lg focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm text-foreground outline-none resize-none"
                     />
                   </div>
                 </div>
@@ -325,10 +324,10 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
           )}
         </div>
 
-        <DialogFooter className="p-4 border-t border-border dark:border-white/10 bg-surface/50 dark:theme-card-structural /[0.02] flex justify-end gap-3">
-          <AppButton variant="outline" onClick={onClose} disabled={saving}>Cancel</AppButton>
-          <AppButton variant="primary" onClick={handleSubmit} disabled={saving || loading}>
-            {saving ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+        <DialogFooter className="p-4 border-t border-border bg-surface flex justify-end gap-3">
+          <AppButton type="button" variant="outline" onClick={onClose} disabled={saving}>Cancel</AppButton>
+          <AppButton type="button" variant="primary" onClick={handleSubmit} disabled={saving || loading}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
             Update Requirement
           </AppButton>
         </DialogFooter>

@@ -1,4 +1,3 @@
-// TODO(ui-v2): migrate to tokens
 "use client";
 import { toast } from 'react-toastify';
 
@@ -12,6 +11,8 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { Users, Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { formatDate, formatDateTime, formatCount } from "@/components/ui/data";
 
 import { PageContainer } from "@/components/layout/PageContainer";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -78,6 +79,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   const [selectedSubWorkspaceId, setSelectedSubWorkspaceId] = useState<string>("");
 
   const [showPutToUseDialog, setShowPutToUseDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [putToUseDate, setPutToUseDate] = useState("");
   const [submittingPutToUse, setSubmittingPutToUse] = useState(false);
   const [showReadyNotification, setShowReadyNotification] = useState(false);
@@ -212,9 +214,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
           estimated_cost: data.custom_fields?.estimated_cost || "",
           estimated_resources: data.estimated_resources || data.custom_fields?.estimated_resources || "",
           dependency_notes: data.dependency_notes || "",
-          start_date: data.start_date ? data.start_date.split('T')[0] : "",
-          due_date: data.due_date ? data.due_date.split('T')[0] : "",
-          expected_completion_date: data.expected_completion_date ? data.expected_completion_date.split('T')[0] : "",
+          start_date: data.start_date ? data.start_date.slice(0, 10) : "",
+          due_date: data.due_date ? data.due_date.slice(0, 10) : "",
+          expected_completion_date: data.expected_completion_date ? data.expected_completion_date.slice(0, 10) : "",
           requirement_type_id: data.requirement_type_id || "",
           impacted_departments: data.custom_fields?.impacted_departments || [],
           department_approvers: data.custom_fields?.department_approvers || {},
@@ -459,11 +461,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
     if (!isNaN(days) && days > 0) {
       let start = formData.start_date ? new Date(formData.start_date) : new Date();
       if (!formData.start_date) {
-        newFormData.start_date = start.toISOString().split('T')[0];
+        newFormData.start_date = start.toISOString().slice(0, 10);
       }
       const due = new Date(start);
       due.setDate(due.getDate() + days);
-      newFormData.due_date = due.toISOString().split('T')[0];
+      newFormData.due_date = due.toISOString().slice(0, 10);
     }
     setFormData(newFormData);
   };
@@ -635,7 +637,6 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to permanently delete this requirement? This action cannot be undone.")) return;
     try {
       const { deleteRequirement } = await import("@/lib/actions/requirements");
       const { data: { user } } = await supabase.auth.getUser();
@@ -643,6 +644,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       router.push('/requirements');
     } catch (err: any) {
       toast.error(sanitizeErrorMessage(err));
+    } finally {
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -694,7 +697,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-surface dark:bg-[#050505]">
+      <div className="h-screen flex flex-col items-center justify-center bg-surface">
         <ChandakLoader
           size="lg"
           title="Loading Requirement Architecture..."
@@ -706,7 +709,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
   if (!requirement) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center text-foreground dark:text-white bg-surface dark:bg-[#050505]">
+      <div className="h-screen flex flex-col items-center justify-center text-foreground bg-surface">
         <h2>Requirement not found.</h2>
         <AppButton onClick={() => router.push('/requirements')} className="mt-4">Back to List</AppButton>
       </div>
@@ -728,34 +731,38 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   return (
     <PageContainer strict={true} className="bg-background">
       <div className="flex-1 overflow-y-auto px-6 md:px-8 pb-12 pt-6 md:pt-8">
-      <div className="flex flex-wrap items-center justify-between pb-2 mb-2 shrink-0 border-b border-border dark:border-white/5 gap-4">
+      <div className="flex flex-wrap items-center justify-between pb-2 mb-2 shrink-0 border-b border-border gap-4">
         <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
           <div className="flex items-baseline gap-2 min-w-0">
-            <h1 className="text-[1.1rem] font-bold text-foreground dark:text-white truncate max-w-full leading-tight">
-              <span className="text-muted mr-2 uppercase text-sm tracking-wider">{requirement.code || reqId}</span>
+            <h1 className="text-[1.1rem] font-bold text-foreground truncate max-w-full leading-tight">
+              <span className="text-muted mr-2 font-mono text-sm tracking-wider">{requirement.code || reqId}</span>
               {requirement.title || 'Untitled Subject'}
               {requirement.amendment_version > 0 && (
-                <span className="ml-3 px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20 text-xs font-bold tracking-widest uppercase">
+                <span className="ml-3 px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20 text-xs font-semibold">
                   v{requirement.amendment_version}
                 </span>
               )}
             </h1>
           </div>
           <AppBadge variant="info" className="shrink-0">{requirement.approval_status || requirement.status?.name || "Draft"}</AppBadge>
-          <div className="flex flex-wrap items-center gap-2 ml-2 border-l border-border dark:border-white/10 pl-3">
+          <div className="flex flex-wrap items-center gap-2 ml-2 border-l border-border pl-3">
             <span className="theme-label text-muted">Priority:</span>
-            <span className="theme-data-value px-2.5 py-0.5 rounded-full text-foreground tracking-wide shadow-sm shrink-0" style={{ backgroundColor: requirement.priority?.priority_color || '#ef4444' }}>
+            <AppBadge
+              variant="custom"
+              customColor={requirement.priority?.priority_color || 'var(--muted)'}
+              className="text-[10px]"
+            >
               {requirement.priority?.name || requirement.priority?.priority_name || '-'}
-            </span>
+            </AppBadge>
             <span className="theme-label text-muted ml-2">Created:</span>
-            <span className="text-xs font-semibold text-foreground dark:text-muted shrink-0">
-              {new Date(requirement.created_at).toLocaleDateString()}
+            <span className="text-xs font-semibold text-foreground shrink-0">
+              {formatDate(requirement.created_at)}
             </span>
             {requirement.put_to_use_date && (
               <>
-                <span className="theme-label text-emerald-500 ml-2">Put to Use:</span>
+                <span className="theme-label text-success ml-2">Put to Use:</span>
                 <span className="text-xs font-semibold text-accent shrink-0">
-                  {new Date(requirement.put_to_use_date).toLocaleDateString()}
+                  {formatDate(requirement.put_to_use_date)}
                 </span>
               </>
             )}
@@ -766,7 +773,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             Back
           </AppButton>
           {!isViewMode && (isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
-            <AppButton variant="destructive" size="sm" leftIcon={<Trash2 className="h-4 w-4"/>} onClick={handleDelete}>
+            <AppButton variant="destructive" size="sm" leftIcon={<Trash2 className="h-4 w-4"/>} onClick={() => setShowDeleteConfirm(true)}>
               Delete
             </AppButton>
           )}
@@ -790,25 +797,25 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
       <Dialog open={showAmendmentDialog} onOpenChange={setShowAmendmentDialog}>
         <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5">
+          <DialogHeader className="px-6 py-4 border-b border-border">
             <DialogTitle>Amend Requirement</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-data-value text-subtle dark:text-muted mb-1.5 uppercase tracking-wider">Revised Details of Requirement</label>
+              <label className="block theme-label text-muted mb-1.5">Revised Details of Requirement</label>
               <textarea 
-                className="w-full flex min-h-[100px] rounded-md border border-border bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-border dark:focus-visible:ring-gray-300" 
+                className="w-full flex min-h-[100px] rounded-md border border-border bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50" 
                 placeholder="Describe what has changed in the requirement..."
                 value={amendmentDetails}
                 onChange={(e) => setAmendmentDetails(e.target.value)}
               />
             </div>
             <div>
-              <label className="block theme-data-value text-subtle dark:text-muted mb-1.5 uppercase tracking-wider">Attachment (Optional)</label>
+              <label className="block theme-label text-muted mb-1.5">Attachment (Optional)</label>
               {!amendmentFile ? (
                 <input 
                   type="file" 
-                  className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary file:text-white hover:file:bg-theme-btn-primary-secondary transition-all"
+                  className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary-hover transition-all"
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       setAmendmentFile(e.target.files[0]);
@@ -816,7 +823,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   }}
                 />
               ) : (
-                <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface dark:bg-slate-900/50">
+                <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface">
                   <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
                     <Paperclip className="h-4 w-4 text-theme-icon shrink-0" />
                     <div className="min-w-0 flex-1">
@@ -883,9 +890,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 id="needsReapproval" 
                 checked={needsReapproval}
                 onChange={(e) => setNeedsReapproval(e.target.checked)}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary dark:border-border dark:bg-surface dark:ring-offset-gray-900"
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
-              <label htmlFor="needsReapproval" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-muted">
+              <label htmlFor="needsReapproval" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Needs Re-Approval Flow?
               </label>
             </div>
@@ -893,7 +900,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               If checked, the requirement will go back to Pending and a new approval flow will be triggered. If unchecked, the changes are auto-approved and will instantly push notifications to any active tasks linked to this requirement.
             </p>
           </div>
-          <DialogFooter className="px-6 py-4 bg-surface border-t border-border/50 dark:bg-slate-950 dark:border-white/5">
+          <DialogFooter className="px-6 py-4 bg-surface border-t border-border">
             <AppButton variant="outline" onClick={() => setShowAmendmentDialog(false)}>Cancel</AppButton>
             <AppButton variant="primary" onClick={handleAmendment} isLoading={submittingAmendment} disabled={!amendmentDetails.trim()}>Submit Amendment</AppButton>
           </DialogFooter>
@@ -902,18 +909,18 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
       <Dialog open={showReadyNotification} onOpenChange={setShowReadyNotification}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5 bg-theme-btn-primary/5">
+          <DialogHeader className="px-6 py-4 border-b border-border bg-primary/5">
             <DialogTitle className="flex items-center gap-2 text-theme-icon">
               <CheckCircle className="h-5 w-5" />
               Tasks Completed
             </DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
-            <p className="text-sm text-subtle dark:text-muted">
+            <p className="text-sm text-subtle">
               All linked tasks for this requirement have been successfully closed. The requirement is now <strong>Ready to Put to Use</strong>.
             </p>
           </div>
-          <DialogFooter className="px-6 py-4 bg-surface border-t border-border/50 dark:bg-slate-950 dark:border-white/5">
+          <DialogFooter className="px-6 py-4 bg-surface border-t border-border">
             <AppButton variant="outline" onClick={() => setShowReadyNotification(false)}>Close</AppButton>
             <AppButton variant="primary" onClick={() => {
               setShowReadyNotification(false);
@@ -927,19 +934,19 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
       <Dialog open={showPutToUseDialog} onOpenChange={setShowPutToUseDialog}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5">
+          <DialogHeader className="px-6 py-4 border-b border-border">
             <DialogTitle>Put Requirement to Use</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-data-value text-subtle dark:text-muted mb-1.5 uppercase tracking-wider">Select Put to Use Date</label>
+              <label className="block theme-label text-muted mb-1.5">Select Put to Use Date</label>
               <AppInput type="date" value={putToUseDate} onChange={(e) => setPutToUseDate(e.target.value)} />
             </div>
             <p className="text-xs text-muted">
               Setting this date will officially mark the requirement as Closed.
             </p>
           </div>
-          <DialogFooter className="px-6 py-4 bg-surface border-t border-border/50 dark:bg-slate-950 dark:border-white/5">
+          <DialogFooter className="px-6 py-4 bg-surface border-t border-border">
             <AppButton variant="outline" onClick={() => setShowPutToUseDialog(false)}>Cancel</AppButton>
             <AppButton variant="primary" onClick={handlePutToUse} isLoading={submittingPutToUse} disabled={!putToUseDate}>Confirm</AppButton>
           </DialogFooter>
@@ -948,16 +955,16 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
       <Dialog open={showWorkspaceSelector} onOpenChange={setShowWorkspaceSelector}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5">
+          <DialogHeader className="px-6 py-4 border-b border-border">
             <DialogTitle>Select Workspace for Task</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-data-value text-subtle dark:text-muted mb-1">Target Workspace <span className="text-red-500">*</span></label>
+              <label className="block theme-data-value text-subtle mb-1">Target Workspace <span className="text-danger">*</span></label>
               <select
                 value={selectedWorkspaceId}
                 onChange={(e) => setSelectedWorkspaceId(e.target.value)}
-                className="w-full text-sm p-2.5 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-theme-btn-primary focus:border-theme-btn-primary"
+                className="w-full text-sm p-2.5 border border-border rounded-md bg-surface text-foreground focus:ring-primary focus:border-primary"
               >
                 <option value="">-- Select Workspace --</option>
                 {workspaces.map(w => <option key={w.id} value={w.id}>{w.workspace_name || w.name}</option>)}
@@ -966,11 +973,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             
             {selectedWorkspaceId && (
               <div>
-                <label className="block theme-data-value text-subtle dark:text-muted mb-1">Sub-Workspace (Optional)</label>
+                <label className="block theme-data-value text-subtle mb-1">Sub-Workspace (Optional)</label>
                 <select
                   value={selectedSubWorkspaceId}
                   onChange={(e) => setSelectedSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-theme-btn-primary focus:border-theme-btn-primary"
+                  className="w-full text-sm p-2.5 border border-border rounded-md bg-surface text-foreground focus:ring-primary focus:border-primary"
                 >
                   <option value="">-- None --</option>
                   {subWorkspaces.filter(sw => sw.parent_workspace_id === selectedWorkspaceId).map(sw => (
@@ -980,7 +987,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               </div>
             )}
           </div>
-          <DialogFooter className="px-6 py-4 border-t border-border/50 dark:border-white/5 bg-surface dark:bg-surface/5">
+          <DialogFooter className="px-6 py-4 border-t border-border bg-surface">
             <AppButton variant="outline" onClick={() => setShowWorkspaceSelector(false)}>Cancel</AppButton>
             <AppButton 
               variant="primary" 
@@ -1026,12 +1033,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
       <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pb-12">
         {showApprovalControls && (
-          <div className="bg-surface dark:bg-elevated/40 border-l-4 border-accent p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-surface border-l-4 border-accent p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex items-start gap-3">
               <ShieldAlert className="h-6 w-6 text-accent shrink-0 mt-0.5" />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-amber-900 dark:text-amber-100">
+                  <h3 className="text-sm font-bold text-warning">
                     {requirement.approval_status === 'Pending SignOff' ? 'Action Required: Sign Off is Pending' : isPendingForOther ? 'Action Required: Manual Override Approval' : 'Action Required: Your Approval is Pending'}
                   </h3>
                   {isPendingForOther && (
@@ -1049,9 +1056,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                     <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
                     {requirement.approval_status === 'Pending SignOff' ? (
-                      <AppButton className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => submitApproval('SignOff' as any)} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Sign Off</AppButton>
+                      <AppButton variant="primary" onClick={() => submitApproval('SignOff' as any)} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Sign Off</AppButton>
                     ) : (
-                      <AppButton className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                      <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
                     )}
                   </div>
                 </div>
@@ -1061,27 +1068,27 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         )}
 
         {isPendingForOther && !showManualOverride && (
-           <div className="bg-surface dark:bg-elevated/40 border-l-4 border-amber-500 p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between flex-wrap gap-4">
+           <div className="bg-surface border-l-4 border-warning p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between flex-wrap gap-4">
              <div className="flex items-center gap-3">
-               <ShieldAlert className="h-6 w-6 text-amber-500 shrink-0" />
+               <ShieldAlert className="h-6 w-6 text-warning shrink-0" />
                <div>
-                 <h3 className="text-sm font-bold text-amber-900 dark:text-amber-100">
+                 <h3 className="text-sm font-bold text-warning">
                    Approval Queue Pending
                  </h3>
-                 <p className="text-xs text-muted dark:text-muted mt-0.5">A user's approval is pending. As a Super Admin, you can manually override and approve this requirement.</p>
+                 <p className="text-xs text-muted mt-0.5">A user's approval is pending. As a Super Admin, you can manually override and approve this requirement.</p>
                </div>
              </div>
              <AppButton variant="primary" onClick={() => setShowManualOverride(true)}>Manual Approve Override</AppButton>
            </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-surface/80 dark:bg-elevated/40 border border-border/80 mb-6 shadow-xs select-none">
+        <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-surface border border-border mb-6 shadow-xs select-none">
           {[
-            { id: 'details', label: 'Requirement Details', icon: FileText, color: 'text-blue-500', activeBg: 'bg-blue-600' },
-            { id: 'analysis', label: 'Business Analysis', icon: Target, color: 'text-theme-icon', activeBg: 'bg-purple-600' },
-            { id: 'approval', label: 'Approval Workflow', icon: Shield, color: 'text-amber-500', activeBg: 'bg-amber-600' },
-            { id: 'tasks', label: 'Tasks', icon: Briefcase, count: linkedTasks.length, color: 'text-emerald-500', activeBg: 'bg-emerald-600' },
-            { id: 'audit', label: 'Audit Trail', icon: Clock, count: auditLogs.length, color: 'text-theme-icon', activeBg: 'bg-cyan-600' }
+            { id: 'details', label: 'Requirement Details', icon: FileText },
+            { id: 'analysis', label: 'Business Analysis', icon: Target },
+            { id: 'approval', label: 'Approval Workflow', icon: Shield },
+            { id: 'tasks', label: 'Tasks', icon: Briefcase, count: linkedTasks.length },
+            { id: 'audit', label: 'Audit Trail', icon: Clock, count: auditLogs.length }
           ].map(tab => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -1092,16 +1099,16 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 variant={isActive ? "primary" : "ghost"}
                 onClick={() => setActiveTab(tab.id)}
                 className={`theme-tab-standard rounded-xl ${
-                  isActive ? "shadow-md scale-[1.02] border-transparent" : "border border-transparent hover:border-border/60"
+                  isActive ? "shadow-sm border-transparent" : "border border-transparent hover:border-border/60"
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : tab.color}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-primary-foreground" : "text-theme-icon"}`} />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className={`ml-1 px-1.5 py-0.2 text-[10px] font-extrabold rounded-full ${
+                  <span className={`ml-1 px-1.5 py-0.2 text-[10px] font-semibold rounded-full ${
                     isActive 
-                      ? "bg-surface/25 text-white" 
-                      : `bg-surface ${tab.color} border border-current/30`
+                      ? "bg-primary-foreground/20 text-primary-foreground" 
+                      : "bg-elevated text-muted border border-border"
                   }`}>
                     {tab.count}
                   </span>
@@ -1114,8 +1121,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         {activeTab === 'details' && (
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
             {(requirement.requirement_reason || requirement.requirement_details || requirement.objective || requirement.functional_scope || requirement.custom_fields?.business_reason || requirement.custom_fields?.requirement_details) && (
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
+              <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <FileText className="w-4 h-4 text-accent" />
@@ -1124,7 +1131,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-accent" /> Issue Description
                     </span>
@@ -1133,7 +1140,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </div>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason
                     </span>
@@ -1142,7 +1149,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </div>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Details
                     </span>
@@ -1156,8 +1163,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             )}
 
             {requirement.scope === 'INFRA' && snap.infraSpecifications && snap.infraSpecifications.length > 0 && (
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4 animate-in fade-in duration-500">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4 animate-in fade-in duration-500">
+              <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-theme-btn-primary shadow-xs" />
                   <Server className="w-4 h-4 text-theme-btn-primary" />
@@ -1178,17 +1185,17 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     {snap.infraSpecifications.map((spec: any, idx: number) => (
                       <AppTableRow key={idx}>
                         <AppTableCell className="font-medium text-foreground">{spec.item}</AppTableCell>
-                        <AppTableCell className="text-right">${(spec.cost || 0).toLocaleString()}</AppTableCell>
+                        <AppTableCell className="text-right">${formatCount(spec.cost || 0)}</AppTableCell>
                         <AppTableCell className="text-right">{spec.qty || 1}</AppTableCell>
                         <AppTableCell className="text-right font-semibold text-theme-btn-primary">
-                          ${((spec.cost || 0) * (spec.qty || 1)).toLocaleString()}
+                          ${formatCount((spec.cost || 0) * (spec.qty || 1))}
                         </AppTableCell>
                       </AppTableRow>
                     ))}
                     <AppTableRow className="bg-elevated/30 border-t-2 border-theme-btn-primary/20">
                       <AppTableCell colSpan={3} className="text-right font-bold text-muted">Total Estimated Cost</AppTableCell>
                       <AppTableCell className="text-right font-bold text-lg text-theme-btn-primary">
-                        ${snap.infraSpecifications.reduce((sum: number, spec: any) => sum + ((spec.cost || 0) * (spec.qty || 1)), 0).toLocaleString()}
+                        ${formatCount(snap.infraSpecifications.reduce((sum: number, spec: any) => sum + ((spec.cost || 0) * (spec.qty || 1)), 0))}
                       </AppTableCell>
                     </AppTableRow>
                   </AppTableBody>
@@ -1198,8 +1205,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             )}
 
             {(requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || requirement.business_criticality?.name || requirement.priority?.name || requirement.business_value?.name || requirement.custom_fields?.business_value || requirement.business_impact || requirement.custom_fields?.business_impact || requirement.dependency_notes || requirement.custom_fields?.dependency_notes || requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope) && (
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
+              <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Target className="w-4 h-4 text-accent" />
@@ -1214,12 +1221,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   (requirement.business_impact || requirement.custom_fields?.business_impact)) && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5">
                   {(requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name) && (
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-accent" /> Business Classification
                     </span>
                     <div>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface dark:bg-elevated text-foreground border border-border/60">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface text-foreground border border-border/60">
                         {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name}
                       </span>
                     </div>
@@ -1227,12 +1234,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   )}
 
                   {(requirement.business_criticality?.name || requirement.priority?.name) && (
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business Criticality <span className="text-red-500">*</span>
+                      <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business Criticality <span className="text-danger">*</span>
                     </span>
                     <div>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface dark:bg-elevated text-foreground border border-border/60">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface text-foreground border border-border/60">
                         {requirement.business_criticality?.name || requirement.priority?.name}
                       </span>
                     </div>
@@ -1240,7 +1247,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   )}
 
                   {(requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value) && (
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-accent" /> Business Value
                     </span>
@@ -1251,7 +1258,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   )}
 
                   {(requirement.business_impact || requirement.custom_fields?.business_impact) && (
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-accent" /> Business Impact
                     </span>
@@ -1266,9 +1273,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 {((requirement.dependency_notes || requirement.custom_fields?.dependency_notes) || (requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope)) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   {(requirement.dependency_notes || requirement.custom_fields?.dependency_notes) && (
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-red-500">*</span>
+                      <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-danger">*</span>
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.dependency_notes || requirement.custom_fields?.dependency_notes}
@@ -1277,9 +1284,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   )}
 
                   {(requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope) && (
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture <span className="text-red-500">*</span>
+                      <Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture <span className="text-danger">*</span>
                     </span>
                     <div 
                       className="theme-data-value text-foreground leading-relaxed break-words quill-rendered-content"
@@ -1293,19 +1300,19 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             </AppCard>
             )}
 
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-5 mb-4">
-              <div className="text-xs font-extrabold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+            <AppCard className="overflow-hidden border border-border p-5 mb-4">
+              <div className="text-xs font-semibold text-muted mb-3 flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-accent" /> Scope & System Classification
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
-                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <Target className="w-3 h-3 text-theme-icon" /> Scope
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.scope || '-'}>{requirement.scope || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <Server className="w-3 h-3 text-theme-icon" /> {requirement.scope === 'INFRA' ? 'Affected Asset' : 'System'}
                   </span>
@@ -1314,44 +1321,44 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   </span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
-                    <Briefcase className="w-3 h-3 text-emerald-500" /> Module
+                    <Briefcase className="w-3 h-3 text-theme-icon" /> Module
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.module?.name || snap.module || '-'}>{requirement.module?.name || snap.module || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <FileText className="w-3 h-3 text-theme-icon" /> Submodule
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.sub_module?.name || snap.submodule || '-'}>{requirement.sub_module?.name || snap.submodule || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">Category</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.category?.name || snap.category || '-'}>{requirement.category?.name || snap.category || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">Sub Category</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.sub_category?.name || snap.subcategory || '-'}>{requirement.sub_category?.name || snap.subcategory || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">Created By</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.creator?.full_name || '-'}>{requirement.creator?.full_name || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                <div className="flex flex-col p-3 rounded-xl bg-surface border border-border">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">Department</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.department?.name || '-'}>{requirement.department?.name || '-'}</span>
                 </div>
               </div>
             </AppCard>
 
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-5 mb-4">
-              <div className="text-xs font-extrabold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+            <AppCard className="overflow-hidden border border-border p-5 mb-4">
+              <div className="text-xs font-semibold text-muted mb-3 flex items-center gap-2">
                 <Paperclip className="h-4 w-4 text-theme-icon" /> Associated Files & Attachments ({attachments.length})
               </div>
               <div className="mb-4">
@@ -1367,13 +1374,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             </AppCard>
 
             {requirement.status?.status_name === 'UAT' && (
-              <section className="bg-amber-900/20 rounded-2xl p-6 border border-amber-500/20 shadow-md">
-                <h3 className="theme-label text-amber-500 mb-2 font-bold text-base flex items-center gap-2">
+              <section className="bg-warning-soft rounded-2xl p-6 border border-warning-border shadow-sm">
+                <h3 className="theme-label text-warning mb-2 font-semibold text-base flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5" />
                   User Acceptance Testing (UAT)
                 </h3>
                 <textarea 
-                  className="w-full bg-surface/40 border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[100px]"
+                  className="w-full bg-surface border border-border rounded-xl p-3 text-sm text-foreground mb-4 focus:outline-none focus:border-primary min-h-[100px]"
                   placeholder="Enter UAT feedback or rejection reasons (Required for Failure)..."
                   value={uatComment}
                   onChange={e => setUatComment(e.target.value)}
@@ -1383,7 +1390,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     onClick={() => handleUAT('PASS')}
                     disabled={submittingUat}
                     isLoading={submittingUat}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    variant="primary"
                     leftIcon={<CheckCircle className="w-4 h-4" />}
                   >
                     Approve & Close Requirement
@@ -1407,8 +1414,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         {activeTab === 'analysis' && (
           <div className="flex flex-col space-y-6 animate-in fade-in duration-300">
             {/* 1. CARD: Business Classification */}
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
+              <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Target className="w-4 h-4 text-accent" />
@@ -1420,7 +1427,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-accent" /> Business Classification <span className="text-red-500">*</span></span>
+                      <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-accent" /> Business Classification <span className="text-danger">*</span></span>
                       {isEditable && (
                         <AppButton variant="ghost" type="button" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10 h-auto min-h-0 min-w-0">
                           <Plus className="w-3.5 h-3.5" />
@@ -1429,7 +1436,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </label>
                     {isEditable ? (
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.requirement_type_id || ""}
                         onChange={(e) => handleUpdateField('requirement_type_id', e.target.value)}
                       >
@@ -1439,7 +1446,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         ))}
                       </select>
                     ) : (
-                      <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
+                      <div className="p-2.5 rounded-lg border border-border bg-surface text-foreground text-sm font-medium">
                         {masters.issue_types?.find((t: any) => t.id === formData.requirement_type_id)?.name || requirement.business_classification?.name || requirement.requirement_type?.name || '-'}
                       </div>
                     )}
@@ -1447,11 +1454,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business Criticality <span className="text-red-500">*</span></span>
+                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business Criticality <span className="text-danger">*</span></span>
                     </label>
                     {isEditable ? (
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.business_criticality_id || ""}
                         onChange={(e) => handleUpdateField('business_criticality_id', e.target.value)}
                       >
@@ -1461,7 +1468,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         ))}
                       </select>
                     ) : (
-                      <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
+                      <div className="p-2.5 rounded-lg border border-border bg-surface text-foreground text-sm font-medium">
                         {masters.priority_master?.find((p: any) => p.id === formData.business_criticality_id)?.name || requirement.business_criticality?.name || requirement.priority?.name || '-'}
                       </div>
                     )}
@@ -1478,7 +1485,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </label>
                     {isEditable ? (
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.business_value_id || ""}
                         onChange={(e) => handleUpdateField('business_value_id', e.target.value)}
                       >
@@ -1488,7 +1495,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         ))}
                       </select>
                     ) : (
-                      <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
+                      <div className="p-2.5 rounded-lg border border-border bg-surface text-foreground text-sm font-medium">
                         {masters.business_values?.find((b: any) => b.id === formData.business_value_id)?.name || requirement.business_value?.name || requirement.custom_fields?.business_value || '-'}
                       </div>
                     )}
@@ -1502,13 +1509,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </label>
                     {isEditable ? (
                       <textarea
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex min-h-[80px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.business_impact}
                         onChange={(e) => handleUpdateField('business_impact', e.target.value)}
                         placeholder="Enter business impact details..."
                       />
                     ) : (
-                      <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm whitespace-pre-wrap">
+                      <div className="p-3 rounded-lg border border-border bg-surface text-foreground text-sm whitespace-pre-wrap">
                         {formData.business_impact || '-'}
                       </div>
                     )}
@@ -1516,17 +1523,17 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
-                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-red-500">*</span></span>
+                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-danger">*</span></span>
                     </label>
                     {isEditable ? (
                       <textarea
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex min-h-[80px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.dependency_notes}
                         onChange={(e) => handleUpdateField('dependency_notes', e.target.value)}
                         placeholder="Enter dependency notes..."
                       />
                     ) : (
-                      <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm whitespace-pre-wrap">
+                      <div className="p-3 rounded-lg border border-border bg-surface text-foreground text-sm whitespace-pre-wrap">
                         {formData.dependency_notes || '-'}
                       </div>
                     )}
@@ -1536,8 +1543,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             </AppCard>
 
             {/* 2. CARD: Requirement Reason, Details & Technical Scope */}
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
+              <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <FileText className="w-4 h-4 text-accent" />
@@ -1550,7 +1557,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     <label className="theme-label text-muted flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Issue Description</span>
                     </label>
-                    <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 h-full">
+                    <div className="p-3.5 rounded-xl bg-surface border border-border h-full">
                       <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                         {requirement.objective || requirement.custom_fields?.description || snap.description || '-'}
                       </div>
@@ -1563,13 +1570,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </label>
                     {isEditable ? (
                       <textarea
-                        className="flex min-h-[80px] h-full w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex min-h-[80px] h-full w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.requirement_reason}
                         onChange={(e) => handleUpdateField('requirement_reason', e.target.value)}
                         placeholder="Enter requirement reason..."
                       />
                     ) : (
-                      <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 h-full">
+                      <div className="p-3.5 rounded-xl bg-surface border border-border h-full">
                         <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                           {formData.requirement_reason || '-'}
                         </div>
@@ -1583,13 +1590,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </label>
                     {isEditable ? (
                       <textarea
-                        className="flex min-h-[80px] h-full w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex min-h-[80px] h-full w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.requirement_details}
                         onChange={(e) => handleUpdateField('requirement_details', e.target.value)}
                         placeholder="Enter requirement details..."
                       />
                     ) : (
-                      <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 h-full">
+                      <div className="p-3.5 rounded-xl bg-surface border border-border h-full">
                         <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                           {formData.requirement_details || '-'}
                         </div>
@@ -1600,7 +1607,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                 <div className="flex flex-col space-y-1.5 mt-4">
                   <label className="theme-label text-muted flex items-center justify-between">
-                    <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture Details <span className="text-red-500">*</span></span>
+                    <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture Details <span className="text-danger">*</span></span>
                   </label>
                   {isEditable ? (
                     <LazyQuill
@@ -1609,7 +1616,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       placeholder="Enter architecture details..."
                     />
                   ) : (
-                    <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm prose dark:prose-invert max-w-none">
+                    <div className="p-3 rounded-lg border border-border bg-surface text-foreground text-sm prose dark:prose-invert max-w-none">
                       <SafeHtml html={formData.technical_scope || ''} />
                     </div>
                   )}
@@ -1620,8 +1627,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             
             {/* IT System Conditional Render */}
             {requirement.custom_fields?.requirement_domain === 'IT & Software System' && (
-              <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
-                <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+              <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
+                <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                     <Server className="w-4 h-4 text-accent" />
@@ -1630,25 +1637,25 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 </div>
                 <div className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">Target System / Application</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_system || '-'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">Data Privacy & Security</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.data_privacy || '-'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">Software License Cost</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.software_cost ? `₹${requirement.custom_fields.software_cost}` : 'N/A'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">Development Cost</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.dev_cost ? `₹${requirement.custom_fields.dev_cost}` : 'N/A'}</span>
                     </div>
                   </div>
                   {requirement.custom_fields?.integrations && (
-                    <div className="mt-3.5 flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="mt-3.5 flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">Integration Dependencies</span>
                       <span className="theme-data-value text-foreground whitespace-pre-wrap">{requirement.custom_fields.integrations}</span>
                     </div>
@@ -1659,8 +1666,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
             {/* Infrastructure Conditional Render */}
             {requirement.custom_fields?.requirement_domain === 'Infrastructure & Hardware' && (
-              <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
-                <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+              <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
+                <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                     <Server className="w-4 h-4 text-accent" />
@@ -1669,19 +1676,19 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 </div>
                 <div className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">Target Environment</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_environment || '-'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">Hardware & Capacity Needs</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.hardware_needs || '-'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">CAPEX Amount</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.capex_amount ? `₹${requirement.custom_fields.capex_amount}` : 'N/A'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                       <span className="theme-label mb-1.5 text-muted">OPEX Amount</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.opex_amount ? `₹${requirement.custom_fields.opex_amount}` : 'N/A'}</span>
                     </div>
@@ -1691,8 +1698,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             )}
 
             {/* 3. CARD: Timelines & Resources */}
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
+              <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Clock className="w-4 h-4 text-accent" />
@@ -1702,35 +1709,35 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
               <div className="p-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-accent" /> Start Date <span className="text-red-500">*</span>
+                      <Calendar className="w-3.5 h-3.5 text-accent" /> Start Date <span className="text-danger">*</span>
                     </span>
                     {isEditable ? (
-                      <AppInput type="date" min={requirement.created_at?.split('T')[0]} value={formData.start_date} onChange={(e) => handleDateChange('start_date', e.target.value)} className="w-full" />
+                      <AppInput type="date" min={requirement.created_at?.slice(0, 10)} value={formData.start_date} onChange={(e) => handleDateChange('start_date', e.target.value)} className="w-full" />
                     ) : (
                       <span className="theme-data-value text-foreground truncate">
-                        {requirement.start_date ? new Date(requirement.start_date).toLocaleDateString() : (requirement.created_at ? new Date(requirement.created_at).toLocaleDateString() : 'Not Set')}
+                        {formatDate(requirement.start_date || requirement.created_at, 'Not Set')}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-accent" /> Due Date <span className="text-red-500">*</span>
+                      <Calendar className="w-3.5 h-3.5 text-accent" /> Due Date <span className="text-danger">*</span>
                     </span>
                     {isEditable ? (
-                      <AppInput type="date" min={formData.start_date || requirement.created_at?.split('T')[0]} value={formData.due_date} onChange={(e) => handleDateChange('due_date', e.target.value)} className="w-full" />
+                      <AppInput type="date" min={formData.start_date || requirement.created_at?.slice(0, 10)} value={formData.due_date} onChange={(e) => handleDateChange('due_date', e.target.value)} className="w-full" />
                     ) : (
                       <span className="theme-data-value text-foreground truncate">
-                        {requirement.due_date || requirement.expected_completion_date ? new Date(requirement.due_date || requirement.expected_completion_date).toLocaleDateString() : 'Not Set'}
+                        {formatDate(requirement.due_date || requirement.expected_completion_date, 'Not Set')}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Hourglass className="w-3.5 h-3.5 text-accent" /> Estimated Effort (Days) <span className="text-red-500">*</span>
+                      <Hourglass className="w-3.5 h-3.5 text-accent" /> Estimated Effort (Days) <span className="text-danger">*</span>
                     </span>
                     {isEditable ? (
                       <AppInput type="number" min="1" value={formData.estimated_effort} onChange={handleEffortChange} className="w-full" placeholder="e.g. 5" />
@@ -1741,7 +1748,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-accent" /> Estimated Cost
                     </span>
@@ -1754,7 +1761,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-accent" /> Estimated Resources
                     </span>
@@ -1772,8 +1779,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
 
             {/* 4. CARD: Impacted Departments & Define Approval Sequence * */}
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
+              <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Briefcase className="w-4 h-4 text-accent" />
@@ -1783,26 +1790,26 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-accent">
                       Primary Impacted Department
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-full theme-data-value bg-indigo-600 text-white shadow-xs">
+                      <span className="px-3 py-1 rounded-full theme-data-value bg-primary text-primary-foreground shadow-xs">
                         {requirement.department?.name || snap.department || '-'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface border border-border">
                     <span className="theme-label mb-1.5 text-accent">
                       Department Approvers & Stakeholders (Sequence Configured)
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {approvalFlow && approvalFlow.length > 0 ? (
                         approvalFlow.map((flow: any, idx: number) => (
-                          <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
-                            <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
+                          <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-foreground">
+                            <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center">{idx + 1}</span>
                             {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.designation?.name || '-'})
                           </span>
                         ))
@@ -1815,8 +1822,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                             return { approver: user, department: dept };
                           });
                         }).map((flow: any, idx: number) => (
-                          <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
-                            <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
+                          <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-foreground">
+                            <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center">{idx + 1}</span>
                             {flow.approver?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.designation?.name || '-'})
                           </span>
                         ))
@@ -1829,10 +1836,10 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                 {/* Define Approval Sequence * Selector Matrix */}
                 {(!approvalFlow || !approvalFlow.some((f: any) => f.status === 'Approved')) && isEditable && (
-                <div className="p-4 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/60 space-y-4">
+                <div className="p-4 rounded-xl bg-surface border border-border space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                      <Shield className="w-3.5 h-3.5 text-accent" /> Select Impacted Departments & Define Approval Sequence <span className="text-red-500">*</span>
+                    <span className="text-[11px] font-semibold text-muted flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-accent" /> Select Impacted Departments & Define Approval Sequence <span className="text-danger">*</span>
                     </span>
                     <span className="text-[10px] text-muted font-medium">Click departments to select, then assign approver order (1st, 2nd, etc).</span>
                   </div>
@@ -1850,13 +1857,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                           onClick={() => handleDepartmentToggle(d.id)}
                           className={`px-2 py-1 rounded-xl text-[11px] font-semibold transition-all border flex items-center gap-1.5 cursor-pointer ${
                             isSelected 
-                              ? "bg-theme-btn-primary border-transparent text-theme-btn-primary-text shadow-sm scale-[1.02]" 
-                              : "bg-surface dark:bg-elevated/30 border-border text-muted hover:text-foreground hover:border-accent/40"
+                              ? "bg-theme-btn-primary border-transparent text-theme-btn-primary-text shadow-sm" 
+                              : "bg-surface border-border text-muted hover:text-foreground hover:border-accent/40"
                           }`}
                         >
                           <div className={`w-2 h-2 rounded-full ${isSelected ? "bg-surface" : "bg-accent"}`} />
                           <span>{d.name}</span>
-                          {isSelected && <span className="text-[10px] font-extrabold bg-surface/20 px-1.5 py-0.2 rounded-full">Selected</span>}
+                          {isSelected && <span className="text-[10px] font-semibold bg-surface/20 px-1.5 py-0.2 rounded-full">Selected</span>}
                         </AppButton>
                       );
                     })}
@@ -1864,9 +1871,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                   {/* 2. Interactive Approval Sequence Builder per Selected Department */}
                   {formData.impacted_departments.length > 0 && (
-                    <div className="mt-4 space-y-4 pt-3 border-t border-border/60">
+                    <div className="mt-4 space-y-4 pt-3 border-t border-border">
                       <label className="block theme-label text-muted">
-                        Configure Department Approval Sequence <span className="text-red-500">*</span>
+                        Configure Department Approval Sequence <span className="text-danger">*</span>
                       </label>
                       {formData.impacted_departments.map((deptId: string) => {
                         const dept = masters.departments?.find((d: any) => d.id === deptId);
@@ -1878,7 +1885,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                         const selectedApprovers = formData.department_approvers[deptId] || [];
 
                         return (
-                          <div key={deptId} className="p-4 rounded-xl border border-border/60 bg-surface/50 dark:bg-elevated/20 space-y-3">
+                          <div key={deptId} className="p-4 rounded-xl border border-border bg-surface space-y-3">
                             <div className="flex items-center justify-between">
                               <span className="theme-data-value text-foreground flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-accent" />
@@ -1889,7 +1896,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                             <div className="flex flex-wrap gap-2 pt-1">
                               {deptUsers.length === 0 ? (
-                                <div className="text-xs text-muted italic p-2 border border-dashed border-border dark:border-white/10 rounded-lg w-full text-center">
+                                <div className="text-xs text-muted italic p-2 border border-border rounded-lg w-full text-center">
                                   No users assigned to the {deptName} department.
                                 </div>
                               ) : (
@@ -1928,11 +1935,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                                       className={`px-2 py-1 rounded-lg text-[11px] font-semibold border flex items-center gap-2 cursor-pointer transition-all ${
                                         isUserSelected 
                                           ? "bg-theme-btn-primary border-transparent text-theme-btn-primary-text shadow-xs" 
-                                          : "bg-surface dark:bg-elevated/40 border-border text-foreground hover:border-accent/40"
+                                          : "bg-surface border-border text-foreground hover:border-accent/40"
                                       }`}
                                     >
                                       {isUserSelected && (
-                                        <span className="bg-surface/25 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-extrabold">
+                                        <span className="bg-surface/25 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-semibold">
                                           {orderIndex}
                                         </span>
                                       )}
@@ -1945,7 +1952,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                             {/* Approval Sequence Preview Strip */}
                             {selectedApprovers.length > 0 && (
-                              <div className="mt-2 p-2.5 rounded-lg bg-surface/90 dark:bg-elevated/60 border border-border/60">
+                              <div className="mt-2 p-2.5 rounded-lg bg-surface border border-border">
                                 <div className="theme-label text-foreground font-semibold mb-1">
                                   {deptName} - Configured Approval Sequence
                                 </div>
@@ -1956,7 +1963,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                                     return (
                                       <div key={id} className="flex items-center gap-1.5">
                                         <span className="text-accent font-bold">{roleLabel}:</span>
-                                        <span className="bg-surface dark:bg-elevated px-2 py-0.5 rounded border border-border">{user?.full_name || user?.name || 'User'} {user?.designation?.name ? `(${user.designation.name})` : ''}</span>
+                                        <span className="bg-surface px-2 py-0.5 rounded border border-border">{user?.full_name || user?.name || 'User'} {user?.designation?.name ? `(${user.designation.name})` : ''}</span>
                                         {index < selectedApprovers.length - 1 && <span className="text-muted font-bold">→</span>}
                                       </div>
                                     );
@@ -1971,12 +1978,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   )}
 
                   {/* 3. Sign-Off Approver Selection */}
-                  <div className="mt-4 pt-4 border-t border-border/60">
+                  <div className="mt-4 pt-4 border-t border-border">
                     <label className="block theme-label text-muted mb-2">
-                      Designated Sign-Off Approver <span className="text-red-500">*</span>
+                      Designated Sign-Off Approver <span className="text-danger">*</span>
                     </label>
                     <select 
-                      className="flex h-10 w-full md:w-1/2 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
+                      className="flex h-10 w-full md:w-1/2 rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                       value={formData.signoff_approver_id}
                       onChange={(e) => setFormData({ ...formData, signoff_approver_id: e.target.value })}
                     >
@@ -1998,9 +2005,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             </AppCard>
 
             {/* 5. CARD: Add New Analysis Remarks (Mandatory for Approvers) & Remarks History */}
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
               {/* Card Header */}
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between select-none">
+              <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between select-none">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs animate-pulse" />
                   <FileText className="w-4 h-4 text-accent" />
@@ -2010,9 +2017,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
               <div className="p-5 space-y-5">
                 {/* SECTION 1: Add New Analysis Remarks (Always Visible & Accessible) */}
-                <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
-                  <label className="theme-data-value uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Add New Analysis Remarks (Mandatory for Approvers) <span className="text-red-500">*</span>
+                <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-surface border border-border">
+                  <label className="theme-data-value text-warning flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Add New Analysis Remarks (Mandatory for Approvers) <span className="text-danger">*</span>
                   </label>
                   <LazyQuill
                     value={approvalRemarks}
@@ -2022,7 +2029,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   </div>
 
                 {/* SECTION 2: Remarks History (Separated, Default Minimized) */}
-                <div className="pt-3 border-t border-border/60 space-y-3">
+                <div className="pt-3 border-t border-border space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="theme-label flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-theme-icon" /> Remarks History ({auditLogs.length})
@@ -2032,7 +2039,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsRemarksHistoryMinimized(!isRemarksHistoryMinimized)}
-                      className="theme-data-value text-accent hover:bg-amber-500/20 flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all"
+                      className="theme-data-value text-accent hover:bg-surface-hover flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all"
                     >
                       {isRemarksHistoryMinimized ? (
                         <>
@@ -2060,7 +2067,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2 mb-1">
                                   <span className="theme-data-value text-foreground truncate">{log.user?.full_name || log.actor_name || 'System Actor'}</span>
-                                  <span className="theme-label text-muted">{new Date(log.performed_at || log.created_at || log.timestamp).toLocaleString()}</span>
+                                  <span className="theme-label text-muted">{formatDateTime(log.performed_at || log.created_at || log.timestamp)}</span>
                                 </div>
                                 <div className="theme-data-value text-muted-foreground leading-relaxed break-words">
                                   <SafeHtml html={log.new_value?.remarks || log.new_value?.message || log.action || log.remarks || log.message || '-'} />
@@ -2086,13 +2093,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
 
 
-        <div className={`rounded-lg mb-10 ${['approval', 'tasks', 'audit'].includes(activeTab) ? 'bg-surface dark:bg-[#050505] border border-border/50 dark:border-white/5 p-3 shadow-sm' : ''}`}>
+        <div className={`rounded-lg mb-10 ${['approval', 'tasks', 'audit'].includes(activeTab) ? 'bg-surface border border-border p-3 shadow-sm' : ''}`}>
           {activeTab === 'approval' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               {approvalFlow.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 opacity-50 mt-4 border border-dashed border-border dark:border-white/10 rounded-lg">
+                <div className="flex flex-col items-center justify-center h-40 opacity-50 mt-4 border border-border rounded-lg">
                   <Shield className="h-8 w-8 mb-2 text-theme-icon" />
-                  <p className="text-xs text-muted dark:text-muted">No approval workflow has been initiated yet.</p>
+                  <p className="text-xs text-muted">No approval workflow has been initiated yet.</p>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -2104,13 +2111,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       return acc;
                     }, {} as Record<string, any[]>)
                   ).map(([deptName, flows]: any) => (
-                    <div key={deptName} className="p-4 bg-surface dark:bg-[#0a0d14] rounded-lg border border-border dark:border-white/10 shadow-sm">
-                      <h3 className="text-sm font-bold text-foreground dark:text-muted mb-4 border-b border-border/50 dark:border-white/5 pb-2">
+                    <div key={deptName} className="p-4 bg-surface rounded-lg border border-border shadow-sm">
+                      <h3 className="text-sm font-bold text-foreground mb-4 border-b border-border pb-2">
                         {deptName} Approvals
                       </h3>
                       <div className="relative">
                         {/* Connecting Line */}
-                        <div className="absolute top-5 left-4 bottom-5 w-0.5 bg-elevated dark:bg-surface/10" />
+                        <div className="absolute top-5 left-4 bottom-5 w-0.5 bg-muted" />
                         
                         <div className="space-y-6 relative z-10">
                           {flows.map((flow: any, index: number) => {
@@ -2118,39 +2125,39 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                             const isPending = flow.status === 'Pending';
                             const isRejected = flow.status === 'Rejected';
                             
-                            let statusColor = "bg-surface dark:bg-surface/5 border-border dark:border-white/10 text-muted";
+                            let statusColor = "bg-surface border-border text-muted";
                             let icon = <Clock className="h-3.5 w-3.5" />;
                             
                             if (isApproved) {
-                              statusColor = "bg-green-100 dark:bg-green-900/30 border-green-500 text-green-700 dark:text-green-400";
+                              statusColor = "bg-success-soft border-success-border text-success-text";
                               icon = <CheckCircle className="h-3.5 w-3.5" />;
                             } else if (isRejected) {
-                              statusColor = "bg-red-100 dark:bg-red-900/30 border-red-500 text-red-700 dark:text-red-400";
+                              statusColor = "bg-danger-soft border-danger-border text-danger-text";
                               icon = <XCircle className="h-3.5 w-3.5" />;
                             } else if (isPending) {
-                              statusColor = "bg-amber-100 dark:bg-amber-900/30 border-amber-500 text-amber-700 dark:text-amber-400";
+                              statusColor = "bg-warning-soft border-warning-border text-warning-text";
                               icon = <AlertTriangle className="h-3.5 w-3.5" />;
                             }
                             
                             return (
                               <div key={flow.id} className="flex gap-4 items-start pl-2">
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 shrink-0 bg-surface dark:bg-[#050505] mt-1 z-10 ${isApproved ? 'border-green-500 text-green-500' : isRejected ? 'border-red-500 text-red-500' : isPending ? 'border-amber-500 text-amber-500' : 'border-border dark:border-border text-muted'}`}>
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 shrink-0 bg-surface mt-1 z-10 ${isApproved ? 'border-success text-success' : isRejected ? 'border-danger text-danger' : isPending ? 'border-warning text-warning' : 'border-border text-muted'}`}>
                                   {isApproved ? <CheckCircle className="w-3 h-3" /> : isRejected ? <XCircle className="w-3 h-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
                                 </div>
                                 <div className={`flex-1 p-3 rounded-lg border ${statusColor} transition-colors`}>
                                   <div className="flex justify-between items-start mb-1">
                                     <div className="font-semibold text-sm">Level {flow.level}: {flow.approver?.full_name || '-'}</div>
-                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface/50 dark:bg-surface/20">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-full bg-surface">
                                       {icon} {flow.status}
                                     </div>
                                   </div>
                                   {flow.actioned_at && (
-                                    <div className="text-[10px] text-muted dark:text-muted mb-2">
-                                      {new Date(flow.actioned_at).toLocaleString()}
+                                    <div className="text-[10px] text-muted mb-2">
+                                      {formatDateTime(flow.actioned_at)}
                                     </div>
                                   )}
                                   {flow.remarks && (
-                                    <div className="text-xs bg-surface/60 dark:bg-surface/30 p-2 rounded text-subtle dark:text-muted italic border border-black/5 dark:border-white/5">
+                                    <div className="text-xs bg-surface p-2 rounded text-subtle italic border border-border">
                                       <SafeHtml html={flow.remarks} />
                                     </div>
                                   )}
@@ -2171,17 +2178,17 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
         {activeTab === 'tasks' && (
             <div className="space-y-4 animate-in fade-in duration-300 pt-2 pb-10">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-border dark:border-white/10">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <Server className="h-5 w-5 text-emerald-500" />
-                  <h2 className="text-sm font-bold text-foreground dark:text-white">Implementation Tasks</h2>
+                  <Server className="h-5 w-5 text-theme-icon" />
+                  <h2 className="text-sm font-bold text-foreground">Implementation Tasks</h2>
                 </div>
               </div>
               
               {linkedTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 opacity-50 mt-4">
-                  <Server className="h-8 w-8 mb-2 text-emerald-500" />
-                  <p className="text-xs text-muted dark:text-muted">Generated implementation tasks will appear here.</p>
+                  <Server className="h-8 w-8 mb-2 text-theme-icon" />
+                  <p className="text-xs text-muted">Generated implementation tasks will appear here.</p>
                 </div>
               ) : (
                 <AppTable>
@@ -2196,29 +2203,27 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   </AppTableHeader>
                   <AppTableBody>
                     {linkedTasks.map((link: any) => (
-                      <AppTableRow key={link.task_id} className="hover:bg-surface dark:hover:bg-surface/5 transition-colors cursor-pointer" onClick={() => router.push(`/tasks/${link.task_id}`)}>
-                        <AppTableCell className="font-medium text-foreground dark:text-white">
+                      <AppTableRow key={link.task_id} className="hover:bg-surface-hover transition-colors cursor-pointer" onClick={() => router.push(`/tasks/${link.task_id}`)}>
+                        <AppTableCell className="font-medium text-foreground">
                           {link.task?.subject || 'Untitled Task'}
                         </AppTableCell>
-                        <AppTableCell className="text-subtle dark:text-muted">
+                        <AppTableCell className="text-subtle">
                           {link.task?.assigned_to_user?.full_name || 'Unassigned'}
                         </AppTableCell>
                         <AppTableCell>
-                          <span 
-                            className="px-2 py-1 text-[10px] font-bold uppercase rounded-full tracking-wider"
-                            style={{ 
-                              backgroundColor: link.task?.status?.status_color ? `${link.task.status.status_color}20` : '#e5e7eb',
-                              color: link.task?.status?.status_color || '#374151'
-                            }}
+                          <AppBadge
+                            variant="custom"
+                            customColor={link.task?.status?.status_color || 'var(--muted)'}
+                            className="text-[10px]"
                           >
                             {link.task?.status?.name || 'New'}
-                          </span>
+                          </AppBadge>
                         </AppTableCell>
-                        <AppTableCell className="text-subtle dark:text-muted">
-                          {link.task?.end_date ? new Date(link.task.end_date).toLocaleDateString() : '-'}
+                        <AppTableCell className="text-subtle">
+                          {link.task?.end_date ? formatDate(link.task.end_date) : '-'}
                         </AppTableCell>
-                        <AppTableCell className="text-muted dark:text-muted text-xs">
-                          {new Date(link.linked_at).toLocaleDateString()}
+                        <AppTableCell className="text-muted text-xs">
+                          {formatDate(link.linked_at)}
                         </AppTableCell>
                       </AppTableRow>
                     ))}
@@ -2230,13 +2235,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
           {activeTab === 'audit' && (
             <div className="space-y-4 animate-in fade-in duration-300 pt-2 pb-10">
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border dark:border-white/10">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
                 <Clock className="h-5 w-5 text-theme-icon" />
-                <h2 className="text-sm font-bold text-foreground dark:text-white">Audit Trail & Lifecycle History</h2>
+                <h2 className="text-sm font-bold text-foreground">Audit Trail & Lifecycle History</h2>
               </div>
               
               {auditLogs.length === 0 ? (
-                <div className="p-8 text-center text-muted text-sm bg-surface dark:bg-surface/5 rounded-lg border border-border/50 dark:border-white/10">
+                <div className="p-8 text-center text-muted text-sm bg-surface rounded-lg border border-border">
                   No activity recorded yet.
                 </div>
               ) : (
@@ -2245,18 +2250,18 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     <AppCard key={log.id} className="p-3 flex flex-col gap-1 shadow-sm">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 flex items-center justify-center text-theme-icon dark:text-theme-icon">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-theme-icon">
                             <Clock className="w-3 h-3" />
                           </div>
-                          <span className="font-bold text-sm text-foreground dark:text-white">{log.event_type.replace(/_/g, ' ')}</span>
+                          <span className="font-bold text-sm text-foreground">{log.event_type.replace(/_/g, ' ')}</span>
                         </div>
-                        <span className="text-xs text-muted">{new Date(log.performed_at).toLocaleString()}</span>
+                        <span className="text-xs text-muted">{formatDateTime(log.performed_at)}</span>
                       </div>
-                      <div className="ml-8 text-xs text-subtle dark:text-muted">
-                        Performed by <span className="font-semibold text-foreground dark:text-muted">{log.user?.full_name || 'System'}</span>
+                      <div className="ml-8 text-xs text-subtle">
+                        Performed by <span className="font-semibold text-foreground">{log.user?.full_name || 'System'}</span>
                       </div>
                       {log.new_value && (
-                        <div className="ml-8 mt-2 p-3 bg-surface dark:bg-[#0a0d14] rounded-md text-xs text-subtle dark:text-muted border border-border/50 dark:border-white/5 font-mono">
+                        <div className="ml-8 mt-2 p-3 bg-surface rounded-md text-xs text-subtle border border-border font-mono">
                           {typeof log.new_value === 'string' ? (
                             <span className="whitespace-pre-wrap">{log.new_value}</span>
                           ) : (
@@ -2266,7 +2271,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                                 .map(([key, value]) => (
                                 <li key={key} className="flex gap-2">
                                   <span className="text-muted font-bold min-w-[100px] truncate">{key.replace(/_/g, ' ').toUpperCase()}:</span>
-                                  <span className="flex-1 text-foreground dark:text-gray-100 whitespace-pre-wrap">{String(value)}</span>
+                                  <span className="flex-1 text-foreground whitespace-pre-wrap">{String(value)}</span>
                                 </li>
                               ))}
                             </ul>
@@ -2283,8 +2288,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       </div>
 
       <Dialog open={showAddMasterModal} onOpenChange={setShowAddMasterModal}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border dark:border-white/10 shadow-2xl rounded-xl bg-surface dark:bg-[#0a0d14]">
-          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5 bg-surface/50 dark:bg-surface/30">
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border bg-surface shadow-lg">
+          <DialogHeader className="px-6 py-4 border-b border-border bg-surface">
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
               <FilePlus className="h-5 w-5 text-theme-icon" />
               Add {masterModalType === 'issue_type' ? 'Requirement Type' : 'Business Value'}
@@ -2292,7 +2297,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-data-value text-subtle dark:text-muted mb-1">Name <span className="text-red-500">*</span></label>
+              <label className="block theme-data-value text-muted mb-1">Name <span className="text-danger">*</span></label>
               <AppInput
                 autoFocus
                 placeholder="Enter name..."
@@ -2302,7 +2307,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               />
             </div>
           </div>
-          <DialogFooter className="px-6 py-4 border-t border-border/50 dark:border-white/5 bg-surface dark:bg-surface/5">
+          <DialogFooter className="px-6 py-4 border-t border-border bg-surface">
             <AppButton variant="outline" onClick={() => setShowAddMasterModal(false)}>Cancel</AppButton>
             <AppButton 
               variant="primary" 
@@ -2318,7 +2323,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       </div> {/* End flex-1 scrollable area */}
 
       {/* GLOBAL STATIC FOOTERS */}
-      <div className="shrink-0 bg-background/95 dark:bg-background/90 border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-[100] empty:hidden px-6 md:px-8">
+      <div className="shrink-0 bg-background/95 border-t border-border shadow-sm z-30 empty:hidden px-6 md:px-8">
         {activeTab === 'analysis' && (
           <div className="p-4 flex items-center justify-end gap-3">
             {((!isViewMode && (isEditable || canManageRequirements || isSuperAdmin)) || showApprovalControls) && (
@@ -2331,7 +2336,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </span>
                     <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                     <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-                    <AppButton className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                    <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
                   </>
                 ) : (
                   isEditable ? (
@@ -2391,12 +2396,23 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 </span>
                 <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                 <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-                <AppButton className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
               </>
             )}
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Delete Requirement"
+        description="Are you sure you want to permanently delete this requirement? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        tone="danger"
+      />
 
     </PageContainer>
   );
