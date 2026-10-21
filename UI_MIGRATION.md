@@ -1,11 +1,11 @@
 # UI migration tracker
-Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5190 errors / 2078 warnings.
+Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5126 errors / 2028 warnings.
 
 ## Modules (in order)
 | # | Module | Pages | Errors at start | Errors now | Status |
 |---|---|---:|---:|---:|---|
 | 0 | Foundation (themes, shell, shared kit) | – | 0 | 0 | Done |
-| 1 | Shared components outside the kit | 76 files | 787 | 787 | Todo |
+| 1 | Shared components outside the kit | 76 files | 787 | 723 | Done |
 | 2 | Task Workflow | 29 | 482 | 482 | Todo |
 | 3 | Vehicle Desk | 1 | 2875 | 2875 | Todo |
 | 4 | Design Tracking | 1 | 16 | 16 | Todo |
@@ -13,6 +13,27 @@ Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5190 errors / 207
 | 6 | Admin, RBAC, IAM, Masters, Settings | 31 | 488 | 488 | Todo |
 | 7 | Auth, module select, profile, misc | 7 | 69 | 69 | Todo |
 | 8 | Guardrails & cleanup | – | – | – | Todo |
+
+## Module 1 inventory: shared duplicates
+| # | Old component (path) | Family | Used by (count of importing files) | Kit target | Approach (wrap / re-export / restyle) | UI errors before → now | Status |
+|---|---|---|---:|---|---|---:|---|
+| 1 | `components/ui/ChandakLoader.tsx` | Loader | 62 | `LoadingState` / `AppSkeleton` / tokens | wrap / restyle | 5 err, 2 warn → 0 err, 0 warn | Done |
+| 2 | `components/ui/tabs.tsx` | Tabs | 12 | `AppTabs` / tokens | wrap / restyle | 1 err, 0 warn → 0 err, 0 warn | Done |
+| 3 | `components/ui/SafeHtml.tsx` | Text / HTML | 11 | tokens | restyle | 0 err, 0 warn → 0 err, 0 warn | Done |
+| 4 | `components/ui/ReportKPIBar.tsx` | KPI card | 3 | `StatTile` / tokens | wrap / restyle | 2 err, 2 warn → 0 err, 0 warn | Done |
+| 5 | `components/ui/SavedFiltersDropdown.tsx` | Filter bar | 3 | Radix Popover / tokens | restyle | 0 err, 1 warn → 0 err, 0 warn | Done |
+| 6 | `components/ui/SectionHeader.tsx` | Page title | 2 | `PageHeader` / tokens | wrap / restyle | 0 err, 1 warn → 0 err, 0 warn | Done |
+| 7 | `components/ui/EnterpriseUploader.tsx` | File upload | 2 | `FileDropzone` / tokens | restyle | 1 err, 2 warn → 0 err, 0 warn | Done |
+| 8 | `components/ui/AnimatedCounter.tsx` | Counter | 2 | tokens | restyle | 0 err, 1 warn → 0 err, 0 warn | Done |
+| 9 | `components/shared/MasterOptionsManager.tsx` | Modal / Masters | 2 | `EnterpriseModalShell` / `ConfirmDialog` | wrap / restyle | 6 err, 3 warn → 0 err, 0 warn | Done |
+| 10 | `components/shared/CityManagerModal.tsx` | Modal / Cities | 1 | `EnterpriseModalShell` / `ConfirmDialog` | wrap / restyle | 9 err, 2 warn → 0 err, 0 warn | Done |
+| 11 | `components/layout/RealtimeNotificationsDrawer.tsx` | Drawer | 1 | `EnterpriseDrawerShell` / tokens | restyle | 35 err, 13 warn → 0 err, 0 warn | Done |
+| 12 | `components/layout/DeploymentVersionBanner.tsx` | Banner | 1 | `InlineAlert` / tokens | restyle | 0 err, 8 warn → 0 err, 0 warn | Done |
+| 13 | `components/layout/GlobalShortcuts.tsx` | Dialog | 1 | `EnterpriseModalShell` / tokens | restyle | 0 err, 6 warn → 0 err, 0 warn | Done |
+| 14 | `components/search/GlobalCommandCenter.tsx` | Search box | 1 | tokens | restyle | 0 err, 2 warn → 0 err, 0 warn | Done |
+| 15 | `components/notifications/NotificationCenter.tsx` | Dropdown menu | 1 | tokens | restyle | 3 err, 3 warn → 0 err, 0 warn | Done |
+| 16 | `components/workspaces/WorkspaceFilterMultiSelect.tsx` | Multi-select | 1 | `FormMultiSelect` / tokens | restyle | 1 err, 4 warn → 0 err, 0 warn | Done |
+| 17 | `components/ui/LazyQuill.tsx` | Rich text editor | 1 | `vendor-overrides.css` / tokens | restyle | 0 err, 0 warn → 0 err, 0 warn | Done |
 
 ## Pages
 | Module | Route | Main file(s) | Page type (list/detail/form/dashboard/board/calendar/settings/auth/print) | Errors | Status |
@@ -107,3 +128,16 @@ Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5190 errors / 207
   - Merged shell navigation components (`Sidebar`, `Navbar`, `ModuleSwitcher`, `WorkspaceShell`, `MobileBottomNav`, `PageHeader`, `PageContainer`) while preserving all routing, cookie logic, and permission filters.
   - Copied reference layouts to `examples/`.
   - Passed TypeScript type-check (`tsc --noEmit`), lint checks, and Next.js production build with 0 errors on touched foundation files.
+- Module 1 (Shared components outside the kit) completed:
+  - Converted 17 shared components and helpers outside the kit to design system tokens with zero functional regression.
+  - Restyled `ChandakLoader.tsx` with design tokens (`border-primary`, `bg-surface`, `bg-[var(--overlay)]`), preserving spinning 40-years badge and all props.
+  - Normalized Radix `tabs.tsx` to design tokens (`bg-sunken`, `bg-surface`, `text-foreground`) and removed `scale-[1.02]` motion.
+  - Upgraded `ReportKPIBar.tsx` to accessible `<button>` components with `font-semibold` values and sentence-case labels.
+  - Converted `SavedFiltersDropdown.tsx` popover to `z-[var(--z-popover)]` with explicit `aria-label` buttons.
+  - Converted `CityManagerModal.tsx` and `MasterOptionsManager.tsx` to `EnterpriseModalShell` and `ConfirmDialog` (`tone="danger"`), replacing browser native `confirm()` calls.
+  - Modernized `EnterpriseUploader.tsx` with accessible dropzone button, token styling, and explicit view/download capabilities.
+  - Refactored `RealtimeNotificationsDrawer.tsx` from 35 errors down to 0 errors: replaced arbitrary z-indexes with `z-[var(--z-toast)]`, eliminated all hover scale movement, and standardized status cards to semantic soft tokens (`bg-danger-soft`, `bg-warning-soft`).
+  - Created `app/styles/vendor-overrides.css` and imported in `app/layout.tsx` for third-party widget standardization (`react-select`, `react-datepicker`, `ql-snow` Quill editor).
+  - Provided root-level re-exports for `ConfirmDialog` and `feedback/index.ts` / `enterprise/index.ts` ensuring 100% backward compatibility for all callers.
+  - All 18 touched files now pass with 0 errors and 0 warnings in `ui-audit`.
+
