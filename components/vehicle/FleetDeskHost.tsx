@@ -961,8 +961,89 @@ export default function FleetDeskHost({
   const [vehiclePoliciesHistory, setVehiclePoliciesHistory] = useState<VehicleInsurancePolicyRecord[]>([]);
   const [loadingPolicyHistory, setLoadingPolicyHistory] = useState(false);
 
-  // Policy Renewal Form States
+  // Policy Renewal Form States (Independent Own & Third Party Insurance Drafts)
   const [renewPolicyCategory, setRenewPolicyCategory] = useState<"Own Insurance" | "Third Party Insurance">("Own Insurance");
+  const [insuranceModalViewMode, setInsuranceModalViewMode] = useState<"TABS" | "MIRROR">("TABS");
+  const [ownPolicyDraft, setOwnPolicyDraft] = useState<{
+    category: "Own Insurance";
+    policyId?: string | null;
+    vendorId: string;
+    vendorName: string;
+    policyNumber: string;
+    policyType: string;
+    idv: number;
+    premium: number;
+    startDate: string;
+    endDate: string;
+    ncb: number;
+    hasRsa: boolean;
+    hasZeroDep: boolean;
+    hasEngineProtect: boolean;
+    receiptNo: string;
+    docUrl: string;
+    stagedFile: { file: File; name: string; size: string; previewUrl: string; base64Url?: string } | null;
+    notes: string;
+  }>({
+    category: "Own Insurance",
+    policyId: null,
+    vendorId: "",
+    vendorName: "",
+    policyNumber: "",
+    policyType: "Comprehensive",
+    idv: 650000,
+    premium: 16500,
+    startDate: "",
+    endDate: "",
+    ncb: 20,
+    hasRsa: true,
+    hasZeroDep: true,
+    hasEngineProtect: false,
+    receiptNo: "",
+    docUrl: "",
+    stagedFile: null,
+    notes: ""
+  });
+
+  const [tpPolicyDraft, setTpPolicyDraft] = useState<{
+    category: "Third Party Insurance";
+    policyId?: string | null;
+    vendorId: string;
+    vendorName: string;
+    policyNumber: string;
+    policyType: string;
+    idv: number;
+    premium: number;
+    startDate: string;
+    endDate: string;
+    ncb: number;
+    hasRsa: boolean;
+    hasZeroDep: boolean;
+    hasEngineProtect: boolean;
+    receiptNo: string;
+    docUrl: string;
+    stagedFile: { file: File; name: string; size: string; previewUrl: string; base64Url?: string } | null;
+    notes: string;
+  }>({
+    category: "Third Party Insurance",
+    policyId: null,
+    vendorId: "",
+    vendorName: "",
+    policyNumber: "",
+    policyType: "Third-Party Liability",
+    idv: 0,
+    premium: 4500,
+    startDate: "",
+    endDate: "",
+    ncb: 0,
+    hasRsa: true,
+    hasZeroDep: false,
+    hasEngineProtect: false,
+    receiptNo: "",
+    docUrl: "",
+    stagedFile: null,
+    notes: ""
+  });
+
   const [renewPolicyNumber, setRenewPolicyNumber] = useState("");
   const [renewPolicyVendorId, setRenewPolicyVendorId] = useState("");
   const [renewPolicyVendorName, setRenewPolicyVendorName] = useState("");
@@ -6830,59 +6911,142 @@ export default function FleetDeskHost({
   // Vehicle Insurance Policy Renewal & History Handlers
   // ----------------------------------------------------------------------------
 
-  const handleOpenVehiclePolicyRenewModal = (
+  const handleOpenVehiclePolicyRenewModal = async (
     veh: VehicleRecord,
     defaultCategory: "Own Insurance" | "Third Party Insurance" = "Own Insurance"
   ) => {
     setSelectedVehicleForPolicyRenew(veh);
     setRenewPolicyCategory(defaultCategory);
-
-    const isTp = defaultCategory === "Third Party Insurance";
-    const existingExpiry = isTp ? veh.tp_insurance_expiry_date : (veh.own_insurance_expiry_date || veh.insurance_expiry_date);
-    const existingVendor = isTp ? (veh.tp_insurance_vendor || "") : (veh.own_insurance_vendor || veh.insurance_vendor || "");
-    const existingVendorId = isTp ? (veh.tp_insurance_vendor_id || "") : (veh.own_insurance_vendor_id || veh.insurance_vendor_id || "");
+    setInsuranceModalViewMode("TABS");
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-    let startDateStr = todayStr;
-    if (existingExpiry) {
-      const oldExp = new Date(existingExpiry);
-      if (!isNaN(oldExp.getTime())) {
-        oldExp.setHours(0, 0, 0, 0);
-        if (oldExp.getTime() > today.getTime()) {
-          const nextDay = new Date(oldExp);
-          nextDay.setDate(nextDay.getDate() + 1);
-          startDateStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, "0")}-${String(nextDay.getDate()).padStart(2, "0")}`;
+    const calculateStartAndEnd = (existingExpiry?: string | null) => {
+      let startStr = todayStr;
+      if (existingExpiry) {
+        const oldExp = new Date(existingExpiry);
+        if (!isNaN(oldExp.getTime())) {
+          oldExp.setHours(0, 0, 0, 0);
+          if (oldExp.getTime() > today.getTime()) {
+            const nextDay = new Date(oldExp);
+            nextDay.setDate(nextDay.getDate() + 1);
+            startStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, "0")}-${String(nextDay.getDate()).padStart(2, "0")}`;
+          }
         }
       }
-    }
+      const [sy, sm, sd] = startStr.split("-").map(Number);
+      const end = new Date(sy + 1, sm - 1, sd);
+      end.setDate(end.getDate() - 1);
+      const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+      return { startStr, endStr };
+    };
 
-    // End Date: Start Date + 1 Year - 1 Day
-    const [sYear, sMonth, sDay] = startDateStr.split("-").map(Number);
-    const end = new Date(sYear, sMonth - 1, sDay);
-    end.setFullYear(end.getFullYear() + 1);
-    end.setDate(end.getDate() - 1);
-    const endDateStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+    const ownDates = calculateStartAndEnd(veh.own_insurance_expiry_date || veh.insurance_expiry_date);
+    const tpDates = calculateStartAndEnd(veh.tp_insurance_expiry_date);
 
-    setRenewPolicyStartDate(startDateStr);
-    setRenewPolicyEndDate(endDateStr);
-    setRenewPolicyVendorId(existingVendorId);
-    setRenewPolicyVendorName(existingVendor);
-    setRenewPolicyNumber("");
-    setRenewPolicyType(isTp ? "Third-Party Liability" : "Comprehensive");
-    setRenewPolicyIdv(isTp ? 0 : 650000);
-    setRenewPolicyPremium(isTp ? 4500 : 16500);
-    setRenewPolicyNcb(isTp ? 0 : 20);
-    setRenewPolicyHasRsa(veh.has_roadside_assistance !== undefined ? veh.has_roadside_assistance : true);
-    setRenewPolicyHasZeroDep(!isTp);
-    setRenewPolicyHasEngineProtect(false);
-    setRenewPolicyReceiptNo("");
-    setRenewPolicyDocUrl("");
-    setRenewPolicyStagedFile(null);
-    setRenewPolicyNotes(`Annual ${defaultCategory} renewal for ${veh.registration_number}.`);
+    // Initial baseline draft from vehicles table pointers
+    const initialOwn = {
+      category: "Own Insurance" as const,
+      policyId: null as string | null,
+      vendorId: veh.own_insurance_vendor_id || veh.insurance_vendor_id || "",
+      vendorName: veh.own_insurance_vendor || veh.insurance_vendor || "",
+      policyNumber: veh.own_insurance_policy_number || veh.insurance_policy_number || "",
+      policyType: "Comprehensive",
+      idv: 650000,
+      premium: 16500,
+      startDate: ownDates.startStr,
+      endDate: ownDates.endStr,
+      ncb: 20,
+      hasRsa: veh.has_roadside_assistance !== undefined ? veh.has_roadside_assistance : true,
+      hasZeroDep: true,
+      hasEngineProtect: false,
+      receiptNo: "",
+      docUrl: "",
+      stagedFile: null,
+      notes: `Annual Own Insurance renewal for ${veh.registration_number}.`
+    };
+
+    const initialTp = {
+      category: "Third Party Insurance" as const,
+      policyId: null as string | null,
+      vendorId: veh.tp_insurance_vendor_id || "",
+      vendorName: veh.tp_insurance_vendor || "",
+      policyNumber: veh.tp_insurance_policy_number || "",
+      policyType: "Third-Party Liability",
+      idv: 0,
+      premium: 4500,
+      startDate: tpDates.startStr,
+      endDate: tpDates.endStr,
+      ncb: 0,
+      hasRsa: true,
+      hasZeroDep: false,
+      hasEngineProtect: false,
+      receiptNo: "",
+      docUrl: "",
+      stagedFile: null,
+      notes: `Annual Third Party Insurance renewal for ${veh.registration_number}.`
+    };
+
+    setOwnPolicyDraft(initialOwn);
+    setTpPolicyDraft(initialTp);
     setIsRenewPolicyModalOpen(true);
+
+    // Fetch authoritative saved active policies from database to pre-populate exact saved values
+    try {
+      const res = await fetchVehicleInsurancePoliciesAction(veh.id);
+      if (res.success && res.policies && res.policies.length > 0) {
+        const activeOwn = res.policies.find(p => p.is_active && (p.insurance_category === "Own Insurance" || p.policy_type !== "Third-Party Liability"));
+        const activeTp = res.policies.find(p => p.is_active && (p.insurance_category === "Third Party Insurance" || p.policy_type === "Third-Party Liability"));
+
+        if (activeOwn) {
+          setOwnPolicyDraft(prev => ({
+            ...prev,
+            policyId: activeOwn.id,
+            vendorId: activeOwn.insurance_vendor_id || prev.vendorId,
+            vendorName: activeOwn.insurer_name || prev.vendorName,
+            policyNumber: activeOwn.policy_number || prev.policyNumber,
+            policyType: activeOwn.policy_type || prev.policyType,
+            idv: Number(activeOwn.idv) || prev.idv,
+            premium: Number(activeOwn.premium_amount) || prev.premium,
+            startDate: activeOwn.start_date || prev.startDate,
+            endDate: activeOwn.end_date || prev.endDate,
+            ncb: Number(activeOwn.ncb_discount_percentage) || prev.ncb,
+            hasRsa: activeOwn.has_roadside_assistance ?? prev.hasRsa,
+            hasZeroDep: activeOwn.has_zero_depreciation ?? prev.hasZeroDep,
+            hasEngineProtect: activeOwn.has_engine_protect ?? prev.hasEngineProtect,
+            receiptNo: activeOwn.receipt_number || prev.receiptNo,
+            docUrl: activeOwn.policy_document_url || prev.docUrl,
+            notes: activeOwn.notes || prev.notes
+          }));
+        }
+
+        if (activeTp) {
+          setTpPolicyDraft(prev => ({
+            ...prev,
+            policyId: activeTp.id,
+            vendorId: activeTp.insurance_vendor_id || prev.vendorId,
+            vendorName: activeTp.insurer_name || prev.vendorName,
+            policyNumber: activeTp.policy_number || prev.policyNumber,
+            policyType: activeTp.policy_type || "Third-Party Liability",
+            idv: 0,
+            premium: Number(activeTp.premium_amount) || prev.premium,
+            startDate: activeTp.start_date || prev.startDate,
+            endDate: activeTp.end_date || prev.endDate,
+            ncb: 0,
+            hasRsa: activeTp.has_roadside_assistance ?? prev.hasRsa,
+            hasZeroDep: false,
+            hasEngineProtect: false,
+            receiptNo: activeTp.receipt_number || prev.receiptNo,
+            docUrl: activeTp.policy_document_url || prev.docUrl,
+            notes: activeTp.notes || prev.notes
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn("Could not load policy records for pre-fill:", err);
+    }
   };
 
   const handleOpenVehiclePolicyHistoryModal = async (veh: VehicleRecord) => {
@@ -6905,49 +7069,61 @@ export default function FleetDeskHost({
     }
   };
 
-  const handleSaveVehiclePolicyRenewal = async (e?: React.FormEvent | React.MouseEvent) => {
-    e?.preventDefault?.();
+  const handleSaveVehiclePolicyRenewal = async (
+    targetCategory?: "Own Insurance" | "Third Party Insurance" | React.FormEvent | React.MouseEvent,
+    event?: React.FormEvent | React.MouseEvent
+  ) => {
+    if (typeof targetCategory !== "string") {
+      targetCategory?.preventDefault?.();
+      targetCategory = renewPolicyCategory;
+    } else {
+      event?.preventDefault?.();
+    }
+
     if (!selectedVehicleForPolicyRenew) return;
 
-    if (!renewPolicyNumber.trim()) {
-      triggerToast("New policy number is required.", true);
+    const category: "Own Insurance" | "Third Party Insurance" = targetCategory as any;
+    const draft = category === "Own Insurance" ? ownPolicyDraft : tpPolicyDraft;
+
+    if (!draft.policyNumber.trim()) {
+      triggerToast(`Policy number is required for ${category}.`, true);
       return;
     }
-    if (!renewPolicyVendorName.trim()) {
-      triggerToast("Insurance provider / vendor is required.", true);
+    if (!draft.vendorName.trim()) {
+      triggerToast(`Insurance provider / vendor is required for ${category}.`, true);
       return;
     }
-    if (!renewPolicyStartDate || !renewPolicyEndDate) {
-      triggerToast("Policy start and end dates are required.", true);
+    if (!draft.startDate || !draft.endDate) {
+      triggerToast(`Policy start and expiration dates are required for ${category}.`, true);
       return;
     }
-    if (renewPolicyEndDate <= renewPolicyStartDate) {
-      triggerToast("Policy End Date must be after Policy Start Date.", true);
+    if (draft.endDate <= draft.startDate) {
+      triggerToast(`Policy expiration date must be after start date for ${category}.`, true);
       return;
     }
 
     setModalSubmitting(true);
     try {
-      let finalPolicyDocUrl = renewPolicyDocUrl.trim();
-      if (renewPolicyStagedFile && selectedVehicleForPolicyRenew) {
+      let finalPolicyDocUrl = draft.docUrl.trim();
+      if (draft.stagedFile && selectedVehicleForPolicyRenew) {
         try {
           const uploadRes = await uploadVehicleDocumentViaRestOrAction(selectedVehicleForPolicyRenew.id, {
             doc_type: "INSURANCE",
-            title: `Insurance Policy #${renewPolicyNumber.trim()}`,
-            document_number: renewPolicyNumber.trim(),
-            expiry_date: renewPolicyEndDate,
-            file_name: renewPolicyStagedFile.name,
-            file_size: renewPolicyStagedFile.size,
-            file_type: renewPolicyStagedFile.file.type || resolveMimeFromName(renewPolicyStagedFile.name),
-            file_url: renewPolicyStagedFile.base64Url || renewPolicyStagedFile.previewUrl,
+            title: `${category} Policy #${draft.policyNumber.trim()}`,
+            document_number: draft.policyNumber.trim(),
+            expiry_date: draft.endDate,
+            file_name: draft.stagedFile.name,
+            file_size: draft.stagedFile.size,
+            file_type: draft.stagedFile.file.type || resolveMimeFromName(draft.stagedFile.name),
+            file_url: draft.stagedFile.base64Url || draft.stagedFile.previewUrl,
             status: "VALID",
-            insurance_vendor_id: renewPolicyVendorId || undefined,
-            insurance_vendor: renewPolicyVendorName.trim() || undefined
+            insurance_vendor_id: draft.vendorId || undefined,
+            insurance_vendor: draft.vendorName.trim() || undefined
           } as any);
           if (uploadRes.success && uploadRes.document?.file_url) {
             finalPolicyDocUrl = uploadRes.document.file_url;
-          } else if (renewPolicyStagedFile.base64Url) {
-            finalPolicyDocUrl = renewPolicyStagedFile.base64Url;
+          } else if (draft.stagedFile.base64Url) {
+            finalPolicyDocUrl = draft.stagedFile.base64Url;
           }
         } catch (uploadErr) {
           console.warn("Failed to upload renewal document, using base64/url fallback:", uploadErr);
@@ -6955,44 +7131,88 @@ export default function FleetDeskHost({
       }
 
       const res = await renewVehicleInsurancePolicyAction(selectedVehicleForPolicyRenew.id, {
-        insurance_category: renewPolicyCategory,
-        policy_number: renewPolicyNumber.trim(),
-        insurer_name: renewPolicyVendorName.trim(),
-        insurance_vendor_id: renewPolicyVendorId || undefined,
-        policy_type: renewPolicyType,
-        idv: Number(renewPolicyIdv) || 0,
-        premium_amount: Number(renewPolicyPremium) || 0,
-        start_date: renewPolicyStartDate,
-        end_date: renewPolicyEndDate,
-        has_roadside_assistance: renewPolicyHasRsa,
-        has_zero_depreciation: renewPolicyHasZeroDep,
-        has_engine_protect: renewPolicyHasEngineProtect,
-        ncb_discount_percentage: Number(renewPolicyNcb) || 0,
-        receipt_number: renewPolicyReceiptNo.trim() || undefined,
+        insurance_category: category,
+        policy_number: draft.policyNumber.trim(),
+        insurer_name: draft.vendorName.trim(),
+        insurance_vendor_id: draft.vendorId || undefined,
+        policy_type: draft.policyType,
+        idv: category === "Third Party Insurance" ? 0 : (Number(draft.idv) || 0),
+        premium_amount: Number(draft.premium) || 0,
+        start_date: draft.startDate,
+        end_date: draft.endDate,
+        has_roadside_assistance: draft.hasRsa,
+        has_zero_depreciation: category === "Third Party Insurance" ? false : draft.hasZeroDep,
+        has_engine_protect: category === "Third Party Insurance" ? false : draft.hasEngineProtect,
+        ncb_discount_percentage: category === "Third Party Insurance" ? 0 : (Number(draft.ncb) || 0),
+        receipt_number: draft.receiptNo.trim() || undefined,
         policy_document_url: finalPolicyDocUrl || undefined,
-        notes: renewPolicyNotes.trim() || undefined
+        notes: draft.notes.trim() || undefined
       });
 
       if (res.success) {
-        triggerToast(`Policy #${renewPolicyNumber} successfully renewed until ${renewPolicyEndDate}!`);
-        setIsRenewPolicyModalOpen(false);
-        setSelectedVehicleForPolicyRenew(null);
-        setRenewPolicyStagedFile(null);
+        triggerToast(`${category} #${draft.policyNumber} successfully saved & renewed until ${draft.endDate}!`);
+        
+        // Update local vehicle state pointers
+        setSelectedVehicleForPolicyRenew(prev => {
+          if (!prev) return null;
+          if (category === "Third Party Insurance") {
+            return {
+              ...prev,
+              tp_insurance_policy_number: draft.policyNumber.trim(),
+              tp_insurance_expiry_date: draft.endDate,
+              tp_insurance_vendor: draft.vendorName.trim(),
+              tp_insurance_vendor_id: draft.vendorId || null
+            };
+          } else {
+            return {
+              ...prev,
+              own_insurance_policy_number: draft.policyNumber.trim(),
+              own_insurance_expiry_date: draft.endDate,
+              own_insurance_vendor: draft.vendorName.trim(),
+              own_insurance_vendor_id: draft.vendorId || null,
+              insurance_policy_number: draft.policyNumber.trim(),
+              insurance_expiry_date: draft.endDate,
+              insurance_vendor: draft.vendorName.trim(),
+              insurance_vendor_id: draft.vendorId || null
+            };
+          }
+        });
+
+        // If in TABS mode, close modal
+        if (insuranceModalViewMode === "TABS") {
+          setIsRenewPolicyModalOpen(false);
+          setSelectedVehicleForPolicyRenew(null);
+        }
+
         fleetDataCache = null;
         loadAllData(true, true);
+
         if (dossierOriginVehicle) {
-          setViewingVehicle(dossierOriginVehicle);
+          setViewingVehicle(prev => prev ? {
+            ...prev,
+            ...(category === "Third Party Insurance" ? {
+              tp_insurance_policy_number: draft.policyNumber.trim(),
+              tp_insurance_expiry_date: draft.endDate,
+              tp_insurance_vendor: draft.vendorName.trim(),
+              tp_insurance_vendor_id: draft.vendorId || null
+            } : {
+              own_insurance_policy_number: draft.policyNumber.trim(),
+              own_insurance_expiry_date: draft.endDate,
+              own_insurance_vendor: draft.vendorName.trim(),
+              own_insurance_vendor_id: draft.vendorId || null,
+              insurance_policy_number: draft.policyNumber.trim(),
+              insurance_expiry_date: draft.endDate,
+              insurance_vendor: draft.vendorName.trim(),
+              insurance_vendor_id: draft.vendorId || null
+            })
+          } : null);
           if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
-          setDossierOriginVehicle(null);
-        }
-        if (selectedVehicleForPolicyHistory?.id === selectedVehicleForPolicyRenew.id) {
-          handleOpenVehiclePolicyHistoryModal(selectedVehicleForPolicyRenew);
         }
       } else {
-        triggerToast(res.error || "Failed to renew policy.", true);
+        triggerToast(res.error || `Failed to save ${category}.`, true);
       }
     } catch (err: any) {
-      triggerToast(err.message || "Failed to renew policy.", true);
+      triggerToast(err.message || `Failed to save ${category}.`, true);
     } finally {
       setModalSubmitting(false);
     }
@@ -21968,64 +22188,56 @@ export default function FleetDeskHost({
             }
           }}
           backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Fleet"}
-          onSave={handleSaveVehiclePolicyRenewal}
-          saveLabel="Save & Issue Insurance Policy"
+          onSave={insuranceModalViewMode === "TABS" ? () => handleSaveVehiclePolicyRenewal(renewPolicyCategory) : undefined}
+          saveLabel={insuranceModalViewMode === "TABS" ? `Save & Issue ${renewPolicyCategory}` : undefined}
           saveIcon={ShieldCheck}
           isSubmitting={modalSubmitting}
         >
-          <div className="space-y-4">
-              {/* Current Active / Expired Policy Banner */}
-              {(() => {
-                const currentExpiry = renewPolicyCategory === "Third Party Insurance"
-                  ? selectedVehicleForPolicyRenew.tp_insurance_expiry_date
-                  : (selectedVehicleForPolicyRenew.own_insurance_expiry_date || selectedVehicleForPolicyRenew.insurance_expiry_date);
-                const currentVendor = renewPolicyCategory === "Third Party Insurance"
-                  ? (selectedVehicleForPolicyRenew.tp_insurance_vendor || "Vendor Not Assigned")
-                  : (selectedVehicleForPolicyRenew.own_insurance_vendor || selectedVehicleForPolicyRenew.insurance_vendor || "Vendor Not Assigned");
-                const currentPolicyNo = renewPolicyCategory === "Third Party Insurance"
-                  ? (selectedVehicleForPolicyRenew.tp_insurance_policy_number || "No Policy on File")
-                  : (selectedVehicleForPolicyRenew.own_insurance_policy_number || selectedVehicleForPolicyRenew.insurance_policy_number || "No Policy on File");
+          {(() => {
+            const renderPolicySection = (
+              draft: typeof ownPolicyDraft | typeof tpPolicyDraft,
+              setDraft: React.Dispatch<React.SetStateAction<any>>,
+              isMirrorMode: boolean = false
+            ) => {
+              const isTp = draft.category === "Third Party Insurance";
+              const currentExpiry = isTp
+                ? selectedVehicleForPolicyRenew.tp_insurance_expiry_date
+                : (selectedVehicleForPolicyRenew.own_insurance_expiry_date || selectedVehicleForPolicyRenew.insurance_expiry_date);
+              const currentVendor = isTp
+                ? (selectedVehicleForPolicyRenew.tp_insurance_vendor || "Vendor Not Assigned")
+                : (selectedVehicleForPolicyRenew.own_insurance_vendor || selectedVehicleForPolicyRenew.insurance_vendor || "Vendor Not Assigned");
+              const currentPolicyNo = isTp
+                ? (selectedVehicleForPolicyRenew.tp_insurance_policy_number || "No Policy on File")
+                : (selectedVehicleForPolicyRenew.own_insurance_policy_number || selectedVehicleForPolicyRenew.insurance_policy_number || "No Policy on File");
 
-                const insDays = calculateDaysRemaining(currentExpiry);
-                const isExpired = insDays !== null && insDays !== undefined && insDays < 0;
-                const isExpiringSoon = insDays !== null && insDays !== undefined && insDays >= 0 && insDays <= 30;
+              const insDays = calculateDaysRemaining(currentExpiry);
+              const isExpired = insDays !== null && insDays !== undefined && insDays < 0;
+              const isExpiringSoon = insDays !== null && insDays !== undefined && insDays >= 0 && insDays <= 30;
 
-                const bannerStyle = isExpired
-                  ? "border-rose-500/25 bg-rose-50/60 dark:bg-rose-950/20"
-                  : isExpiringSoon
-                  ? "border-amber-500/25 bg-amber-50/60 dark:bg-amber-950/20"
-                  : currentExpiry
-                  ? "border-emerald-500/25 bg-emerald-50/50 dark:bg-emerald-950/20"
-                  : "border-border bg-surface/50 dark:bg-surface";
+              const bannerBorder = isExpired
+                ? "border-rose-500/25 bg-rose-50/60 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400"
+                : isExpiringSoon
+                ? "border-amber-500/25 bg-amber-50/60 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400"
+                : currentExpiry
+                ? "border-emerald-500/25 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400"
+                : "border-border bg-surface/50 dark:bg-surface text-foreground";
 
-                const headerTextStyle = isExpired
-                  ? "text-rose-700 dark:text-rose-400"
-                  : isExpiringSoon
-                  ? "text-amber-700 dark:text-amber-400"
-                  : currentExpiry
-                  ? "text-emerald-700 dark:text-emerald-400"
-                  : "text-foreground dark:text-muted-foreground";
-
-                const headerTitle = isExpired
-                  ? `Expired ${renewPolicyCategory} Policy Record`
-                  : isExpiringSoon
-                  ? `Expiring Soon ${renewPolicyCategory} Info`
-                  : currentExpiry
-                  ? `Current Active ${renewPolicyCategory} Info`
-                  : `${renewPolicyCategory} Policy Record`;
-
-                return (
-                  <div className={`p-3.5 rounded-xl border ${bannerStyle} flex flex-wrap items-center justify-between gap-2`}>
+              return (
+                <div className={`space-y-4 ${isMirrorMode ? "p-4 rounded-xl border border-border bg-card shadow-2xs" : ""}`}>
+                  {/* Current Active / Expired Banner for this Category */}
+                  <div className={`p-3 rounded-xl border ${bannerBorder} flex flex-wrap items-center justify-between gap-2`}>
                     <div className="space-y-0.5">
-                      <div className={`text-xs font-bold uppercase tracking-wider ${headerTextStyle} flex items-center gap-1`}>
-                        <Clock className="h-3 w-3" />
-                        <span>{headerTitle}</span>
+                      <div className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        {isTp ? <Shield className="h-3.5 w-3.5 text-blue-500" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />}
+                        <span>
+                          {draft.category} {isExpired ? "— Expired" : isExpiringSoon ? "— Expiring Soon" : currentExpiry ? "— Active Record" : "— New Entry"}
+                        </span>
                       </div>
                       <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
                         <VehicleBrandLogo brand={selectedVehicleForPolicyRenew.make} model={selectedVehicleForPolicyRenew.model} size={15} />
                         <span>{selectedVehicleForPolicyRenew.make} {selectedVehicleForPolicyRenew.model} —</span>
                         <span className="font-mono">{currentPolicyNo}</span>
-                        <span className="text-muted-foreground font-normal"> ({currentVendor})</span>
+                        <span className="text-muted-foreground font-normal">({currentVendor})</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -22036,392 +22248,526 @@ export default function FleetDeskHost({
                       {renderExpiryBadge(insDays)}
                     </div>
                   </div>
-                );
-              })()}
 
-              {/* Insurance Category Selector (Own Insurance vs Third Party Insurance) */}
-              <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider block flex items-center gap-1.5 text-foreground">
-                  <ShieldCheck className="h-4 w-4 text-theme-btn-primary" />
-                  <span>Insurance Category *</span>
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRenewPolicyCategory("Own Insurance");
-                      if (selectedVehicleForPolicyRenew) {
-                        const existingVendor = selectedVehicleForPolicyRenew.own_insurance_vendor || selectedVehicleForPolicyRenew.insurance_vendor || "";
-                        const existingVendorId = selectedVehicleForPolicyRenew.own_insurance_vendor_id || selectedVehicleForPolicyRenew.insurance_vendor_id || "";
-                        setRenewPolicyVendorName(existingVendor);
-                        setRenewPolicyVendorId(existingVendorId);
-                        setRenewPolicyType("Comprehensive");
-                        setRenewPolicyIdv(650000);
-                        setRenewPolicyPremium(16500);
-                        setRenewPolicyHasZeroDep(true);
-                      }
-                    }}
-                    className={`flex items-center justify-between p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      renewPolicyCategory === "Own Insurance"
-                        ? "border-theme-btn-primary bg-theme-btn-primary/10 text-foreground ring-1 ring-theme-btn-primary"
-                        : "border-border bg-surface hover:bg-surface-hover text-muted-foreground"
-                    }`}
-                  >
-                    <div className="space-y-0.5">
-                      <div className="text-xs font-bold text-foreground">Own Insurance</div>
-                      <div className="text-[11px] text-muted-foreground">Comprehensive / Own-Damage coverage for vehicle assets</div>
-                    </div>
-                    {renewPolicyCategory === "Own Insurance" && (
-                      <CheckCircle2 className="h-4 w-4 text-theme-btn-primary shrink-0" />
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRenewPolicyCategory("Third Party Insurance");
-                      if (selectedVehicleForPolicyRenew) {
-                        const existingVendor = selectedVehicleForPolicyRenew.tp_insurance_vendor || "";
-                        const existingVendorId = selectedVehicleForPolicyRenew.tp_insurance_vendor_id || "";
-                        setRenewPolicyVendorName(existingVendor);
-                        setRenewPolicyVendorId(existingVendorId);
-                        setRenewPolicyType("Third-Party Liability");
-                        setRenewPolicyIdv(0);
-                        setRenewPolicyPremium(4500);
-                        setRenewPolicyHasZeroDep(false);
-                      }
-                    }}
-                    className={`flex items-center justify-between p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      renewPolicyCategory === "Third Party Insurance"
-                        ? "border-theme-btn-primary bg-theme-btn-primary/10 text-foreground ring-1 ring-theme-btn-primary"
-                        : "border-border bg-surface hover:bg-surface-hover text-muted-foreground"
-                    }`}
-                  >
-                    <div className="space-y-0.5">
-                      <div className="text-xs font-bold text-foreground">Third Party Insurance</div>
-                      <div className="text-[11px] text-muted-foreground">Statutory third-party liability coverage (TP policy)</div>
-                    </div>
-                    {renewPolicyCategory === "Third Party Insurance" && (
-                      <CheckCircle2 className="h-4 w-4 text-theme-btn-primary shrink-0" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Vendor & Policy Number */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold block mb-1 flex items-center gap-1 text-foreground">
-                    <Building2 className="h-3.5 w-3.5 text-theme-btn-primary" />
-                    <span>Insurance Provider / Vendor *</span>
-                  </label>
-                  <select
-                    value={renewPolicyVendorId}
-                    onChange={(e) => {
-                      const vId = e.target.value;
-                      setRenewPolicyVendorId(vId);
-                      const matched = insuranceVendors.find(v => v.id === vId);
-                      if (matched) {
-                        setRenewPolicyVendorName(matched.name);
-                      }
-                    }}
-                    className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                  >
-                    <option value="">-- Select from Insurance Masters --</option>
-                    {insuranceVendors.map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.name} {v.toll_free_number ? `(Toll-Free: ${v.toll_free_number})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  {(!renewPolicyVendorId || !insuranceVendors.some(v => v.id === renewPolicyVendorId)) && (
-                    <AppInput
-                      value={renewPolicyVendorName}
-                      onChange={(e) => setRenewPolicyVendorName(e.target.value)}
-                      className="mt-1.5"
-                      required
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-1 flex items-center gap-1 text-foreground">
-                    <Hash className="h-3.5 w-3.5 text-theme-btn-primary" />
-                    <span>New Policy Number *</span>
-                  </label>
-                  <AppInput
-                    value={renewPolicyNumber}
-                    onChange={(e) => setRenewPolicyNumber(e.target.value)}
-                    required
-                    className="font-mono uppercase"
-                  />
-                </div>
-              </div>
-
-              {/* Policy Type & Financials */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="font-semibold block mb-1">Policy Type</label>
-                  <select
-                    value={renewPolicyType}
-                    onChange={(e) => setRenewPolicyType(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                  >
-                    <option value="Comprehensive">Comprehensive Package</option>
-                    <option value="Zero Depreciation">Zero Depreciation (Bumper-to-Bumper)</option>
-                    <option value="Third-Party Liability">Third-Party Liability Only</option>
-                    <option value="Commercial Fleet">Commercial Fleet Transit</option>
-                    <option value="Own Damage (Stand-alone)">Own Damage (Stand-alone)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-1">IDV (Insured Declared Value ₹)</label>
-                  <AppInput
-                    type="number"
-                    min="0"
-                    value={renewPolicyIdv || ""}
-                    onChange={(e) => setRenewPolicyIdv(Number(e.target.value) || 0)}
-                    className="font-mono font-semibold"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-1">Annual Premium Amount (₹) *</label>
-                  <AppInput
-                    type="number"
-                    min="0"
-                    value={renewPolicyPremium || ""}
-                    onChange={(e) => setRenewPolicyPremium(Number(e.target.value) || 0)}
-                    required
-                    className="font-mono font-bold text-theme-icon dark:text-muted-foreground"
-                  />
-                </div>
-              </div>
-
-              {/* Policy Validity Dates */}
-              <div className="p-3.5 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/40 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-theme-icon" />
-                    <span>Policy Validity Period</span>
-                  </label>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const baseStr = renewPolicyStartDate || new Date().toISOString().split("T")[0];
-                        const [sy, sm, sd] = baseStr.split("-").map(Number);
-                        const end = new Date(sy + 1, sm - 1, sd);
-                        end.setDate(end.getDate() - 1);
-                        const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
-                        setRenewPolicyEndDate(endStr);
-                      }}
-                      className="px-2 py-0.5 rounded text-xs font-semibold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors"
-                    >
-                      +1 Year (Auto)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const baseStr = renewPolicyStartDate || new Date().toISOString().split("T")[0];
-                        const [sy, sm, sd] = baseStr.split("-").map(Number);
-                        const end = new Date(sy + 3, sm - 1, sd);
-                        end.setDate(end.getDate() - 1);
-                        const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
-                        setRenewPolicyEndDate(endStr);
-                      }}
-                      className="px-2 py-0.5 rounded text-xs font-semibold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors"
-                    >
-                      +3 Years (Long-Term)
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold block mb-1">Effective Start Date *</label>
-                    <AppInput
-                      type="date"
-                      value={renewPolicyStartDate}
-                      onChange={(e) => setRenewPolicyStartDate(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold block mb-1">Policy Expiration Date *</label>
-                    <AppInput
-                      type="date"
-                      value={renewPolicyEndDate}
-                      onChange={(e) => setRenewPolicyEndDate(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Add-on Coverage & Discounts */}
-              <div className="p-3.5 rounded-xl border border-border bg-surface space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Add-on Covers & NCB Benefits
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <label className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={renewPolicyHasRsa}
-                      onChange={(e) => setRenewPolicyHasRsa(e.target.checked)}
-                      className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
-                    />
-                    <span className="text-xs font-medium">Roadside Assistance (RSA)</span>
-                  </label>
-                  <label className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={renewPolicyHasZeroDep}
-                      onChange={(e) => setRenewPolicyHasZeroDep(e.target.checked)}
-                      className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
-                    />
-                    <span className="text-xs font-medium">Zero Depreciation (Nil-Dep)</span>
-                  </label>
-                  <label className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={renewPolicyHasEngineProtect}
-                      onChange={(e) => setRenewPolicyHasEngineProtect(e.target.checked)}
-                      className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
-                    />
-                    <span className="text-xs font-medium">Engine & Gearbox Protector</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Document Upload & Pre-submission Verification */}
-              <div className="p-3.5 rounded-xl border border-border bg-surface space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-theme-icon" />
-                    <span>Policy Document Scan & Attachment</span>
-                  </label>
-                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-theme-btn-primary/10 text-theme-btn-primary hover:bg-theme-btn-primary/20 border border-theme-btn-primary/30 transition-all">
-                    <Upload className="h-3.5 w-3.5" />
-                    <span>Upload Document File</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg,.docx"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (re) => {
-                            const b64 = re.target?.result as string;
-                            const previewUrl = URL.createObjectURL(file);
-                            setRenewPolicyStagedFile({
-                              file,
-                              name: file.name,
-                              size: formatFileSize(file.size),
-                              previewUrl,
-                              base64Url: b64
-                            });
-                            setRenewPolicyDocUrl(file.name);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-
-                {renewPolicyStagedFile ? (
-                  <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-foreground truncate" title={renewPolicyStagedFile.name}>
-                          {renewPolicyStagedFile.name}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">{renewPolicyStagedFile.size} • Ready for upload</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <AppButton
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(renewPolicyStagedFile.previewUrl, "_blank")}
-                        className="h-6 text-xs px-2 text-theme-icon border-border gap-1 font-semibold"
-                        title="View staged document"
-                      >
-                        <Eye className="h-3 w-3" />
-                        <span>View</span>
-                      </AppButton>
-                      <AppButton
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const a = document.createElement("a");
-                          a.href = renewPolicyStagedFile.previewUrl;
-                          a.download = renewPolicyStagedFile.name;
-                          a.click();
-                        }}
-                        className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground border-border gap-1 font-semibold"
-                        title="Download staged document"
-                      >
-                        <Download className="h-3 w-3" />
-                        <span>Download</span>
-                      </AppButton>
-                      <AppButton
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setRenewPolicyStagedFile(null);
-                          setRenewPolicyDocUrl("");
-                        }}
-                        className="h-6 text-xs px-1.5 text-rose-600 hover:bg-rose-50"
-                        title="Remove file"
-                      >
-                        <X className="h-3 w-3" />
-                      </AppButton>
-                    </div>
-                  </div>
-                ) : (
+                  {/* Vendor & Policy Number */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground block mb-1">Direct Storage Link / External URL</label>
+                      <label className="text-xs font-semibold block mb-1 flex items-center gap-1 text-foreground">
+                        <Building2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                        <span>Insurance Provider / Vendor *</span>
+                      </label>
+                      <select
+                        value={draft.vendorId}
+                        onChange={(e) => {
+                          const vId = e.target.value;
+                          const matched = insuranceVendors.find(v => v.id === vId);
+                          setDraft((prev: any) => ({
+                            ...prev,
+                            vendorId: vId,
+                            vendorName: matched ? matched.name : prev.vendorName
+                          }));
+                        }}
+                        className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                      >
+                        <option value="">-- Select from Insurance Masters --</option>
+                        {insuranceVendors.map(v => (
+                          <option key={v.id} value={v.id}>
+                            {v.name} {v.toll_free_number ? `(${v.toll_free_number})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      {(!draft.vendorId || !insuranceVendors.some(v => v.id === draft.vendorId)) && (
+                        <AppInput
+                          value={draft.vendorName}
+                          placeholder="Or enter custom insurer name"
+                          onChange={(e) => setDraft((prev: any) => ({ ...prev, vendorName: e.target.value }))}
+                          className="mt-1.5 text-xs"
+                          required
+                        />
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold block mb-1 flex items-center gap-1 text-foreground">
+                        <Hash className="h-3.5 w-3.5 text-theme-btn-primary" />
+                        <span>Policy Number *</span>
+                      </label>
                       <AppInput
-                        placeholder="Paste document URL or upload file above"
-                        value={renewPolicyDocUrl}
-                        onChange={(e) => setRenewPolicyDocUrl(e.target.value)}
-                        className="text-xs"
+                        value={draft.policyNumber}
+                        onChange={(e) => setDraft((prev: any) => ({ ...prev, policyNumber: e.target.value }))}
+                        required
+                        placeholder="e.g. 3001/HY-22489525/00/000"
+                        className="font-mono uppercase text-xs"
                       />
                     </div>
+                  </div>
+
+                  {/* Policy Type & Financials */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground block mb-1">Receipt / Transaction Ref #</label>
+                      <label className="text-xs font-semibold block mb-1">Policy Type</label>
+                      <select
+                        value={draft.policyType}
+                        onChange={(e) => setDraft((prev: any) => ({ ...prev, policyType: e.target.value }))}
+                        className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                      >
+                        {isTp ? (
+                          <>
+                            <option value="Third-Party Liability">Third-Party Liability Only</option>
+                            <option value="Commercial Fleet Liability">Commercial Fleet Liability</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="Comprehensive">Comprehensive Package</option>
+                            <option value="Zero Depreciation">Zero Depreciation (Bumper-to-Bumper)</option>
+                            <option value="Commercial Fleet">Commercial Fleet Transit</option>
+                            <option value="Own Damage (Stand-alone)">Own Damage (Stand-alone)</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold">IDV (Insured Declared Value ₹)</label>
+                        {isTp && <span className="text-[10px] text-muted-foreground font-mono">N/A for TP</span>}
+                      </div>
+                      {isTp ? (
+                        <div className="p-2 rounded-lg border border-border bg-surface/50 text-xs text-muted-foreground font-mono">
+                          ₹0 (Liability Only)
+                        </div>
+                      ) : (
+                        <AppInput
+                          type="number"
+                          min="0"
+                          value={draft.idv || ""}
+                          onChange={(e) => setDraft((prev: any) => ({ ...prev, idv: Number(e.target.value) || 0 }))}
+                          placeholder="e.g. 650000"
+                          className="font-mono font-semibold text-xs"
+                        />
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold block mb-1">Annual Premium Amount (₹) *</label>
                       <AppInput
-                        placeholder="e.g. REC-2026-9921"
-                        value={renewPolicyReceiptNo}
-                        onChange={(e) => setRenewPolicyReceiptNo(e.target.value)}
-                        className="font-mono text-xs"
+                        type="number"
+                        min="0"
+                        value={draft.premium || ""}
+                        onChange={(e) => setDraft((prev: any) => ({ ...prev, premium: Number(e.target.value) || 0 }))}
+                        required
+                        placeholder="e.g. 15500"
+                        className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400"
                       />
+                    </div>
+                  </div>
+
+                  {/* Policy Validity Dates */}
+                  <div className="p-3 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/40 space-y-2">
+                    <div className="flex items-center justify-between flex-wrap gap-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-theme-icon" />
+                        <span>Policy Validity Period</span>
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const baseStr = draft.startDate || new Date().toISOString().split("T")[0];
+                            const [sy, sm, sd] = baseStr.split("-").map(Number);
+                            const end = new Date(sy + 1, sm - 1, sd);
+                            end.setDate(end.getDate() - 1);
+                            const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+                            setDraft((prev: any) => ({ ...prev, endDate: endStr }));
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface border border-border hover:bg-surface-hover transition-colors"
+                        >
+                          +1 Year (Auto)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const baseStr = draft.startDate || new Date().toISOString().split("T")[0];
+                            const [sy, sm, sd] = baseStr.split("-").map(Number);
+                            const end = new Date(sy + 3, sm - 1, sd);
+                            end.setDate(end.getDate() - 1);
+                            const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+                            setDraft((prev: any) => ({ ...prev, endDate: endStr }));
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface border border-border hover:bg-surface-hover transition-colors"
+                        >
+                          +3 Years (Long-Term)
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold block mb-1">Effective Start Date *</label>
+                        <AppInput
+                          type="date"
+                          value={draft.startDate}
+                          onChange={(e) => setDraft((prev: any) => ({ ...prev, startDate: e.target.value }))}
+                          required
+                          className="text-xs font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold block mb-1">Policy Expiration Date *</label>
+                        <AppInput
+                          type="date"
+                          value={draft.endDate}
+                          onChange={(e) => setDraft((prev: any) => ({ ...prev, endDate: e.target.value }))}
+                          required
+                          className="text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Add-on Coverage & Discounts */}
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Add-on Covers & NCB Benefits
+                      </span>
+                      {!isTp && (
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-muted-foreground font-medium">NCB:</span>
+                          <select
+                            value={draft.ncb}
+                            onChange={(e) => setDraft((prev: any) => ({ ...prev, ncb: Number(e.target.value) || 0 }))}
+                            className="text-xs font-mono px-2 py-0.5 rounded border border-border bg-surface text-foreground"
+                          >
+                            <option value="0">0% (Zero NCB)</option>
+                            <option value="20">20% (1st Year Claim-Free)</option>
+                            <option value="25">25% (2nd Year Claim-Free)</option>
+                            <option value="35">35% (3rd Year Claim-Free)</option>
+                            <option value="45">45% (4th Year Claim-Free)</option>
+                            <option value="50">50% (Max 5th Year NCB)</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <label className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={draft.hasRsa}
+                          onChange={(e) => setDraft((prev: any) => ({ ...prev, hasRsa: e.target.checked }))}
+                          className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
+                        />
+                        <span className="text-xs font-medium">Roadside Assistance (RSA)</span>
+                      </label>
+                      <label className={`flex items-center gap-2 p-2 rounded-lg border ${isTp ? "opacity-50 cursor-not-allowed bg-surface/50 border-border/50" : "border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer"}`}>
+                        <input
+                          type="checkbox"
+                          disabled={isTp}
+                          checked={isTp ? false : draft.hasZeroDep}
+                          onChange={(e) => setDraft((prev: any) => ({ ...prev, hasZeroDep: e.target.checked }))}
+                          className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
+                        />
+                        <span className="text-xs font-medium">Zero Depreciation {isTp ? "(N/A for TP)" : "(Nil-Dep)"}</span>
+                      </label>
+                      <label className={`flex items-center gap-2 p-2 rounded-lg border ${isTp ? "opacity-50 cursor-not-allowed bg-surface/50 border-border/50" : "border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer"}`}>
+                        <input
+                          type="checkbox"
+                          disabled={isTp}
+                          checked={isTp ? false : draft.hasEngineProtect}
+                          onChange={(e) => setDraft((prev: any) => ({ ...prev, hasEngineProtect: e.target.checked }))}
+                          className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
+                        />
+                        <span className="text-xs font-medium">Engine Protector {isTp ? "(N/A for TP)" : ""}</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Document Upload & Pre-submission Verification */}
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <FileText className="h-3.5 w-3.5 text-theme-icon" />
+                        <span>Policy Document Scan & Attachment</span>
+                      </label>
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-theme-btn-primary/10 text-theme-btn-primary hover:bg-theme-btn-primary/20 border border-theme-btn-primary/30 transition-all">
+                        <Upload className="h-3.5 w-3.5" />
+                        <span>Upload Document</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg,.docx"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (re) => {
+                                const b64 = re.target?.result as string;
+                                const previewUrl = URL.createObjectURL(file);
+                                setDraft((prev: any) => ({
+                                  ...prev,
+                                  stagedFile: {
+                                    file,
+                                    name: file.name,
+                                    size: formatFileSize(file.size),
+                                    previewUrl,
+                                    base64Url: b64
+                                  },
+                                  docUrl: file.name
+                                }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {draft.stagedFile ? (
+                      <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-foreground truncate" title={draft.stagedFile.name}>
+                              {draft.stagedFile.name}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">{draft.stagedFile.size} • Ready for upload</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(draft.stagedFile!.previewUrl, "_blank")}
+                            className="h-6 text-xs px-2 text-theme-icon border-border gap-1 font-semibold"
+                            title="View staged document"
+                          >
+                            <Eye className="h-3 w-3" />
+                            <span>View</span>
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const a = document.createElement("a");
+                              a.href = draft.stagedFile!.previewUrl;
+                              a.download = draft.stagedFile!.name;
+                              a.click();
+                            }}
+                            className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground border-border gap-1 font-semibold"
+                            title="Download staged document"
+                          >
+                            <Download className="h-3 w-3" />
+                            <span>Download</span>
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setDraft((prev: any) => ({ ...prev, stagedFile: null, docUrl: "" }));
+                            }}
+                            className="h-6 text-xs px-1.5 text-rose-600 hover:bg-rose-50"
+                            title="Remove file"
+                          >
+                            <X className="h-3 w-3" />
+                          </AppButton>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground block mb-1">Direct Storage Link / External URL</label>
+                          <AppInput
+                            placeholder="Paste document URL or upload file above"
+                            value={draft.docUrl}
+                            onChange={(e) => setDraft((prev: any) => ({ ...prev, docUrl: e.target.value }))}
+                            className="text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground block mb-1">Receipt / Transaction Ref #</label>
+                          <AppInput
+                            placeholder="e.g. REC-2026-9921"
+                            value={draft.receiptNo}
+                            onChange={(e) => setDraft((prev: any) => ({ ...prev, receiptNo: e.target.value }))}
+                            className="font-mono text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold block mb-1">Renewal Notes & Audit Remarks</label>
+                    <textarea
+                      rows={2}
+                      value={draft.notes}
+                      onChange={(e) => setDraft((prev: any) => ({ ...prev, notes: e.target.value }))}
+                      className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                    />
+                  </div>
+
+                  {isMirrorMode && (
+                    <div className="pt-2 flex justify-end">
+                      <AppButton
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        disabled={modalSubmitting}
+                        onClick={() => handleSaveVehiclePolicyRenewal(draft.category as any)}
+                        className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text font-semibold text-xs gap-1.5 shadow-2xs"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        <span>Save & Issue {draft.category}</span>
+                      </AppButton>
+                    </div>
+                  )}
+                </div>
+              );
+            };
+
+            return (
+              <div className="space-y-4">
+                {/* View Mode & Category Controls Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-border bg-surface shadow-2xs">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <ShieldCheck className="h-4 w-4 text-theme-btn-primary" />
+                      <span>Insurance Policy Configuration</span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      Independent policy records maintained for {selectedVehicleForPolicyRenew.registration_number} ({selectedVehicleForPolicyRenew.make} {selectedVehicleForPolicyRenew.model})
+                    </div>
+                  </div>
+
+                  {/* View Switcher: Tabs vs Mirror (Side-by-Side) */}
+                  <div className="flex items-center gap-1 p-1 bg-surface-elevated/70 dark:bg-surface-elevated rounded-lg border border-border self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setInsuranceModalViewMode("TABS")}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                        insuranceModalViewMode === "TABS"
+                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-surface"
+                      }`}
+                    >
+                      <Layers className="h-3.5 w-3.5" />
+                      <span>Category Tabs</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInsuranceModalViewMode("MIRROR")}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                        insuranceModalViewMode === "MIRROR"
+                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-surface"
+                      }`}
+                      title="View and edit Own Insurance and Third Party Insurance simultaneously on the same screen"
+                    >
+                      <Columns className="h-3.5 w-3.5" />
+                      <span>Mirror View (Both)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* When in TABS mode: Show the Category Switcher */}
+                {insuranceModalViewMode === "TABS" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setRenewPolicyCategory("Own Insurance")}
+                      className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        renewPolicyCategory === "Own Insurance"
+                          ? "border-theme-btn-primary bg-theme-btn-primary/10 text-foreground ring-1 ring-theme-btn-primary shadow-2xs"
+                          : "border-border bg-surface hover:bg-surface-hover text-muted-foreground"
+                      }`}
+                    >
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                          <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                          <span>Own Insurance (OD / Comprehensive)</span>
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          Covers own vehicle damage, loss, theft & bumper-to-bumper IDV
+                        </div>
+                        <div className="text-[10px] font-mono text-muted-foreground pt-1 flex items-center gap-2">
+                          <span>Policy: {ownPolicyDraft.policyNumber || selectedVehicleForPolicyRenew.own_insurance_policy_number || "None"}</span>
+                          <span>•</span>
+                          <span>Expires: {ownPolicyDraft.endDate || selectedVehicleForPolicyRenew.own_insurance_expiry_date || "Unset"}</span>
+                        </div>
+                      </div>
+                      {renewPolicyCategory === "Own Insurance" && (
+                        <CheckCircle2 className="h-4 w-4 text-theme-btn-primary shrink-0" />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setRenewPolicyCategory("Third Party Insurance")}
+                      className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        renewPolicyCategory === "Third Party Insurance"
+                          ? "border-theme-btn-primary bg-theme-btn-primary/10 text-foreground ring-1 ring-theme-btn-primary shadow-2xs"
+                          : "border-border bg-surface hover:bg-surface-hover text-muted-foreground"
+                      }`}
+                    >
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                          <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <span>Third Party Insurance (Mandatory TP)</span>
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          Statutory legal liability coverage for 3rd party life & property
+                        </div>
+                        <div className="text-[10px] font-mono text-muted-foreground pt-1 flex items-center gap-2">
+                          <span>Policy: {tpPolicyDraft.policyNumber || selectedVehicleForPolicyRenew.tp_insurance_policy_number || "None"}</span>
+                          <span>•</span>
+                          <span>Expires: {tpPolicyDraft.endDate || selectedVehicleForPolicyRenew.tp_insurance_expiry_date || "Unset"}</span>
+                        </div>
+                      </div>
+                      {renewPolicyCategory === "Third Party Insurance" && (
+                        <CheckCircle2 className="h-4 w-4 text-theme-btn-primary shrink-0" />
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Form Panels: TABS vs MIRROR */}
+                {insuranceModalViewMode === "TABS" ? (
+                  renewPolicyCategory === "Own Insurance" ? (
+                    renderPolicySection(ownPolicyDraft, setOwnPolicyDraft, false)
+                  ) : (
+                    renderPolicySection(tpPolicyDraft, setTpPolicyDraft, false)
+                  )
+                ) : (
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                    <div>
+                      <div className="mb-2 flex items-center justify-between px-1">
+                        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
+                          <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                          <span>Own Insurance Policy</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-mono">Independent Record</span>
+                      </div>
+                      {renderPolicySection(ownPolicyDraft, setOwnPolicyDraft, true)}
+                    </div>
+
+                    <div>
+                      <div className="mb-2 flex items-center justify-between px-1">
+                        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
+                          <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <span>Third Party Insurance Policy</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-mono">Independent Record</span>
+                      </div>
+                      {renderPolicySection(tpPolicyDraft, setTpPolicyDraft, true)}
                     </div>
                   </div>
                 )}
               </div>
-
-              <div>
-                <label className="font-semibold block mb-1">Renewal Notes & Audit Remarks</label>
-                <textarea
-                  rows={2}
-                  value={renewPolicyNotes}
-                  onChange={(e) => setRenewPolicyNotes(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                />
-              </div>
-
-          </div>
+            );
+          })()}
         </TransactionFormLayout>
       )}
 
