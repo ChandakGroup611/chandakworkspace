@@ -1,0 +1,144 @@
+/* ==========================================================================
+   Third-Party & Vendor Component Overrides
+   Mapped strictly to Chandak Workspace CSS Theme Tokens
+   ========================================================================== */
+
+/* --- React Select / Custom Select Controls --- */
+.app-select__control {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-input) !important;
+  min-height: var(--control-h) !important;
+  border-radius: var(--radius-input) !important;
+  box-shadow: none !important;
+  transition: border-color var(--dur-short) var(--ease-standard),
+              box-shadow var(--dur-short) var(--ease-standard);
+}
+
+.app-select__control--is-focused {
+  border-color: var(--focus-ring) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 22%, transparent) !important;
+}
+
+.app-select__menu {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-dropdown) !important;
+  box-shadow: var(--elevation-lg) !important;
+  z-index: var(--z-popover) !important;
+  overflow: hidden !important;
+}
+
+.app-select__option {
+  color: var(--text-foreground) !important;
+  cursor: pointer !important;
+}
+
+.app-select__option--is-focused {
+  background: var(--bg-hover) !important;
+}
+
+.app-select__option--is-selected {
+  background: var(--accent-soft) !important;
+  color: var(--accent-soft-text) !important;
+  font-weight: 500 !important;
+}
+
+.app-select__single-value,
+.app-select__input-container {
+  color: var(--text-foreground) !important;
+}
+
+.app-select__placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* --- Date Pickers & Calendars --- */
+.react-datepicker {
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border-border) !important;
+  border-radius: var(--radius-dropdown) !important;
+  box-shadow: var(--elevation-lg) !important;
+  font-family: inherit !important;
+  color: var(--text-foreground) !important;
+  z-index: var(--z-popover) !important;
+}
+
+.react-datepicker__header {
+  background-color: var(--bg-surface) !important;
+  border-bottom: 1px solid var(--border-border) !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header,
+.react-datepicker-year-header {
+  color: var(--text-heading) !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day-name {
+  color: var(--text-muted) !important;
+}
+
+.react-datepicker__day {
+  color: var(--text-foreground) !important;
+  border-radius: var(--radius-input) !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--today {
+  border: 1px solid var(--primary) !important;
+}
+
+/* --- Quill Rich Text Editor Overrides --- */
+.ql-toolbar.ql-snow {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-border) !important;
+  border-top-left-radius: var(--radius-input) !important;
+  border-top-right-radius: var(--radius-input) !important;
+}
+
+.ql-container.ql-snow {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-border) !important;
+  border-top: none !important;
+  border-bottom-left-radius: var(--radius-input) !important;
+  border-bottom-right-radius: var(--radius-input) !important;
+  color: var(--text-foreground) !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+}
+
+.ql-snow .ql-stroke {
+  stroke: var(--text-muted) !important;
+}
+
+.ql-snow .ql-fill {
+  fill: var(--text-muted) !important;
+}
+
+.ql-snow .ql-picker {
+  color: var(--text-muted) !important;
+}
+
+.ql-snow .ql-picker-options {
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border-border) !important;
+  border-radius: var(--radius-dropdown) !important;
+  box-shadow: var(--elevation-md) !important;
+  z-index: var(--z-popover) !important;
+}
+
+.ql-editor.ql-blank::before {
+  color: var(--text-muted) !important;
+  font-style: normal !important;
+}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-interface ChandakLoaderProps {
+export interface ChandakLoaderProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   title?: string;
   subtitle?: string;
@@ -31,18 +31,19 @@ export default function ChandakLoader({
     <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
       {/* 40-Years Logo Animated Badge */}
       <div className={`relative flex items-center justify-center ${currentSize.box}`}>
-        {/* Glowing ambient background ring */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#7B1D56]/20 via-[#D4AF37]/20 to-[#1E3A8A]/20 blur-md animate-pulse duration-1000" />
+        {/* Ambient background ring using tokens */}
+        <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse duration-1000" />
         
-        {/* Smooth spinning accent ring */}
-        <div className={`absolute inset-0 rounded-full border-2 border-transparent border-t-[#7B1D56] border-r-[#D4AF37] animate-spin ${currentSize.ring}`} />
+        {/* Smooth spinning accent ring using design tokens */}
+        <div className={`absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary/40 animate-spin ${currentSize.ring}`} />
         
         {/* 40-Years Logo Icon */}
-        <div className="relative z-10 flex items-center justify-center rounded-full bg-surface/80 dark:bg-background/80 p-1.5 shadow-sm backdrop-blur-sm">
+        <div className="relative z-10 flex items-center justify-center rounded-full bg-surface border border-border p-1.5 shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/chandak-40-icon.png"
-            alt="Chandak 40 Years"
-            className={`${currentSize.img} object-contain transition-transform duration-300`}
+            alt="Chandak"
+            className={`${currentSize.img} object-contain`}
             style={{ imageRendering: '-webkit-optimize-contrast' }}
             onError={(e) => {
               const target = e.currentTarget;
@@ -58,12 +59,12 @@ export default function ChandakLoader({
       {(title || subtitle) && (
         <div className="flex flex-col items-center text-center space-y-1">
           {title && (
-            <h3 className="text-base md:text-lg font-bold text-foreground tracking-tight">
+            <h3 className="text-base md:text-lg font-semibold text-foreground tracking-tight">
               {title}
             </h3>
           )}
           {subtitle && (
-            <p className="text-xs md:text-sm text-muted font-medium font-sans">
+            <p className="text-xs md:text-sm text-muted font-normal font-sans">
               {subtitle}
             </p>
           )}
@@ -74,11 +75,14 @@ export default function ChandakLoader({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md">
-        {content}
+      <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)]">
+        <div className="p-6 rounded-xl bg-surface border border-border shadow-xl">
+          {content}
+        </div>
       </div>
     );
   }
 
   return content;
 }
+export { ChandakLoader };

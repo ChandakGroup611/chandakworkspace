@@ -35,17 +35,17 @@ export function SectionHeader({
       <div className="space-y-0.5 flex-1 min-w-0">
         <div className="flex items-center gap-2.5 flex-wrap">
           {icon && (
-            <div className="shrink-0 text-theme-icon h-4 w-4 flex items-center justify-center">
+            <div className="shrink-0 text-muted h-4 w-4 flex items-center justify-center">
               {icon}
             </div>
           )}
-          <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground truncate">
+          <h2 className="text-sm font-semibold text-heading truncate">
             {title}
           </h2>
           {badge && <div className="shrink-0">{badge}</div>}
         </div>
         {description && (
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted leading-relaxed">
             {description}
           </p>
         )}
@@ -60,3 +60,4 @@ export function SectionHeader({
     </div>
   );
 }
+export default SectionHeader;

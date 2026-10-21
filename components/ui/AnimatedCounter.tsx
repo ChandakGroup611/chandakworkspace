@@ -66,10 +66,10 @@ export function AnimatedCounter({
 
   const formatted = formatter
     ? formatter(displayValue)
-    : displayValue.toLocaleString();
+    : new Intl.NumberFormat("en-IN").format(displayValue);
 
   return (
-    <span className={`tabular-nums inline-block transition-transform duration-200 ${className}`}>
+    <span className={`tabular-nums inline-block ${className}`}>
       {prefix}
       {formatted}
       {suffix}
