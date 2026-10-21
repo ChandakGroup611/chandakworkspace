@@ -1,13 +1,12 @@
-// TODO(ui-v2): migrate to tokens
 "use client";
 
 import React, { useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Plus, Save, Trash2, ArrowRight, Zap, Play, Filter, GitMerge } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -23,6 +22,7 @@ export default function TicketAutomationsBuilder() {
   ]);
   
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
   
   const [form, setForm] = useState({
     id: "",
@@ -61,14 +61,15 @@ export default function TicketAutomationsBuilder() {
     }
     
     setEditingId(null);
-    toast.success("Automation Rule saved!");
+    toast.success("Automation rule saved.");
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Delete this automation rule?")) {
-      setRules(rules.filter(r => r.id !== id));
-      if (editingId === id) setEditingId(null);
-    }
+  const confirmDelete = () => {
+    if (!ruleToDelete) return;
+    setRules(rules.filter(r => r.id !== ruleToDelete));
+    if (editingId === ruleToDelete) setEditingId(null);
+    setRuleToDelete(null);
+    toast.success("Automation rule deleted.");
   };
 
   const addCondition = () => {
@@ -109,27 +110,35 @@ export default function TicketAutomationsBuilder() {
           {rules.map(rule => (
             <div 
               key={rule.id}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleEdit(rule);
+                }
+              }}
               onClick={() => handleEdit(rule)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 editingId === rule.id 
-                  ? "border-theme-btn-primary bg-theme-btn-primary/5 shadow-md shadow-theme-btn-primary/10" 
-                  : "border-border bg-surface dark:bg-[#121620] hover:border-border"
+                  ? "border-primary bg-primary-soft shadow-xs" 
+                  : "border-border bg-surface hover:border-border-strong"
               }`}
             >
               <div className="flex justify-between items-start mb-2">
-                <h3 className={`font-bold ${editingId === rule.id ? "text-theme-icon" : "text-foreground"}`}>
+                <h3 className={`font-semibold ${editingId === rule.id ? "text-accent-soft-text" : "text-foreground"}`}>
                   {rule.name || "Untitled Rule"}
                 </h3>
-                <div className={`w-2 h-2 rounded-full ${rule.isActive ? "bg-success shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "bg-gray-400"}`} />
+                <div className={`w-2 h-2 rounded-full ${rule.isActive ? "bg-success" : "bg-muted"}`} />
               </div>
               <div className="text-xs text-muted flex flex-col gap-1">
                 <span className="flex items-center gap-1"><Filter className="w-3 h-3" /> {rule.conditions.length} Conditions</span>
-                <span className="flex items-center gap-1"><Play className="w-3 h-3 text-theme-icon" /> {rule.actions.length} Actions</span>
+                <span className="flex items-center gap-1"><Play className="w-3 h-3 text-accent-soft-text" /> {rule.actions.length} Actions</span>
               </div>
             </div>
           ))}
           {rules.length === 0 && (
-            <div className="p-8 text-center text-muted border-2 border-dashed border-border rounded-xl">
+            <div className="p-8 text-center text-muted border border-border rounded-xl bg-sunken/40">
               No automation rules defined.
             </div>
           )}
@@ -138,21 +147,21 @@ export default function TicketAutomationsBuilder() {
         {/* Rule Builder */}
         <div className="lg:col-span-2">
           {editingId ? (
-            <div className="bg-surface dark:bg-[#121620] rounded-2xl border border-border shadow-xl overflow-hidden animate-in slide-in-from-right-8 duration-300">
-              <div className="p-6 border-b border-border flex justify-between items-center bg-surface dark:bg-surface/[0.02]">
+            <div className="bg-surface rounded-2xl border border-border shadow-xs overflow-hidden animate-in slide-in-from-right-8 duration-300">
+              <div className="p-6 border-b border-border flex justify-between items-center bg-surface">
                 <div className="flex-1 mr-4">
-                  <label className="text-sm font-bold text-muted uppercase">Rule Name</label>
+                  <label className="text-xs font-semibold text-muted">Rule name</label>
                   <AppInput 
                     value={form.name} 
                     onChange={e => setForm({...form, name: e.target.value})} 
-                    className="text-lg font-bold py-2 mt-1 bg-transparent border-transparent focus:bg-surface dark:focus:bg-[#0A0D14]" 
+                    className="text-lg font-bold py-2 mt-1 bg-transparent border-transparent focus:bg-surface" 
                     placeholder="Enter Rule Name"
                   />
                 </div>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-sm font-bold text-muted">Active</span>
-                    <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? 'bg-success' : 'bg-elevated dark:bg-surface'}`}>
+                    <span className="text-sm font-semibold text-muted">Active</span>
+                    <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? 'bg-success' : 'bg-elevated'}`}>
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                     </div>
                     <input 
@@ -162,7 +171,7 @@ export default function TicketAutomationsBuilder() {
                       onChange={e => setForm({...form, isActive: e.target.checked})}
                     />
                   </label>
-                  <AppButton variant="outline" className="text-danger" onClick={() => handleDelete(form.id)}>
+                  <AppButton variant="outline" className="text-danger border-danger-border hover:bg-danger-soft" onClick={() => setRuleToDelete(form.id)}>
                     <Trash2 className="w-4 h-4" />
                   </AppButton>
                   <AppButton variant="primary" onClick={handleSave} leftIcon={<Save className="w-4 h-4" />}>
@@ -171,21 +180,21 @@ export default function TicketAutomationsBuilder() {
                 </div>
               </div>
 
-              <div className="p-6 bg-surface/50 dark:bg-[#0B0F19]">
+              <div className="p-6 bg-sunken/30">
                 {/* Trigger / Conditions */}
                 <div className="mb-8 relative">
-                  <div className="absolute left-6 top-8 bottom-[-40px] w-0.5 bg-elevated dark:bg-surface z-0" />
+                  <div className="absolute left-6 top-8 bottom-[-40px] w-0.5 bg-border z-0" />
                   
-                  <div className="flex items-center gap-2 text-accent dark:text-accent font-black tracking-wider text-xl mb-4 relative z-10 bg-surface/50 dark:bg-[#0B0F19] pr-4 w-max">
-                    <GitMerge className="w-6 h-6" /> WHEN (Trigger Conditions)
+                  <div className="flex items-center gap-2 text-foreground font-semibold tracking-wide text-lg mb-4 relative z-10 bg-surface px-3 py-1 rounded-md border border-border w-max">
+                    <GitMerge className="w-5 h-5 text-accent-soft-text" /> When (Trigger Conditions)
                   </div>
                   
                   <div className="space-y-3 pl-12 relative z-10">
                     {form.conditions.map((cond, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-surface dark:bg-[#121620] p-3 rounded-lg border border-border shadow-sm group">
-                        {i > 0 && <span className="font-bold text-muted text-xs mr-2 w-8 text-center">AND</span>}
+                      <div key={i} className="flex items-center gap-3 bg-surface p-3 rounded-lg border border-border shadow-xs group">
+                        {i > 0 && <span className="font-semibold text-muted text-xs mr-2 w-8 text-center">AND</span>}
                         <select 
-                          className="p-2 bg-surface dark:bg-[#0A0D14] border border-border rounded-md text-sm min-w-[150px]"
+                          className="p-2 bg-surface border border-border rounded-md text-sm min-w-[150px] text-foreground"
                           value={cond.field}
                           onChange={e => {
                             const c = [...form.conditions];
@@ -201,7 +210,7 @@ export default function TicketAutomationsBuilder() {
                         </select>
                         
                         <select 
-                          className="p-2 bg-surface dark:bg-[#0A0D14] border border-border rounded-md text-sm font-mono text-accent dark:text-accent"
+                          className="p-2 bg-surface border border-border rounded-md text-sm font-mono text-accent-soft-text"
                           value={cond.operator}
                           onChange={e => {
                             const c = [...form.conditions];
@@ -216,7 +225,7 @@ export default function TicketAutomationsBuilder() {
                         
                         <input 
                           type="text" 
-                          className="flex-1 p-2 bg-transparent border-b border-dashed border-border dark:border-border focus:outline-none focus:border-theme-btn-primary text-sm"
+                          className="flex-1 p-2 bg-transparent border-b border-border focus:outline-none focus:border-primary text-sm text-foreground"
                           placeholder="Value..."
                           value={cond.value}
                           onChange={e => {
@@ -226,12 +235,12 @@ export default function TicketAutomationsBuilder() {
                           }}
                         />
                         
-                        <AppButton variant="secondary" onClick={() => removeCondition(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AppButton variant="ghost" size="sm" onClick={() => removeCondition(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       </div>
                     ))}
-                    <AppButton variant="outline" size="sm" onClick={addCondition} className="mt-2 text-xs border-dashed" leftIcon={<Plus className="w-3 h-3" />}>
+                    <AppButton variant="outline" size="sm" onClick={addCondition} className="mt-2 text-xs" leftIcon={<Plus className="w-3 h-3" />}>
                       Add Condition
                     </AppButton>
                   </div>
@@ -239,15 +248,15 @@ export default function TicketAutomationsBuilder() {
 
                 {/* Actions */}
                 <div className="relative mt-12">
-                  <div className="flex items-center gap-2 text-success dark:text-success font-black tracking-wider text-xl mb-4 relative z-10 bg-surface/50 dark:bg-[#0B0F19] pr-4 w-max">
-                    <Zap className="w-6 h-6" /> THEN (Execute Actions)
+                  <div className="flex items-center gap-2 text-foreground font-semibold tracking-wide text-lg mb-4 relative z-10 bg-surface px-3 py-1 rounded-md border border-border w-max">
+                    <Zap className="w-5 h-5 text-success" /> Then (Execute Actions)
                   </div>
                   
                   <div className="space-y-3 pl-12 relative z-10">
                     {form.actions.map((act, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-surface dark:bg-[#121620] p-3 rounded-lg border border-border shadow-sm group border-l-4 border-l-emerald-500">
+                      <div key={i} className="flex items-center gap-3 bg-surface p-3 rounded-lg border border-border shadow-xs group border-l-4 border-l-success">
                         <select 
-                          className="p-2 bg-surface dark:bg-[#0A0D14] border border-border rounded-md text-sm min-w-[150px] font-bold"
+                          className="p-2 bg-surface border border-border rounded-md text-sm min-w-[150px] font-semibold text-foreground"
                           value={act.type}
                           onChange={e => {
                             const a = [...form.actions];
@@ -268,7 +277,7 @@ export default function TicketAutomationsBuilder() {
                         
                         <input 
                           type="text" 
-                          className="flex-1 p-2 bg-transparent border-b border-dashed border-border dark:border-border focus:outline-none focus:border-emerald-500 text-sm font-mono text-success dark:text-success"
+                          className="flex-1 p-2 bg-transparent border-b border-border focus:outline-none focus:border-success text-sm font-mono text-success"
                           placeholder="Action parameter..."
                           value={act.value}
                           onChange={e => {
@@ -278,12 +287,12 @@ export default function TicketAutomationsBuilder() {
                           }}
                         />
                         
-                        <AppButton variant="secondary" onClick={() => removeAction(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AppButton variant="ghost" size="sm" onClick={() => removeAction(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       </div>
                     ))}
-                    <AppButton variant="outline" size="sm" onClick={addAction} className="mt-2 text-xs border-dashed text-success dark:text-success border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/10" leftIcon={<Plus className="w-3 h-3" />}>
+                    <AppButton variant="outline" size="sm" onClick={addAction} className="mt-2 text-xs text-success border-success-border hover:bg-success-soft" leftIcon={<Plus className="w-3 h-3" />}>
                       Add Action
                     </AppButton>
                   </div>
@@ -292,8 +301,8 @@ export default function TicketAutomationsBuilder() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full bg-surface dark:bg-[#0B0F19] rounded-2xl border border-dashed border-border p-12 text-muted">
-              <Zap className="w-16 h-16 text-muted dark:text-subtle mb-4" />
+            <div className="flex flex-col items-center justify-center h-full bg-surface rounded-2xl border border-border p-12 text-muted">
+              <Zap className="w-16 h-16 text-muted mb-4" />
               <h3 className="text-xl font-bold text-foreground">Automation Builder</h3>
               <p className="mt-2 max-w-md text-center">Select an existing rule to edit its workflow, or create a new automation to streamline your ticket processing.</p>
               <AppButton variant="primary" className="mt-6" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>Create New Rule</AppButton>
@@ -301,6 +310,16 @@ export default function TicketAutomationsBuilder() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!ruleToDelete}
+        onClose={() => setRuleToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete automation rule"
+        description="Are you sure you want to delete this automation rule? This action cannot be undone."
+        confirmLabel="Delete rule"
+        tone="danger"
+      />
     </PageContainer>
   );
 }

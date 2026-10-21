@@ -10,6 +10,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
+import { StatusBadge, formatDate } from "@/components/ui/data";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import DOMPurify from 'dompurify';
 
@@ -111,7 +112,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background text-foreground space-y-4">
         <h2 className="text-xl font-bold">Ticket Not Found</h2>
-        <AppButton variant="secondary" onClick={() => router.push("/tickets")} className="px-4 py-2 bg-theme-btn-primary text-white rounded-lg text-sm font-bold">
+        <AppButton variant="primary" onClick={() => router.push("/tickets")}>
           Return to Tickets
         </AppButton>
       </div>
@@ -127,7 +128,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       <div className="px-6 flex flex-wrap items-center gap-4">
         <Link
           href="/tickets"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-theme-icon hover:text-theme-icon-secondary"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-accent-soft-text hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Ticket List
@@ -135,18 +136,18 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       </div>
       <div className="space-y-6">
         <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr] items-stretch">
-          <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+          <div className="rounded-3xl border border-border bg-surface p-6 shadow-xs">
             {/* Top row: Tags and Button */}
             <div className="flex items-start justify-between gap-4 w-full">
               <div className="flex flex-wrap items-center gap-2 mb-2">
-                <p className="text-[11px] font-mono tracking-wider text-theme-icon bg-theme-btn-primary/10 dark:bg-theme-btn-primary/10 px-2 py-0.5 rounded font-bold">
+                <p className="text-[11px] font-mono font-bold text-accent-soft-text bg-accent-soft px-2 py-0.5 rounded">
                   {ticketData.id}
                 </p>
-                <p className="text-[11px] tracking-wider text-muted-foreground px-2 py-0.5 border border-border rounded font-bold bg-background">
-                  DEPARTMENT: {ticketData.departmentObj?.name || "Unassigned"}
+                <p className="text-[11px] text-muted font-semibold px-2 py-0.5 border border-border rounded bg-sunken">
+                  Department: {ticketData.departmentObj?.name || "Unassigned"}
                 </p>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-2xl bg-theme-btn-primary/10 px-4 py-2 text-xs font-semibold text-theme-icon dark:bg-theme-btn-primary/10 dark:text-purple-200 shrink-0">
+              <div className="inline-flex items-center gap-2 rounded-2xl bg-accent-soft px-4 py-2 text-xs font-semibold text-accent-soft-text shrink-0">
                 <ArrowLeft className="h-4 w-4" />
                 Full ticket page
               </div>
@@ -156,24 +157,24 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
             <div className="min-w-0 w-full mt-1">
               <div className="mt-3 w-full">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  <span className="text-[10px] font-semibold text-muted flex items-center gap-1.5">
                     Subject
                   </span>
                   {canEditTicket && (
                     !isEditing ? (
-                      <AppButton variant="secondary" onClick={() => setIsEditing(true)} className="text-[10px] font-bold uppercase tracking-widest text-theme-icon hover:text-theme-icon">
+                      <AppButton variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="text-xs font-medium">
                         Edit
                       </AppButton>
                     ) : (
                       <div className="flex gap-2">
-                        <AppButton variant="secondary" onClick={() => {
+                        <AppButton variant="ghost" size="sm" onClick={() => {
                           setIsEditing(false);
                           setEditTitle(ticketData.title || "");
                           setEditDescription(ticketData.description || "");
-                        }} className="text-[10px] font-bold uppercase tracking-widest text-muted hover:text-subtle">
+                        }} className="text-xs font-medium text-muted">
                           Cancel
                         </AppButton>
-                        <AppButton variant="secondary" onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-success hover:text-success">
+                        <AppButton variant="primary" size="sm" onClick={handleSaveDetails} className="text-xs font-medium">
                           Save
                         </AppButton>
                       </div>
@@ -182,10 +183,10 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                 </div>
                 <div className="flex items-center gap-3 min-w-0 w-full">
                   {!isEditing ? (
-                    <h1 className="text-lg font-bold text-theme-icon dark:text-theme-icon break-words whitespace-normal w-full">{ticketData.title}</h1>
+                    <h1 className="text-lg font-bold text-foreground break-words whitespace-normal w-full">{ticketData.title}</h1>
                   ) : (
                     <input 
-                      className="text-lg font-bold w-full border border-theme-btn-primary/30 rounded px-2 py-1 bg-background text-foreground"
+                      className="text-lg font-bold w-full border border-border rounded px-2 py-1 bg-surface text-foreground"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
                     />
@@ -194,17 +195,17 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
               </div>
               
               <div className="mt-6 w-full">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-muted mb-2 flex items-center gap-1.5">
                   Description
                 </span>
                 {!isEditing ? (
                   <div 
-                    className="text-[13px] sm:text-sm text-foreground w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-background/50 p-4 rounded-xl border border-border shadow-sm"
+                    className="text-[13px] sm:text-sm text-foreground w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-sunken/40 p-4 rounded-xl border border-border shadow-xs"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ticketData.description || "No description provided.") }} 
                   />
                 ) : (
                   <textarea 
-                    className="w-full text-[13px] sm:text-sm border border-theme-btn-primary/30 rounded-xl p-4 bg-background text-foreground min-h-[120px] resize-y"
+                    className="w-full text-[13px] sm:text-sm border border-border rounded-xl p-4 bg-surface text-foreground min-h-[120px] resize-y"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                   />
@@ -214,24 +215,22 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
             
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-border pt-4">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Creator</span>
-                <p className="text-xs font-semibold text-foreground mt-0.5">{ticketData.creator?.full_name || "Unknown"}</p>
+                <span className="text-xs font-semibold text-muted">Creator</span>
+                <p className="text-xs font-medium text-foreground mt-0.5">{ticketData.creator?.full_name || "Unknown"}</p>
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Created At</span>
-                <p className="text-xs font-semibold text-foreground mt-0.5">{new Date(ticketData.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</p>
+                <span className="text-xs font-semibold text-muted">Created At</span>
+                <p className="text-xs font-medium text-foreground mt-0.5">{formatDate(ticketData.createdAt)}</p>
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Last Status</span>
-                <p className="text-xs font-semibold text-foreground mt-0.5">
-                  <span className="inline-flex items-center rounded-md bg-theme-btn-primary/10 px-1.5 py-0.5 text-xs font-medium text-theme-icon ring-1 ring-inset ring-theme-btn-primary/10 dark:bg-theme-btn-primary/10 dark:text-theme-icon dark:ring-theme-btn-primary/20">
-                    {ticketData.statusObj?.name || "Open"}
-                  </span>
-                </p>
+                <span className="text-xs font-semibold text-muted">Last Status</span>
+                <div className="mt-0.5">
+                  <StatusBadge status={ticketData.statusObj?.name || "Open"} size="sm" />
+                </div>
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Last Updated</span>
-                <p className="text-xs font-semibold text-foreground mt-0.5">{ticketData.updated_at ? new Date(ticketData.updated_at).toLocaleDateString(undefined, { dateStyle: 'medium' }) : "Never"}</p>
+                <span className="text-xs font-semibold text-muted">Last Updated</span>
+                <p className="text-xs font-medium text-foreground mt-0.5">{ticketData.updated_at ? formatDate(ticketData.updated_at) : "Never"}</p>
               </div>
             </div>
           </div>

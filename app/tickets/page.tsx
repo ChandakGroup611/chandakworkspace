@@ -14,6 +14,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppTable, AppTableBody, AppTableCell, AppTableContainer, AppTableHead, AppTableHeader, AppTableRow } from "@/components/ui/AppTable";
 import { AppBadge } from "@/components/ui/AppBadge";
+import { StatusBadge, formatDate } from "@/components/ui/data";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 
@@ -143,11 +144,11 @@ function TicketsPageContent() {
   };
 
   const getPriorityColor = (code: string | undefined) => {
-    if (!code) return "bg-gray-500";
-    if (code.includes("CRITICAL") || code === "PRIO_CRIT_P1" || code === "P1") return "bg-danger text-white";
-    if (code.includes("HIGH") || code === "PRIO_HIGH_P2" || code === "P2") return "bg-warning text-white";
-    if (code.includes("MEDIUM") || code === "PRIO_MED_P3" || code === "P3") return "bg-theme-btn-primary text-white";
-    return "bg-success text-white";
+    if (!code) return "bg-sunken text-muted";
+    if (code.includes("CRITICAL") || code === "PRIO_CRIT_P1" || code === "P1") return "bg-danger text-primary-foreground";
+    if (code.includes("HIGH") || code === "PRIO_HIGH_P2" || code === "P2") return "bg-warning text-primary-foreground";
+    if (code.includes("MEDIUM") || code === "PRIO_MED_P3" || code === "P3") return "bg-primary text-primary-foreground";
+    return "bg-success text-primary-foreground";
   };
 
   // End User Role Visibility: Can only see their own created or assigned tickets is handled on the server side using the existing getVisibleTickets logic, but we still apply it here just in case, though the DB already enforces it. Actually, wait. The DB filters for ends users as well? Yes, getVisibleTickets handles user isolation. So we can just use tickets directly.
@@ -168,7 +169,7 @@ function TicketsPageContent() {
   if (!hasPermission("TICKETS_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-surface text-foreground`}>
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger">
           <Database className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
@@ -186,12 +187,12 @@ function TicketsPageContent() {
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-              <span className={`text-[0.65rem] font-bold uppercase tracking-widest text-muted`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
+              <span className="text-[0.65rem] font-bold tracking-widest text-muted">Live Node: Chandak Workspace-ENTERPRISE-01</span>
             </div>
             <div className={`h-4 w-px bg-elevated`} />
             <div className="flex items-center gap-4 text-xs">
-              <span className="font-semibold text-muted uppercase tracking-wide">Active: <span className="text-foreground dark:text-white">{tickets.length}</span></span>
-              <span className="font-semibold text-success uppercase tracking-wide">SLA Stability: 98.4%</span>
+              <span className="font-semibold text-muted tracking-wide">Active: <span className="text-foreground">{tickets.length}</span></span>
+              <span className="font-semibold text-success tracking-wide">SLA Stability: 98.4%</span>
             </div>
           </div>
         }
@@ -252,13 +253,11 @@ function TicketsPageContent() {
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Filter className="h-4 w-4 text-muted shrink-0" />
-              <span className="text-xs font-bold uppercase tracking-wider text-muted hidden md:inline shrink-0">Status:</span>
+              <span className="text-xs font-semibold text-muted hidden md:inline shrink-0">Status:</span>
               <select 
                 value={selectedStatus}
                 onChange={e => setSelectedStatus(e.target.value)}
-                className={`flex-1 sm:flex-initial min-w-0 h-9 pl-2.5 pr-6 sm:pr-8 rounded-lg text-xs sm:text-sm border outline-none cursor-pointer truncate ${
-                  "bg-surface border-border"
-                }`}
+                className="flex-1 sm:flex-initial min-w-0 h-9 pl-2.5 pr-6 sm:pr-8 rounded-lg text-xs sm:text-sm border outline-none cursor-pointer truncate bg-surface border-border text-foreground"
               >
                 <option value="ALL">All Statuses</option>
                 {states.map(s => (
@@ -269,9 +268,7 @@ function TicketsPageContent() {
               <select 
                 value={selectedPriority}
                 onChange={e => setSelectedPriority(e.target.value)}
-                className={`flex-1 sm:flex-initial min-w-0 h-9 pl-2.5 pr-6 sm:pr-8 rounded-lg text-xs sm:text-sm border outline-none cursor-pointer truncate ${
-                  "bg-surface border-border"
-                }`}
+                className="flex-1 sm:flex-initial min-w-0 h-9 pl-2.5 pr-6 sm:pr-8 rounded-lg text-xs sm:text-sm border outline-none cursor-pointer truncate bg-surface border-border text-foreground"
               >
                 <option value="ALL">All Priorities</option>
                 {priorities.map(p => (
@@ -286,11 +283,7 @@ function TicketsPageContent() {
               onClick={() => setSelectedScope("ALL")}
               variant={selectedScope === "ALL" ? "primary" : "ghost"}
               size="sm"
-              className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 ${
-                selectedScope === "ALL" 
-                  ? "bg-theme-btn-primary text-white hover:bg-theme-btn-primary-secondary" 
-                  : ""
-              }`}
+              className="px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0"
             >
               All Scopes
             </AppButton>
@@ -300,11 +293,7 @@ function TicketsPageContent() {
                 onClick={() => setSelectedScope(scope.id)}
                 variant={selectedScope === scope.id ? "primary" : "ghost"}
                 size="sm"
-                className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 ${
-                  selectedScope === scope.id 
-                    ? "bg-theme-btn-primary text-white hover:bg-theme-btn-primary-secondary" 
-                    : ""
-                }`}
+                className="px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0"
               >
                 {scope.name}
               </AppButton>
@@ -327,7 +316,7 @@ function TicketsPageContent() {
               {/* Mobile Card List (<1024px) */}
               <div className="block lg:hidden space-y-3">
                 {filteredTickets.length === 0 ? (
-                  <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50 animate-in fade-in duration-300">
+                  <div className="text-center py-12 text-muted text-sm border border-border rounded-xl bg-sunken/50 animate-in fade-in duration-300">
                     No tickets found matching your criteria.
                   </div>
                 ) : (
@@ -339,31 +328,37 @@ function TicketsPageContent() {
                     return (
                       <div 
                         key={ticket.dbId}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleTicketClick(ticket);
+                          }
+                        }}
                         onClick={() => handleTicketClick(ticket)}
-                        className={`rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 relative active:scale-[0.99] animate-stagger-in ${staggerClass}`}
+                        className={`rounded-2xl border border-border bg-surface p-4 shadow-xs hover:border-border-strong hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 relative active:scale-[0.99] animate-stagger-in ${staggerClass}`}
                       >
                         {/* Top Row: Code, Priority, Status */}
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
+                          <span className="font-mono text-xs font-bold text-accent-soft-text bg-accent-soft px-2 py-0.5 rounded-md shrink-0">
                             {ticket.id}
                           </span>
                           <div className="flex items-center gap-1.5 shrink-0">
                             <AppBadge 
                               variant={isCritical ? "danger" : isUrgent ? "warning" : "neutral"}
                               withPulse={isCritical}
-                              className="text-[10px] font-bold tracking-wider"
+                              className="text-[10px] font-semibold"
                             >
-                              {ticket.priorityObj?.name || "STANDARD"}
+                              {ticket.priorityObj?.name || "Standard"}
                             </AppBadge>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border border-border bg-surface text-foreground whitespace-nowrap">
-                              {ticket.statusObj?.name || "Unknown"}
-                            </span>
+                            <StatusBadge status={ticket.statusObj?.name || "Unknown"} size="sm" />
                           </div>
                         </div>
 
                         {/* Title */}
                         <div>
-                          <h3 className="text-sm font-bold text-foreground line-clamp-2 hover:text-theme-btn-primary transition-colors">
+                          <h3 className="text-sm font-semibold text-foreground line-clamp-2 hover:text-accent-soft-text transition-colors">
                             {ticket.title}
                           </h3>
                         </div>
@@ -372,7 +367,7 @@ function TicketsPageContent() {
                         <div className="flex items-center justify-between gap-2 text-xs text-muted flex-wrap">
                           <div className="flex items-center gap-1.5 truncate">
                             {ticket.departmentObj?.name && (
-                              <span className="bg-elevated px-2 py-0.5 rounded-md text-[10px] font-bold text-foreground/80 truncate max-w-[140px]">
+                              <span className="bg-elevated px-2 py-0.5 rounded-md text-[10px] font-semibold text-foreground truncate max-w-[140px]">
                                 {ticket.departmentObj.name}
                               </span>
                             )}
@@ -386,13 +381,13 @@ function TicketsPageContent() {
                         {/* Bottom Row: Created Date & Quick Action Buttons */}
                         <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
                           <span className="text-[11px] text-muted">
-                            {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {formatDate(ticket.createdAt)}
                           </span>
                           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                             <AppButton 
                               variant="ghost" 
                               size="sm" 
-                              className="h-7 px-2.5 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center gap-1 active:scale-95 transition-all"
+                              className="h-7 px-2.5 text-xs rounded-lg flex items-center gap-1"
                               onClick={() => handleTicketClick(ticket)}
                             >
                               <Search className="h-3.5 w-3.5" /> View
@@ -401,7 +396,7 @@ function TicketsPageContent() {
                               <AppButton 
                                 variant="ghost" 
                                 size="sm" 
-                                className="h-7 px-2.5 text-xs text-success hover:bg-success/10 rounded-lg flex items-center gap-1 active:scale-95 transition-all"
+                                className="h-7 px-2.5 text-xs text-success hover:bg-success-soft rounded-lg flex items-center gap-1"
                                 onClick={() => handleTicketClick(ticket)}
                               >
                                 <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
@@ -444,46 +439,44 @@ function TicketsPageContent() {
                               onClick={() => handleTicketClick(ticket)}
                               className={`cursor-pointer hover:bg-surface-hover/80 transition-colors animate-stagger-in ${staggerClass}`}
                             >
-                              <AppTableCell className="font-mono text-xs font-bold text-theme-icon dark:text-theme-icon">
+                              <AppTableCell className="font-mono text-xs font-bold text-accent-soft-text">
                                 {ticket.id}
                               </AppTableCell>
-                              <AppTableCell className="font-semibold max-w-xs truncate group-hover:text-theme-btn-primary transition-colors">
+                              <AppTableCell className="font-semibold max-w-xs truncate">
                                 {ticket.title}
                               </AppTableCell>
                               <AppTableCell>
                                 <AppBadge 
                                   variant={isCritical ? "danger" : isUrgent ? "warning" : "neutral"}
                                   withPulse={isCritical}
-                                  className="text-[10px] font-bold tracking-wider"
+                                  className="text-[10px] font-semibold"
                                 >
-                                  {ticket.priorityObj?.name || "STANDARD"}
+                                  {ticket.priorityObj?.name || "Standard"}
                                 </AppBadge>
                               </AppTableCell>
                               <AppTableCell>
-                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-border bg-surface text-foreground whitespace-nowrap shadow-2xs">
-                                  {ticket.statusObj?.name || "Unknown"}
-                                </span>
+                                <StatusBadge status={ticket.statusObj?.name || "Unknown"} size="sm" />
                               </AppTableCell>
-                              <AppTableCell className="text-xs text-muted-foreground">
+                              <AppTableCell className="text-xs text-muted">
                                 {ticket.departmentObj?.name || "-"}
                               </AppTableCell>
                               <AppTableCell className="text-xs font-medium">
                                 {ticket.assignedTo}
                               </AppTableCell>
-                              <AppTableCell className="text-xs text-muted-foreground">
-                                {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                              <AppTableCell className="text-xs text-muted">
+                                {formatDate(ticket.createdAt)}
                               </AppTableCell>
                               <AppTableCell className="text-right">
                                 <div className="flex justify-end gap-2">
                                   <AppButton 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="h-8 px-2.5 text-theme-icon hover:bg-theme-btn-primary/10 transition-all active:scale-95"
+                                    className="h-8 px-2.5"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleTicketClick(ticket);
                                     }}
-                                    title="View Details"
+                                    title="View details"
                                   >
                                     <Search className="h-4 w-4" />
                                   </AppButton>
@@ -491,12 +484,12 @@ function TicketsPageContent() {
                                     <AppButton 
                                       variant="ghost" 
                                       size="sm" 
-                                      className="h-8 px-2.5 text-success hover:bg-success/10 transition-all active:scale-95"
+                                      className="h-8 px-2.5 text-success hover:bg-success-soft"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleTicketClick(ticket);
                                       }}
-                                      title="Resolve Ticket"
+                                      title="Resolve ticket"
                                     >
                                       <CheckCircle2 className="h-4 w-4" />
                                     </AppButton>
@@ -508,7 +501,7 @@ function TicketsPageContent() {
                         })
                       ) : (
                         <AppTableRow>
-                          <AppTableCell colSpan={8} className="h-32 text-center text-muted-foreground animate-in fade-in duration-300">
+                          <AppTableCell colSpan={8} className="h-32 text-center text-muted animate-in fade-in duration-300">
                             No tickets found matching your criteria.
                           </AppTableCell>
                         </AppTableRow>
@@ -542,8 +535,8 @@ function TicketsPageContent() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-4 duration-300">
-          <div className="px-6 py-3 bg-theme-btn-primary text-white text-sm font-bold rounded-2xl shadow-2xl shadow-indigo-500/40 border border-theme-btn-primary flex items-center gap-3">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[var(--z-toast)] animate-in slide-in-from-bottom-4 duration-300">
+          <div className="px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-xl shadow-lg border border-primary flex items-center gap-3">
             <CheckCircle2 className="h-4 w-4" />
             {toastMessage}
           </div>
