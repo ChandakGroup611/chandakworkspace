@@ -1,83 +1,44 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
-import { Suspense } from "react";
-import { useTheme } from "@/components/theme/ThemeProvider";
-import { useEffect, useState } from "react";
 import GlobalShortcuts from "./GlobalShortcuts";
 import MobileBottomNav from "./MobileBottomNav";
 import DeploymentVersionBanner from "./DeploymentVersionBanner";
 
 export default function WorkspaceShell({ children }: { children: React.ReactNode }) {
-  const { theme } = useTheme();
   const pathname = usePathname();
-  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const isAuthRoute = pathname === "/login" || pathname === "/register" || pathname === "/select-module";
   const isDashboardRoute = pathname === "/";
-  const isRequirementDetailsRoute = pathname.startsWith('/requirements/') && pathname.split('/').length === 3 && !['reports', 'approvals', 'grooming'].includes(pathname.split('/')[2]);
-  const isDesignRoute = pathname?.startsWith('/design');
+  const isRequirementDetailsRoute = pathname.startsWith("/requirements/") && pathname.split("/").length === 3 && !["reports", "approvals", "grooming"].includes(pathname.split("/")[2]);
+  const isDesignRoute = pathname?.startsWith("/design");
   const isZeroPaddingRoute = isAuthRoute || isRequirementDetailsRoute || isDashboardRoute;
-  const [isSidebarCompact, setIsSidebarCompact] = useState(false);
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const mainRef = React.useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const handler = (e: any) => {
-      setIsSidebarCompact(Boolean(e?.detail?.compact));
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("sidebar:toggle", handler as EventListener);
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("sidebar:toggle", handler as EventListener);
-      }
-    };
-  }, []);
-
-  // Close mobile drawer and scroll to top on route change
+  // Close mobile drawer and reset scroll once per route change on main
   useEffect(() => {
     setIsMobileMenuOpen(false);
-    const resetScroll = () => {
-      if (mainRef.current) {
-        mainRef.current.scrollTop = 0;
-      }
-      if (typeof window !== "undefined") {
-        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }
-    };
-
-    resetScroll();
-    const frameId = requestAnimationFrame(resetScroll);
-    const timerId = setTimeout(resetScroll, 50);
-    return () => {
-      cancelAnimationFrame(frameId);
-      clearTimeout(timerId);
-    };
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
   }, [pathname]);
 
   // Global scroll-to-top event listener for sub-navigation and modals
   useEffect(() => {
     const handleScrollTop = () => {
-      const resetScroll = () => {
-        if (mainRef.current) {
-          mainRef.current.scrollTop = 0;
-        }
-        if (typeof window !== "undefined") {
-          window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-        }
-      };
-
-      resetScroll();
-      requestAnimationFrame(resetScroll);
-      setTimeout(resetScroll, 50);
+      if (mainRef.current) {
+        mainRef.current.scrollTop = 0;
+      }
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
     };
 
     if (typeof window !== "undefined") {
@@ -91,12 +52,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
   }, []);
 
   return (
-    <div 
-      className={`h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-theme-btn-primary/20 overflow-hidden bg-background`}
-      style={{
-        color: "var(--text-primary, #FFFFFF)"
-      }}
-    >
+    <div className="h-screen w-full flex font-sans antialiased relative selection:bg-selected overflow-hidden bg-background text-foreground">
       {/* Sidebar Navigation */}
       {!isAuthRoute && (
         <Suspense fallback={null}>
@@ -108,7 +64,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
       )}
 
       {/* Main Orchestration Column */}
-      <div className={`flex flex-1 flex-col min-w-0 h-full relative`}>
+      <div className="flex flex-1 flex-col min-w-0 h-full relative">
         {/* Dynamic Live Update Banner */}
         <DeploymentVersionBanner />
 
@@ -121,17 +77,18 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         <main
           ref={mainRef}
           className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${
-          isZeroPaddingRoute 
-            ? 'p-0 pb-16 md:pb-0' 
-            : isDesignRoute
-              ? 'p-2 sm:p-3 md:p-4 lg:p-5 pb-16 md:pb-6 bg-transparent w-full min-w-0 max-w-none'
-              : 'p-3 sm:p-4 md:p-6 lg:p-8 pb-20 md:pb-8 bg-transparent'
-        }`}>
+            isZeroPaddingRoute 
+              ? "p-0 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0" 
+              : isDesignRoute
+                ? "p-2 sm:p-3 md:p-4 lg:p-5 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-6 bg-transparent w-full min-w-0 max-w-none"
+                : "p-3 sm:p-4 md:p-6 lg:p-8 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-8 bg-transparent"
+          }`}
+        >
           {children}
         </main>
       </div>
 
-      {/* Mobile E-Commerce Bottom Navigation Bar */}
+      {/* Mobile Bottom Navigation Bar */}
       {!isAuthRoute && (
         <MobileBottomNav onOpenMobileMenu={() => setIsMobileMenuOpen(true)} />
       )}
@@ -140,5 +97,3 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
     </div>
   );
 }
-
-

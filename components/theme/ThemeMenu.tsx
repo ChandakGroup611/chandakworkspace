@@ -74,3 +74,6 @@ export function ThemeMenu({ className = "" }: { className?: string }) {
     </Popover.Root>
   );
 }
+
+export default ThemeMenu;
+

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { 
   FolderKanban, 
@@ -8,16 +8,14 @@ import {
   Compass, 
   Layers, 
   LineChart,
-  BookOpen,
-  ShieldCheck,
   ChevronDown, 
   Check, 
-  Sparkles,
   ExternalLink,
-  ArrowRightLeft
+  Star
 } from "lucide-react";
-import type { ModuleInfo, UserModulesResult } from "@/lib/actions/module-switcher";
-import { AppButton } from "@/components/ui/AppButton";
+import * as Popover from "@radix-ui/react-popover";
+import type { UserModulesResult } from "@/lib/actions/module-switcher";
+import { cn } from "@/lib/utils";
 
 interface ModuleSwitcherProps {
   isCompact?: boolean;
@@ -25,12 +23,26 @@ interface ModuleSwitcherProps {
   className?: string;
 }
 
+// Module-level cached promise: fetch once per session, not on every route change
+let cachedModulesPromise: Promise<UserModulesResult> | null = null;
+function getCachedModules(): Promise<UserModulesResult> {
+  if (!cachedModulesPromise) {
+    cachedModulesPromise = fetch("/api/modules")
+      .then((res) => res.json())
+      .catch((err) => {
+        cachedModulesPromise = null;
+        throw err;
+      });
+  }
+  return cachedModulesPromise;
+}
+
+const CORE_MAIN_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
+
 export default function ModuleSwitcher({ isCompact = false, onCloseMobile, className = "" }: ModuleSwitcherProps) {
   const pathname = usePathname() || "/";
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [data, setData] = useState<UserModulesResult | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Auto-detect current active module strictly based on route
   const activeModuleCode = React.useMemo(() => {
@@ -51,18 +63,15 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     }
   }, [activeModuleCode]);
 
-  const CORE_MAIN_MODULE_CODES = React.useMemo(() => new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]), []);
-
   useEffect(() => {
     let isMounted = true;
-    fetch("/api/modules")
-      .then((res) => res.json())
+    getCachedModules()
       .then((res: UserModulesResult) => {
         if (isMounted) {
-          const filteredModules = (res.modules || []).filter(m => CORE_MAIN_MODULE_CODES.has(m.code));
+          const filteredModules = (res.modules || []).filter((m) => CORE_MAIN_MODULE_CODES.has(m.code));
           setData({
             ...res,
-            modules: filteredModules
+            modules: filteredModules,
           });
         }
       })
@@ -73,22 +82,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     return () => {
       isMounted = false;
     };
-  }, [pathname, CORE_MAIN_MODULE_CODES]);
-
-  // Click outside listener
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open]);
+  }, []);
 
   const getModuleIcon = (code: string) => {
     switch (code) {
@@ -105,42 +99,32 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     }
   };
 
-  const getModuleTheme = (code: string) => {
-    return {
-      color: "text-theme-btn-primary",
-      bg: "bg-theme-btn-primary/10",
-      border: "border-theme-btn-primary/30",
-      dot: "bg-theme-btn-primary"
-    };
-  };
-
-  const handleSetDefaultModule = async (e: React.MouseEvent, code: string, name: string) => {
+  const handleSetDefaultModule = async (e: React.MouseEvent, code: string) => {
     e.stopPropagation();
     try {
-      setLoading(true);
       const res = await fetch("/api/modules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleCode: code, setAsDefault: true })
+        body: JSON.stringify({ moduleCode: code, setAsDefault: true }),
       });
       const resData = await res.json();
       if (resData.success) {
         if (data) {
-          setData({
+          const updated = {
             ...data,
-            modules: data.modules.map(m => ({
+            modules: data.modules.map((m) => ({
               ...m,
-              is_default: m.code === code
+              is_default: m.code === code,
             })),
-            defaultModule: data.modules.find(m => m.code === code) || null,
-            hasExplicitDefault: true
-          });
+            defaultModule: data.modules.find((m) => m.code === code) || null,
+            hasExplicitDefault: true,
+          };
+          setData(updated);
+          cachedModulesPromise = Promise.resolve(updated);
         }
       }
     } catch (e) {
       console.error("[ModuleSwitcher] setDefault error:", e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -151,184 +135,144 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     }
 
     try {
-      setLoading(true);
       const res = await fetch("/api/modules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleCode: code, setAsDefault: false })
+        body: JSON.stringify({ moduleCode: code, setAsDefault: false }),
       });
       const resData = await res.json();
       if (resData.success) {
         onCloseMobile?.();
-        window.location.href = resData.redirectUrl || (code === "VEHICLE_DESK" ? "/vehicle" : code === "DESIGN_TRACKING" ? "/design/matrix" : code === "DASHBOARDS" ? "/dashboards" : "/");
-      } else {
-        setLoading(false);
+        window.location.href =
+          resData.redirectUrl ||
+          (code === "VEHICLE_DESK"
+            ? "/vehicle"
+            : code === "DESIGN_TRACKING"
+            ? "/design/matrix"
+            : code === "DASHBOARDS"
+            ? "/dashboards"
+            : "/");
       }
     } catch (e) {
       console.error("[ModuleSwitcher] switch error:", e);
-      setLoading(false);
     }
   };
 
-  const activeModule = data?.modules.find(m => m.code === activeModuleCode) || {
+  const activeModule = data?.modules.find((m) => m.code === activeModuleCode) || {
     code: activeModuleCode,
-    name: activeModuleCode === "VEHICLE_DESK" 
-      ? "Vehicle Module" 
-      : activeModuleCode === "DESIGN_TRACKING" 
-      ? "Design Tracking" 
-      : activeModuleCode === "DASHBOARDS"
-      ? "Dashboards"
-      : "Workspace Module",
+    name:
+      activeModuleCode === "VEHICLE_DESK"
+        ? "Vehicle Module"
+        : activeModuleCode === "DESIGN_TRACKING"
+        ? "Design Tracking"
+        : activeModuleCode === "DASHBOARDS"
+        ? "Dashboards"
+        : "Workspace Module",
     description: null,
     icon: "FolderKanban",
-    route_path: activeModuleCode === "VEHICLE_DESK" ? "/vehicle" : activeModuleCode === "DESIGN_TRACKING" ? "/design/matrix" : activeModuleCode === "DASHBOARDS" ? "/dashboards" : "/",
+    route_path:
+      activeModuleCode === "VEHICLE_DESK"
+        ? "/vehicle"
+        : activeModuleCode === "DESIGN_TRACKING"
+        ? "/design/matrix"
+        : activeModuleCode === "DASHBOARDS"
+        ? "/dashboards"
+        : "/",
     display_order: 1,
-    is_active: true
+    is_active: true,
   };
 
   const ActiveIcon = getModuleIcon(activeModule.code);
-  const activeTheme = getModuleTheme(activeModule.code);
-
   const hasMultipleModules = (data?.modules?.length || 0) > 1;
 
-  if (isCompact) {
-    return (
-      <div className={`relative ${className}`} ref={dropdownRef}>
-        <AppButton
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => hasMultipleModules && setOpen(!open)}
-          title={`Active: ${activeModule.name}${hasMultipleModules ? ' (Click to switch module)' : ''}`}
-          className={`h-9 w-9 mx-auto rounded-xl flex items-center justify-center transition-all ${
-            hasMultipleModules 
-              ? "hover:scale-105 active:scale-95 cursor-pointer" 
-              : "cursor-default"
-          } ${activeTheme.bg} ${activeTheme.color} border ${activeTheme.border}`}
+  // Single module presentation: Render a clean, non-interactive label (not a 50% opacity disabled button)
+  if (!hasMultipleModules) {
+    if (isCompact) {
+      return (
+        <div
+          className={cn("h-9 w-9 mx-auto rounded-lg flex items-center justify-center bg-accent-soft text-accent-soft-text border border-border/40", className)}
+          title={`Active: ${activeModule.name}`}
         >
           <ActiveIcon className="h-4 w-4" />
-        </AppButton>
+        </div>
+      );
+    }
 
-        {open && hasMultipleModules && (
-          <div className="absolute left-full ml-2 top-0 z-50 w-72 rounded-2xl bg-surface border border-border shadow-2xl p-2.5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 flex items-center justify-between">
-              <span>Switch Module</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-elevated text-muted-foreground font-semibold">
-                {data?.modules.length} Available
-              </span>
-            </div>
-
-            <div className="py-2 space-y-1.5">
-              {data?.modules.map((mod) => {
-                const ModIcon = getModuleIcon(mod.code);
-                const isCurrent = mod.code === activeModuleCode;
-
-                return (
-                  <div
-                    key={mod.id}
-                    onClick={() => handleSelectModule(mod.code)}
-                    className={`w-full flex items-start justify-between gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
-                      isCurrent
-                        ? "bg-theme-btn-primary/10 text-theme-btn-primary font-bold border border-theme-btn-primary/20 shadow-xs"
-                        : "text-foreground hover:bg-elevated"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                      <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${isCurrent ? 'bg-theme-btn-primary text-white' : 'bg-elevated text-muted-foreground'}`}>
-                        <ModIcon className="h-4 w-4" />
-                      </div>
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <span className="leading-snug font-semibold text-foreground break-words">{mod.name}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          {mod.is_default ? (
-                            <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5">
-                              ★ Default Login
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => handleSetDefaultModule(e, mod.code, mod.name)}
-                              title="Set as default login module"
-                              className="text-[10px] text-muted-foreground hover:text-amber-500 hover:underline transition-colors font-medium flex items-center gap-0.5"
-                            >
-                              ☆ Set Default
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {isCurrent && (
-                      <div className="h-6 flex items-center shrink-0">
-                        <Check className="h-4 w-4 text-theme-btn-primary" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-2 border-t border-border/50">
-              <a
-                href="/select-module"
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-elevated"
-              >
-                <span>Change Default Module</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          </div>
-        )}
+    return (
+      <div className={cn("w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border/50 bg-sunken select-none", className)}>
+        <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 bg-accent-soft text-accent-soft-text">
+          <ActiveIcon className="h-4 w-4" />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+            Active Module
+          </span>
+          <span className="text-xs font-semibold text-foreground truncate">
+            {activeModule.name}
+          </span>
+        </div>
       </div>
     );
   }
 
+  // Multiple modules presentation with Radix Popover (portalled to prevent clipping)
   return (
-    <div className={`relative w-full ${className}`} ref={dropdownRef}>
-      <AppButton
-        type="button"
-        variant="ghost"
-        onClick={() => hasMultipleModules && setOpen(!open)}
-        disabled={!hasMultipleModules}
-        className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border transition-all text-left group ${
-          hasMultipleModules
-            ? "hover:border-theme-btn-primary/40 active:scale-[0.99] cursor-pointer"
-            : "cursor-default border-transparent"
-        } bg-surface/80 border-border shadow-xs`}
-      >
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 bg-theme-btn-primary/10 text-theme-btn-primary shadow-xs">
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        {isCompact ? (
+          <button
+            type="button"
+            aria-label={`Current module: ${activeModule.name}. Click to switch module`}
+            className={cn(
+              "h-9 w-9 mx-auto rounded-lg flex items-center justify-center transition-colors bg-accent-soft text-accent-soft-text border border-border hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              className
+            )}
+          >
             <ActiveIcon className="h-4 w-4" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-              Active Module
-              {hasMultipleModules && (
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              )}
-            </span>
-            <span className="text-xs font-semibold text-foreground truncate">
-              {activeModule.name}
-            </span>
-          </div>
-        </div>
-
-        {hasMultipleModules && (
-          <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 shrink-0 ${open ? "rotate-180 text-foreground" : "group-hover:text-foreground"}`} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label={`Current module: ${activeModule.name}. Click to switch module`}
+            className={cn(
+              "w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              className
+            )}
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 bg-primary text-primary-foreground shadow-xs">
+                <ActiveIcon className="h-4 w-4" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1">
+                  Active Module
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                </span>
+                <span className="text-xs font-semibold text-foreground truncate">
+                  {activeModule.name}
+                </span>
+              </div>
+            </div>
+            <ChevronDown className={cn("h-3.5 w-3.5 text-muted transition-transform duration-200 shrink-0", open && "rotate-180 text-foreground")} />
+          </button>
         )}
-      </AppButton>
+      </Popover.Trigger>
 
-      {/* Dropdown Menu */}
-      {open && hasMultipleModules && (
-        <div className="absolute top-full left-0 right-0 sm:-right-2 sm:-left-2 mt-2 z-50 min-w-[240px] rounded-2xl bg-surface border border-border shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 flex items-center justify-between">
+      <Popover.Portal>
+        <Popover.Content
+          align="start"
+          side={isCompact ? "right" : "bottom"}
+          sideOffset={8}
+          className="z-[var(--z-popover)] w-72 rounded-xl bg-elevated border border-border p-2 shadow-xl outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+        >
+          <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-border flex items-center justify-between">
             <span>Switch Module</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-elevated text-muted-foreground font-semibold">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sunken text-subtle font-semibold tabular-nums">
               {data?.modules.length} Available
             </span>
           </div>
 
-          <div className="py-2 space-y-1.5">
+          <div className="py-1.5 space-y-1">
             {data?.modules.map((mod) => {
               const ModIcon = getModuleIcon(mod.code);
               const isCurrent = mod.code === activeModuleCode;
@@ -336,60 +280,74 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
               return (
                 <div
                   key={mod.id}
-                  onClick={() => handleSelectModule(mod.code)}
-                  className={`w-full flex items-start justify-between gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                  className={cn(
+                    "flex items-center justify-between gap-2 p-1.5 rounded-lg transition-colors",
                     isCurrent
-                      ? "bg-theme-btn-primary/10 text-theme-btn-primary font-bold border border-theme-btn-primary/20 shadow-xs"
-                      : "text-foreground hover:bg-elevated"
-                  }`}
+                      ? "bg-selected border border-border/50"
+                      : "hover:bg-surface-hover"
+                  )}
                 >
-                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${isCurrent ? 'bg-theme-btn-primary text-white' : 'bg-elevated text-muted-foreground'}`}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectModule(mod.code)}
+                    className="flex items-center gap-2.5 min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded py-0.5"
+                  >
+                    <div
+                      className={cn(
+                        "h-7 w-7 rounded-md flex items-center justify-center shrink-0",
+                        isCurrent
+                          ? "bg-primary text-primary-foreground font-bold"
+                          : "bg-sunken text-muted"
+                      )}
+                    >
                       <ModIcon className="h-4 w-4" />
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="leading-snug font-semibold text-foreground break-words">{mod.name}</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        {mod.is_default ? (
-                          <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5">
-                            ★ Default Login
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => handleSetDefaultModule(e, mod.code, mod.name)}
-                            title="Set this as your default module on login"
-                            className="text-[10px] text-muted-foreground hover:text-amber-500 hover:underline transition-colors font-medium flex items-center gap-0.5"
-                          >
-                            ☆ Set Default
-                          </button>
-                        )}
-                      </div>
+                      <span className={cn("text-xs leading-snug font-semibold truncate", isCurrent ? "text-foreground" : "text-subtle")}>
+                        {mod.name}
+                      </span>
+                      {mod.is_default && (
+                        <span className="text-[10px] text-warning-text font-medium flex items-center gap-0.5">
+                          Default Login
+                        </span>
+                      )}
                     </div>
-                  </div>
+                  </button>
 
-                  {isCurrent && (
-                    <div className="h-6 flex items-center shrink-0">
-                      <Check className="h-4 w-4 text-theme-btn-primary" />
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => handleSetDefaultModule(e, mod.code)}
+                      title={mod.is_default ? "Default login module" : "Set as default login module"}
+                      aria-label={mod.is_default ? "Default login module" : `Set ${mod.name} as default login module`}
+                      className={cn(
+                        "p-1 rounded text-muted hover:text-warning transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                        mod.is_default && "text-warning"
+                      )}
+                    >
+                      <Star className={cn("h-3.5 w-3.5", mod.is_default && "fill-current")} />
+                    </button>
+                    {isCurrent && (
+                      <Check className="h-3.5 w-3.5 text-primary ml-0.5" />
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="pt-2 border-t border-border/50 flex items-center justify-between px-1">
+          <div className="pt-2 border-t border-border flex items-center justify-between px-2">
             <a
               href="/select-module"
               onClick={() => onCloseMobile?.()}
-              className="text-[11px] font-semibold text-theme-btn-primary hover:underline flex items-center gap-1 py-1"
+              className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 py-1"
             >
               <span>Manage Modules</span>
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
-        </div>
-      )}
-    </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }

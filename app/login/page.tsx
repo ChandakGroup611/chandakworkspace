@@ -282,139 +282,117 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
-      <style dangerouslySetInnerHTML={{__html: `
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus, 
-        input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px var(--color-surface) inset !important;
-            -webkit-text-fill-color: var(--color-foreground) !important;
-        }
-      `}} />
       {/* LEFT PANEL - Branding / Image Split */}
-      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-surface text-foreground">
+      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-sunken border-r border-border text-foreground">
         <Image 
           src="/login-bg.png"
           alt="Abstract Background"
           fill
           priority
-          className="object-cover opacity-10 dark:opacity-30 mix-blend-luminosity"
+          className="object-cover opacity-10 dark:opacity-25 mix-blend-luminosity"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/80 to-surface/20"></div>
-        
-        {/* Abstract Glow Effects */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-theme-btn-primary/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-theme-btn-primary/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-sunken via-sunken/80 to-sunken/30"></div>
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
-          
           {/* Logo - Pushed to Absolute Top */}
-          <div className="absolute top-8 lg:top-12 left-0 right-0 flex flex-col items-center px-6 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
-            <div className="relative w-fit inline-flex py-3.5 px-6 rounded-2xl bg-surface/90 dark:bg-surface/50 backdrop-blur-md shadow-xl border border-border/70 items-center justify-center transition-all hover:shadow-2xl">
+          <div className="absolute top-8 lg:top-12 left-0 right-0 flex flex-col items-center px-6 animate-in fade-in slide-in-from-top-8 duration-700">
+            <div className="relative w-fit inline-flex py-3.5 px-6 rounded-xl bg-surface border border-border shadow-sm items-center justify-center">
               <img 
                 src="/Chandak_Group_Official_Logo.png" 
                 alt="Chandak Group Official Logo" 
-                className="h-16 lg:h-20 w-auto object-contain dark:brightness-0 dark:invert"
-                style={{ imageRendering: '-webkit-optimize-contrast' }}
+                className="h-14 lg:h-16 w-auto object-contain dark:brightness-0 dark:invert"
+                style={{ imageRendering: "-webkit-optimize-contrast" }}
               />
             </div>
           </div>
 
           {/* Main Text - Perfectly Centered */}
-          <div className="max-w-xl mt-32 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-12 leading-tight drop-shadow-sm">
+          <div className="max-w-xl mt-28 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground mb-4 leading-tight">
               Intelligent Governance <br />
               & Enterprise Mastery
             </h1>
-            <p className="text-muted-foreground text-lg font-medium leading-relaxed max-w-md mx-auto drop-shadow-sm">
+            <p className="text-subtle text-base font-normal leading-relaxed max-w-md mx-auto">
               Securely orchestrate enterprise operations, manage identities, and automate workflows in one unified platform.
             </p>
           </div>
-
         </div>
       </div>
 
       {/* RIGHT PANEL - Authentication Form */}
       <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-background relative text-foreground">
-        {/* Subtle grid on right panel for texture */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
-
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-24 relative z-10 min-h-full">
-          <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
+          <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500 fill-mode-both">
             
             <div className="lg:hidden flex flex-col items-center justify-center mb-8">
-              <div className="relative w-fit inline-flex py-2.5 px-5 items-center justify-center bg-surface/90 rounded-2xl shadow-lg border border-border/60">
+              <div className="relative w-fit inline-flex py-2 px-4 items-center justify-center bg-surface rounded-xl shadow-sm border border-border">
                 <img 
                   src="/Chandak_Group_Official_Logo.png" 
                   alt="Chandak Group Official Logo" 
-                  className="h-11 w-auto object-contain dark:brightness-0 dark:invert"
-                  style={{ imageRendering: '-webkit-optimize-contrast' }}
+                  className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
+                  style={{ imageRendering: "-webkit-optimize-contrast" }}
                 />
               </div>
             </div>
 
-            <div className="mb-10 lg:mb-12">
-              <h2 className="text-3xl font-bold mb-2 text-foreground">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-1.5 text-heading">
                 Welcome back
               </h2>
-              <p className="mb-4 text-muted-foreground">
-                Please enter your details to sign in to your workspace.
+              <p className="text-subtle text-sm">
+                Please enter your credentials to sign in to your workspace.
               </p>
             </div>
 
             {/* Realtime Alert Displays */}
             {noticeMsg && (
-              <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                <div className="space-y-1">
-                  <strong className="font-semibold block text-amber-900 dark:text-amber-300">{noticeMsg.title}</strong>
-                  <span className="opacity-90">{noticeMsg.description}</span>
+              <div className="mb-6 p-3.5 rounded-lg bg-warning-soft border border-warning-border text-warning-text text-sm flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <strong className="font-semibold block">{noticeMsg.title}</strong>
+                  <span className="opacity-95">{noticeMsg.description}</span>
                 </div>
               </div>
             )}
 
             {errorMsg && (
-              <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-danger dark:text-danger text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="mb-6 p-3.5 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-sm flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <strong className="font-semibold block">Authentication Failed</strong>
-                  <span className="opacity-90">{errorMsg}</span>
+                  <span className="opacity-95">{errorMsg}</span>
                 </div>
               </div>
             )}
 
             {successMsg && (
-              <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-success dark:text-success text-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="mb-6 p-3.5 rounded-lg bg-success-soft border border-success-border text-success-text text-sm flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 shrink-0" />
                 <span className="font-medium">{successMsg}</span>
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
+            <form onSubmit={handleStandardAuthSubmit} className="space-y-4" autoComplete="off">
+              <AppInput 
+                label="Email Address"
+                name="email"
+                type="email"
+                placeholder="user@chandak.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                leftIcon={<Mail className="h-4 w-4 text-muted" />}
+                required
+              />
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                  Email Address
-                </label>
-                <AppInput 
-                  name="email"
-                  type="email"
-                  placeholder="user@enterprise.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  leftIcon={<Mail className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-surface border-border focus:bg-surface transition-colors text-foreground"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                    Password
-                  </label>
-                  <Link href="#" onClick={(e) => { e.preventDefault(); toast.warning("Contact administrator to reset password."); }} className="text-xs font-semibold text-theme-icon hover:text-theme-icon/80 transition-colors">
+                  <span className="text-xs font-medium text-subtle">Password</span>
+                  <Link 
+                    href="#" 
+                    onClick={(e) => { e.preventDefault(); toast.warning("Contact administrator to reset password."); }} 
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
                     Forgot password?
                   </Link>
                 </div>
@@ -424,8 +402,7 @@ export default function LoginPage() {
                   placeholder="••••••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  leftIcon={<Lock className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-surface border-border focus:bg-surface transition-colors text-foreground"
+                  leftIcon={<Lock className="h-4 w-4 text-muted" />}
                   required
                 />
               </div>
@@ -434,11 +411,11 @@ export default function LoginPage() {
                 type="submit" 
                 variant="primary"
                 disabled={loading || !!successMsg}
-                className="w-full h-12 mt-4 text-base font-semibold shadow-lg shadow-theme-btn-primary/20 hover:shadow-theme-btn-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                className="w-full h-10 mt-2 font-semibold"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
-                    <span className="h-5 w-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    <span className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
                     <span>Processing...</span>
                   </div>
                 ) : (
@@ -450,12 +427,12 @@ export default function LoginPage() {
               </AppButton>
             </form>
 
-            <div className="relative py-8">
+            <div className="relative py-6">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-4 font-semibold tracking-widest text-muted-foreground">
+                <span className="bg-background px-3 font-medium tracking-wider text-muted">
                   Or Continue With
                 </span>
               </div>
@@ -463,25 +440,25 @@ export default function LoginPage() {
 
             <AppButton
               type="button"
-              variant="outline"
+              variant="secondary"
               onClick={handleMicrosoftLogin}
               disabled={ssoLoading}
-              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-surface/50 font-semibold bg-transparent border border-border text-foreground"
+              className="w-full h-10 flex items-center justify-center gap-3 font-medium"
             >
               {ssoLoading ? (
-                <div className="flex items-center gap-2 text-foreground">
-                  <span className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                <div className="flex items-center gap-2">
+                  <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
                   Connecting to Microsoft...
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-foreground">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 21 21">
+                <div className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21">
                     <path fill="#f25022" d="M1 1h9v9H1z"/>
                     <path fill="#00a4ef" d="M1 11h9v9H1z"/>
                     <path fill="#7fba00" d="M11 1h9v9h-9z"/>
                     <path fill="#ffb900" d="M11 11h9v9h-9z"/>
                   </svg>
-                  Continue with Microsoft
+                  <span>Continue with Microsoft</span>
                 </div>
               )}
             </AppButton>
