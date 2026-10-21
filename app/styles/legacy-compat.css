@@ -1,0 +1,68 @@
+/* ==========================================================================
+   LEGACY COMPATIBILITY — temporary.
+   Older pages hard-code Tailwind palette classes (text-gray-400, bg-slate-900,
+   text-white, bg-[#0A0D14] ...). These rules map them onto theme tokens so those
+   pages stay readable while they are migrated. When a page uses only token
+   classes (bg-surface, text-muted, border-border ...) it no longer needs this.
+
+   Fixes vs. the old version:
+   - Dark mode used to force ALL grey text (incl. muted) to near-white #f1f5f9,
+     which erased the visual hierarchy. Grey text now maps to secondary/muted.
+   - base.css and globals.css disagreed on .text-gray-500 in light mode.
+   - Uses [data-mode] so it follows every theme, not a hard-coded list.
+   ========================================================================== */
+
+/* Grey text -> hierarchy tokens (both modes) */
+:where([data-mode]) .text-gray-300, :where([data-mode]) .text-slate-300, :where([data-mode]) .text-zinc-300,
+:where([data-mode]) .text-gray-200, :where([data-mode]) .text-slate-200, :where([data-mode]) .text-zinc-200 {
+  color: var(--text-secondary);
+}
+:where([data-mode]) .text-gray-400, :where([data-mode]) .text-slate-400, :where([data-mode]) .text-zinc-400,
+:where([data-mode]) .text-gray-500, :where([data-mode]) .text-slate-500, :where([data-mode]) .text-zinc-500,
+:where([data-mode]) .text-gray-600, :where([data-mode]) .text-slate-600, :where([data-mode]) .text-zinc-600 {
+  color: var(--text-muted);
+}
+:where([data-mode]) .text-gray-700, :where([data-mode]) .text-slate-700,
+:where([data-mode]) .text-gray-800, :where([data-mode]) .text-slate-800,
+:where([data-mode]) .text-gray-900, :where([data-mode]) .text-slate-900 {
+  color: var(--text-primary);
+}
+
+/* Hard-coded dark panels -> surface tokens */
+:where([data-mode]) .bg-\[\#0A0D14\], :where([data-mode]) .bg-\[\#0a0a0b\], :where([data-mode]) .bg-\[\#0B0F19\],
+:where([data-mode]) .bg-\[\#1C1C21\], :where([data-mode]) .bg-\[\#0b0e17\]\/95,
+:where([data-mode]) .bg-slate-950, :where([data-mode]) .bg-gray-950, :where([data-mode]) .bg-zinc-950 {
+  background-color: var(--bg-surface);
+}
+[data-mode="light"] .bg-slate-900:not(.text-white), [data-mode="light"] .bg-gray-900:not(.text-white),
+[data-mode="light"] .bg-zinc-900:not(.text-white), [data-mode="light"] .bg-slate-800:not(.text-white),
+[data-mode="light"] .bg-gray-800:not(.text-white), [data-mode="light"] .bg-zinc-800:not(.text-white) {
+  background-color: var(--bg-surface);
+}
+[data-mode="light"] .bg-white\/5, [data-mode="light"] .bg-white\/10, [data-mode="light"] .bg-white\/\[0\.02\],
+[data-mode="light"] .bg-white\/\[0\.05\], [data-mode="light"] .bg-black\/30, [data-mode="light"] .bg-black\/40 {
+  background-color: var(--bg-sunken);
+}
+[data-mode="dark"] .bg-white:not([class*="text-"]), [data-mode="dark"] .bg-gray-50, [data-mode="dark"] .bg-slate-50 {
+  background-color: var(--bg-surface);
+}
+[data-mode="dark"] .bg-gray-100, [data-mode="dark"] .bg-slate-100 { background-color: var(--bg-sunken); }
+
+/* Hard-coded borders */
+:where([data-mode]) .border-white\/5, :where([data-mode]) .border-white\/10, :where([data-mode]) .border-white\/20,
+:where([data-mode]) .border-gray-200, :where([data-mode]) .border-slate-200,
+:where([data-mode]) .border-gray-700, :where([data-mode]) .border-slate-700, :where([data-mode]) .border-zinc-700,
+:where([data-mode]) .border-gray-800, :where([data-mode]) .border-slate-800, :where([data-mode]) .border-zinc-800 {
+  border-color: var(--border-subtle);
+}
+
+/* text-white with no background of its own is "body text written for dark mode" */
+[data-mode="light"] .text-white:not([class*="bg-"]):not([class*="from-"]) { color: var(--text-primary); }
+/* ...unless it sits on a coloured parent (buttons, chips, banners) */
+[data-mode="light"] :is([class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-purple-"], [class*="bg-violet-"],
+  [class*="bg-emerald-"], [class*="bg-green-"], [class*="bg-teal-"], [class*="bg-cyan-"], [class*="bg-sky-"],
+  [class*="bg-rose-"], [class*="bg-red-"], [class*="bg-amber-"], [class*="bg-orange-"],
+  [class*="bg-slate-8"], [class*="bg-slate-9"], [class*="bg-primary"], [class*="bg-theme-btn-primary"],
+  [class*="bg-danger"], [class*="bg-accent"], [class*="bg-sidebar"], [class*="from-"]) .text-white {
+  color: #ffffff;
+}

@@ -1,0 +1,116 @@
+/* ==========================================================================
+   Structural classes used across existing pages. Written ONCE against tokens,
+   so they look right in every theme. (Previously each of the 8 theme files
+   re-declared them with hard-coded hex and !important, which made them drift
+   and blocked Tailwind className overrides.)
+   Living in @layer components means a utility class on the element wins.
+   ========================================================================== */
+@layer components {
+  .theme-card-structural {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    box-shadow: var(--elevation-sm);
+  }
+
+  .theme-input-structural {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-input);
+    min-height: var(--control-h);
+    transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .theme-input-structural:hover:not(:disabled):not(:focus) { border-color: var(--border-active); }
+  .theme-input-structural:focus,
+  .theme-input-structural:focus-visible {
+    outline: none;
+    border-color: var(--focus-ring);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 22%, transparent);
+  }
+  .theme-input-structural[aria-invalid="true"] { border-color: var(--danger); }
+  .theme-input-structural[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent);
+  }
+  .theme-input-structural:disabled {
+    background: var(--bg-sunken);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+
+  /* Secondary by default; add .theme-btn-primary for the main action.
+     (light-neumorphic previously painted EVERY structural button purple.) */
+  .theme-button-structural {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: var(--control-h);
+    padding: 0 14px;
+    background: var(--btn-secondary-bg);
+    color: var(--btn-secondary-text);
+    border: 1px solid var(--btn-secondary-border);
+    border-radius: var(--radius-button);
+    font-weight: 500;
+    box-shadow: var(--elevation-sm);
+    transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+  }
+  .theme-button-structural:hover:not(:disabled) { background: var(--btn-secondary-hover); }
+  .theme-button-structural:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+  .theme-button-structural.theme-btn-primary {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border-color: transparent;
+  }
+  .theme-button-structural.theme-btn-primary:hover:not(:disabled) { background: var(--btn-primary-hover); }
+
+  .theme-table-structural {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    box-shadow: var(--elevation-sm);
+    overflow: auto;
+  }
+  .theme-table-header {
+    background: var(--bg-sunken);
+    color: var(--text-secondary);
+  }
+  .theme-table-header th { border-bottom: 1px solid var(--border-subtle); }
+  /* Rows no longer slide sideways on hover (caused jitter and broke sticky columns) */
+  .theme-table-row { transition: background-color var(--dur-fast) var(--ease-out); }
+  .theme-table-row:hover { background: var(--bg-hover); }
+  .theme-table-row[data-state="selected"] { background: var(--bg-selected); }
+
+  .theme-badge-structural {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px;
+    background: var(--bg-sunken);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 12px; font-weight: 500; line-height: 18px;
+  }
+
+  /* Tabs: segmented look, active tab raised on a sunken track */
+  .theme-tab-list {
+    display: inline-flex; gap: 2px; padding: 3px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+  }
+  .theme-tab-standard {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 6px 14px;
+    font-size: 13px; font-weight: 500; white-space: nowrap; user-select: none; cursor: pointer;
+    color: var(--tab-inactive-text);
+    background: var(--tab-inactive-bg);
+    border-radius: 6px;
+    transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  }
+  .theme-tab-standard:hover { color: var(--text-primary); }
+  .theme-tab-standard[data-state="active"],
+  .theme-tab-standard[aria-selected="true"] {
+    background: var(--tab-active-bg);
+    color: var(--tab-active-text);
+    box-shadow: var(--elevation-sm);
+    font-weight: 600;
+  }
+}

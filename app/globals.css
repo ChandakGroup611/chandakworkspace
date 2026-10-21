@@ -1,42 +1,95 @@
 @import "tailwindcss";
 
-/* Import Phase 2 Advanced 3D Themes */
-@import '../src/styles/themes/base.css';
-@import '../src/styles/themes/dark-neumorphic-v2.css';
-@import '../src/styles/themes/light-neumorphic-v2.css';
-@import '../src/styles/themes/industrial-control-v2.css';
-@import '../src/styles/themes/cyberpunk-v2.css';
+/* 1. Colour tokens for every theme (generated, contrast-checked) */
+@import "./styles/themes.css";
+/* 2. Token-driven structural classes (theme-card-structural, theme-input-structural, ...) */
+@import "./styles/components.css";
+/* 3. TEMPORARY: remaps hard-coded Tailwind greys/blacks in older pages. Delete page by page. */
+@import "./styles/legacy-compat.css";
 
-@import '../src/styles/themes/pure-white-v2.css';
-@import '../src/styles/themes/pure-white-neumorphic-v2.css';
-@import '../src/styles/themes/amazon-v2.css';
-@import '../src/styles/themes/amazon-prime-upi-v2.css';
+/* Dark utilities follow the app's mode attribute, not the OS setting */
+@custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));
 
-/* Force Tailwind v4 to use class-based dark mode instead of media queries */
-@custom-variant dark (&:where(.dark, .dark *));
+/* `inline` makes utilities reference the theme variables directly (bg-surface →
+   var(--bg-surface)), so a nested [data-theme] (theme previews, an embedded
+   dark panel) resolves its own colours instead of the page root's. */
+@theme inline {
+  --font-sans: var(--app-font-family, "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif);
 
-@theme {
-  --font-sans: var(--app-font-family, ui-sans-serif, system-ui, sans-serif);
-  
+  /* Surfaces */
   --color-background: var(--bg-primary);
   --color-foreground: var(--text-primary);
   --color-surface: var(--bg-surface);
+  --color-surface-hover: var(--bg-hover);      /* was referenced everywhere but never defined */
   --color-elevated: var(--bg-elevated);
+  --color-sunken: var(--bg-sunken);
+  --color-selected: var(--bg-selected);
   --color-card: var(--bg-surface);
   --color-card-foreground: var(--text-primary);
-  --color-popover: var(--bg-surface);
+  --color-popover: var(--bg-elevated);
   --color-popover-foreground: var(--text-primary);
-  --color-muted: var(--bg-elevated, #f1f5f9);
-  --color-muted-foreground: var(--text-muted, #64748b);
+
+  /* Text. NOTE: --color-muted used to point at --bg-elevated, which made every
+     `text-muted` render in the background colour (white-on-white) and forced the
+     !important hacks in base.css. It now points at the muted TEXT colour. */
+  --color-muted: var(--text-muted);
+  --color-muted-foreground: var(--text-muted);
   --color-subtle: var(--text-secondary);
+  --color-heading: var(--heading-text);
+
+  /* Lines */
   --color-border: var(--border-subtle);
   --color-border-active: var(--border-active);
+  --color-input: var(--border-input);
+  --color-ring: var(--focus-ring);
+
+  /* Brand / action */
   --color-accent: var(--accent-primary);
   --color-accent-secondary: var(--accent-secondary);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-danger: var(--danger);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-text: var(--accent-soft-text);
+  --color-primary: var(--btn-primary-bg);
+  --color-primary-hover: var(--btn-primary-hover);
+  --color-primary-foreground: var(--btn-primary-text);
 
+  /* Status: solid (icons, dots), -text (readable text), -soft (tint bg), -border */
+  --color-success: var(--success);
+  --color-success-text: var(--success-text);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-danger: var(--danger);
+  --color-danger-text: var(--danger-text);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+  --color-danger-solid: var(--danger-solid);
+  --color-info: var(--info);
+  --color-info-text: var(--info-text);
+  --color-info-soft: var(--info-soft);
+  --color-info-border: var(--info-border);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-foreground: var(--sidebar-text);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active-bg);
+  --color-sidebar-active-foreground: var(--sidebar-active-text);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-indicator: var(--sidebar-indicator);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+
+  /* Back-compat names used across existing pages */
   --color-theme-btn-primary: var(--btn-primary-bg);
   --color-theme-btn-primary-text: var(--btn-primary-text);
   --color-theme-btn-secondary: var(--btn-secondary-bg);
@@ -46,488 +99,202 @@
   --color-theme-tab-inactive: var(--tab-inactive-bg);
   --color-theme-tab-inactive-text: var(--tab-inactive-text);
   --color-theme-heading: var(--heading-text);
-  --color-theme-icon: var(--icon-color);
+  --color-theme-icon: var(--accent-soft-text);
   --color-selection-bg: var(--selection-bg);
   --color-selection-text: var(--selection-text);
 
+  /* Shadows & radius */
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
 }
 
-/* Universal Theme Enhancements */
+/* Shared, non-colour design tokens */
+:root {
+  --radius-input: 6px;
+  --radius-button: 6px;
+  --radius-card: 10px;
+  --radius-modal: 12px;
+  --radius-pill: 999px;
+
+  /* One z-index scale. Popovers sit ABOVE modals/drawers so selects inside a
+     modal are visible (previously drawer = 999999, popover = 100). */
+  --z-sticky: 10;
+  --z-sidebar: 30;
+  --z-header: 35;
+  --z-mobile-nav: 40;
+  --z-overlay: 50;
+  --z-modal: 51;
+  --z-popover: 60;
+  --z-toast: 70;
+  --z-tooltip: 80;
+
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 120ms;
+  --dur-normal: 180ms;
+}
+
 @layer base {
   html {
-    font-size: var(--base-font-size, 16px) !important;
+    font-size: var(--base-font-size, 16px);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-text-size-adjust: 100%;
   }
-
-  /* Force inputs, buttons, and tables to inherit the font */
-  input, textarea, select, button, table, th, td {
-    font-family: inherit;
-  }
-
-  /* Universal Premium Typography for Labels & Data Fields */
-  label, .theme-label {
-    font-size: 0.75rem; /* text-xs */
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-muted-foreground, var(--text-muted, #475569));
-  }
-
-  .theme-data-value {
-    font-size: 0.875rem !important; /* text-sm */
-    font-weight: 600 !important;
-    color: var(--color-foreground) !important;
-  }
-
-  /* Universal High-Contrast Text Selection Across All Elements & Fields */
-  ::selection {
-    background-color: var(--selection-bg, #2563eb) !important;
-    color: var(--selection-text, #ffffff) !important;
-    -webkit-text-fill-color: var(--selection-text, #ffffff) !important;
-  }
-
-  ::-moz-selection {
-    background-color: var(--selection-bg, #2563eb) !important;
-    color: var(--selection-text, #ffffff) !important;
-  }
-
-  *::selection {
-    background-color: var(--selection-bg, #2563eb) !important;
-    color: var(--selection-text, #ffffff) !important;
-    -webkit-text-fill-color: var(--selection-text, #ffffff) !important;
-  }
-
-  *::-moz-selection {
-    background-color: var(--selection-bg, #2563eb) !important;
-    color: var(--selection-text, #ffffff) !important;
-  }
-
-  /* Universal Field & Form Controls Selection Guarantee (Inputs, Textareas, Modals) */
-  input::selection,
-  textarea::selection,
-  select::selection,
-  [contenteditable]::selection,
-  .theme-input-structural::selection,
-  .theme-data-value::selection {
-    background-color: var(--selection-bg, #2563eb) !important;
-    color: var(--selection-text, #ffffff) !important;
-    -webkit-text-fill-color: var(--selection-text, #ffffff) !important;
-  }
-
-  input::-moz-selection,
-  textarea::-moz-selection,
-  select::-moz-selection,
-  [contenteditable]::-moz-selection,
-  .theme-input-structural::-moz-selection,
-  .theme-data-value::-moz-selection {
-    background-color: var(--selection-bg, #2563eb) !important;
-    color: var(--selection-text, #ffffff) !important;
-  }
-
+  html, body { height: 100%; margin: 0; }
   body {
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--font-body, 14px);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01";
   }
+  h1, h2, h3, h4, h5, h6 { color: var(--heading-text); text-wrap: balance; }
 
-  /* Universal Field Styling (Inputs, Selects, Textareas) */
-  input:not([type="checkbox"]):not([type="radio"]),
+  input, textarea, select, button, table { font: inherit; }
+
+  /* Native fields that don't use AppInput still get a sane themed look */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
   select,
   textarea {
-    background-color: var(--color-surface);
-    color: var(--color-foreground);
-    transition: all 0.2s ease;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-input);
+    transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
   }
-
-  /* Soft focus ring for inputs */
-  input:not([type="checkbox"]):not([type="radio"]):focus,
-  select:focus,
-  textarea:focus {
+  input:not([type="checkbox"]):not([type="radio"]):hover:not(:disabled):not(:focus),
+  select:hover:not(:disabled):not(:focus),
+  textarea:hover:not(:disabled):not(:focus) {
+    border-color: var(--border-active);
+  }
+  input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
     outline: none;
-    border-color: var(--color-theme-btn-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-theme-btn-primary-rgb, 0,0,0), 0.2);
+    border-color: var(--focus-ring);
+    /* previously used an undefined --color-theme-btn-primary-rgb, so the ring was black */
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 22%, transparent);
+  }
+  ::placeholder { color: var(--text-muted); opacity: 0.85; }
+  :disabled { cursor: not-allowed; }
+
+  input[type="checkbox"], input[type="radio"] { accent-color: var(--btn-primary-bg); }
+
+  select option { background: var(--bg-elevated); color: var(--text-primary); }
+
+  /* Chrome autofill paints inputs light-blue; keep them on-theme (visible on the login screen) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-primary);
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-surface) inset;
+    caret-color: var(--text-primary);
+    transition: background-color 9999s ease-out 0s;
   }
 
-  /* Base borders */
-  input:not([type="checkbox"]):not([type="radio"]):not(:focus),
-  select:not(:focus),
-  textarea:not(:focus) {
-    border-width: 1px;
-    border-style: solid;
-    border-color: var(--color-border);
-  }
+  /* Keyboard focus is always visible; mouse focus is not */
+  :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  :focus:not(:focus-visible) { outline: none; }
 
-  input:not([type="checkbox"]):not([type="radio"]):not(:focus):hover,
-  select:not(:focus):hover,
-  textarea:not(:focus):hover {
-    border-color: var(--color-border-active);
+  ::selection { background: var(--selection-bg); color: var(--selection-text); }
+
+  /* Labels are no longer forced UPPERCASE/bold globally. Use .theme-label where an
+     overline label is wanted. */
+  label { color: var(--text-secondary); }
+
+  /* Thin, themed scrollbars (they were hidden everywhere, so users could not tell
+     that tables, drawers and dropdowns scroll). */
+  * { scrollbar-width: thin; scrollbar-color: var(--border-active) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-active);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
   }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted); }
 }
 
 @layer utilities {
-  .bg-surface {
-    background-color: var(--color-surface);
-  }
-  .bg-elevated {
-    background-color: var(--color-elevated);
-  }
+  /* Font-weight profile (heavy | standard | light) set by ThemeProvider */
+  .font-semibold { font-weight: var(--ui-weight-semibold, 600); }
+  .font-bold { font-weight: var(--ui-weight-bold, 700); }
+  .font-extrabold { font-weight: var(--ui-weight-extrabold, 800); }
 
-  .font-semibold {
-    font-weight: var(--ui-weight-semibold, 600) !important;
-  }
-  .font-bold {
-    font-weight: var(--ui-weight-bold, 700) !important;
-  }
-  .font-extrabold {
-    font-weight: var(--ui-weight-extrabold, 800) !important;
-  }
-  
+  .scrollbar-hide { scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  /* Universal Light Theme Enforcement */
-  /* Replaces hardcoded dark backgrounds and text colors when a light theme is active */
-  .theme-light .bg-\[\#0A0D14\],
-  .theme-light .bg-\[\#0b0e17\]\/95,
-  .theme-light .bg-\[\#1C1C21\],
-  .theme-light .bg-black\/30,
-  .theme-light .bg-black\/40,
-  .theme-light .bg-black\/50,
-  .theme-light .bg-white\/5,
-  .theme-light .bg-white\/10,
-  .theme-light .bg-white\/20,
-  .theme-light .bg-white\/\[0\.02\],
-  .theme-light .bg-white\/\[0\.05\],
-  .theme-light .bg-white\/\[0\.1\],
-  .theme-light .bg-slate-950:not(.text-white),
-  .theme-light .bg-slate-900:not(.text-white),
-  .theme-light .bg-slate-800:not(.text-white),
-  .theme-light .bg-gray-950:not(.text-white),
-  .theme-light .bg-gray-900:not(.text-white),
-  .theme-light .bg-gray-800:not(.text-white),
-  .theme-light .bg-zinc-950:not(.text-white),
-  .theme-light .bg-zinc-900:not(.text-white),
-  .theme-light .bg-zinc-800:not(.text-white) {
-    background-color: var(--color-surface) !important;
-  }
+  .tabular { font-variant-numeric: tabular-nums; }
 
-  .theme-light .border-white\/5,
-  .theme-light .border-white\/10,
-  .theme-light .border-white\/20,
-  .theme-light .border-slate-800,
-  .theme-light .border-slate-700,
-  .theme-light .border-gray-800,
-  .theme-light .border-gray-700,
-  .theme-light .border-zinc-800,
-  .theme-light .border-zinc-700 {
-    border-color: var(--color-border) !important;
+  .theme-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
   }
+  .theme-data-value { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
 
-  .theme-light .text-white:not([class*="bg-"]):not([class*="from-"]) {
-    color: var(--color-foreground) !important;
-  }
-  
-  .theme-light .text-gray-500,
-  .theme-light .text-slate-500,
-  .theme-light .text-zinc-500,
-  .theme-light .text-gray-200,
-  .theme-light .text-gray-300,
-  .theme-light .text-gray-400,
-  .theme-light .text-slate-200,
-  .theme-light .text-slate-300,
-  .theme-light .text-slate-400,
-  .theme-light .text-zinc-200,
-  .theme-light .text-zinc-300,
-  .theme-light .text-zinc-400,
-  .theme-light .text-white\/50,
-  .theme-light .text-white\/60,
-  .theme-light .text-white\/70 {
-    color: var(--color-subtle) !important;
-  }
-
-  /* Protect buttons and badges that legitimately need white text */
-  .theme-light [class*="bg-blue-"] .text-white,
-  .theme-light [class*="bg-indigo-"] .text-white,
-  .theme-light [class*="bg-purple-"] .text-white,
-  .theme-light [class*="bg-emerald-"] .text-white,
-  .theme-light [class*="bg-rose-"] .text-white,
-  .theme-light [class*="bg-amber-"] .text-white,
-  .theme-light [class*="bg-green-"] .text-white,
-  .theme-light [class*="bg-red-"] .text-white,
-  .theme-light [class*="bg-slate-800"] .text-white,
-  .theme-light [class*="bg-slate-900"] .text-white,
-  .theme-light [class*="from-blue-"] .text-white,
-  .theme-light [class*="from-indigo-"] .text-white,
-  .theme-light [class*="from-purple-"] .text-white,
-  .theme-light [class*="from-emerald-"] .text-white,
-  .theme-light [class*="from-rose-"] .text-white,
-  .theme-light [class*="from-amber-"] .text-white,
-  .theme-light [class*="bg-blue-"].text-white,
-  .theme-light [class*="bg-indigo-"].text-white,
-  .theme-light [class*="bg-purple-"].text-white,
-  .theme-light [class*="bg-emerald-"].text-white,
-  .theme-light [class*="bg-rose-"].text-white,
-  .theme-light [class*="bg-amber-"].text-white,
-  .theme-light [class*="bg-green-"].text-white,
-  .theme-light [class*="bg-red-"].text-white,
-  .theme-light [class*="bg-slate-800"].text-white,
-  .theme-light [class*="bg-slate-900"].text-white,
-  .theme-light [class*="from-blue-"].text-white,
-  .theme-light [class*="from-indigo-"].text-white,
-  .theme-light [class*="from-purple-"].text-white,
-  .theme-light [class*="from-emerald-"].text-white,
-  .theme-light [class*="from-rose-"].text-white,
-  .theme-light [class*="from-amber-"].text-white {
-    color: #ffffff !important;
-  }
-
-  /* Universal Recharts Light Theme Overrides */
-  .theme-light .recharts-cartesian-grid-horizontal line,
-  .theme-light .recharts-cartesian-grid-vertical line {
-    stroke: var(--color-border) !important;
-  }
-  
-  .theme-light .recharts-text,
-  .theme-light .recharts-cartesian-axis-tick-value {
-    fill: var(--color-subtle) !important;
-  }
-  
-  .theme-light .recharts-default-tooltip {
-    background-color: var(--color-surface) !important;
-    border-color: var(--color-border) !important;
-  }
-  
-  .theme-light .recharts-tooltip-item {
-    color: var(--color-foreground) !important;
-  }
-  
-  .theme-light .recharts-tooltip-label {
-    color: var(--color-subtle) !important;
-  }
-  
-  /* Standardized Universal Application Tabs */
-  .theme-tab-standard {
-    @apply flex items-center justify-center gap-2 px-5 py-2.5 text-[13px] font-bold transition-all duration-200 whitespace-nowrap select-none cursor-pointer;
-  }
+  /* Kept for existing markup; no longer moves things on hover */
+  .tactile-press { transition: transform var(--dur-fast) var(--ease-out); }
+  .tactile-press:active { transform: scale(0.98); }
+  .interactive-card { transition: box-shadow var(--dur-normal) var(--ease-out), border-color var(--dur-normal) var(--ease-out); }
+  .interactive-card:hover { box-shadow: var(--shadow-md); border-color: var(--border-active); }
+  .chevron-spring { transition: transform var(--dur-normal) var(--ease-out); }
 }
 
-/* Universal Scrollbar Hiding */
-::-webkit-scrollbar,
-::-webkit-scrollbar-corner,
-::-webkit-resizer,
-::-webkit-scrollbar-track,
-::-webkit-scrollbar-track-piece {
-    display: none !important;
-    background: transparent !important;
-    width: 0 !important;
-    height: 0 !important;
+/* Recharts follows tokens in every theme (was light-only) */
+.recharts-cartesian-grid line { stroke: var(--border-subtle); }
+.recharts-text, .recharts-cartesian-axis-tick-value { fill: var(--text-muted); }
+.recharts-default-tooltip {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
 }
-* {
-    -ms-overflow-style: none !important;
-    scrollbar-width: none !important;
-}
+.recharts-tooltip-label { color: var(--text-secondary) !important; }
+.recharts-tooltip-item { color: var(--text-primary) !important; }
 
-.scrollbar-hide::-webkit-scrollbar,
-.scrollbar-hide::-webkit-scrollbar-corner {
-    display: none !important;
-    background: transparent !important;
-}
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-/* Universal Crisp Text & High-Contrast Rendering */
-.theme-data-value,
-input,
-select,
-textarea,
-label,
-button,
-div,
-span,
-p,
-h1, h2, h3, h4, h5, h6 {
-  text-shadow: none !important;
-  -webkit-font-smoothing: antialiased !important;
-  -moz-osx-font-smoothing: grayscale !important;
-}
-
-/* Neutralize GPU-rasterizing backdrop-filter blur across entire application */
-.backdrop-blur-sm,
-.backdrop-blur,
-.backdrop-blur-md,
-.backdrop-blur-lg,
-.backdrop-blur-xl,
-.backdrop-blur-2xl,
-.backdrop-blur-3xl {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-.hover\:shadow-lg:hover .theme-label svg { 
-  transform: scale(1.1); 
-  transition: all 0.2s ease-in-out; 
-}
-.theme-label svg { 
-  transition: all 0.2s ease; 
-}
-
-/* ==========================================================================
-   Modern Micro-Interactions & 60fps Animation Touch Utilities
-   ========================================================================== */
-
-/* Smooth Deceleration Spring Easing (Apple / Linear style) */
-:root {
-  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* Radar Pulse for Live Status Indicators */
+/* Status pulse for live indicators */
 @keyframes pulseRadar {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 60%, transparent); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
-
 @keyframes pulseRadarDanger {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 60%, transparent); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
+.animate-radar { animation: pulseRadar 2s infinite; }
+.animate-radar-danger { animation: pulseRadarDanger 2s infinite; }
 
-.animate-radar {
-  animation: pulseRadar 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-}
+@keyframes slideUpFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.animate-stagger-in { animation: slideUpFade 0.24s var(--ease-out) backwards; }
+@keyframes accordionSlideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.animate-accordion-down { animation: accordionSlideDown 0.18s var(--ease-out) forwards; }
+.delay-1 { animation-delay: 30ms; } .delay-2 { animation-delay: 60ms; } .delay-3 { animation-delay: 90ms; }
+.delay-4 { animation-delay: 120ms; } .delay-5 { animation-delay: 150ms; } .delay-6 { animation-delay: 180ms; }
+.delay-7 { animation-delay: 210ms; } .delay-8 { animation-delay: 240ms; }
 
-.animate-radar-danger {
-  animation: pulseRadarDanger 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-}
-
-/* Staggered Entrance Animation for Tables & Lists */
-@keyframes slideUpFade {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-stagger-in {
-  animation: slideUpFade 0.35s var(--ease-spring) backwards;
-}
-
-@keyframes accordionSlideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-accordion-down {
-  animation: accordionSlideDown 0.25s var(--ease-spring) forwards;
-}
-
-/* Stagger delay utilities */
-.delay-1 { animation-delay: 40ms; }
-.delay-2 { animation-delay: 80ms; }
-.delay-3 { animation-delay: 120ms; }
-.delay-4 { animation-delay: 160ms; }
-.delay-5 { animation-delay: 200ms; }
-.delay-6 { animation-delay: 240ms; }
-.delay-7 { animation-delay: 280ms; }
-.delay-8 { animation-delay: 320ms; }
-
-/* Interactive Tactile Touch & Spring Hover Elevation */
-.tactile-press {
-  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
-}
-.tactile-press:hover {
-  transform: translateY(-1.5px);
-}
-.tactile-press:active {
-  transform: scale(0.96) translateY(0);
-}
-
-/* Universal Table Row Animation Touch */
-.theme-table-row {
-  transition: background-color 0.2s ease, transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
-  position: relative;
-}
-.theme-table-row:hover {
-  transform: translateX(2px);
-}
-
-/* Universal Chevron Smooth Spring Rotation */
-.chevron-spring {
-  transition: transform 0.3s var(--ease-bounce), color 0.2s ease;
-}
-
-/* Interactive Hover Card Lift with Ambient Glow */
-.interactive-card {
-  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s var(--ease-spring), border-color 0.25s ease;
-}
-.interactive-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.08);
-}
-.theme-dark .interactive-card:hover {
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 0 15px -2px var(--color-accent, rgba(99, 102, 241, 0.15));
-}
-
-/* Shimmer Sweep Animation for Premium Skeleton Loaders */
-@keyframes shimmerSweep {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.animate-shimmer {
-  position: relative;
-  overflow: hidden;
-}
+@keyframes shimmerSweep { 100% { transform: translateX(100%); } }
+.animate-shimmer { position: relative; overflow: hidden; }
 .animate-shimmer::after {
-  position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
-  transform: translateX(-100%);
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.08) 20%,
-    rgba(255, 255, 255, 0.15) 60%,
-    rgba(255, 255, 255, 0)
-  );
-  animation: shimmerSweep 1.8s infinite;
-  content: '';
+  content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-primary) 6%, transparent), transparent);
+  animation: shimmerSweep 1.6s infinite;
 }
-.theme-light .animate-shimmer::after {
-  background-image: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0) 0,
-    rgba(0, 0, 0, 0.03) 20%,
-    rgba(0, 0, 0, 0.06) 60%,
-    rgba(0, 0, 0, 0)
-  );
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
