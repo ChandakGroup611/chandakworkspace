@@ -1,5 +1,6 @@
 "use client";
 
+import { CHART_THEME } from "@/components/ui/charts/chartTheme";
 import React, { useMemo } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
 
@@ -106,12 +107,11 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={burndownData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
+                <CartesianGrid {...CHART_THEME.grid} />
                 <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={9} tickLine={false} axisLine={false} dy={10} style={{ fontFamily: 'var(--mono)' }} />
                 <YAxis stroke="var(--text-muted)" fontSize={9} tickLine={false} axisLine={false} dx={-10} style={{ fontFamily: 'var(--mono)' }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '8px', color: '#0f172a', fontSize: '11px', fontFamily: 'var(--mono)' }}
-                  itemStyle={{ color: '#0f172a' }}
+                  {...CHART_THEME.tooltip}
                 />
                 <Line type="monotone" dataKey="tasksActive" stroke="var(--teal)" strokeWidth={2} dot={{ r: 3, fill: 'var(--teal)', strokeWidth: 0 }} name="Tasks" />
                 <Line type="monotone" dataKey="wsActive" stroke="var(--accent)" strokeWidth={2} dot={false} name="Workspaces" />
@@ -145,14 +145,14 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
                     outerRadius="100%"
                     paddingAngle={0}
                     dataKey="value"
-                    stroke="#ffffff"
+                    stroke="var(--bg-surface)"
                     strokeWidth={3}
                   >
                     {donutData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '8px', color: '#0f172a', fontSize: '11px', fontFamily: 'var(--mono)' }} />
+                  <Tooltip {...CHART_THEME.tooltip} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

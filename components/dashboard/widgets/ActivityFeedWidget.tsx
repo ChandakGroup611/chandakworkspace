@@ -87,13 +87,13 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
           let iconBg;
           
           if (act.type === 'closed') {
-            iconElement = <CheckCircle2 className="h-4 w-4 text-success" />;
-            iconBg = "bg-success/10 border-success-border";
+            iconElement = <CheckCircle2 className="h-4 w-4 text-success-text" />;
+            iconBg = "bg-success-soft border-success-border";
           } else if (act.type === 'blocked') {
-            iconElement = <AlertCircle className="h-4 w-4 text-danger" />;
-            iconBg = "bg-danger/10 border-danger-border";
+            iconElement = <AlertCircle className="h-4 w-4 text-danger-text" />;
+            iconBg = "bg-danger-soft border-danger-border";
           } else if (act.type === 'comment') {
-            iconElement = <MessageSquare className="h-4 w-4 text-theme-icon" />;
+            iconElement = <MessageSquare className="h-4 w-4 text-accent-soft-text" />;
             iconBg = "bg-surface border-border";
           } else {
             iconElement = <Plus className="h-4 w-4 text-info-text" />;
@@ -120,7 +120,7 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
           );
         })}
         {activities.length === 0 && (
-          <div className="text-xs text-muted-foreground text-center py-8 border border-dashed border-border/50 rounded-xl">No recent activity</div>
+          <div className="text-xs text-muted-foreground text-center py-8 border border-border rounded-lg">No recent activity</div>
         )}
       </div>
     </BaseWidget>

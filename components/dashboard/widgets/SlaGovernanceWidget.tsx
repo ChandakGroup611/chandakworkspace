@@ -36,7 +36,7 @@ export function SlaGovernanceWidget({ analytics, kpis: globalKpis, onDrillDown }
     >
       <div className="flex flex-col h-full justify-center">
         {/* Heatmap Bar */}
-        <div className="w-full h-10 flex rounded-xl overflow-hidden mb-8 shadow-inner border border-border/50">
+        <div className="w-full h-10 flex rounded-lg overflow-hidden mb-8 shadow-inner border border-border">
           <div className="bg-success h-full transition-all duration-1000 ease-in-out hover:brightness-110" style={{ width: `${healthyPct}%` }} title={`Healthy: ${slaStats.healthy}`} />
           <div className="bg-warning h-full transition-all duration-1000 ease-in-out hover:brightness-110" style={{ width: `${warningPct}%` }} title={`Warning: ${slaStats.warning}`} />
           <div className="bg-danger h-full transition-all duration-1000 ease-in-out hover:brightness-110" style={{ width: `${breachedPct}%` }} title={`Breached: ${slaStats.breached}`} />
@@ -45,27 +45,27 @@ export function SlaGovernanceWidget({ analytics, kpis: globalKpis, onDrillDown }
         <div className="grid grid-cols-3 gap-4">
           <div 
             onClick={() => onDrillDown && onDrillDown({ title: "Healthy SLA deliverables", description: "Deliverables progressing within target SLA windows." })}
-            className={`p-4 rounded-xl border border-success-border bg-success/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-success/10 ${onDrillDown ? "cursor-pointer group" : ""}`}
+            className={`p-4 rounded-lg border border-success-border bg-success-soft text-center flex flex-col items-center justify-center transition-colors hover:bg-success-soft ${onDrillDown ? "cursor-pointer group" : ""}`}
           >
-            <ShieldCheck className="w-6 h-6 text-success mb-2" />
-            <div className="text-3xl font-semibold text-success dark:text-success drop-shadow-sm">{slaStats.healthy}</div>
-            <div className="text-[11px] font-bold text-success/70 dark:text-success/70 mt-1">Healthy</div>
+            <ShieldCheck className="w-6 h-6 text-success-text mb-2" />
+            <div className="text-3xl font-semibold text-success-text dark:text-success-text drop-shadow-sm">{slaStats.healthy}</div>
+            <div className="text-[11px] font-semibold text-success/70 dark:text-success/70 mt-1">Healthy</div>
           </div>
           <div 
             onClick={() => onDrillDown && onDrillDown({ title: "Warning SLA deliverables", description: "Deliverables nearing their deadline (<24 hours).", urgency: "warning" })}
-            className={`p-4 rounded-xl border border-warning-border bg-warning/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-warning/10 ${onDrillDown ? "cursor-pointer group" : ""}`}
+            className={`p-4 rounded-lg border border-warning-border bg-warning-soft text-center flex flex-col items-center justify-center transition-colors hover:bg-warning-soft ${onDrillDown ? "cursor-pointer group" : ""}`}
           >
-            <AlertTriangle className="w-6 h-6 text-warning mb-2" />
-            <div className="text-3xl font-semibold text-warning dark:text-warning drop-shadow-sm">{slaStats.warning}</div>
-            <div className="text-[11px] font-bold text-warning/70 dark:text-warning/70 mt-1">Warning</div>
+            <AlertTriangle className="w-6 h-6 text-warning-text mb-2" />
+            <div className="text-3xl font-semibold text-warning-text dark:text-warning-text drop-shadow-sm">{slaStats.warning}</div>
+            <div className="text-[11px] font-semibold text-warning/70 dark:text-warning/70 mt-1">Warning</div>
           </div>
           <div 
             onClick={() => onDrillDown && onDrillDown({ title: "Breached SLA deliverables", description: "All deliverables that exceeded resolution deadlines.", urgency: "breached" })}
-            className={`p-4 rounded-xl border border-danger-border bg-danger/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-danger/10 ${onDrillDown ? "cursor-pointer group" : ""}`}
+            className={`p-4 rounded-lg border border-danger-border bg-danger-soft text-center flex flex-col items-center justify-center transition-colors hover:bg-danger-soft ${onDrillDown ? "cursor-pointer group" : ""}`}
           >
-            <ShieldAlert className="w-6 h-6 text-danger mb-2" />
-            <div className="text-3xl font-semibold text-danger dark:text-danger drop-shadow-sm">{slaStats.breached}</div>
-            <div className="text-[11px] font-bold text-danger/70 dark:text-danger/70 mt-1">Breached</div>
+            <ShieldAlert className="w-6 h-6 text-danger-text mb-2" />
+            <div className="text-3xl font-semibold text-danger-text dark:text-danger-text drop-shadow-sm">{slaStats.breached}</div>
+            <div className="text-[11px] font-semibold text-danger/70 dark:text-danger/70 mt-1">Breached</div>
           </div>
         </div>
       </div>

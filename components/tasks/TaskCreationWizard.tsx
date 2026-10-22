@@ -761,7 +761,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     />
                     <label 
                       htmlFor="task-attachment"
-                      className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border border-dashed border-border cursor-pointer transition-colors text-muted hover:text-foreground hover:border-theme-btn-primary`}
+                      className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border border-border cursor-pointer transition-colors text-muted hover:text-foreground hover:border-theme-btn-primary`}
                     >
                       <Paperclip className="h-3 w-3" />
                       <span>Attach file</span>

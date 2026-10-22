@@ -25,8 +25,8 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
     const d2 = new Date(dueDate);
     const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
     
-    if (diff < 0) return <AppBadge variant="danger" className="text-[11px] font-bold py-0 h-5 border-danger-border text-danger">Overdue</AppBadge>;
-    if (diff === 0) return <AppBadge variant="warning" className="text-[11px] font-bold py-0 h-5 border-warning-border text-warning">Due today</AppBadge>;
+    if (diff < 0) return <AppBadge variant="danger" className="text-[11px] font-semibold py-0 h-5 border-danger-border text-danger-text">Overdue</AppBadge>;
+    if (diff === 0) return <AppBadge variant="warning" className="text-[11px] font-semibold py-0 h-5 border-warning-border text-warning-text">Due today</AppBadge>;
     if (diff === 1) return <span className="text-xs font-medium text-muted-foreground">Tomorrow</span>;
     return <span className="text-xs font-medium text-muted-foreground">In {diff} days</span>;
   };
@@ -35,16 +35,16 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
     const d1 = new Date();
     const d2 = new Date(dueDate);
     const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
-    if (diff < 0) return { icon: <Flame className="h-4 w-4 text-danger" /> };
-    if (diff <= 2) return { icon: <AlertCircle className="h-4 w-4 text-warning" /> };
+    if (diff < 0) return { icon: <Flame className="h-4 w-4 text-danger-text" /> };
+    if (diff <= 2) return { icon: <AlertCircle className="h-4 w-4 text-warning-text" /> };
     return { icon: <Calendar className="h-4 w-4 text-muted-foreground" /> };
   };
 
   return (
     <AppCard>
       <div className="flex items-center gap-2 p-4 border-b theme-card-structural">
-        <CalendarClock className="h-4 w-4 text-danger" />
-        <span className="text-sm font-bold text-foreground">Upcoming deadlines</span>
+        <CalendarClock className="h-4 w-4 text-danger-text" />
+        <span className="text-sm font-semibold text-foreground">Upcoming deadlines</span>
       </div>
       <div className="p-4 bg-background">
         <div className="space-y-3">

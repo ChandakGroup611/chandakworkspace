@@ -68,7 +68,7 @@ export default function LearningHubClient() {
       
       {/* Top Hero Banner */}
       <div className="w-full text-center space-y-4 pt-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20 mb-1">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-accent-soft text-primary border border-border-active mb-1">
           <GraduationCap className="h-4 w-4" />
           <span>Enterprise platform learning hub & knowledge center</span>
         </div>
@@ -84,9 +84,9 @@ export default function LearningHubClient() {
         <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
           <button type="button"
             onClick={() => setActiveTopTab("DIAGRAM")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs md:text-sm font-semibold transition-all border ${
               activeTopTab === "DIAGRAM"
-                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-lg shadow-theme-btn-primary/20"
+                ? "bg-primary text-white border-primary shadow-lg shadow-theme-btn-primary/20"
                 : "bg-surface hover:bg-elevated border-border text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -96,9 +96,9 @@ export default function LearningHubClient() {
 
           <button type="button"
             onClick={() => setActiveTopTab("MODULE_SPECS")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs md:text-sm font-semibold transition-all border ${
               activeTopTab === "MODULE_SPECS"
-                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-lg shadow-theme-btn-primary/20"
+                ? "bg-primary text-white border-primary shadow-lg shadow-theme-btn-primary/20"
                 : "bg-surface hover:bg-elevated border-border text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -108,9 +108,9 @@ export default function LearningHubClient() {
 
           <button type="button"
             onClick={() => setActiveTopTab("GLOBAL_FIELDS")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs md:text-sm font-semibold transition-all border ${
               activeTopTab === "GLOBAL_FIELDS"
-                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-lg shadow-theme-btn-primary/20"
+                ? "bg-primary text-white border-primary shadow-lg shadow-theme-btn-primary/20"
                 : "bg-surface hover:bg-elevated border-border text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -138,27 +138,27 @@ export default function LearningHubClient() {
           <div className="w-full space-y-8 animate-in fade-in duration-300">
             
             {/* Module Picker Bar */}
-            <div className="bg-surface rounded-2xl p-4 border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+            <div className="bg-surface rounded-lg p-4 border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-muted-foreground">Select Module:</span>
-                <span className="font-bold text-sm text-foreground">{selectedModule.title}</span>
+                <span className="text-xs font-semibold text-muted-foreground">Select Module:</span>
+                <span className="font-semibold text-sm text-foreground">{selectedModule.title}</span>
               </div>
 
               {/* Module Dropdown Selector */}
               <div className="relative w-full md:w-80">
                 <button type="button"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-elevated text-left text-xs font-bold text-foreground hover:border-theme-btn-primary transition-all"
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-border bg-elevated text-left text-xs font-semibold text-foreground hover:border-primary transition-all"
                 >
                   <div className="flex items-center gap-2 truncate">
-                    {React.createElement(selectedModule.icon, { className: "h-4 w-4 text-theme-btn-primary shrink-0" })}
+                    {React.createElement(selectedModule.icon, { className: "h-4 w-4 text-primary shrink-0" })}
                     <span className="truncate">{selectedModule.title}</span>
                   </div>
                   <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 left-0 top-full mt-2 p-2 rounded-xl border border-border bg-surface shadow-lg z-30 space-y-1">
+                  <div className="absolute right-0 left-0 top-full mt-2 p-2 rounded-lg border border-border bg-surface shadow-lg z-30 space-y-1">
                     {learningModules.map((m) => {
                       const Icon = m.icon;
                       const isCurr = m.id === selectedModuleId;
@@ -171,7 +171,7 @@ export default function LearningHubClient() {
                           }}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs transition-colors ${
                             isCurr
-                              ? "bg-accent-soft text-theme-btn-primary font-bold"
+                              ? "bg-accent-soft text-primary font-semibold"
                               : "hover:bg-elevated text-foreground"
                           }`}
                         >
@@ -196,10 +196,10 @@ export default function LearningHubClient() {
         {/* TAB 3: GLOBAL FIELD & SCHEMA INDEX */}
         {activeTopTab === "GLOBAL_FIELDS" && (
           <div className="w-full space-y-6 animate-in fade-in duration-300">
-            <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm space-y-4">
+            <div className="bg-surface rounded-lg p-6 border border-border shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-bold text-foreground">
+                  <h3 className="text-xl font-semibold text-foreground">
                     Universal field & database schema index
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -214,12 +214,12 @@ export default function LearningHubClient() {
                     placeholder="Search across all fields, tables, or modules…"
                     value={globalFieldQuery}
                     onChange={(e) => setGlobalFieldQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-elevated border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30"
+                    className="w-full pl-9 pr-4 py-2 text-xs rounded-lg bg-elevated border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
 
-              <div className="rounded-xl overflow-hidden border border-border">
+              <div className="rounded-lg overflow-hidden border border-border">
                 <AppTableContainer>
                   <AppTable className="w-full text-left text-xs">
                     <AppTableHeader className="bg-elevated text-muted-foreground font-semibold text-[11px] border-b border-border">
@@ -237,28 +237,28 @@ export default function LearningHubClient() {
                       {filteredGlobalFields.map((field, idx) => (
                         <AppTableRow key={idx} className="hover:bg-elevated/60 transition-colors">
                           <AppTableCell className="px-4 py-3.5 whitespace-nowrap">
-                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-accent-soft text-theme-btn-primary">
+                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-accent-soft text-primary">
                               {field.moduleCode}
                             </span>
                           </AppTableCell>
-                          <AppTableCell className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">
+                          <AppTableCell className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">
                             {field.name}
                           </AppTableCell>
-                          <AppTableCell className="px-4 py-3.5 font-mono text-[11px] text-theme-btn-primary">
+                          <AppTableCell className="px-4 py-3.5 font-mono text-[11px] text-primary">
                             {field.dbColumn}
                           </AppTableCell>
                           <AppTableCell className="px-4 py-3.5">
-                            <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-elevated text-muted-foreground">
+                            <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-elevated text-muted-foreground">
                               {field.type}
                             </span>
                           </AppTableCell>
                           <AppTableCell className="px-4 py-3.5">
                             {field.isRequired ? (
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-danger-soft text-danger-text">
+                              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-danger-soft text-danger-text">
                                 Mandatory
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-sunken text-muted-foreground">
+                              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-sunken text-muted-foreground">
                                 Optional
                               </span>
                             )}

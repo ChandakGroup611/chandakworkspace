@@ -55,7 +55,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
 
   if (timelineTasks.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full border-2 border-dashed border-border rounded-xl">
+      <div className="flex items-center justify-center h-full border border-border rounded-xl">
         <p className="text-muted font-medium">No tasks with start and end dates available for timeline.</p>
       </div>
     );

@@ -36,10 +36,10 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   if (!hasPermission("SETTINGS_NOTIFICATIONS_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
+        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view Notification Settings.</p>
       </div>
     );
@@ -48,8 +48,8 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   const canManage = hasPermission("SETTINGS_NOTIFICATIONS_MANAGE");
 
   return (
-    <div className="theme-card-structural border-border p-6 rounded-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
-      <h2 className="text-xl font-bold text-foreground mb-2">Event trigger controls</h2>
+    <div className="theme-card-structural border-border p-6 rounded-lg animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
+      <h2 className="text-xl font-semibold text-foreground mb-2">Event trigger controls</h2>
       <div className="space-y-8">
         {modules.map(mod => {
           const modConfigs = configs.filter(c => c.module_code === mod);
@@ -73,7 +73,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                         <span className="text-xs font-medium text-muted">In-App</span>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-border theme-card-structural text-theme-icon focus:ring-theme-btn-primary/50" 
+                          className="w-4 h-4 rounded border-border theme-card-structural text-accent-soft-text focus:ring-ring" 
                           checked={config.is_inapp_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_inapp_enabled', config.is_inapp_enabled !== false)}
                           disabled={loadingId === config.id || !canManage}
@@ -83,7 +83,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                         <span className="text-xs font-medium text-muted">Email</span>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-border theme-card-structural text-theme-icon focus:ring-theme-btn-primary/50" 
+                          className="w-4 h-4 rounded border-border theme-card-structural text-accent-soft-text focus:ring-ring" 
                           checked={config.is_email_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_email_enabled', config.is_email_enabled !== false)}
                           disabled={loadingId === config.id || !canManage}

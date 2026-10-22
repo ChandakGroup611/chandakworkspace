@@ -37,7 +37,7 @@ export function BaseWidget({
   return (
     <div 
       className={cn(
-        "flex flex-col rounded-2xl theme-card-structural border border-border/70",
+        "flex flex-col rounded-lg theme-card-structural border border-border",
         "text-foreground transition-all duration-300 shadow-xs",
         isCollapsed ? "!h-auto !min-h-0 overflow-hidden" : "h-full overflow-hidden hover:shadow-md hover:border-border-active",
         "group",
@@ -48,7 +48,7 @@ export function BaseWidget({
         <div 
           className={cn(
             "flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 theme-card-structural select-none transition-colors",
-            !isCollapsed ? "border-b border-border/50" : "hover:bg-surface/60",
+            !isCollapsed ? "border-b border-border" : "hover:bg-surface/60",
             collapsible && "cursor-pointer"
           )}
           onClick={collapsible ? () => setIsCollapsed(!isCollapsed) : undefined}
@@ -58,11 +58,11 @@ export function BaseWidget({
           aria-expanded={!isCollapsed}
         >
           <div className="flex items-center gap-2.5 text-foreground/90 group-hover:text-foreground transition-colors min-w-0 flex-1">
-            {icon && <div className="text-theme-icon shrink-0 transition-transform duration-200">{icon}</div>}
+            {icon && <div className="text-accent-soft-text shrink-0 transition-transform duration-200">{icon}</div>}
             {title && (
               <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-xs sm:text-sm font-bold tracking-wide truncate">{title}</h3>
+                  <h3 className="text-xs sm:text-sm font-semibold tracking-wide truncate">{title}</h3>
                   {badge}
                 </div>
                 {subtitle && <span className="text-[11px] text-muted font-normal tracking-normal truncate">{subtitle}</span>}

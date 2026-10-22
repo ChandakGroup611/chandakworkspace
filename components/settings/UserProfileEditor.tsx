@@ -264,23 +264,23 @@ export default function UserProfileEditor() {
     <div className="w-full relative">
       {/* Toast notifications */}
       {successMsg && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-success/90 text-white px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-lg bg-success/90 text-white px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
           <Check className="h-4 w-4" />
           <span className="text-sm font-semibold">{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-danger/90 text-white px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-lg bg-danger/90 text-white px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
           <AlertCircle className="h-4 w-4" />
           <span className="text-sm font-semibold">{errorMsg}</span>
         </div>
       )}
       
       {isMissingDetails && (
-        <div className="mb-6 p-4 rounded-xl bg-warning/10 border border-warning-border flex flex-col md:flex-row gap-4 items-start md:items-center justify-between animate-in slide-in-from-top-4">
+        <div className="mb-6 p-4 rounded-lg bg-warning-soft border border-warning-border flex flex-col md:flex-row gap-4 items-start md:items-center justify-between animate-in slide-in-from-top-4">
            <div>
-              <h3 className="text-warning font-semibold text-sm">Action required: complete your profile</h3>
+              <h3 className="text-warning-text font-semibold text-sm">Action required: complete your profile</h3>
               <p className="text-warning/80 text-xs mt-1">Please fill out your organizational details below to proceed to your dashboard.</p>
            </div>
         </div>
@@ -342,11 +342,11 @@ export default function UserProfileEditor() {
 
               {/* User Summary Info */}
               <div className="text-center space-y-1.5">
-                <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center justify-center gap-1.5">
+                <h2 className="text-xl font-semibold tracking-tight text-foreground flex items-center justify-center gap-1.5">
                   {profile?.full_name}
-                  {roleCode === 'SUPER_ADMIN' && <BadgeCheck className="h-5 w-5 text-theme-icon" />}
+                  {roleCode === 'SUPER_ADMIN' && <BadgeCheck className="h-5 w-5 text-accent-soft-text" />}
                 </h2>
-                <p className="text-sm font-medium text-theme-icon">
+                <p className="text-sm font-medium text-accent-soft-text">
                   {!isMissingDetails ? (profile?.designation?.name || "No Designation") : "Setup Required"}
                 </p>
                 <div className="flex items-center justify-center gap-1.5 text-xs text-muted mt-2">
@@ -356,17 +356,17 @@ export default function UserProfileEditor() {
 
                 {/* Role & User Code Badges */}
                 <div className="flex items-center justify-center gap-2 mt-3">
-                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
+                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-accent-soft-text border border-border-active">
                      {profile?.role?.name || "No Role Assigned"}
                    </span>
-                   <span className="text-[11px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-elevated border border-border text-muted-foreground">
+                   <span className="text-[11px] font-mono font-semibold tracking-wider px-2 py-0.5 rounded-full bg-elevated border border-border text-muted-foreground">
                      {profile?.user_code}
                    </span>
                 </div>
 
                 {/* Preset Avatars */}
                 <div className="pt-6 mt-6 border-t border-border">
-                  <p className="text-[11px] font-bold text-muted mb-3">Or choose a preset</p>
+                  <p className="text-[11px] font-semibold text-muted mb-3">Or choose a preset</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {PRESET_AVATARS.map((avatar, idx) => (
                       <img 
@@ -374,7 +374,7 @@ export default function UserProfileEditor() {
                         src={avatar} 
                         alt="Preset" 
                         onClick={() => !photoUploading && handlePresetAvatarSelect(avatar)}
-                        className={`w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-theme-btn-primary transition-all ${photoUploading ? 'opacity-50 cursor-not-allowed' : 'opacity-80 hover:opacity-100'}`} 
+                        className={`w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-ring transition-all ${photoUploading ? 'opacity-50 cursor-not-allowed' : 'opacity-80 hover:opacity-100'}`} 
                       />
                     ))}
                   </div>
@@ -389,7 +389,7 @@ export default function UserProfileEditor() {
           <AppCard className="border-0 shadow-lg bg-card/60">
             <AppCardHeader className="pb-4 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-accent-soft text-theme-icon">
+                <div className="p-2 rounded-lg bg-accent-soft text-accent-soft-text">
                   <User className="h-5 w-5" />
                 </div>
                 <div>
@@ -404,7 +404,7 @@ export default function UserProfileEditor() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Full Name */}
                 <div className="space-y-2 relative group">
-                  <label className="text-[11px] font-bold text-muted flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-muted flex items-center justify-between">
                     Full name *
                     <Lock className="h-3 w-3 opacity-50" />
                   </label>
@@ -418,7 +418,7 @@ export default function UserProfileEditor() {
 
                 {/* Email */}
                 <div className="space-y-2 relative">
-                  <label className="text-[11px] font-bold text-muted flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-muted flex items-center justify-between">
                     Email address *
                     <Lock className="h-3 w-3 opacity-50" />
                   </label>
@@ -436,7 +436,7 @@ export default function UserProfileEditor() {
           <AppCard className="border-0 shadow-lg bg-card/60">
             <AppCardHeader className="pb-4 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-success/10 text-success">
+                <div className="p-2 rounded-lg bg-success-soft text-success-text">
                   <Building className="h-5 w-5" />
                 </div>
                 <div>
@@ -457,7 +457,7 @@ export default function UserProfileEditor() {
                    <>
                       {/* Department Dropdown */}
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-warning flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-warning-text flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" /> Department *</span>
                         </label>
                         <div className="relative">
@@ -482,7 +482,7 @@ export default function UserProfileEditor() {
 
                       {/* Designation Dropdown */}
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-warning flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-warning-text flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Designation *</span>
                         </label>
                         <div className="relative">
@@ -506,7 +506,7 @@ export default function UserProfileEditor() {
 
                       {/* Custom Manager Dropdown */}
                       <div className="space-y-2 md:col-span-2 relative" ref={managerDropdownRef}>
-                        <label className="text-[11px] font-bold text-warning flex items-center gap-1.5">
+                        <label className="text-[11px] font-semibold text-warning-text flex items-center gap-1.5">
                           <Users className="h-3.5 w-3.5" /> Reporting manager *
                         </label>
                         
@@ -536,7 +536,7 @@ export default function UserProfileEditor() {
                               {managers.map((m) => (
                                 <div 
                                   key={m.id}
-                                  className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${selectedManager === m.id ? 'bg-accent-soft text-theme-icon font-medium' : 'hover:bg-elevated text-foreground'}`}
+                                  className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${selectedManager === m.id ? 'bg-accent-soft text-accent-soft-text font-medium' : 'hover:bg-elevated text-foreground'}`}
                                   onClick={() => { setSelectedManager(m.id); setManagerDropdownOpen(false); }}
                                 >
                                   <img 
@@ -558,11 +558,11 @@ export default function UserProfileEditor() {
                    <>
                       {/* Department ReadOnly */}
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-muted flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-muted flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" /> Department *</span>
                           <Lock className="h-3 w-3 opacity-50" />
                         </label>
-                        <div className="h-10 px-3 rounded-[var(--radius-input,4px)] bg-elevated/50 border border-border flex items-center opacity-80 cursor-default">
+                        <div className="h-10 px-3 rounded-[var(--radius-input,4px)] bg-sunken border border-border flex items-center opacity-80 cursor-default">
                           <span className="text-[14px] font-medium text-foreground">
                             {profile?.department?.name || "Not Assigned"}
                           </span>
@@ -571,11 +571,11 @@ export default function UserProfileEditor() {
 
                       {/* Designation ReadOnly */}
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-muted flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-muted flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5" /> Designation *</span>
                           <Lock className="h-3 w-3 opacity-50" />
                         </label>
-                        <div className="h-10 px-3 rounded-[var(--radius-input,4px)] bg-elevated/50 border border-border flex items-center opacity-80 cursor-default">
+                        <div className="h-10 px-3 rounded-[var(--radius-input,4px)] bg-sunken border border-border flex items-center opacity-80 cursor-default">
                           <span className="text-[14px] font-medium text-foreground">
                             {profile?.designation?.name || "Not Assigned"}
                           </span>
@@ -584,11 +584,11 @@ export default function UserProfileEditor() {
 
                       {/* Manager ReadOnly */}
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-[11px] font-bold text-muted flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-muted flex items-center justify-between">
                           <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> Reporting manager *</span>
                           <Lock className="h-3 w-3 opacity-50" />
                         </label>
-                        <div className="h-10 px-3 rounded-[var(--radius-input,4px)] bg-elevated/50 border border-border flex items-center gap-2 opacity-80 cursor-default">
+                        <div className="h-10 px-3 rounded-[var(--radius-input,4px)] bg-sunken border border-border flex items-center gap-2 opacity-80 cursor-default">
                           <img 
                             src={getAvatarUrl(profile?.manager?.full_name || "Manager", profile?.manager?.profile_photo)} 
                             className="h-5 w-5 rounded-full object-cover bg-accent-soft"

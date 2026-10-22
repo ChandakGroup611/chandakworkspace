@@ -23983,7 +23983,7 @@ export default function FleetDeskHost({
                               {/* Timeline Bullet */}
                               <div className={`absolute -left-[31px] top-1 h-5 w-5 rounded-full border-2 border-surface flex items-center justify-center shadow-xs ${
                                 isInsurance
-                                  ? "bg-surface0 text-white"
+                                  ? "bg-primary text-primary-foreground"
                                   : isPuc
                                   ? "bg-success text-white"
                                   : "bg-info text-white"

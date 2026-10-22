@@ -18,7 +18,7 @@ function SortableColumnItem({ item, onToggle }: { item: UserReportLayout; onTogg
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
         item.is_visible
           ? "bg-surface border-border shadow-xs"
           : "bg-sunken border-border opacity-60"
@@ -48,7 +48,7 @@ function SortableColumnItem({ item, onToggle }: { item: UserReportLayout; onTogg
           onClick={() => onToggle(item.field_id)}
           className={`p-2 rounded-lg border transition-colors ${
             item.is_visible
-              ? "bg-success-soft border-success/30 text-success-text hover:bg-success-soft/80"
+              ? "bg-success-soft border-success-border text-success-text hover:bg-success-soft/80"
               : "bg-sunken border-border text-muted hover:bg-surface"
           }`}
           title={item.is_visible ? "Hide column" : "Show column"}
@@ -152,11 +152,11 @@ export default function DynamicReportBuilder({
     <>
       <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 sm:p-0">
         <div className="absolute inset-0 bg-[var(--overlay)]" onClick={onClose} role="presentation" tabIndex={-1} />
-        <div className="relative bg-surface rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-border shadow-lg animate-in fade-in zoom-in-95">
+        <div className="relative bg-surface rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col border border-border shadow-lg animate-in fade-in zoom-in-95">
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 Configure Columns: {reportName}
               </h2>
             </div>
@@ -203,7 +203,7 @@ export default function DynamicReportBuilder({
                     key={field.field_key}
                     role="button"
                     tabIndex={0}
-                    className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors group cursor-pointer"
+                    className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-border bg-surface hover:border-border-active transition-colors group cursor-pointer"
                     onClick={() => handleAddMissingField(field)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -217,7 +217,7 @@ export default function DynamicReportBuilder({
                         {field.display_name}
                       </span>
                     </div>
-                    <span className="theme-label text-theme-btn-primary bg-accent-soft px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <span className="theme-label text-primary bg-accent-soft px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                       Add +
                     </span>
                   </div>
@@ -234,7 +234,7 @@ export default function DynamicReportBuilder({
             <AppButton
               variant="ghost"
               type="button"
-              className="text-danger hover:bg-danger-soft hover:text-danger"
+              className="text-danger-text hover:bg-danger-soft hover:text-danger-text"
               onClick={() => setIsResetConfirmOpen(true)}
               disabled={isSaving || isResetting}
               leftIcon={<RotateCcw className={`w-4 h-4 ${isResetting ? "animate-spin" : ""}`} />}

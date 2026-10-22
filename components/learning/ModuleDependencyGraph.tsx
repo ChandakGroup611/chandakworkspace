@@ -73,14 +73,14 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
     <div className="w-full space-y-8 animate-in fade-in duration-300">
       
       {/* 1. Interactive Architecture Map Header */}
-      <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm">
+      <div className="bg-surface rounded-lg p-6 border border-border shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <div className="flex items-center gap-2 text-theme-btn-primary font-bold text-xs">
+            <div className="flex items-center gap-2 text-primary font-semibold text-xs">
               <Workflow className="h-4 w-4" />
               <span>Enterprise ecosystem architecture</span>
             </div>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground mt-1">
+            <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-1">
               Cross-module connections & ripple impact diagram
             </h2>
             <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
@@ -90,7 +90,7 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
           
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs text-muted-foreground font-semibold">Active Node:</span>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20 flex items-center gap-1.5">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-accent-soft text-primary border border-border-active flex items-center gap-1.5">
               {React.createElement(getModuleIcon(activeModule.id), { className: "h-3.5 w-3.5" })}
               {activeModule.title}
             </span>
@@ -112,9 +112,9 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
                   setSelectedModuleId(mod.id);
                   if (onSelectModule) onSelectModule(mod.id);
                 }}
-                className={`flex flex-col text-left p-4 rounded-xl border transition-all relative overflow-hidden group ${
+                className={`flex flex-col text-left p-4 rounded-lg border transition-all relative overflow-hidden group ${
                   isSelected
-                    ? "bg-accent-soft border-theme-btn-primary shadow-md ring-2 ring-theme-btn-primary/20"
+                    ? "bg-accent-soft border-primary shadow-md ring-2 ring-ring"
                     : isInflow
                     ? "bg-info-soft border-info-border hover:border-info-border"
                     : isOutflow
@@ -125,30 +125,30 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
                 <div className="flex items-center justify-between w-full mb-2">
                   <div className={`p-2 rounded-lg ${
                     isSelected 
-                      ? "bg-theme-btn-primary text-white" 
+                      ? "bg-primary text-white" 
                       : "bg-elevated text-muted-foreground group-hover:text-foreground"
                   }`}>
                     <Icon className="h-4 w-4" />
                   </div>
 
                   {isSelected && (
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-theme-btn-primary text-white">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-primary text-white">
                       Active
                     </span>
                   )}
                   {!isSelected && isInflow && (
-                    <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-info-soft text-info-text">
+                    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-info-soft text-info-text">
                       Feeds data ➔
                     </span>
                   )}
                   {!isSelected && isOutflow && (
-                    <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-success-soft text-success-text">
+                    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-success-soft text-success-text">
                       ➔ Receives
                     </span>
                   )}
                 </div>
 
-                <div className="font-bold text-xs text-foreground line-clamp-1 group-hover:text-theme-btn-primary transition-colors">
+                <div className="font-semibold text-xs text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                   {mod.title}
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1 font-mono">
@@ -161,14 +161,14 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
       </div>
 
       {/* 2. Selected Module Deep-Dive Connectivity Card */}
-      <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm">
+      <div className="bg-surface rounded-lg p-6 border border-border shadow-sm">
         <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-accent-soft text-theme-btn-primary">
+            <div className="p-2.5 rounded-lg bg-accent-soft text-primary">
               {React.createElement(getModuleIcon(activeModule.id), { className: "h-6 w-6" })}
             </div>
             <div>
-              <h3 className="text-lg font-bold text-foreground">
+              <h3 className="text-lg font-semibold text-foreground">
                 {activeModule.title} — Inter-module relationship analysis
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -192,7 +192,7 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
           
           {/* INFLOW: Who feeds data into this module */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-info-text">
+            <div className="flex items-center gap-2 text-xs font-semibold text-info-text">
               <Share2 className="h-4 w-4 rotate-180" />
               <span>Data inflows (upstream dependencies)</span>
             </div>
@@ -200,9 +200,9 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
             {inflows.length > 0 ? (
               <div className="space-y-3">
                 {inflows.map((inf, idx) => (
-                  <div key={idx} className="p-4 rounded-xl bg-info-soft border border-info-border space-y-2">
+                  <div key={idx} className="p-4 rounded-lg bg-info-soft border border-info-border space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                      <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-info"></span>
                         {inf.sourceModuleName}
                       </span>
@@ -222,7 +222,7 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
                 ))}
               </div>
             ) : (
-              <div className="p-6 rounded-xl bg-elevated/50 border border-border text-center text-xs text-muted-foreground">
+              <div className="p-6 rounded-lg bg-sunken border border-border text-center text-xs text-muted-foreground">
                 This is a root foundational module with zero upstream data dependencies.
               </div>
             )}
@@ -230,7 +230,7 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
 
           {/* OUTFLOW: Who receives data from this module */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-success-text">
+            <div className="flex items-center gap-2 text-xs font-semibold text-success-text">
               <Share2 className="h-4 w-4" />
               <span>Data outflows (downstream triggers & impacts)</span>
             </div>
@@ -238,9 +238,9 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
             {outflows.length > 0 ? (
               <div className="space-y-3">
                 {outflows.map((out, idx) => (
-                  <div key={idx} className="p-4 rounded-xl bg-success-soft border border-success-border space-y-2">
+                  <div key={idx} className="p-4 rounded-lg bg-success-soft border border-success-border space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                      <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-success"></span>
                         {out.targetModuleName}
                       </span>
@@ -260,7 +260,7 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
                 ))}
               </div>
             ) : (
-              <div className="p-6 rounded-xl bg-elevated/50 border border-border text-center text-xs text-muted-foreground">
+              <div className="p-6 rounded-lg bg-sunken border border-border text-center text-xs text-muted-foreground">
                 This module operates as a terminal execution or analytics receiver.
               </div>
             )}
@@ -269,10 +269,10 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
         </div>
 
         {/* Global Ripple Impact Alert */}
-        <div className="mt-6 p-4 rounded-xl bg-warning-soft border border-warning-border flex items-start gap-3 text-xs text-muted-foreground">
+        <div className="mt-6 p-4 rounded-lg bg-warning-soft border border-warning-border flex items-start gap-3 text-xs text-muted-foreground">
           <AlertCircle className="h-5 w-5 text-warning-text shrink-0 mt-0.5" />
           <div>
-            <div className="font-bold text-warning-text">
+            <div className="font-semibold text-warning-text">
               System-wide ripple impact summary
             </div>
             <p className="mt-0.5 leading-relaxed">
@@ -283,10 +283,10 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
       </div>
 
       {/* 3. Global Ecosystem Dependency Matrix Table */}
-      <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm space-y-4">
+      <div className="bg-surface rounded-lg p-6 border border-border shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-bold text-foreground">
+            <h3 className="text-lg font-semibold text-foreground">
               Master inter-module dependency matrix
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -301,12 +301,12 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
               placeholder="Search dependencies, data, or impact…"
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-elevated border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30"
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-lg bg-elevated border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
 
-        <div className="rounded-xl overflow-hidden border border-border">
+        <div className="rounded-lg overflow-hidden border border-border">
           <AppTableContainer>
             <AppTable className="w-full text-left text-xs">
               <AppTableHeader className="bg-elevated text-muted-foreground font-semibold text-[11px] border-b border-border">
@@ -321,15 +321,15 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
               <AppTableBody className="divide-y divide-border">
                 {filteredDependencies.map((dep, idx) => (
                   <AppTableRow key={idx} className="hover:bg-elevated/60 transition-colors">
-                    <AppTableCell className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">
+                    <AppTableCell className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">
                       {dep.sourceModuleName}
                     </AppTableCell>
                     <AppTableCell className="px-4 py-3.5">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-accent-soft text-theme-btn-primary">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-accent-soft text-primary">
                         {dep.relationshipType}
                       </span>
                     </AppTableCell>
-                    <AppTableCell className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">
+                    <AppTableCell className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">
                       {dep.targetModuleName}
                     </AppTableCell>
                     <AppTableCell className="px-4 py-3.5 text-muted-foreground max-w-xs">

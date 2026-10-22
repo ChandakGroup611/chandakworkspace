@@ -76,10 +76,10 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 antialiased">
       {/* Top Branding */}
       <div className="w-full max-w-md text-center space-y-2 mb-6">
-        <div className="h-12 w-12 rounded-xl bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary font-semibold mx-auto">
+        <div className="h-12 w-12 rounded-lg bg-accent-soft border border-border-active flex items-center justify-center text-primary font-semibold mx-auto">
           C
         </div>
-        <h1 className="text-sm font-bold text-foreground">
+        <h1 className="text-sm font-semibold text-foreground">
           Chandak Group • site execution QR validation
         </h1>
         <p className="text-xs text-muted-foreground font-mono">
@@ -88,17 +88,17 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
       </div>
 
       {loading ? (
-        <div className="w-full max-w-md bg-surface border border-border rounded-2xl p-8 text-center space-y-3 shadow-xl animate-pulse">
-          <ShieldCheck className="h-10 w-10 mx-auto text-theme-btn-primary stroke-1" />
+        <div className="w-full max-w-md bg-surface border border-border rounded-lg p-8 text-center space-y-3 shadow-lg animate-pulse">
+          <ShieldCheck className="h-10 w-10 mx-auto text-primary stroke-1" />
           <p className="text-xs font-semibold text-muted-foreground">Verifying digital QR token with registry…</p>
         </div>
       ) : !data?.isValid ? (
-        <div className="w-full max-w-md bg-surface border border-danger-border rounded-2xl p-6 text-center space-y-4 shadow-xl">
+        <div className="w-full max-w-md bg-surface border border-danger-border rounded-lg p-6 text-center space-y-4 shadow-lg">
           <div className="h-12 w-12 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center mx-auto">
             <XCircle className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">Invalid QR code token</h2>
+            <h2 className="text-base font-semibold text-foreground">Invalid QR code token</h2>
             <p className="text-xs text-muted-foreground mt-1">
               This drawing token is not recognized in the Chandak DMAC central registry. Do not use this drawing for site execution.
             </p>
@@ -106,7 +106,7 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
         </div>
       ) : data.status === "ACTIVE_GFC" ? (
         /* 1. ACTIVE GFC (GREEN PASS) */
-        <div className="w-full max-w-md bg-surface border-2 border-success-border rounded-2xl p-6 shadow-lg space-y-5 animate-in zoom-in-95">
+        <div className="w-full max-w-md bg-surface border-2 border-success-border rounded-lg p-6 shadow-lg space-y-5 animate-in zoom-in-95">
           <div className="text-center space-y-2">
             <div className="h-14 w-14 rounded-full bg-success-soft text-success-text border border-success-border flex items-center justify-center mx-auto ring-4 ring-success-border">
               <CheckCircle2 className="h-8 w-8" />
@@ -120,7 +120,7 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
             </div>
           </div>
 
-          <div className="p-4 bg-surface rounded-xl border border-border space-y-2.5 text-xs">
+          <div className="p-4 bg-surface rounded-lg border border-border space-y-2.5 text-xs">
             <div className="flex justify-between pb-2 border-b border-border">
               <span className="text-muted-foreground">Revision Status:</span>
               <strong className="font-mono text-success-text">{data.revisionNumber} (Active GFC)</strong>
@@ -149,7 +149,7 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
         </div>
       ) : (
         /* 2. SUPERSEDED REVISION (RED DANGER ALERT) */
-        <div className="w-full max-w-md bg-surface border-2 border-danger-border rounded-2xl p-6 shadow-lg space-y-5 animate-in zoom-in-95">
+        <div className="w-full max-w-md bg-surface border-2 border-danger-border rounded-lg p-6 shadow-lg space-y-5 animate-in zoom-in-95">
           <div className="text-center space-y-2">
             <div className="h-14 w-14 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center mx-auto ring-4 ring-danger-border">
               <ShieldAlert className="h-8 w-8" />
@@ -163,8 +163,8 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
             </div>
           </div>
 
-          <div className="p-4 bg-danger-soft border border-danger-border rounded-xl text-xs space-y-2 text-danger-text">
-            <p className="font-bold flex items-center gap-1.5">
+          <div className="p-4 bg-danger-soft border border-danger-border rounded-lg text-xs space-y-2 text-danger-text">
+            <p className="font-semibold flex items-center gap-1.5">
               <AlertTriangle className="h-4 w-4 shrink-0 text-danger-text" />
               <span>WARNING: this revision ({data.revisionNumber}) has been superseded.</span>
             </p>

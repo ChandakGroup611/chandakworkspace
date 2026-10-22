@@ -90,12 +90,12 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
 
   return (
     <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl theme-card-structural rounded-2xl overflow-hidden flex flex-col max-h-[85vh] border border-border">
+      <div className="w-full max-w-2xl theme-card-structural rounded-lg overflow-hidden flex flex-col max-h-[85vh] border border-border">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border bg-surface">
           <div>
-            <h2 className="text-lg font-bold text-foreground tracking-tight">Customise dashboard</h2>
+            <h2 className="text-lg font-semibold text-foreground tracking-tight">Customise dashboard</h2>
           </div>
           <AppButton variant="ghost" type="button" aria-label="Close dialog" onClick={onClose} className="p-2 text-muted-foreground hover:bg-surface hover:text-foreground rounded-full transition-colors">
             <X className="w-5 h-5" />
@@ -167,10 +167,10 @@ function SortableWidgetItem({ item, onToggle, onSpanChange, onMoveUp, onMoveDown
       ref={setNodeRef} 
       style={style}
       className={cn(
-        "flex items-center gap-4 p-4 rounded-xl border transition-colors",
+        "flex items-center gap-4 p-4 rounded-lg border transition-colors",
         isActive 
           ? "bg-surface border-border shadow-sm" 
-          : "bg-surface/30 border-border/50 opacity-60",
+          : "bg-surface/30 border-border opacity-60",
         isDragging && "ring-2 ring-primary border-primary  opacity-100"
       )}
     >
@@ -202,7 +202,7 @@ function SortableWidgetItem({ item, onToggle, onSpanChange, onMoveUp, onMoveDown
                 type="button"
                 onClick={() => onSpanChange(w as any)}
                 className={cn(
-                  "w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-all",
+                  "w-6 h-6 rounded flex items-center justify-center text-xs font-semibold transition-all",
                   item.colSpan === w 
                     ? "bg-primary text-primary-foreground shadow-sm" 
                     : "bg-accent-soft text-muted-foreground hover:bg-accent-soft hover:text-foreground"

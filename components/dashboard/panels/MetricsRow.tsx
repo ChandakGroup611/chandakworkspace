@@ -39,7 +39,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       color: "accent", // Using global accent
       gradientLight: "to-accent/10",
       gradientDark: "to-accent/10",
-      textColor: "text-theme-icon",
+      textColor: "text-accent-soft-text",
     },
     {
       id: "resolved",
@@ -51,7 +51,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       color: "emerald-500",
       gradientLight: "to-success-soft",
       gradientDark: "to-success-soft",
-      textColor: "text-success dark:text-success",
+      textColor: "text-success-text dark:text-success-text",
     },
     {
       id: "inProgress",
@@ -63,7 +63,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       color: "amber-500",
       gradientLight: "to-warning-soft",
       gradientDark: "to-warning-soft",
-      textColor: "text-warning dark:text-warning",
+      textColor: "text-warning-text dark:text-warning-text",
     },
     {
       id: "blocked",
@@ -75,7 +75,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       color: "rose-500",
       gradientLight: "to-danger-soft",
       gradientDark: "to-danger-soft",
-      textColor: "text-danger dark:text-danger",
+      textColor: "text-danger-text dark:text-danger-text",
     }
   ];
 
@@ -97,15 +97,15 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
 
             {/* Glowing Accent Top Border */}
             <div className={`absolute top-0 left-0 w-full h-1 ${
-              card.color === "accent" ? "bg-theme-btn-primary" : `bg-${card.color}`
+              card.color === "accent" ? "bg-primary" : `bg-${card.color}`
             }`} />
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
-                <span className="text-[11px] font-bold text-muted-foreground mix-blend-luminosity opacity-80">
+                <span className="text-[11px] font-semibold text-muted-foreground mix-blend-luminosity opacity-80">
                   {card.label}
                 </span>
-                <div className={`p-2 rounded-xl bg-surface/50 shadow-sm ring-1 ring-inset ring-border ${card.textColor}`}>
+                <div className={`p-2 rounded-lg bg-surface/50 shadow-sm ring-1 ring-inset ring-border ${card.textColor}`}>
                   <Icon className="h-5 w-5" />
                 </div>
               </div>
@@ -116,7 +116,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
                 </div>
                 
                 <div className="flex items-center gap-1.5 text-xs font-semibold">
-                  <span className={`flex items-center gap-0.5 ${card.isUp ? "text-success" : (card.color === 'rose-500' ? "text-danger" : "text-warning")}`}>
+                  <span className={`flex items-center gap-0.5 ${card.isUp ? "text-success-text" : (card.color === 'rose-500' ? "text-danger-text" : "text-warning-text")}`}>
                     {card.isUp ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                   </span>
                   <span className="text-muted-foreground">{card.delta}</span>

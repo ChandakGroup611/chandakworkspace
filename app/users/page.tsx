@@ -698,7 +698,7 @@ export default function UserMasterPage() {
       }`}>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>Enterprise personnel registry</h1>
+            <h1 className={`text-xl font-semibold tracking-tight ${"text-foreground"}`}>Enterprise personnel registry</h1>
             <AppBadge variant="info">Identity directory</AppBadge>
           </div>
           <p className={`text-xs ${"text-muted"}`}>
@@ -710,7 +710,7 @@ export default function UserMasterPage() {
           <AppButton 
             variant="outline" 
             size="sm" 
-            leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-theme-icon" : ""}`} />}
+            leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-accent-soft-text" : ""}`} />}
             onClick={fetchUsersDirectory}
           >
             Refresh directory
@@ -739,15 +739,15 @@ export default function UserMasterPage() {
       {/* Invite Modal */}
       {inviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-lg shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
             {/* Modal Header */}
-            <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-accent-soft text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20">
+                <div className="h-10 w-10 rounded-lg bg-accent-soft text-primary flex items-center justify-center border border-border-active">
                   <Mail className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Invite user to organisation
                   </h3>
                   <p className="text-xs text-muted">
@@ -794,11 +794,11 @@ export default function UserMasterPage() {
                 <div>
                   <label className="text-xs font-semibold mb-1 block text-foreground">Initial role</label>
                   <select 
-                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary"
+                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
                     value={inviteRole}
                     onChange={e => setInviteRole(e.target.value)}
                   >
-                    <option value="">-- Select role --</option>
+                    <option value="">Select role</option>
                     {roles.map(r => (
                       <option key={r.id} value={r.id}>{r.name}</option>
                     ))}
@@ -808,14 +808,14 @@ export default function UserMasterPage() {
                 <div>
                   <label className="text-xs font-semibold mb-1 block text-foreground">Department</label>
                   <select 
-                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary"
+                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
                     value={inviteDepartment}
                     onChange={e => {
                       setInviteDepartment(e.target.value);
                       setInviteDesignation("");
                     }}
                   >
-                    <option value="">-- Select department --</option>
+                    <option value="">Select department</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
@@ -825,11 +825,11 @@ export default function UserMasterPage() {
                 <div>
                   <label className="text-xs font-semibold mb-1 block text-foreground">Designation</label>
                   <select 
-                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary"
+                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
                     value={inviteDesignation}
                     onChange={e => setInviteDesignation(e.target.value)}
                   >
-                    <option value="">-- Select designation --</option>
+                    <option value="">Select designation</option>
                     {designations
                       .filter(ds => !inviteDepartment || ds.department_id === inviteDepartment)
                       .map(ds => (
@@ -840,10 +840,10 @@ export default function UserMasterPage() {
               </div>
 
               {/* Module Access Configuration */}
-              <div className="pt-2 border-t border-border/60">
+              <div className="pt-2 border-t border-border">
                 <div className="flex items-center justify-between mb-2.5">
                   <div>
-                    <h4 className="text-xs font-bold text-muted">Operational module access</h4>
+                    <h4 className="text-xs font-semibold text-muted">Operational module access</h4>
                     <p className="text-[11px] text-muted">Select modules the user will be provisioned access to upon accepting invite</p>
                   </div>
                   <AppBadge variant="info">Auto-Provisioned</AppBadge>
@@ -880,10 +880,10 @@ export default function UserMasterPage() {
                     return (
                       <div 
                         key={mod.code}
-                        className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                        className={`p-3 rounded-lg border transition-all flex items-center justify-between gap-3 ${
                           isChecked 
-                            ? "bg-surface border-theme-btn-primary/40 shadow-xs" 
-                            : "bg-surface/40 border-border/60 opacity-60 hover:opacity-100"
+                            ? "bg-surface border-border-active shadow-xs" 
+                            : "bg-surface/40 border-border opacity-60 hover:opacity-100"
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -905,7 +905,7 @@ export default function UserMasterPage() {
                                 }
                               }
                             }}
-                            className="h-4 w-4 rounded text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer"
+                            className="h-4 w-4 rounded text-primary focus:ring-ring cursor-pointer"
                           />
                           <div className={`h-8 w-8 rounded-lg flex items-center justify-center border shrink-0 ${mod.color}`}>
                             <IconComp className="h-4 w-4" />
@@ -914,7 +914,7 @@ export default function UserMasterPage() {
                             <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                               {mod.name}
                               {isDefault && (
-                                <span className="text-[11px] bg-accent-soft text-theme-btn-primary font-medium px-1.5 py-0.5 rounded border border-theme-btn-primary/30">
+                                <span className="text-[11px] bg-accent-soft text-primary font-medium px-1.5 py-0.5 rounded border border-border-active">
                                   Default landing
                                 </span>
                               )}
@@ -929,8 +929,8 @@ export default function UserMasterPage() {
                             onClick={() => setInviteDefaultModule(mod.code)}
                             className={`shrink-0 text-[11px] px-2.5 py-1 rounded-md border font-medium transition-colors ${
                               isDefault
-                                ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary"
-                                : "bg-surface text-muted hover:text-foreground border-border hover:border-theme-btn-primary/40"
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-surface text-muted hover:text-foreground border-border hover:border-border-active"
                             }`}
                           >
                             {isDefault ? "Default" : "Set Default"}
@@ -944,7 +944,7 @@ export default function UserMasterPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-border/60 bg-surface/50 flex items-center justify-end gap-2.5">
+            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-end gap-2.5">
               <AppButton 
                 variant="ghost" 
                 size="sm"
@@ -970,14 +970,14 @@ export default function UserMasterPage() {
       {/* Assign Modules Modal Dialog */}
       {moduleModalOpen && moduleModalUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-lg shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-surface text-theme-icon flex items-center justify-center border border-border">
+                <div className="h-10 w-10 rounded-lg bg-surface text-accent-soft-text flex items-center justify-center border border-border">
                   <Layers className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Assign operational modules
                   </h3>
                   <p className="text-xs text-muted">
@@ -998,14 +998,14 @@ export default function UserMasterPage() {
             <div className="p-5 space-y-3.5 overflow-y-auto flex-1">
               {moduleModalLoading ? (
                 <div className="py-8 text-center text-muted flex flex-col items-center gap-2">
-                  <RefreshCw className="h-5 w-5 animate-spin text-theme-icon" />
+                  <RefreshCw className="h-5 w-5 animate-spin text-accent-soft-text" />
                   <span className="text-xs">Loading module entitlements…</span>
                 </div>
               ) : (
                 [
                   { code: "VEHICLE_DESK", name: "Vehicle Module", desc: "Fleet inventory, trip sheets, driver rosters, maintenance & spare parts.", icon: Car, color: "text-success-text bg-success-soft border-success-border" },
                   { code: "TASK_WORKFLOW", name: "Workspace Module", desc: "Executive task tracker, sprints, ticketing/helpdesk, requirements & AMC.", icon: FolderKanban, color: "text-info-text bg-info-soft border-info-border" },
-                  { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-theme-icon bg-surface border-border" },
+                  { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-accent-soft-text bg-surface border-border" },
                   { code: "DASHBOARDS", name: "Dashboards", desc: "IT & Marketing budget dashboards. What each user can do is set by DASH_* role permissions.", icon: LineChart, color: "text-accent-soft-text bg-accent-soft border-border" }
                 ].map((mod) => {
                   const isChecked = modalSelectedCodes.includes(mod.code);
@@ -1015,7 +1015,7 @@ export default function UserMasterPage() {
                   return (
                     <div
                       key={mod.code}
-                      className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                      className={`p-3.5 rounded-lg border transition-all flex items-center justify-between gap-3 ${
                         isChecked
                           ? "bg-surface border-border shadow-xs"
                           : "bg-muted/20 border-border/40 opacity-60"
@@ -1027,11 +1027,11 @@ export default function UserMasterPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-sm text-foreground">
+                            <span className="font-semibold text-sm text-foreground">
                               {mod.name}
                             </span>
                             {isDefault && isChecked && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
                                 <Star className="h-2.5 w-2.5 fill-warning text-warning-text" /> Landing default
                               </span>
                             )}
@@ -1080,7 +1080,7 @@ export default function UserMasterPage() {
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                          <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                         </label>
                       </div>
                     </div>
@@ -1089,7 +1089,7 @@ export default function UserMasterPage() {
               )}
             </div>
 
-            <div className="p-4 border-t border-border/60 bg-surface/50 flex items-center justify-between gap-3">
+            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between gap-3">
               <span className="text-xs text-muted">
                 {modalSelectedCodes.length} of 3 modules enabled
               </span>
@@ -1105,7 +1105,7 @@ export default function UserMasterPage() {
                 <AppButton 
                   type="button" 
                   size="sm" 
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                  className="bg-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
                   onClick={handleSaveModules}
                   disabled={moduleModalSaving || moduleModalLoading}
                 >
@@ -1120,11 +1120,11 @@ export default function UserMasterPage() {
 
       {/* Dismissable Informational Alerts */}
       {successAlert && (
-        <div className={`p-4 rounded-xl border flex items-center justify-between text-xs animate-in fade-in-20 ${
+        <div className={`p-4 rounded-lg border flex items-center justify-between text-xs animate-in fade-in-20 ${
           "bg-success-soft border-success-border text-success-text"
         }`}>
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+            <CheckCircle2 className="h-4 w-4 text-success-text shrink-0" />
             <span className="font-medium">{successAlert}</span>
           </div>
           <AppButton aria-label="Close" variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-subtle">
@@ -1134,12 +1134,12 @@ export default function UserMasterPage() {
       )}
 
       {errorAlert && (
-        <div className={`p-4 rounded-xl border flex items-start gap-2.5 text-xs animate-in fade-in-20 ${
+        <div className={`p-4 rounded-lg border flex items-start gap-2.5 text-xs animate-in fade-in-20 ${
           "bg-danger-soft border-danger-border text-danger-text"
         }`}>
-          <ShieldAlert className="h-4 w-4 text-danger shrink-0 mt-0.5" />
+          <ShieldAlert className="h-4 w-4 text-danger-text shrink-0 mt-0.5" />
           <div className="flex-1">
-            <strong className="font-bold block mb-0.5">Validation constraint notice:</strong>
+            <strong className="font-semibold block mb-0.5">Validation constraint notice:</strong>
             {errorAlert}
           </div>
           <AppButton aria-label="Close" variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-subtle">
@@ -1152,7 +1152,7 @@ export default function UserMasterPage() {
       <div className="w-full flex flex-col gap-6">
         {/* Main Spanning List View */}
         <div className="w-full flex flex-col space-y-4">
-          <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden shadow-xl ${
+          <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden shadow-lg ${
             "border-border"
           }`}>
             {/* Unified Filter Box Header */}
@@ -1176,7 +1176,7 @@ export default function UserMasterPage() {
                       onClick={() => setStatusFilter(flt)}
                       className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
                         statusFilter === flt 
-                          ? "bg-theme-btn-primary text-white shadow-sm" 
+                          ? "bg-primary text-white shadow-sm" 
                           : "text-subtle hover:text-foreground dark:text-muted hover:bg-surface dark:hover:bg-surface/5"
                       }`}
                     >
@@ -1192,7 +1192,7 @@ export default function UserMasterPage() {
                   <select 
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
-                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-surface border-border dark:border-border appearance-none focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 text-subtle dark:text-muted"
+                    className="w-full h-9 text-xs pl-3 pr-8 rounded-lg border bg-surface border-border dark:border-border appearance-none focus:outline-none focus:ring-2 focus:ring-ring text-subtle dark:text-muted"
                   >
                     <option value="ALL">All departments</option>
                     {departments.map(d => (
@@ -1258,7 +1258,7 @@ export default function UserMasterPage() {
                             className={`cursor-pointer group transition-all duration-200 ${
                               isSelected 
                                 ? ("bg-accent-soft shadow-inner") 
-                                : ("hover:bg-elevated/80")
+                                : ("hover:bg-sunken")
                             }`}
                           >
                             <AppTableCell className="w-14 px-2">
@@ -1278,7 +1278,7 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-sm font-bold text-foreground block`}>
+                              <span className={`text-sm font-semibold text-foreground block`}>
                                 {usr.full_name}
                               </span>
                             </AppTableCell>
@@ -1297,7 +1297,7 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold tracking-wide whitespace-nowrap bg-accent-soft text-theme-icon`}>
+                              <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold tracking-wide whitespace-nowrap bg-accent-soft text-accent-soft-text`}>
                                 {usr.designationObj?.name || "General Assignee"}
                               </span>
                             </AppTableCell>
@@ -1309,9 +1309,9 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell className="w-28 text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold inline-block ${
+                              <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold inline-block ${
                                 usr.is_active 
-                                  ? ("bg-success-soft text-success dark:text-success") 
+                                  ? ("bg-success-soft text-success-text dark:text-success-text") 
                                   : ("bg-sunken text-muted")
                               }`}>
                                 {usr.is_active ? "Active" : "Disabled"}
@@ -1329,8 +1329,8 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                                usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-warning-soft text-warning-text dark:text-warning" : "bg-sunken text-subtle"
+                              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                                usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-warning-soft text-warning-text dark:text-warning-text" : "bg-sunken text-subtle"
                               }`}>
                                 {usr.roleObj?.name || "Standard Profile"}
                               </span>
@@ -1342,7 +1342,7 @@ export default function UserMasterPage() {
                                   <AppButton aria-label="Assign workspace modules" variant="secondary"
                                     type="button"
                                     onClick={() => handleOpenModuleModal(usr)}
-                                    className="p-1.5 rounded-lg transition-all text-theme-icon dark:text-muted-foreground bg-surface/80 dark:bg-surface hover:bg-accent-soft border border-border/70 shadow-2xs"
+                                    className="p-1.5 rounded-lg transition-all text-accent-soft-text dark:text-muted-foreground bg-surface/80 dark:bg-surface hover:bg-accent-soft border border-border shadow-2xs"
                                     title="Assign workspace modules"
                                   >
                                     <Layers className="h-4 w-4" />
@@ -1353,7 +1353,7 @@ export default function UserMasterPage() {
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
                                     className={`p-1.5 rounded-lg transition-all ${
-                                      "text-muted dark:text-muted hover:text-theme-icon hover:bg-accent-soft border border-transparent hover:border-border"
+                                      "text-muted dark:text-muted hover:text-accent-soft-text hover:bg-accent-soft border border-transparent hover:border-border"
                                     }`}
                                     title="Edit user profile"
                                   >
@@ -1365,7 +1365,7 @@ export default function UserMasterPage() {
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
                                     className={`p-1.5 rounded-lg transition-all ${
-                                      "text-muted dark:text-muted hover:text-danger hover:bg-danger-soft border border-transparent hover:border-danger-border"
+                                      "text-muted dark:text-muted hover:text-danger-text hover:bg-danger-soft border border-transparent hover:border-danger-border"
                                     }`}
                                     title="Remove user"
                                   >
@@ -1391,10 +1391,10 @@ export default function UserMasterPage() {
       {deleteInspectUser && deleteWarningData && (
         <div 
           className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-150"
-          style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
+          style={{ backgroundColor: "var(--overlay)" }}
           onClick={() => { if (!deleteWarningData.loading) { setDeleteInspectUser(null); setDeleteWarningData(null); } }}
         >
-          <div className={`relative w-full max-w-md rounded-2xl border shadow-lg overflow-hidden flex flex-col p-6 space-y-6 ${
+          <div className={`relative w-full max-w-md rounded-lg border shadow-lg overflow-hidden flex flex-col p-6 space-y-6 ${
             "bg-surface border-border text-foreground"
           }`} onClick={(e) => e.stopPropagation()}>
             
@@ -1410,11 +1410,11 @@ export default function UserMasterPage() {
               <>
                 {/* Deletion Warning Alert Style */}
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-warning/10 border border-warning-border text-warning shrink-0">
+                  <div className="p-3 rounded-full bg-warning-soft border border-warning-border text-warning-text shrink-0">
                     <ShieldAlert className="h-6 w-6 animate-pulse" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold tracking-tight text-warning">
+                    <h3 className="text-sm font-semibold tracking-tight text-warning-text">
                       Delete warning: active assignments
                     </h3>
                     <p className={`text-xs ${"text-muted"}`}>
@@ -1423,10 +1423,10 @@ export default function UserMasterPage() {
                   </div>
                 </div>
 
-                <div className={`p-4 rounded-xl border space-y-2.5 text-xs ${
-                  "bg-elevated/50 border-border"
+                <div className={`p-4 rounded-lg border space-y-2.5 text-xs ${
+                  "bg-sunken border-border"
                 }`}>
-                  <span className="text-xs font-bold text-muted block">
+                  <span className="text-xs font-semibold text-muted block">
                     Active reference summary
                   </span>
                   
@@ -1435,9 +1435,9 @@ export default function UserMasterPage() {
                       <span className="text-muted flex items-center gap-1.5">
                         ðŸŽ« active tickets:
                       </span>
-                      <span className={`font-mono font-bold px-2 py-0.5 rounded ${
+                      <span className={`font-mono font-semibold px-2 py-0.5 rounded ${
                         deleteWarningData.tickets > 0 
-                          ? "bg-danger/10 text-danger border border-danger-border" 
+                          ? "bg-danger-soft text-danger-text border border-danger-border" 
                           : "bg-sunken text-muted"
                       }`}>
                         {deleteWarningData.tickets}
@@ -1448,9 +1448,9 @@ export default function UserMasterPage() {
                       <span className="text-muted flex items-center gap-1.5">
                         ðŸ“‹ workspace tasks:
                       </span>
-                      <span className={`font-mono font-bold px-2 py-0.5 rounded ${
+                      <span className={`font-mono font-semibold px-2 py-0.5 rounded ${
                         deleteWarningData.tasks > 0 
-                          ? "bg-danger/10 text-danger border border-danger-border" 
+                          ? "bg-danger-soft text-danger-text border border-danger-border" 
                           : "bg-sunken text-muted"
                       }`}>
                         {deleteWarningData.tasks}
@@ -1461,9 +1461,9 @@ export default function UserMasterPage() {
                       <span className="text-muted flex items-center gap-1.5">
                         ðŸ› ï¸ Requirements:
                       </span>
-                      <span className={`font-mono font-bold px-2 py-0.5 rounded ${
+                      <span className={`font-mono font-semibold px-2 py-0.5 rounded ${
                         deleteWarningData.requirements > 0 
-                          ? "bg-danger/10 text-danger border border-danger-border" 
+                          ? "bg-danger-soft text-danger-text border border-danger-border" 
                           : "bg-sunken text-muted"
                       }`}>
                         {deleteWarningData.requirements}
@@ -1493,7 +1493,7 @@ export default function UserMasterPage() {
                     variant="outline" 
                     size="sm"
                     onClick={() => handleDeactivateUser(deleteInspectUser)}
-                    className="w-full sm:w-auto text-warning border-warning-border hover:bg-warning/10"
+                    className="w-full sm:w-auto text-warning-text border-warning-border hover:bg-warning-soft"
                   >
                     Deactivate only
                   </AppButton>
@@ -1513,11 +1513,11 @@ export default function UserMasterPage() {
               <>
                 {/* Safe for Soft Delete Alert Style */}
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-success/10 border border-success-border text-success shrink-0">
+                  <div className="p-3 rounded-full bg-success-soft border border-success-border text-success-text shrink-0">
                     <CheckCircle2 className="h-6 w-6 animate-pulse" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold tracking-tight text-success">
+                    <h3 className="text-sm font-semibold tracking-tight text-success-text">
                       Delete account confirmation
                     </h3>
                     <p className={`text-xs ${"text-muted"}`}>
@@ -1545,7 +1545,7 @@ export default function UserMasterPage() {
                     variant="outline" 
                     size="sm"
                     onClick={() => handleDeactivateUser(deleteInspectUser)}
-                    className="w-full sm:w-auto text-warning border-warning-border hover:bg-warning/10"
+                    className="w-full sm:w-auto text-warning-text border-warning-border hover:bg-warning-soft"
                   >
                     Deactivate only
                   </AppButton>
@@ -1574,17 +1574,17 @@ export default function UserMasterPage() {
           onClick={() => { if (!moduleModalSaving) setModuleModalOpen(false); }}
         >
           <div 
-            className="relative w-full max-w-lg rounded-2xl border border-border bg-surface shadow-lg p-6 space-y-5 text-foreground"
+            className="relative w-full max-w-lg rounded-lg border border-border bg-surface shadow-lg p-6 space-y-5 text-foreground"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-surface text-theme-icon dark:text-muted-foreground flex items-center justify-center border border-border shrink-0">
+                <div className="h-9 w-9 rounded-lg bg-surface text-accent-soft-text dark:text-muted-foreground flex items-center justify-center border border-border shrink-0">
                   <Layers className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     Assign operational modules
                   </h3>
                   <p className="text-xs text-muted-foreground">
@@ -1669,7 +1669,7 @@ export default function UserMasterPage() {
                             setModalSelectedCodes([...modalSelectedCodes, mod.code]);
                           }
                         }}
-                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                        className={`p-3.5 rounded-lg border transition-all cursor-pointer flex items-start justify-between gap-3 ${
                           isSelected 
                             ? "bg-surface border-border shadow-xs ring-1 ring-ring" 
                             : "bg-muted/30 border-border opacity-60 hover:opacity-100"
@@ -1681,9 +1681,9 @@ export default function UserMasterPage() {
                           </div>
                           <div className="space-y-0.5 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-foreground text-xs">{mod.name}</span>
+                              <span className="font-semibold text-foreground text-xs">{mod.name}</span>
                               {isDefault && (
-                                <span className="text-[11px] px-1.5 py-0.2 rounded bg-surface text-theme-icon dark:text-muted-foreground font-bold border border-border">
+                                <span className="text-[11px] px-1.5 py-0.2 rounded bg-surface text-accent-soft-text dark:text-muted-foreground font-semibold border border-border">
                                   Default landing
                                 </span>
                               )}
@@ -1708,11 +1708,11 @@ export default function UserMasterPage() {
 
                 {/* Default Landing Module Dropdown */}
                 <div className="pt-2 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <label className="text-xs font-bold text-foreground">Default landing module:</label>
+                  <label className="text-xs font-semibold text-foreground">Default landing module:</label>
                   <select
                     value={modalDefaultCode}
                     onChange={e => setModalDefaultCode(e.target.value)}
-                    className="px-3 py-1.5 rounded-xl border border-border bg-background text-foreground font-semibold text-xs focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-border bg-background text-foreground font-semibold text-xs focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     {modalSelectedCodes.map(code => (
                       <option key={code} value={code}>
@@ -1742,7 +1742,7 @@ export default function UserMasterPage() {
                 onClick={handleSaveModules}
                 disabled={moduleModalSaving || moduleModalLoading}
                 leftIcon={moduleModalSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                className="bg-primary hover:bg-surface0 text-white font-bold"
+                className="bg-primary hover:bg-primary-hover text-white font-semibold"
               >
                 {moduleModalSaving ? "Saving Allocations..." : "Save Module Allocations"}
               </AppButton>

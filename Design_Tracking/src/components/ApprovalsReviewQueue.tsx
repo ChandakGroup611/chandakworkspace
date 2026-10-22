@@ -74,21 +74,21 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
         value: "Under Review",
         label: "Under Review",
         count: underReviewCount,
-        colorDot: "#f59e0b",
+        colorDot: "var(--warning)",
         subtitle: "Pending engineering sign-off"
       },
       {
         value: "Revision Requested",
         label: "Revision Requested",
         count: revisionReqCount,
-        colorDot: "#f43f5e",
+        colorDot: "var(--danger)",
         subtitle: "Awaiting consultant updates"
       },
       {
         value: "Approved (GFC)",
         label: "Approved (GFC)",
         count: approvedGfcCount,
-        colorDot: "#10b981",
+        colorDot: "var(--success)",
         subtitle: "Signed & certified"
       }
     ];
@@ -133,14 +133,14 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
       {/* Control Strip */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
+      <div className="p-4 sm:p-5 rounded-lg border border-border bg-surface shadow-xs space-y-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
               <CheckCircle2 className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">
+              <h2 className="text-base font-semibold text-foreground">
                 Design approvals & review
               </h2>
             </div>
@@ -153,7 +153,7 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               aria-label="Search approvals review queue"
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-success-border"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-sunken text-foreground focus:outline-none focus:border-success-border"
             />
           </div>
         </div>
@@ -203,7 +203,7 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
               <button
                 type="button"
                 onClick={handleClearAllFilters}
-                className="h-9 px-3 rounded-xl border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                className="h-9 px-3 rounded-lg border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
                 title="Reset all active filters"
               >
                 <X className="h-3.5 w-3.5" />
@@ -217,10 +217,10 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
           </div>
         </div>
 
-        {/* 🏷️ Active Selected Filter Badges */}
+        {/* Active Selected Filter Badges */}
         {totalActiveFilterCount > 0 && (
           <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
+            <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0">
               Active Filters:
             </span>
 
@@ -291,10 +291,10 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between shadow-2xs">
+        <div className="p-4 rounded-lg bg-surface border border-border flex items-center justify-between shadow-2xs">
           <div>
             <span className="text-xs font-semibold text-warning-text">Under review</span>
-            <div className="text-2xl font-bold text-foreground mt-0.5">{underReviewCount}</div>
+            <div className="text-2xl font-semibold text-foreground mt-0.5">{underReviewCount}</div>
             <span className="text-[11px] text-muted-foreground">Pending lead sign-off</span>
           </div>
           <div className="h-9 w-9 rounded-lg bg-warning-soft text-warning-text flex items-center justify-center border border-warning-border">
@@ -302,10 +302,10 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between shadow-2xs">
+        <div className="p-4 rounded-lg bg-surface border border-border flex items-center justify-between shadow-2xs">
           <div>
             <span className="text-xs font-semibold text-danger-text">Revisions requested</span>
-            <div className="text-2xl font-bold text-foreground mt-0.5">{revisionReqCount}</div>
+            <div className="text-2xl font-semibold text-foreground mt-0.5">{revisionReqCount}</div>
             <span className="text-[11px] text-muted-foreground">Returned with comments</span>
           </div>
           <div className="h-9 w-9 rounded-lg bg-danger-soft text-danger-text flex items-center justify-center border border-danger-border">
@@ -313,10 +313,10 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between shadow-2xs">
+        <div className="p-4 rounded-lg bg-surface border border-border flex items-center justify-between shadow-2xs">
           <div>
             <span className="text-xs font-semibold text-success-text">GFC certified</span>
-            <div className="text-2xl font-bold text-foreground mt-0.5">{approvedGfcCount}</div>
+            <div className="text-2xl font-semibold text-foreground mt-0.5">{approvedGfcCount}</div>
             <span className="text-[11px] text-muted-foreground">Stamped for site release</span>
           </div>
           <div className="h-9 w-9 rounded-lg bg-success-soft text-success-text flex items-center justify-center border border-success-border">
@@ -328,27 +328,27 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
       {/* Review Queue Cards */}
       <div className="space-y-3">
         {filteredDrawings.length === 0 ? (
-          <div className="text-center py-16 p-6 rounded-2xl border border-dashed border-border text-muted-foreground text-xs">
+          <div className="text-center py-16 p-6 rounded-lg border border-border text-muted-foreground text-xs">
             No drawing sheets found matching the current review filter.
           </div>
         ) : (
           filteredDrawings.map((drawing) => (
             <div 
               key={drawing.id} 
-              className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs hover:border-success-border transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+              className="p-4 sm:p-5 rounded-lg border border-border bg-surface shadow-xs hover:border-success-border transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
             >
               <div className="space-y-1.5 flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono font-bold text-xs text-foreground bg-sunken px-2 py-0.5 rounded border border-border">
+                  <span className="font-mono font-semibold text-xs text-foreground bg-sunken px-2 py-0.5 rounded border border-border">
                     {drawing.code}
                   </span>
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sunken text-muted-foreground">
                     {drawing.discipline}
                   </span>
-                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-info-soft text-info-text border border-info-border">
+                  <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-info-soft text-info-text border border-info-border">
                     Rev {drawing.revision}
                   </span>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
                     drawing.status === "Approved (GFC)" 
                       ? "bg-success-soft text-success-text border-success-border"
                       : drawing.status === "Under Review"
@@ -359,7 +359,7 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
                   </span>
                 </div>
 
-                <h4 className="text-sm font-bold text-foreground">
+                <h4 className="text-sm font-semibold text-foreground">
                   {drawing.title}
                 </h4>
 
@@ -378,7 +378,7 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
                 </div>
 
                 {drawing.description && (
-                  <p className="text-xs text-muted-foreground italic bg-sunken p-2 rounded-lg border border-border/50">
+                  <p className="text-xs text-muted-foreground italic bg-sunken p-2 rounded-lg border border-border">
                     "{drawing.description}"
                   </p>
                 )}
@@ -389,7 +389,7 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenReviewModal(drawing)}
-                  className="h-8 px-3.5 rounded-xl bg-success hover:bg-success text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  className="h-8 px-3.5 rounded-lg bg-success hover:bg-success text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                 >
                   <Eye className="h-3.5 w-3.5" />
                   <span>Review & certify</span>
@@ -399,7 +399,7 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
                   <button
                     type="button"
                     onClick={() => onQuickStatusUpdate(drawing.id, "Approved (GFC)")}
-                    className="h-8 px-3 rounded-xl border border-success-border bg-success-soft hover:bg-success-soft text-success-text text-xs font-bold inline-flex items-center gap-1 transition-all cursor-pointer"
+                    className="h-8 px-3 rounded-lg border border-success-border bg-success-soft hover:bg-success-soft text-success-text text-xs font-semibold inline-flex items-center gap-1 transition-all cursor-pointer"
                     title="Directly stamp as GFC approved"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />

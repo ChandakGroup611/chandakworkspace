@@ -111,28 +111,28 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
         value: "Approved (GFC)",
         label: "Approved (GFC)",
         count: drawings.filter(d => d.status === "Approved (GFC)").length,
-        colorDot: "#10b981",
+        colorDot: "var(--success)",
         subtitle: "Issued for site construction"
       },
       {
         value: "Under Review",
         label: "Under Review",
         count: drawings.filter(d => d.status === "Under Review").length,
-        colorDot: "#f59e0b",
+        colorDot: "var(--warning)",
         subtitle: "Awaiting engineering review"
       },
       {
         value: "Revision Requested",
         label: "Revision Requested",
         count: drawings.filter(d => d.status === "Revision Requested").length,
-        colorDot: "#f43f5e",
+        colorDot: "var(--danger)",
         subtitle: "Consultant action pending"
       },
       {
         value: "Site Handed Over",
         label: "Site Handed Over",
         count: drawings.filter(d => d.status === "Site Handed Over").length,
-        colorDot: "#0ea5e9",
+        colorDot: "var(--info)",
         subtitle: "Civil team acknowledged"
       }
     ];
@@ -244,14 +244,14 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
       {!previewDrawing && (
         <>
           {/* Control Header Strip */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
+          <div className="p-4 sm:p-5 rounded-lg border border-border bg-surface shadow-xs space-y-3.5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
               <FileText className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">
+              <h2 className="text-base font-semibold text-foreground">
                 Drawing register
               </h2>
             </div>
@@ -266,7 +266,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                 aria-label="Search drawings"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-success-border"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-sunken text-foreground focus:outline-none focus:border-success-border"
               />
             </div>
 
@@ -274,7 +274,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
             <button
               type="button"
               onClick={handleExportCsv}
-              className="h-8 px-3 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              className="h-8 px-3 rounded-lg border border-border bg-surface hover:bg-sunken text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-success-text" />
               <span>Export CSV</span>
@@ -327,7 +327,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               <button
                 type="button"
                 onClick={handleClearAllFilters}
-                className="h-9 px-3 rounded-xl border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                className="h-9 px-3 rounded-lg border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
                 title="Reset all active filters"
               >
                 <X className="h-3.5 w-3.5" />
@@ -341,10 +341,10 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
           </div>
         </div>
 
-        {/* 🏷️ Active Selected Filter Badges */}
+        {/* Active Selected Filter Badges */}
         {totalActiveFilterCount > 0 && (
           <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
+            <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0">
               Active Filters:
             </span>
 
@@ -414,7 +414,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
       </div>
 
       {/* Table with Horizontal Scroll Container */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+      <div className="rounded-lg border border-border bg-surface overflow-hidden shadow-xs">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-xs border-collapse min-w-[1300px]">
             <thead>
@@ -441,11 +441,11 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                   <tr key={item.id} className="hover:bg-sunken transition-colors">
                     <td className="p-3.5 whitespace-nowrap min-w-[260px]">
                       <div className="flex items-center gap-2.5 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold border whitespace-nowrap shrink-0 ${getDisciplineBadge(item.discipline)}`}>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border whitespace-nowrap shrink-0 ${getDisciplineBadge(item.discipline)}`}>
                           {item.discipline}
                         </span>
                         <div className="min-w-0">
-                          <span className="font-mono font-bold text-foreground block text-xs whitespace-nowrap select-all tracking-tight">
+                          <span className="font-mono font-semibold text-foreground block text-xs whitespace-nowrap select-all tracking-tight">
                             {item.code}
                           </span>
                           <span className="text-[11px] text-muted-foreground whitespace-nowrap block mt-0.5">
@@ -471,12 +471,12 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                       </span>
                     </td>
                     <td className="p-3.5 text-center whitespace-nowrap min-w-[90px]">
-                      <span className="px-2.5 py-0.5 rounded font-mono font-bold text-xs bg-sunken border border-border text-foreground inline-block whitespace-nowrap">
+                      <span className="px-2.5 py-0.5 rounded font-mono font-semibold text-xs bg-sunken border border-border text-foreground inline-block whitespace-nowrap">
                         {item.revision}
                       </span>
                     </td>
                     <td className="p-3.5 whitespace-nowrap min-w-[170px]">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border inline-flex items-center gap-1 whitespace-nowrap ${getStatusBadge(item.status)}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border inline-flex items-center gap-1 whitespace-nowrap ${getStatusBadge(item.status)}`}>
                         {item.status === "Approved (GFC)" && <CheckCircle2 className="h-3 w-3 shrink-0" />}
                         {item.status === "Under Review" && <Clock className="h-3 w-3 shrink-0" />}
                         {item.status === "Revision Requested" && <AlertCircle className="h-3 w-3 shrink-0" />}
@@ -566,10 +566,10 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
         <WorkingDocumentLayout
           title={`${previewDrawing.code}: ${previewDrawing.title}`}
           badge={previewDrawing.status}
-          badgeColor={previewDrawing.status === "Approved (GFC)" ? "bg-success-soft text-success-text border border-success-border" : "bg-surface text-theme-icon border border-border"}
+          badgeColor={previewDrawing.status === "Approved (GFC)" ? "bg-success-soft text-success-text border border-success-border" : "bg-surface text-accent-soft-text border border-border"}
           category="Architectural Blueprint & GFC Inspection"
           icon={Compass}
-          iconBg="bg-surface text-theme-icon dark:text-muted-foreground"
+          iconBg="bg-surface text-accent-soft-text dark:text-muted-foreground"
           description={`High-fidelity vector engineering sheet verification for ${previewDrawing.project} (${previewDrawing.discipline}).`}
           breadcrumbs={[
             { label: "Design Tracking Desk" },
@@ -630,50 +630,50 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
           <div className="space-y-6">
             {/* Blueprint Overview Info Header */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[11px] font-bold text-muted-foreground block">Project / development</span>
-                <span className="text-xs font-bold text-foreground">{previewDrawing.project}</span>
+              <div className="p-3.5 rounded-lg bg-muted/20 border border-border space-y-1">
+                <span className="text-[11px] font-semibold text-muted-foreground block">Project / development</span>
+                <span className="text-xs font-semibold text-foreground">{previewDrawing.project}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[11px] font-bold text-muted-foreground block">Discipline</span>
-                <span className="text-xs font-bold text-foreground">{previewDrawing.discipline}</span>
+              <div className="p-3.5 rounded-lg bg-muted/20 border border-border space-y-1">
+                <span className="text-[11px] font-semibold text-muted-foreground block">Discipline</span>
+                <span className="text-xs font-semibold text-foreground">{previewDrawing.discipline}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[11px] font-bold text-muted-foreground block">Author consultant</span>
-                <span className="text-xs font-bold text-foreground">{previewDrawing.consultant}</span>
+              <div className="p-3.5 rounded-lg bg-muted/20 border border-border space-y-1">
+                <span className="text-[11px] font-semibold text-muted-foreground block">Author consultant</span>
+                <span className="text-xs font-semibold text-foreground">{previewDrawing.consultant}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[11px] font-bold text-muted-foreground block">Revision & date</span>
-                <span className="text-xs font-bold font-mono text-foreground">Rev {previewDrawing.revision} • {previewDrawing.submittedDate}</span>
+              <div className="p-3.5 rounded-lg bg-muted/20 border border-border space-y-1">
+                <span className="text-[11px] font-semibold text-muted-foreground block">Revision & date</span>
+                <span className="text-xs font-semibold font-mono text-foreground">Rev {previewDrawing.revision} • {previewDrawing.submittedDate}</span>
               </div>
             </div>
 
             {/* CAD Blueprint Canvas Simulation */}
             <div
-              className="h-96 w-full rounded-2xl bg-foreground border border-border relative overflow-hidden flex flex-col justify-between p-6 font-mono select-none shadow-lg text-background"
+              className="h-96 w-full rounded-lg bg-foreground border border-border relative overflow-hidden flex flex-col justify-between p-6 font-mono select-none shadow-lg text-background"
               style={{
                 backgroundImage: "radial-gradient(#0ea5e9 1px, transparent 1px)",
                 backgroundSize: "24px 24px"
               }}
             >
               {/* Engineering Coordinate Grid Markers */}
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-bold">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-semibold">
                 <span>GRID COORD: A1-F8 | SCALE: 1:100 METRIC | PROJECTION: ORTHOGRAPHIC</span>
                 <span>Chandak design & engineering studio</span>
               </div>
 
               {/* Center Wireframe Graphics simulation */}
               <div className="flex flex-col items-center justify-center space-y-3 opacity-90 my-auto">
-                <div className="w-80 h-44 border-2 border-dashed border-info-border rounded-xl flex items-center justify-center relative bg-info-soft">
+                <div className="w-80 h-44 border border-info-border rounded-lg flex items-center justify-center relative bg-info-soft">
                   <div className="w-64 h-32 border border-border/40 rounded-lg flex flex-col items-center justify-center p-4 text-center">
-                    <span className="text-sm font-bold text-muted-foreground tracking-wider">
+                    <span className="text-sm font-semibold text-muted-foreground tracking-wider">
                       {previewDrawing.title}
                     </span>
                     <span className="text-[11px] text-muted-foreground/80 font-mono mt-1">
                       Sheet {previewDrawing.code} • REV {previewDrawing.revision}
                     </span>
                   </div>
-                  <div className="absolute -top-3 bg-surface px-3 text-[11px] text-muted-foreground font-bold border border-border rounded">
+                  <div className="absolute -top-3 bg-surface px-3 text-[11px] text-muted-foreground font-semibold border border-border rounded">
                     Section x-x' elevation architectural
                   </div>
                 </div>
@@ -682,14 +682,14 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               {/* Title Block Bottom Right */}
               <div className="flex items-end justify-between border-t border-border pt-3">
                 <div className="text-[11px] text-muted space-y-0.5">
-                  <div>Author: <strong className="text-white font-bold">{previewDrawing.consultant}</strong></div>
-                  <div>Sheet no: <strong className="text-white font-mono font-bold">{previewDrawing.code}</strong></div>
-                  <div>Workflow status: <strong className="text-success-text font-bold">{previewDrawing.status}</strong></div>
+                  <div>Author: <strong className="text-white font-semibold">{previewDrawing.consultant}</strong></div>
+                  <div>Sheet no: <strong className="text-white font-mono font-semibold">{previewDrawing.code}</strong></div>
+                  <div>Workflow status: <strong className="text-success-text font-semibold">{previewDrawing.status}</strong></div>
                 </div>
 
                 {previewDrawing.status === "Approved (GFC)" && (
-                  <div className="p-3 rounded-xl border-2 border-success-border bg-success text-success-text text-center font-semibold text-xs shadow-xl rotate-[-3deg]">
-                    ✓ GOOD FOR CONSTRUCTION (GFC)
+                  <div className="p-3 rounded-lg border-2 border-success-border bg-success text-success-text text-center font-semibold text-xs shadow-lg rotate-[-3deg]">
+                    Good for construction (GFC)
                   </div>
                 )}
               </div>

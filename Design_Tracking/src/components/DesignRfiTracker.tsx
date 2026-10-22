@@ -240,13 +240,13 @@ export function DesignRfiTracker() {
       {!isRaiseModalOpen && !selectedRfiForReply && (
         <>
           {/* Header Banner */}
-          <div className="p-5 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div className="p-5 rounded-lg bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-surface border border-border flex items-center justify-center text-theme-icon dark:text-muted-foreground shrink-0">
+          <div className="h-10 w-10 rounded-lg bg-surface border border-border flex items-center justify-center text-accent-soft-text dark:text-muted-foreground shrink-0">
             <HelpCircle className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">
+            <h2 className="text-base font-semibold text-foreground">
               RFI & site clash query tracker
             </h2>
           </div>
@@ -256,7 +256,7 @@ export function DesignRfiTracker() {
           <button
             type="button"
             onClick={() => setIsRaiseModalOpen(true)}
-            className="h-8 px-3.5 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
+            className="h-8 px-3.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Raise site query (RFI)</span>
@@ -266,27 +266,27 @@ export function DesignRfiTracker() {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-muted-foreground">Total RFIs logged</div>
+        <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="text-[11px] font-semibold text-muted-foreground">Total RFIs logged</div>
           <div className="text-xl font-semibold text-foreground mt-1">{rfis.length}</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-danger-text">Open / pending</div>
+        <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="text-[11px] font-semibold text-danger-text">Open / pending</div>
           <div className="text-xl font-semibold text-danger-text mt-1">
             {rfis.filter(r => r.status === "OPEN" || r.status === "UNDER_REVIEW").length}
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-success-text">Clarified & resolved</div>
+        <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="text-[11px] font-semibold text-success-text">Clarified & resolved</div>
           <div className="text-xl font-semibold text-success-text mt-1">
             {rfis.filter(r => r.status === "CLARIFIED" || r.status === "CLOSED").length}
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-warning-text">Urgent priority</div>
+        <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="text-[11px] font-semibold text-warning-text">Urgent priority</div>
           <div className="text-xl font-semibold text-warning-text mt-1">
             {rfis.filter(r => r.priority === "URGENT").length}
           </div>
@@ -294,7 +294,7 @@ export function DesignRfiTracker() {
       </div>
 
       {/* Unified Multi-Select Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-card border border-border space-y-3 shadow-xs">
+      <div className="p-4 rounded-lg bg-card border border-border space-y-3 shadow-xs">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="relative w-full lg:w-72 shrink-0">
             <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -303,7 +303,7 @@ export function DesignRfiTracker() {
               aria-label="Search RFI number, subject, consultant"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-border-active"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-sunken text-foreground focus:outline-none focus:border-border-active"
             />
           </div>
 
@@ -354,7 +354,7 @@ export function DesignRfiTracker() {
                   setSelectedPriorities([]);
                   setSearchQuery("");
                 }}
-                className="h-8 px-2.5 rounded-xl border border-dashed border-danger-border hover:border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                className="h-8 px-2.5 rounded-lg border border-danger-border hover:border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <X className="h-3 w-3" />
                 <span>Reset</span>
@@ -366,7 +366,7 @@ export function DesignRfiTracker() {
         {/* Active Filter Chips Bar */}
         {(selectedProjects.length > 0 || selectedDisciplines.length > 0 || selectedStatuses.length > 0 || selectedPriorities.length > 0) && (
           <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1">Active:</span>
+            <span className="text-[11px] font-semibold text-muted-foreground mr-1">Active:</span>
 
             {selectedProjects.map(id => {
               const p = projects.find(proj => proj.id === id);
@@ -460,7 +460,7 @@ export function DesignRfiTracker() {
       {/* RFI Cards List */}
       <div className="space-y-3">
         {filteredRfis.length === 0 ? (
-          <div className="p-10 rounded-2xl border border-border bg-card text-center text-muted-foreground text-xs">
+          <div className="p-10 rounded-lg border border-border bg-card text-center text-muted-foreground text-xs">
             No RFI queries found matching the selected filters.
           </div>
         ) : (
@@ -472,18 +472,18 @@ export function DesignRfiTracker() {
             return (
               <div
                 key={r.id}
-                className="p-5 rounded-2xl border border-border bg-card hover:border-theme-btn-primary/40 transition-all shadow-sm space-y-3"
+                className="p-5 rounded-lg border border-border bg-card hover:border-border-active transition-all shadow-sm space-y-3"
               >
                 {/* Header line */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono font-semibold text-sm text-theme-icon dark:text-muted-foreground">
+                    <span className="font-mono font-semibold text-sm text-accent-soft-text dark:text-muted-foreground">
                       {r.rfiNumber}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${pBadge.color}`}>
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${pBadge.color}`}>
                       {pBadge.label}
                     </span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border ${sBadge.color}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${sBadge.color}`}>
                       <StatusIcon className="h-3 w-3" />
                       <span>{sBadge.label}</span>
                     </span>
@@ -499,7 +499,7 @@ export function DesignRfiTracker() {
 
                 {/* Subject & Description */}
                 <div>
-                  <h3 className="font-bold text-sm text-foreground mb-1">
+                  <h3 className="font-semibold text-sm text-foreground mb-1">
                     {r.subject}
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -508,7 +508,7 @@ export function DesignRfiTracker() {
                 </div>
 
                 {/* Context Badges */}
-                <div className="flex flex-wrap items-center gap-3 text-xs pt-1 border-t border-border/50">
+                <div className="flex flex-wrap items-center gap-3 text-xs pt-1 border-t border-border">
                   <div className="flex items-center gap-1.5 text-foreground font-semibold">
                     <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                     <span>{r.projectName} {r.towerName && `• ${r.towerName}`}</span>
@@ -534,8 +534,8 @@ export function DesignRfiTracker() {
 
                 {/* Consultant Response Box if Clarified */}
                 {r.consultantResponse && (
-                  <div className="p-3.5 rounded-xl bg-success-soft border border-success-border text-xs space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-success-text">
+                  <div className="p-3.5 rounded-lg bg-success-soft border border-success-border text-xs space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-success-text">
                       <div className="flex items-center gap-1.5">
                         <CornerDownRight className="h-3.5 w-3.5" />
                         <span>Consultant clarification & solution:</span>
@@ -567,7 +567,7 @@ export function DesignRfiTracker() {
                         setRespondedByName("");
                         setResolvingRev("");
                       }}
-                      className="h-7 px-3 rounded-lg bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      className="h-7 px-3 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
                       <span>Submit consultant clarification</span>
@@ -602,7 +602,7 @@ export function DesignRfiTracker() {
           badge="Technical Query Entry"
           category="RFI & Query Control"
           icon={HelpCircle}
-          iconBg="bg-surface text-theme-icon border-border"
+          iconBg="bg-surface text-accent-soft-text border-border"
           description="Log design query, site condition clash, or structural specification ambiguity with consultant assignment."
           breadcrumbs={[
             { label: "RFI Tracker", onClick: () => setIsRaiseModalOpen(false) },
@@ -626,28 +626,28 @@ export function DesignRfiTracker() {
         >
           <div className="space-y-6 max-w-4xl">
             {formError && (
-              <div className="p-3.5 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
             <AppCard className="border-border shadow-xs">
-              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
+              <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+                <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-accent-soft-text dark:text-muted-foreground" />
                   <span>Project & engineering discipline</span>
                 </AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Project *</label>
+                    <label className="text-xs font-semibold text-foreground">Project *</label>
                     <select
                       value={projectId}
                       onChange={e => setProjectId(e.target.value)}
                       aria-label="Select project"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
                     >
                       <option value="">Select project</option>
                       {projects.map(p => (
@@ -657,26 +657,26 @@ export function DesignRfiTracker() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Tower / zone</label>
+                    <label className="text-xs font-semibold text-foreground">Tower / zone</label>
                     <input
                       type="text"
                       value={towerName}
                       onChange={e => setTowerName(e.target.value)}
                       placeholder="e.g. Tower b / podium basement 1"
                       aria-label="Tower or zone"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Discipline *</label>
+                    <label className="text-xs font-semibold text-foreground">Discipline *</label>
                     <select
                       value={discipline}
                       onChange={e => setDiscipline(e.target.value as DesignDiscipline)}
                       aria-label="Discipline"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
                     >
                       <option value="Architectural">Architectural</option>
                       <option value="Structural">Structural</option>
@@ -687,12 +687,12 @@ export function DesignRfiTracker() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Priority level *</label>
+                    <label className="text-xs font-semibold text-foreground">Priority level *</label>
                     <select
                       value={priority}
                       onChange={e => setPriority(e.target.value as RfiPriority)}
                       aria-label="Priority level"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
                     >
                       <option value="URGENT">Urgent (site stoppage risk)</option>
                       <option value="HIGH">High (Upcoming Activity)</option>
@@ -703,25 +703,25 @@ export function DesignRfiTracker() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Referenced drawing number</label>
+                    <label className="text-xs font-semibold text-foreground">Referenced drawing number</label>
                     <input
                       type="text"
                       value={drawingCode}
                       onChange={e => setDrawingCode(e.target.value)}
                       placeholder="e.g. ST-T1-COL-204"
                       aria-label="Referenced drawing number"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Target resolution date</label>
+                    <label className="text-xs font-semibold text-foreground">Target resolution date</label>
                     <input
                       type="date"
                       value={targetResolutionDate}
                       onChange={e => setTargetResolutionDate(e.target.value)}
                       aria-label="Target resolution date"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -729,15 +729,15 @@ export function DesignRfiTracker() {
             </AppCard>
 
             <AppCard className="border-border shadow-xs">
-              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
+              <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+                <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-accent-soft-text dark:text-muted-foreground" />
                   <span>Technical query details</span>
                 </AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="p-5 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Subject / query title *</label>
+                  <label className="text-xs font-semibold text-foreground">Subject / query title *</label>
                   <input
                     type="text"
                     required
@@ -745,12 +745,12 @@ export function DesignRfiTracker() {
                     onChange={e => setSubject(e.target.value)}
                     placeholder="e.g. Clash between MEP HVAC Ducting and Structural Beam Level 3"
                     aria-label="Subject or query title"
-                    className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Detailed query description *</label>
+                  <label className="text-xs font-semibold text-foreground">Detailed query description *</label>
                   <textarea
                     rows={4}
                     required
@@ -758,13 +758,13 @@ export function DesignRfiTracker() {
                     onChange={e => setQueryDescription(e.target.value)}
                     placeholder="Provide specific grid locations, discrepancy measurements, and contractor query…"
                     aria-label="Detailed query description"
-                    className="w-full p-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                    className="w-full p-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Raised by (site engineer) *</label>
+                    <label className="text-xs font-semibold text-foreground">Raised by (site engineer) *</label>
                     <input
                       type="text"
                       required
@@ -772,12 +772,12 @@ export function DesignRfiTracker() {
                       onChange={e => setRaisedBy(e.target.value)}
                       placeholder="e.g. Site engineer (civil)"
                       aria-label="Raised by site engineer"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Assigned consultant firm *</label>
+                    <label className="text-xs font-semibold text-foreground">Assigned consultant firm *</label>
                     <input
                       type="text"
                       required
@@ -785,7 +785,7 @@ export function DesignRfiTracker() {
                       onChange={e => setAssignedConsultant(e.target.value)}
                       placeholder="e.g. Structural consultant / MEP firm"
                       aria-label="Assigned consultant firm"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -817,40 +817,40 @@ export function DesignRfiTracker() {
           <div className="space-y-6 max-w-4xl">
             {/* Query Summary Dossier */}
             <AppCard className="border-border shadow-xs">
-              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4 text-theme-btn-primary" />
+              <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+                <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4 text-primary" />
                   <span>Site query dossier</span>
                 </AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="p-5 space-y-3">
-                <div className="text-base font-bold text-foreground">{selectedRfiForReply.subject}</div>
-                <div className="text-xs text-muted-foreground leading-relaxed bg-muted/20 p-3.5 rounded-xl border border-border">
+                <div className="text-base font-semibold text-foreground">{selectedRfiForReply.subject}</div>
+                <div className="text-xs text-muted-foreground leading-relaxed bg-muted/20 p-3.5 rounded-lg border border-border">
                   {selectedRfiForReply.queryDescription}
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
                   <div className="p-2.5 rounded-lg bg-sunken border border-border">
-                    <span className="text-[11px] text-muted-foreground block font-bold">Project:</span>
+                    <span className="text-[11px] text-muted-foreground block font-semibold">Project:</span>
                     <span className="font-semibold text-foreground">{selectedRfiForReply.projectName}</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-sunken border border-border">
-                    <span className="text-[11px] text-muted-foreground block font-bold">Discipline:</span>
+                    <span className="text-[11px] text-muted-foreground block font-semibold">Discipline:</span>
                     <span className="font-semibold text-foreground">{selectedRfiForReply.discipline}</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-sunken border border-border">
-                    <span className="text-[11px] text-muted-foreground block font-bold">Raised By:</span>
+                    <span className="text-[11px] text-muted-foreground block font-semibold">Raised By:</span>
                     <span className="font-semibold text-foreground">{selectedRfiForReply.raisedBy}</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-sunken border border-border">
-                    <span className="text-[11px] text-muted-foreground block font-bold">Assigned To:</span>
-                    <span className="font-semibold text-theme-icon dark:text-muted-foreground">{selectedRfiForReply.assignedConsultant}</span>
+                    <span className="text-[11px] text-muted-foreground block font-semibold">Assigned To:</span>
+                    <span className="font-semibold text-accent-soft-text dark:text-muted-foreground">{selectedRfiForReply.assignedConsultant}</span>
                   </div>
                 </div>
               </AppCardContent>
             </AppCard>
 
             {replyError && (
-              <div className="p-3.5 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{replyError}</span>
               </div>
@@ -858,15 +858,15 @@ export function DesignRfiTracker() {
 
             {/* Technical Instructions Form */}
             <AppCard className="border-border shadow-xs">
-              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+              <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+                <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-success-text" />
                   <span>Consultant technical resolution</span>
                 </AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="p-5 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">
+                  <label className="text-xs font-semibold text-foreground">
                     Consultant clarification & technical instructions *
                   </label>
                   <textarea
@@ -876,13 +876,13 @@ export function DesignRfiTracker() {
                     onChange={e => setResponseText(e.target.value)}
                     placeholder="Provide detailed engineering clearance, revised coordinate fix, or contractor instructions…"
                     aria-label="Consultant clarification and instructions"
-                    className="w-full p-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-success-border resize-none"
+                    className="w-full p-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-success-border resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Responded by (consultant engineer) *</label>
+                    <label className="text-xs font-semibold text-foreground">Responded by (consultant engineer) *</label>
                     <input
                       type="text"
                       required
@@ -890,19 +890,19 @@ export function DesignRfiTracker() {
                       onChange={e => setRespondedByName(e.target.value)}
                       placeholder="e.g. Lead structural consultant"
                       aria-label="Responded by consultant engineer"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-success-border"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-success-border"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Resolving drawing revision (e.g. R3)</label>
+                    <label className="text-xs font-semibold text-foreground">Resolving drawing revision (e.g. R3)</label>
                     <input
                       type="text"
                       value={resolvingRev}
                       onChange={e => setResolvingRev(e.target.value)}
                       placeholder="e.g. ST-t1-COL-204 rev r3"
                       aria-label="Resolving drawing revision"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-success-border"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-success-border"
                     />
                   </div>
                 </div>

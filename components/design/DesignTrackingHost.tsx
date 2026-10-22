@@ -417,23 +417,23 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       {!isAnyHostTransactionOpen && (
         <>
           {/* Top Header & Actions Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-xl bg-accent-soft text-theme-icon flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-accent-soft text-accent-soft-text flex items-center justify-center border border-border-active shrink-0">
                 <Compass className="h-5 w-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
                     Design & engineering tracking
                   </h1>
                   {isRestrictedProjectScope ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-accent-soft-text border border-border-active">
                       <Building2 className="h-3 w-3" />
                       <span>Scoped: {accessibleProjects.map(p => p.name).join(", ")} ({accessibleProjects.length} Project{accessibleProjects.length > 1 ? "s" : ""})</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-accent-soft-text border border-border-active">
                       <ShieldCheck className="h-3 w-3" />
                       <span>Global scope ({accessibleProjects.length} Projects)</span>
                     </span>
@@ -449,12 +449,12 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
                 onClick={() => handleTabChange("LEARNING")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "LEARNING"
-                    ? "bg-accent-soft border-theme-btn-primary/30 text-theme-btn-primary font-bold shadow-sm"
+                    ? "bg-accent-soft border-border-active text-primary font-semibold shadow-sm"
                     : "border-border bg-surface hover:bg-surface/80 text-foreground"
                 }`}
                 title="View end-to-end workflow & lifecycle guide"
               >
-                <BookOpen className="h-3.5 w-3.5 text-theme-icon" />
+                <BookOpen className="h-3.5 w-3.5 text-accent-soft-text" />
                 <span>Learning & playbook</span>
               </button>
 
@@ -464,14 +464,14 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface/80 text-foreground text-xs font-semibold transition-colors cursor-pointer"
                 title="Open quick data entry form"
               >
-                <Plus className="h-3.5 w-3.5 text-theme-icon" />
+                <Plus className="h-3.5 w-3.5 text-accent-soft-text" />
                 <span>Quick entry</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsUploadOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text text-xs font-semibold transition-opacity cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-opacity cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span>Upload drawing</span>

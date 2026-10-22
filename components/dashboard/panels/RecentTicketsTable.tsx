@@ -37,8 +37,8 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
     <AppCard className="overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b theme-card-structural">
         <div className="flex items-center gap-2">
-          <ListChecks className="h-5 w-5 text-theme-icon" />
-          <span className="text-sm font-bold text-foreground">Recent tickets</span>
+          <ListChecks className="h-5 w-5 text-accent-soft-text" />
+          <span className="text-sm font-semibold text-foreground">Recent tickets</span>
         </div>
         <AppButton variant="ghost" size="sm" onClick={() => router.push('/tickets')}>
           View all ↗
@@ -78,7 +78,7 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
               return (
                 <AppTableRow key={i} onClick={handleRowClick} className="cursor-pointer">
                   <AppTableCell>
-                    <div className="font-mono text-[0.7rem] font-bold text-muted  uppercase">{m.code || `TF-${shortId}`}</div>
+                    <div className="font-mono text-[0.7rem] font-semibold text-muted  uppercase">{m.code || `TF-${shortId}`}</div>
                     <div className="text-xs font-semibold text-foreground truncate max-w-[200px]" title={m.title}>{m.title || `${m.module} Assignment`}</div>
                   </AppTableCell>
                   <AppTableCell><span className={tagClass}>{m.module.substring(0,4).toLowerCase()}</span></AppTableCell>

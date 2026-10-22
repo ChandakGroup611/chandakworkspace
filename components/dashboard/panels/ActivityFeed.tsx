@@ -69,8 +69,8 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
     <AppCard>
       <div className="flex items-center justify-between p-4 border-b theme-card-structural">
         <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-success" />
-          <span className="text-sm font-bold text-foreground">Recent activity</span>
+          <Activity className="h-4 w-4 text-success-text" />
+          <span className="text-sm font-semibold text-foreground">Recent activity</span>
         </div>
         <AppButton variant="ghost" size="sm" className="h-6 text-xs gap-1">All <ArrowRight className="h-3 w-3" /></AppButton>
       </div>
@@ -78,10 +78,10 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
         <div className="space-y-4">
           {activities.map((act, i) => {
             let iconElement;
-            if (act.type === 'closed') iconElement = <CheckCircle2 className="h-4 w-4 text-success" />;
-            else if (act.type === 'blocked') iconElement = <AlertCircle className="h-4 w-4 text-danger" />;
-            else if (act.type === 'comment') iconElement = <MessageSquare className="h-4 w-4 text-theme-icon" />;
-            else iconElement = <Plus className="h-4 w-4 text-theme-icon" />;
+            if (act.type === 'closed') iconElement = <CheckCircle2 className="h-4 w-4 text-success-text" />;
+            else if (act.type === 'blocked') iconElement = <AlertCircle className="h-4 w-4 text-danger-text" />;
+            else if (act.type === 'comment') iconElement = <MessageSquare className="h-4 w-4 text-accent-soft-text" />;
+            else iconElement = <Plus className="h-4 w-4 text-accent-soft-text" />;
 
             return (
               <div key={act.id || i} className="flex gap-3">

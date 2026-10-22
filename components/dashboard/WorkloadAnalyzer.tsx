@@ -42,16 +42,16 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
   }, [userId]);
 
   return (
-    <div className="absolute inset-0 bg-surface/80 z-[200] flex items-center justify-center p-6 rounded-xl animate-in fade-in-50">
-      <AppCard className={`w-full max-w-md p-6  theme-card-structural border-theme-btn-primary/30`}>
+    <div className="absolute inset-0 bg-surface/80 z-[200] flex items-center justify-center p-6 rounded-lg animate-in fade-in-50">
+      <AppCard className={`w-full max-w-md p-6  theme-card-structural border-border-active`}>
         
         <div className="flex items-center justify-between border-b pb-4 mb-5 border-border dark:border-border">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-accent-soft rounded-lg">
-              <Activity className="h-5 w-5 text-theme-icon" />
+              <Activity className="h-5 w-5 text-accent-soft-text" />
             </div>
             <div>
-              <h3 className={`font-bold text-theme-icon`}>Workload intelligence</h3>
+              <h3 className={`font-semibold text-accent-soft-text`}>Workload intelligence</h3>
               <p className="text-xs text-muted">Capacity & bandwidth analysis</p>
             </div>
           </div>
@@ -70,8 +70,8 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             {/* Primary Capacity Meter */}
             <div className="space-y-2">
               <div className="flex items-end justify-between">
-                <span className="text-xs font-bold text-theme-icon">Utilisation</span>
-                <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-danger' : 'text-theme-icon'}`}>
+                <span className="text-xs font-semibold text-accent-soft-text">Utilisation</span>
+                <span className={`text-2xl font-semibold ${metrics.capacity_percentage > 80 ? 'text-danger-text' : 'text-accent-soft-text'}`}>
                   {metrics.capacity_percentage}%
                 </span>
               </div>
@@ -86,7 +86,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
                 />
               </div>
               {metrics.capacity_percentage > 80 && (
-                <p className="text-xs text-danger flex items-center gap-1 mt-1">
+                <p className="text-xs text-danger-text flex items-center gap-1 mt-1">
                   <AlertTriangle className="h-3 w-3" /> User is currently over-utilized. High risk of SLA breach.
                 </p>
               )}
@@ -94,30 +94,30 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
 
             {/* Metric Bento Grid */}
             <div className="grid grid-cols-2 gap-3">
-              <div className={`p-4 rounded-xl border bg-elevated border-border`}>
-                <CheckCircle2 className="h-4 w-4 text-success mb-2" />
-                <span className="block text-2xl font-bold text-theme-icon mb-1">{metrics.active_tasks}</span>
-                <span className="text-xs text-muted font-bold">Active directives</span>
+              <div className={`p-4 rounded-lg border bg-elevated border-border`}>
+                <CheckCircle2 className="h-4 w-4 text-success-text mb-2" />
+                <span className="block text-2xl font-semibold text-accent-soft-text mb-1">{metrics.active_tasks}</span>
+                <span className="text-xs text-muted font-semibold">Active directives</span>
               </div>
-              <div className={`p-4 rounded-xl border bg-danger-soft border-danger-border`}>
-                <AlertTriangle className="h-4 w-4 text-danger mb-2" />
-                <span className="block text-2xl font-bold text-danger dark:text-danger mb-1">{metrics.overdue_tasks}</span>
-                <span className="text-xs text-danger/70 font-bold">Overdue SLA</span>
+              <div className={`p-4 rounded-lg border bg-danger-soft border-danger-border`}>
+                <AlertTriangle className="h-4 w-4 text-danger-text mb-2" />
+                <span className="block text-2xl font-semibold text-danger-text dark:text-danger-text mb-1">{metrics.overdue_tasks}</span>
+                <span className="text-xs text-danger/70 font-semibold">Overdue SLA</span>
               </div>
-              <div className={`p-4 rounded-xl border bg-elevated border-border`}>
-                <Clock className="h-4 w-4 text-theme-icon mb-2" />
-                <span className="block text-2xl font-bold text-theme-icon mb-1">{metrics.estimated_hours}h</span>
-                <span className="text-xs text-muted font-bold">Estimated load</span>
+              <div className={`p-4 rounded-lg border bg-elevated border-border`}>
+                <Clock className="h-4 w-4 text-accent-soft-text mb-2" />
+                <span className="block text-2xl font-semibold text-accent-soft-text mb-1">{metrics.estimated_hours}h</span>
+                <span className="text-xs text-muted font-semibold">Estimated load</span>
               </div>
-              <div className={`p-4 rounded-xl border flex flex-col justify-center bg-accent-soft border-info-border`}>
-                <span className="text-xs text-theme-icon dark:text-theme-icon font-bold mb-1">Available bandwidth</span>
-                <span className="text-xl font-bold text-theme-icon">{metrics.available_capacity}%</span>
+              <div className={`p-4 rounded-lg border flex flex-col justify-center bg-accent-soft border-info-border`}>
+                <span className="text-xs text-accent-soft-text dark:text-accent-soft-text font-semibold mb-1">Available bandwidth</span>
+                <span className="text-xl font-semibold text-accent-soft-text">{metrics.available_capacity}%</span>
               </div>
             </div>
 
             <AppButton variant="ghost" 
               onClick={onClose}
-              className={`w-full py-2 rounded-lg text-sm font-bold transition-colors ${
+              className={`w-full py-2 rounded-lg text-sm font-semibold transition-colors ${
                 "bg-elevated text-muted hover:bg-elevated"
               }`}
             >

@@ -303,21 +303,21 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
         );
       case "DELETE":
         return (
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-danger-soft text-danger-text border border-danger-border inline-flex items-center gap-1">
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-danger-soft text-danger-text border border-danger-border inline-flex items-center gap-1">
             <Trash2 className="h-3 w-3 text-danger-text" />
             <span>Delete</span>
           </span>
         );
       case "UPDATE":
         return (
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-info-soft text-info-text border border-info-border inline-flex items-center gap-1">
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-info-soft text-info-text border border-info-border inline-flex items-center gap-1">
             <Edit2 className="h-3 w-3 text-info-text" />
             <span>Update</span>
           </span>
         );
       case "CREATE":
         return (
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-success-soft text-success-text border border-success-border inline-flex items-center gap-1">
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-success-soft text-success-text border border-success-border inline-flex items-center gap-1">
             <Plus className="h-3 w-3 text-success-text" />
             <span>Create</span>
           </span>
@@ -325,8 +325,8 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
       case "STATUS_CHANGE":
       default:
         return (
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-surface text-theme-icon dark:text-muted-foreground border border-border inline-flex items-center gap-1">
-            <Layers className="h-3 w-3 text-theme-icon" />
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface text-accent-soft-text dark:text-muted-foreground border border-border inline-flex items-center gap-1">
+            <Layers className="h-3 w-3 text-accent-soft-text" />
             <span>Status change</span>
           </span>
         );
@@ -336,30 +336,30 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
   const getEntityTypeBadge = (entityType?: string) => {
     switch (entityType) {
       case "PROJECT":
-        return <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-sunken text-foreground border border-border">🏢 Master project</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-sunken text-foreground border border-border">Master project</span>;
       case "SUB_PROJECT":
-        return <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-warning-soft text-warning-text border border-warning-border">🏙️ Sub-Project</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border">Sub-Project</span>;
       case "TOWER":
-        return <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-info-soft text-info-text border border-info-border">🏙️ Tower / wing</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-info-soft text-info-text border border-info-border">Tower / wing</span>;
       case "PACKAGE":
-        return <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-success-soft text-success-text border border-success-border">📦 Work package</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-success-soft text-success-text border border-success-border">Work package</span>;
       case "CONSULTANT":
-        return <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-surface text-foreground dark:text-muted-foreground border border-border">🤝 Consultant</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border">Consultant</span>;
       case "AUTHORITY":
-        return <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-surface text-foreground dark:text-muted-foreground border border-border">🛡️ Authority</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border">Authority</span>;
       case "MATRIX_CELL":
       default:
-        return <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-muted text-muted-foreground border border-border">📊 Matrix cell</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-muted text-muted-foreground border border-border">Matrix cell</span>;
     }
   };
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
       {/* Top Header & Tab Switcher Strip */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
+      <div className="p-4 sm:p-5 rounded-lg border border-border bg-surface shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-surface text-theme-icon dark:text-muted-foreground flex items-center justify-center border border-border shrink-0">
+            <div className="h-10 w-10 rounded-lg bg-surface text-accent-soft-text dark:text-muted-foreground flex items-center justify-center border border-border shrink-0">
               <History className="h-5 w-5" />
             </div>
             <div>
@@ -370,11 +370,11 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
           </div>
 
           {/* Sub-Tab Switcher */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/30 border border-border self-start sm:self-auto">
+          <div className="flex items-center gap-1.5 p-1 rounded-lg bg-muted/30 border border-border self-start sm:self-auto">
             <button
               type="button"
               onClick={() => setActiveTab("AUDIT_TRAIL")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "AUDIT_TRAIL"
                   ? "bg-primary text-white shadow-2xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -387,7 +387,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab("DRAWING_REVISIONS")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "DRAWING_REVISIONS"
                   ? "bg-info text-white shadow-2xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -404,20 +404,20 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
           <div className="space-y-4 pt-1">
             {/* Fast Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 rounded-xl bg-surface border border-border">
-                <span className="text-[11px] font-bold text-muted-foreground block">Total audit events</span>
+              <div className="p-3 rounded-lg bg-surface border border-border">
+                <span className="text-[11px] font-semibold text-muted-foreground block">Total audit events</span>
                 <span className="text-lg font-semibold text-foreground font-mono">{auditStats.total}</span>
               </div>
-              <div className="p-3 rounded-xl bg-danger-soft border border-danger-border">
-                <span className="text-[11px] font-bold text-danger-text block">Deletions & cascades</span>
+              <div className="p-3 rounded-lg bg-danger-soft border border-danger-border">
+                <span className="text-[11px] font-semibold text-danger-text block">Deletions & cascades</span>
                 <span className="text-lg font-semibold text-danger-text font-mono">{auditStats.deletes}</span>
               </div>
-              <div className="p-3 rounded-xl bg-info-soft border border-info-border">
-                <span className="text-[11px] font-bold text-info-text block">Master updates</span>
+              <div className="p-3 rounded-lg bg-info-soft border border-info-border">
+                <span className="text-[11px] font-semibold text-info-text block">Master updates</span>
                 <span className="text-lg font-semibold text-info-text font-mono">{auditStats.updates}</span>
               </div>
-              <div className="p-3 rounded-xl bg-success-soft border border-success-border">
-                <span className="text-[11px] font-bold text-success-text block">Status / matrix fills</span>
+              <div className="p-3 rounded-lg bg-success-soft border border-success-border">
+                <span className="text-[11px] font-semibold text-success-text block">Status / matrix fills</span>
                 <span className="text-lg font-semibold text-success-text font-mono">{auditStats.statusChanges + auditStats.creates}</span>
               </div>
             </div>
@@ -431,7 +431,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                   placeholder="Search audit trail by entity, project, operator, or remarks…"
                   value={auditSearchQuery}
                   onChange={e => setAuditSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -439,41 +439,41 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               <select
                 value={selectedActionFilter}
                 onChange={e => setSelectedActionFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
               >
                 <option value="ALL">All actions</option>
                 <option value="CASCADE_DELETE">Cascade delete</option>
-                <option value="DELETE">🗑️ DELETE</option>
-                <option value="UPDATE">✏️ UPDATE</option>
-                <option value="CREATE">➕ CREATE</option>
-                <option value="STATUS_CHANGE">📊 STATUS CHANGE</option>
+                <option value="DELETE">Deleted</option>
+                <option value="UPDATE">Updated</option>
+                <option value="CREATE">Created</option>
+                <option value="STATUS_CHANGE">Status changed</option>
               </select>
 
               {/* Entity Type Filter */}
               <select
                 value={selectedEntityTypeFilter}
                 onChange={e => setSelectedEntityTypeFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
               >
                 <option value="ALL">All entity types</option>
-                <option value="PROJECT">🏢 Master project</option>
-                <option value="SUB_PROJECT">🏙️ Sub-project / phase</option>
-                <option value="TOWER">🏙️ Tower / wing</option>
-                <option value="PACKAGE">📦 Work package</option>
-                <option value="CONSULTANT">🤝 Consultant partner</option>
-                <option value="AUTHORITY">🛡️ Statutory authority</option>
-                <option value="MATRIX_CELL">📊 Matrix cell</option>
+                <option value="PROJECT">Master project</option>
+                <option value="SUB_PROJECT">Sub-project / phase</option>
+                <option value="TOWER">Tower / wing</option>
+                <option value="PACKAGE">Work package</option>
+                <option value="CONSULTANT">Consultant partner</option>
+                <option value="AUTHORITY">Statutory authority</option>
+                <option value="MATRIX_CELL">Matrix cell</option>
               </select>
 
               {/* Project Filter */}
               <select
                 value={selectedAuditProject}
                 onChange={e => setSelectedAuditProject(e.target.value)}
-                className="px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
               >
                 <option value="ALL">All projects</option>
                 {masterProjects.map(p => (
-                  <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name}` : `🏢 ${p.name}`}</option>
+                  <option key={p.id} value={p.id}>{p.isSubProject ? `${p.name}` : `${p.name}`}</option>
                 ))}
               </select>
 
@@ -486,7 +486,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                     setSelectedAuditProject("ALL");
                     setAuditSearchQuery("");
                   }}
-                  className="px-3 py-1.5 rounded-xl border border-dashed border-danger-border text-danger-text hover:bg-danger-soft text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                  className="px-3 py-1.5 rounded-lg border border-danger-border text-danger-text hover:bg-danger-soft text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <X className="h-3 w-3" />
                   <span>Reset</span>
@@ -496,7 +496,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               <button
                 type="button"
                 onClick={handleExportAuditCsv}
-                className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all ml-auto"
+                className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all ml-auto"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5" />
                 <span>Export audit CSV</span>
@@ -515,7 +515,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                 placeholder="Search drawings by code, title, consultant…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
               />
             </div>
 
@@ -545,7 +545,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                   setSelectedProjects([]);
                   setSearchQuery("");
                 }}
-                className="h-8 px-2.5 rounded-xl border border-dashed border-danger-border bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
+                className="h-8 px-2.5 rounded-lg border border-danger-border bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
               >
                 <X className="h-3 w-3" />
                 <span>Reset</span>
@@ -555,7 +555,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
             <button
               type="button"
               onClick={handleExportDrawingCsv}
-              className="h-8 px-3 rounded-xl border border-border bg-surface hover:bg-muted text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ml-auto"
+              className="h-8 px-3 rounded-lg border border-border bg-surface hover:bg-muted text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ml-auto"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-info-text" />
               <span>Export drawing CSV</span>
@@ -566,7 +566,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
 
       {/* View 1: Master & Transaction Audit Logs Table */}
       {activeTab === "AUDIT_TRAIL" && (
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+        <div className="rounded-lg border border-border bg-surface overflow-hidden shadow-xs">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse min-w-[1100px]">
               <thead>
@@ -600,14 +600,14 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                           {/* Timestamp & Operator */}
                           <td className="p-3.5 whitespace-nowrap min-w-[160px]">
                             <div>
-                              <span className="font-mono text-[11px] font-bold text-foreground block">
+                              <span className="font-mono text-[11px] font-semibold text-foreground block">
                                 {formatDate(log.timestamp)}
                               </span>
                               <span className="font-mono text-[11px] text-muted-foreground block">
                                 {new Date(log.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                               </span>
-                              <span className="text-[11px] font-semibold text-theme-icon dark:text-muted-foreground block mt-0.5">
-                                👤 {log.changedBy || "Design Manager"}
+                              <span className="text-[11px] font-semibold text-accent-soft-text dark:text-muted-foreground block mt-0.5">
+                                {log.changedBy || "Design Manager"}
                               </span>
                             </div>
                           </td>
@@ -621,7 +621,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                           <td className="p-3.5 whitespace-nowrap min-w-[200px]">
                             <div className="space-y-1">
                               <div>{getEntityTypeBadge(log.entityType)}</div>
-                              <span className="font-bold text-foreground block text-xs truncate max-w-[220px]">
+                              <span className="font-semibold text-foreground block text-xs truncate max-w-[220px]">
                                 {log.entityName || log.packageName || log.projectName || log.entryKey || "Transaction Record"}
                               </span>
                             </div>
@@ -632,22 +632,22 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                             <div className="flex flex-wrap gap-1 max-w-[280px]">
                               {log.projectName && (
                                 <span className="px-1.5 py-0.5 rounded text-[11px] bg-info-soft text-info-text border border-info-border font-medium truncate max-w-[130px]">
-                                  🏢 {log.projectName}
+                                  {log.projectName}
                                 </span>
                               )}
                               {log.towerName && (
                                 <span className="px-1.5 py-0.5 rounded text-[11px] bg-sunken text-foreground border border-border font-medium">
-                                  🏙️ {log.towerName}
+                                  {log.towerName}
                                 </span>
                               )}
                               {log.packageName && (
                                 <span className="px-1.5 py-0.5 rounded text-[11px] bg-success-soft text-success-text border border-success-border font-medium truncate max-w-[130px]">
-                                  📦 {log.packageName}
+                                  {log.packageName}
                                 </span>
                               )}
                               {log.consultantName && (
                                 <span className="px-1.5 py-0.5 rounded text-[11px] bg-surface text-foreground dark:text-muted-foreground border border-border font-medium truncate max-w-[130px]">
-                                  🤝 {log.consultantName}
+                                  {log.consultantName}
                                 </span>
                               )}
                               {!log.projectName && !log.towerName && !log.packageName && !log.consultantName && (
@@ -696,10 +696,10 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                         {isExpanded && (
                           <tr className="bg-muted/30 border-b border-border">
                             <td colSpan={7} className="p-4 space-y-3">
-                              <div className="p-3.5 rounded-xl bg-surface border border-border space-y-2.5">
+                              <div className="p-3.5 rounded-lg bg-surface border border-border space-y-2.5">
                                 <div className="flex items-center justify-between border-b border-border pb-2">
-                                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                                    <Info className="h-3.5 w-3.5 text-theme-icon" />
+                                  <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                                    <Info className="h-3.5 w-3.5 text-accent-soft-text" />
                                     <span>Audit snapshot & foreign key relationship inspection</span>
                                   </span>
                                   <span className="font-mono text-[11px] text-muted-foreground">ID: {log.id}</span>
@@ -708,7 +708,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                                   {/* Previous State Snapshot */}
                                   <div className="space-y-1">
-                                    <span className="text-[11px] font-bold text-danger-text block">
+                                    <span className="text-[11px] font-semibold text-danger-text block">
                                       Previous state snapshot (before change):
                                     </span>
                                     <pre className="p-2.5 rounded-lg bg-muted/40 border border-border text-[11px] font-mono text-muted-foreground overflow-x-auto max-h-48 custom-scrollbar">
@@ -720,7 +720,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
 
                                   {/* New State Snapshot */}
                                   <div className="space-y-1">
-                                    <span className="text-[11px] font-bold text-success-text block">
+                                    <span className="text-[11px] font-semibold text-success-text block">
                                       New state snapshot (after change):
                                     </span>
                                     <pre className="p-2.5 rounded-lg bg-muted/40 border border-border text-[11px] font-mono text-foreground overflow-x-auto max-h-48 custom-scrollbar">
@@ -733,7 +733,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
 
                                 {log.reason && (
                                   <div className="pt-2 border-t border-border flex items-center gap-2 text-xs">
-                                    <span className="font-bold text-foreground">Deletion / change reason:</span>
+                                    <span className="font-semibold text-foreground">Deletion / change reason:</span>
                                     <span className="text-muted-foreground">{log.reason}</span>
                                   </div>
                                 )}
@@ -753,7 +753,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
 
       {/* View 2: Drawing CAD Revision History Table */}
       {activeTab === "DRAWING_REVISIONS" && (
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+        <div className="rounded-lg border border-border bg-surface overflow-hidden shadow-xs">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left text-xs border-collapse min-w-[1250px]">
               <thead>
@@ -779,7 +779,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                     <tr key={entry.id} className="hover:bg-sunken transition-colors">
                       <td className="p-3.5 whitespace-nowrap min-w-[260px]">
                         <div>
-                          <span className="font-mono font-bold text-foreground block text-xs whitespace-nowrap select-all">
+                          <span className="font-mono font-semibold text-foreground block text-xs whitespace-nowrap select-all">
                             {entry.drawingCode}
                           </span>
                           <span className="text-[11px] text-muted-foreground whitespace-nowrap block mt-0.5">
@@ -794,7 +794,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                         </span>
                       </td>
                       <td className="p-3.5 text-center whitespace-nowrap min-w-[140px]">
-                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-info-soft text-info-text font-mono font-bold text-xs border border-info-border whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-info-soft text-info-text font-mono font-semibold text-xs border border-info-border whitespace-nowrap">
                           {entry.previousRevision && (
                             <>
                               <span className="text-muted-foreground">{entry.previousRevision}</span>

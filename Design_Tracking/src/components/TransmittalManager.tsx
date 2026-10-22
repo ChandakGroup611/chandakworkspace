@@ -27,7 +27,7 @@ import { TransmittalItem, TransmittalPurpose } from "../types";
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
-import { confirmAction } from "@/components/ui/feedback/confirm";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 export function TransmittalManager() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -166,8 +166,8 @@ export function TransmittalManager() {
     setRemarks("");
   };
 
-  const handleAcknowledge = (id: string) => {
-    const user = prompt("Enter Name / Designation of Recipient Acknowledging Receipt:", "Site Project Manager");
+  const handleAcknowledge = async (id: string) => {
+    const user = await promptAction({ title: "Record acknowledgement", description: "Who received this transmittal?", label: "Name or designation", defaultValue: "Site Project Manager", confirmLabel: "Acknowledge" });
     if (user && user.trim()) {
       DesignMasterStore.acknowledgeTransmittal(id, user.trim());
     }
@@ -191,13 +191,13 @@ export function TransmittalManager() {
       {!isCreateModalOpen && !isPrintSlipOpen && (
         <>
           {/* Header Banner */}
-          <div className="p-5 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div className="p-5 rounded-lg bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-info-soft border border-info-border flex items-center justify-center text-info-text shrink-0">
+          <div className="h-10 w-10 rounded-lg bg-info-soft border border-info-border flex items-center justify-center text-info-text shrink-0">
             <Send className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">
+            <h2 className="text-base font-semibold text-foreground">
               Document transmittals & GFC dispatch slips
             </h2>
           </div>
@@ -207,7 +207,7 @@ export function TransmittalManager() {
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="h-8 px-3.5 rounded-xl bg-info hover:bg-info text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
+            className="h-8 px-3.5 rounded-lg bg-info hover:bg-info text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Generate transmittal note</span>
@@ -217,27 +217,27 @@ export function TransmittalManager() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-muted-foreground">Total transmittals</div>
+        <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="text-[11px] font-semibold text-muted-foreground">Total transmittals</div>
           <div className="text-xl font-semibold text-foreground mt-1">{transmittals.length}</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-success-text">GFC releases</div>
+        <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="text-[11px] font-semibold text-success-text">GFC releases</div>
           <div className="text-xl font-semibold text-success-text mt-1">
             {transmittals.filter(t => t.purpose === "GOOD_FOR_CONSTRUCTION").length}
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-info-text">Acknowledged</div>
+        <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="text-[11px] font-semibold text-info-text">Acknowledged</div>
           <div className="text-xl font-semibold text-info-text mt-1">
             {transmittals.filter(t => t.status === "ACKNOWLEDGED").length}
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-warning-text">Pending acknowledgment</div>
+        <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="text-[11px] font-semibold text-warning-text">Pending acknowledgment</div>
           <div className="text-xl font-semibold text-warning-text mt-1">
             {transmittals.filter(t => t.status === "ISSUED").length}
           </div>
@@ -245,7 +245,7 @@ export function TransmittalManager() {
       </div>
 
       {/* Unified Multi-Select Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-card border border-border space-y-3 shadow-xs">
+      <div className="p-4 rounded-lg bg-card border border-border space-y-3 shadow-xs">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="relative w-full lg:w-72 shrink-0">
             <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -254,7 +254,7 @@ export function TransmittalManager() {
               aria-label="Search transmittal number, recipient, tower"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-sunken text-foreground focus:outline-none focus:border-info-border"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-sunken text-foreground focus:outline-none focus:border-info-border"
             />
           </div>
 
@@ -295,7 +295,7 @@ export function TransmittalManager() {
                   setSelectedStatuses([]);
                   setSearchQuery("");
                 }}
-                className="h-8 px-2.5 rounded-xl border border-dashed border-danger-border hover:border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                className="h-8 px-2.5 rounded-lg border border-danger-border hover:border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <X className="h-3 w-3" />
                 <span>Reset</span>
@@ -307,7 +307,7 @@ export function TransmittalManager() {
         {/* Active Filter Chips Bar */}
         {(selectedProjects.length > 0 || selectedPurposes.length > 0 || selectedStatuses.length > 0) && (
           <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1">Active:</span>
+            <span className="text-[11px] font-semibold text-muted-foreground mr-1">Active:</span>
 
             {selectedProjects.map(id => {
               const p = projects.find(proj => proj.id === id);
@@ -382,7 +382,7 @@ export function TransmittalManager() {
       </div>
 
       {/* Transmittals List Table */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+      <div className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -410,12 +410,12 @@ export function TransmittalManager() {
                   return (
                     <tr key={t.id} className="hover:bg-sunken transition-colors">
                       <td className="p-3.5 pl-4">
-                        <div className="font-mono font-bold text-info-text">{t.transmittalNumber}</div>
+                        <div className="font-mono font-semibold text-info-text">{t.transmittalNumber}</div>
                         <div className="text-[11px] text-muted-foreground">By: {t.issuedBy}</div>
                       </td>
 
                       <td className="p-3.5">
-                        <div className="font-bold text-foreground">{t.projectName}</div>
+                        <div className="font-semibold text-foreground">{t.projectName}</div>
                         {t.towerName && (
                           <div className="text-[11px] text-muted-foreground flex items-center gap-1">
                             <Building2 className="h-3 w-3" />
@@ -425,7 +425,7 @@ export function TransmittalManager() {
                       </td>
 
                       <td className="p-3.5">
-                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${pBadge.color}`}>
+                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${pBadge.color}`}>
                           {pBadge.label}
                         </span>
                       </td>
@@ -438,7 +438,7 @@ export function TransmittalManager() {
                       </td>
 
                       <td className="p-3.5">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-sunken text-foreground font-mono font-bold text-[11px]">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-sunken text-foreground font-mono font-semibold text-[11px]">
                           <FileText className="h-3 w-3 text-muted-foreground" />
                           <span>{t.drawingDetails?.length || t.drawingIds.length} Drawing(s)</span>
                         </div>
@@ -450,12 +450,12 @@ export function TransmittalManager() {
 
                       <td className="p-3.5">
                         {t.status === "ACKNOWLEDGED" ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-success-soft text-success-text border border-success-border">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-success-soft text-success-text border border-success-border">
                             <CheckCircle2 className="h-3 w-3" />
                             <span>Acknowledged</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-warning-soft text-warning-text border border-warning-border">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border">
                             <Clock className="h-3 w-3" />
                             <span>Issued</span>
                           </span>
@@ -542,15 +542,15 @@ export function TransmittalManager() {
         >
           <div className="space-y-6 max-w-4xl">
             {formError && (
-              <div className="p-3.5 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
             <AppCard className="border-border shadow-xs">
-              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+              <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+                <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-info-text" />
                   <span>Project & purpose configuration</span>
                 </AppCardTitle>
@@ -558,12 +558,12 @@ export function TransmittalManager() {
               <AppCardContent className="p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Target project *</label>
+                    <label className="text-xs font-semibold text-foreground">Target project *</label>
                     <select
                       value={projectId}
                       onChange={e => setProjectId(e.target.value)}
                       aria-label="Target project"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border cursor-pointer"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border cursor-pointer"
                     >
                       <option value="">Select project</option>
                       {projects.map(p => (
@@ -573,26 +573,26 @@ export function TransmittalManager() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Tower / zone / sector</label>
+                    <label className="text-xs font-semibold text-foreground">Tower / zone / sector</label>
                     <input
                       type="text"
                       value={towerName}
                       onChange={e => setTowerName(e.target.value)}
                       placeholder="e.g. Tower a / podium / commercial wing"
                       aria-label="Tower, zone, or sector"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Purpose of issue *</label>
+                    <label className="text-xs font-semibold text-foreground">Purpose of issue *</label>
                     <select
                       value={purpose}
                       onChange={e => setPurpose(e.target.value as TransmittalPurpose)}
                       aria-label="Purpose of issue"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border cursor-pointer"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border cursor-pointer"
                     >
                       <option value="GOOD_FOR_CONSTRUCTION">Good for construction (GFC)</option>
                       <option value="FOR_TENDER_BIDDING">For tender / pricing</option>
@@ -603,13 +603,13 @@ export function TransmittalManager() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Issued by / designation</label>
+                    <label className="text-xs font-semibold text-foreground">Issued by / designation</label>
                     <input
                       type="text"
                       value={issuedBy}
                       onChange={e => setIssuedBy(e.target.value)}
                       aria-label="Issued by or designation"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
                     />
                   </div>
                 </div>
@@ -617,8 +617,8 @@ export function TransmittalManager() {
             </AppCard>
 
             <AppCard className="border-border shadow-xs">
-              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+              <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+                <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-info-text" />
                   <span>Recipient & contractor details</span>
                 </AppCardTitle>
@@ -626,7 +626,7 @@ export function TransmittalManager() {
               <AppCardContent className="p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Recipient agency / contractor *</label>
+                    <label className="text-xs font-semibold text-foreground">Recipient agency / contractor *</label>
                     <input
                       type="text"
                       required
@@ -634,30 +634,30 @@ export function TransmittalManager() {
                       onChange={e => setRecipientAgency(e.target.value)}
                       placeholder="e.g. L&t construction / shapoorji pallonji"
                       aria-label="Recipient agency or contractor"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Recipient contact person</label>
+                    <label className="text-xs font-semibold text-foreground">Recipient contact person</label>
                     <input
                       type="text"
                       value={recipientContact}
                       onChange={e => setRecipientContact(e.target.value)}
                       placeholder="e.g. Mr. Rajesh sharma (project director)"
                       aria-label="Recipient contact person"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
                     />
                   </div>
                 </div>
 
                 {/* Drawing Selection Checklist */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-foreground flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                     <span>Select drawings to include ({selectedDrawingIds.length} selected) *</span>
                     <span className="text-[11px] text-muted-foreground">Select one or more drawing revisions</span>
                   </label>
-                  <div className="p-3 rounded-2xl border border-border bg-background max-h-56 overflow-y-auto custom-scrollbar space-y-2">
+                  <div className="p-3 rounded-lg border border-border bg-background max-h-56 overflow-y-auto custom-scrollbar space-y-2">
                     {drawings.length === 0 ? (
                       <div className="p-6 text-center text-muted-foreground text-xs">
                         No drawings uploaded yet in drawing register.
@@ -668,7 +668,7 @@ export function TransmittalManager() {
                         return (
                           <label
                             key={d.id}
-                            className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
+                            className={`flex items-start gap-3 p-3 rounded-lg border text-xs cursor-pointer transition-colors ${
                               isChecked 
                                 ? "bg-info-soft border-info-border text-foreground" 
                                 : "bg-surface border-border text-muted-foreground hover:text-foreground"
@@ -687,7 +687,7 @@ export function TransmittalManager() {
                               className="mt-0.5 rounded border-border text-info-text focus:ring-info-border"
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="font-mono font-bold text-foreground flex items-center gap-2">
+                              <div className="font-mono font-semibold text-foreground flex items-center gap-2">
                                 <span>{d.code}</span>
                                 <span className="px-2 py-0.5 rounded-md bg-muted text-[11px] border border-border">{d.revision}</span>
                                 <span className="text-[11px] text-muted-foreground">({d.discipline})</span>
@@ -703,7 +703,7 @@ export function TransmittalManager() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Copies per drawing</label>
+                    <label className="text-xs font-semibold text-foreground">Copies per drawing</label>
                     <input
                       type="number"
                       min="1"
@@ -711,19 +711,19 @@ export function TransmittalManager() {
                       value={copiesPerDrawing}
                       onChange={e => setCopiesPerDrawing(parseInt(e.target.value) || 1)}
                       aria-label="Copies per drawing"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Transmittal remarks / instructions</label>
+                    <label className="text-xs font-semibold text-foreground">Transmittal remarks / instructions</label>
                     <input
                       type="text"
                       value={remarks}
                       onChange={e => setRemarks(e.target.value)}
                       placeholder="e.g. For immediate structural column bar bending schedule execution"
                       aria-label="Transmittal remarks or instructions"
-                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-info-border"
                     />
                   </div>
                 </div>
@@ -752,7 +752,7 @@ export function TransmittalManager() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="h-9 px-4 rounded-xl bg-foreground hover:bg-foreground text-background text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+              className="h-9 px-4 rounded-lg bg-foreground hover:bg-foreground text-background text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
               <Printer className="h-3.5 w-3.5" />
               <span>Print transmittal slip</span>
@@ -767,7 +767,7 @@ export function TransmittalManager() {
                   <h1 className="text-xl font-semibold tracking-tight text-foreground">
                     Chandak group
                   </h1>
-                  <p className="text-xs font-bold text-subtle">
+                  <p className="text-xs font-semibold text-subtle">
                     Design & project delivery division • corporate office Mumbai
                   </p>
                   <p className="text-[11px] text-muted">
@@ -776,10 +776,10 @@ export function TransmittalManager() {
                 </div>
 
                 <div className="text-right">
-                  <div className="inline-block p-2 border border-border rounded-xl bg-sunken">
+                  <div className="inline-block p-2 border border-border rounded-lg bg-sunken">
                     <QrCode className="h-10 w-10 text-foreground" />
                   </div>
-                  <div className="text-[11px] font-mono font-bold text-muted mt-1">
+                  <div className="text-[11px] font-mono font-semibold text-muted mt-1">
                     {selectedTransmittal.transmittalNumber}
                   </div>
                 </div>
@@ -787,32 +787,32 @@ export function TransmittalManager() {
             </div>
 
             {/* Metadata Grid */}
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-sunken border border-border text-xs mb-6">
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-sunken border border-border text-xs mb-6">
               <div>
-                <span className="text-[11px] font-bold text-muted block">Project Name:</span>
-                <span className="font-bold text-foreground text-sm">{selectedTransmittal.projectName}</span>
+                <span className="text-[11px] font-semibold text-muted block">Project Name:</span>
+                <span className="font-semibold text-foreground text-sm">{selectedTransmittal.projectName}</span>
                 {selectedTransmittal.towerName && (
                   <span className="text-[11px] text-subtle block">Tower / Sector: {selectedTransmittal.towerName}</span>
                 )}
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-muted block">Transmittal ref no:</span>
+                <span className="text-[11px] font-semibold text-muted block">Transmittal ref no:</span>
                 <span className="font-mono font-semibold text-info-text text-sm">{selectedTransmittal.transmittalNumber}</span>
                 <span className="text-[11px] text-subtle block">Date of Issue: {selectedTransmittal.issueDate}</span>
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-muted block">Issued to (recipient):</span>
-                <span className="font-bold text-foreground">{selectedTransmittal.recipientAgency}</span>
+                <span className="text-[11px] font-semibold text-muted block">Issued to (recipient):</span>
+                <span className="font-semibold text-foreground">{selectedTransmittal.recipientAgency}</span>
                 {selectedTransmittal.recipientContact && (
                   <span className="text-[11px] text-subtle block">Attn: {selectedTransmittal.recipientContact}</span>
                 )}
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-muted block">Purpose of Release:</span>
-                <span className="inline-block px-2.5 py-0.5 mt-0.5 rounded text-[11px] font-bold bg-foreground text-background">
+                <span className="text-[11px] font-semibold text-muted block">Purpose of Release:</span>
+                <span className="inline-block px-2.5 py-0.5 mt-0.5 rounded text-[11px] font-semibold bg-foreground text-background">
                   {selectedTransmittal.purpose.replace(/_/g, " ")}
                 </span>
                 <span className="text-[11px] text-subtle block mt-1">Issued By: {selectedTransmittal.issuedBy}</span>
@@ -821,12 +821,12 @@ export function TransmittalManager() {
 
             {/* Attached Drawings Table */}
             <div className="mb-6">
-              <h4 className="text-xs font-bold text-foreground mb-2">
+              <h4 className="text-xs font-semibold text-foreground mb-2">
                 Attached drawing schedule ({selectedTransmittal.drawingDetails.length} items)
               </h4>
               <table className="w-full text-left border-collapse border border-border text-xs">
                 <thead>
-                  <tr className="bg-sunken border-b border-border font-bold text-foreground text-[11px]">
+                  <tr className="bg-sunken border-b border-border font-semibold text-foreground text-[11px]">
                     <th className="p-2.5 border-r border-border">Sr.</th>
                     <th className="p-2.5 border-r border-border">Drawing number</th>
                     <th className="p-2.5 border-r border-border">Drawing title / description</th>
@@ -838,10 +838,10 @@ export function TransmittalManager() {
                   {selectedTransmittal.drawingDetails.map((item, idx) => (
                     <tr key={idx} className="hover:bg-sunken">
                       <td className="p-2.5 border-r border-border text-center font-mono text-[11px]">{idx + 1}</td>
-                      <td className="p-2.5 border-r border-border font-mono font-bold text-foreground">{item.drawingCode}</td>
+                      <td className="p-2.5 border-r border-border font-mono font-semibold text-foreground">{item.drawingCode}</td>
                       <td className="p-2.5 border-r border-border text-foreground">{item.drawingTitle}</td>
-                      <td className="p-2.5 border-r border-border text-center font-mono font-bold text-info-text">{item.revision}</td>
-                      <td className="p-2.5 text-center font-mono font-bold text-foreground">{item.copiesIssued}</td>
+                      <td className="p-2.5 border-r border-border text-center font-mono font-semibold text-info-text">{item.revision}</td>
+                      <td className="p-2.5 text-center font-mono font-semibold text-foreground">{item.copiesIssued}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -849,23 +849,23 @@ export function TransmittalManager() {
             </div>
 
             {selectedTransmittal.remarks && (
-              <div className="p-3.5 mb-6 rounded-xl bg-warning-soft border border-warning-border text-xs text-warning-text">
-                <span className="font-bold block text-[11px] mb-0.5">Special instructions / remarks:</span>
+              <div className="p-3.5 mb-6 rounded-lg bg-warning-soft border border-warning-border text-xs text-warning-text">
+                <span className="font-semibold block text-[11px] mb-0.5">Special instructions / remarks:</span>
                 <span>{selectedTransmittal.remarks}</span>
               </div>
             )}
 
             {/* Signature & Seal Block */}
             <div className="grid grid-cols-2 gap-6 pt-6 border-t-2 border-border text-xs mt-8">
-              <div className="border border-border rounded-2xl p-4 bg-sunken">
-                <div className="text-[11px] font-bold text-muted mb-8">Issued by (Chandak design division):</div>
-                <div className="border-b border-border-active pb-1 mb-1 font-bold text-foreground">{selectedTransmittal.issuedBy}</div>
+              <div className="border border-border rounded-lg p-4 bg-sunken">
+                <div className="text-[11px] font-semibold text-muted mb-8">Issued by (Chandak design division):</div>
+                <div className="border-b border-border-active pb-1 mb-1 font-semibold text-foreground">{selectedTransmittal.issuedBy}</div>
                 <div className="text-[11px] text-muted">Authorised design signatory & date: {selectedTransmittal.issueDate}</div>
               </div>
 
-              <div className="border border-border rounded-2xl p-4 bg-sunken">
-                <div className="text-[11px] font-bold text-muted mb-8">Received & acknowledged by:</div>
-                <div className="border-b border-border-active pb-1 mb-1 font-bold text-foreground">
+              <div className="border border-border rounded-lg p-4 bg-sunken">
+                <div className="text-[11px] font-semibold text-muted mb-8">Received & acknowledged by:</div>
+                <div className="border-b border-border-active pb-1 mb-1 font-semibold text-foreground">
                   {selectedTransmittal.acknowledgedBy || "_______________________________"}
                 </div>
                 <div className="text-[11px] text-muted">

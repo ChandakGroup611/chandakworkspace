@@ -396,10 +396,10 @@ export default function IAMGovernanceCockpit({
   if (!hasPermission("IAM_VIEW")) {
     return (
       <div className="h-96 flex flex-col items-center justify-center space-y-4 text-center">
-        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
           <Lock className="h-10 w-10" />
         </div>
-        <h2 className={cn("text-lg font-bold", "text-foreground")}>Access denied</h2>
+        <h2 className={cn("text-lg font-semibold", "text-foreground")}>Access denied</h2>
         <p className="text-xs text-muted max-w-sm">You do not have capabilities to view the IAM Governance Cockpit.</p>
       </div>
     );
@@ -422,11 +422,11 @@ export default function IAMGovernanceCockpit({
       {/* Header Section */}
       <div className={cn("flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b pb-6", "border-border")}>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-elevated border border-border text-foreground">
+          <div className="p-2 rounded-lg bg-elevated border border-border text-foreground">
             <ShieldCheck className="h-5 w-5 text-foreground" />
           </div>
           <div>
-            <h1 className={cn("text-xl font-bold tracking-tight", "text-foreground")}>
+            <h1 className={cn("text-xl font-semibold tracking-tight", "text-foreground")}>
               IAM governance cockpit
             </h1>
           </div>
@@ -434,13 +434,13 @@ export default function IAMGovernanceCockpit({
 
         <div className="flex items-center gap-4">
           <div className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-2xl border transition-all duration-300",
+            "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-300",
             isSaving 
-              ? ("bg-success-soft border-success-border text-success")
+              ? ("bg-success-soft border-success-border text-success-text")
               : ("bg-elevated border-border text-muted")
           )}>
             <Zap className={`h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
-            <span className="text-xs font-bold">
+            <span className="text-xs font-semibold">
               {isSaving ? "Syncing Logic Gates..." : "Snapshot Synced"}
             </span>
           </div>
@@ -457,19 +457,19 @@ export default function IAMGovernanceCockpit({
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-theme-icon" />
-                  <span className={cn("text-xs font-bold", "text-muted")}>Role registry</span>
+                  <Layers className="h-4 w-4 text-accent-soft-text" />
+                  <span className={cn("text-xs font-semibold", "text-muted")}>Role registry</span>
                 </div>
-                <AppBadge className={cn("font-mono text-xs", "bg-elevated text-muted border-border/50")}>{rolesList.length} Units</AppBadge>
+                <AppBadge className={cn("font-mono text-xs", "bg-elevated text-muted border-border")}>{rolesList.length} Units</AppBadge>
               </div>
 
               <div className="relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted group-focus-within:text-theme-icon transition-colors" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted group-focus-within:text-accent-soft-text transition-colors" />
                 <AppInput 
                   placeholder="Search by role or code…" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={cn("pl-10 h-11 transition-all text-xs", "bg-surface border-border focus:border-theme-btn-primary text-foreground placeholder:text-muted")}
+                  className={cn("pl-10 h-11 transition-all text-xs", "bg-surface border-border focus:border-primary text-foreground placeholder:text-muted")}
                 />
               </div>
             </div>
@@ -481,25 +481,25 @@ export default function IAMGovernanceCockpit({
                   <div 
                     key={role.id}
                     onClick={() => setActiveRoleID(role.id)}
-                    className={cn("group relative p-4 rounded-2xl border transition-all duration-300 cursor-pointer",
+                    className={cn("group relative p-4 rounded-lg border transition-all duration-300 cursor-pointer",
                       isSelected
-                        ? ("bg-accent-soft border-theme-btn-primary/30 shadow-xs")
-                        : ("bg-transparent border-transparent hover:bg-elevated/80 hover:border-border")
+                        ? ("bg-accent-soft border-border-active shadow-xs")
+                        : ("bg-transparent border-transparent hover:bg-sunken hover:border-border")
                     )}
                   >
                     {isSelected && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-theme-btn-primary rounded-r-full" />
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary rounded-r-full" />
                     )}
                     
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className={cn("text-sm font-bold transition-colors", isSelected ? ("text-foreground") : ("text-muted group-hover:text-foreground"))}>
+                          <span className={cn("text-sm font-semibold transition-colors", isSelected ? ("text-foreground") : ("text-muted group-hover:text-foreground"))}>
                             {role.name}
                           </span>
                           {role.is_system && <ShieldCheck className="h-3.5 w-3.5 text-warning/80" />}
                           {!role.is_active && (
-                            <AppBadge variant="danger" className="text-[0.65rem] py-0 px-1 font-mono uppercase bg-danger/10 border-danger-border text-danger">Disabled</AppBadge>
+                            <AppBadge variant="danger" className="text-[0.65rem] py-0 px-1 font-mono uppercase bg-danger-soft border-danger-border text-danger-text">Disabled</AppBadge>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
@@ -515,7 +515,7 @@ export default function IAMGovernanceCockpit({
                           )}
                         </div>
                       </div>
-                      <div className={cn("p-2 rounded-xl transition-all", isSelected ? ("bg-accent-soft text-theme-icon") : ("bg-elevated text-muted group-hover:text-muted"))}>
+                      <div className={cn("p-2 rounded-lg transition-all", isSelected ? ("bg-accent-soft text-accent-soft-text") : ("bg-elevated text-muted group-hover:text-muted"))}>
                         <ChevronRight className={`h-4 w-4 transition-transform ${isSelected ? "rotate-90" : ""}`} />
                       </div>
                     </div>
@@ -528,7 +528,7 @@ export default function IAMGovernanceCockpit({
               <div className={cn("p-6 border-t", "border-border bg-surface/50")}>
                 <form onSubmit={handleCreateRole} className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-muted">Add custom role</span>
+                    <span className="text-xs font-semibold text-muted">Add custom role</span>
                     <Settings className="h-3 w-3 text-subtle" />
                   </div>
                   <div className="flex gap-2">
@@ -536,12 +536,12 @@ export default function IAMGovernanceCockpit({
                       placeholder="New role name…"
                       value={newRoleName}
                       onChange={(e) => setNewRoleName(e.target.value)}
-                      className={cn("h-10 text-xs", "bg-surface border-border text-foreground focus:border-theme-btn-primary focus:bg-surface")}
+                      className={cn("h-10 text-xs", "bg-surface border-border text-foreground focus:border-primary focus:bg-surface")}
                     />
                     <AppButton aria-label="Add" 
                       variant="primary" 
                       type="submit" 
-                      className="h-10 px-4 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text"
+                      className="h-10 px-4 bg-primary hover:opacity-90 text-primary-foreground"
                     >
                       <Plus className="h-4 w-4" />
                     </AppButton>
@@ -557,8 +557,8 @@ export default function IAMGovernanceCockpit({
           <AppCard className={cn("flex-1 overflow-hidden flex flex-col relative")}>
             {isRoleLoading && (
               <div className="absolute inset-0 bg-surface/30-[2px] flex flex-col items-center justify-center space-y-3 z-50">
-                <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
-                <span className={cn("text-xs font-bold animate-pulse", "text-muted")}>
+                <div className="animate-spin h-10 w-10 border-2 border-primary border-t-transparent rounded-full" />
+                <span className={cn("text-xs font-semibold animate-pulse", "text-muted")}>
                   Loading Capabilities…
                 </span>
               </div>
@@ -570,12 +570,12 @@ export default function IAMGovernanceCockpit({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-warning" />
-                        <h3 className={cn("text-lg font-bold tracking-tight", "text-foreground")}>
-                          Capability Matrix: <span className="text-theme-icon">{activeRole.name}</span>
+                        <Zap className="h-4 w-4 text-warning-text" />
+                        <h3 className={cn("text-lg font-semibold tracking-tight", "text-foreground")}>
+                          Capability Matrix: <span className="text-accent-soft-text">{activeRole.name}</span>
                         </h3>
                         {activeRole.is_system && (
-                          <AppBadge className="bg-warning/10 text-warning border-warning-border py-0.5 px-1.5 text-[0.65rem] font-mono uppercase">System</AppBadge>
+                          <AppBadge className="bg-warning-soft text-warning-text border-warning-border py-0.5 px-1.5 text-[0.65rem] font-mono uppercase">System</AppBadge>
                         )}
                       </div>
                       <div className="flex items-center gap-3">
@@ -596,8 +596,8 @@ export default function IAMGovernanceCockpit({
                           onClick={() => handleToggleStatus(activeRole)}
                           className={cn("h-9 px-3 text-xs font-semibold gap-1.5 transition-all border",
                             activeRole.is_active
-                              ? "bg-danger/5 hover:bg-danger/10 text-danger border-danger-border"
-                              : "bg-success/5 hover:bg-success/10 text-success border-success-border"
+                              ? "bg-danger-soft hover:bg-danger-soft text-danger-text border-danger-border"
+                              : "bg-success-soft hover:bg-success-soft text-success-text border-success-border"
                           )}
                         >
                           <Power className="h-3.5 w-3.5" />
@@ -608,7 +608,7 @@ export default function IAMGovernanceCockpit({
                       {hasPermission("IAM_CREATE") && (
                         <AppButton
                           onClick={() => handleCloneRole(activeRole)}
-                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-accent-soft text-theme-icon hover:opacity-90/20 border border-theme-btn-primary/20"
+                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-accent-soft text-accent-soft-text hover:opacity-90/20 border border-border-active"
                         >
                           <Copy className="h-3.5 w-3.5" />
                           Clone role
@@ -618,7 +618,7 @@ export default function IAMGovernanceCockpit({
                       {!activeRole.is_system && hasPermission("IAM_DELETE") && (
                         <AppButton
                           onClick={() => handleDeleteRole(activeRole)}
-                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-danger/10 text-danger hover:bg-danger/20 border border-danger-border"
+                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-danger-soft text-danger-text hover:bg-danger-soft border border-danger-border"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Delete
@@ -632,7 +632,7 @@ export default function IAMGovernanceCockpit({
                 <div className={cn("p-6 border-b space-y-4 bg-transparent", "border-border")}>
                   {/* Module Horizontal Filter Tabs */}
                   <div className="space-y-2">
-                    <span className={cn("text-[0.7rem] font-bold block", "text-muted")}>Filter by module</span>
+                    <span className={cn("text-[0.7rem] font-semibold block", "text-muted")}>Filter by module</span>
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none custom-scrollbar">
                       {uniqueModules.map((mod) => {
                         const isTabSelected = selectedModule === mod;
@@ -642,18 +642,18 @@ export default function IAMGovernanceCockpit({
                             key={mod}
                             onClick={() => setSelectedModule(mod)}
                             className={cn(
-                              "flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer",
+                              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border cursor-pointer",
                               isTabSelected
-                                ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                                ? "bg-primary border-primary text-primary-foreground shadow-xs"
                                 : "bg-elevated border-border text-muted hover:bg-elevated hover:text-muted"
                             )}
                           >
                             <span>{mod === "ALL" ? "All Capabilities" : mod}</span>
                             <span className={cn(
-                              "text-[0.7rem] font-mono font-bold px-1.5 py-0.5 rounded-md",
+                              "text-[0.7rem] font-mono font-semibold px-1.5 py-0.5 rounded-md",
                               isTabSelected
                                 ? "bg-surface/20 text-white"
-                                : "bg-elevated/50 text-muted"
+                                : "bg-sunken text-muted"
                             )}>
                               {stats.active}/{stats.total}
                             </span>
@@ -670,7 +670,7 @@ export default function IAMGovernanceCockpit({
                       placeholder={`Search permissions in ${selectedModule === "ALL" ? "all modules" : selectedModule}...`}
                       value={permSearchQuery}
                       onChange={(e) => setPermSearchQuery(e.target.value)}
-                      className={cn("pl-11 h-11 text-xs", "bg-surface border-border focus:border-theme-btn-primary text-foreground placeholder:text-muted")}
+                      className={cn("pl-11 h-11 text-xs", "bg-surface border-border focus:border-primary text-foreground placeholder:text-muted")}
                     />
                   </div>
                 </div>
@@ -702,7 +702,7 @@ export default function IAMGovernanceCockpit({
                               <React.Fragment key={moduleName}>
                                 <AppTableRow className={cn("border-y", "bg-accent-soft")}>
                                   <AppTableCell colSpan={6} className="py-2">
-                                    <span className="text-[0.65rem] font-bold text-theme-icon">
+                                    <span className="text-[0.65rem] font-semibold text-accent-soft-text">
                                       {moduleName} Directory
                                     </span>
                                   </AppTableCell>
@@ -727,12 +727,12 @@ export default function IAMGovernanceCockpit({
                                       key={m.name}
                                       className={cn(
                                         "group/row transition-colors hover:bg-surface/[0.01]",
-                                        "hover:bg-elevated/40"
+                                        "hover:bg-sunken"
                                       )}
                                     >
                                       <AppTableCell className="pl-6">
                                         <div className="space-y-0.5">
-                                          <div className={cn("text-xs font-bold transition-colors", "text-foreground group-hover/row:text-theme-icon")}>
+                                          <div className={cn("text-xs font-semibold transition-colors", "text-foreground group-hover/row:text-accent-soft-text")}>
                                             {m.submodule}
                                           </div>
                                           <div className="text-[0.7rem] font-mono text-muted uppercase tracking-tighter">
@@ -761,10 +761,10 @@ export default function IAMGovernanceCockpit({
                                                     checked
                                                       ? "bg-success border-success-border text-white shadow-md"
                                                       : "bg-surface border-border",
-                                                    isSuperAdmin ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-theme-btn-primary"
+                                                    isSuperAdmin ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-primary"
                                                   )}
                                                 >
-                                                  {checked && <span className="text-white text-[12px] font-bold">✓</span>}
+                                                  {checked && <span className="text-white text-[12px] font-semibold">✓</span>}
                                                 </AppButton>
                                               </div>
                                             ) : (
@@ -783,7 +783,7 @@ export default function IAMGovernanceCockpit({
                       </AppTable>
                     </div>
                   ) : (
-                    <div className="h-60 flex flex-col items-center justify-center space-y-2 border border-dashed rounded-2xl border-border">
+                    <div className="h-60 flex flex-col items-center justify-center space-y-2 border rounded-lg border-border">
                       <Filter className={cn("h-6 w-6", "text-muted")} />
                       <span className={cn("text-xs font-semibold", "text-muted")}>No matching capabilities found.</span>
                       <span className="text-xs text-muted">Try adjusting your filters or search query.</span>
@@ -793,22 +793,22 @@ export default function IAMGovernanceCockpit({
               </>
             ) : (
               <div className={cn("flex-1 flex flex-col items-center justify-center space-y-3", "text-muted")}>
-                <Layers className="h-8 w-8 opacity-40 animate-pulse text-theme-icon" />
+                <Layers className="h-8 w-8 opacity-40 animate-pulse text-accent-soft-text" />
                 <span className="text-xs font-semibold">No active selection</span>
-                <span className="text-xs text-muted">Select a role from the registry registry list to begin matrix audits.</span>
+                <span className="text-xs text-muted">Select a role from the registry list to begin matrix audits.</span>
               </div>
             )}
 
             {/* Matrix Footer */}
             <div className={cn("p-8 border-t bg-gradient-to-r from-transparent to-transparent", "border-border via-sunken")}>
               <div className="flex items-start gap-4 max-w-3xl">
-                <div className={cn("p-3 rounded-2xl shadow-inner", "bg-accent-soft border border-border")}>
-                  <ShieldCheck className="h-5 w-5 text-theme-icon" />
+                <div className={cn("p-3 rounded-lg shadow-inner", "bg-accent-soft border border-border")}>
+                  <ShieldCheck className="h-5 w-5 text-accent-soft-text" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className={cn("text-xs font-bold", "text-muted")}>Recursive governance enforcement</h4>
+                  <h4 className={cn("text-xs font-semibold", "text-muted")}>Recursive governance enforcement</h4>
                   <p className="text-[0.8rem] text-muted leading-relaxed font-medium">
-                    State transitions committed in this matrix are recursively propagated to the <span className="text-theme-icon font-bold">Identity cache</span>.
+                    State transitions committed in this matrix are recursively propagated to the <span className="text-accent-soft-text font-semibold">Identity cache</span>.
                     Authorization policies will reflect system-wide without session invalidation. System-critical roles enforce immutable logic gates.
                   </p>
                 </div>

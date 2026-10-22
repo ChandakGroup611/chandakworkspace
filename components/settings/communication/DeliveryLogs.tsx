@@ -47,9 +47,9 @@ export default function DeliveryLogs() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'DELIVERED': return <CheckCircle className="w-4 h-4 text-success" />;
-      case 'FAILED': return <XCircle className="w-4 h-4 text-danger" />;
-      case 'PENDING': return <Clock className="w-4 h-4 text-warning" />;
+      case 'DELIVERED': return <CheckCircle className="w-4 h-4 text-success-text" />;
+      case 'FAILED': return <XCircle className="w-4 h-4 text-danger-text" />;
+      case 'PENDING': return <Clock className="w-4 h-4 text-warning-text" />;
       default: return <Clock className="w-4 h-4 text-muted" />;
     }
   };
@@ -58,7 +58,7 @@ export default function DeliveryLogs() {
     <div className="space-y-4 animate-in fade-in duration-500">
       <AppCard className="flex justify-between items-center p-4">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Transmission logs</h2>
+          <h2 className="text-lg font-semibold text-foreground">Transmission logs</h2>
           </div>
         <AppButton aria-label="Refresh"
           onClick={fetchLogs}
@@ -98,7 +98,7 @@ export default function DeliveryLogs() {
                       </span>
                     </div>
                   </AppTableCell>
-                  <AppTableCell className="font-mono text-theme-icon">
+                  <AppTableCell className="font-mono text-accent-soft-text">
                     {log.recipient_email}
                   </AppTableCell>
                   <AppTableCell className="text-xs text-muted-foreground">
@@ -107,7 +107,7 @@ export default function DeliveryLogs() {
                   <AppTableCell>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(log.status)}
-                      <span className="text-xs font-bold text-foreground">{log.status}</span>
+                      <span className="text-xs font-semibold text-foreground">{log.status}</span>
                     </div>
                   </AppTableCell>
                 </AppTableRow>

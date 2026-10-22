@@ -524,7 +524,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
           {/* Mobile Card List (<1024px) */}
           <div className="block lg:hidden p-4 space-y-3">
             {filtered.length === 0 ? (
-              <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
+              <div className="text-center py-12 text-muted text-sm border border-border rounded-xl bg-surface/50">
                 No requirements match your current filters.
               </div>
             ) : (

@@ -40,7 +40,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
     let healthColor = "text-success-text bg-success-soft border-success-border";
     if (healthScore < 60) {
       healthLabel = "Critical Attention Required";
-      healthColor = "text-danger bg-danger/10 border-danger-border";
+      healthColor = "text-danger-text bg-danger-soft border-danger-border";
     } else if (healthScore < 85) {
       healthLabel = "Moderate Workload Friction";
       healthColor = "text-warning-text bg-warning-soft border-warning-border";
@@ -144,15 +144,15 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
       }
       collapsible={true}
       headerRight={
-        <div className="flex items-center gap-2.5 bg-surface/80 px-3 py-1 rounded-xl border border-border/60 shrink-0">
+        <div className="flex items-center gap-2.5 bg-surface/80 px-3 py-1 rounded-lg border border-border shrink-0">
           <div className="text-right hidden sm:block">
-            <div className="text-[11px] font-bold text-muted-foreground">Health score</div>
+            <div className="text-[11px] font-semibold text-muted-foreground">Health score</div>
             <div className="text-[11px] font-semibold text-foreground truncate max-w-[140px]">{digest.healthLabel}</div>
           </div>
           <div className={`flex items-center justify-center w-8 h-8 rounded-lg border font-semibold text-xs ${
             digest.healthScore >= 85 ? 'text-success-text border-success-border bg-success-soft' :
             digest.healthScore >= 60 ? 'text-warning-text border-warning-border bg-warning-soft' :
-            'text-danger border-danger-border bg-danger/10'
+            'text-danger-text border-danger-border bg-danger-soft'
           }`}>
             {digest.healthScore}%
           </div>
@@ -172,9 +172,9 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
               onClick={() => {
                 if (isClickable && b.filter) onDrillDown(b.filter);
               }}
-              className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
+              className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all ${
                 b.type === "danger"
-                  ? "bg-danger/5 border-danger-border text-danger-foreground hover:bg-danger/10"
+                  ? "bg-danger-soft border-danger-border text-danger-foreground hover:bg-danger-soft"
                   : b.type === "warning"
                   ? "bg-warning-soft border-warning-border text-foreground hover:bg-warning-soft"
                   : b.type === "info"
@@ -183,7 +183,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
               } ${isClickable ? "cursor-pointer group" : ""}`}
             >
               <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${
-                b.type === "danger" ? "bg-danger/15 text-danger" :
+                b.type === "danger" ? "bg-danger-soft text-danger-text" :
                 b.type === "warning" ? "bg-warning-soft text-warning-text" :
                 b.type === "info" ? "bg-info-soft text-info-text" :
                 "bg-success-soft text-success-text"
@@ -196,7 +196,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
                   {b.text}
                 </p>
                 {isClickable && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary mt-1 group-hover:underline">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary mt-1 group-hover:underline">
                     View items <ArrowUpRight className="w-3 h-3 transition-transform" />
                   </span>
                 )}

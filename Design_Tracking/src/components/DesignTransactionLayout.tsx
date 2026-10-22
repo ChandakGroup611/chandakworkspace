@@ -80,14 +80,14 @@ export function TransactionFormLayout({
             ))}
           </div>
           <div className="flex items-center gap-3 pt-1">
-            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-success-soft text-success-text border-success-border"}`}>
+            <div className={`h-11 w-11 rounded-lg flex items-center justify-center border shrink-0 ${iconBg || "bg-success-soft text-success-text border-success-border"}`}>
               <Icon className="h-6 w-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
                 <span>{title}</span>
                 {badge && (
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-accent-soft text-theme-btn-primary border-theme-btn-primary/20"}`}>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-accent-soft text-primary border-border-active"}`}>
                     {badge}
                   </span>
                 )}
@@ -129,7 +129,7 @@ export function TransactionFormLayout({
               size="sm"
               disabled={isSubmitting || isSaveDisabled}
               onClick={() => onSave()}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
+              className="bg-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
             >
               {isSubmitting ? (
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -194,7 +194,7 @@ export function TransactionFormLayout({
               size="sm"
               disabled={isSubmitting || isSaveDisabled}
               onClick={() => onSave()}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
+              className="bg-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
             >
               {isSubmitting ? (
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -274,14 +274,14 @@ export function WorkingDocumentLayout({
             ))}
           </div>
           <div className="flex items-center gap-3 pt-1">
-            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-success-soft text-success-text border-success-border"}`}>
+            <div className={`h-11 w-11 rounded-lg flex items-center justify-center border shrink-0 ${iconBg || "bg-success-soft text-success-text border-success-border"}`}>
               <Icon className="h-6 w-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
                 <span>{title}</span>
                 {badge && (
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-accent-soft text-theme-btn-primary border-theme-btn-primary/20"}`}>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-accent-soft text-primary border-border-active"}`}>
                     {badge}
                   </span>
                 )}

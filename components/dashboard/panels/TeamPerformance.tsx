@@ -92,8 +92,8 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
       <AppCard className="mt-5">
         <div className="flex items-center justify-between p-4 border-b theme-card-structural">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-theme-icon" />
-            <span className="text-sm font-bold text-foreground">Team performance · live working metrics</span>
+            <Users className="h-4 w-4 text-accent-soft-text" />
+            <span className="text-sm font-semibold text-foreground">Team performance · live working metrics</span>
           </div>
           <AppButton 
             variant="ghost" 
@@ -118,8 +118,8 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
             <AppTableBody>
               {teamStats.map((u: any, i: number) => {
                 const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
-                const colors = ['bg-success', 'bg-info', 'bg-warning', 'bg-theme-btn-primary', 'bg-theme-btn-primary'];
-                const textColors = ['text-success', 'text-info-text', 'text-warning', 'text-theme-icon', 'text-theme-icon'];
+                const colors = ['bg-success', 'bg-info', 'bg-warning', 'bg-primary', 'bg-primary'];
+                const textColors = ['text-success-text', 'text-info-text', 'text-warning-text', 'text-accent-soft-text', 'text-accent-soft-text'];
                 const color = colors[i % colors.length];
                 const textColor = textColors[i % textColors.length];
 
@@ -132,19 +132,19 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                   >
                     <AppTableCell>
                       <div className="flex items-center gap-3">
-                        <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold text-foreground ${color}`}>
+                        <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-semibold text-foreground ${color}`}>
                           {u.initials}
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-foreground hover:text-primary transition-colors">{u.name}</div>
+                          <div className="text-xs font-semibold text-foreground hover:text-primary transition-colors">{u.name}</div>
                           <div className="text-[11px] text-muted-foreground font-mono">{getRole(u)}</div>
                         </div>
                       </div>
                     </AppTableCell>
-                    <AppTableCell className={`text-center font-bold text-lg ${textColor}`}>
+                    <AppTableCell className={`text-center font-semibold text-lg ${textColor}`}>
                       {u.closed}
                     </AppTableCell>
-                    <AppTableCell className="text-center font-bold text-lg text-theme-icon">
+                    <AppTableCell className="text-center font-semibold text-lg text-accent-soft-text">
                       {u.pts}
                     </AppTableCell>
                     <AppTableCell>

@@ -64,7 +64,7 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
       case "READ": return "text-info-text bg-info-soft border-info-border";
       case "UPDATE": return "text-warning-text bg-warning-soft border-warning-border";
       case "DELETE": return "text-danger-text bg-danger-soft border-danger-border";
-      default: return "text-theme-btn-primary bg-accent-soft border-theme-btn-primary/20";
+      default: return "text-primary bg-accent-soft border-border-active";
     }
   };
 
@@ -72,22 +72,22 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
     <div className="w-full max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300 pb-16">
       
       {/* 1. Header & Business Purpose Card */}
-      <section className="bg-surface rounded-2xl p-6 md:p-8 border border-border shadow-sm space-y-6">
+      <section className="bg-surface rounded-lg p-6 md:p-8 border border-border shadow-sm space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
           <div className="flex items-center gap-4">
-            <div className="p-3.5 rounded-2xl bg-accent-soft text-theme-btn-primary shrink-0">
+            <div className="p-3.5 rounded-lg bg-accent-soft text-primary shrink-0">
               <module.icon className="h-8 w-8" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-accent-soft text-theme-btn-primary">
+                <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded bg-accent-soft text-primary">
                   {module.code}
                 </span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-elevated text-muted-foreground">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-elevated text-muted-foreground">
                   {module.category}
                 </span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
+              <h1 className="text-2xl md:text-3xl font-semibold text-foreground mt-1">
                 {module.title}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
@@ -99,8 +99,8 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
 
         {/* Real-World Purpose & Ecosystem Inflow/Outflow */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-elevated/60 border border-border md:col-span-3 space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-theme-btn-primary">
+          <div className="p-4 rounded-lg bg-elevated/60 border border-border md:col-span-3 space-y-1">
+            <div className="flex items-center gap-2 text-xs font-semibold text-primary">
               <Sparkles className="h-4 w-4" />
               <span>Real-world business purpose</span>
             </div>
@@ -109,8 +109,8 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-info-soft border border-info-border space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-info-text">
+          <div className="p-4 rounded-lg bg-info-soft border border-info-border space-y-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-info-text">
               <Share2 className="h-3.5 w-3.5 rotate-180" />
               <span>Inflow sources</span>
             </div>
@@ -121,8 +121,8 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
             </ul>
           </div>
 
-          <div className="p-4 rounded-xl bg-success-soft border border-success-border space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-success-text">
+          <div className="p-4 rounded-lg bg-success-soft border border-success-border space-y-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-success-text">
               <Share2 className="h-3.5 w-3.5" />
               <span>Outflow destinations</span>
             </div>
@@ -133,14 +133,14 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
             </ul>
           </div>
 
-          <div className="p-4 rounded-xl bg-accent-soft border border-border space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-accent-soft-text">
+          <div className="p-4 rounded-lg bg-accent-soft border border-border space-y-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-accent-soft-text">
               <Database className="h-3.5 w-3.5" />
               <span>PostgreSQL tables</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {module.databaseTables.map((t, i) => (
-                <span key={i} className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-surface border border-border text-foreground">
+                <span key={i} className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-surface border border-border text-foreground">
                   {t}
                 </span>
               ))}
@@ -150,20 +150,20 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
 
         {/* Navigation & Prerequisites */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <div className="p-4 rounded-xl bg-elevated/40 border border-border flex items-start gap-3">
-            <ArrowRight className="h-5 w-5 text-theme-btn-primary shrink-0 mt-0.5" />
+          <div className="p-4 rounded-lg bg-sunken border border-border flex items-start gap-3">
+            <ArrowRight className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div>
-              <div className="text-xs font-bold text-foreground">UI navigation flow</div>
-              <div className="text-xs font-mono font-semibold text-theme-btn-primary mt-0.5">
+              <div className="text-xs font-semibold text-foreground">UI navigation flow</div>
+              <div className="text-xs font-mono font-semibold text-primary mt-0.5">
                 {module.startInfo.navigation}
               </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-elevated/40 border border-border flex items-start gap-3">
-            <ListChecks className="h-5 w-5 text-success shrink-0 mt-0.5" />
+          <div className="p-4 rounded-lg bg-sunken border border-border flex items-start gap-3">
+            <ListChecks className="h-5 w-5 text-success-text shrink-0 mt-0.5" />
             <div>
-              <div className="text-xs font-bold text-foreground">Prerequisites & permissions</div>
+              <div className="text-xs font-semibold text-foreground">Prerequisites & permissions</div>
               <ul className="text-xs text-muted-foreground mt-0.5 list-disc pl-4 space-y-0.5">
                 {module.startInfo.prerequisites.map((req, i) => (
                   <li key={i}>{req}</li>
@@ -175,13 +175,13 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
       </section>
 
       {/* 2. Interactive CRUD Operations Lifecycle Specs */}
-      <section className="bg-surface rounded-2xl p-6 md:p-8 border border-border shadow-sm space-y-6">
+      <section className="bg-surface rounded-lg p-6 md:p-8 border border-border shadow-sm space-y-6">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-theme-btn-primary">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
             <Database className="h-4 w-4" />
             <span>Complete lifecycle operations</span>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold text-foreground mt-1">
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-1">
             CRUD operations & transaction playbook
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
@@ -200,10 +200,10 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
               <button type="button"
                 key={crud.operation}
                 onClick={() => setActiveCrudTab(crud.operation)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all border ${
                   isSelected
-                    ? `${colorCls} shadow-sm ring-2 ring-theme-btn-primary/20`
-                    : "bg-elevated hover:bg-elevated/80 border-border text-muted-foreground"
+                    ? `${colorCls} shadow-sm ring-2 ring-ring`
+                    : "bg-elevated hover:bg-sunken border-border text-muted-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -218,8 +218,8 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-mono font-bold ${getCrudColor(activeCrud.operation)}`}>
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded text-xs font-mono font-semibold ${getCrudColor(activeCrud.operation)}`}>
                     [{activeCrud.code}]
                   </span>
                   {activeCrud.title}
@@ -235,23 +235,23 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               
-              <div className="p-4 rounded-xl bg-elevated/50 border border-border space-y-2">
-                <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Key className="h-3.5 w-3.5 text-theme-btn-primary" />
+              <div className="p-4 rounded-lg bg-sunken border border-border space-y-2">
+                <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Key className="h-3.5 w-3.5 text-primary" />
                   <span>Authorised roles</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {activeCrud.whoCanPerform.map((role, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-accent-soft text-theme-btn-primary">
+                    <span key={i} className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-accent-soft text-primary">
                       {role}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-elevated/50 border border-border space-y-2">
-                <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Settings2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+              <div className="p-4 rounded-lg bg-sunken border border-border space-y-2">
+                <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Settings2 className="h-3.5 w-3.5 text-primary" />
                   <span>Required inputs / payload</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -263,8 +263,8 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-success-soft border border-success-border space-y-2 md:col-span-2">
-                <div className="text-xs font-bold text-success-text flex items-center gap-1.5">
+              <div className="p-4 rounded-lg bg-success-soft border border-success-border space-y-2 md:col-span-2">
+                <div className="text-xs font-semibold text-success-text flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   <span>System mutations & database execution</span>
                 </div>
@@ -275,8 +275,8 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
                 </ul>
               </div>
 
-              <div className="p-4 rounded-xl bg-warning-soft border border-warning-border space-y-1.5 md:col-span-2">
-                <div className="text-xs font-bold text-warning-text flex items-center gap-1.5">
+              <div className="p-4 rounded-lg bg-warning-soft border border-warning-border space-y-1.5 md:col-span-2">
+                <div className="text-xs font-semibold text-warning-text flex items-center gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   <span>Referential safety & cascade rules</span>
                 </div>
@@ -291,14 +291,14 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
       </section>
 
       {/* 3. Field-to-Field Data Dictionary */}
-      <section className="bg-surface rounded-2xl p-6 md:p-8 border border-border shadow-sm space-y-4">
+      <section className="bg-surface rounded-lg p-6 md:p-8 border border-border shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-theme-btn-primary">
+            <div className="flex items-center gap-2 text-xs font-semibold text-primary">
               <Layers className="h-4 w-4" />
               <span>Schema & field dictionary</span>
             </div>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground mt-1">
+            <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-1">
               Field-to-field specifications
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -313,12 +313,12 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
               placeholder="Search fields or columns…"
               value={fieldSearchQuery}
               onChange={(e) => setFieldSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-elevated border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30"
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-lg bg-elevated border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
 
-        <div className="rounded-xl overflow-hidden border border-border">
+        <div className="rounded-lg overflow-hidden border border-border">
           <AppTableContainer>
             <AppTable className="w-full text-left text-xs">
               <AppTableHeader className="bg-elevated text-muted-foreground font-semibold text-[11px] border-b border-border">
@@ -334,24 +334,24 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
               <AppTableBody className="divide-y divide-border">
                 {filteredFields.map((field, idx) => (
                   <AppTableRow key={idx} className="hover:bg-elevated/60 transition-colors">
-                    <AppTableCell className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">
+                    <AppTableCell className="px-4 py-3.5 font-semibold text-foreground whitespace-nowrap">
                       {field.name}
                     </AppTableCell>
-                    <AppTableCell className="px-4 py-3.5 font-mono text-[11px] text-theme-btn-primary">
+                    <AppTableCell className="px-4 py-3.5 font-mono text-[11px] text-primary">
                       {field.dbColumn}
                     </AppTableCell>
                     <AppTableCell className="px-4 py-3.5">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-elevated text-muted-foreground">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-elevated text-muted-foreground">
                         {field.type}
                       </span>
                     </AppTableCell>
                     <AppTableCell className="px-4 py-3.5">
                       {field.isRequired ? (
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-danger-soft text-danger-text">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-danger-soft text-danger-text">
                           Mandatory
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-sunken text-muted-foreground">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-sunken text-muted-foreground">
                           Optional
                         </span>
                       )}
@@ -381,9 +381,9 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
       </section>
 
       {/* 4. Practical Execution Steps */}
-      <section className="bg-surface rounded-2xl p-6 md:p-8 border border-border shadow-sm space-y-4">
+      <section className="bg-surface rounded-lg p-6 md:p-8 border border-border shadow-sm space-y-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-foreground">
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">
             End-to-end operational workflow
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -393,12 +393,12 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
 
         <div className="space-y-3 pt-2">
           {module.steps.map((step, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-elevated/40 border border-border flex items-start gap-4">
-              <div className="h-7 w-7 rounded-full bg-accent-soft text-theme-btn-primary font-bold text-xs flex items-center justify-center shrink-0">
+            <div key={idx} className="p-4 rounded-lg bg-sunken border border-border flex items-start gap-4">
+              <div className="h-7 w-7 rounded-full bg-accent-soft text-primary font-semibold text-xs flex items-center justify-center shrink-0">
                 {idx + 1}
               </div>
               <div className="space-y-1">
-                <div className="text-xs md:text-sm font-bold text-foreground">
+                <div className="text-xs md:text-sm font-semibold text-foreground">
                   {step.title}
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">

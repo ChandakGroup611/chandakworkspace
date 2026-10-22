@@ -22,10 +22,10 @@ export function RiskIntelligenceWidget({ kpis }: RiskIntelligenceWidgetProps) {
     const { escalationRate, overdueRate, velocity } = kpis.risk;
 
     return [
-      { name: 'Escalation Rate', value: escalationRate, color: '#ef4444' },
-      { name: 'Overdue Rate', value: overdueRate, color: '#f59e0b' },
-      { name: 'Resolution Gap', value: Math.max(0, 100 - velocity), color: '#3b82f6' },
-      { name: 'Healthy', value: Math.max(0, 100 - (escalationRate + overdueRate + Math.max(0, 100 - velocity))), color: '#10b981' }
+      { name: 'Escalation Rate', value: escalationRate, color: 'var(--danger)' },
+      { name: 'Overdue Rate', value: overdueRate, color: 'var(--warning)' },
+      { name: 'Resolution Gap', value: Math.max(0, 100 - velocity), color: 'var(--chart-2)' },
+      { name: 'Healthy', value: Math.max(0, 100 - (escalationRate + overdueRate + Math.max(0, 100 - velocity))), color: 'var(--success)' }
     ];
   }, [kpis]);
 
@@ -33,11 +33,11 @@ export function RiskIntelligenceWidget({ kpis }: RiskIntelligenceWidgetProps) {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-background/95 border border-border/50 p-3 rounded-lg  z-50">
+        <div className="bg-background/95 border border-border p-3 rounded-lg  z-50">
           <div className="flex items-center gap-2 text-xs">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
             <span className="text-muted-foreground">{data.name}:</span>
-            <span className="font-bold">{data.value.toFixed(1)}%</span>
+            <span className="font-semibold">{data.value.toFixed(1)}%</span>
           </div>
         </div>
       );
@@ -45,7 +45,7 @@ export function RiskIntelligenceWidget({ kpis }: RiskIntelligenceWidgetProps) {
     return null;
   };
 
-  if (!kpis?.risk) return <div className="h-full w-full bg-surface/50 rounded-2xl animate-pulse" />;
+  if (!kpis?.risk) return <div className="h-full w-full bg-surface/50 rounded-lg animate-pulse" />;
 
   return (
     <BaseWidget 
@@ -83,7 +83,7 @@ export function RiskIntelligenceWidget({ kpis }: RiskIntelligenceWidgetProps) {
         </div>
         
         {/* Legend */}
-        <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border/50">
+        <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-border">
           {chartData.map((d, i) => (
             <div key={i} className="flex flex-col text-sm">
               <div className="flex items-center gap-2 text-muted-foreground text-xs mb-0.5">

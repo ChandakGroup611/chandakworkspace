@@ -1,5 +1,6 @@
 "use client";
 
+/* ui-audit-allow hex-literal: markup ink colours are saved with each annotation, and the halo/label colours sit on the white drawing sheet, so they must not follow the app theme */
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   ZoomIn,
@@ -507,19 +508,19 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
       {/* 1. TOP HEADER & WORKSPACE TOOLBAR */}
       <header className="h-14 border-b border-border bg-surface px-4 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="h-8 w-8 rounded-lg bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary shrink-0">
+          <div className="h-8 w-8 rounded-lg bg-accent-soft border border-border-active flex items-center justify-center text-primary shrink-0">
             <Layers className="h-4 w-4" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-foreground truncate">
+              <span className="font-mono text-xs font-semibold text-foreground truncate">
                 {drawing.drawingNumber}
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-soft text-theme-btn-primary">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
                 {drawing.discipline}
               </span>
               {activeRev && (
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-success-soft text-success-text">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success-soft text-success-text">
                   Rev R{activeRev.rev_no} {activeRev.is_gfc ? "• GFC" : ""}
                 </span>
               )}
@@ -579,7 +580,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
           )}
           <button type="button"
             onClick={() => setShowDecisionDrawer(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs transition-all"
           >
             <ShieldCheck className="h-4 w-4" />
             <span>Commit decision</span>
@@ -596,7 +597,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
       {/* 2. SECONDARY MARKUP TOOLBAR */}
       <div className="h-11 border-b border-border bg-surface/50 px-4 flex items-center justify-between gap-2 overflow-x-auto shrink-0">
         <div className="flex items-center gap-1">
-          <span className="text-[11px] font-bold text-muted-foreground mr-2 hidden sm:inline">
+          <span className="text-[11px] font-semibold text-muted-foreground mr-2 hidden sm:inline">
             Tools:
           </span>
 
@@ -604,7 +605,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
             onClick={() => setActiveTool("select")}
             className={`p-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all ${
               activeTool === "select"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-surface text-muted-foreground hover:text-foreground"
             }`}
             title="Select & inspect"
@@ -617,7 +618,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
             onClick={() => setActiveTool("pan")}
             className={`p-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all ${
               activeTool === "pan"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-surface text-muted-foreground hover:text-foreground"
             }`}
             title="Pan sheet"
@@ -632,7 +633,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
             onClick={() => setActiveTool("cloud")}
             className={`p-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all ${
               activeTool === "cloud"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-surface text-muted-foreground hover:text-foreground"
             }`}
             title="Revision cloud"
@@ -645,7 +646,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
             onClick={() => setActiveTool("arrow")}
             className={`p-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all ${
               activeTool === "arrow"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-surface text-muted-foreground hover:text-foreground"
             }`}
             title="Leader arrow"
@@ -658,7 +659,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
             onClick={() => setActiveTool("callout")}
             className={`p-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all ${
               activeTool === "callout"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-surface text-muted-foreground hover:text-foreground"
             }`}
             title="Callout pin"
@@ -671,7 +672,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
             onClick={() => setActiveTool("rect")}
             className={`p-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all ${
               activeTool === "rect"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-surface text-muted-foreground hover:text-foreground"
             }`}
             title="Rectangle box"
@@ -684,7 +685,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
             onClick={() => setActiveTool("measure")}
             className={`p-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all ${
               activeTool === "measure"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-surface text-muted-foreground hover:text-foreground"
             }`}
             title="Dimension ruler"
@@ -697,7 +698,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
             onClick={() => setActiveTool("pen")}
             className={`p-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all ${
               activeTool === "pen"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                ? "bg-primary text-primary-foreground"
                 : "hover:bg-surface text-muted-foreground hover:text-foreground"
             }`}
             title="Freehand pen"
@@ -731,9 +732,9 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
               <button type="button"
                 key={w}
                 onClick={() => setStrokeWidth(w)}
-                className={`px-2 py-0.5 text-[11px] font-bold rounded-sm ${
+                className={`px-2 py-0.5 text-[11px] font-semibold rounded-sm ${
                   strokeWidth === w
-                    ? "bg-surface text-foreground font-bold border border-border"
+                    ? "bg-surface text-foreground font-semibold border border-border"
                     : "hover:bg-surface text-muted-foreground"
                 }`}
               >
@@ -784,24 +785,24 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                       <span className="text-xl font-mono font-semibold text-foreground">
                         {drawing.drawingNumber}
                       </span>
-                      <p className="text-xs font-bold text-muted">
+                      <p className="text-xs font-semibold text-muted">
                         Status: {drawing.currentStatus || "UNDER REVIEW"}
                       </p>
                     </div>
                   </div>
 
                   {/* Structural Grid Drawing Graphic Placeholder */}
-                  <div className="flex-1 my-6 border-2 border-dashed border-border rounded-lg flex items-center justify-center relative overflow-hidden bg-surface">
+                  <div className="flex-1 my-6 border border-border rounded-lg flex items-center justify-center relative overflow-hidden bg-surface">
                     <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 gap-4 p-8 opacity-40">
                       {Array.from({ length: 24 }).map((_, i) => (
                         <div key={i} className="border border-border-active rounded-sm flex items-center justify-center">
-                          <span className="text-[11px] font-mono font-bold text-muted">G-{i + 1}</span>
+                          <span className="text-[11px] font-mono font-semibold text-muted">G-{i + 1}</span>
                         </div>
                       ))}
                     </div>
                     <div className="text-center z-10 space-y-2">
                       <Layers className="h-12 w-12 text-muted mx-auto stroke-1" />
-                      <p className="text-sm font-bold text-subtle">
+                      <p className="text-sm font-semibold text-subtle">
                         {drawing.title}
                       </p>
                       <p className="text-xs text-muted">
@@ -1153,8 +1154,8 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
           {/* Header & Category Filter */}
           <div className="p-3.5 border-b border-border space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5 text-theme-btn-primary" />
+              <h3 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-primary" />
                 <span>Observations & comments ({comments.length})</span>
               </h3>
               <span className="text-[11px] font-mono text-muted-foreground">
@@ -1168,9 +1169,9 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                 <button type="button"
                   key={cat}
                   onClick={() => setActiveCategoryFilter(cat)}
-                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 transition-all ${
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0 transition-all ${
                     activeCategoryFilter === cat
-                      ? "bg-theme-btn-primary text-theme-btn-primary-text"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-surface hover:bg-surface text-muted-foreground"
                   }`}
                 >
@@ -1182,20 +1183,20 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
 
           {/* DRAFT COMMENT COMPOSER (If new markup drawn) */}
           {currentDraftMarkup && (
-            <div className="p-4 bg-accent-soft border-b border-theme-btn-primary/20 space-y-3 animate-in fade-in">
+            <div className="p-4 bg-accent-soft border-b border-border-active space-y-3 animate-in fade-in">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-theme-btn-primary flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-primary flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Draft comment #{currentDraftMarkup.commentNumber || comments.length + 1}</span>
                 </span>
-                <span className="text-[11px] font-mono bg-accent-soft text-theme-btn-primary px-1.5 py-0.5 rounded-sm">
+                <span className="text-[11px] font-mono bg-accent-soft text-primary px-1.5 py-0.5 rounded-sm">
                   {currentDraftMarkup.tool}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[11px] font-bold text-muted-foreground">Category</label>
+                  <label className="text-[11px] font-semibold text-muted-foreground">Category</label>
                   <select
                     value={draftCategory}
                     onChange={(e: any) => setDraftCategory(e.target.value)}
@@ -1208,7 +1209,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-muted-foreground">Severity</label>
+                  <label className="text-[11px] font-semibold text-muted-foreground">Severity</label>
                   <select
                     value={draftSeverity}
                     onChange={(e: any) => setDraftSeverity(e.target.value)}
@@ -1223,13 +1224,13 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-muted-foreground">Comment observation</label>
+                <label className="text-[11px] font-semibold text-muted-foreground">Comment observation</label>
                 <textarea
                   value={draftCommentText}
                   onChange={(e) => setDraftCommentText(e.target.value)}
                   placeholder="State technical discrepancy or required revision…"
                   rows={2}
-                  className="w-full mt-1 text-xs rounded-md bg-surface border border-border p-2 text-foreground focus:outline-hidden focus:ring-1 focus:ring-theme-btn-primary resize-none"
+                  className="w-full mt-1 text-xs rounded-md bg-surface border border-border p-2 text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring resize-none"
                   autoFocus
                 />
               </div>
@@ -1244,7 +1245,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                 <button type="button"
                   onClick={handleSaveDraftComment}
                   disabled={!draftCommentText.trim() || isSavingComment}
-                  className="px-3 py-1 text-xs font-bold rounded-md bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 disabled:opacity-50"
+                  className="px-3 py-1 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:brightness-110 disabled:opacity-50"
                 >
                   {isSavingComment ? "Saving..." : "Save Markup"}
                 </button>
@@ -1271,7 +1272,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                     onClick={() => setSelectedCommentId(comm.id)}
                     className={`p-3 rounded-lg border transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-accent-soft border-theme-btn-primary shadow-xs"
+                        ? "bg-accent-soft border-primary shadow-xs"
                         : "bg-surface/50 border-border hover:border-border"
                     }`}
                   >
@@ -1279,19 +1280,19 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span
-                          className="h-5 w-5 rounded-full text-[11px] font-bold text-white flex items-center justify-center shrink-0"
+                          className="h-5 w-5 rounded-full text-[11px] font-semibold text-white flex items-center justify-center shrink-0"
                           style={{ backgroundColor: comm.markup_geometry?.color || "#e11d48" }}
                         >
                           {comm.comment_number}
                         </span>
-                        <span className="text-[11px] font-bold text-muted-foreground">
+                        <span className="text-[11px] font-semibold text-muted-foreground">
                           {comm.category}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                          className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${
                             comm.severity === "BLOCKER" || comm.severity === "HIGH"
                               ? "bg-danger-soft text-danger-text"
                               : "bg-warning-soft text-warning-text"
@@ -1300,7 +1301,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                           {comm.severity}
                         </span>
                         <span
-                          className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                          className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${
                             comm.status === "RESOLVED"
                               ? "bg-success-soft text-success-text"
                               : "bg-info-soft text-info-text"
@@ -1325,7 +1326,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                             className="bg-surface p-2 rounded-md border border-border text-[11px] space-y-1"
                           >
                             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                              <span className="font-bold text-foreground">
+                              <span className="font-semibold text-foreground">
                                 {reply.author_role || "Reviewer"}
                               </span>
                               <span>{new Date(reply.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
@@ -1349,12 +1350,12 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                             if (e.key === "Enter") handleAddThreadReply(comm.id);
                           }}
                           placeholder="Reply in thread…"
-                          className="flex-1 text-[11px] bg-surface border border-border rounded-md px-2 py-1 text-foreground focus:outline-hidden focus:ring-1 focus:ring-theme-btn-primary"
+                          className="flex-1 text-[11px] bg-surface border border-border rounded-md px-2 py-1 text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                         />
                         <button aria-label="Send" type="button"
                           onClick={() => handleAddThreadReply(comm.id)}
                           disabled={!replyTextMap[comm.id]?.trim() || isSubmittingReply}
-                          className="p-1.5 bg-theme-btn-primary text-theme-btn-primary-text rounded-md hover:brightness-110 disabled:opacity-50"
+                          className="p-1.5 bg-primary text-primary-foreground rounded-md hover:brightness-110 disabled:opacity-50"
                         >
                           <Send className="h-3 w-3" />
                         </button>
@@ -1378,14 +1379,14 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
       {/* 4. CODE A/B/C/D FORMAL REVIEW DECISION DRAWER */}
       {showDecisionDrawer && (
         <div className="fixed inset-0 z-60 bg-[var(--overlay)] flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-xl shadow-lg max-w-lg w-full overflow-hidden animate-in zoom-in-95">
+          <div className="bg-surface border border-border rounded-lg shadow-lg max-w-lg w-full overflow-hidden animate-in zoom-in-95">
             <div className="p-5 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-lg bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary">
+                <div className="h-9 w-9 rounded-lg bg-accent-soft border border-border-active flex items-center justify-center text-primary">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">Record review decision</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Record review decision</h3>
                   <p className="text-xs text-muted-foreground">
                     {drawing.drawingNumber} • Rev R{activeRev?.rev_no ?? 0}
                   </p>
@@ -1401,7 +1402,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
 
             <div className="p-5 space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Select decision code
                 </label>
                 <div className="grid grid-cols-2 gap-2 mt-2">
@@ -1416,11 +1417,11 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                       onClick={() => setDecisionCode(d.code as any)}
                       className={`p-3 text-left rounded-lg border transition-all ${
                         decisionCode === d.code
-                          ? "bg-accent-soft border-theme-btn-primary ring-1 ring-theme-btn-primary"
+                          ? "bg-accent-soft border-primary ring-1 ring-ring"
                           : "bg-surface border-border hover:border-border"
                       }`}
                     >
-                      <span className="text-xs font-bold text-foreground">{d.title}</span>
+                      <span className="text-xs font-semibold text-foreground">{d.title}</span>
                       <p className="text-[11px] text-muted-foreground mt-0.5">{d.desc}</p>
                     </button>
                   ))}
@@ -1428,7 +1429,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-muted-foreground">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Review remarks & executive summary
                 </label>
                 <textarea
@@ -1436,7 +1437,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                   onChange={(e) => setDecisionRemarks(e.target.value)}
                   placeholder="State technical summary, clearance notes, or directions for the consultant…"
                   rows={3}
-                  className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-3 text-foreground focus:outline-hidden focus:ring-1 focus:ring-theme-btn-primary resize-none"
+                  className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-3 text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring resize-none"
                 />
               </div>
 
@@ -1444,7 +1445,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                 <div className="p-3 bg-warning-soft border border-warning-border rounded-lg flex items-start gap-2.5">
                   <AlertTriangle className="h-4 w-4 text-warning-text shrink-0 mt-0.5" />
                   <p className="text-xs text-warning-text">
-                    <strong className="font-bold">Comment clearance gate:</strong> There are{" "}
+                    <strong className="font-semibold">Comment clearance gate:</strong> There are{" "}
                     {comments.filter((c) => c.status === "OPEN").length} open observations. If returning as Code C/D, the consultant will be required to answer each item before resubmitting.
                   </p>
                 </div>
@@ -1461,7 +1462,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
               <button type="button"
                 onClick={handleCommitReviewDecision}
                 disabled={isCommittingDecision}
-                className="px-5 py-2 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs"
+                className="px-5 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs"
               >
                 {isCommittingDecision ? "Committing..." : "Commit Formal Decision"}
               </button>

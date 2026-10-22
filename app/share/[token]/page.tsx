@@ -155,11 +155,11 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
       {/* 1. TOP SECURE BANNER */}
       <header className="h-14 border-b border-border bg-surface px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-accent-soft border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary font-semibold">
+          <div className="h-8 w-8 rounded-lg bg-accent-soft border border-border-active flex items-center justify-center text-primary font-semibold">
             C
           </div>
           <div>
-            <span className="text-xs font-bold text-foreground block">
+            <span className="text-xs font-semibold text-foreground block">
               CHANDAK GROUP • SECURE DOCUMENT PORTAL
             </span>
             <span className="text-[11px] text-muted-foreground font-mono">
@@ -170,7 +170,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
 
         <div className="flex items-center gap-2">
           {step === "UNLOCKED" ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-success-soft text-success-text border border-success-border">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-success-soft text-success-text border border-success-border">
               <CheckCircle2 className="h-3.5 w-3.5" />
               <span>Session authenticated</span>
             </span>
@@ -187,17 +187,17 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
       <main className="flex-1 flex items-center justify-center p-4">
         {isLoadingMeta ? (
           <div className="text-center py-12 text-muted-foreground space-y-3 animate-pulse">
-            <ShieldCheck className="h-10 w-10 mx-auto text-theme-btn-primary stroke-1" />
+            <ShieldCheck className="h-10 w-10 mx-auto text-primary stroke-1" />
             <p className="text-xs font-semibold">Establishing encrypted handshake…</p>
           </div>
         ) : !meta?.isValid ? (
           /* INVALID / EXPIRED / LOCKED CARD */
-          <div className="max-w-md w-full bg-surface border border-border rounded-xl p-6 shadow-xl text-center space-y-4">
+          <div className="max-w-md w-full bg-surface border border-border rounded-lg p-6 shadow-lg text-center space-y-4">
             <div className="h-12 w-12 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center mx-auto">
               {meta?.isLocked ? <ShieldAlert className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground">
+              <h3 className="text-base font-semibold text-foreground">
                 {meta?.isLocked ? "Access Locked" : "Link Expired or Invalid"}
               </h3>
               <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
@@ -210,12 +210,12 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
           </div>
         ) : step === "EMAIL" ? (
           /* STEP 1: EMAIL IDENTIFICATION CARD */
-          <div className="max-w-md w-full bg-surface border border-border rounded-xl p-6 shadow-xl space-y-5">
+          <div className="max-w-md w-full bg-surface border border-border rounded-lg p-6 shadow-lg space-y-5">
             <div className="text-center space-y-1.5">
-              <div className="h-11 w-11 rounded-full bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20 flex items-center justify-center mx-auto">
+              <div className="h-11 w-11 rounded-full bg-accent-soft text-primary border border-border-active flex items-center justify-center mx-auto">
                 <Lock className="h-5 w-5" />
               </div>
-              <h2 className="text-base font-bold text-foreground">Authorised consultant access</h2>
+              <h2 className="text-base font-semibold text-foreground">Authorised consultant access</h2>
               <p className="text-xs text-muted-foreground">
                 Documents for <strong className="font-semibold text-foreground">{meta.workspaceName}</strong>
               </p>
@@ -237,7 +237,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
 
             <form onSubmit={handleRequestOtp} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-1">
+                <label className="text-xs font-semibold text-muted-foreground block mb-1">
                   Your work email address *
                 </label>
                 <div className="relative">
@@ -248,7 +248,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@consultant.com"
                     required
-                    className="w-full text-xs rounded-lg bg-surface border border-border pl-9 pr-3 py-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                    className="w-full text-xs rounded-lg bg-surface border border-border pl-9 pr-3 py-2.5 text-foreground focus:ring-1 focus:ring-ring"
                     autoFocus
                   />
                 </div>
@@ -257,7 +257,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
               <button
                 type="submit"
                 disabled={isSendingOtp || !email.trim()}
-                className="w-full py-2.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-2.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <span>{isSendingOtp ? "Dispatching Code..." : "Send Verification Passcode"}</span>
                 <ArrowRight className="h-4 w-4" />
@@ -270,12 +270,12 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
           </div>
         ) : step === "CHALLENGE" ? (
           /* STEP 2: PASSWORD + OTP CHALLENGE CARD */
-          <div className="max-w-md w-full bg-surface border border-border rounded-xl p-6 shadow-xl space-y-5">
+          <div className="max-w-md w-full bg-surface border border-border rounded-lg p-6 shadow-lg space-y-5">
             <div className="text-center space-y-1.5">
-              <div className="h-11 w-11 rounded-full bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20 flex items-center justify-center mx-auto">
+              <div className="h-11 w-11 rounded-full bg-accent-soft text-primary border border-border-active flex items-center justify-center mx-auto">
                 <Key className="h-5 w-5" />
               </div>
-              <h2 className="text-base font-bold text-foreground">Dual-challenge authentication</h2>
+              <h2 className="text-base font-semibold text-foreground">Dual-challenge authentication</h2>
               <p className="text-xs text-muted-foreground">
                 Code sent to <strong className="font-semibold text-foreground">{email}</strong>
               </p>
@@ -290,7 +290,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
 
             <form onSubmit={handleVerifyChallenge} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-1">
+                <label className="text-xs font-semibold text-muted-foreground block mb-1">
                   Link access password
                 </label>
                 <input
@@ -298,12 +298,12 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter link password if provided…"
-                  className="w-full text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                  className="w-full text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-ring"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-muted-foreground block mb-1">
+                <label className="text-xs font-semibold text-muted-foreground block mb-1">
                   6-Digit one-time passcode *
                 </label>
                 <input
@@ -313,7 +313,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                   placeholder="123456"
                   required
-                  className="w-full text-center text-lg font-mono font-bold tracking-widest rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                  className="w-full text-center text-lg font-mono font-semibold tracking-widest rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-ring"
                   autoFocus
                 />
               </div>
@@ -321,7 +321,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
               <button
                 type="submit"
                 disabled={isVerifying || otp.length < 6}
-                className="w-full py-2.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-2.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <ShieldCheck className="h-4 w-4" />
                 <span>{isVerifying ? "Verifying Credentials..." : "Unlock Shared Workspace"}</span>
@@ -340,7 +340,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                 type="button"
                 onClick={handleRequestOtp}
                 disabled={isSendingOtp}
-                className="hover:underline text-theme-btn-primary font-bold"
+                className="hover:underline text-primary font-semibold"
               >
                 Resend code
               </button>
@@ -350,9 +350,9 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
           /* STEP 3: UNLOCKED CONSULTANT WORKSPACE */
           <div className="w-full max-w-7xl h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-4">
             {/* LEFT PANEL: SHARED ITEMS LIST */}
-            <aside className="w-full md:w-80 bg-surface border border-border rounded-xl p-4 flex flex-col shrink-0 shadow-xs">
+            <aside className="w-full md:w-80 bg-surface border border-border rounded-lg p-4 flex flex-col shrink-0 shadow-xs">
               <div className="pb-3 border-b border-border">
-                <span className="text-xs font-bold text-muted-foreground block">
+                <span className="text-xs font-semibold text-muted-foreground block">
                   Shared dossier items ({sharedItems.length})
                 </span>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -369,15 +369,15 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                       onClick={() => setSelectedItemId(item.id)}
                       className={`p-3 rounded-lg border transition-all cursor-pointer ${
                         isSelected
-                          ? "bg-accent-soft border-theme-btn-primary ring-1 ring-theme-btn-primary/20"
+                          ? "bg-accent-soft border-primary ring-1 ring-ring"
                           : "bg-surface hover:bg-surface border-border"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1">
-                        <span className="font-mono text-xs font-bold text-foreground truncate">
+                        <span className="font-mono text-xs font-semibold text-foreground truncate">
                           {item.codeOrNumber}
                         </span>
-                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-accent-soft text-theme-btn-primary">
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-accent-soft text-primary">
                           {item.versionOrRev}
                         </span>
                       </div>
@@ -395,13 +395,13 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
             </aside>
 
             {/* MAIN STAGE: WATERMARKED PREVIEW & ACTIONS */}
-            <main className="flex-1 bg-surface border border-border rounded-xl flex flex-col overflow-hidden shadow-xs">
+            <main className="flex-1 bg-surface border border-border rounded-lg flex flex-col overflow-hidden shadow-xs">
               {/* Top Viewport Header */}
               <div className="h-12 border-b border-border px-5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  <FileText className="h-4 w-4 text-theme-btn-primary shrink-0" />
+                  <FileText className="h-4 w-4 text-primary shrink-0" />
                   <div className="min-w-0">
-                    <span className="text-xs font-bold text-foreground truncate block">
+                    <span className="text-xs font-semibold text-foreground truncate block">
                       {selectedItem?.title || "Document Preview"}
                     </span>
                     <span className="text-[11px] font-mono text-muted-foreground">
@@ -415,7 +415,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                     <a
                       href={`/api/proxy-attachment/${selectedItem?.id}`}
                       download
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs"
                     >
                       <Download className="h-3.5 w-3.5" />
                       <span>Download raw file</span>
@@ -446,7 +446,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                     {Array.from({ length: 5 }).map((_, i) => (
                       <div
                         key={i}
-                        className="text-xs sm:text-sm font-mono font-bold tracking-widest text-foreground -rotate-12 whitespace-nowrap"
+                        className="text-xs sm:text-sm font-mono font-semibold tracking-widest text-foreground -rotate-12 whitespace-nowrap"
                       >
                         {watermarkText}
                       </div>
@@ -465,15 +465,15 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                         {selectedItem?.title} • {selectedItem?.versionOrRev}
                       </p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-muted">
+                    <span className="text-xs font-mono font-semibold text-muted">
                       {selectedItem?.codeOrNumber}
                     </span>
                   </div>
 
-                  <div className="flex-1 my-6 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-sunken text-center p-6 space-y-2">
+                  <div className="flex-1 my-6 border border-border rounded-lg flex items-center justify-center bg-sunken text-center p-6 space-y-2">
                     <div>
                       <Layers className="h-12 w-12 text-muted mx-auto stroke-1" />
-                      <p className="text-xs font-bold text-subtle mt-2">
+                      <p className="text-xs font-semibold text-subtle mt-2">
                         Watermarked document preview stage
                       </p>
                       <p className="text-[11px] text-muted max-w-sm">

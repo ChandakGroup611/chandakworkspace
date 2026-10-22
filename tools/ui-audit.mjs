@@ -8,6 +8,7 @@
  *   node tools/ui-audit.mjs --fail              # exit 1 if any ERROR (use in CI / pre-commit)
  *   node tools/ui-audit.mjs --include-kit       # also scan components/ui (the kit itself)
  *
+ * Allow one rule for a whole file:  /* ui-audit-allow hex-literal: <reason> *\/
  * Suppress a deliberate exception:   // ui-audit-ignore-next-line  <reason>
  *                                    {/* ui-audit-ignore-next-line <reason> *\/}
  * Whole file (generated code only):  /* ui-audit-disable *\/  on the first line
@@ -47,7 +48,7 @@ const RULES = [
   ["blur", "WARN", /\bbackdrop-blur(?:-\w+)?\b/g, "backdrop-blur (disabled app-wide; leaves translucent panels)", "Use opaque bg-elevated / bg-surface"],
   ["date-format", "WARN", /toLocaleDateString\(|toLocaleString\(\s*\)|format\([^)]*["'`](?:dd[-/]MM[-/]yyyy|yyyy-MM-dd|DD[-/]MM[-/]YYYY|YYYY-MM-DD)["'`]|\.split\(\s*["']T["']\s*\)\[0\]/g, "Ad-hoc date formatting (mixed formats)", "DateCell / DueDateCell / formatDate() from components/ui/data"],
   ["emoji", "WARN", /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "Emoji in UI", "Use a lucide icon or plain text"],
-  ["old-hover-token", "ERROR", /hover:opacity-90\/10|\bbg-hover\b|border-border-subtle\b|ring-focus-ring\b|shadow-\[var\(--shadow-ambient\)\]/g, "Class that resolves to nothing", "See UI_STANDARDS.md token list"],
+  ["old-hover-token", "ERROR", /hover:opacity-90\/10|(?<![-\w])bg-hover\b|border-border-subtle\b|ring-focus-ring\b|shadow-\[var\(--shadow-ambient\)\]/g, "Class that resolves to nothing", "See UI_STANDARDS.md token list"],
 ];
 
 const MODULES = [
@@ -92,6 +93,7 @@ function* tags(src, name) {
   }
 }
 
+const DROPZONE_RE = /type=["\x27]file["\x27]|onDrop=|onDragOver=|getRootProps|FileDropzone|fileInputRef|\.click\(\)/;
 const lineAt = (src, idx) => src.slice(0, idx).split("\n").length;
 
 function auditFile(file) {
@@ -113,6 +115,10 @@ function auditFile(file) {
 
   for (const [id, sev, re, msg, fix] of RULES) {
     if (!isJs && !["hex-literal", "legacy-theme-id", "native-dialog", "date-format"].includes(id)) continue;
+    // server code under lib/ builds emails, PDFs and stored defaults, where CSS variables don't exist
+    if ((id === "hex-literal" || id === "rgb-literal") && rel.startsWith("lib/")) continue;
+    // a file can opt one rule out with a reason:  /* ui-audit-allow hex-literal: drawing ink colours are stored with the markup */
+    if (new RegExp(`ui-audit-allow ${id}\\b`).test(src)) continue;
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(src))) {
@@ -124,6 +130,11 @@ function auditFile(file) {
       if (id === "text-white") {
         const cls = src.slice(Math.max(0, m.index - 160), m.index + 40);
         if (/bg-(primary|danger-solid|danger|success|info|warning|sidebar|accent)\b/.test(cls)) continue;
+      }
+      // a dashed border is the convention for a file drop zone: allow it when the element handles files
+      if (id === "dashed-pill") {
+        const ctx = src.slice(Math.max(0, m.index - 600), m.index + 900);
+        if (DROPZONE_RE.test(ctx)) continue;
       }
       push(id, sev, m.index, m[0], msg, fix);
     }

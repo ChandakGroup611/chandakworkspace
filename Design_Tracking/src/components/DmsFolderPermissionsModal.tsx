@@ -282,19 +282,19 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[var(--overlay)] animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl bg-surface border border-border rounded-2xl shadow-lg flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="relative w-full max-w-4xl bg-surface border border-border rounded-lg shadow-lg flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-muted/40 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-10 w-10 rounded-xl bg-accent-soft text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
+            <div className="h-10 w-10 rounded-lg bg-accent-soft text-primary flex items-center justify-center border border-border-active shrink-0">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-bold text-foreground truncate">
+                <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">
                   Folder access & permissions
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-muted text-foreground border border-border">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-muted text-foreground border border-border">
                   {folder.name}
                 </span>
               </div>
@@ -317,25 +317,25 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {/* Notification Messages */}
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {saveSuccessMsg && (
-            <div className="p-3 rounded-xl bg-success-soft border border-success-border text-success-text text-xs flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-success-soft border border-success-border text-success-text text-xs flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <span>{saveSuccessMsg}</span>
             </div>
           )}
 
           {/* 1. Inheritance Option Card */}
-          <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
+          <div className="p-4 rounded-lg bg-muted/30 border border-border space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-theme-btn-primary" />
-                <span className="text-xs font-bold text-foreground">Permission inheritance</span>
+                <Layers className="h-4 w-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">Permission inheritance</span>
               </div>
               <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                 inheritPermissions 
@@ -349,7 +349,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                 inheritPermissions 
-                  ? "bg-surface border-theme-btn-primary ring-1 ring-theme-btn-primary/30" 
+                  ? "bg-surface border-primary ring-1 ring-ring" 
                   : "bg-surface/50 border-border hover:bg-surface"
               }`}>
                 <input
@@ -357,10 +357,10 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                   name="inheritance"
                   checked={inheritPermissions}
                   onChange={() => setInheritPermissions(true)}
-                  className="mt-0.5 text-theme-btn-primary focus:ring-theme-btn-primary"
+                  className="mt-0.5 text-primary focus:ring-ring"
                 />
                 <div>
-                  <p className="text-xs font-bold text-foreground">Inherit from parent folder</p>
+                  <p className="text-xs font-semibold text-foreground">Inherit from parent folder</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
                     Users who have access to parent folders automatically receive access to this folder.
                   </p>
@@ -369,7 +369,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
 
               <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                 !inheritPermissions 
-                  ? "bg-surface border-theme-btn-primary ring-1 ring-theme-btn-primary/30" 
+                  ? "bg-surface border-primary ring-1 ring-ring" 
                   : "bg-surface/50 border-border hover:bg-surface"
               }`}>
                 <input
@@ -377,10 +377,10 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                   name="inheritance"
                   checked={!inheritPermissions}
                   onChange={() => setInheritPermissions(false)}
-                  className="mt-0.5 text-theme-btn-primary focus:ring-theme-btn-primary"
+                  className="mt-0.5 text-primary focus:ring-ring"
                 />
                 <div>
-                  <p className="text-xs font-bold text-foreground">Custom permissions (break inheritance)</p>
+                  <p className="text-xs font-semibold text-foreground">Custom permissions (break inheritance)</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
                     Define an explicit list of authorised users and their specific View, Upload, Download, and Delete rights.
                   </p>
@@ -393,8 +393,8 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-theme-btn-primary" />
+                <h3 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-primary" />
                   <span>Folder access list ({assignedPermissions.length} User{assignedPermissions.length !== 1 ? "s" : ""})</span>
                 </h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -405,7 +405,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
               <button
                 type="button"
                 onClick={() => setIsUserPickerOpen(!isUserPickerOpen)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-btn-primary text-theme-btn-primary-text text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs cursor-pointer self-start sm:self-center"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs cursor-pointer self-start sm:self-center"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>{isUserPickerOpen ? "Hide User Picker" : "Add Users (Multi-Select)"}</span>
@@ -414,17 +414,17 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
 
             {/* Multi-Select User Picker Popover */}
             {isUserPickerOpen && (
-              <div className="p-4 rounded-xl bg-surface border border-theme-btn-primary/30 ring-1 ring-theme-btn-primary/20 space-y-3 shadow-md animate-in fade-in duration-150">
+              <div className="p-4 rounded-lg bg-surface border border-border-active ring-1 ring-ring space-y-3 shadow-md animate-in fade-in duration-150">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-theme-btn-primary" />
-                    <span className="text-xs font-bold text-foreground">Select multiple workspace users</span>
+                    <Search className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-semibold text-foreground">Select multiple workspace users</span>
                   </div>
                   <div className="flex items-center gap-2 text-[11px]">
                     <button
                       type="button"
                       onClick={selectAllFilteredUsers}
-                      className="text-theme-btn-primary font-semibold hover:underline"
+                      className="text-primary font-semibold hover:underline"
                     >
                       Select all ({filteredAvailableUsers.length})
                     </button>
@@ -447,7 +447,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                     value={userSearchQuery}
                     onChange={(e) => setUserSearchQuery(e.target.value)}
                     placeholder="Search by name, email, department, or role…"
-                    className="w-full text-xs rounded-lg bg-muted/50 border border-border pl-8 pr-3 py-1.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                    className="w-full text-xs rounded-lg bg-muted/50 border border-border pl-8 pr-3 py-1.5 text-foreground focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
@@ -475,7 +475,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => {}} // Handled by row click
-                              className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
+                              className="rounded text-primary focus:ring-ring"
                             />
                             <div className="min-w-0">
                               <p className="font-semibold text-foreground truncate">{user.fullName}</p>
@@ -489,7 +489,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                                 {user.departmentName}
                               </span>
                             )}
-                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20">
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-accent-soft text-primary border border-border-active">
                               {user.roleCode || "USER"}
                             </span>
                           </div>
@@ -518,7 +518,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                     type="button"
                     onClick={handleAddSelectedUsers}
                     disabled={selectedUserIds.size === 0}
-                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-theme-btn-primary text-theme-btn-primary-text text-xs font-bold hover:opacity-90 disabled:opacity-40 transition-opacity cursor-pointer shadow-xs"
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity cursor-pointer shadow-xs"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     <span>Add {selectedUserIds.size} User{selectedUserIds.size !== 1 ? "s" : ""}</span>
@@ -528,7 +528,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
             )}
 
             {/* 3. Permissions Matrix Table */}
-            <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+            <div className="overflow-x-auto rounded-lg border border-border bg-surface">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-muted/60 border-b border-border text-muted-foreground font-semibold">
@@ -577,7 +577,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                   ) : assignedPermissions.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-8 text-center text-muted-foreground space-y-1.5">
-                        <Users className="h-6 w-6 mx-auto opacity-40 text-theme-btn-primary" />
+                        <Users className="h-6 w-6 mx-auto opacity-40 text-primary" />
                         <p className="font-semibold text-xs text-foreground">No explicit users assigned.</p>
                         <p className="text-[11px]">
                           {inheritPermissions 
@@ -592,7 +592,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                         {/* User Profile */}
                         <td className="py-2.5 px-3 min-w-48">
                           <div className="flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-full bg-accent-soft text-theme-btn-primary font-bold text-xs flex items-center justify-center shrink-0">
+                            <div className="h-7 w-7 rounded-full bg-accent-soft text-primary font-semibold text-xs flex items-center justify-center shrink-0">
                               {(perm.userName || perm.userEmail || "U")[0].toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -612,7 +612,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                             type="checkbox"
                             checked={perm.canView}
                             onChange={() => handleTogglePermission(index, "canView")}
-                            className="rounded text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer"
+                            className="rounded text-primary focus:ring-ring cursor-pointer"
                           />
                         </td>
 
@@ -670,7 +670,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                             <button
                               type="button"
                               onClick={() => applyPresetToRow(index, "CONTRIBUTOR")}
-                              className="px-1.5 py-0.5 rounded text-[11px] bg-accent-soft text-theme-btn-primary hover:bg-accent-soft font-semibold cursor-pointer"
+                              className="px-1.5 py-0.5 rounded text-[11px] bg-accent-soft text-primary hover:bg-accent-soft font-semibold cursor-pointer"
                               title="Set view + upload + download"
                             >
                               Edit
@@ -717,7 +717,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold rounded-xl border border-border bg-surface hover:bg-muted transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-muted transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -725,7 +725,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
               type="button"
               onClick={handleSaveChanges}
               disabled={isSaving}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-theme-btn-primary text-theme-btn-primary-text hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm cursor-pointer"
             >
               <Check className="h-4 w-4" />
               <span>{isSaving ? "Saving..." : "Save Permissions"}</span>

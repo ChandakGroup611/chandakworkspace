@@ -371,7 +371,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
             <Building2 className="w-3.5 h-3.5" />
             DMAC · {projects.find(p => p.id === selectedProjectId)?.name || "Live Project"} · {towers.find(t => t.id === selectedTowerId)?.towerName || "All Wings"}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground mt-1">
             Building section heat matrix
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -436,7 +436,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
               className={`p-3.5 rounded-lg border text-left transition-all ${
                 activeFilter === null
                   ? "border-primary ring-1 ring-primary bg-surface shadow-sm"
-                  : "border-border bg-surface hover:border-border/80"
+                  : "border-border bg-surface hover:border-border"
               }`}
             >
               <div className="text-2xl font-semibold tabular-nums text-foreground">
@@ -536,7 +536,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
               <AppCard>
                 <AppCardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
                   <div>
-                    <AppCardTitle className="text-base font-bold flex items-center gap-2">
+                    <AppCardTitle className="text-base font-semibold flex items-center gap-2">
                       <Layers className="w-4 h-4 text-primary" />
                       Building grid: floor × discipline
                     </AppCardTitle>
@@ -579,7 +579,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
 
                         return (
                           <tr key={fl.id}>
-                            <th scope="row" className="text-right pr-3 text-xs font-mono font-bold text-muted-foreground whitespace-nowrap">
+                            <th scope="row" className="text-right pr-3 text-xs font-mono font-semibold text-muted-foreground whitespace-nowrap">
                               {fl.name}
                             </th>
                             {matrixData.disciplines.map(dp => {
@@ -587,7 +587,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                               if (!cell) {
                                 return (
                                   <td key={dp.code}>
-                                    <div className="h-11 rounded border border-dashed border-border bg-muted/10 flex items-center justify-center text-[11px] text-muted-foreground font-mono">
+                                    <div className="h-11 rounded border border-border bg-muted/10 flex items-center justify-center text-[11px] text-muted-foreground font-mono">
                                       –
                                     </div>
                                   </td>
@@ -613,7 +613,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                                         className="absolute top-1 right-1 w-2 h-2 rounded-full bg-danger-solid animate-pulse ring-2 ring-background"
                                       />
                                     )}
-                                    <span className="text-[11px] font-mono font-bold leading-tight">
+                                    <span className="text-[11px] font-mono font-semibold leading-tight">
                                       {cell.displayRev}
                                     </span>
                                     <span className="text-[11px] font-semibold leading-tight mt-0.5 truncate max-w-[80px]">
@@ -673,7 +673,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
               {/* Waiting Longest Queue */}
               <AppCard>
                 <AppCardHeader className="pb-3 border-b border-border">
-                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                     <Clock className="w-4 h-4 text-warning-text" />
                     Waiting longest (ball-in-court)
                   </AppCardTitle>
@@ -694,7 +694,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                         className="w-full text-left p-2.5 rounded-md hover:bg-muted/40 transition-all flex items-center justify-between gap-3 border border-transparent hover:border-border"
                       >
                         <div className="min-w-0">
-                          <div className="text-xs font-mono font-bold text-foreground truncate">
+                          <div className="text-xs font-mono font-semibold text-foreground truncate">
                             {item.drawingNumber} · {item.displayRev}
                           </div>
                           <div className="text-[11px] text-muted-foreground truncate">
@@ -722,7 +722,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
               {/* Latest Operational Activity */}
               <AppCard>
                 <AppCardHeader className="pb-3 border-b border-border">
-                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-primary" />
                     Latest activity stream
                   </AppCardTitle>
@@ -762,7 +762,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
         /* How It Works Tab (BRD Architecture Guide) */
         <AppCard className="max-w-4xl mx-auto">
           <AppCardHeader className="border-b border-border">
-            <AppCardTitle className="text-lg font-bold">The drawing review & approval cycle</AppCardTitle>
+            <AppCardTitle className="text-lg font-semibold">The drawing review & approval cycle</AppCardTitle>
             <p className="text-sm text-muted-foreground">
               Every drawing pass between Design and Engineering is recorded as a numbered revision with complete comment resolution traceability.
             </p>
@@ -770,28 +770,28 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
           <AppCardContent className="p-6 space-y-6 text-sm leading-relaxed">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <div className="p-3 rounded-lg border border-border bg-surface">
-                <span className="text-[11px] font-mono font-bold text-primary block mb-1">Step 1 · design</span>
-                <div className="font-bold text-foreground">Submit R0</div>
+                <span className="text-[11px] font-mono font-semibold text-primary block mb-1">Step 1 · design</span>
+                <div className="font-semibold text-foreground">Submit R0</div>
                 <p className="text-xs text-muted-foreground mt-1">Upload floor drawings with drawing number & CAD/PDF sets.</p>
               </div>
               <div className="p-3 rounded-lg border border-border bg-surface">
-                <span className="text-[11px] font-mono font-bold text-info-text block mb-1">Step 2 · engg</span>
-                <div className="font-bold text-foreground">Review & markup</div>
+                <span className="text-[11px] font-mono font-semibold text-info-text block mb-1">Step 2 · engg</span>
+                <div className="font-semibold text-foreground">Review & markup</div>
                 <p className="text-xs text-muted-foreground mt-1">Engineer marks up PDF canvas with numbered issues.</p>
               </div>
               <div className="p-3 rounded-lg border border-border bg-surface">
-                <span className="text-[11px] font-mono font-bold text-warning-text block mb-1">Step 3 · decision</span>
-                <div className="font-bold text-foreground">Code A/B/C/D</div>
+                <span className="text-[11px] font-mono font-semibold text-warning-text block mb-1">Step 3 · decision</span>
+                <div className="font-semibold text-foreground">Code A/B/C/D</div>
                 <p className="text-xs text-muted-foreground mt-1">Code c/d returns drawing to design for revision.</p>
               </div>
               <div className="p-3 rounded-lg border border-border bg-surface">
-                <span className="text-[11px] font-mono font-bold text-primary block mb-1">Step 4 · design</span>
-                <div className="font-bold text-foreground">Resolve & resubmit</div>
+                <span className="text-[11px] font-mono font-semibold text-primary block mb-1">Step 4 · design</span>
+                <div className="font-semibold text-foreground">Resolve & resubmit</div>
                 <p className="text-xs text-muted-foreground mt-1">Design answers all open comments & submits R1.</p>
               </div>
               <div className="p-3 rounded-lg border border-border bg-success-soft">
-                <span className="text-[11px] font-mono font-bold text-success-text block mb-1">Step 5 · site</span>
-                <div className="font-bold text-foreground">GFC release</div>
+                <span className="text-[11px] font-mono font-semibold text-success-text block mb-1">Step 5 · site</span>
+                <div className="font-semibold text-foreground">GFC release</div>
                 <p className="text-xs text-muted-foreground mt-1">Official IFC stamp & site QR verification token issued.</p>
               </div>
             </div>
@@ -829,18 +829,18 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
                 <div className="text-xs text-muted-foreground">Revision</div>
-                <div className="text-base font-bold text-foreground mt-0.5">{selectedCell.displayRev}</div>
+                <div className="text-base font-semibold text-foreground mt-0.5">{selectedCell.displayRev}</div>
               </div>
               <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
                 <div className="text-xs text-muted-foreground">Ball-in-Court</div>
-                <div className="text-xs font-bold text-foreground mt-1">
+                <div className="text-xs font-semibold text-foreground mt-1">
                   {selectedCell.currentHolder === "ENGINEERING" ? "Engineering" : "Design Team"}
                 </div>
               </div>
               <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
                 <div className="text-xs text-muted-foreground">Days elapsed</div>
                 <div
-                  className={`text-base font-bold tabular-nums mt-0.5 ${
+                  className={`text-base font-semibold tabular-nums mt-0.5 ${
                     selectedCell.isOverdue ? "text-danger-text" : "text-foreground"
                   }`}
                 >
@@ -851,7 +851,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
 
             {/* Dual-Lane Split Timeline */}
             <div>
-              <div className="flex items-center justify-between text-xs font-mono font-bold text-muted-foreground border-b border-border pb-2 mb-4">
+              <div className="flex items-center justify-between text-xs font-mono font-semibold text-muted-foreground border-b border-border pb-2 mb-4">
                 <span>Design lane</span>
                 <span>Engineering lane</span>
               </div>
@@ -860,7 +860,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                 {/* R0 Submission */}
                 <div className="flex items-center justify-between w-full">
                   <div className="w-[45%] p-3 rounded-lg bg-info-soft border border-info-border text-xs space-y-1">
-                    <div className="font-bold text-foreground">R0 submitted</div>
+                    <div className="font-semibold text-foreground">R0 submitted</div>
                     <div className="text-[11px] text-muted-foreground">Design team uploaded CAD + PDF sets</div>
                     <div className="text-[11px] font-mono text-primary">07 Oct 2026</div>
                   </div>
@@ -874,7 +874,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                     <div className="w-[45%]" />
                     <span className="w-3 h-3 rounded-full bg-warning ring-4 ring-background z-10" />
                     <div className="w-[45%] p-3 rounded-lg bg-warning-soft border border-warning-border text-xs space-y-1">
-                      <div className="font-bold text-warning-text">Returned (Code C)</div>
+                      <div className="font-semibold text-warning-text">Returned (Code C)</div>
                       <div className="text-[11px] text-muted-foreground">3 coordination comments logged</div>
                       <div className="text-[11px] font-mono text-muted-foreground">Review took 3 working days</div>
                     </div>
@@ -887,7 +887,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                     <div className="w-[45%]" />
                     <span className="w-3 h-3 rounded-full bg-success ring-4 ring-background z-10" />
                     <div className="w-[45%] p-3 rounded-lg bg-success-soft border border-success-border text-xs space-y-1">
-                      <div className="font-bold text-success-text">Approved (Code A)</div>
+                      <div className="font-semibold text-success-text">Approved (Code A)</div>
                       <div className="text-[11px] text-muted-foreground">All structural comments closed</div>
                       <div className="text-[11px] font-mono text-muted-foreground">Review took 2 working days</div>
                     </div>
@@ -904,7 +904,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                 onClick={() => handleOpenMarkupStudio(selectedCell)}
                 disabled={isLoadingDrawingDetail}
               >
-                <PenTool className="w-4 h-4 mr-1.5 text-theme-btn-primary" />
+                <PenTool className="w-4 h-4 mr-1.5 text-primary" />
                 {isLoadingDrawingDetail ? "Loading Studio..." : "Canvas Markup Studio"}
               </AppButton>
               <AppButton

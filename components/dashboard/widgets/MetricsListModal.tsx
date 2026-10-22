@@ -111,18 +111,18 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
   const renderStatus = (s: string) => {
     const statusStr = String(s || "").toLowerCase();
     if (statusStr.includes("resolv") || statusStr.includes("done")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-success/10 text-success border border-success-border">Done</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-success-soft text-success-text border border-success-border">Done</span>;
     if (statusStr.includes("escalat") || statusStr.includes("block")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-danger/10 text-danger border border-danger-border">Blocked</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-danger-soft text-danger-text border border-danger-border">Blocked</span>;
     if (statusStr.includes("review")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-warning/10 text-warning border border-warning-border">Review</span>;
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">Active</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border">Review</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-accent-soft text-accent-soft-text border border-border-active">Active</span>;
   };
 
   const renderPriority = (p: string) => {
     const priorityStr = String(p || "").toLowerCase();
     if (priorityStr.includes("critical") || priorityStr.includes("p1")) 
-      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span><span className="text-xs font-semibold text-danger">Critical</span></div>;
+      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger"></span><span className="text-xs font-semibold text-danger-text">Critical</span></div>;
     if (priorityStr.includes("high") || priorityStr.includes("p2")) 
       return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-warning"></span><span className="text-xs font-semibold text-warning-text">High</span></div>;
     if (priorityStr.includes("medium")) 
@@ -135,12 +135,12 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[92vw] sm:max-w-6xl h-[88vh] flex flex-col overflow-hidden bg-background p-0 border border-border/70 rounded-2xl shadow-lg">
+      <DialogContent className="max-w-[92vw] sm:max-w-6xl h-[88vh] flex flex-col overflow-hidden bg-background p-0 border border-border rounded-lg shadow-lg">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b border-border/50 bg-surface/40 shrink-0 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b border-border bg-surface/40 shrink-0 gap-4">
           <div>
-            <DialogTitle className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
               <ListChecks className="w-5 h-5 text-primary" />
               {dialogTitle}
             </DialogTitle>
@@ -187,7 +187,7 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                 onClick={() => setSelectedModule(mod)}
                 className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${
                   selectedModule === mod
-                    ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                    ? "bg-primary text-primary-foreground font-semibold shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-surface"
                 }`}
               >
@@ -206,7 +206,7 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                 onClick={() => setSelectedStatus(st)}
                 className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${
                   selectedStatus === st
-                    ? "bg-primary/20 text-primary font-bold border border-primary/30"
+                    ? "bg-primary/20 text-primary font-semibold border border-primary/30"
                     : "text-muted-foreground hover:text-foreground hover:bg-surface"
                 }`}
               >
@@ -223,7 +223,7 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                 setSelectedStatus("ALL");
                 setSearchTerm("");
               }}
-              className="ml-auto text-[11px] text-muted-foreground hover:text-danger flex items-center gap-1 transition-colors"
+              className="ml-auto text-[11px] text-muted-foreground hover:text-danger-text flex items-center gap-1 transition-colors"
             >
               <X className="w-3 h-3" /> Reset filters
             </button>
@@ -234,14 +234,14 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
         <div className="flex-1 overflow-auto custom-scrollbar">
           <AppTable>
             <AppTableHeader className="sticky top-0 z-10 bg-surface/90 shadow-sm">
-              <AppTableRow className="border-b border-border/60">
-                <AppTableHead className="font-bold text-[11px] text-muted-foreground w-2/5">Item / subject</AppTableHead>
-                <AppTableHead className="font-bold text-[11px] text-muted-foreground w-28">Scope</AppTableHead>
-                <AppTableHead className="font-bold text-[11px] text-muted-foreground w-28">Priority</AppTableHead>
-                <AppTableHead className="font-bold text-[11px] text-muted-foreground w-24">Status</AppTableHead>
-                <AppTableHead className="font-bold text-[11px] text-muted-foreground w-36">Assignee / dept</AppTableHead>
-                <AppTableHead className="font-bold text-[11px] text-muted-foreground w-24">Aging</AppTableHead>
-                <AppTableHead className="font-bold text-[11px] text-muted-foreground w-32">Due date</AppTableHead>
+              <AppTableRow className="border-b border-border">
+                <AppTableHead className="font-semibold text-[11px] text-muted-foreground w-2/5">Item / subject</AppTableHead>
+                <AppTableHead className="font-semibold text-[11px] text-muted-foreground w-28">Scope</AppTableHead>
+                <AppTableHead className="font-semibold text-[11px] text-muted-foreground w-28">Priority</AppTableHead>
+                <AppTableHead className="font-semibold text-[11px] text-muted-foreground w-24">Status</AppTableHead>
+                <AppTableHead className="font-semibold text-[11px] text-muted-foreground w-36">Assignee / dept</AppTableHead>
+                <AppTableHead className="font-semibold text-[11px] text-muted-foreground w-24">Aging</AppTableHead>
+                <AppTableHead className="font-semibold text-[11px] text-muted-foreground w-32">Due date</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
             <AppTableBody>
@@ -251,7 +251,7 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                   const isBug = m.module === 'Tickets';
                   const isTask = m.module === 'Tasks' || m.module === 'Sub Tasks';
                   const isReq = m.module === 'Requirements';
-                  const tagBg = isBug ? 'bg-danger/10 text-danger border-danger-border' : isTask ? 'bg-accent-soft text-theme-icon border-theme-btn-primary/20' : isReq ? 'bg-success-soft text-success-text border-success-border' : 'bg-warning-soft text-warning-text border-warning-border';
+                  const tagBg = isBug ? 'bg-danger-soft text-danger-text border-danger-border' : isTask ? 'bg-accent-soft text-accent-soft-text border-border-active' : isReq ? 'bg-success-soft text-success-text border-success-border' : 'bg-warning-soft text-warning-text border-warning-border';
                   
                   const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
@@ -267,13 +267,13 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                   return (
                     <AppTableRow key={`${m.id}-${i}`} onClick={handleRowClick} className="cursor-pointer hover:bg-surface-hover/50 transition-colors border-b border-border/40 group">
                       <AppTableCell>
-                        <div className="font-mono text-[11px] font-bold text-muted-foreground mb-0.5">{m.code || `ID-${shortId}`}</div>
+                        <div className="font-mono text-[11px] font-semibold text-muted-foreground mb-0.5">{m.code || `ID-${shortId}`}</div>
                         <div className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={m.title}>
                           {m.title || `${m.module} Assignment`}
                         </div>
                       </AppTableCell>
                       <AppTableCell>
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold border ${tagBg}`}>
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold border ${tagBg}`}>
                           {m.module}
                         </span>
                       </AppTableCell>
@@ -282,7 +282,7 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                       <AppTableCell>
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1.5">
-                            <div className="w-5 h-5 rounded-full bg-surface border border-border/50 flex items-center justify-center text-[11px] font-bold text-foreground shrink-0" title={m.user}>
+                            <div className="w-5 h-5 rounded-full bg-surface border border-border flex items-center justify-center text-[11px] font-semibold text-foreground shrink-0" title={m.user}>
                               {initials}
                             </div>
                             <span className="text-xs font-medium text-foreground truncate max-w-[120px]">{m.user}</span>
@@ -297,7 +297,7 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                       </AppTableCell>
                       <AppTableCell>
                         <span className={`inline-flex items-center gap-1 text-xs font-semibold ${
-                          (m.daysInStatus || 0) >= 10 ? 'text-danger' : (m.daysInStatus || 0) >= 5 ? 'text-warning-text' : 'text-muted-foreground'
+                          (m.daysInStatus || 0) >= 10 ? 'text-danger-text' : (m.daysInStatus || 0) >= 5 ? 'text-warning-text' : 'text-muted-foreground'
                         }`}>
                           <Clock className="w-3 h-3" />
                           {m.daysInStatus || 0}d
@@ -305,9 +305,9 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                       </AppTableCell>
                       <AppTableCell>
                         {m.dueDate ? (
-                          <div className={`text-xs font-semibold ${m.isOverdue ? 'text-danger' : 'text-muted-foreground'}`}>
+                          <div className={`text-xs font-semibold ${m.isOverdue ? 'text-danger-text' : 'text-muted-foreground'}`}>
                             {formatDate(m.dueDate)}
-                            {m.isOverdue && <span className="block text-[11px] text-danger font-bold">Overdue</span>}
+                            {m.isOverdue && <span className="block text-[11px] text-danger-text font-semibold">Overdue</span>}
                           </div>
                         ) : (
                           <div className="text-xs text-muted-foreground/50 italic">N/A</div>

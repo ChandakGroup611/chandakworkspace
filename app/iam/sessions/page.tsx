@@ -64,7 +64,7 @@ export default function SessionManagement() {
         badge={<AppBadge variant="info">Governance</AppBadge>}
         actions={
           <div className="relative w-72">
-            <div className="relative bg-surface border border-border rounded-xl flex items-center shadow-sm">
+            <div className="relative bg-surface border border-border rounded-lg flex items-center shadow-sm">
               <Search className="w-4 h-4 ml-3 text-muted" />
               <input 
                 type="text" 
@@ -79,7 +79,7 @@ export default function SessionManagement() {
       />
 
       <div className="mt-6 flex-1 min-h-0 flex flex-col h-[calc(100vh-200px)]">
-        <AppTableContainer className="flex-1 overflow-y-auto bg-surface/40 rounded-2xl border border-border/30 shadow-sm">
+        <AppTableContainer className="flex-1 overflow-y-auto bg-surface/40 rounded-lg border border-border/30 shadow-sm">
           <AppTable>
             <AppTableHeader>
               <AppTableRow>
@@ -115,11 +115,11 @@ export default function SessionManagement() {
                 <AppTableRow>
                   <AppTableCell colSpan={6} className="h-64">
                     <div className="flex flex-col items-center justify-center text-center space-y-3 animate-in fade-in zoom-in-95 duration-500">
-                      <div className="w-14 h-14 rounded-2xl bg-surface/80 border border-border/40 flex items-center justify-center shadow-sm">
+                      <div className="w-14 h-14 rounded-lg bg-surface/80 border border-border/40 flex items-center justify-center shadow-sm">
                         <ShieldX className="w-7 h-7 text-muted" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-foreground">No active sessions found</h3>
+                        <h3 className="text-sm font-semibold text-foreground">No active sessions found</h3>
                         <p className="text-xs text-muted mt-1 max-w-sm">There are currently no active sessions matching your search criteria.</p>
                       </div>
                     </div>
@@ -130,11 +130,11 @@ export default function SessionManagement() {
                   <AppTableRow key={session.id} className="hover:bg-surface/50 transition-colors duration-200">
                     <AppTableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-xs shadow-[inset_0_0_8px_rgba(var(--color-accent),0.2)]">
+                        <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-semibold text-xs shadow-[inset_0_0_8px_rgba(var(--color-accent),0.2)]">
                           {session.user?.full_name?.substring(0, 2).toUpperCase() || 'U'}
                         </div>
                         <div>
-                          <div className="font-bold text-foreground text-sm tracking-tight">{session.user?.full_name || 'Unknown User'}</div>
+                          <div className="font-semibold text-foreground text-sm tracking-tight">{session.user?.full_name || 'Unknown User'}</div>
                           <div className="text-[11px] text-muted font-mono">{session.user?.email || 'N/A'}</div>
                         </div>
                       </div>
@@ -159,7 +159,7 @@ export default function SessionManagement() {
                       </div>
                     </AppTableCell>
                     <AppTableCell>
-                      <div className="text-xs font-medium text-success dark:text-success">
+                      <div className="text-xs font-medium text-success-text dark:text-success-text">
                         {formatDistanceToNow(new Date(session.last_activity), { addSuffix: true })}
                       </div>
                     </AppTableCell>
@@ -169,7 +169,7 @@ export default function SessionManagement() {
                         size="sm" 
                         onClick={() => handleKillSession(session.id)}
                         disabled={processingId === session.id}
-                        className="text-danger border-danger/20 hover:bg-danger/10 hover:border-danger/40 transition-all shadow-sm rounded-lg"
+                        className="text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger-border transition-all shadow-sm rounded-lg"
                         leftIcon={processingId === session.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <WifiOff className="w-3.5 h-3.5" />}
                       >
                         {processingId === session.id ? "Terminating..." : "Kill Session"}

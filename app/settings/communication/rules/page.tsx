@@ -14,7 +14,7 @@ export default function NotificationRulesPage() {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-12">
       <header className="border-b border-border pb-4 animate-in fade-in duration-500">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Notification rule engine
         </h1>
         </header>

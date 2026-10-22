@@ -104,10 +104,10 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
   };
 
   const getWorkloadStatus = (active: number) => {
-    if (active >= 8) return { label: "Heavily loaded", color: "text-danger bg-danger/10 border-danger/20" };
-    if (active >= 4) return { label: "Loaded", color: "text-warning bg-warning/10 border-warning/20" };
-    if (active >= 1) return { label: "Active", color: "text-theme-icon bg-accent-soft border-theme-btn-primary/20" };
-    return { label: "Available", color: "text-success bg-success/10 border-success/20" };
+    if (active >= 8) return { label: "Heavily loaded", color: "text-danger-text bg-danger-soft border-danger-border" };
+    if (active >= 4) return { label: "Loaded", color: "text-warning-text bg-warning-soft border-warning-border" };
+    if (active >= 1) return { label: "Active", color: "text-accent-soft-text bg-accent-soft border-border-active" };
+    return { label: "Available", color: "text-success-text bg-success-soft border-success-border" };
   };
 
   const getAvgDays = (u: any) => {
@@ -122,9 +122,9 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
         id="team-performance"
         title="Team throughput & performance"
         subtitle="Member workload, resolved story points & velocity"
-        icon={<Users className="w-5 h-5 text-theme-icon" />}
+        icon={<Users className="w-5 h-5 text-accent-soft-text" />}
         badge={
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface text-theme-icon border border-border shrink-0">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface text-accent-soft-text border border-border shrink-0">
             {teamStats.length} Members
           </span>
         }
@@ -143,7 +143,7 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
         <div className="w-full overflow-auto h-full custom-scrollbar">
           <AppTable className="border-b-0">
             <AppTableHeader className="sticky top-0 z-10 bg-surface/90 shadow-sm">
-              <AppTableRow className="border-b border-border/50">
+              <AppTableRow className="border-b border-border">
                 <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent">Member</AppTableHead>
                 <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent text-center w-24">Workload</AppTableHead>
                 <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent text-center w-24">Tasks (A/R)</AppTableHead>
@@ -156,8 +156,8 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
             <AppTableBody>
               {teamStats.map((u: any, i: number) => {
                 const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
-                const colors = ['bg-success/20 text-success border-success-border', 'bg-accent-soft text-theme-icon border-theme-btn-primary/30', 'bg-accent-soft text-theme-icon border-theme-btn-primary/30', 'bg-warning/20 text-warning border-warning-border', 'bg-danger/20 text-danger border-danger-border'];
-                const fillColors = ['bg-success', 'bg-theme-btn-primary', 'bg-theme-btn-primary', 'bg-warning', 'bg-danger'];
+                const colors = ['bg-success-soft text-success-text border-success-border', 'bg-accent-soft text-accent-soft-text border-border-active', 'bg-accent-soft text-accent-soft-text border-border-active', 'bg-warning-soft text-warning-text border-warning-border', 'bg-danger-soft text-danger-text border-danger-border'];
+                const fillColors = ['bg-success', 'bg-primary', 'bg-primary', 'bg-warning', 'bg-danger'];
                 
                 const colorCls = colors[i % colors.length];
                 const fillCls = fillColors[i % fillColors.length];
@@ -171,7 +171,7 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
                   >
                     <AppTableCell>
                       <div className="flex items-center gap-3">
-                        <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold border shadow-sm transition-transform ${colorCls}`}>
+                        <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-semibold border shadow-sm transition-transform ${colorCls}`}>
                           {u.initials}
                         </div>
                         <div>
@@ -184,31 +184,31 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
                       </div>
                     </AppTableCell>
                     <AppTableCell className="text-center">
-                      <div className={`inline-flex items-center justify-center px-2 py-1 rounded text-[11px] font-bold border whitespace-nowrap ${getWorkloadStatus(u.active).color}`}>
+                      <div className={`inline-flex items-center justify-center px-2 py-1 rounded text-[11px] font-semibold border whitespace-nowrap ${getWorkloadStatus(u.active).color}`}>
                         {getWorkloadStatus(u.active).label}
                       </div>
                     </AppTableCell>
                     <AppTableCell className="text-center">
                       <div className="text-xs font-mono">
-                        <span className="text-warning">{u.tasks.assigned}</span> / <span className="text-success">{u.tasks.resolved}</span>
+                        <span className="text-warning-text">{u.tasks.assigned}</span> / <span className="text-success-text">{u.tasks.resolved}</span>
                       </div>
                     </AppTableCell>
                     <AppTableCell className="text-center">
                       <div className="text-xs font-mono">
-                        <span className="text-warning">{u.tickets.assigned}</span> / <span className="text-success">{u.tickets.resolved}</span>
+                        <span className="text-warning-text">{u.tickets.assigned}</span> / <span className="text-success-text">{u.tickets.resolved}</span>
                       </div>
                     </AppTableCell>
                     <AppTableCell className="text-center">
                       <div className="text-xs font-mono">
-                        <span className="text-warning">{u.reqs.assigned}</span> / <span className="text-success">{u.reqs.resolved}</span>
+                        <span className="text-warning-text">{u.reqs.assigned}</span> / <span className="text-success-text">{u.reqs.resolved}</span>
                       </div>
                     </AppTableCell>
-                    <AppTableCell className="text-center font-bold text-lg text-primary/80 group-hover:text-primary transition-colors">
+                    <AppTableCell className="text-center font-semibold text-lg text-primary/80 group-hover:text-primary transition-colors">
                       {u.pts}
                     </AppTableCell>
                     <AppTableCell>
                       <div className="flex justify-between text-[11px] font-mono text-muted-foreground mb-1.5">
-                        <span>Sprint goal</span><span className="font-bold text-foreground">{progress}%</span>
+                        <span>Sprint goal</span><span className="font-semibold text-foreground">{progress}%</span>
                       </div>
                       <div className="h-1.5 w-full bg-surface dark:bg-surface/20 rounded-full overflow-hidden">
                         <div className={`h-full ${fillCls} transition-all duration-1000`} style={{ width: `${progress}%` }}></div>

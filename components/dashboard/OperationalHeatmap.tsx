@@ -107,10 +107,10 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
     <AppCard className="flex flex-col h-full">
       <AppCardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
-          <Flame className="h-4 w-4 text-danger" />
+          <Flame className="h-4 w-4 text-danger-text" />
           <AppCardTitle>Operational heatmap matrix</AppCardTitle>
         </div>
-        <span className="text-xs text-theme-icon font-bold">Ingress vs SLA resolution</span>
+        <span className="text-xs text-accent-soft-text font-semibold">Ingress vs SLA resolution</span>
       </AppCardHeader>
 
       <AppCardContent className="flex-1 flex flex-col justify-between space-y-4 pt-2">
@@ -118,7 +118,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         <div className="flex-1 flex flex-col justify-between space-y-2">
           {heatmapData.map((dItem) => (
             <div key={dItem.day} className="flex items-center gap-2">
-              <span className="w-8 text-[0.8rem] font-bold text-theme-icon select-none">
+              <span className="w-8 text-[0.8rem] font-semibold text-accent-soft-text select-none">
                 {dItem.day}
               </span>
               <div className="flex-1 grid grid-cols-6 gap-1.5">
@@ -139,19 +139,19 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         <div className="h-8 flex items-center justify-between px-3 rounded-lg theme-card-structural text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
           {hoveredCell ? (
             <div className="flex items-center gap-2.5 text-muted font-medium animate-in fade-in duration-150">
-              <Activity className="h-3 w-3 text-theme-icon shrink-0" />
+              <Activity className="h-3 w-3 text-accent-soft-text shrink-0" />
               <span><strong className="text-foreground">{hoveredCell.day} @ {hoveredCell.hour}</strong></span>
               <span className="text-subtle">|</span>
               <span className="text-xs">
-                Tasks: <strong className="text-foreground">{hoveredCell.data?.tasksCreated || 0}</strong> crt / <strong className="text-success">{hoveredCell.data?.tasksResolved || 0}</strong> res
+                Tasks: <strong className="text-foreground">{hoveredCell.data?.tasksCreated || 0}</strong> crt / <strong className="text-success-text">{hoveredCell.data?.tasksResolved || 0}</strong> res
               </span>
               <span className="text-subtle">|</span>
               <span className="text-xs">
-                Workspaces: <strong className="text-foreground">{hoveredCell.data?.workspacesCreated || 0}</strong> crt / <strong className="text-success">{hoveredCell.data?.workspacesResolved || 0}</strong> res
+                Workspaces: <strong className="text-foreground">{hoveredCell.data?.workspacesCreated || 0}</strong> crt / <strong className="text-success-text">{hoveredCell.data?.workspacesResolved || 0}</strong> res
               </span>
               <span className="text-subtle">|</span>
               <span className="text-xs">
-                Tickets: <strong className="text-foreground">{hoveredCell.data?.ticketsCreated || 0}</strong> crt / <strong className="text-success">{hoveredCell.data?.ticketsResolved || 0}</strong> res
+                Tickets: <strong className="text-foreground">{hoveredCell.data?.ticketsCreated || 0}</strong> crt / <strong className="text-success-text">{hoveredCell.data?.ticketsResolved || 0}</strong> res
               </span>
             </div>
           ) : (

@@ -94,10 +94,10 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
       id="sla-countdown-radar" 
       title="SLA early warning & breach ticker"
       subtitle="Real-time resolution countdown for high-urgency active items"
-      icon={<Flame className="w-5 h-5 text-danger animate-pulse" />}
+      icon={<Flame className="w-5 h-5 text-danger-text animate-pulse" />}
       badge={
         categorizedItems.critical.length > 0 ? (
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-danger/15 text-danger animate-pulse border border-danger-border shrink-0">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-danger-soft text-danger-text animate-pulse border border-danger-border shrink-0">
             {categorizedItems.critical.length} Critical alert{categorizedItems.critical.length > 1 ? "s" : ""}
           </span>
         ) : (
@@ -131,7 +131,7 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
         <button
           type="button"
           onClick={() => setActiveTab("all")}
-          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === "all"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground hover:bg-surface"
@@ -143,10 +143,10 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
         <button
           type="button"
           onClick={() => setActiveTab("critical")}
-          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "critical"
               ? "bg-danger text-white shadow-sm"
-              : "text-danger hover:bg-danger/10"
+              : "text-danger-text hover:bg-danger-soft"
           }`}
         >
           <span className="w-2 h-2 rounded-full bg-danger animate-ping" />
@@ -156,7 +156,7 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
         <button
           type="button"
           onClick={() => setActiveTab("urgent")}
-          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "urgent"
               ? "bg-warning text-white shadow-sm"
               : "text-warning-text hover:bg-warning-soft"
@@ -168,7 +168,7 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
         <button
           type="button"
           onClick={() => setActiveTab("warning")}
-          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === "warning"
               ? "bg-warning text-foreground shadow-sm"
               : "text-warning-text hover:bg-warning-soft"
@@ -180,7 +180,7 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
         <button
           type="button"
           onClick={() => setActiveTab("breached")}
-          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === "breached"
               ? "bg-danger-solid text-white shadow-sm"
               : "text-danger-text hover:bg-danger-soft"
@@ -206,9 +206,9 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
             return (
               <div key={`${item.id}-${idx}`} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-hover/50 transition-colors group">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
-                    isBreached ? 'bg-danger/15 text-danger border border-danger-border' :
-                    isCritical ? 'bg-danger/10 text-danger border border-danger-border animate-pulse' :
+                  <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${
+                    isBreached ? 'bg-danger-soft text-danger-text border border-danger-border' :
+                    isCritical ? 'bg-danger-soft text-danger-text border border-danger-border animate-pulse' :
                     isUrgent ? 'bg-warning-soft text-warning-text border border-warning-border' :
                     'bg-warning-soft text-warning-text border border-warning-border'
                   }`}>
@@ -217,14 +217,14 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-mono text-[11px] font-bold text-muted-foreground">{item.code}</span>
-                      <span className="px-1.5 py-0.2 rounded text-[11px] font-bold bg-surface border border-border/50 text-foreground">
+                      <span className="font-mono text-[11px] font-semibold text-muted-foreground">{item.code}</span>
+                      <span className="px-1.5 py-0.2 rounded text-[11px] font-semibold bg-surface border border-border text-foreground">
                         {item.module}
                       </span>
                       <span className="text-[11px] text-muted-foreground">• Assigned to: <strong className="text-foreground">{item.user}</strong> ({item.departmentName || "General"})</span>
                     </div>
 
-                    <a href={itemUrl} className="text-xs font-bold text-foreground hover:text-primary transition-colors line-clamp-1 block" title={item.title}>
+                    <a href={itemUrl} className="text-xs font-semibold text-foreground hover:text-primary transition-colors line-clamp-1 block" title={item.title}>
                       {item.title}
                     </a>
                   </div>
@@ -232,9 +232,9 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
 
                 {/* Countdown pill & Jump button */}
                 <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                  <div className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1.5 ${
-                    isBreached ? 'bg-danger/10 text-danger border-danger-border' :
-                    isCritical ? 'bg-danger/10 text-danger border-danger-border shadow-[0_0_10px_rgba(239,68,68,0.2)]' :
+                  <div className={`px-3 py-1.5 rounded-lg border text-xs font-mono font-semibold flex items-center gap-1.5 ${
+                    isBreached ? 'bg-danger-soft text-danger-text border-danger-border' :
+                    isCritical ? 'bg-danger-soft text-danger-text border-danger-border' :
                     isUrgent ? 'bg-warning-soft text-warning-text border-warning-border' :
                     'bg-warning-soft text-warning-text border-warning-border'
                   }`}>
@@ -244,7 +244,7 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
 
                   <a
                     href={itemUrl}
-                    className="p-1.5 rounded-lg bg-surface border border-border/60 text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
+                    className="p-1.5 rounded-lg bg-surface border border-border text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
                     title="Jump to deliverable"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />

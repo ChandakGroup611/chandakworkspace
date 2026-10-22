@@ -31,12 +31,12 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  Critical: "#ef4444",
-  High: "#f97316",
-  Medium: "#eab308",
-  Low: "#3b82f6",
-  Standard: "#8b5cf6",
-  "N/A": "#64748b"
+  Critical: "var(--danger)",
+  High: "var(--warning)",
+  Medium: "var(--warning)",
+  Low: "var(--chart-2)",
+  Standard: "var(--chart-1)",
+  "N/A": "var(--text-muted)"
 };
 
 const STATE_COLORS: Record<string, string> = {
@@ -106,7 +106,7 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
     return priorityData.map((d) => ({
       name: d.priority,
       value: d.total,
-      fill: PRIORITY_COLORS[d.priority] || "#64748b"
+      fill: PRIORITY_COLORS[d.priority] || "var(--text-muted)"
     })).filter(d => d.value > 0);
   }, [priorityData]);
 
@@ -116,14 +116,14 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 my-6">
       
       {/* CHART 1: STATUS-WISE CREATED & ACTIVE DISTRIBUTION */}
-      <AppCard className="p-5 relative overflow-hidden border border-border/70 shadow-sm theme-card-structural">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
+      <AppCard className="p-5 relative overflow-hidden border border-border shadow-sm theme-card-structural">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
           <div>
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-accent-soft text-theme-icon">
+              <div className="p-1.5 rounded-lg bg-accent-soft text-accent-soft-text">
                 <Activity className="h-4 w-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground tracking-tight">Status-wise workload distribution</h3>
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">Status-wise workload distribution</h3>
             </div>
             <p className="text-xs text-muted mt-1">Live breakdown of active, in review, escalated & resolved tasks</p>
           </div>
@@ -161,15 +161,15 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground, #888)" }} tickLine={false} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "var(--muted-foreground, #888)" }} tickLine={false} />
                 <Tooltip
-                  cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                  cursor={{ fill: "var(--bg-hover)" }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0];
                       const pct = totalItems > 0 ? ((Number(data.value) / totalItems) * 100).toFixed(1) : "0";
                       return (
-                        <div className="p-2.5 rounded-lg border border-border bg-surface shadow-xl text-xs space-y-1">
-                          <p className="font-bold text-foreground">{data.payload.name}</p>
-                          <p className="text-theme-icon font-medium">Count: <span className="font-bold">{data.value}</span> ({pct}%)</p>
+                        <div className="p-2.5 rounded-lg border border-border bg-surface shadow-lg text-xs space-y-1">
+                          <p className="font-semibold text-foreground">{data.payload.name}</p>
+                          <p className="text-accent-soft-text font-medium">Count: <span className="font-semibold">{data.value}</span> ({pct}%)</p>
                         </div>
                       );
                     }
@@ -205,9 +205,9 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
                       const data = payload[0];
                       const pct = totalItems > 0 ? ((Number(data.value) / totalItems) * 100).toFixed(1) : "0";
                       return (
-                        <div className="p-2.5 rounded-lg border border-border bg-surface shadow-xl text-xs space-y-1">
-                          <p className="font-bold text-foreground">{data.name}</p>
-                          <p className="text-theme-icon font-medium">Total: <span className="font-bold">{data.value}</span> ({pct}%)</p>
+                        <div className="p-2.5 rounded-lg border border-border bg-surface shadow-lg text-xs space-y-1">
+                          <p className="font-semibold text-foreground">{data.name}</p>
+                          <p className="text-accent-soft-text font-medium">Total: <span className="font-semibold">{data.value}</span> ({pct}%)</p>
                         </div>
                       );
                     }
@@ -226,14 +226,14 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
       </AppCard>
 
       {/* CHART 2: PRIORITY-WISE BREAKDOWN (OPEN, OVERDUE, UPCOMING) */}
-      <AppCard className="p-5 relative overflow-hidden border border-border/70 shadow-sm theme-card-structural">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
+      <AppCard className="p-5 relative overflow-hidden border border-border shadow-sm theme-card-structural">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
           <div>
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-danger/10 text-danger">
+              <div className="p-1.5 rounded-lg bg-danger-soft text-danger-text">
                 <Flame className="h-4 w-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground tracking-tight">Priority & risk breakdown</h3>
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">Priority & risk breakdown</h3>
             </div>
             </div>
 
@@ -270,19 +270,19 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
                 <XAxis dataKey="priority" tick={{ fontSize: 11, fill: "var(--muted-foreground, #888)" }} tickLine={false} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "var(--muted-foreground, #888)" }} tickLine={false} />
                 <Tooltip
-                  cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                  cursor={{ fill: "var(--bg-hover)" }}
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="p-3 rounded-lg border border-border bg-surface shadow-xl text-xs space-y-1.5 min-w-[130px]">
-                          <p className="font-bold text-foreground border-b border-border/50 pb-1">{label} Priority</p>
+                        <div className="p-3 rounded-lg border border-border bg-surface shadow-lg text-xs space-y-1.5 min-w-[130px]">
+                          <p className="font-semibold text-foreground border-b border-border pb-1">{label} Priority</p>
                           {payload.map((entry: any, i: number) => (
                             <div key={i} className="flex justify-between items-center gap-3">
                               <span className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.fill }} />
                                 <span className="text-muted">{entry.name}:</span>
                               </span>
-                              <span className="font-bold text-foreground">{entry.value}</span>
+                              <span className="font-semibold text-foreground">{entry.value}</span>
                             </div>
                           ))}
                         </div>
@@ -324,9 +324,9 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
                       const data = payload[0];
                       const pct = totalItems > 0 ? ((Number(data.value) / totalItems) * 100).toFixed(1) : "0";
                       return (
-                        <div className="p-2.5 rounded-lg border border-border bg-surface shadow-xl text-xs space-y-1">
-                          <p className="font-bold text-foreground">{data.name} Priority</p>
-                          <p className="text-theme-icon font-medium">Total: <span className="font-bold">{data.value}</span> ({pct}%)</p>
+                        <div className="p-2.5 rounded-lg border border-border bg-surface shadow-lg text-xs space-y-1">
+                          <p className="font-semibold text-foreground">{data.name} Priority</p>
+                          <p className="text-accent-soft-text font-medium">Total: <span className="font-semibold">{data.value}</span> ({pct}%)</p>
                         </div>
                       );
                     }

@@ -69,12 +69,12 @@ import { TransactionFormLayout } from "./DesignTransactionLayout";
 // Clean badge colors
 const ROLE_BADGE_COLORS = [
   { id: "amber", label: "Amber", class: "bg-warning-soft text-warning-text border-warning-border" },
-  { id: "indigo", label: "Indigo", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
+  { id: "indigo", label: "Indigo", class: "bg-surface text-accent-soft-text dark:text-muted-foreground border-border" },
   { id: "blue", label: "Sky Blue", class: "bg-info-soft text-info-text border-info-border" },
   { id: "emerald", label: "Emerald", class: "bg-success-soft text-success-text border-success-border" },
-  { id: "cyan", label: "Cyan", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
+  { id: "cyan", label: "Cyan", class: "bg-surface text-accent-soft-text dark:text-muted-foreground border-border" },
   { id: "orange", label: "Orange", class: "bg-warning-soft text-warning-text border-warning-border" },
-  { id: "purple", label: "Purple", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
+  { id: "purple", label: "Purple", class: "bg-surface text-accent-soft-text dark:text-muted-foreground border-border" },
   { id: "slate", label: "Slate", class: "bg-sunken text-subtle border-border" },
   { id: "rose", label: "Rose", class: "bg-danger-soft text-danger-text border-danger-border" }
 ];
@@ -768,13 +768,13 @@ export const DesignRbacGovernance: React.FC = () => {
       {!isRoleModalOpen && !isDrawerOpen && (
         <div className="space-y-5">
           {/* 1. Platform Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface border border-border rounded-lg p-4 sm:p-5 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-accent-soft text-theme-icon flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
+          <div className="h-10 w-10 rounded-lg bg-accent-soft text-accent-soft-text flex items-center justify-center border border-border-active shrink-0">
             <Key className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
               Design & tracking RBAC governance
             </h1>
           </div>
@@ -785,16 +785,16 @@ export const DesignRbacGovernance: React.FC = () => {
             type="button"
             onClick={loadWorkspaceUsers}
             disabled={isLoading}
-            className="px-3 py-2 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-2 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin text-theme-icon" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin text-accent-soft-text" : ""}`} />
             <span>Sync</span>
           </button>
 
           <button
             type="button"
             onClick={handleOpenCreateRole}
-            className="px-4 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-theme-btn-primary-secondary rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Create role</span>
@@ -804,7 +804,7 @@ export const DesignRbacGovernance: React.FC = () => {
 
       {/* Toast */}
       {feedbackMessage && (
-        <div className={`p-3.5 rounded-xl border flex items-center justify-between text-xs animate-in slide-in-from-top-2 duration-200 ${
+        <div className={`p-3.5 rounded-lg border flex items-center justify-between text-xs animate-in slide-in-from-top-2 duration-200 ${
           feedbackMessage.type === "success" 
             ? "bg-success-soft border-success-border text-success-text"
             : "bg-danger-soft border-danger-border text-danger-text"
@@ -824,15 +824,15 @@ export const DesignRbacGovernance: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("ROLES_BUILDER")}
-          className={`py-2.5 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
+          className={`py-2.5 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "ROLES_BUILDER"
-              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
+              ? "border-primary text-accent-soft-text bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
           <Shield className="h-4 w-4" />
           <span>Roles & permissions</span>
-          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface text-muted font-bold">
+          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface text-muted font-semibold">
             {allRoles.length}
           </span>
         </button>
@@ -840,15 +840,15 @@ export const DesignRbacGovernance: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("PERSONNEL")}
-          className={`py-2.5 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
+          className={`py-2.5 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "PERSONNEL"
-              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
+              ? "border-primary text-accent-soft-text bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
           <Users className="h-4 w-4" />
           <span>Personnel directory</span>
-          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface text-muted font-bold">
+          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-surface text-muted font-semibold">
             {filteredUsers.length}
           </span>
         </button>
@@ -856,9 +856,9 @@ export const DesignRbacGovernance: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("POLICY_MATRIX")}
-          className={`py-2.5 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
+          className={`py-2.5 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "POLICY_MATRIX"
-              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
+              ? "border-primary text-accent-soft-text bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
@@ -869,9 +869,9 @@ export const DesignRbacGovernance: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("SIMULATOR")}
-          className={`py-2.5 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
+          className={`py-2.5 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
             activeTab === "SIMULATOR"
-              ? "border-theme-btn-primary text-theme-icon bg-accent-soft rounded-t-lg"
+              ? "border-primary text-accent-soft-text bg-accent-soft rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground"
           }`}
         >
@@ -888,11 +888,11 @@ export const DesignRbacGovernance: React.FC = () => {
           {/* Left: Roles List */}
           <div className="lg:col-span-4 space-y-2">
             <div className="flex items-center justify-between px-1 mb-2">
-              <span className="text-xs font-bold text-muted">Defined roles</span>
+              <span className="text-xs font-semibold text-muted">Defined roles</span>
               <button
                 type="button"
                 onClick={handleOpenCreateRole}
-                className="text-xs font-bold text-theme-icon hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-accent-soft-text hover:underline flex items-center gap-1"
               >
                 <Plus className="h-3.5 w-3.5" /> New role
               </button>
@@ -907,21 +907,21 @@ export const DesignRbacGovernance: React.FC = () => {
                   <div
                     key={role.code}
                     onClick={() => setSelectedBuilderRoleCode(role.code)}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                    className={`p-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? "bg-accent-soft border-theme-btn-primary/40 ring-1 ring-theme-btn-primary/30 shadow-xs"
-                        : "bg-surface border-border/80 hover:border-border hover:bg-surface/80"
+                        ? "bg-accent-soft border-border-active ring-1 ring-ring shadow-xs"
+                        : "bg-surface border-border hover:border-border hover:bg-surface/80"
                     }`}
                   >
                     <div className="min-w-0 flex-1 pr-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-foreground truncate">{role.label}</span>
+                        <span className="text-xs font-semibold text-foreground truncate">{role.label}</span>
                         {role.isSystem ? (
-                          <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-sunken text-subtle border border-border">
+                          <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-sunken text-subtle border border-border">
                             System
                           </span>
                         ) : (
-                          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded border ${role.badgeColor || "bg-surface text-theme-icon"}`}>
+                          <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded border ${role.badgeColor || "bg-surface text-accent-soft-text"}`}>
                             Custom
                           </span>
                         )}
@@ -942,13 +942,13 @@ export const DesignRbacGovernance: React.FC = () => {
           {/* Right: Selected Role Overview & Permissions */}
           <div className="lg:col-span-8 space-y-4">
             {currentBuilderRole && (
-              <div className="bg-surface border border-border/80 rounded-2xl p-5 shadow-xs space-y-5">
+              <div className="bg-surface border border-border rounded-lg p-5 shadow-xs space-y-5">
                 {/* Role Header & Actions */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-lg font-bold text-foreground">{currentBuilderRole.label}</h2>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${currentBuilderRole.badgeColor || "bg-surface text-theme-icon"}`}>
+                      <h2 className="text-lg font-semibold text-foreground">{currentBuilderRole.label}</h2>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${currentBuilderRole.badgeColor || "bg-surface text-accent-soft-text"}`}>
                         {currentBuilderRole.code}
                       </span>
                     </div>
@@ -961,17 +961,17 @@ export const DesignRbacGovernance: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleOpenCloneRole(currentBuilderRole)}
-                      className="px-3 py-1.5 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                      className="px-3 py-1.5 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-lg transition-all flex items-center gap-1 cursor-pointer"
                       title="Clone role into a new custom role"
                     >
-                      <Copy className="h-3.5 w-3.5 text-theme-icon" />
+                      <Copy className="h-3.5 w-3.5 text-accent-soft-text" />
                       <span>Clone</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleOpenEditRole(currentBuilderRole)}
-                      className="px-3 py-1.5 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                      className="px-3 py-1.5 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-lg transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <Edit3 className="h-3.5 w-3.5 text-warning-text" />
                       <span>Edit</span>
@@ -981,7 +981,7 @@ export const DesignRbacGovernance: React.FC = () => {
                       <button aria-label="Delete custom role"
                         type="button"
                         onClick={() => setRoleToDelete(currentBuilderRole)}
-                        className="p-1.5 text-xs text-danger hover:bg-danger-soft rounded-xl transition-all cursor-pointer"
+                        className="p-1.5 text-xs text-danger-text hover:bg-danger-soft rounded-lg transition-all cursor-pointer"
                         title="Delete custom role"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -992,11 +992,11 @@ export const DesignRbacGovernance: React.FC = () => {
 
                 {/* Module Permissions Matrix */}
                 <div className="space-y-2.5">
-                  <span className="text-xs font-bold text-foreground">Module permissions & ticket scopes</span>
-                  <div className="border border-border/80 rounded-xl overflow-hidden">
+                  <span className="text-xs font-semibold text-foreground">Module permissions & ticket scopes</span>
+                  <div className="border border-border rounded-lg overflow-hidden">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-sunken border-b border-border/80 text-[11px] font-bold text-muted">
+                        <tr className="bg-sunken border-b border-border text-[11px] font-semibold text-muted">
                           <th className="py-2.5 px-3">Module</th>
                           <th className="py-2.5 px-2 text-center">View</th>
                           <th className="py-2.5 px-2 text-center">Create</th>
@@ -1031,11 +1031,11 @@ export const DesignRbacGovernance: React.FC = () => {
                               <td className="py-2.5 px-2 text-center">{canA ? <Check className="h-3.5 w-3.5 text-success-text mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
                               <td className="py-2.5 px-2 text-center">{canE ? <Check className="h-3.5 w-3.5 text-success-text mx-auto" /> : <X className="h-3.5 w-3.5 text-muted mx-auto" />}</td>
                               <td className="py-2.5 px-3">
-                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
                                   tScope === "ALL" ? "bg-info-soft text-info-text" :
                                   tScope === "ASSIGNED_ONLY" ? "bg-warning-soft text-warning-text" :
-                                  tScope === "NONE" ? "bg-danger-soft text-danger" :
-                                  "bg-surface text-theme-icon"
+                                  tScope === "NONE" ? "bg-danger-soft text-danger-text" :
+                                  "bg-surface text-accent-soft-text"
                                 }`}>
                                   {TICKET_SCOPE_OPTIONS.find(o => o.value === tScope)?.label || tScope}
                                 </span>
@@ -1049,9 +1049,9 @@ export const DesignRbacGovernance: React.FC = () => {
                 </div>
 
                 {/* Assigned Users List */}
-                <div className="space-y-2 pt-2 border-t border-border/80">
+                <div className="space-y-2 pt-2 border-t border-border">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">
+                    <span className="text-xs font-semibold text-foreground">
                       Assigned personnel ({mergedUsers.filter(u => u.designAccess?.designRole === currentBuilderRole.code).length})
                     </span>
                   </div>
@@ -1080,7 +1080,7 @@ export const DesignRbacGovernance: React.FC = () => {
       {/* ======================================================================= */}
       {activeTab === "PERSONNEL" && (
         <div className="space-y-4">
-          <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="bg-surface border border-border rounded-lg p-3.5 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[240px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
               <input
@@ -1088,7 +1088,7 @@ export const DesignRbacGovernance: React.FC = () => {
                 placeholder="Search personnel by name, email, department…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 text-xs bg-background border border-border rounded-xl focus:outline-none text-foreground"
+                className="w-full pl-9 pr-8 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none text-foreground"
               />
               {searchQuery && (
                 <button aria-label="Close" type="button" onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
@@ -1101,7 +1101,7 @@ export const DesignRbacGovernance: React.FC = () => {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none cursor-pointer"
+                className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none cursor-pointer"
               >
                 <option value="ALL">All roles</option>
                 {allRoles.map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
@@ -1110,7 +1110,7 @@ export const DesignRbacGovernance: React.FC = () => {
               <select
                 value={scopeFilter}
                 onChange={(e) => setScopeFilter(e.target.value)}
-                className="text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none cursor-pointer"
+                className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none cursor-pointer"
               >
                 <option value="ALL">All scopes</option>
                 <option value="GLOBAL">Global</option>
@@ -1119,10 +1119,10 @@ export const DesignRbacGovernance: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-surface border border-border/80 rounded-2xl shadow-xs overflow-hidden">
+          <div className="bg-surface border border-border rounded-lg shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs border-collapse min-w-[700px]">
               <thead>
-                <tr className="bg-sunken border-b border-border/80 text-[11px] font-bold text-muted">
+                <tr className="bg-sunken border-b border-border text-[11px] font-semibold text-muted">
                   <th className="py-3 px-4">Personnel</th>
                   <th className="py-3 px-3">Role</th>
                   <th className="py-3 px-3">Project scope</th>
@@ -1144,12 +1144,12 @@ export const DesignRbacGovernance: React.FC = () => {
                     return (
                       <tr key={user.id} className="hover:bg-sunken">
                         <td className="py-3 px-4">
-                          <div className="font-bold text-foreground">{user.fullName}</div>
+                          <div className="font-semibold text-foreground">{user.fullName}</div>
                           <div className="text-[11px] text-muted">{user.email}</div>
                         </td>
                         <td className="py-3 px-3">
                           {roleMeta ? (
-                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${roleMeta.badgeColor || "bg-surface text-theme-icon"}`}>
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${roleMeta.badgeColor || "bg-surface text-accent-soft-text"}`}>
                               {roleMeta.label}
                             </span>
                           ) : (
@@ -1178,9 +1178,9 @@ export const DesignRbacGovernance: React.FC = () => {
                             type="button"
                             onClick={(e) => handleToggleModuleAccess(user, e)}
                             disabled={isToggling}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
                               user.hasModuleAccess
-                                ? "bg-success-soft text-success-text border border-success-border hover:bg-danger-soft hover:text-danger"
+                                ? "bg-success-soft text-success-text border border-success-border hover:bg-danger-soft hover:text-danger-text"
                                 : "bg-sunken text-muted border border-border hover:bg-success-soft hover:text-success-text"
                             }`}
                           >
@@ -1211,25 +1211,25 @@ export const DesignRbacGovernance: React.FC = () => {
       {/* ======================================================================= */}
       {activeTab === "POLICY_MATRIX" && (
         <div className="space-y-4">
-          <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-surface border border-border rounded-lg p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-muted">Role:</span>
+                <span className="text-xs font-semibold text-muted">Role:</span>
                 <select
                   value={matrixRole}
                   onChange={(e) => setMatrixRole(e.target.value)}
-                  className="text-xs bg-background border border-border rounded-xl px-3 py-1.5 text-foreground font-semibold"
+                  className="text-xs bg-background border border-border rounded-lg px-3 py-1.5 text-foreground font-semibold"
                 >
                   {allRoles.map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
                 </select>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-muted">Project:</span>
+                <span className="text-xs font-semibold text-muted">Project:</span>
                 <select
                   value={matrixProject}
                   onChange={(e) => setMatrixProject(e.target.value)}
-                  className="text-xs bg-background border border-border rounded-xl px-3 py-1.5 text-foreground font-semibold"
+                  className="text-xs bg-background border border-border rounded-lg px-3 py-1.5 text-foreground font-semibold"
                 >
                   <option value="ALL">Global (All Projects)</option>
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -1241,17 +1241,17 @@ export const DesignRbacGovernance: React.FC = () => {
               type="button"
               onClick={handleSaveAllPolicies}
               disabled={isSavingPolicies}
-              className="px-4 py-1.5 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs transition-all flex items-center gap-1.5"
+              className="px-4 py-1.5 text-xs font-semibold text-primary-foreground bg-primary hover:bg-theme-btn-primary-secondary rounded-lg shadow-xs transition-all flex items-center gap-1.5"
             >
               <Check className="h-4 w-4" />
               <span>{isSavingPolicies ? "Saving..." : "Commit Policies"}</span>
             </button>
           </div>
 
-          <div className="bg-surface border border-border/80 rounded-2xl shadow-xs overflow-hidden">
+          <div className="bg-surface border border-border rounded-lg shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-sunken border-b border-border/80 text-[11px] font-bold text-muted">
+                <tr className="bg-sunken border-b border-border text-[11px] font-semibold text-muted">
                   <th className="py-3 px-4">Module</th>
                   <th className="py-3 px-3 text-center">View</th>
                   <th className="py-3 px-3 text-center">Create</th>
@@ -1272,22 +1272,22 @@ export const DesignRbacGovernance: React.FC = () => {
                         <span>{m.label}</span>
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <input type="checkbox" checked={pol.canRead} onChange={() => handlePolicyToggle(m.code, "canRead")} className="rounded text-theme-icon h-4 w-4" />
+                        <input type="checkbox" checked={pol.canRead} onChange={() => handlePolicyToggle(m.code, "canRead")} className="rounded text-accent-soft-text h-4 w-4" />
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <input type="checkbox" checked={pol.canCreate} onChange={() => handlePolicyToggle(m.code, "canCreate")} className="rounded text-theme-icon h-4 w-4" />
+                        <input type="checkbox" checked={pol.canCreate} onChange={() => handlePolicyToggle(m.code, "canCreate")} className="rounded text-accent-soft-text h-4 w-4" />
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <input type="checkbox" checked={pol.canUpdate} onChange={() => handlePolicyToggle(m.code, "canUpdate")} className="rounded text-theme-icon h-4 w-4" />
+                        <input type="checkbox" checked={pol.canUpdate} onChange={() => handlePolicyToggle(m.code, "canUpdate")} className="rounded text-accent-soft-text h-4 w-4" />
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <input type="checkbox" checked={pol.canDelete} onChange={() => handlePolicyToggle(m.code, "canDelete")} className="rounded text-theme-icon h-4 w-4" />
+                        <input type="checkbox" checked={pol.canDelete} onChange={() => handlePolicyToggle(m.code, "canDelete")} className="rounded text-accent-soft-text h-4 w-4" />
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <input type="checkbox" checked={!!pol.canApprove} onChange={() => handlePolicyToggle(m.code, "canApprove")} className="rounded text-theme-icon h-4 w-4" />
+                        <input type="checkbox" checked={!!pol.canApprove} onChange={() => handlePolicyToggle(m.code, "canApprove")} className="rounded text-accent-soft-text h-4 w-4" />
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <input type="checkbox" checked={!!pol.canExport} onChange={() => handlePolicyToggle(m.code, "canExport")} className="rounded text-theme-icon h-4 w-4" />
+                        <input type="checkbox" checked={!!pol.canExport} onChange={() => handlePolicyToggle(m.code, "canExport")} className="rounded text-accent-soft-text h-4 w-4" />
                       </td>
                       <td className="py-3 px-4">
                         <select
@@ -1311,25 +1311,25 @@ export const DesignRbacGovernance: React.FC = () => {
       {/* TAB 4: PERMISSION TESTER (SIMULATOR)                                    */}
       {/* ======================================================================= */}
       {activeTab === "SIMULATOR" && (
-        <div className="bg-surface border border-border/80 rounded-2xl p-5 shadow-xs space-y-4">
+        <div className="bg-surface border border-border rounded-lg p-5 shadow-xs space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted">Test user</label>
+              <label className="text-xs font-semibold text-muted">Test user</label>
               <select
                 value={simUserId}
                 onChange={(e) => setSimUserId(e.target.value)}
-                className="w-full text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground font-semibold"
+                className="w-full text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground font-semibold"
               >
                 {mergedUsers.map(u => <option key={u.id} value={u.id}>{u.fullName} ({u.designAccess?.designRole || "No Role"})</option>)}
               </select>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted">Target project</label>
+              <label className="text-xs font-semibold text-muted">Target project</label>
               <select
                 value={simProjectId}
                 onChange={(e) => setSimProjectId(e.target.value)}
-                className="w-full text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground font-semibold"
+                className="w-full text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground font-semibold"
               >
                 <option value="ALL">Global (All Projects)</option>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -1337,11 +1337,11 @@ export const DesignRbacGovernance: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted">Target module</label>
+              <label className="text-xs font-semibold text-muted">Target module</label>
               <select
                 value={simModule}
                 onChange={(e) => setSimModule(e.target.value as any)}
-                className="w-full text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground font-semibold"
+                className="w-full text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground font-semibold"
               >
                 {MODULE_LIST.map(m => <option key={m.code} value={m.code}>{m.label}</option>)}
               </select>
@@ -1350,11 +1350,11 @@ export const DesignRbacGovernance: React.FC = () => {
 
           <div className="flex items-center gap-4 pt-2">
             <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
-              <input type="checkbox" checked={simIsAssignee} onChange={e => setSimIsAssignee(e.target.checked)} className="rounded text-theme-icon" />
+              <input type="checkbox" checked={simIsAssignee} onChange={e => setSimIsAssignee(e.target.checked)} className="rounded text-accent-soft-text" />
               <span>Simulate user as ticket assignee</span>
             </label>
             <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
-              <input type="checkbox" checked={simIsCreator} onChange={e => setSimIsCreator(e.target.checked)} className="rounded text-theme-icon" />
+              <input type="checkbox" checked={simIsCreator} onChange={e => setSimIsCreator(e.target.checked)} className="rounded text-accent-soft-text" />
               <span>Simulate user as ticket creator</span>
             </label>
           </div>
@@ -1394,7 +1394,7 @@ export const DesignRbacGovernance: React.FC = () => {
               {/* 1. Basic Info */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1 sm:col-span-1">
-                  <label className="text-xs font-bold text-foreground">Role name *</label>
+                  <label className="text-xs font-semibold text-foreground">Role name *</label>
                   <input
                     type="text"
                     placeholder="e.g. Façade consultant"
@@ -1405,44 +1405,44 @@ export const DesignRbacGovernance: React.FC = () => {
                         setRoleFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"));
                       }
                     }}
-                    className="w-full text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none"
+                    className="w-full text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-1 sm:col-span-1">
-                  <label className="text-xs font-bold text-foreground">Role code *</label>
+                  <label className="text-xs font-semibold text-foreground">Role code *</label>
                   <input
                     type="text"
                     placeholder="e.g. FACADE_CONSULTANT"
                     value={roleFormCode}
                     onChange={(e) => setRoleFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"))}
                     disabled={modalMode === "EDIT" && currentBuilderRole.isSystem}
-                    className="w-full text-xs font-mono bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none disabled:opacity-60"
+                    className="w-full text-xs font-mono bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none disabled:opacity-60"
                   />
                 </div>
 
                 <div className="space-y-1 sm:col-span-1">
-                  <label className="text-xs font-bold text-foreground">Description</label>
+                  <label className="text-xs font-semibold text-foreground">Description</label>
                   <input
                     type="text"
                     placeholder="Brief description…"
                     value={roleFormDesc}
                     onChange={(e) => setRoleFormDesc(e.target.value)}
-                    className="w-full text-xs bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none"
+                    className="w-full text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Badge Theme */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Badge theme</label>
+                <label className="text-xs font-semibold text-foreground">Badge theme</label>
                 <div className="flex flex-wrap gap-1.5">
                   {ROLE_BADGE_COLORS.map(c => (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => setRoleFormBadgeColor(c.class)}
-                      className={`text-[11px] font-bold px-2 py-1 rounded-md border transition-all ${c.class} ${roleFormBadgeColor === c.class ? "ring-2 ring-theme-btn-primary" : "opacity-75"}`}
+                      className={`text-[11px] font-semibold px-2 py-1 rounded-md border transition-all ${c.class} ${roleFormBadgeColor === c.class ? "ring-2 ring-ring" : "opacity-75"}`}
                     >
                       {c.label}
                     </button>
@@ -1453,28 +1453,28 @@ export const DesignRbacGovernance: React.FC = () => {
               {/* 2. Module Permissions & Ticket Scopes */}
               <div className="space-y-2.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-foreground">Module permissions & ticket scopes</span>
+                  <span className="text-xs font-semibold text-foreground">Module permissions & ticket scopes</span>
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[11px] font-bold text-muted mr-1">Presets:</span>
-                    <button type="button" onClick={() => handleApplyPreset("READ_ONLY")} className="text-[11px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
+                    <span className="text-[11px] font-semibold text-muted mr-1">Presets:</span>
+                    <button type="button" onClick={() => handleApplyPreset("READ_ONLY")} className="text-[11px] font-semibold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
                       Read only
                     </button>
-                    <button type="button" onClick={() => handleApplyPreset("FULL_ACCESS")} className="text-[11px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
+                    <button type="button" onClick={() => handleApplyPreset("FULL_ACCESS")} className="text-[11px] font-semibold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
                       Full access
                     </button>
-                    <button type="button" onClick={() => handleApplyPreset("CONSULTANT")} className="text-[11px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
+                    <button type="button" onClick={() => handleApplyPreset("CONSULTANT")} className="text-[11px] font-semibold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
                       Consultant
                     </button>
-                    <button type="button" onClick={() => handleApplyPreset("SITE_ENGINEER")} className="text-[11px] font-bold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
+                    <button type="button" onClick={() => handleApplyPreset("SITE_ENGINEER")} className="text-[11px] font-semibold px-2 py-0.5 rounded bg-surface border hover:bg-sunken">
                       Site engineer
                     </button>
                   </div>
                 </div>
 
-                <div className="border border-border/80 rounded-xl overflow-hidden">
+                <div className="border border-border rounded-lg overflow-hidden">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-sunken border-b border-border/80 text-[11px] font-bold text-muted">
+                      <tr className="bg-sunken border-b border-border text-[11px] font-semibold text-muted">
                         <th className="py-2.5 px-3">Module</th>
                         <th className="py-2.5 px-2 text-center">View</th>
                         <th className="py-2.5 px-2 text-center">Create</th>
@@ -1502,22 +1502,22 @@ export const DesignRbacGovernance: React.FC = () => {
                               <span>{m.label}</span>
                             </td>
                             <td className="py-2.5 px-2 text-center">
-                              <input type="checkbox" checked={conf.canRead} onChange={e => updateConf("canRead", e.target.checked)} className="rounded text-theme-icon h-4 w-4" />
+                              <input type="checkbox" checked={conf.canRead} onChange={e => updateConf("canRead", e.target.checked)} className="rounded text-accent-soft-text h-4 w-4" />
                             </td>
                             <td className="py-2.5 px-2 text-center">
-                              <input type="checkbox" checked={conf.canCreate} onChange={e => updateConf("canCreate", e.target.checked)} className="rounded text-theme-icon h-4 w-4" />
+                              <input type="checkbox" checked={conf.canCreate} onChange={e => updateConf("canCreate", e.target.checked)} className="rounded text-accent-soft-text h-4 w-4" />
                             </td>
                             <td className="py-2.5 px-2 text-center">
-                              <input type="checkbox" checked={conf.canUpdate} onChange={e => updateConf("canUpdate", e.target.checked)} className="rounded text-theme-icon h-4 w-4" />
+                              <input type="checkbox" checked={conf.canUpdate} onChange={e => updateConf("canUpdate", e.target.checked)} className="rounded text-accent-soft-text h-4 w-4" />
                             </td>
                             <td className="py-2.5 px-2 text-center">
-                              <input type="checkbox" checked={conf.canDelete} onChange={e => updateConf("canDelete", e.target.checked)} className="rounded text-theme-icon h-4 w-4" />
+                              <input type="checkbox" checked={conf.canDelete} onChange={e => updateConf("canDelete", e.target.checked)} className="rounded text-accent-soft-text h-4 w-4" />
                             </td>
                             <td className="py-2.5 px-2 text-center">
-                              <input type="checkbox" checked={conf.canApprove} onChange={e => updateConf("canApprove", e.target.checked)} className="rounded text-theme-icon h-4 w-4" />
+                              <input type="checkbox" checked={conf.canApprove} onChange={e => updateConf("canApprove", e.target.checked)} className="rounded text-accent-soft-text h-4 w-4" />
                             </td>
                             <td className="py-2.5 px-2 text-center">
-                              <input type="checkbox" checked={conf.canExport} onChange={e => updateConf("canExport", e.target.checked)} className="rounded text-theme-icon h-4 w-4" />
+                              <input type="checkbox" checked={conf.canExport} onChange={e => updateConf("canExport", e.target.checked)} className="rounded text-accent-soft-text h-4 w-4" />
                             </td>
                             <td className="py-2.5 px-3">
                               <select
@@ -1537,8 +1537,8 @@ export const DesignRbacGovernance: React.FC = () => {
               </div>
 
               {/* 3. Project Governance Scope */}
-              <div className="space-y-2.5 pt-2 border-t border-border/80">
-                <span className="text-xs font-bold text-foreground">Project access scope</span>
+              <div className="space-y-2.5 pt-2 border-t border-border">
+                <span className="text-xs font-semibold text-foreground">Project access scope</span>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
                     <input
@@ -1546,7 +1546,7 @@ export const DesignRbacGovernance: React.FC = () => {
                       name="projectScope"
                       checked={roleFormProjectType === "ALL"}
                       onChange={() => setRoleFormProjectType("ALL")}
-                      className="text-theme-icon"
+                      className="text-accent-soft-text"
                     />
                     <span>All projects (global)</span>
                   </label>
@@ -1556,14 +1556,14 @@ export const DesignRbacGovernance: React.FC = () => {
                       name="projectScope"
                       checked={roleFormProjectType === "SPECIFIC"}
                       onChange={() => setRoleFormProjectType("SPECIFIC")}
-                      className="text-theme-icon"
+                      className="text-accent-soft-text"
                     />
                     <span>Specific projects</span>
                   </label>
                 </div>
 
                 {roleFormProjectType === "SPECIFIC" && (
-                  <div className="space-y-2 border border-border rounded-xl p-3 bg-background">
+                  <div className="space-y-2 border border-border rounded-lg p-3 bg-background">
                     <div className="flex items-center justify-between gap-2">
                       <input
                         type="text"
@@ -1573,10 +1573,10 @@ export const DesignRbacGovernance: React.FC = () => {
                         className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1 text-foreground flex-1 focus:outline-none"
                       />
                       <div className="flex items-center gap-1.5">
-                        <button type="button" onClick={() => setRoleFormProjectIds(projects.map(p => p.id))} className="text-[11px] font-bold text-theme-icon hover:underline">
+                        <button type="button" onClick={() => setRoleFormProjectIds(projects.map(p => p.id))} className="text-[11px] font-semibold text-accent-soft-text hover:underline">
                           Select all
                         </button>
-                        <button type="button" onClick={() => setRoleFormProjectIds([])} className="text-[11px] font-bold text-muted hover:underline">
+                        <button type="button" onClick={() => setRoleFormProjectIds([])} className="text-[11px] font-semibold text-muted hover:underline">
                           Clear
                         </button>
                       </div>
@@ -1595,7 +1595,7 @@ export const DesignRbacGovernance: React.FC = () => {
                                 onChange={() => {
                                   setRoleFormProjectIds(prev => isAssigned ? prev.filter(id => id !== p.id) : [...prev, p.id]);
                                 }}
-                                className="rounded text-theme-icon h-3.5 w-3.5"
+                                className="rounded text-accent-soft-text h-3.5 w-3.5"
                               />
                               <span className="truncate">{p.name} ({p.code})</span>
                             </label>
@@ -1607,8 +1607,8 @@ export const DesignRbacGovernance: React.FC = () => {
               </div>
 
               {/* 4. Assign Personnel (Optional) */}
-              <div className="space-y-2.5 pt-2 border-t border-border/80">
-                <span className="text-xs font-bold text-foreground">Assign users to this role</span>
+              <div className="space-y-2.5 pt-2 border-t border-border">
+                <span className="text-xs font-semibold text-foreground">Assign users to this role</span>
                 <input
                   type="text"
                   placeholder="Search users…"
@@ -1617,7 +1617,7 @@ export const DesignRbacGovernance: React.FC = () => {
                   className="text-xs bg-background border border-border rounded-lg px-2.5 py-1.5 text-foreground w-full focus:outline-none"
                 />
 
-                <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar border border-border rounded-xl p-2 bg-background">
+                <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar border border-border rounded-lg p-2 bg-background">
                   {mergedUsers
                     .filter(u => !roleFormUserSearch || u.fullName.toLowerCase().includes(roleFormUserSearch.toLowerCase()) || u.email.toLowerCase().includes(roleFormUserSearch.toLowerCase()))
                     .map(u => {
@@ -1630,7 +1630,7 @@ export const DesignRbacGovernance: React.FC = () => {
                             onChange={() => {
                               setRoleFormAssignedUserIds(prev => isAssigned ? prev.filter(id => id !== u.id) : [...prev, u.id]);
                             }}
-                            className="rounded text-theme-icon h-3.5 w-3.5"
+                            className="rounded text-accent-soft-text h-3.5 w-3.5"
                           />
                           <span className="font-semibold text-foreground truncate">{u.fullName}</span>
                           <span className="text-[11px] text-muted truncate">({u.email})</span>
@@ -1645,7 +1645,7 @@ export const DesignRbacGovernance: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsRoleModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-sunken rounded-xl border border-border cursor-pointer transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-sunken rounded-lg border border-border cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1653,7 +1653,7 @@ export const DesignRbacGovernance: React.FC = () => {
                 type="button"
                 onClick={handleSaveRoleModal}
                 disabled={isSaving}
-                className="px-5 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs cursor-pointer transition-all disabled:opacity-60"
+                className="px-5 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-theme-btn-primary-secondary rounded-lg shadow-xs cursor-pointer transition-all disabled:opacity-60"
               >
                 {isSaving ? "Saving..." : "Save Role & Permissions"}
               </button>
@@ -1681,9 +1681,9 @@ export const DesignRbacGovernance: React.FC = () => {
           isSubmitting={isSaving}
         >
           <div className="space-y-6 max-w-3xl">
-            <div className="p-4 rounded-2xl bg-surface border border-border space-y-4">
+            <div className="p-4 rounded-lg bg-surface border border-border space-y-4">
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Role</label>
+                <label className="font-semibold text-foreground">Role</label>
                 <select
                   value={drawerDesignRole}
                   onChange={(e) => {
@@ -1698,25 +1698,25 @@ export const DesignRbacGovernance: React.FC = () => {
                       setPermMastersManage(def.canMastersManage);
                     }
                   }}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground font-semibold"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground font-semibold"
                 >
                   {allRoles.map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Ticket scope</label>
+                <label className="font-semibold text-foreground">Ticket scope</label>
                 <select
                   value={drawerTicketScope}
                   onChange={(e) => setDrawerTicketScope(e.target.value as DesignTicketAccessScope)}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground"
                 >
                   {TICKET_SCOPE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                 </select>
               </div>
 
               <div className="space-y-2 pt-2 border-t border-border">
-                <span className="font-bold text-foreground">Project scope</span>
+                <span className="font-semibold text-foreground">Project scope</span>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input type="radio" name="drProj" checked={drawerProjectAccessType === "ALL"} onChange={() => setDrawerProjectAccessType("ALL")} />
@@ -1729,7 +1729,7 @@ export const DesignRbacGovernance: React.FC = () => {
                 </div>
 
                 {drawerProjectAccessType === "SPECIFIC" && (
-                  <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar border border-border rounded-xl p-2 bg-background">
+                  <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar border border-border rounded-lg p-2 bg-background">
                     {projects.map(p => (
                       <label key={p.id} className="flex items-center gap-2 p-1 cursor-pointer">
                         <input
@@ -1738,7 +1738,7 @@ export const DesignRbacGovernance: React.FC = () => {
                           onChange={() => {
                             setDrawerAssignedProjectIds(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]);
                           }}
-                          className="rounded text-theme-icon h-3.5 w-3.5"
+                          className="rounded text-accent-soft-text h-3.5 w-3.5"
                         />
                         <span className="truncate">{p.name}</span>
                       </label>
@@ -1752,7 +1752,7 @@ export const DesignRbacGovernance: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-sunken rounded-xl border border-border cursor-pointer transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-sunken rounded-lg border border-border cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1760,7 +1760,7 @@ export const DesignRbacGovernance: React.FC = () => {
                 type="button"
                 onClick={handleSaveDrawerAccess}
                 disabled={isSaving}
-                className="px-5 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs cursor-pointer transition-all disabled:opacity-60"
+                className="px-5 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-theme-btn-primary-secondary rounded-lg shadow-xs cursor-pointer transition-all disabled:opacity-60"
               >
                 {isSaving ? "Saving..." : "Save Access Scope"}
               </button>
@@ -1772,12 +1772,12 @@ export const DesignRbacGovernance: React.FC = () => {
       {/* Delete Confirmation */}
       {roleToDelete && (
         <div className="fixed inset-0 z-50 bg-[var(--overlay)] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-danger-border rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-lg">
-            <h3 className="text-sm font-bold text-foreground">Delete custom role?</h3>
+          <div className="bg-surface border border-danger-border rounded-lg w-full max-w-sm p-5 space-y-4 shadow-lg">
+            <h3 className="text-sm font-semibold text-foreground">Delete custom role?</h3>
             <p className="text-xs text-muted">This will remove '{roleToDelete.label}' ({roleToDelete.code}) and its policies.</p>
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-              <button type="button" onClick={() => setRoleToDelete(null)} className="px-4 py-2 text-xs font-semibold rounded-xl">Cancel</button>
-              <button type="button" onClick={handleConfirmDeleteRole} className="px-4 py-2 text-xs font-bold text-white bg-danger-solid hover:bg-danger-solid rounded-xl">Confirm delete</button>
+              <button type="button" onClick={() => setRoleToDelete(null)} className="px-4 py-2 text-xs font-semibold rounded-lg">Cancel</button>
+              <button type="button" onClick={handleConfirmDeleteRole} className="px-4 py-2 text-xs font-semibold text-white bg-danger-solid hover:bg-danger-solid rounded-lg">Confirm delete</button>
             </div>
           </div>
         </div>

@@ -43,14 +43,14 @@ export default async function DashboardsPage() {
             <ArrowLeft className="h-3.5 w-3.5" /> Back to navigation
           </Link>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboards</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Dashboards</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Budget and expense dashboards on live IN4 data. You see the dashboards and actions your role allows.
         </p>
       </div>
 
       {dashboards.length === 0 ? (
-        <div className="theme-card-structural rounded-2xl p-8 flex flex-col items-center text-center gap-3">
+        <div className="theme-card-structural rounded-lg p-8 flex flex-col items-center text-center gap-3">
           <Lock className="h-8 w-8 text-muted-foreground" />
           <h2 className="text-lg font-semibold text-foreground">No dashboards assigned yet</h2>
           <p className="text-sm text-muted-foreground max-w-md">
@@ -64,11 +64,11 @@ export default async function DashboardsPage() {
             <a
               key={def.key}
               href={`/dashboards/${def.key}`}
-              className="theme-card-structural rounded-2xl p-5 flex flex-col gap-4 transition-all duration-300 hover:border-theme-btn-primary/40 hover:shadow-md group"
+              className="theme-card-structural rounded-lg p-5 flex flex-col gap-4 transition-all duration-300 hover:border-border-active hover:shadow-md group"
             >
               <div className="flex items-center gap-3">
                 <span
-                  className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0"
+                  className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0"
                   style={{ backgroundColor: `${def.accent}1f`, color: def.accent }}
                 >
                   <LineChart className="h-5 w-5" />

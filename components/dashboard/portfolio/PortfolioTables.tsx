@@ -139,18 +139,18 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
   };
 
   return (
-    <AppCard className="p-0 border border-border/70 overflow-hidden shadow-sm theme-card-structural my-6">
+    <AppCard className="p-0 border border-border overflow-hidden shadow-sm theme-card-structural my-6">
       
       {/* TABLE TABS HEADER */}
-      <div className="p-4 border-b border-border/60 bg-surface/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 border-b border-border bg-surface/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
         
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 bg-background/60 p-1 rounded-xl border border-border/40 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 bg-background/60 p-1 rounded-lg border border-border/40 overflow-x-auto scrollbar-none">
           
           <button type="button"
             onClick={() => handleTabChange("overdue")}
             className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap",
+              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
               activeTab === "overdue"
                 ? "bg-danger text-white shadow-sm"
                 : "text-muted hover:text-foreground hover:bg-surface/50"
@@ -160,7 +160,7 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
             Overdue detailed list
             <span className={cn(
               "px-1.5 py-0.2 rounded-full text-[11px]",
-              activeTab === "overdue" ? "bg-sunken text-white" : "bg-danger/10 text-danger"
+              activeTab === "overdue" ? "bg-sunken text-white" : "bg-danger-soft text-danger-text"
             )}>
               {overdueItems.length}
             </span>
@@ -169,7 +169,7 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
           <button type="button"
             onClick={() => handleTabChange("due_not_completed")}
             className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap",
+              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
               activeTab === "due_not_completed"
                 ? "bg-warning text-white shadow-sm"
                 : "text-muted hover:text-foreground hover:bg-surface/50"
@@ -188,9 +188,9 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
           <button type="button"
             onClick={() => handleTabChange("timeline_revisions")}
             className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap",
+              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
               activeTab === "timeline_revisions"
-                ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted hover:text-foreground hover:bg-surface/50"
             )}
           >
@@ -198,7 +198,7 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
             Timeline revisions & milestones
             <span className={cn(
               "px-1.5 py-0.2 rounded-full text-[11px]",
-              activeTab === "timeline_revisions" ? "bg-sunken text-white" : "bg-accent-soft text-theme-icon"
+              activeTab === "timeline_revisions" ? "bg-sunken text-white" : "bg-accent-soft text-accent-soft-text"
             )}>
               {revisedItems.length}
             </span>
@@ -215,14 +215,14 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
               placeholder="Search title, code, user…"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-              className="w-full bg-background border border-border/70 rounded-lg pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
+              className="w-full bg-background border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
 
           <select
             value={moduleFilter}
             onChange={(e) => { setModuleFilter(e.target.value); setPage(1); }}
-            className="bg-background border border-border/70 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
+            className="bg-background border border-border rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="all">All modules</option>
             <option value="Tasks">Tasks</option>
@@ -246,7 +246,7 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
         ) : (
           <AppTable>
             <AppTableHeader>
-              <AppTableRow className="border-b border-border/60 bg-surface/60 text-[11px] font-semibold text-muted">
+              <AppTableRow className="border-b border-border bg-surface/60 text-[11px] font-semibold text-muted">
                 <AppTableHead className="w-24">Item code</AppTableHead>
                 <AppTableHead className="min-w-[200px]">Subject / title</AppTableHead>
                 <AppTableHead className="w-28">Module</AppTableHead>
@@ -269,8 +269,8 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
                   <AppTableRow key={item.id} className="hover:bg-surface/30 transition-colors border-b border-border/40 text-xs">
                     
                     {/* Item Code */}
-                    <AppTableCell className="font-mono font-bold text-foreground">
-                      <span className="px-1.5 py-0.5 rounded bg-surface border border-border/60 text-[11px]">
+                    <AppTableCell className="font-mono font-semibold text-foreground">
+                      <span className="px-1.5 py-0.5 rounded bg-surface border border-border text-[11px]">
                         {item.code || "N/A"}
                       </span>
                     </AppTableCell>
@@ -278,7 +278,7 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
                     {/* Title */}
                     <AppTableCell>
                       <div className="flex flex-col">
-                        <Link href={linkHref} className="font-semibold text-foreground hover:text-theme-icon transition-colors line-clamp-1">
+                        <Link href={linkHref} className="font-semibold text-foreground hover:text-accent-soft-text transition-colors line-clamp-1">
                           {item.title}
                         </Link>
                         <span className="text-[11px] text-muted">Created: {formatDisplayDate(item.createdAt)}</span>
@@ -290,8 +290,8 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
                       <span className={cn(
                         "inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border",
                         item.module === "Tasks" && "bg-info-soft text-info-text border-info-border",
-                        item.module === "Sub Tasks" && "bg-surface text-theme-icon border-border",
-                        item.module === "Tickets" && "bg-surface text-theme-icon border-border",
+                        item.module === "Sub Tasks" && "bg-surface text-accent-soft-text border-border",
+                        item.module === "Tickets" && "bg-surface text-accent-soft-text border-border",
                         item.module === "Requirements" && "bg-success-soft text-success-text border-success-border",
                         item.module === "Workspaces" && "bg-warning-soft text-warning-text border-warning-border"
                       )}>
@@ -305,7 +305,7 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
                         {item.userAvatar ? (
                           <img src={item.userAvatar} alt="" className="w-5 h-5 rounded-full object-cover" />
                         ) : (
-                          <div className="w-5 h-5 rounded-full bg-accent-soft text-theme-icon flex items-center justify-center text-[11px] font-bold">
+                          <div className="w-5 h-5 rounded-full bg-accent-soft text-accent-soft-text flex items-center justify-center text-[11px] font-semibold">
                             {item.userName.substring(0, 2).toUpperCase()}
                           </div>
                         )}
@@ -319,8 +319,8 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
                     {/* Priority */}
                     <AppTableCell>
                       <span className={cn(
-                        "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold",
-                        item.priority === "Critical" && "bg-danger/15 text-danger border border-danger/30",
+                        "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold",
+                        item.priority === "Critical" && "bg-danger-soft text-danger-text border border-danger-border",
                         item.priority === "High" && "bg-warning-soft text-warning-text border border-warning-border",
                         item.priority === "Medium" && "bg-info-soft text-info-text border border-info-border",
                         (item.priority === "Low" || item.priority === "Standard" || item.priority === "N/A") && "bg-surface text-muted border border-border"
@@ -355,28 +355,28 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
                     <AppTableCell>
                       {activeTab === "timeline_revisions" ? (
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[11px] font-bold text-foreground">
+                          <span className="text-[11px] font-semibold text-foreground">
                             {item.originalDueDate ? `Orig Due: ${formatDisplayDate(item.originalDueDate)}` : "No original due date"}
                           </span>
-                          <span className="text-[11px] text-theme-icon font-medium">
+                          <span className="text-[11px] text-accent-soft-text font-medium">
                             {item.dueDate ? `→ New Due: ${formatDisplayDate(item.dueDate)}` : ""}
                           </span>
                           {item.isOverdue && (
-                            <span className="text-[11px] text-danger font-bold">
+                            <span className="text-[11px] text-danger-text font-semibold">
                               Overdue by {item.overdueDays}d (Status: {item.rawStatus})
                             </span>
                           )}
                         </div>
                       ) : item.isOverdue ? (
                         <div className="flex flex-col">
-                          <span className="inline-flex items-center gap-1 text-danger font-bold text-xs">
+                          <span className="inline-flex items-center gap-1 text-danger-text font-semibold text-xs">
                             <AlertCircle className="h-3.5 w-3.5" />
                             +{item.overdueDays} {item.overdueDays === 1 ? "day" : "days"} overdue
                           </span>
                           <span className="text-[11px] text-muted">Status: {item.rawStatus}</span>
                         </div>
                       ) : item.status === "Resolved" ? (
-                        <span className="inline-flex items-center gap-1 text-success text-xs font-semibold">
+                        <span className="inline-flex items-center gap-1 text-success-text text-xs font-semibold">
                           <CheckCircle2 className="h-3.5 w-3.5" /> Completed
                         </span>
                       ) : (
@@ -387,7 +387,7 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
                     {/* Direct Action */}
                     <AppTableCell className="text-right">
                       <Link href={linkHref}>
-                        <AppButton variant="outline" size="sm" className="h-7 px-2.5 text-xs gap-1 border-border/70 hover:bg-theme-btn-primary hover:text-white">
+                        <AppButton variant="outline" size="sm" className="h-7 px-2.5 text-xs gap-1 border-border hover:bg-primary hover:text-white">
                           Open <ExternalLink className="h-3 w-3" />
                         </AppButton>
                       </Link>
@@ -402,7 +402,7 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
       </div>
 
       {/* PAGINATION FOOTER */}
-      <div className="p-3 border-t border-border/60 bg-surface/30 flex items-center justify-between text-xs text-muted">
+      <div className="p-3 border-t border-border bg-surface/30 flex items-center justify-between text-xs text-muted">
         <div>
           Showing <span className="font-semibold text-foreground">{paginatedData.length > 0 ? (page - 1) * pageSize + 1 : 0}</span> to{" "}
           <span className="font-semibold text-foreground">{Math.min(page * pageSize, filteredData.length)}</span> of{" "}

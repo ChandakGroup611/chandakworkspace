@@ -48,7 +48,7 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
     if (isBug) href = `/tickets/${m.id}`;
     if (isReq) href = `/requirements/${m.id}`;
     
-    const tagBg = isBug ? 'bg-danger/10 text-danger border-danger-border' : isTask ? 'bg-accent-soft text-theme-icon border-theme-btn-primary/20' : 'bg-accent-soft text-theme-icon border-theme-btn-primary/20';
+    const tagBg = isBug ? 'bg-danger-soft text-danger-text border-danger-border' : isTask ? 'bg-accent-soft text-accent-soft-text border-border-active' : 'bg-accent-soft text-accent-soft-text border-border-active';
     const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
     const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
@@ -56,7 +56,7 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
       <Link 
         key={m.id} 
         href={href}
-        className={`block p-3 rounded-xl border bg-surface/60 hover:bg-surface transition-all cursor-pointer shadow-xs min-w-0 overflow-hidden ${isProgress ? 'border-primary/40 ring-1 ring-primary/20 bg-primary/5' : 'border-border/60 hover:border-border'}`}
+        className={`block p-3 rounded-lg border bg-surface/60 hover:bg-surface transition-all cursor-pointer shadow-xs min-w-0 overflow-hidden ${isProgress ? 'border-primary/40 ring-1 ring-primary/20 bg-primary/5' : 'border-border hover:border-border'}`}
         style={{ textDecoration: 'none' }}
       >
         <div className="text-xs font-semibold text-foreground line-clamp-2 leading-snug mb-2 break-words overflow-hidden" title={m.title}>
@@ -68,10 +68,10 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
             {m.code || `TF-${shortId}`}
           </span>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded border ${tagBg}`}>
+            <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded border ${tagBg}`}>
               {m.module.substring(0,4)}
             </span>
-            <div className="w-5 h-5 rounded-full bg-surface-hover border border-border/50 flex items-center justify-center text-[11px] font-bold text-foreground shrink-0" title={m.user}>
+            <div className="w-5 h-5 rounded-full bg-surface-hover border border-border flex items-center justify-center text-[11px] font-semibold text-foreground shrink-0" title={m.user}>
               {initials}
             </div>
           </div>
@@ -95,9 +95,9 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
       id="kanban"
       title="Active sprint"
       subtitle="Sprint Kanban board & flow stages"
-      icon={<LayoutDashboard className="w-5 h-5 text-theme-icon" />}
+      icon={<LayoutDashboard className="w-5 h-5 text-accent-soft-text" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 shrink-0">
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-accent-soft-text border border-border-active shrink-0">
           {totalActive} Active items
         </span>
       }
@@ -113,50 +113,50 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
     >
       <div className="flex gap-3 h-full overflow-x-auto custom-scrollbar pb-2 w-full min-w-0">
         {/* Backlog */}
-        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-surface/40 rounded-xl p-2.5 border border-border/50">
+        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-surface/40 rounded-lg p-2.5 border border-border">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold text-muted-foreground">Backlog</h4>
-            <span className="bg-surface text-muted-foreground text-[11px] font-bold px-2 py-0.5 rounded-full border border-border/40">{board.backlog.length}</span>
+            <h4 className="text-[11px] font-semibold text-muted-foreground">Backlog</h4>
+            <span className="bg-surface text-muted-foreground text-[11px] font-semibold px-2 py-0.5 rounded-full border border-border/40">{board.backlog.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.backlog.map(m => renderCard(m, false))}
-            {board.backlog.length === 0 && <div className="text-xs text-center text-muted-foreground py-8 border border-dashed border-border/50 rounded-xl">No items</div>}
+            {board.backlog.length === 0 && <div className="text-xs text-center text-muted-foreground py-8 border border-border rounded-lg">No items</div>}
           </div>
         </div>
 
         {/* In Progress */}
-        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-primary/5 rounded-xl p-2.5 border border-primary/20">
+        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-primary/5 rounded-lg p-2.5 border border-primary/20">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold text-primary">In progress</h4>
-            <span className="bg-primary/10 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full border border-primary/20">{board.inProgress.length}</span>
+            <h4 className="text-[11px] font-semibold text-primary">In progress</h4>
+            <span className="bg-primary/10 text-primary text-[11px] font-semibold px-2 py-0.5 rounded-full border border-primary/20">{board.inProgress.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.inProgress.map(m => renderCard(m, true))}
-            {board.inProgress.length === 0 && <div className="text-xs text-center text-muted-foreground py-8 border border-dashed border-border/50 rounded-xl">No items</div>}
+            {board.inProgress.length === 0 && <div className="text-xs text-center text-muted-foreground py-8 border border-border rounded-lg">No items</div>}
           </div>
         </div>
 
         {/* In Review */}
-        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-warning/5 rounded-xl p-2.5 border border-warning-border">
+        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-warning-soft rounded-lg p-2.5 border border-warning-border">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold text-warning dark:text-warning">In review</h4>
-            <span className="bg-warning/10 text-warning dark:text-warning text-[11px] font-bold px-2 py-0.5 rounded-full border border-warning-border">{board.inReview.length}</span>
+            <h4 className="text-[11px] font-semibold text-warning-text dark:text-warning-text">In review</h4>
+            <span className="bg-warning-soft text-warning-text dark:text-warning-text text-[11px] font-semibold px-2 py-0.5 rounded-full border border-warning-border">{board.inReview.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.inReview.map(m => renderCard(m, false))}
-            {board.inReview.length === 0 && <div className="text-xs text-center text-muted-foreground py-8 border border-dashed border-border/50 rounded-xl">No items</div>}
+            {board.inReview.length === 0 && <div className="text-xs text-center text-muted-foreground py-8 border border-border rounded-lg">No items</div>}
           </div>
         </div>
 
         {/* Done */}
-        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-success/5 rounded-xl p-2.5 border border-success-border opacity-80 hover:opacity-100 transition-opacity">
+        <div className="w-[240px] sm:w-[260px] min-w-[240px] sm:min-w-[260px] shrink-0 flex flex-col h-full bg-success-soft rounded-lg p-2.5 border border-success-border opacity-80 hover:opacity-100 transition-opacity">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold text-success dark:text-success">Done</h4>
-            <span className="bg-success/10 text-success dark:text-success text-[11px] font-bold px-2 py-0.5 rounded-full border border-success-border">{board.done.length}</span>
+            <h4 className="text-[11px] font-semibold text-success-text dark:text-success-text">Done</h4>
+            <span className="bg-success-soft text-success-text dark:text-success-text text-[11px] font-semibold px-2 py-0.5 rounded-full border border-success-border">{board.done.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.done.map(m => renderCard(m, false))}
-            {board.done.length === 0 && <div className="text-xs text-center text-muted-foreground py-8 border border-dashed border-border/50 rounded-xl">No items</div>}
+            {board.done.length === 0 && <div className="text-xs text-center text-muted-foreground py-8 border border-border rounded-lg">No items</div>}
           </div>
         </div>
       </div>

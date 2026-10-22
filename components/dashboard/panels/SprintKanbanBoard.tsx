@@ -47,7 +47,7 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
     const avatarClass = `mini-avatar a${((m.id?.length || 0) % 5) + 1}`;
 
     return (
-      <div key={m.id} className="sprint-card" style={isProgress ? { borderColor: 'rgba(110,123,255,0.25)' } : {}}>
+      <div key={m.id} className="sprint-card" style={isProgress ? { borderColor: 'var(--border-active)' } : {}}>
         <div className="sprint-card-title" title={m.title}>{m.title || `${m.module} Assignment`}</div>
         <div className="sprint-card-meta">
           <span className="sprint-card-id">{m.code || `TF-${shortId}`}</span>

@@ -291,13 +291,13 @@ export function MyPortfolioSection() {
     <div className="w-full space-y-6 animate-in fade-in duration-500">
       
       {/* SECTION MASTER HEADER & FILTER BAR */}
-      <div className="p-5 rounded-2xl border border-border/80 shadow-sm theme-card-structural space-y-4">
+      <div className="p-5 rounded-lg border border-border shadow-sm theme-card-structural space-y-4">
         
         {/* Top Title & Quick Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text shadow-md">
+              <div className="p-2 rounded-lg bg-primary text-primary-foreground shadow-md">
                 <Briefcase className="h-5 w-5" />
               </div>
               <div>
@@ -320,10 +320,10 @@ export function MyPortfolioSection() {
               leftIcon={<ArrowUpDown className="h-4 w-4" />}
               onClick={() => setCompareMode(!compareMode)}
               className={cn(
-                "font-bold transition-all shadow-sm",
+                "font-semibold transition-all shadow-sm",
                 compareMode 
-                  ? "bg-gradient-to-r from-theme-btn-primary to-primary ring-2 ring-theme-btn-primary/30" 
-                  : "border-border/80 hover:border-theme-btn-primary"
+                  ? "bg-gradient-to-r from-theme-btn-primary to-primary ring-2 ring-ring" 
+                  : "border-border hover:border-primary"
               )}
             >
               {compareMode ? "Compare Mode Active" : "Compare Users"}
@@ -340,7 +340,7 @@ export function MyPortfolioSection() {
               size="sm"
               leftIcon={<RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />}
               onClick={() => refetch()}
-              className="border-border/80 text-xs"
+              className="border-border text-xs"
             >
               Sync live
             </AppButton>
@@ -355,13 +355,13 @@ export function MyPortfolioSection() {
           
           {/* 1. Date Range Preset */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-muted flex items-center gap-1">
-              <Calendar className="h-3 w-3 text-theme-icon" /> Time window
+            <label className="text-[11px] font-semibold text-muted flex items-center gap-1">
+              <Calendar className="h-3 w-3 text-accent-soft-text" /> Time window
             </label>
             <select
               value={datePreset}
               onChange={(e) => setDatePreset(e.target.value as DatePreset)}
-              className="w-full bg-background border border-border/80 rounded-lg px-3 py-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             >
               <option value="this_week">This week (mon - sun)</option>
               <option value="last_week">Last week</option>
@@ -375,8 +375,8 @@ export function MyPortfolioSection() {
 
           {/* 2. Scope / Entity Filter */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-muted flex items-center gap-1">
-              <Layers className="h-3 w-3 text-theme-icon" /> Entity scope
+            <label className="text-[11px] font-semibold text-muted flex items-center gap-1">
+              <Layers className="h-3 w-3 text-accent-soft-text" /> Entity scope
             </label>
             <MultiSelectFilter
               options={SCOPE_OPTIONS}
@@ -389,14 +389,14 @@ export function MyPortfolioSection() {
           {/* 3. User Selection */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-[11px] font-bold text-muted flex items-center gap-1">
-                <Users className="h-3 w-3 text-theme-icon" /> Selected users
+              <label className="text-[11px] font-semibold text-muted flex items-center gap-1">
+                <Users className="h-3 w-3 text-accent-soft-text" /> Selected users
               </label>
               <div className="flex items-center gap-1 text-[11px]">
                 <button
                   type="button"
                   onClick={handleSelectMe}
-                  className="text-theme-icon hover:underline font-bold"
+                  className="text-accent-soft-text hover:underline font-semibold"
                 >
                   Only me
                 </button>
@@ -420,14 +420,14 @@ export function MyPortfolioSection() {
 
           {/* 4. Active Filter Summary */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-muted flex items-center gap-1">
-              <SlidersHorizontal className="h-3 w-3 text-theme-icon" /> Filter scope
+            <label className="text-[11px] font-semibold text-muted flex items-center gap-1">
+              <SlidersHorizontal className="h-3 w-3 text-accent-soft-text" /> Filter scope
             </label>
-            <div className="p-2 rounded-lg bg-background/60 border border-border/70 text-xs flex items-center justify-between">
+            <div className="p-2 rounded-lg bg-background/60 border border-border text-xs flex items-center justify-between">
               <span className="font-semibold text-foreground truncate max-w-[130px]">
                 {filteredItems.length} matching items
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-soft text-theme-icon">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-accent-soft-text">
                 {activeUserCount} {activeUserCount === 1 ? "User" : "Users"}
               </span>
             </div>
@@ -439,21 +439,21 @@ export function MyPortfolioSection() {
         {datePreset === "custom" && (
           <div className="pt-3 border-t border-border/40 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in duration-300">
             <div>
-              <label className="text-[11px] font-bold text-muted">From date</label>
+              <label className="text-[11px] font-semibold text-muted">From date</label>
               <input
                 type="date"
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
-                className="w-full mt-1 bg-background border border-border/80 rounded-lg px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
+                className="w-full mt-1 bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <div>
-              <label className="text-[11px] font-bold text-muted">To date</label>
+              <label className="text-[11px] font-semibold text-muted">To date</label>
               <input
                 type="date"
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
-                className="w-full mt-1 bg-background border border-border/80 rounded-lg px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
+                className="w-full mt-1 bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
           </div>
@@ -463,7 +463,7 @@ export function MyPortfolioSection() {
 
       {/* ERROR WARNING IF ANY */}
       {error && (
-        <div className="p-4 rounded-xl bg-danger/10 text-danger border border-danger/30 text-xs flex items-center gap-2">
+        <div className="p-4 rounded-lg bg-danger-soft text-danger-text border border-danger-border text-xs flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>Failed to synchronize live portfolio metrics: {(error as any)?.message || "Unknown error"}</span>
         </div>
@@ -484,15 +484,15 @@ export function MyPortfolioSection() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* KPI 1: CREATED IN PERIOD (WITH SEGREGATED SCOPE BREAKDOWN) */}
-        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
+        <AppCard className="p-5 border border-border shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[11px] font-bold text-muted">Created in period</span>
+              <span className="text-[11px] font-semibold text-muted">Created in period</span>
               <div className="text-3xl font-semibold text-foreground mt-1 tracking-tight">
                 {kpis.createdCount}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-accent-soft text-theme-icon">
+            <div className="p-2.5 rounded-lg bg-accent-soft text-accent-soft-text">
               <Sparkles className="h-5 w-5" />
             </div>
           </div>
@@ -502,74 +502,74 @@ export function MyPortfolioSection() {
             <div className="flex items-center gap-2 flex-wrap text-[11px]">
               <span className="text-info-text font-semibold">{kpis.createdByModule.Tasks} Tasks</span>
               <span className="text-muted">·</span>
-              <span className="text-theme-icon font-semibold">{kpis.createdByModule["Sub Tasks"]} Subtasks</span>
+              <span className="text-accent-soft-text font-semibold">{kpis.createdByModule["Sub Tasks"]} Subtasks</span>
               <span className="text-muted">·</span>
-              <span className="text-theme-icon font-semibold">{kpis.createdByModule.Tickets} Tickets</span>
+              <span className="text-accent-soft-text font-semibold">{kpis.createdByModule.Tickets} Tickets</span>
             </div>
           </div>
         </AppCard>
 
         {/* KPI 2: CLOSED / COMPLETED IN PERIOD */}
-        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
+        <AppCard className="p-5 border border-border shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[11px] font-bold text-success">Closed / completed</span>
-              <div className="text-3xl font-semibold text-success mt-1 tracking-tight">
+              <span className="text-[11px] font-semibold text-success-text">Closed / completed</span>
+              <div className="text-3xl font-semibold text-success-text mt-1 tracking-tight">
                 {kpis.closedCount}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-success/10 text-success">
+            <div className="p-2.5 rounded-lg bg-success-soft text-success-text">
               <CheckCircle2 className="h-5 w-5" />
             </div>
           </div>
 
           <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
             <span className="text-muted flex items-center gap-1">
-              <ShieldCheck className="h-3.5 w-3.5 text-success" /> On-Time Rate:
+              <ShieldCheck className="h-3.5 w-3.5 text-success-text" /> On-Time Rate:
             </span>
-            <span className="font-bold text-foreground">{kpis.onTimeRate}%</span>
+            <span className="font-semibold text-foreground">{kpis.onTimeRate}%</span>
           </div>
         </AppCard>
 
         {/* KPI 3: OVERDUE TASK COUNT */}
-        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
+        <AppCard className="p-5 border border-border shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[11px] font-bold text-danger">Currently overdue</span>
-              <div className="text-3xl font-semibold text-danger mt-1 tracking-tight">
+              <span className="text-[11px] font-semibold text-danger-text">Currently overdue</span>
+              <div className="text-3xl font-semibold text-danger-text mt-1 tracking-tight">
                 {kpis.overdueCount}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-danger/10 text-danger">
+            <div className="p-2.5 rounded-lg bg-danger-soft text-danger-text">
               <AlertTriangle className="h-5 w-5" />
             </div>
           </div>
 
           <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
             <span className="text-muted">Active overdue risk:</span>
-            <span className="font-bold text-danger">
+            <span className="font-semibold text-danger-text">
               {kpis.overdueCount > 0 ? "Action Required" : "All Clear"}
             </span>
           </div>
         </AppCard>
 
         {/* KPI 4: DUE BUT NOT COMPLETED IN PERIOD */}
-        <AppCard className="p-5 border border-border/80 shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
+        <AppCard className="p-5 border border-border shadow-sm theme-card-structural relative overflow-hidden flex flex-col justify-between group transition-transform">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-[11px] font-bold text-warning-text">Due but not done (period)</span>
+              <span className="text-[11px] font-semibold text-warning-text">Due but not done (period)</span>
               <div className="text-3xl font-semibold text-warning-text mt-1 tracking-tight">
                 {kpis.dueNotCompletedCount}
               </div>
             </div>
-            <div className="p-2.5 rounded-xl bg-warning-soft text-warning-text">
+            <div className="p-2.5 rounded-lg bg-warning-soft text-warning-text">
               <Clock className="h-5 w-5" />
             </div>
           </div>
 
           <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
             <span className="text-muted">Revised Deadlines:</span>
-            <span className="font-bold text-theme-icon">{kpis.revisionCount} Tasks</span>
+            <span className="font-semibold text-accent-soft-text">{kpis.revisionCount} Tasks</span>
           </div>
         </AppCard>
 

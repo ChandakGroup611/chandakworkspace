@@ -66,13 +66,13 @@ export function ResolutionVelocityWidget({ metrics = [] }: ResolutionVelocityWid
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-background/95 border border-border/50 p-3 rounded-lg ">
+        <div className="bg-background/95 border border-border p-3 rounded-lg ">
           <p className="text-sm font-semibold mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 text-xs">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
               <span className="text-muted-foreground">{entry.name}:</span>
-              <span className="font-bold">{entry.value}</span>
+              <span className="font-semibold">{entry.value}</span>
             </div>
           ))}
         </div>
@@ -95,12 +95,12 @@ export function ResolutionVelocityWidget({ metrics = [] }: ResolutionVelocityWid
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0}/>
               </linearGradient>
               <linearGradient id="colorResolved" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                <stop offset="5%" stopColor="var(--success)" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
@@ -108,8 +108,8 @@ export function ResolutionVelocityWidget({ metrics = [] }: ResolutionVelocityWid
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-            <Area type="monotone" dataKey="New" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorNew)" />
-            <Area type="monotone" dataKey="Resolved" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorResolved)" />
+            <Area type="monotone" dataKey="New" stroke="var(--chart-1)" strokeWidth={3} fillOpacity={1} fill="url(#colorNew)" />
+            <Area type="monotone" dataKey="Resolved" stroke="var(--success)" strokeWidth={3} fillOpacity={1} fill="url(#colorResolved)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

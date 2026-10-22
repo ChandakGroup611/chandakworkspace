@@ -79,12 +79,12 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
   return (
     <div className="flex flex-col h-full relative">
       {degradationStage >= DegradationStage.STAGE_1_MILD && (
-        <div className="bg-warning-soft text-warning text-[11px] font-bold py-1 px-3 text-center border-b border-warning-border">
+        <div className="bg-warning-soft text-warning-text text-[11px] font-semibold py-1 px-3 text-center border-b border-warning-border">
           Governance: presence & typing indicators paused
         </div>
       )}
       {degradationStage >= DegradationStage.STAGE_3_SEVERE && (
-        <div className="bg-danger-soft text-danger text-[11px] font-bold py-1 px-3 text-center border-b border-danger-border">
+        <div className="bg-danger-soft text-danger-text text-[11px] font-semibold py-1 px-3 text-center border-b border-danger-border">
           Governance: Live Chat Stream Paused. Force Refresh to load new.
         </div>
       )}
@@ -92,9 +92,9 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
         {messages.map((msg, i) => {
           const isChat = msg.event_type === 'CHAT' || msg.event_type === 'COMMENT';
           return (
-            <div key={msg.id || i} className={`text-sm ${isChat ? 'bg-accent-soft border-theme-btn-primary/30' : 'theme-card-structural'} rounded-xl p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>
+            <div key={msg.id || i} className={`text-sm ${isChat ? 'bg-accent-soft border-border-active' : 'theme-card-structural'} rounded-lg p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-bold text-xs text-muted">
+                <span className="font-semibold text-xs text-muted">
                   {msg.performed_by?.full_name || 'System User'}
                 </span>
                 <span className="text-xs text-muted">
@@ -119,9 +119,9 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message or @mention someone…"
-          className="flex-1 theme-card-structural rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-theme-btn-primary"
+          className="flex-1 theme-card-structural rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-primary"
         />
-        <AppButton type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
+        <AppButton type="submit" className="bg-primary hover:opacity-90 text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
           Send
         </AppButton>
       </form>

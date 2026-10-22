@@ -458,7 +458,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
     }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-theme-icon" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent-soft-text" /></div>;
 
   // Active Template for Editor View
   const tpl = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
@@ -469,9 +469,9 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
     <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Dynamic Header */}
-      <div className="flex justify-between items-center bg-background border border-border p-4 rounded-xl shadow-xs">
+      <div className="flex justify-between items-center bg-background border border-border p-4 rounded-lg shadow-xs">
         <div>
-          <h2 className="text-lg font-bold text-foreground">
+          <h2 className="text-lg font-semibold text-foreground">
             {editingTemplateId 
               ? (isVeh ? "Edit Vehicle Notification Template" : "Edit Template") 
               : (isVeh ? "Vehicle Notification & Expiry Templates" : "Dynamic Template Designer")}
@@ -494,14 +494,14 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               }
               setEditingTemplateId(null);
             }}
-            className="flex items-center gap-2 theme-card-structural hover:bg-surface text-foreground px-4 py-2 rounded-lg text-sm font-bold shadow-xs transition-all"
+            className="flex items-center gap-2 theme-card-structural hover:bg-surface text-foreground px-4 py-2 rounded-lg text-sm font-semibold shadow-xs transition-all"
           >
             <ArrowLeft className="w-4 h-4" /> Back to list
           </AppButton>
         ) : (
           <AppButton
             onClick={handleAddTemplate}
-            className="flex items-center gap-2 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text px-4 py-2 rounded-lg text-sm font-bold shadow-xs transition-all"
+            className="flex items-center gap-2 bg-primary hover:bg-theme-btn-primary-secondary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold shadow-xs transition-all"
           >
             <Plus className="w-4 h-4" /> {isVeh ? "Add Vehicle Template" : "Add Template"}
           </AppButton>
@@ -517,7 +517,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
             {/* Filter Pills - only shown in global communication settings */}
             {!isLockedToModule && (
               <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
-                <span className="font-bold text-muted-foreground shrink-0 mr-1">Module:</span>
+                <span className="font-semibold text-muted-foreground shrink-0 mr-1">Module:</span>
                 {["ALL", ...MODULES].map((mod) => (
                   <button
                     key={mod}
@@ -525,12 +525,12 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                     onClick={() => setModuleFilter(mod)}
                     className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
                       moduleFilter === mod
-                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                        ? "bg-primary text-primary-foreground shadow-xs"
                         : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
                     }`}
                   >
                     {mod === "ALL" ? "All Modules" : mod}
-                    <span className="ml-1.5 text-[11px] font-mono font-bold opacity-75">
+                    <span className="ml-1.5 text-[11px] font-mono font-semibold opacity-75">
                       ({mod === "ALL" ? templates.length : templates.filter(t => t.module === mod || (mod === "Vehicle (FleetDesk)" && (t.module === "Vehicle" || t.module === "Vehicle (FleetDesk)"))).length})
                     </span>
                   </button>
@@ -538,7 +538,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               </div>
             )}
 
-            <div className="theme-card-structural rounded-xl overflow-hidden border border-border">
+            <div className="theme-card-structural rounded-lg overflow-hidden border border-border">
             {(() => {
               const visibleTemplates = moduleFilter === "ALL"
                 ? templates
@@ -547,18 +547,18 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               return visibleTemplates.length === 0 ? (
                 <div className="text-center py-12">
                   <LayoutTemplate className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-                  <h3 className="text-lg font-bold text-foreground">No templates for {isVeh ? "Vehicle Desk" : (moduleFilter === "ALL" ? "System" : moduleFilter)}</h3>
+                  <h3 className="text-lg font-semibold text-foreground">No templates for {isVeh ? "Vehicle Desk" : (moduleFilter === "ALL" ? "System" : moduleFilter)}</h3>
                   <p className="text-xs text-muted-foreground mt-1">Click "{isVeh ? "Add Vehicle Template" : "Add Template"}" to construct a new notification payload.</p>
                 </div>
               ) : (
                 <AppTable className="w-full text-left text-sm">
                   <thead className="bg-background border-b border-border">
                     <tr>
-                      <th className="px-6 py-4 font-bold text-muted">Template name</th>
-                      <th className="px-6 py-4 font-bold text-muted">Module</th>
-                      <th className="px-6 py-4 font-bold text-muted">Event</th>
-                      <th className="px-6 py-4 font-bold text-muted text-center">Status</th>
-                      <th className="px-6 py-4 font-bold text-muted text-right">Actions</th>
+                      <th className="px-6 py-4 font-semibold text-muted">Template name</th>
+                      <th className="px-6 py-4 font-semibold text-muted">Module</th>
+                      <th className="px-6 py-4 font-semibold text-muted">Event</th>
+                      <th className="px-6 py-4 font-semibold text-muted text-center">Status</th>
+                      <th className="px-6 py-4 font-semibold text-muted text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -572,7 +572,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                         <td className="px-6 py-4 text-muted">{item.module}</td>
                         <td className="px-6 py-4 text-muted">{item.event}</td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${item.is_active ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${item.is_active ? 'bg-success-soft text-success-text' : 'bg-danger-soft text-danger-text'}`}>
                             {item.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
@@ -580,14 +580,14 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <AppButton aria-label="Edit" 
                             onClick={(e) => { e.stopPropagation(); setEditingTemplateId(item.id); }}
-                            className="p-2 text-muted hover:text-theme-icon bg-background rounded-md border border-border shadow-sm"
+                            className="p-2 text-muted hover:text-accent-soft-text bg-background rounded-md border border-border shadow-sm"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </AppButton>
                           <AppButton aria-label="Delete" 
                             onClick={(e) => handleDelete(item.id, e)} 
-                            className="p-2 text-muted hover:text-danger bg-background rounded-md border border-border shadow-sm"
+                            className="p-2 text-muted hover:text-danger-text bg-background rounded-md border border-border shadow-sm"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -606,24 +606,24 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
 
         {/* EDITOR VIEW */}
         {editingTemplateId && tpl && (
-          <div className="theme-card-structural rounded-xl overflow-hidden  flex flex-col animate-in slide-in-from-right-4 duration-300">
+          <div className="theme-card-structural rounded-lg overflow-hidden  flex flex-col animate-in slide-in-from-right-4 duration-300">
             {/* Header Configuration */}
             <div className="p-6 border-b grid grid-cols-1 md:grid-cols-3 gap-6 theme-card-structural">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-muted">Template name</label>
+                <label className="text-sm font-semibold text-muted">Template name</label>
                 <input 
                   type="text" 
                   value={tpl.template_name || ''}
                   onChange={(e) => updateLocal(tpl.id, "template_name", e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-muted">Trigger module</label>
+                <label className="text-sm font-semibold text-muted">Trigger module</label>
                 {isLockedToModule ? (
                   <div className="w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-foreground font-semibold flex items-center justify-between">
                     <span>{tpl.module || initialModule}</span>
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-info-soft text-info-text border border-info-border font-bold">
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-info-soft text-info-text border border-info-border font-semibold">
                       Vehicle scoped
                     </span>
                   </div>
@@ -631,39 +631,39 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                   <select 
                     value={tpl.module || ''}
                     onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
-                    className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                    className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                   >
                     {MODULES.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 )}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-muted">Trigger event</label>
+                <label className="text-sm font-semibold text-muted">Trigger event</label>
                 <select 
                   value={tpl.event || ''}
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                 >
                   {(isVeh ? VEHICLE_EVENTS : EVENTS).map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
               </div>
               <div className="md:col-span-3 space-y-2">
-                <label className="text-sm font-bold text-muted">Email subject line</label>
+                <label className="text-sm font-semibold text-muted">Email subject line</label>
                 <input 
                   type="text" 
                   value={tpl.subject || ''}
                   onChange={(e) => updateLocal(tpl.id, "subject", e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary font-mono"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary font-mono"
                   placeholder="e.g. Action Required: {{registration_number}}"
                 />
               </div>
 
               {/* Target Recipients Checkboxes */}
               <div className="md:col-span-3 space-y-2 mt-2">
-                <label className="text-sm font-bold text-muted">Target recipients (dynamic)</label>
+                <label className="text-sm font-semibold text-muted">Target recipients (dynamic)</label>
                 <div className="flex flex-wrap gap-3">
                   {(isVeh ? VEHICLE_RECIPIENT_OPTIONS : RECIPIENT_OPTIONS).map(opt => (
-                    <label key={opt} className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-border rounded-md bg-background hover:border-theme-btn-primary transition-colors select-none">
+                    <label key={opt} className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-border rounded-md bg-background hover:border-primary transition-colors select-none">
                       <input 
                         type="checkbox"
                         checked={tpl.recipient_types?.includes(opt) || false}
@@ -687,7 +687,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
 
             {/* Merge Tags Helper */}
             <div className="px-6 py-3 border-b border-border bg-background flex flex-wrap gap-2 items-center">
-              <span className="text-xs font-bold text-muted mr-2">Available tags:</span>
+              <span className="text-xs font-semibold text-muted mr-2">Available tags:</span>
               {getAvailableMergeTags(tpl.module).map(tag => (
                 <AppButton 
                   key={tag} 
@@ -702,7 +702,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                       updateLocal(tpl.id, "html_body", newBody);
                     }
                   }}
-                  className="px-2 py-1 bg-theme-btn-primary text-theme-btn-primary-text hover:bg-theme-btn-primary-secondary text-xs font-mono rounded transition-colors shadow-2xs cursor-pointer"
+                  className="px-2 py-1 bg-primary text-primary-foreground hover:bg-theme-btn-primary-secondary text-xs font-mono rounded transition-colors shadow-2xs cursor-pointer"
                 >
                   {tag}
                 </AppButton>
@@ -713,13 +713,13 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
             <div className="flex border-b border-border bg-background">
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'code' ? 'border-theme-btn-primary text-theme-icon theme-card-structural ' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'code' ? 'border-primary text-accent-soft-text theme-card-structural ' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML source
               </AppButton>
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'preview' ? 'border-theme-btn-primary text-theme-icon theme-card-structural ' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'preview' ? 'border-primary text-accent-soft-text theme-card-structural ' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Eye className="w-4 h-4" /> Live preview (dynamic)
               </AppButton>
@@ -731,7 +731,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                 id={`editor_${tpl.id}`}
                 value={tpl.html_body || ''}
                 onChange={(e) => updateLocal(tpl.id, "html_body", e.target.value)}
-                className="w-full h-64 bg-background text-success dark:text-success font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-theme-btn-primary/20 resize-y"
+                className="w-full h-64 bg-background text-success-text dark:text-success-text font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-ring resize-y"
                 spellCheck={false}
               />
             ) : (
@@ -744,7 +744,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
             {/* Footer Actions */}
             <div className="bg-background px-6 py-3 border-t border-border flex justify-between items-center">
               <label className="flex items-center gap-2 cursor-pointer">
-                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tpl.is_active ? 'bg-theme-btn-primary' : 'bg-border-active'}`}>
+                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tpl.is_active ? 'bg-primary' : 'bg-border-active'}`}>
                   <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${tpl.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                 </div>
                 <input 
@@ -753,11 +753,11 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                   checked={tpl.is_active} 
                   onChange={(e) => updateLocal(tpl.id, "is_active", e.target.checked)}
                 />
-                <span className="text-xs font-bold text-muted">Template active</span>
+                <span className="text-xs font-semibold text-muted">Template active</span>
               </label>
 
               <div className="flex items-center gap-3">
-                <AppButton aria-label="Delete" onClick={(e) => handleDelete(tpl.id, e)} className="text-muted hover:text-danger transition-colors mr-2">
+                <AppButton aria-label="Delete" onClick={(e) => handleDelete(tpl.id, e)} className="text-muted hover:text-danger-text transition-colors mr-2">
                   <Trash2 className="w-4 h-4" />
                 </AppButton>
                 <AppButton 
@@ -767,13 +767,13 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                     }
                     setEditingTemplateId(null);
                   }}
-                  className="bg-transparent hover:bg-surface text-muted px-4 py-1.5 rounded text-sm font-bold transition-colors"
+                  className="bg-transparent hover:bg-surface text-muted px-4 py-1.5 rounded text-sm font-semibold transition-colors"
                 >
                   Cancel
                 </AppButton>
                 <AppButton 
                   onClick={() => handleSave(tpl)}
-                  className="flex items-center gap-2 bg-theme-btn-primary hover:opacity-90/90 text-theme-btn-primary-text px-6 py-1.5 rounded text-sm font-bold transition-colors shadow-lg shadow-theme-btn-primary/20"
+                  className="flex items-center gap-2 bg-primary hover:opacity-90/90 text-primary-foreground px-6 py-1.5 rounded text-sm font-semibold transition-colors shadow-lg shadow-theme-btn-primary/20"
                 >
                   <Save className="w-4 h-4" /> Save template
                 </AppButton>
@@ -785,7 +785,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

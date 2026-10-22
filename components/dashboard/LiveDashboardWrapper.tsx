@@ -51,7 +51,7 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, init
       className="flex items-center gap-2 px-2.5 py-1 theme-card-structural rounded-full hover:opacity-80 transition-all cursor-pointer select-none border border-border/40"
     >
       {isFetching ? (
-        <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />
+        <Loader2 className="w-3 h-3 animate-spin text-accent-soft-text" />
       ) : (
         <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
       )}
@@ -67,18 +67,18 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, init
       <div className="w-full p-4 md:p-6 space-y-6 animate-pulse" aria-label="Loading dashboard deliverables…">
         <div className="flex justify-between items-center pb-4 border-b border-border/40">
           <div className="flex gap-2">
-            <div className="h-9 w-32 bg-muted/20 rounded-xl"></div>
-            <div className="h-9 w-32 bg-muted/10 rounded-xl"></div>
+            <div className="h-9 w-32 bg-muted/20 rounded-lg"></div>
+            <div className="h-9 w-32 bg-muted/10 rounded-lg"></div>
           </div>
           <div className="h-7 w-24 bg-muted/20 rounded-full"></div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="h-24 bg-muted/15 rounded-xl border border-border/30"></div>
-          <div className="h-24 bg-muted/15 rounded-xl border border-border/30"></div>
-          <div className="h-24 bg-muted/15 rounded-xl border border-border/30"></div>
-          <div className="h-24 bg-muted/15 rounded-xl border border-border/30"></div>
+          <div className="h-24 bg-muted/15 rounded-lg border border-border/30"></div>
+          <div className="h-24 bg-muted/15 rounded-lg border border-border/30"></div>
+          <div className="h-24 bg-muted/15 rounded-lg border border-border/30"></div>
+          <div className="h-24 bg-muted/15 rounded-lg border border-border/30"></div>
         </div>
-        <div className="h-64 bg-muted/10 rounded-2xl border border-border/20"></div>
+        <div className="h-64 bg-muted/10 rounded-lg border border-border/20"></div>
       </div>
     );
   }

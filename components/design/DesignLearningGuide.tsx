@@ -51,7 +51,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       icon: Settings2,
       color: "text-info-text",
       bgColor: "bg-info-soft",
-      borderColor: "border-info/30",
+      borderColor: "border-info-border",
       route: "/design/masters",
       summary: "Foundation setup: Company, Projects, Towers/Wings, Disciplines, Sub-Packages, Consultants, and Authorities.",
       whyFirst: "Drawings and matrices cannot exist without being anchored to a specific Project, Tower, Discipline, and Consultant firm. Defining masters first guarantees referential integrity.",
@@ -100,7 +100,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       icon: Clock,
       color: "text-warning-text",
       bgColor: "bg-warning-soft",
-      borderColor: "border-warning/30",
+      borderColor: "border-warning-border",
       route: "/design/matrix",
       summary: "Generating the multi-tower package matrix grid, 30/60-day look-ahead deliverables, and milestone roadmaps.",
       whyFirst: "Establishes the procurement and site delivery schedule before releasing tenders or mobilizing contractors on site.",
@@ -133,9 +133,9 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       name: "Drawing Upload, Revisions & Review",
       badge: "Engineering Coordination",
       icon: FileText,
-      color: "text-theme-btn-primary",
+      color: "text-primary",
       bgColor: "bg-accent-soft",
-      borderColor: "border-theme-btn-primary/30",
+      borderColor: "border-border-active",
       route: "/design/drawings",
       summary: "Consultant CAD/PDF uploads, multi-revision vaults (R0 -> R1 -> R2), and multi-disciplinary clash reviews.",
       whyFirst: "Ensures every architectural, structural, and MEP drawing undergoes rigorous peer review and version control before reaching site teams.",
@@ -170,7 +170,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       icon: Send,
       color: "text-success-text",
       bgColor: "bg-success-soft",
-      borderColor: "border-success/30",
+      borderColor: "border-success-border",
       route: "/design/handover",
       summary: "Digital Good-for-Construction (GFC) stamping, physical/digital transmittal slips, and contractor handover.",
       whyFirst: "Contractors are strictly prohibited from building without certified GFC drawings. Transmittals provide legal proof of delivery.",
@@ -198,7 +198,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       icon: FolderTree,
       color: "text-info-text",
       bgColor: "bg-info-soft",
-      borderColor: "border-info/30",
+      borderColor: "border-info-border",
       route: "/design/dms",
       summary: "Handling site clash RFIs, automated DMS folder indexing, and long-term project compliance archival.",
       whyFirst: "Resolves on-site construction queries within SLA and organizes thousands of drawings into searchable hierarchical folders.",
@@ -224,14 +224,14 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-200">
       {/* Module Guide Banner */}
-      <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm">
+      <div className="bg-surface rounded-lg p-6 border border-border shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 theme-label text-theme-btn-primary">
+            <div className="flex items-center gap-2 theme-label text-primary">
               <BookOpen className="h-4 w-4" />
               <span>Design & engineering onboarding & architecture playbook</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
               End-to-end workflow, transaction lifecycle & field dictionary
             </h2>
             <p className="text-sm text-muted-foreground max-w-3xl">
@@ -240,17 +240,17 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
           </div>
 
           {/* Quick Guide Tab Switcher */}
-          <div className="flex items-center gap-1.5 bg-muted/60 p-1.5 rounded-xl border border-border shrink-0 self-start lg:self-center">
+          <div className="flex items-center gap-1.5 bg-muted/60 p-1.5 rounded-lg border border-border shrink-0 self-start lg:self-center">
             <button
               type="button"
               onClick={() => setActiveGuideView("FLOWCHART")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 activeGuideView === "FLOWCHART"
-                  ? "bg-surface text-foreground shadow-sm border border-border/80"
+                  ? "bg-surface text-foreground shadow-sm border border-border"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Workflow className="h-3.5 w-3.5 text-theme-btn-primary" />
+              <Workflow className="h-3.5 w-3.5 text-primary" />
               <span>Process flowchart</span>
             </button>
 
@@ -259,11 +259,11 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
               onClick={() => setActiveGuideView("CRUD_FIELDS")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 activeGuideView === "CRUD_FIELDS"
-                  ? "bg-surface text-foreground shadow-sm border border-border/80"
+                  ? "bg-surface text-foreground shadow-sm border border-border"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Database className="h-3.5 w-3.5 text-theme-btn-primary" />
+              <Database className="h-3.5 w-3.5 text-primary" />
               <span>CRUD & field dictionary</span>
             </button>
 
@@ -272,11 +272,11 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
               onClick={() => setActiveGuideView("ARCHITECTURE")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 activeGuideView === "ARCHITECTURE"
-                  ? "bg-surface text-foreground shadow-sm border border-border/80"
+                  ? "bg-surface text-foreground shadow-sm border border-border"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <GitFork className="h-3.5 w-3.5 text-theme-btn-primary" />
+              <GitFork className="h-3.5 w-3.5 text-primary" />
               <span>Ecosystem impact</span>
             </button>
           </div>
@@ -296,26 +296,26 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                   key={phase.phaseNumber}
                   type="button"
                   onClick={() => setSelectedPhase(phase.phaseNumber)}
-                  className={`text-left p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                  className={`text-left p-4 rounded-lg border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                     isSelected
-                      ? `bg-surface border-theme-btn-primary shadow-sm ring-2 ring-theme-btn-primary/20`
-                      : "bg-surface/60 hover:bg-surface border-border hover:border-border/80"
+                      ? `bg-surface border-primary shadow-sm ring-2 ring-ring`
+                      : "bg-surface/60 hover:bg-surface border-border hover:border-border"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${phase.bgColor} ${phase.color} border ${phase.borderColor}`}>
                       <Icon className="h-4 w-4" />
                     </div>
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                       Phase {phase.phaseNumber}
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-xs text-foreground leading-snug">{phase.name}</h3>
+                    <h3 className="font-semibold text-xs text-foreground leading-snug">{phase.name}</h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5">{phase.badge}</p>
                   </div>
                   {isSelected && (
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-theme-btn-primary pt-1 border-t border-border/50">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-primary pt-1 border-t border-border">
                       <span>Viewing active details</span>
                       <ChevronRight className="h-3 w-3" />
                     </div>
@@ -330,10 +330,10 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
             const activePhase = lifecyclePhases.find(p => p.phaseNumber === selectedPhase) || lifecyclePhases[0];
             const Icon = activePhase.icon;
             return (
-              <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm space-y-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-5">
+              <div className="bg-surface rounded-lg border border-border p-6 shadow-sm space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
                   <div className="flex items-center gap-3">
-                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${activePhase.bgColor} ${activePhase.color} border ${activePhase.borderColor} shrink-0`}>
+                    <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${activePhase.bgColor} ${activePhase.color} border ${activePhase.borderColor} shrink-0`}>
                       <Icon className="h-6 w-6" />
                     </div>
                     <div>
@@ -345,7 +345,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                           {activePhase.badge}
                         </span>
                       </div>
-                      <h3 className="text-lg sm:text-xl font-bold text-foreground mt-0.5">
+                      <h3 className="text-lg sm:text-xl font-semibold text-foreground mt-0.5">
                         {activePhase.name}
                       </h3>
                     </div>
@@ -353,7 +353,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
 
                   <Link
                     href={activePhase.route}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text text-xs font-bold hover:opacity-90 transition-opacity shadow-sm self-start md:self-center"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm self-start md:self-center"
                   >
                     <span>Open live view</span>
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -362,9 +362,9 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
 
                 {/* Why This Stage & Purpose Callout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-muted/40 border border-border space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                      <Sparkles className="h-3.5 w-3.5 text-warning" />
+                  <div className="p-4 rounded-lg bg-muted/40 border border-border space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <Sparkles className="h-3.5 w-3.5 text-warning-text" />
                       <span>Executive overview</span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
@@ -372,8 +372,8 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-accent-soft border border-theme-btn-primary/20 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-theme-btn-primary">
+                  <div className="p-4 rounded-lg bg-accent-soft border border-border-active space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
                       <ShieldCheck className="h-3.5 w-3.5" />
                       <span>Why this is done (business purpose & risk mitigation)</span>
                     </div>
@@ -386,11 +386,11 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                 {/* Sequence Steps Table */}
                 <div className="space-y-3">
                   <h4 className="theme-label text-muted-foreground flex items-center gap-2">
-                    <Workflow className="h-3.5 w-3.5 text-theme-btn-primary" />
+                    <Workflow className="h-3.5 w-3.5 text-primary" />
                     <span>Sequential steps & field purpose</span>
                   </h4>
 
-                  <div className="overflow-x-auto rounded-xl border border-border">
+                  <div className="overflow-x-auto rounded-lg border border-border">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
                         <tr className="bg-muted/60 border-b border-border text-muted-foreground font-semibold">
@@ -404,7 +404,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                       <tbody className="divide-y divide-border">
                         {activePhase.steps.map((step) => (
                           <tr key={step.order} className="hover:bg-surface/80 transition-colors">
-                            <td className="py-3 px-3 font-mono font-bold text-theme-btn-primary">
+                            <td className="py-3 px-3 font-mono font-semibold text-primary">
                               {step.order}
                             </td>
                             <td className="py-3 px-3 font-semibold text-foreground">

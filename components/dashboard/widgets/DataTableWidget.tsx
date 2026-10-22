@@ -22,18 +22,18 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
   const renderStatus = (s: string) => {
     const statusStr = String(s || "").toLowerCase();
     if (statusStr.includes("resolv") || statusStr.includes("done")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-success/10 text-success border border-success-border">Done</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-success-soft text-success-text border border-success-border">Done</span>;
     if (statusStr.includes("escalat") || statusStr.includes("block")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-danger/10 text-danger border border-danger-border">Blocked</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-danger-soft text-danger-text border border-danger-border">Blocked</span>;
     if (statusStr.includes("review")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-warning/10 text-warning border border-warning-border">Review</span>;
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">Active</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border">Review</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-accent-soft text-accent-soft-text border border-border-active">Active</span>;
   };
 
   const renderPriority = (p: string) => {
     const priorityStr = String(p || "").toLowerCase();
     if (priorityStr.includes("critical") || priorityStr.includes("p1")) 
-      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span><span className="text-xs text-foreground">Critical</span></div>;
+      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger"></span><span className="text-xs text-foreground">Critical</span></div>;
     if (priorityStr.includes("high") || priorityStr.includes("p2")) 
       return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-warning"></span><span className="text-xs text-foreground">High</span></div>;
     if (priorityStr.includes("medium")) 
@@ -46,9 +46,9 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
       id="recent-items"
       title="Recent assignments"
       subtitle="Latest active and in-flight operational deliverables"
-      icon={<ListChecks className="w-5 h-5 text-theme-icon" />}
+      icon={<ListChecks className="w-5 h-5 text-accent-soft-text" />}
       badge={
-        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 shrink-0">
+        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-accent-soft-text border border-border-active shrink-0">
           {recentItems.length} Items
         </span>
       }
@@ -60,7 +60,7 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
       <div className="w-full overflow-auto h-full custom-scrollbar">
         <AppTable className="border-b-0">
           <AppTableHeader className="sticky top-0 z-10 bg-surface/90 shadow-sm">
-            <AppTableRow className="border-b border-border/50">
+            <AppTableRow className="border-b border-border">
               <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent">ID / title</AppTableHead>
               <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent w-24">Type</AppTableHead>
               <AppTableHead className="font-semibold text-xs text-muted-foreground bg-transparent w-28">Priority</AppTableHead>
@@ -75,7 +75,7 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
                 const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
                 const isBug = m.module === 'Tickets';
                 const isTask = m.module === 'Tasks';
-                const tagBg = isBug ? 'bg-danger/10 text-danger border-danger-border' : isTask ? 'bg-accent-soft text-theme-icon border-theme-btn-primary/20' : 'bg-accent-soft text-theme-icon border-theme-btn-primary/20';
+                const tagBg = isBug ? 'bg-danger-soft text-danger-text border-danger-border' : isTask ? 'bg-accent-soft text-accent-soft-text border-border-active' : 'bg-accent-soft text-accent-soft-text border-border-active';
                 
                 const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
@@ -89,24 +89,24 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
                 return (
                   <AppTableRow key={i} onClick={handleRowClick} className="cursor-pointer -hover/50 transition-colors border-b last:border-0 group">
                     <AppTableCell>
-                      <div className="font-mono text-[11px] font-bold text-muted-foreground mb-0.5">{m.code || `TF-${shortId}`}</div>
+                      <div className="font-mono text-[11px] font-semibold text-muted-foreground mb-0.5">{m.code || `TF-${shortId}`}</div>
                       <div className="text-sm font-semibold text-foreground truncate max-w-[250px] group-hover:text-primary transition-colors" title={m.title}>{m.title || `${m.module} Assignment`}</div>
                     </AppTableCell>
                     <AppTableCell>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold border ${tagBg}`}>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold border ${tagBg}`}>
                         {m.module.substring(0,4)}
                       </span>
                     </AppTableCell>
                     <AppTableCell>{renderPriority(m.priority || "")}</AppTableCell>
                     <AppTableCell>{renderStatus(m.status)}</AppTableCell>
                     <AppTableCell>
-                      <div className="w-6 h-6 rounded-full theme-card-structural flex items-center justify-center text-[11px] font-bold text-foreground" title={m.user}>
+                      <div className="w-6 h-6 rounded-full theme-card-structural flex items-center justify-center text-[11px] font-semibold text-foreground" title={m.user}>
                         {initials}
                       </div>
                     </AppTableCell>
                     <AppTableCell>
                       {m.dueDate ? (
-                        <div className={`text-xs font-semibold ${m.isOverdue ? 'text-danger' : 'text-muted-foreground'}`}>
+                        <div className={`text-xs font-semibold ${m.isOverdue ? 'text-danger-text' : 'text-muted-foreground'}`}>
                           {formatDate(m.dueDate)}
                         </div>
                       ) : (

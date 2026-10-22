@@ -12,7 +12,7 @@ export default function ProfilePage() {
     <div className="w-full space-y-6 animate-in fade-in-50 duration-500">
       {/* Semantic main header wrapper */}
       <header className="border-b border-border pb-4">
-        <h1 id="profile-page-title" className="text-xl font-bold tracking-tight">
+        <h1 id="profile-page-title" className="text-xl font-semibold tracking-tight">
           My profile settings
         </h1>
         <p className="text-xs text-muted mt-1">
@@ -21,7 +21,7 @@ export default function ProfilePage() {
       </header>
 
       {/* Profile Editor Component */}
-      <React.Suspense fallback={<div className="h-40 w-full animate-pulse bg-surface/5 rounded-xl" />}>
+      <React.Suspense fallback={<div className="h-40 w-full animate-pulse bg-surface/5 rounded-lg" />}>
         <UserProfileEditor />
       </React.Suspense>
     </div>

@@ -1,4 +1,5 @@
 "use client";
+import { promptAction } from "@/components/ui/feedback/confirm";
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect } from "react";
@@ -144,7 +145,7 @@ export default function VendorMasterPage() {
       toast.warning("Please select a state first.");
       return;
     }
-    const newCity = prompt(`Enter new city name for ${formState}:`);
+    const newCity = (await promptAction({ title: `Add a city in ${formState}`, label: "City name", confirmLabel: "Add city" }));
     if (!newCity || !newCity.trim()) return;
 
     try {
@@ -189,7 +190,7 @@ export default function VendorMasterPage() {
       toast.warning("Please select a bank state first.");
       return;
     }
-    const newCity = prompt(`Enter new city name for ${formBankState}:`);
+    const newCity = (await promptAction({ title: `Add a city in ${formBankState}`, label: "City name", confirmLabel: "Add city" }));
     if (!newCity || !newCity.trim()) return;
 
     try {
@@ -366,7 +367,7 @@ export default function VendorMasterPage() {
       <div className="flex flex-col h-full gap-6 px-4 md:px-8 py-6">
         <PageHeader 
           title="Provider / vendor master" 
-          icon={<Building2 className="h-6 w-6 text-theme-icon" />}
+          icon={<Building2 className="h-6 w-6 text-accent-soft-text" />}
         />
 
         <AppCard className="flex-1 flex flex-col overflow-hidden">
@@ -429,7 +430,7 @@ export default function VendorMasterPage() {
                   ) : (
                     filtered.map(v => (
                       <AppTableRow key={v.id} className="hover:bg-accent-soft group">
-                        <AppTableCell className="font-bold text-foreground">{v.name}</AppTableCell>
+                        <AppTableCell className="font-semibold text-foreground">{v.name}</AppTableCell>
                         <AppTableCell>{v.contact_name || '-'}</AppTableCell>
                         <AppTableCell>
                           <div className="text-xs">
@@ -446,7 +447,7 @@ export default function VendorMasterPage() {
                             <AppButton aria-label="Edit" variant="secondary" onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-info-soft text-accent hover:bg-info-soft transition-colors">
                               <Edit className="h-4 w-4" />
                             </AppButton>
-                            <AppButton aria-label="Delete" variant="secondary" onClick={() => handleDelete(v.id)} className="p-1.5 rounded bg-danger-soft text-danger hover:bg-danger-soft transition-colors">
+                            <AppButton aria-label="Delete" variant="secondary" onClick={() => handleDelete(v.id)} className="p-1.5 rounded bg-danger-soft text-danger-text hover:bg-danger-soft transition-colors">
                               <Trash2 className="h-4 w-4" />
                             </AppButton>
                           </div>
@@ -463,7 +464,7 @@ export default function VendorMasterPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-surface/40">
-          <div className="bg-surface border border-border shadow-lg rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-surface border border-border shadow-lg rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
               <h2 className="text-xl font-semibold text-foreground">
@@ -477,23 +478,23 @@ export default function VendorMasterPage() {
             <div className="flex-1 overflow-y-auto">
               <form id="vendorForm" onSubmit={handleSave} className="p-6 md:p-8 space-y-10">
                 {errorMsg && (
-                  <div className="p-4 rounded-xl bg-danger-soft text-danger border border-danger-border text-sm font-semibold">
+                  <div className="p-4 rounded-lg bg-danger-soft text-danger-text border border-danger-border text-sm font-semibold">
                     {errorMsg}
                   </div>
                 )}
 
                 {/* Section 1: General Info */}
                 <div className="space-y-6">
-                  <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
+                  <h4 className="text-sm font-semibold text-accent-soft-text flex items-center gap-2 border-b border-border pb-2">
                     <Briefcase className="h-4 w-4" /> General & contact details
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-muted">Vendor / company name <span className="text-danger">*</span></label>
+                      <label className="text-sm font-semibold text-muted">Vendor / company name <span className="text-danger-text">*</span></label>
                       <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Microsoft corporation" className="h-11 font-semibold" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Industry type (multi-select)</label>
+                      <label className="text-sm font-semibold text-muted">Industry type (multi-select)</label>
                       <div className="flex gap-2">
                         <FormMultiSelect 
                           options={masterIndustryTypes.map(i => ({ value: i.name, label: i.name }))}
@@ -511,7 +512,7 @@ export default function VendorMasterPage() {
                           className="flex-1"
                         />
                         <AppButton aria-label="Add new industry" type="button" variant="outline" onClick={async () => {
-                          const newInd = prompt("Enter new Industry Type:");
+                          const newInd = (await promptAction({ title: "Add an industry type", label: "Industry type", confirmLabel: "Add" }));
                           if (newInd && newInd.trim()) {
                             await saveMasterEntity("master_industry_types", { name: newInd.trim() });
                             await fetchDependencies();
@@ -526,7 +527,7 @@ export default function VendorMasterPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Vendor type (multi-select)</label>
+                      <label className="text-sm font-semibold text-muted">Vendor type (multi-select)</label>
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <FormMultiSelect 
@@ -543,14 +544,14 @@ export default function VendorMasterPage() {
                           <AppButton aria-label="Add new vendor type" type="button" variant="outline" onClick={async () => {
                             let targetIndustry = formIndustryType[0];
                             if (formIndustryType.length > 1) {
-                               const choice = prompt(`Which industry does this new Vendor Type belong to?\nAvailable: ${formIndustryType.join(", ")}`);
+                               const choice = (await promptAction({ title: "Which industry is this vendor type for?", label: "Industry", options: formIndustryType, confirmLabel: "Next" }));
                                if (!choice || !formIndustryType.includes(choice.trim())) {
-                                 toast.error("Invalid industry selected. Creation cancelled.");
+                                 toast.error("Pick one of the selected industries.");
                                  return;
                                }
                                targetIndustry = choice.trim();
                             }
-                            const newVen = prompt(`Enter new Vendor Type for ${targetIndustry}:`);
+                            const newVen = (await promptAction({ title: `Add a vendor type for ${targetIndustry}`, label: "Vendor type", confirmLabel: "Add" }));
                             if (newVen && newVen.trim()) {
                               await saveMasterEntity("master_vendor_types", { name: newVen.trim(), industry_name: targetIndustry });
                               await fetchDependencies();
@@ -566,19 +567,19 @@ export default function VendorMasterPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Contact person name <span className="text-danger">*</span></label>
+                      <label className="text-sm font-semibold text-muted">Contact person name <span className="text-danger-text">*</span></label>
                       <AppInput value={formContactName} onChange={e => setFormContactName(e.target.value)} required placeholder="John doe" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Contact email <span className="text-danger">*</span></label>
+                      <label className="text-sm font-semibold text-muted">Contact email <span className="text-danger-text">*</span></label>
                       <AppInput type="email" value={formContactEmail} onChange={e => setFormContactEmail(e.target.value)} required placeholder="john@example.com" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Phone number <span className="text-danger">*</span></label>
+                      <label className="text-sm font-semibold text-muted">Phone number <span className="text-danger-text">*</span></label>
                       <AppInput value={formPhone} onChange={e => setFormPhone(e.target.value)} required placeholder="+91 ..." className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Website</label>
+                      <label className="text-sm font-semibold text-muted">Website</label>
                       <AppInput value={formWebsite} onChange={e => setFormWebsite(e.target.value)} placeholder="https://..." className="h-11" />
                     </div>
                   </div>
@@ -586,44 +587,44 @@ export default function VendorMasterPage() {
 
                 {/* Section 2: Address */}
                 <div className="space-y-6">
-                  <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
+                  <h4 className="text-sm font-semibold text-accent-soft-text flex items-center gap-2 border-b border-border pb-2">
                     <Building2 className="h-4 w-4" /> Registered address
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-muted">Address line 1</label>
+                      <label className="text-sm font-semibold text-muted">Address line 1</label>
                       <AppInput value={formAddr1} onChange={e => setFormAddr1(e.target.value)} placeholder="Suite, building" className="h-11" />
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-muted">Address line 2</label>
+                      <label className="text-sm font-semibold text-muted">Address line 2</label>
                       <AppInput value={formAddr2} onChange={e => setFormAddr2(e.target.value)} placeholder="Street, area" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">State</label>
+                      <label className="text-sm font-semibold text-muted">State</label>
                       <select 
                         value={formState} 
                         onChange={e => {
                           setFormState(e.target.value);
                           setFormCity(""); // reset city when state changes
                         }} 
-                        className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
+                        className="w-full h-11 px-4 rounded-lg text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-primary focus:ring-ring border"
                       >
-                        <option value="">-- Select state --</option>
+                        <option value="">Select state</option>
                         {INDIAN_STATES.map(st => (
                           <option key={st} value={st}>{st}</option>
                         ))}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">City</label>
+                      <label className="text-sm font-semibold text-muted">City</label>
                       <div className="flex gap-2">
                         <select 
                           value={formCity} 
                           onChange={e => setFormCity(e.target.value)} 
-                          className="flex-1 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
+                          className="flex-1 h-11 px-4 rounded-lg text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-primary focus:ring-ring border"
                           disabled={!formState || loadingCities}
                         >
-                          <option value="">-- Select city --</option>
+                          <option value="">Select city</option>
                           {cityOptions.map(c => (
                             <option key={c.city_name} value={c.city_name}>{c.city_name}</option>
                           ))}
@@ -640,7 +641,7 @@ export default function VendorMasterPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted">Pincode / zip</label>
+                      <label className="text-sm font-semibold text-muted">Pincode / zip</label>
                       <AppInput value={formPincode} onChange={e => setFormPincode(e.target.value)} placeholder="Postal code" className="h-11" />
                     </div>
                   </div>
@@ -649,76 +650,76 @@ export default function VendorMasterPage() {
                 {/* Section 3: Taxation & Bank */}
                 <div className="space-y-8">
                   <div className="space-y-6">
-                    <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
+                    <h4 className="text-sm font-semibold text-accent-soft-text flex items-center gap-2 border-b border-border pb-2">
                       <FileText className="h-4 w-4" /> Financial & taxation
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">GSTIN number</label>
+                        <label className="text-sm font-semibold text-muted">GSTIN number</label>
                         <AppInput value={formTaxGstin} onChange={e => setFormTaxGstin(e.target.value)} placeholder="22Aaaaa0000a1z5" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">PAN number</label>
+                        <label className="text-sm font-semibold text-muted">PAN number</label>
                         <AppInput value={formTaxPan} onChange={e => setFormTaxPan(e.target.value)} placeholder="Abcde1234f" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">Other tax code (MSME/LUT)</label>
+                        <label className="text-sm font-semibold text-muted">Other tax code (MSME/LUT)</label>
                         <AppInput value={formTaxCode} onChange={e => setFormTaxCode(e.target.value)} placeholder="Tax code" className="h-11" />
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
+                    <h4 className="text-sm font-semibold text-accent-soft-text flex items-center gap-2 border-b border-border pb-2">
                       <Landmark className="h-4 w-4" /> Bank account details
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">Bank name</label>
+                        <label className="text-sm font-semibold text-muted">Bank name</label>
                         <AppInput value={formBankName} onChange={e => setFormBankName(e.target.value)} placeholder="HDFC bank" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">Account name</label>
+                        <label className="text-sm font-semibold text-muted">Account name</label>
                         <AppInput value={formBankAcctName} onChange={e => setFormBankAcctName(e.target.value)} placeholder="Beneficiary name" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">Account number</label>
+                        <label className="text-sm font-semibold text-muted">Account number</label>
                         <AppInput value={formBankAcctNo} onChange={e => setFormBankAcctNo(e.target.value)} placeholder="00000000000" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">IFSC code / swift</label>
+                        <label className="text-sm font-semibold text-muted">IFSC code / swift</label>
                         <AppInput value={formBankIfsc} onChange={e => setFormBankIfsc(e.target.value)} placeholder="Hdfc0000001" className="h-11" />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-sm font-bold text-muted">Branch name</label>
+                        <label className="text-sm font-semibold text-muted">Branch name</label>
                         <AppInput value={formBankBranch} onChange={e => setFormBankBranch(e.target.value)} placeholder="Branch name" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">Bank state</label>
+                        <label className="text-sm font-semibold text-muted">Bank state</label>
                         <select 
                           value={formBankState} 
                           onChange={e => {
                             setFormBankState(e.target.value);
                             setFormBankCity(""); // reset city when state changes
                           }} 
-                          className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
+                          className="w-full h-11 px-4 rounded-lg text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-primary focus:ring-ring border"
                         >
-                          <option value="">-- Select state --</option>
+                          <option value="">Select state</option>
                           {INDIAN_STATES.map(st => (
                             <option key={st} value={st}>{st}</option>
                           ))}
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-muted">Bank city</label>
+                        <label className="text-sm font-semibold text-muted">Bank city</label>
                         <div className="flex gap-2">
                           <select 
                             value={formBankCity} 
                             onChange={e => setFormBankCity(e.target.value)} 
-                            className="flex-1 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
+                            className="flex-1 h-11 px-4 rounded-lg text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-primary focus:ring-ring border"
                             disabled={!formBankState || loadingBankCities}
                           >
-                            <option value="">-- Select city --</option>
+                            <option value="">Select city</option>
                             {bankCityOptions.map(c => (
                               <option key={c.city_name} value={c.city_name}>{c.city_name}</option>
                             ))}
@@ -740,12 +741,12 @@ export default function VendorMasterPage() {
 
                 {/* Section 4: Notes */}
                 <div className="space-y-2 pt-4">
-                  <label className="text-sm font-bold text-muted">Internal notes</label>
+                  <label className="text-sm font-semibold text-muted">Internal notes</label>
                   <textarea 
                     value={formNotes} 
                     onChange={e => setFormNotes(e.target.value)} 
                     placeholder="Any specific instructions or terms related to this vendor…" 
-                    className="w-full min-h-[100px] p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border resize-y"
+                    className="w-full min-h-[100px] p-4 rounded-lg text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-primary focus:ring-ring border resize-y"
                   />
                 </div>
 
@@ -753,10 +754,10 @@ export default function VendorMasterPage() {
             </div>
 
               <div className="p-6 border-t border-border shrink-0 flex items-center justify-end gap-4 bg-surface/80 rounded-b-3xl">
-                <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-11 px-8 text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+                <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-11 px-8 text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">
                   Discard
                 </AppButton>
-                <AppButton type="submit" form="vendorForm" disabled={saving} className="h-11 px-8 font-bold shadow-lg shadow-theme-btn-primary/20">
+                <AppButton type="submit" form="vendorForm" disabled={saving} className="h-11 px-8 font-semibold shadow-lg shadow-theme-btn-primary/20">
                 {saving ? "Saving..." : editId ? "Update Profile" : "Create Vendor"}
               </AppButton>
             </div>

@@ -142,10 +142,10 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
   });
 
   const masterTabOptions: Array<{ id: MasterImportType; label: string; icon: any; color: string }> = [
-    { id: "PACKAGES", label: "Package Master", icon: Tag, color: "text-theme-icon bg-surface border-border" },
+    { id: "PACKAGES", label: "Package Master", icon: Tag, color: "text-accent-soft-text bg-surface border-border" },
     { id: "SUB_PACKAGES", label: "Sub-package master", icon: Layers, color: "text-info-text bg-info-soft border-border" },
     { id: "PROJECTS", label: "Project Master", icon: Building2, color: "text-info-text bg-info-soft border-info-border" },
-    { id: "SUB_PROJECTS", label: "Sub-project / wings", icon: FolderTree, color: "text-theme-icon bg-surface border-border" },
+    { id: "SUB_PROJECTS", label: "Sub-project / wings", icon: FolderTree, color: "text-accent-soft-text bg-surface border-border" },
     { id: "CONSULTANTS", label: "Consultant Master", icon: Users, color: "text-success-text bg-success-soft border-success-border" },
     { id: "AUTHORITIES", label: "Statutory Authorities", icon: ShieldCheck, color: "text-warning-text bg-warning-soft border-warning-border" },
     { id: "ALL", label: "All masters (consolidated)", icon: FileSpreadsheet, color: "text-info-text bg-info-soft border-border" }
@@ -160,13 +160,13 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
         {/* Header Bar */}
         <div className="px-6 py-4 border-b border-border bg-sunken flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-info-soft text-info-text flex items-center justify-center border border-info-border shrink-0">
+            <div className="h-10 w-10 rounded-lg bg-info-soft text-info-text flex items-center justify-center border border-info-border shrink-0">
               <Upload className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 <span>Bulk import & template center</span>
-                <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-info-soft text-info-text border border-info-border">
+                <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-info-soft text-info-text border border-info-border">
                   Excel & CSV
                 </span>
               </h3>
@@ -179,7 +179,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
           <button aria-label="Close"
             type="button"
             onClick={handleClose}
-            className="h-8 w-8 rounded-xl hover:bg-sunken text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+            className="h-8 w-8 rounded-lg hover:bg-sunken text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -189,7 +189,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1">
           {/* Step 1: Master Type Selector */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-foreground block">
+            <label className="text-xs font-semibold text-foreground block">
               1. Select master domain to import
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -204,14 +204,14 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                       setSelectedMaster(tab.id);
                       handleReset();
                     }}
-                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                    className={`p-3 rounded-lg border text-left flex flex-col justify-between transition-all cursor-pointer ${
                       isSelected
                         ? "bg-info-soft border-info-border ring-2 ring-info-border shadow-xs"
                         : "bg-surface border-border hover:bg-sunken"
                     }`}
                   >
                     <div className="flex items-center justify-between w-full mb-2">
-                      <div className={`h-7 w-7 rounded-xl flex items-center justify-center border ${tab.color}`}>
+                      <div className={`h-7 w-7 rounded-lg flex items-center justify-center border ${tab.color}`}>
                         <Icon className="h-3.5 w-3.5" />
                       </div>
                       {isSelected && (
@@ -220,7 +220,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                         </div>
                       )}
                     </div>
-                    <span className="text-xs font-bold text-foreground leading-tight">{tab.label}</span>
+                    <span className="text-xs font-semibold text-foreground leading-tight">{tab.label}</span>
                   </button>
                 );
               })}
@@ -230,9 +230,9 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
           {/* Step 2: Download Template & File Upload Section */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             {/* Download Template Box */}
-            <div className="lg:col-span-5 p-5 rounded-2xl border border-border bg-sunken flex flex-col justify-between space-y-4">
+            <div className="lg:col-span-5 p-5 rounded-lg border border-border bg-sunken flex flex-col justify-between space-y-4">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-foreground font-bold text-xs">
+                <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
                   <Download className="h-4 w-4 text-info-text" />
                   <span>Download sample template</span>
                 </div>
@@ -246,7 +246,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDownloadTemplate("xlsx")}
-                    className="flex-1 px-3.5 py-2 rounded-xl bg-success hover:bg-success text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
+                    className="flex-1 px-3.5 py-2 rounded-lg bg-success hover:bg-success text-white text-xs font-semibold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
                   >
                     <FileSpreadsheet className="h-4 w-4" />
                     <span>Download Excel (.xlsx)</span>
@@ -255,7 +255,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleDownloadTemplate("csv")}
-                      className="px-3.5 py-2 rounded-xl border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="px-3.5 py-2 rounded-lg border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
                       <FileText className="h-4 w-4 text-info-text" />
                       <span>CSV</span>
@@ -270,7 +270,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                     if (onImportComplete) onImportComplete();
                     handleClose();
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl bg-warning hover:bg-warning text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2 rounded-lg bg-warning hover:bg-warning text-white text-xs font-semibold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>1-Click load Chandak tender tracker (r2)</span>
@@ -299,7 +299,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                   const f = e.dataTransfer.files?.[0];
                   if (f) handleFileSelected(f);
                 }}
-                className={`h-full min-h-[160px] p-6 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center cursor-pointer ${
+                className={`h-full min-h-[160px] p-6 rounded-lg border-2 border-dashed transition-all flex flex-col items-center justify-center text-center cursor-pointer ${
                   file
                     ? "border-info-border bg-info-soft"
                     : "border-border hover:border-info-border hover:bg-sunken"
@@ -307,11 +307,11 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
               >
                 {file ? (
                   <div className="space-y-2">
-                    <div className="h-10 w-10 mx-auto rounded-2xl bg-info-soft text-info-text flex items-center justify-center">
+                    <div className="h-10 w-10 mx-auto rounded-lg bg-info-soft text-info-text flex items-center justify-center">
                       <FileSpreadsheet className="h-5 w-5" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-foreground">{file.name}</div>
+                      <div className="text-xs font-semibold text-foreground">{file.name}</div>
                       <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">
                         {(file.size / 1024).toFixed(1)} KB • click or drop another file to replace
                       </div>
@@ -319,11 +319,11 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="h-10 w-10 mx-auto rounded-2xl bg-muted text-muted-foreground flex items-center justify-center">
+                    <div className="h-10 w-10 mx-auto rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
                       <Upload className="h-5 w-5" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-foreground">
+                      <div className="text-xs font-semibold text-foreground">
                         Click to browse or drag & drop spreadsheet
                       </div>
                       <div className="text-[11px] text-muted-foreground mt-0.5">
@@ -338,9 +338,9 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
 
           {/* Step 3: Parsing Spinner */}
           {isParsing && (
-            <div className="p-8 rounded-2xl border border-border bg-sunken text-center space-y-2">
+            <div className="p-8 rounded-lg border border-border bg-sunken text-center space-y-2">
               <RefreshCw className="h-6 w-6 text-info-text animate-spin mx-auto" />
-              <div className="text-xs font-bold text-foreground">Parsing spreadsheet & validating schema…</div>
+              <div className="text-xs font-semibold text-foreground">Parsing spreadsheet & validating schema…</div>
             </div>
           )}
 
@@ -350,13 +350,13 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
               {/* Multi-Sheet Selector Tabs if applicable */}
               {validationResult.multiSheetResults && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-border">
-                  <span className="text-xs font-bold text-muted-foreground mr-1">Sheets:</span>
+                  <span className="text-xs font-semibold text-muted-foreground mr-1">Sheets:</span>
                   {Object.entries(validationResult.multiSheetResults).map(([key, sResult]) => (
                     <button
                       key={key}
                       type="button"
                       onClick={() => setActiveSheetTab(key)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                         activeSheetTab === key
                           ? "bg-info text-white shadow-xs"
                           : "bg-surface border border-border text-muted-foreground hover:text-foreground"
@@ -373,7 +373,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
 
               {/* KPI Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-2xl bg-surface border border-border flex items-center justify-between">
+                <div className="p-3.5 rounded-lg bg-surface border border-border flex items-center justify-between">
                   <div>
                     <span className="text-[11px] font-semibold text-muted-foreground block">Total rows</span>
                     <span className="text-lg font-semibold text-foreground">{currentResult?.totalRows || 0}</span>
@@ -381,7 +381,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                   <Layers className="h-4 w-4 text-muted-foreground" />
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-success-soft border border-success-border flex items-center justify-between">
+                <div className="p-3.5 rounded-lg bg-success-soft border border-success-border flex items-center justify-between">
                   <div>
                     <span className="text-[11px] font-semibold text-success-text block">Valid new</span>
                     <span className="text-lg font-semibold text-success-text">
@@ -391,7 +391,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                   <CheckCircle2 className="h-4 w-4 text-success-text" />
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-warning-soft border border-warning-border flex items-center justify-between">
+                <div className="p-3.5 rounded-lg bg-warning-soft border border-warning-border flex items-center justify-between">
                   <div>
                     <span className="text-[11px] font-semibold text-warning-text block">Existing duplicates</span>
                     <span className="text-lg font-semibold text-warning-text">
@@ -401,7 +401,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                   <AlertTriangle className="h-4 w-4 text-warning-text" />
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-danger-soft border border-danger-border flex items-center justify-between">
+                <div className="p-3.5 rounded-lg bg-danger-soft border border-danger-border flex items-center justify-between">
                   <div>
                     <span className="text-[11px] font-semibold text-danger-text block">Errors / issues</span>
                     <span className="text-lg font-semibold text-danger-text">
@@ -413,10 +413,10 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
               </div>
 
               {/* Duplicate Strategy & Preview Tabs Bar */}
-              <div className="p-3.5 rounded-2xl border border-border bg-sunken flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-3.5 rounded-lg border border-border bg-sunken flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 {/* Duplicate Strategy Radio */}
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="font-bold text-foreground text-[11px]">Duplicate Action:</span>
+                  <span className="font-semibold text-foreground text-[11px]">Duplicate Action:</span>
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input
                       type="radio"
@@ -446,7 +446,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                     onClick={() => setActivePreviewTab("ALL")}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
                       activePreviewTab === "ALL"
-                        ? "bg-foreground text-background font-bold"
+                        ? "bg-foreground text-background font-semibold"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -457,7 +457,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                     onClick={() => setActivePreviewTab("VALID")}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
                       activePreviewTab === "VALID"
-                        ? "bg-success text-white font-bold"
+                        ? "bg-success text-white font-semibold"
                         : "text-success-text hover:underline"
                     }`}
                   >
@@ -469,7 +469,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                       onClick={() => setActivePreviewTab("DUPLICATES")}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
                         activePreviewTab === "DUPLICATES"
-                          ? "bg-warning text-white font-bold"
+                          ? "bg-warning text-white font-semibold"
                           : "text-warning-text hover:underline"
                       }`}
                     >
@@ -482,7 +482,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                       onClick={() => setActivePreviewTab("ERRORS")}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
                         activePreviewTab === "ERRORS"
-                          ? "bg-danger-solid text-white font-bold"
+                          ? "bg-danger-solid text-white font-semibold"
                           : "text-danger-text hover:underline"
                       }`}
                     >
@@ -493,15 +493,15 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
               </div>
 
               {/* Data Preview Table */}
-              <div className="rounded-2xl border border-border overflow-hidden bg-surface shadow-xs">
+              <div className="rounded-lg border border-border overflow-hidden bg-surface shadow-xs">
                 <div className="overflow-x-auto max-h-64 custom-scrollbar">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="sticky top-0 bg-sunken border-b border-border z-10">
                       <tr>
-                        <th className="p-2.5 font-bold text-foreground text-[11px] w-12 text-center">Row</th>
-                        <th className="p-2.5 font-bold text-foreground text-[11px] w-24">Status</th>
+                        <th className="p-2.5 font-semibold text-foreground text-[11px] w-12 text-center">Row</th>
+                        <th className="p-2.5 font-semibold text-foreground text-[11px] w-24">Status</th>
                         {(currentResult?.columns || []).map((col, idx) => (
-                          <th key={idx} className="p-2.5 font-bold text-foreground text-[11px] whitespace-nowrap">
+                          <th key={idx} className="p-2.5 font-semibold text-foreground text-[11px] whitespace-nowrap">
                             {col}
                           </th>
                         ))}
@@ -535,17 +535,17 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                               </td>
                               <td className="p-2.5 whitespace-nowrap">
                                 {isErr ? (
-                                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-danger-soft text-danger-text border border-danger-border inline-flex items-center gap-1" title={r.errors.join("; ")}>
+                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-danger-soft text-danger-text border border-danger-border inline-flex items-center gap-1" title={r.errors.join("; ")}>
                                     <AlertCircle className="h-3 w-3" />
                                     <span>Error ({r.errors.length})</span>
                                   </span>
                                 ) : isDup ? (
-                                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-warning-soft text-warning-text border border-warning-border inline-flex items-center gap-1">
+                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border inline-flex items-center gap-1">
                                     <AlertTriangle className="h-3 w-3" />
                                     <span>Duplicate</span>
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-success-soft text-success-text border border-success-border inline-flex items-center gap-1">
+                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-success-soft text-success-text border border-success-border inline-flex items-center gap-1">
                                     <Check className="h-3 w-3" />
                                     <span>Valid</span>
                                   </span>
@@ -584,7 +584,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-lg border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground cursor-pointer transition-colors"
             >
               Cancel
             </button>
@@ -592,7 +592,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
               type="button"
               disabled={!validationResult || (currentResult?.validCount === 0 && currentResult?.duplicateCount === 0) || isImporting}
               onClick={handleExecuteImport}
-              className={`px-6 py-2 rounded-xl text-xs font-bold text-white shadow-md flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-6 py-2 rounded-lg text-xs font-semibold text-white shadow-md flex items-center gap-2 transition-all cursor-pointer ${
                 !validationResult || (currentResult?.validCount === 0 && currentResult?.duplicateCount === 0) || isImporting
                   ? "bg-border-active cursor-not-allowed opacity-60"
                   : "bg-info hover:bg-info"

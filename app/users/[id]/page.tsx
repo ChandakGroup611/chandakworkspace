@@ -80,7 +80,7 @@ const getModuleMeta = (code: string) => {
     default:
       return {
         icon: Layers,
-        badgeBg: "bg-surface text-theme-icon border-border",
+        badgeBg: "bg-surface text-accent-soft-text border-border",
         description: "Enterprise operational suite and specialized workflows."
       };
   }
@@ -314,7 +314,7 @@ export default function UserFormPage() {
     }
   };
 
-  const inputStyle = `w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 focus:border-theme-btn-primary ${
+  const inputStyle = `w-full h-11 px-4 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary ${
     "bg-surface border-border dark:border-border text-foreground disabled:bg-sunken disabled:text-muted disabled:dark:text-muted"
   }`;
 
@@ -345,7 +345,7 @@ export default function UserFormPage() {
             <ArrowLeft className="h-5 w-5" />
           </AppButton>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight">
               {isEditingMode ? "Update Identity Record" : "Register New Account"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -361,7 +361,7 @@ export default function UserFormPage() {
             className="px-4 h-10 font-semibold flex items-center gap-2 border-border bg-surface/60 dark:bg-surface text-foreground dark:text-muted-foreground hover:bg-accent-soft transition-all shadow-xs cursor-pointer"
             title="Configure and assign workspace modules"
           >
-            <Layers className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
+            <Layers className="h-4 w-4 text-accent-soft-text dark:text-muted-foreground" />
             <span>Assign modules ({selectedModuleCodes.length})</span>
           </AppButton>
           <AppButton 
@@ -374,7 +374,7 @@ export default function UserFormPage() {
           <AppButton 
             onClick={handleSubmit} 
             disabled={saving || (!isSuperAdmin && !isEditingMode)}
-            className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white px-8 h-10 gap-2 shadow-sm font-semibold"
+            className="bg-primary hover:bg-theme-btn-primary-secondary text-white px-8 h-10 gap-2 shadow-sm font-semibold"
           >
             {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             <span>{saving ? "Committing..." : "Commit Record"}</span>
@@ -385,14 +385,14 @@ export default function UserFormPage() {
       {/* Interactive Assign Modules Modal Dialog */}
       {assignModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-lg shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-surface text-theme-icon flex items-center justify-center border border-border">
+                <div className="h-10 w-10 rounded-lg bg-surface text-accent-soft-text flex items-center justify-center border border-border">
                   <Layers className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Assign operational modules
                   </h3>
                   <p className="text-xs text-muted-foreground">
@@ -424,7 +424,7 @@ export default function UserFormPage() {
                 return (
                   <div
                     key={mod.id || mod.code}
-                    className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                    className={`p-4 rounded-lg border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
                       isChecked
                         ? "bg-surface border-border shadow-xs"
                         : "bg-muted/20 border-border/40 opacity-60"
@@ -436,14 +436,14 @@ export default function UserFormPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm text-foreground">
+                          <span className="font-semibold text-sm text-foreground">
                             {mod.name}
                           </span>
                           <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                             {mod.code}
                           </span>
                           {isDefault && isChecked && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
                               <Star className="h-2.5 w-2.5 fill-warning text-warning-text" /> Landing default
                             </span>
                           )}
@@ -493,7 +493,7 @@ export default function UserFormPage() {
                           }}
                           className="sr-only peer"
                         />
-                        <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                        <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                       </label>
                     </div>
                   </div>
@@ -501,7 +501,7 @@ export default function UserFormPage() {
               })}
             </div>
 
-            <div className="p-4 border-t border-border/60 bg-surface/50 flex items-center justify-between gap-3">
+            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between gap-3">
               <span className="text-xs text-muted-foreground">
                 {selectedModuleCodes.length} of {availableModules.length || 3} modules enabled
               </span>
@@ -517,7 +517,7 @@ export default function UserFormPage() {
                 <AppButton 
                   type="button" 
                   size="sm" 
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                  className="bg-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
                   onClick={async () => {
                     if (isEditingMode && id) {
                       setAssignModalSaving(true);
@@ -555,7 +555,7 @@ export default function UserFormPage() {
       <div className="px-4 sm:px-6 lg:px-8">
 
       {successAlert && (
-        <div className="p-4 mb-6 rounded-xl bg-success-soft border border-success-border text-success-text text-sm flex items-center justify-between animate-in fade-in duration-200">
+        <div className="p-4 mb-6 rounded-lg bg-success-soft border border-success-border text-success-text text-sm flex items-center justify-between animate-in fade-in duration-200">
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="h-5 w-5 text-success-text shrink-0" />
             <span className="font-semibold">{successAlert}</span>
@@ -567,7 +567,7 @@ export default function UserFormPage() {
       )}
 
       {errorAlert && (
-        <div className="p-4 mb-6 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-sm flex items-start gap-3">
+        <div className="p-4 mb-6 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-sm flex items-start gap-3">
           <X className="h-5 w-5 shrink-0 mt-0.5" />
           <p className="font-medium">{errorAlert}</p>
         </div>
@@ -582,7 +582,7 @@ export default function UserFormPage() {
           <AppCard className={`overflow-hidden transition-all border-border`}>
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-theme-icon" />
+                <User className="h-5 w-5 text-accent-soft-text" />
                 <AppCardTitle className="text-lg">Personal identity</AppCardTitle>
               </div>
             </AppCardHeader>
@@ -597,7 +597,7 @@ export default function UserFormPage() {
                       <ImageIcon className="w-12 h-12 opacity-50" />
                     )}
                   </div>
-                  <div className="absolute bottom-0 right-0 w-9 h-9 bg-theme-btn-primary text-white rounded-full flex items-center justify-center border-[3px] border-surface shadow-sm transition-transform">
+                  <div className="absolute bottom-0 right-0 w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center border-[3px] border-surface shadow-sm transition-transform">
                     <Camera className="w-4 h-4" />
                   </div>
                 </div>
@@ -623,7 +623,7 @@ export default function UserFormPage() {
                       {PRESET_AVATARS.map((avatar, idx) => (
                         <img 
                           key={idx} src={avatar} alt="Preset" 
-                          className="w-10 h-10 rounded-full object-cover cursor-pointer shrink-0 hover:ring-2 hover:ring-theme-btn-primary transition-all opacity-80 hover:opacity-100" 
+                          className="w-10 h-10 rounded-full object-cover cursor-pointer shrink-0 hover:ring-2 hover:ring-ring transition-all opacity-80 hover:opacity-100" 
                           onClick={() => setFormPhoto(avatar)} 
                         />
                       ))}
@@ -665,7 +665,7 @@ export default function UserFormPage() {
           <AppCard className={`overflow-hidden transition-all border-border`}>
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-warning" />
+                <Briefcase className="h-5 w-5 text-warning-text" />
                 <AppCardTitle className="text-lg">Organisation alignment</AppCardTitle>
               </div>
             </AppCardHeader>
@@ -732,9 +732,9 @@ export default function UserFormPage() {
 
           {/* SECTION 3: Workspace Module Entitlements */}
           <AppCard className="overflow-hidden transition-all border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 pb-4 flex flex-row items-center justify-between border-b border-border/50">
+            <AppCardHeader className="bg-surface/50 pb-4 flex flex-row items-center justify-between border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-lg bg-surface text-theme-icon flex items-center justify-center border border-border">
+                <div className="h-8 w-8 rounded-lg bg-surface text-accent-soft-text flex items-center justify-center border border-border">
                   <Layers className="h-4 w-4" />
                 </div>
                 <div>
@@ -744,7 +744,7 @@ export default function UserFormPage() {
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-surface text-theme-icon dark:text-muted-foreground border border-border shrink-0">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-surface text-accent-soft-text dark:text-muted-foreground border border-border shrink-0">
                 {selectedModuleCodes.length} / {availableModules.length || 3} Permitted
               </span>
             </AppCardHeader>
@@ -762,26 +762,26 @@ export default function UserFormPage() {
                 return (
                   <div
                     key={mod.id || mod.code}
-                    className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                    className={`p-4 rounded-lg border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
                       isChecked
                         ? "bg-surface border-border shadow-xs"
                         : "bg-muted/20 border-border/40 opacity-60"
                     }`}
                   >
                     <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
+                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm text-foreground">
+                          <span className="font-semibold text-sm text-foreground">
                             {mod.name}
                           </span>
                           <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
                             {mod.code}
                           </span>
                           {isDefault && isChecked && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
                               <Star className="h-3 w-3 fill-warning text-warning-text" /> Landing default
                             </span>
                           )}
@@ -841,7 +841,7 @@ export default function UserFormPage() {
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                          <div className="w-11 h-6 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                         </label>
                       </div>
                     </div>
@@ -861,8 +861,8 @@ export default function UserFormPage() {
             <AppCardContent className="p-6 space-y-6">
               <div>
                 <label className={labelStyle}>Account status</label>
-                <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${formIsActive ? ("bg-success-soft border-success-border") : ("bg-danger-soft border-danger-border")}`}>
-                  <span className={`font-semibold ${formIsActive ? "text-success dark:text-success" : "text-danger dark:text-danger"}`}>
+                <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${formIsActive ? ("bg-success-soft border-success-border") : ("bg-danger-soft border-danger-border")}`}>
+                  <span className={`font-semibold ${formIsActive ? "text-success-text dark:text-success-text" : "text-danger-text dark:text-danger-text"}`}>
                     {formIsActive ? "Active Participant" : "Suspended"}
                   </span>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -890,7 +890,7 @@ export default function UserFormPage() {
           <AppCard className={`overflow-hidden shadow-md ring-1 ring-border transition-all border-border`}>
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-danger" />
+                <Shield className="h-5 w-5 text-danger-text" />
                 <AppCardTitle className="text-lg">Security settings</AppCardTitle>
               </div>
             </AppCardHeader>
@@ -902,7 +902,7 @@ export default function UserFormPage() {
                     value={formRoleId} 
                     onChange={(e) => setFormRoleId(e.target.value)} 
                     disabled={!isSuperAdmin}
-                    className={`${inputStyle} appearance-none pr-10 font-semibold text-theme-icon dark:text-theme-icon`}
+                    className={`${inputStyle} appearance-none pr-10 font-semibold text-accent-soft-text dark:text-accent-soft-text`}
                   >
                     <option value="">Select Role…</option>
                     {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -948,16 +948,16 @@ export default function UserFormPage() {
           <AppCard className={`overflow-hidden shadow-md ring-1 ring-border transition-all border-border`}>
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
-                <MonitorSmartphone className="h-5 w-5 text-theme-icon" />
+                <MonitorSmartphone className="h-5 w-5 text-accent-soft-text" />
                 <AppCardTitle className="text-lg">Assigned assets</AppCardTitle>
               </div>
             </AppCardHeader>
             <AppCardContent className="p-6">
               <label className={labelStyle}>Linked IT hardware tags</label>
-              <div className={`min-h-[140px] p-4 rounded-xl border flex flex-col gap-3 relative bg-surface border-border`}>
+              <div className={`min-h-[140px] p-4 rounded-lg border flex flex-col gap-3 relative bg-surface border-border`}>
                 <div className="flex flex-wrap items-center gap-2">
                   {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
-                    <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-accent-soft text-theme-icon-secondary border border-theme-btn-primary/30 rounded-lg dark:bg-accent-soft dark:text-muted-foreground dark:border-theme-btn-primary/30 shadow-sm">
+                    <span key={idx} className="text-xs font-semibold px-3 py-1.5 flex items-center gap-2 bg-accent-soft text-theme-icon-secondary border border-border-active rounded-lg dark:bg-accent-soft dark:text-muted-foreground dark:border-border-active shadow-sm">
                       <MonitorSmartphone className="h-3 w-3" />
                       {tag} 
                       <X className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" onClick={() => {

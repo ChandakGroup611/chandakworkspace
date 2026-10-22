@@ -89,10 +89,10 @@ export default function IdentityProviderForm() {
   if (!hasPermission("SETTINGS_IDENTITY_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
+        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view Identity Settings.</p>
       </div>
     );
@@ -102,7 +102,7 @@ export default function IdentityProviderForm() {
     <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Overview Card */}
-      <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
+      <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-accent-soft text-accent-soft-text rounded-lg">
@@ -181,7 +181,7 @@ export default function IdentityProviderForm() {
       </div>
 
       {/* Auto Provisioning Settings */}
-      <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
+      <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-accent-soft text-accent-soft-text rounded-lg">
             <Users className="w-6 h-6" />
@@ -251,7 +251,7 @@ export default function IdentityProviderForm() {
 
       {/* Local Toast Notification */}
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-xl px-4 py-3 shadow-lg animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger-solid text-white' : 'bg-success text-white'}`}>
+        <div className={`fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-lg px-4 py-3 shadow-lg animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger-solid text-white' : 'bg-success text-white'}`}>
           {toastMsg.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>

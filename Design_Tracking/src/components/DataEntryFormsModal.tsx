@@ -93,14 +93,14 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     const currProj = storeState.projects.find(p => p.id === pId);
     const directTowers = storeState.towers.filter(t => t.projectId === pId).map(t => ({
       ...t,
-      displayLabel: currProj?.isSubProject ? `${t.towerName} (${t.towerType}) [🏙️ ${currProj.name}]` : `${t.towerName} (${t.towerType})`
+      displayLabel: currProj?.isSubProject ? `${t.towerName} (${t.towerType}) [${currProj.name}]` : `${t.towerName} (${t.towerType})`
     }));
 
     const childSubProjects = storeState.projects.filter(p => p.parentProjectId === pId);
     const childTowers = childSubProjects.flatMap(sp => 
       storeState.towers.filter(t => t.projectId === sp.id).map(t => ({
         ...t,
-        displayLabel: `${t.towerName} (${t.towerType}) [🏙️ ${sp.name}]`
+        displayLabel: `${t.towerName} (${t.towerType}) [${sp.name}]`
       }))
     );
 
@@ -243,7 +243,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     ? "bg-info-soft text-info-text border-info-border" 
     : activeTab === "LOOK_AHEAD" 
     ? "bg-warning-soft text-warning-text border-warning-border" 
-    : "bg-surface text-theme-icon border-border";
+    : "bg-surface text-accent-soft-text border-border";
 
   const saveLabel = activeTab === "PACKAGE" 
     ? "Record Status & Log Audit" 
@@ -271,11 +271,11 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       saveIcon={Save}
     >
       {/* Tab Selector Banner */}
-      <div className="p-1.5 rounded-2xl bg-muted/40 border border-border flex items-center gap-1.5 text-xs max-w-2xl">
+      <div className="p-1.5 rounded-lg bg-muted/40 border border-border flex items-center gap-1.5 text-xs max-w-2xl">
         <button
           type="button"
           onClick={() => setActiveTab("PACKAGE")}
-          className={`flex-1 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === "PACKAGE" 
               ? "bg-surface text-foreground shadow-xs border border-border" 
               : "text-muted-foreground hover:text-foreground"
@@ -287,7 +287,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab("LOOK_AHEAD")}
-          className={`flex-1 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === "LOOK_AHEAD" 
               ? "bg-surface text-foreground shadow-xs border border-border" 
               : "text-muted-foreground hover:text-foreground"
@@ -299,13 +299,13 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab("LIAISON")}
-          className={`flex-1 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === "LIAISON" 
               ? "bg-surface text-foreground shadow-xs border border-border" 
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <ShieldCheck className="h-4 w-4 text-theme-icon" />
+          <ShieldCheck className="h-4 w-4 text-accent-soft-text" />
           <span>Statutory authority NOC</span>
         </button>
       </div>
@@ -314,8 +314,8 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       {activeTab === "PACKAGE" && (
         <div className="space-y-6 max-w-4xl">
           <AppCard className="border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-              <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+            <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+              <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-info-text" />
                 <span>Project & location mapping</span>
               </AppCardTitle>
@@ -323,7 +323,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
             <AppCardContent className="p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Target project *</label>
+                  <label className="text-xs font-semibold text-foreground">Target project *</label>
                   <select
                     required
                     value={pkgProjectId}
@@ -331,18 +331,18 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                       setPkgProjectId(e.target.value);
                       setPkgTowerId("");
                     }}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     <option value="">Select project</option>
                     {accessibleProjects.map((p: ProjectMaster) => (
-                      <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
+                      <option key={p.id} value={p.id}>{p.isSubProject ? `${p.name} (Sub-Project)` : `${p.name}`}</option>
                     ))}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-foreground">Tower / wing *</label>
+                    <label className="text-xs font-semibold text-foreground">Tower / wing *</label>
                     {pkgProjectId && pkgAvailableTowers.length === 0 && (
                       <button
                         type="button"
@@ -354,7 +354,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setPkgTowerId(newTwr.id);
                         }}
-                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span>Quick add wing a</span>
@@ -365,7 +365,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     required
                     value={pkgTowerId}
                     onChange={e => setPkgTowerId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     <option value="">{pkgAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
                     {pkgAvailableTowers.map(t => (
@@ -376,12 +376,12 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Sub-package deliverable scope *</label>
+                <label className="text-xs font-semibold text-foreground">Sub-package deliverable scope *</label>
                 <select
                   required
                   value={pkgId}
                   onChange={e => setPkgId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
                   <option value="">Select Sub-Package</option>
                   {storeState.packages.map(p => (
@@ -391,7 +391,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               {pkgError && (
-                <div className="p-3 rounded-xl bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
+                <div className="p-3 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span>{pkgError}</span>
                 </div>
@@ -400,31 +400,31 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
           </AppCard>
 
           <AppCard className="border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-              <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+            <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+              <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-info-text" />
                 <span>Execution timeline & status parameters</span>
               </AppCardTitle>
             </AppCardHeader>
             <AppCardContent className="p-5 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Delivery status *</label>
+                <label className="text-xs font-semibold text-foreground">Delivery status *</label>
                 <select
                   value={pkgStatus}
                   onChange={e => setPkgStatus(e.target.value as any)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
                   <option value="Received">Received (Tender / GFC)</option>
                   <option value="In progress">⏳ In progress / onboard</option>
                   <option value="Pending">Pending / bottleneck</option>
-                  <option value="Target Date">📅 Target date forecast</option>
-                  <option value="NA">⚪ Not applicable (NA)</option>
+                  <option value="Target Date">Target date forecast</option>
+                  <option value="NA">Not applicable (NA)</option>
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-muted/20 border border-border">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/20 border border-border">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground flex items-center gap-1">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5 text-info-text" />
                     <span>Planned baseline date * (mandatory)</span>
                   </label>
@@ -433,12 +433,12 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     required
                     value={pkgPlannedDate}
                     onChange={e => setPkgPlannedDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground flex items-center gap-1">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5 text-success-text" />
                     <span>Actual / certified delivery date * (mandatory)</span>
                   </label>
@@ -447,17 +447,17 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     required
                     value={pkgActualDate}
                     onChange={e => setPkgActualDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Assigned consultant partner</label>
+                <label className="text-xs font-semibold text-foreground">Assigned consultant partner</label>
                 <select
                   value={pkgConsultantId}
                   onChange={e => setPkgConsultantId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
                   <option value="">None / internal team</option>
                   {storeState.consultants.map(c => (
@@ -467,13 +467,13 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Remarks / audit note</label>
+                <label className="text-xs font-semibold text-foreground">Remarks / audit note</label>
                 <input
                   type="text"
                   value={pkgRemarks}
                   onChange={e => setPkgRemarks(e.target.value)}
                   placeholder="e.g. Approved by Structural Consultant with revised column grid notes"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
             </AppCardContent>
@@ -485,8 +485,8 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       {activeTab === "LOOK_AHEAD" && (
         <div className="space-y-6 max-w-4xl">
           <AppCard className="border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-              <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+            <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+              <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-warning-text" />
                 <span>Project target & wing selection</span>
               </AppCardTitle>
@@ -494,7 +494,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
             <AppCardContent className="p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Project *</label>
+                  <label className="text-xs font-semibold text-foreground">Project *</label>
                   <select
                     required
                     value={laProjectId}
@@ -502,18 +502,18 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                       setLaProjectId(e.target.value);
                       setLaTowerId("");
                     }}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     <option value="">Select project</option>
                     {accessibleProjects.map((p: ProjectMaster) => (
-                      <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
+                      <option key={p.id} value={p.id}>{p.isSubProject ? `${p.name} (Sub-Project)` : `${p.name}`}</option>
                     ))}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-foreground">Tower / wing *</label>
+                    <label className="text-xs font-semibold text-foreground">Tower / wing *</label>
                     {laProjectId && laAvailableTowers.length === 0 && (
                       <button
                         type="button"
@@ -525,7 +525,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setLaTowerId(newTwr.id);
                         }}
-                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span>Quick add wing a</span>
@@ -536,7 +536,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     required
                     value={laTowerId}
                     onChange={e => setLaTowerId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     <option value="">{laAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
                     {laAvailableTowers.map(t => (
@@ -547,36 +547,36 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Deliverable milestone description *</label>
+                <label className="text-xs font-semibold text-foreground">Deliverable milestone description *</label>
                 <textarea
                   required
                   rows={3}
                   value={laDescription}
                   onChange={e => setLaDescription(e.target.value)}
                   placeholder="e.g. Issue Level 4 Podium Reinforcement Detailing to GCC Contractor"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Timeframe window *</label>
+                  <label className="text-xs font-semibold text-foreground">Timeframe window *</label>
                   <select
                     value={laTimeframe}
                     onChange={e => setLaTimeframe(e.target.value as any)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    <option value="30_DAYS">🚨 In 30 days (immediate action)</option>
+                    <option value="30_DAYS">In 30 days (immediate action)</option>
                     <option value="60_DAYS">⏳ In 60 days (mid-term forecast)</option>
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Priority level</label>
+                  <label className="text-xs font-semibold text-foreground">Priority level</label>
                   <select
                     value={laPriority}
                     onChange={e => setLaPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     <option value="CRITICAL">Critical (High Urgency)</option>
                     <option value="HIGH">High priority</option>
@@ -593,16 +593,16 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       {activeTab === "LIAISON" && (
         <div className="space-y-6 max-w-4xl">
           <AppCard className="border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-              <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
+            <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+              <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-accent-soft-text dark:text-muted-foreground" />
                 <span>Statutory authority & compliance status</span>
               </AppCardTitle>
             </AppCardHeader>
             <AppCardContent className="p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Project *</label>
+                  <label className="text-xs font-semibold text-foreground">Project *</label>
                   <select
                     required
                     value={liaisonProjectId}
@@ -610,18 +610,18 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                       setLiaisonProjectId(e.target.value);
                       setLiaisonTowerId("");
                     }}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     <option value="">Select project</option>
                     {accessibleProjects.map((p: ProjectMaster) => (
-                      <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
+                      <option key={p.id} value={p.id}>{p.isSubProject ? `${p.name} (Sub-Project)` : `${p.name}`}</option>
                     ))}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-foreground">Tower / wing *</label>
+                    <label className="text-xs font-semibold text-foreground">Tower / wing *</label>
                     {liaisonProjectId && liaisonAvailableTowers.length === 0 && (
                       <button
                         type="button"
@@ -633,7 +633,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setLiaisonTowerId(newTwr.id);
                         }}
-                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-success-soft hover:bg-success-soft text-success-text border border-success-border text-[11px] font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                         <span>Quick add wing a</span>
@@ -644,7 +644,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     required
                     value={liaisonTowerId}
                     onChange={e => setLiaisonTowerId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     <option value="">{liaisonAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
                     {liaisonAvailableTowers.map(t => (
@@ -655,12 +655,12 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Statutory authority *</label>
+                <label className="text-xs font-semibold text-foreground">Statutory authority *</label>
                 <select
                   required
                   value={liaisonAuthorityId}
                   onChange={e => setLiaisonAuthorityId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
                   <option value="">Select authority</option>
                   {storeState.authorities.map(a => (
@@ -670,27 +670,27 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Onboarding / NOC status *</label>
+                <label className="text-xs font-semibold text-foreground">Onboarding / NOC status *</label>
                 <select
                   value={liaisonStatus}
                   onChange={e => setLiaisonStatus(e.target.value as any)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
                   <option value="Onboard">Onboard (Clearance Active)</option>
-                  <option value="Fixed consultant">🔷 Fixed corporate partner</option>
+                  <option value="Fixed consultant">Fixed corporate partner</option>
                   <option value="Not Onboard">Not onboard (action needed)</option>
                   <option value="Compliance Pending">⏳ Compliance pending</option>
                 </select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Consultant name / file ref</label>
+                <label className="text-xs font-semibold text-foreground">Consultant name / file ref</label>
                 <input
                   type="text"
                   value={liaisonRemarks}
                   onChange={e => setLiaisonRemarks(e.target.value)}
                   placeholder="e.g. MPCB consent to establish ref #2026/09"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
             </AppCardContent>

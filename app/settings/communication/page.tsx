@@ -12,26 +12,26 @@ const MODULES = [
     description: "Manage Primary and Fallback SMTP/Graph providers for high-availability routing.",
     href: "/settings/communication/providers",
     icon: Server,
-    color: "text-theme-icon",
+    color: "text-accent-soft-text",
     bg: "bg-accent-soft",
-    border: "border-theme-btn-primary/20"
+    border: "border-border-active"
   },
   {
     title: "Template designer",
     description: "Design dynamic HTML email templates with intelligent merge tag hydration.",
     href: "/settings/communication/templates",
     icon: LayoutTemplate,
-    color: "text-theme-icon",
+    color: "text-accent-soft-text",
     bg: "bg-accent-soft",
-    border: "border-theme-btn-primary/20"
+    border: "border-border-active"
   },
   {
     title: "Notification rules",
     description: "Configure event-based routing, recipient resolution, and status triggers.",
     href: "/settings/communication/rules",
     icon: Workflow,
-    color: "text-success",
-    bg: "bg-success/10",
+    color: "text-success-text",
+    bg: "bg-success-soft",
     border: "border-success-border"
   },
   {
@@ -39,8 +39,8 @@ const MODULES = [
     description: "Audit trail of all communication dispatch, fallbacks, and delivery receipts.",
     href: "/settings/communication/logs",
     icon: Activity,
-    color: "text-warning",
-    bg: "bg-warning/10",
+    color: "text-warning-text",
+    bg: "bg-warning-soft",
     border: "border-warning-border"
   }
 ];
@@ -59,10 +59,10 @@ export default function CommunicationCenterHub() {
   if (!hasPermission("SETTINGS_COMMUNICATION_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
+        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view Communication Settings.</p>
       </div>
     );
@@ -71,7 +71,7 @@ export default function CommunicationCenterHub() {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <header className="border-b border-border pb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Communication center
         </h1>
         </header>
@@ -79,13 +79,13 @@ export default function CommunicationCenterHub() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {MODULES.map((mod) => (
           <Link href={mod.href} key={mod.title}>
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md hover:border-theme-btn-primary/50 hover:bg-accent-soft transition-all cursor-pointer group h-full">
+            <div className="bg-card border border-border rounded-lg p-6 shadow-sm hover:shadow-md hover:border-border-active hover:bg-accent-soft transition-all cursor-pointer group h-full">
               <div className="flex items-start space-x-4">
                 <div className={`p-3 rounded-lg ${mod.bg} ${mod.border} border transition-colors group-hover:bg-opacity-20`}>
                   <mod.icon className={`w-6 h-6 ${mod.color}`} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-foreground group-hover:text-theme-icon transition-colors">{mod.title}</h2>
+                  <h2 className="text-lg font-semibold text-foreground group-hover:text-accent-soft-text transition-colors">{mod.title}</h2>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{mod.description}</p>
                 </div>
               </div>

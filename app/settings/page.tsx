@@ -12,7 +12,7 @@ export default function SettingsPage() {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
+          <h2 className="text-2xl font-semibold text-danger-text">Access denied</h2>
           <p className="text-muted">You do not have permission to manage settings.</p>
         </div>
       </div>
@@ -23,7 +23,7 @@ export default function SettingsPage() {
     <div className="w-full space-y-6 animate-in fade-in-50 duration-500">
       {/* Semantic main header wrapper ensuring heading hierarchy */}
       <header className="border-b border-border pb-4">
-        <h1 id="settings-page-title" className="text-xl font-bold tracking-tight">
+        <h1 id="settings-page-title" className="text-xl font-semibold tracking-tight">
           Design gallery & UI governance engine
         </h1>
         <p className="text-xs text-muted mt-1">

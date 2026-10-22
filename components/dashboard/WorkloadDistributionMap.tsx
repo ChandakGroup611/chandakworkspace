@@ -45,7 +45,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
     <AppCard className="flex flex-col h-full justify-between">
       <AppCardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-theme-icon" />
+          <Users className="h-4 w-4 text-accent-soft-text" />
           <AppCardTitle>Workload saturation engine</AppCardTitle>
         </div>
         <span className="text-xs theme-card-structural border-border px-2 py-0.5 rounded text-muted font-semibold">
@@ -55,18 +55,18 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
 
       <AppCardContent className="space-y-4 pt-2">
         <div className="grid grid-cols-2 gap-3 mb-2">
-          <div className="p-3 rounded-xl theme-card-structural border-border flex flex-col justify-between">
+          <div className="p-3 rounded-lg theme-card-structural border-border flex flex-col justify-between">
             <span className="text-xs text-muted font-medium tracking-wide">Total concurrency</span>
             <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-xl font-bold text-foreground">{metrics.totalConcurrency}</span>
-              <span className="text-[0.7rem] text-subtle font-bold">active</span>
+              <span className="text-xl font-semibold text-foreground">{metrics.totalConcurrency}</span>
+              <span className="text-[0.7rem] text-subtle font-semibold">active</span>
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-danger/5 border border-danger-border flex flex-col justify-between">
-            <span className="text-xs text-danger font-medium tracking-wide">Backlog overdue</span>
+          <div className="p-3 rounded-lg bg-danger-soft border border-danger-border flex flex-col justify-between">
+            <span className="text-xs text-danger-text font-medium tracking-wide">Backlog overdue</span>
             <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-xl font-bold text-danger">{metrics.backlogOverdue}</span>
-              <span className="text-[0.7rem] text-danger font-bold">critical</span>
+              <span className="text-xl font-semibold text-danger-text">{metrics.backlogOverdue}</span>
+              <span className="text-[0.7rem] text-danger-text font-semibold">critical</span>
             </div>
           </div>
         </div>
@@ -79,12 +79,12 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
                 <span className="text-muted font-medium truncate max-w-[140px]">{dept.name} ({dept.active})</span>
                 <div className="flex items-center gap-2 text-[0.8rem]">
                   {dept.overdue > 0 && (
-                    <span className="text-danger font-bold flex items-center gap-0.5">
+                    <span className="text-danger-text font-semibold flex items-center gap-0.5">
                       <AlertOctagon className="h-2.5 w-2.5" />
                       {dept.overdue}
                     </span>
                   )}
-                  <span className="text-muted font-bold">{dept.capacity}%</span>
+                  <span className="text-muted font-semibold">{dept.capacity}%</span>
                 </div>
               </div>
 

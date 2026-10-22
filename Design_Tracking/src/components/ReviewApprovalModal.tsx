@@ -85,27 +85,27 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
       <div className="space-y-6 max-w-4xl">
         {/* Section 1: Drawing Sheet Specification Profile */}
         <AppCard className="border-border shadow-xs">
-          <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-            <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-              <FileText className="h-4 w-4 text-theme-btn-primary" />
+          <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+            <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
               <span>Drawing sheet dossier</span>
             </AppCardTitle>
           </AppCardHeader>
           <AppCardContent className="p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
               <div>
-                <span className="text-[11px] font-bold text-muted-foreground">
+                <span className="text-[11px] font-semibold text-muted-foreground">
                   {drawing.discipline} Discipline sheet
                 </span>
-                <h2 className="text-base font-bold text-foreground mt-0.5">
+                <h2 className="text-base font-semibold text-foreground mt-0.5">
                   {drawing.title}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-muted text-foreground font-bold border border-border">
+                <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-muted text-foreground font-semibold border border-border">
                   Revision: {drawing.revision}
                 </span>
-                <span className={`text-xs px-2.5 py-1 rounded-lg font-bold border ${
+                <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold border ${
                   drawing.status === "Approved (GFC)" 
                     ? "bg-success-soft text-success-text border-success-border" 
                     : drawing.status === "Revision Requested" 
@@ -118,27 +118,27 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-              <div className="p-3 rounded-xl bg-muted/20 border border-border space-y-1">
+              <div className="p-3 rounded-lg bg-muted/20 border border-border space-y-1">
                 <span className="text-muted-foreground text-[11px] block">Project:</span>
-                <span className="font-bold text-foreground">{drawing.project}</span>
+                <span className="font-semibold text-foreground">{drawing.project}</span>
               </div>
-              <div className="p-3 rounded-xl bg-muted/20 border border-border space-y-1">
+              <div className="p-3 rounded-lg bg-muted/20 border border-border space-y-1">
                 <span className="text-muted-foreground text-[11px] block">Consultant Author:</span>
                 <span className="font-semibold text-foreground">{drawing.consultant}</span>
               </div>
-              <div className="p-3 rounded-xl bg-muted/20 border border-border space-y-1">
+              <div className="p-3 rounded-lg bg-muted/20 border border-border space-y-1">
                 <span className="text-muted-foreground text-[11px] block">Submission Date:</span>
                 <span className="font-mono font-semibold text-foreground">{drawing.submittedDate}</span>
               </div>
-              <div className="p-3 rounded-xl bg-muted/20 border border-border space-y-1">
+              <div className="p-3 rounded-lg bg-muted/20 border border-border space-y-1">
                 <span className="text-muted-foreground text-[11px] block">CAD file size:</span>
                 <span className="font-mono font-semibold text-foreground">{drawing.fileSize}</span>
               </div>
             </div>
 
             {drawing.description && (
-              <div className="p-3.5 rounded-xl bg-sunken border border-border text-xs space-y-1">
-                <span className="text-muted-foreground text-[11px] font-bold">Revision Summary:</span>
+              <div className="p-3.5 rounded-lg bg-sunken border border-border text-xs space-y-1">
+                <span className="text-muted-foreground text-[11px] font-semibold">Revision Summary:</span>
                 <p className="text-foreground">{drawing.description}</p>
               </div>
             )}
@@ -147,9 +147,9 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
 
         {/* Section 2: Stage-Gate Decision Matrix */}
         <AppCard className="border-border shadow-xs">
-          <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-            <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-theme-btn-primary" />
+          <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+            <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" />
               <span>Review decision & certification action</span>
             </AppCardTitle>
           </AppCardHeader>
@@ -181,13 +181,13 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
                     key={st.id}
                     type="button"
                     onClick={() => setSelectedStatus(st.id as DrawingStatus)}
-                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                    className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
                       isSel 
-                        ? `${st.badge} ring-2 ring-primary font-bold shadow-xs` 
+                        ? `${st.badge} ring-2 ring-primary font-semibold shadow-xs` 
                         : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <div className="text-sm font-bold">{st.label}</div>
+                    <div className="text-sm font-semibold">{st.label}</div>
                     <div className="text-xs opacity-80 mt-1 font-normal">{st.desc}</div>
                   </button>
                 );
@@ -195,7 +195,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label className="text-xs font-semibold text-foreground">
                 Reviewer observations, clash notes & redlines
               </label>
               <textarea
@@ -203,12 +203,12 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
                 value={reviewComments}
                 onChange={(e) => setReviewComments(e.target.value)}
                 placeholder="Log design considerations, coordinate cheque notes, or site execution instructions…"
-                className="w-full rounded-xl border border-border bg-background p-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
+                className="w-full rounded-lg border border-border bg-background p-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
               />
             </div>
 
             {selectedStatus === "Approved (GFC)" && (
-              <div className="p-4 rounded-xl border border-success-border bg-success-soft flex items-start gap-3">
+              <div className="p-4 rounded-lg border border-success-border bg-success-soft flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-success-text shrink-0 mt-0.5" />
                 <div className="text-xs text-success-text leading-relaxed">
                   <strong>GFC release authorization:</strong> Approving this revision will digitally seal this sheet as <strong>Good for construction (GFC)</strong>, increment the certified drawings index, and authorise physical print issuance to the General Civil Contractor.

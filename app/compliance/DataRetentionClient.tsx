@@ -157,7 +157,7 @@ export default function DataRetentionClient() {
     <div className="space-y-4">
       {selectedIds.size > 0 && (
         <div className="bg-surface/5 border border-border rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
-          <span className="text-sm font-bold text-muted">{selectedIds.size} record(s) selected</span>
+          <span className="text-sm font-semibold text-muted">{selectedIds.size} record(s) selected</span>
           <div className="flex gap-2">
             {activeView === "deleted" ? (
               <>
@@ -249,10 +249,10 @@ export default function DataRetentionClient() {
       {/* Error Popup Modal */}
       {showErrorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/60">
-          <div className="bg-danger-solid border border-danger-border rounded-2xl p-6 max-w-md w-full shadow-lg">
-            <div className="flex items-center gap-3 text-danger mb-4">
+          <div className="bg-danger-solid border border-danger-border rounded-lg p-6 max-w-md w-full shadow-lg">
+            <div className="flex items-center gap-3 text-danger-text mb-4">
               <ShieldAlert className="h-8 w-8" />
-              <h3 className="text-xl font-bold">Deletion blocked</h3>
+              <h3 className="text-xl font-semibold">Deletion blocked</h3>
             </div>
             <p className="text-danger-text text-sm mb-6 leading-relaxed">
               This record cannot be permanently deleted because active transactions or records are currently attached to it. 
@@ -272,20 +272,20 @@ export default function DataRetentionClient() {
 
       {/* Action Banners */}
       {errorBanner && (
-        <div className="p-4 rounded-xl border border-danger-border bg-danger/10 flex items-start gap-3">
-          <AlertOctagon className="h-5 w-5 text-danger shrink-0 mt-0.5" />
+        <div className="p-4 rounded-lg border border-danger-border bg-danger-soft flex items-start gap-3">
+          <AlertOctagon className="h-5 w-5 text-danger-text shrink-0 mt-0.5" />
           <div className="space-y-1 text-sm">
-            <h4 className="font-bold text-danger">Action failed</h4>
+            <h4 className="font-semibold text-danger-text">Action failed</h4>
             <p className="text-danger/80">{errorBanner}</p>
           </div>
         </div>
       )}
       
       {successBanner && (
-        <div className="p-4 rounded-xl border border-success-border bg-success/10 flex items-start gap-3">
-          <CheckSquare className="h-5 w-5 text-success shrink-0 mt-0.5" />
+        <div className="p-4 rounded-lg border border-success-border bg-success-soft flex items-start gap-3">
+          <CheckSquare className="h-5 w-5 text-success-text shrink-0 mt-0.5" />
           <div className="space-y-1 text-sm">
-            <h4 className="font-bold text-success">Success</h4>
+            <h4 className="font-semibold text-success-text">Success</h4>
             <p className="text-success/80">{successBanner}</p>
           </div>
         </div>
@@ -293,7 +293,7 @@ export default function DataRetentionClient() {
 
       {/* Module Tabs (Scrollable for many tabs) */}
       <div className="pb-4">
-        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-border rounded-xl w-max max-w-full shadow-sm scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border dark:border-border rounded-lg w-max max-w-full shadow-sm scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -304,8 +304,8 @@ export default function DataRetentionClient() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`theme-tab-standard rounded-lg min-w-[120px] ${
                   isActive 
-                    ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
-                    : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
+                    ? 'bg-surface dark:bg-surface text-accent-soft-text dark:text-accent-soft-text shadow-sm border border-border dark:border-border' 
+                    : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-sunken dark:hover:bg-surface/5 border border-transparent'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -329,14 +329,14 @@ export default function DataRetentionClient() {
               <AppButton 
                 variant={activeView === "active" ? "primary" : "ghost"}
                 onClick={() => setActiveView("active")}
-                className="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
+                className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
               >
                 Active records
               </AppButton>
               <AppButton 
                 variant={activeView === "deleted" ? "destructive" : "ghost"}
                 onClick={() => setActiveView("deleted")}
-                className="px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5"
               >
                 <ShieldAlert className="h-3.5 w-3.5" />
                 Recycle bin

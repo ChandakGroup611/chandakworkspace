@@ -128,7 +128,7 @@ export default function DepartmentsMasterPage() {
       <div className="flex flex-col h-full gap-6 px-4 md:px-8 py-6">
         <PageHeader 
           title="Departments" 
-          icon={<Layers className="h-6 w-6 text-theme-icon" />}
+          icon={<Layers className="h-6 w-6 text-accent-soft-text" />}
         />
 
         <AppCard className="flex-1 flex flex-col overflow-hidden">
@@ -181,8 +181,8 @@ export default function DepartmentsMasterPage() {
                   ) : (
                     filtered.map(d => (
                       <AppTableRow key={d.id} className="hover:bg-accent-soft group">
-                        <AppTableCell className="font-mono text-sm font-bold text-theme-icon">{d.code}</AppTableCell>
-                        <AppTableCell className="font-bold text-foreground">{d.name}</AppTableCell>
+                        <AppTableCell className="font-mono text-sm font-semibold text-accent-soft-text">{d.code}</AppTableCell>
+                        <AppTableCell className="font-semibold text-foreground">{d.name}</AppTableCell>
                         <AppTableCell className="text-muted text-sm">{d.description || '-'}</AppTableCell>
                         <AppTableCell>
                           <AppBadge variant={d.is_active ? "success" : "neutral"}>
@@ -194,7 +194,7 @@ export default function DepartmentsMasterPage() {
                             <AppButton aria-label="Edit" variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(d)} className="text-accent">
                               <Edit className="h-4 w-4" />
                             </AppButton>
-                            <AppButton aria-label="Delete" variant="ghost" size="icon-sm" onClick={() => handleDelete(d.id)} className="text-danger">
+                            <AppButton aria-label="Delete" variant="ghost" size="icon-sm" onClick={() => handleDelete(d.id)} className="text-danger-text">
                               <Trash2 className="h-4 w-4" />
                             </AppButton>
                           </div>
@@ -211,7 +211,7 @@ export default function DepartmentsMasterPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-surface/40">
-          <div className="bg-surface border border-border shadow-lg rounded-2xl w-full max-w-lg flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-surface border border-border shadow-lg rounded-lg w-full max-w-lg flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
               <h2 className="text-xl font-semibold text-foreground">
@@ -225,34 +225,34 @@ export default function DepartmentsMasterPage() {
             <div className="p-6">
               <form id="deptForm" onSubmit={handleSave} className="space-y-6">
                 {errorMsg && (
-                  <div className="p-3 rounded-lg bg-danger-soft text-danger border border-danger-border text-sm font-medium">
+                  <div className="p-3 rounded-lg bg-danger-soft text-danger-text border border-danger-border text-sm font-medium">
                     {errorMsg}
                   </div>
                 )}
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted">Department name <span className="text-danger">*</span></label>
+                    <label className="text-sm font-semibold text-muted">Department name <span className="text-danger-text">*</span></label>
                     <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Human resources" className="h-11" />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted">Department code <span className="text-danger">*</span></label>
+                    <label className="text-sm font-semibold text-muted">Department code <span className="text-danger-text">*</span></label>
                     <AppInput value={formCode} onChange={e => setFormCode(e.target.value)} required placeholder="e.g. HR" className="h-11 uppercase font-mono" />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted">Description</label>
+                    <label className="text-sm font-semibold text-muted">Description</label>
                     <textarea 
                       value={formDesc} 
                       onChange={e => setFormDesc(e.target.value)} 
                       placeholder="Brief description…" 
-                      className="w-full h-24 p-3 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border resize-none"
+                      className="w-full h-24 p-3 rounded-lg text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-primary focus:ring-ring border resize-none"
                     />
                   </div>
 
                   <label className="flex items-center gap-3 cursor-pointer mt-2">
-                    <input type="checkbox" checked={formIsActive} onChange={e => setFormIsActive(e.target.checked)} className="h-4 w-4 rounded border-border text-theme-icon focus:ring-theme-btn-primary" />
+                    <input type="checkbox" checked={formIsActive} onChange={e => setFormIsActive(e.target.checked)} className="h-4 w-4 rounded border-border text-accent-soft-text focus:ring-ring" />
                     <span className="text-sm font-medium text-foreground">Active department</span>
                   </label>
                 </div>
@@ -260,7 +260,7 @@ export default function DepartmentsMasterPage() {
             </div>
 
             <div className="p-5 border-t border-border shrink-0 flex items-center justify-end gap-3 bg-surface/50 rounded-b-2xl">
-              <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-10 px-6 text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+              <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-10 px-6 text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">
                 Discard
               </AppButton>
               <AppButton type="submit" form="deptForm" disabled={saving} className="h-10 px-8">

@@ -225,12 +225,12 @@ export default function MigrationClient() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Step 1: Configuration */}
-        <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs relative overflow-hidden group">
+        <div className="bg-surface border border-border rounded-lg p-6 shadow-xs relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
             <FileSpreadsheet className="w-32 h-32" />
           </div>
           
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-6">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent-soft text-accent-soft-text text-xs font-semibold">1</span>
             Configure template
           </h2>
@@ -245,7 +245,7 @@ export default function MigrationClient() {
                   setTargetWorkspaceId('');
                   setTargetSubworkspaceId('');
                 }}
-                className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+                className="w-full bg-surface border border-border rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
               >
                 <option value="WORKSPACE">Root workspace</option>
                 <option value="SUBWORKSPACE">Subworkspace</option>
@@ -254,7 +254,7 @@ export default function MigrationClient() {
             </div>
 
             {selectedModule === 'TASK' && (
-              <div className="p-4 bg-sunken border border-border rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2">
+              <div className="p-4 bg-sunken border border-border rounded-lg space-y-4 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-start gap-2 mb-2">
                   <Database className="w-4 h-4 text-accent-soft-text mt-0.5" />
                   <p className="text-xs text-muted leading-relaxed">
@@ -263,7 +263,7 @@ export default function MigrationClient() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold text-muted mb-1.5">Target workspace (root) <span className="text-danger">*</span></label>
+                  <label className="block text-sm font-semibold text-muted mb-1.5">Target workspace (root) <span className="text-danger-text">*</span></label>
                   <select
                     className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                     value={targetWorkspaceId}
@@ -287,7 +287,7 @@ export default function MigrationClient() {
                     onChange={(e) => setTargetSubworkspaceId(e.target.value)}
                     disabled={!targetWorkspaceId}
                   >
-                    <option value="">-- Root level (no subworkspace) --</option>
+                    <option value="">Root level (no subworkspace)</option>
                     {subWorkspaces.map((ws: any) => (
                       <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
                     ))}
@@ -311,9 +311,9 @@ export default function MigrationClient() {
         </div>
         
         {/* Step 2: Upload */}
-        <div className={`bg-surface border border-border rounded-2xl p-6 shadow-xs relative overflow-hidden group transition-opacity ${selectedModule === 'TASK' && !targetWorkspaceId ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`bg-surface border border-border rounded-lg p-6 shadow-xs relative overflow-hidden group transition-opacity ${selectedModule === 'TASK' && !targetWorkspaceId ? 'opacity-50 pointer-events-none' : ''}`}>
           
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-6">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent-soft text-accent-soft-text text-xs font-semibold">2</span>
             Upload data
           </h2>
@@ -328,7 +328,7 @@ export default function MigrationClient() {
              />
              
              {uploadResult && (
-               <div className={`p-4 rounded-xl flex items-start gap-3 ${uploadResult.success ? 'bg-success-soft border border-success-border text-success-text' : 'bg-danger-soft border border-danger-border text-danger-text'}`}>
+               <div className={`p-4 rounded-lg flex items-start gap-3 ${uploadResult.success ? 'bg-success-soft border border-success-border text-success-text' : 'bg-danger-soft border border-danger-border text-danger-text'}`}>
                  {uploadResult.success ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
                  <p className="text-sm">{uploadResult.message}</p>
                </div>
@@ -344,7 +344,7 @@ export default function MigrationClient() {
                  }
                }}
                // ui-audit-ignore-next-line file-dropzone
-               className={`border-2 border-dashed ${isUploading ? 'border-primary bg-primary-soft' : 'border-border hover:border-border-strong hover:bg-sunken cursor-pointer transition-all'} rounded-xl p-8 flex flex-col items-center justify-center text-center`}
+               className={`border-2 border-dashed ${isUploading ? 'border-primary bg-primary-soft' : 'border-border hover:border-border-strong hover:bg-sunken cursor-pointer transition-all'} rounded-lg p-8 flex flex-col items-center justify-center text-center`}
                onClick={() => !isUploading && fileInputRef.current?.click()}
                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                onDrop={(e) => {
@@ -371,7 +371,7 @@ export default function MigrationClient() {
                  </div>
                ) : (
                  <>
-                   <Upload className="w-10 h-10 text-muted mb-3 group-hover:text-theme-icon transition-colors" />
+                   <Upload className="w-10 h-10 text-muted mb-3 group-hover:text-accent-soft-text transition-colors" />
                    <h3 className="text-sm font-semibold text-muted mb-1">Click to browse or drag file here</h3>
                    <p className="text-xs text-muted">Only .xlsx files are supported</p>
                    <AppButton 

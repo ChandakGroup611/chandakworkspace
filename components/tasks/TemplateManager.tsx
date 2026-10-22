@@ -130,7 +130,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
             {isLoading ? (
               <div className="p-8 text-center text-muted text-sm animate-pulse">Loading templates…</div>
             ) : templates.length === 0 && !isCreating ? (
-              <div className="p-8 text-center border border-dashed rounded-xl border-border dark:border-border text-muted text-sm">
+              <div className="p-8 text-center border rounded-xl border-border dark:border-border text-muted text-sm">
                 No templates found in this workspace. Create one above!
               </div>
             ) : (

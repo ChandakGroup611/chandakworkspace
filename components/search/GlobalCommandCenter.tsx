@@ -67,7 +67,7 @@ export function GlobalCommandCenter() {
       case "TASK":
         return <Target className="w-4 h-4 text-primary" />;
       case "REQUIREMENT":
-        return <Briefcase className="w-4 h-4 text-success" />;
+        return <Briefcase className="w-4 h-4 text-success-text" />;
       default:
         return <Search className="w-4 h-4 text-muted" />;
     }
@@ -84,7 +84,7 @@ export function GlobalCommandCenter() {
       />
 
       {/* Command Palette */}
-      <div className="relative z-10 w-full max-w-2xl bg-elevated border border-border shadow-xl rounded-xl overflow-hidden flex flex-col animate-in slide-in-from-top-4 duration-200">
+      <div className="relative z-10 w-full max-w-2xl bg-elevated border border-border shadow-lg rounded-lg overflow-hidden flex flex-col animate-in slide-in-from-top-4 duration-200">
         {/* Search Input */}
         <div className="flex items-center px-4 border-b border-border bg-surface">
           <Search className="w-4 h-4 text-muted mr-3 shrink-0" />

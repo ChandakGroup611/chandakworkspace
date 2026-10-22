@@ -13,7 +13,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
   return (
     <div className={`rich-text-editor-container ${className || ''}`}>
       <textarea
-        className="w-full min-h-[300px] p-4 text-sm font-inter bg-transparent border border-border dark:border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 focus:border-theme-btn-primary"
+        className="w-full min-h-[300px] p-4 text-sm font-inter bg-transparent border border-border dark:border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || "Write your article content here..."}

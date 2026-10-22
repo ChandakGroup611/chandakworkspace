@@ -1,5 +1,6 @@
 "use client";
 
+import { CHART_THEME } from "@/components/ui/charts/chartTheme";
 import React from "react";
 import {
   BarChart,
@@ -84,16 +85,16 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
                 <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "#1e1e24", border: "1px solid #333", borderRadius: "8px" }}
-                  itemStyle={{ color: "#fff" }}
+                  {...CHART_THEME.tooltip}
+                  
                 />
                 <Line
                   type="monotone"
                   dataKey="count"
-                  stroke="#3b82f6"
+                  stroke="var(--chart-2)"
                   strokeWidth={3}
-                  dot={{ r: 4, fill: "#3b82f6", strokeWidth: 0 }}
-                  activeDot={{ r: 6, fill: "#60a5fa" }}
+                  dot={{ r: 4, fill: "var(--chart-2)", strokeWidth: 0 }}
+                  activeDot={{ r: 6, fill: "var(--chart-2)" }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -109,11 +110,8 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={true} vertical={false} />
                 <XAxis type="number" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip
-                  cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                  contentStyle={{ backgroundColor: "#1e1e24", border: "1px solid #333", borderRadius: "8px" }}
-                />
-                <Bar dataKey="tickets" fill="#a855f7" radius={[0, 4, 4, 0]} barSize={24} />
+                <Tooltip {...CHART_THEME.tooltip} />
+                <Bar dataKey="tickets" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>

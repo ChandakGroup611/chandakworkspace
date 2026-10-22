@@ -115,10 +115,10 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
         };
       case "purple":
         return {
-          icon: "text-theme-icon",
+          icon: "text-accent-soft-text",
           activeBg: "bg-surface border-border text-foreground dark:text-muted-foreground",
           badge: "bg-primary text-white",
-          checkbox: "text-theme-icon",
+          checkbox: "text-accent-soft-text",
           itemActive: "bg-surface dark:bg-surface text-accent-soft-text font-semibold"
         };
       case "amber":
@@ -188,13 +188,13 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
 
   return (
     <div className={`relative inline-block text-left ${className}`} ref={containerRef}>
-      {/* 🔘 Dropdown Trigger Button */}
+      {/* Dropdown Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`h-9 px-3 rounded-xl border text-xs font-semibold inline-flex items-center justify-between gap-2 transition-all cursor-pointer select-none max-w-[240px] sm:max-w-[280px] shadow-2xs ${
+        className={`h-9 px-3 rounded-lg border text-xs font-semibold inline-flex items-center justify-between gap-2 transition-all cursor-pointer select-none max-w-[240px] sm:max-w-[280px] shadow-2xs ${
           isFiltered
-            ? `${themeClasses.activeBg} font-bold shadow-xs`
+            ? `${themeClasses.activeBg} font-semibold shadow-xs`
             : "border-border bg-surface hover:bg-sunken text-foreground"
         }`}
         aria-haspopup="true"
@@ -202,7 +202,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
       >
         <div className="flex items-center gap-1.5 truncate">
           {icon && <span className={`shrink-0 ${themeClasses.icon}`}>{icon}</span>}
-          <span className="text-[11px] font-bold text-muted-foreground shrink-0">{label}:</span>
+          <span className="text-[11px] font-semibold text-muted-foreground shrink-0">{label}:</span>
           <span className="truncate font-medium" title={triggerText}>
             {triggerText}
           </span>
@@ -226,17 +226,17 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
         </div>
       </button>
 
-      {/* 📋 Dropdown Popover Menu */}
+      {/* Dropdown Popover Menu */}
       {isOpen && (
         <div
           className={`absolute ${
             align === "right" ? "right-0" : "left-0"
-          } mt-1.5 w-72 sm:w-80 rounded-2xl border border-border bg-surface shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100`}
+          } mt-1.5 w-72 sm:w-80 rounded-lg border border-border bg-surface shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100`}
         >
           {/* Menu Header */}
           <div className="p-3 border-b border-border bg-sunken space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                 {icon && <span className={themeClasses.icon}>{icon}</span>}
                 <span>Filter by {label}</span>
                 <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-sunken text-muted-foreground font-semibold">
@@ -277,7 +277,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   aria-label={`Search ${label.toLowerCase()}`}
-                  className="w-full pl-8 pr-7 py-1 text-xs rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:border-primary"
+                  className="w-full pl-8 pr-7 py-1 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-primary"
                 />
                 {searchQuery && (
                   <button aria-label="Close"
@@ -305,7 +305,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                   <div
                     key={option.value}
                     onClick={() => handleToggleOption(option.value)}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer select-none ${
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer select-none ${
                       isSelected
                         ? themeClasses.itemActive
                         : "hover:bg-sunken text-foreground"
@@ -345,7 +345,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                     <div className="shrink-0 flex items-center gap-1.5">
                       {option.badge && (
                         <span
-                          className={`text-[11px] px-1.5 py-0.5 rounded-md font-bold ${
+                          className={`text-[11px] px-1.5 py-0.5 rounded-md font-semibold ${
                             option.badgeColor ||
                             (option.badge === "Onboard"
                               ? "bg-success-soft text-success-text border border-success-border"
@@ -377,7 +377,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="px-2.5 py-1 rounded-lg bg-foreground text-background font-bold hover:opacity-90 transition-opacity cursor-pointer text-xs"
+              className="px-2.5 py-1 rounded-lg bg-foreground text-background font-semibold hover:opacity-90 transition-opacity cursor-pointer text-xs"
             >
               Done
             </button>

@@ -23,9 +23,9 @@ class WidgetErrorBoundary extends React.Component<{ children: React.ReactNode, t
   render() {
     if (this.state.hasError) {
       return (
-        <div className="h-full flex flex-col items-center justify-center p-6 border border-danger/20 bg-danger/5 rounded-2xl text-center">
+        <div className="h-full flex flex-col items-center justify-center p-6 border border-danger-border bg-danger-soft rounded-lg text-center">
           <AlertTriangle className="w-8 h-8 text-danger/50 mb-3" />
-          <h3 className="text-sm font-semibold text-danger">Widget unavailable</h3>
+          <h3 className="text-sm font-semibold text-danger-text">Widget unavailable</h3>
           <p className="text-xs text-danger/70 mt-1 max-w-[200px] truncate">{this.state.error?.message || "An error occurred"}</p>
         </div>
       );
@@ -136,10 +136,10 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
         <div 
           onClick={() => toggleSection(section.id)}
           className={cn(
-            "flex items-center justify-between p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer select-none group shadow-xs",
+            "flex items-center justify-between p-3 sm:p-3.5 rounded-lg border transition-all cursor-pointer select-none group shadow-xs",
             isCollapsed 
-              ? "bg-surface/70 hover:bg-surface border-border/70 hover:border-theme-btn-primary/30" 
-              : "bg-surface/90 border-border/80 mb-5 hover:border-theme-btn-primary/40 shadow-sm"
+              ? "bg-surface/70 hover:bg-surface border-border hover:border-border-active" 
+              : "bg-surface/90 border-border mb-5 hover:border-border-active shadow-sm"
           )}
           role="button"
           tabIndex={0}
@@ -147,15 +147,15 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
           aria-expanded={!isCollapsed}
         >
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="p-2 rounded-xl bg-accent-soft text-theme-icon shrink-0 transition-transform">
+            <div className="p-2 rounded-lg bg-accent-soft text-accent-soft-text shrink-0 transition-transform">
               <IconComp className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                <h2 className="text-xs sm:text-sm font-semibold text-foreground truncate">
                   {section.title}
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 shrink-0">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-accent-soft-text border border-border-active shrink-0">
                   {sectionWidgets.length} {sectionWidgets.length === 1 ? 'KPI / Widget' : 'KPIs & Widgets'}
                 </span>
               </div>
@@ -169,7 +169,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
             <span className="text-[11px] font-semibold text-muted-foreground hidden md:inline group-hover:text-foreground transition-colors">
               {isCollapsed ? "Click to Expand" : "Click to Minimize"}
             </span>
-            <div className="h-7 w-7 rounded-lg flex items-center justify-center bg-surface-hover text-foreground group-hover:bg-theme-btn-primary group-hover:text-white transition-all shadow-xs">
+            <div className="h-7 w-7 rounded-lg flex items-center justify-center bg-surface-hover text-foreground group-hover:bg-primary group-hover:text-white transition-all shadow-xs">
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </div>
           </div>
@@ -215,12 +215,12 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
   };
 
   return (
-    <div id="dashboard-export-area" className="w-full relative animate-in fade-in duration-700 bg-background/50 p-1 sm:p-2 rounded-xl">
+    <div id="dashboard-export-area" className="w-full relative animate-in fade-in duration-700 bg-background/50 p-1 sm:p-2 rounded-lg">
       {/* KPI Sections Toolbar & Controls (Unwanted duplicate Workspace Overview title removed) */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-1 mb-4">
         {/* Top Section KPI Quick Navigation & Accordion Pill Strip */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-nowrap shrink-0 py-0.5">
-          <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
+          <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0">
             KPI Sections:
           </span>
 
@@ -245,17 +245,17 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
                 }, 50);
               }}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 border select-none",
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 border select-none",
                 !isCollapsed 
-                  ? "bg-accent-soft text-theme-icon border-theme-btn-primary/30 shadow-xs" 
-                  : "bg-surface text-muted-foreground hover:text-foreground border-border/60 hover:bg-surface/60"
+                  ? "bg-accent-soft text-accent-soft-text border-border-active shadow-xs" 
+                  : "bg-surface text-muted-foreground hover:text-foreground border-border hover:bg-surface/60"
               )}
             >
               <IconComp className="w-3.5 h-3.5" />
               <span>{s.title.split('&')[0].trim()}</span>
               <span className={cn(
-                "px-1.5 py-0.2 rounded-full text-[11px] font-bold border",
-                !isCollapsed ? "bg-theme-btn-primary text-white border-transparent" : "bg-surface-hover text-muted-foreground border-border/40"
+                "px-1.5 py-0.2 rounded-full text-[11px] font-semibold border",
+                !isCollapsed ? "bg-primary text-white border-transparent" : "bg-surface-hover text-muted-foreground border-border/40"
               )}>
                 {sectionWidgets.length}
               </span>
@@ -282,8 +282,8 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
             </AppButton>
 
             {presetDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-xl shadow-lg theme-card-structural border border-border/80 z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="text-[11px] font-bold text-muted-foreground px-3 py-1.5 border-b border-border/40">
+              <div className="absolute right-0 mt-2 w-72 rounded-lg shadow-lg theme-card-structural border border-border z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="text-[11px] font-semibold text-muted-foreground px-3 py-1.5 border-b border-border/40">
                   Switch dashboard layout preset
                 </div>
                 <div className="py-1 space-y-0.5">
@@ -297,7 +297,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
                       }}
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors flex flex-col",
-                        activePreset === key ? "bg-primary/15 text-primary font-bold" : "hover:bg-surface text-foreground"
+                        activePreset === key ? "bg-primary/15 text-primary font-semibold" : "hover:bg-surface text-foreground"
                       )}
                     >
                       <span className="font-semibold">{preset.name}</span>
@@ -336,7 +336,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
       {SECTIONS.map(section => renderSection(section))}
 
       {activeWidgets.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-dashed rounded-3xl theme-card-structural border-border">
+        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center rounded-lg theme-card-structural border-border">
           <Settings2 className="w-12 h-12 mb-4 text-muted-foreground/30" />
           <h3 className="text-lg font-semibold text-foreground">Dashboard is empty</h3>
           <p className="mt-2 text-sm text-muted-foreground max-w-md">

@@ -65,7 +65,7 @@ function DraggableTableHead({ col, isFirst, filterValue, onFilterChange }: { col
             value={filterValue || ""} 
             onChange={(e) => onFilterChange(e.target.value)} 
             placeholder={`Filter ${col.display_name}...`}
-            className="w-full text-[11px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-border text-foreground focus:outline-none focus:border-theme-btn-primary placeholder:text-muted"
+            className="w-full text-[11px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-border text-foreground focus:outline-none focus:border-primary placeholder:text-muted"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -336,16 +336,16 @@ export default function ReportsClient() {
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border pb-3">
         {/* Entity Selection Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar flex-nowrap sm:flex-wrap">
-          <AppButton variant="secondary" onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-accent-soft text-theme-icon" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${entityType === "WORKSPACE" ? "bg-accent-soft text-accent-soft-text" : "text-muted hover:bg-elevated"}`}>
             <Briefcase className="h-3.5 w-3.5" /> Workspaces
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-accent-soft text-theme-icon" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-accent-soft text-accent-soft-text" : "text-muted hover:bg-elevated"}`}>
             <Layers className="h-3.5 w-3.5" /> Sub-Workspaces
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-accent-soft text-theme-icon" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${entityType === "TASK" ? "bg-accent-soft text-accent-soft-text" : "text-muted hover:bg-elevated"}`}>
             <LayoutList className="h-3.5 w-3.5" /> Tasks
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-accent-soft text-theme-icon" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${entityType === "SUB_TASK" ? "bg-accent-soft text-accent-soft-text" : "text-muted hover:bg-elevated"}`}>
             <AlignLeft className="h-3.5 w-3.5" /> Sub-Tasks
           </AppButton>
         </div>
@@ -356,7 +356,7 @@ export default function ReportsClient() {
             <AppButton variant="secondary"
               key={sc}
               onClick={() => setScope(sc)}
-              className={`whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-md transition-all ${ scope === sc ? "theme-card-structural text-theme-icon shadow-sm " : "text-muted hover:text-foreground" }`}
+              className={`whitespace-nowrap text-[11px] font-semibold px-3 py-1.5 rounded-md transition-all ${ scope === sc ? "theme-card-structural text-accent-soft-text shadow-sm " : "text-muted hover:text-foreground" }`}
             >
               {sc === "ALL" ? "All Records" : sc === "ASSIGNED_TO_ME" ? "Assigned To Me" : "Enrolled Tasks"}
             </AppButton>
@@ -369,11 +369,11 @@ export default function ReportsClient() {
         
         {/* Date Range & Clear Filters */}
         <div className="flex items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-subtle theme-card-structural p-2 rounded-xl">
+          <div className="flex items-center gap-2 text-xs font-semibold text-subtle theme-card-structural p-2 rounded-lg">
             <span>Date Range:</span>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-theme-btn-primary`} />
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-ring`} />
             <span>to</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-theme-btn-primary`} />
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-ring`} />
             
             {(selectedStatus || dateFrom || dateTo || query || Object.keys(columnFilters).some(k => columnFilters[k])) && (
               <AppButton variant="secondary" 
@@ -384,7 +384,7 @@ export default function ReportsClient() {
                   setQuery("");
                   setColumnFilters({});
                 }}
-                className="ml-2 px-2 py-1 theme-label font-bold text-danger hover:bg-danger-soft rounded transition-colors"
+                className="ml-2 px-2 py-1 theme-label font-semibold text-danger-text hover:bg-danger-soft rounded transition-colors"
               >
                 Clear filters
               </AppButton>
@@ -392,7 +392,7 @@ export default function ReportsClient() {
           </div>
 
           {(entityType === "TASK" || entityType === "SUB_TASK") && (
-            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl theme-card-structural text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary`}>
+            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-semibold px-3 py-2.5 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-2 focus:ring-ring`}>
               <option value="">All statuses</option>
               {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -403,10 +403,10 @@ export default function ReportsClient() {
         <div className="flex items-center flex-wrap gap-3">
           {canExport && (
             <div className="flex items-center gap-2 border-r border-border pr-3 mr-1">
-              <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-success" />}>
+              <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-success-text" />}>
                 Export Excel
               </AppButton>
-              <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-danger" />}>
+              <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-danger-text" />}>
                 Export PDF
               </AppButton>
             </div>
@@ -447,17 +447,17 @@ export default function ReportsClient() {
       {/* Mobile / Tablet Report Cards (<1024px) */}
       <div className="block lg:hidden space-y-3">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted text-sm border border-border rounded-xl bg-surface/50">
+          <div className="text-center py-12 text-muted text-sm border border-border rounded-lg bg-surface/50">
             {loading ? "Loading report data..." : "No records found matching the current filters."}
           </div>
         ) : (
           filtered.map((item) => (
             <div 
               key={item.id} 
-              className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all select-none space-y-2.5"
+              className="rounded-lg border border-border bg-surface/90 p-4 shadow-xs hover:border-border-active transition-all select-none space-y-2.5"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs font-bold text-theme-icon bg-accent-soft px-2 py-0.5 rounded-md shrink-0">
+                <span className="font-mono text-xs font-semibold text-accent-soft-text bg-accent-soft px-2 py-0.5 rounded-md shrink-0">
                   {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
                 </span>
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -480,7 +480,7 @@ export default function ReportsClient() {
               </div>
 
               <div>
-                <h4 className="text-sm font-bold text-foreground line-clamp-2">
+                <h4 className="text-sm font-semibold text-foreground line-clamp-2">
                   {item.title || item.name || 'Untitled Record'}
                 </h4>
                 {item.description && (
@@ -496,7 +496,7 @@ export default function ReportsClient() {
                     <span className="font-semibold text-foreground/80 truncate max-w-[120px]">{item.workspace}</span>
                   )}
                   {item.department && (
-                    <span className="bg-elevated px-1.5 py-0.5 rounded text-[11px] font-bold">{item.department}</span>
+                    <span className="bg-elevated px-1.5 py-0.5 rounded text-[11px] font-semibold">{item.department}</span>
                   )}
                 </div>
                 <div className="text-[11px] font-medium shrink-0">
@@ -543,7 +543,7 @@ export default function ReportsClient() {
                         const isCode = col.field_key === "code" || index === 0;
                         switch(col.field_key) {
                           case "code": return (
-                            <AppTableCell key={col.field_id} className="font-mono font-bold text-theme-icon whitespace-nowrap sticky left-0 bg-surface z-20 shadow-[4px_0_8px_rgba(0,0,0,0.06)]">
+                            <AppTableCell key={col.field_id} className="font-mono font-semibold text-accent-soft-text whitespace-nowrap sticky left-0 bg-surface z-20 shadow-[4px_0_8px_rgba(0,0,0,0.06)]">
                               {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
                             </AppTableCell>
                           );
@@ -631,7 +631,7 @@ export default function ReportsClient() {
                               <AppTableCell key={col.field_id} className="text-subtle">
                                 <div className="truncate max-w-[200px]" title={String(val)}>
                                   {col.data_type === "link" && val !== "—" ? (
-                                    <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
+                                    <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-accent-soft-text hover:underline">{val}</a>
                                   ) : col.data_type === "badge" && val !== "—" ? (
                                     <AppBadge variant="neutral">{val}</AppBadge>
                                   ) : (

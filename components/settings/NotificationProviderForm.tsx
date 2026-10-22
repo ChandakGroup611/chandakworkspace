@@ -55,8 +55,8 @@ export default function NotificationProviderForm({ initialData }: { initialData:
   };
 
   return (
-    <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
-      <h2 className="text-xl font-bold text-heading mb-2">Email provider setup</h2>
+    <div className="bg-surface border border-border p-6 rounded-lg shadow-sm">
+      <h2 className="text-xl font-semibold text-heading mb-2">Email provider setup</h2>
       <div className="flex gap-2 mb-6">
         {["GMAIL", "OFFICE365", "RESEND"].map((p) => (
           <AppButton 

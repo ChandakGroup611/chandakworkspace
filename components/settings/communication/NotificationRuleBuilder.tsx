@@ -136,13 +136,13 @@ export default function NotificationRuleBuilder() {
     }));
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-success" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-success-text" /></div>;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-surface border border-border p-4 rounded-xl shadow-sm">
+      <div className="flex justify-between items-center bg-surface border border-border p-4 rounded-lg shadow-sm">
         <div>
-          <h2 className="text-lg font-bold text-heading">Rule engine</h2>
+          <h2 className="text-lg font-semibold text-heading">Rule engine</h2>
         </div>
         <AppButton
           variant="primary"
@@ -159,10 +159,10 @@ export default function NotificationRuleBuilder() {
           const config = MODULE_CONFIG[rule.module] || MODULE_CONFIG["Task"];
           
           return (
-            <div key={rule.id} className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
+            <div key={rule.id} className="bg-surface border border-border rounded-lg overflow-hidden shadow-sm">
               {/* Header IF block */}
               <div className="bg-sunken px-6 py-4 border-b border-border flex flex-wrap items-center gap-4">
-                <span className="font-mono text-success-text font-bold text-lg">IF</span>
+                <span className="font-mono text-success-text font-semibold text-lg">IF</span>
                 
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-muted">Module =</span>
@@ -175,7 +175,7 @@ export default function NotificationRuleBuilder() {
                   </select>
                 </div>
 
-                <span className="font-mono text-muted font-bold text-sm">AND</span>
+                <span className="font-mono text-muted font-semibold text-sm">AND</span>
 
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-muted">Event =</span>
@@ -188,7 +188,7 @@ export default function NotificationRuleBuilder() {
                   </select>
                 </div>
 
-                <span className="font-mono text-muted font-bold text-sm">AND</span>
+                <span className="font-mono text-muted font-semibold text-sm">AND</span>
 
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-muted">Status =</span>
@@ -206,7 +206,7 @@ export default function NotificationRuleBuilder() {
               <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-primary font-bold text-lg">Then</span>
+                    <span className="font-mono text-primary font-semibold text-lg">Then</span>
                     <span className="text-sm font-semibold text-subtle">Resolve Recipients:</span>
                   </div>
                   
@@ -233,7 +233,7 @@ export default function NotificationRuleBuilder() {
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-primary font-bold text-lg">VIA</span>
+                    <span className="font-mono text-primary font-semibold text-lg">VIA</span>
                     <span className="text-sm font-semibold text-subtle">Delivery Method:</span>
                   </div>
                   
@@ -299,15 +299,15 @@ export default function NotificationRuleBuilder() {
         })}
 
         {rules.length === 0 && (
-          <div className="text-center py-12 border-2 border-dashed border-border rounded-xl">
+          <div className="text-center py-12 border border-border rounded-lg">
             <Workflow className="w-12 h-12 text-subtle mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-muted">No routing rules configured</h3>
+            <h3 className="text-lg font-semibold text-muted">No routing rules configured</h3>
             </div>
         )}
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

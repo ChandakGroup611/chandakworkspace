@@ -89,10 +89,10 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
     });
 
     return [
-      { name: "Tickets", value: tickets, color: "#a855f7" },
-      { name: "Tasks", value: tasks, color: "#3b82f6" },
-      { name: "Requirements", value: reqs, color: "#10b981" },
-      { name: "Workspaces", value: workspaces, color: "#f59e0b" },
+      { name: "Tickets", value: tickets, color: "var(--chart-1)" },
+      { name: "Tasks", value: tasks, color: "var(--chart-2)" },
+      { name: "Requirements", value: reqs, color: "var(--success)" },
+      { name: "Workspaces", value: workspaces, color: "var(--warning)" },
     ].filter(d => d.value > 0);
   }, [metrics]);
 
@@ -101,13 +101,13 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-background/95 border border-border/50 p-3 rounded-lg ">
+        <div className="bg-background/95 border border-border p-3 rounded-lg ">
           <p className="text-sm font-semibold mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 text-xs">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
               <span className="text-muted-foreground">{entry.name}:</span>
-              <span className="font-bold">{entry.value}</span>
+              <span className="font-semibold">{entry.value}</span>
             </div>
           ))}
         </div>
@@ -121,11 +121,11 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
       const data = payload[0].payload;
       const percentage = total > 0 ? Math.round((data.value / total) * 100) : 0;
       return (
-        <div className="bg-background/95 border border-border/50 p-3 rounded-lg ">
+        <div className="bg-background/95 border border-border p-3 rounded-lg ">
           <div className="flex items-center gap-2 text-xs">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
             <span className="text-muted-foreground">{data.name}:</span>
-            <span className="font-bold">{data.value}</span>
+            <span className="font-semibold">{data.value}</span>
             <span className="text-muted-foreground ml-1">({percentage}%)</span>
           </div>
         </div>
@@ -155,10 +155,10 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--text-muted)', opacity: 0.2 }} />
               <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-              <Bar dataKey="Tasks" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="Requirements" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="Workspaces" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="Tickets" stackId="a" fill="#a855f7" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Tasks" stackId="a" fill="var(--chart-2)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="Requirements" stackId="a" fill="var(--success)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="Workspaces" stackId="a" fill="var(--warning)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="Tickets" stackId="a" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -203,7 +203,7 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
                   <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: d.color }}></div>
                   <div className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{d.name}</div>
                 </div>
-                <div className="text-sm font-bold theme-card-structural px-2 py-0.5 rounded-md">
+                <div className="text-sm font-semibold theme-card-structural px-2 py-0.5 rounded-md">
                   {total > 0 ? Math.round((d.value/total)*100) : 0}%
                 </div>
               </div>

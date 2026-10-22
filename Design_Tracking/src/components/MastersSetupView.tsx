@@ -277,13 +277,13 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       {!isNewPackageModalOpen && !(isEditPackageModalOpen && editingPackage) && !isNewAuthorityModalOpen && (
         <>
           {/* Top Master Sub-Tab Navigation Bar & Excel Import Action */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2 rounded-2xl bg-surface border border-border shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2 rounded-lg bg-surface border border-border shadow-xs">
             <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0 text-xs">
               {[
                 { id: "PROJECTS" as MasterSubTab, label: "Projects", icon: Building2, count: parentProjects.length, color: "text-success-text" },
-                { id: "SUB_PROJECTS" as MasterSubTab, label: "Sub-projects / wings", icon: FolderTree, count: storeState.towers.length, color: "text-theme-icon" },
+                { id: "SUB_PROJECTS" as MasterSubTab, label: "Sub-projects / wings", icon: FolderTree, count: storeState.towers.length, color: "text-accent-soft-text" },
                 { id: "CONSULTANTS" as MasterSubTab, label: "Consultants", icon: Users, count: storeState.consultants.length, color: "text-info-text" },
-                { id: "PACKAGES" as MasterSubTab, label: "Package Master", icon: Tag, count: categories.length, color: "text-theme-icon" },
+                { id: "PACKAGES" as MasterSubTab, label: "Package Master", icon: Tag, count: categories.length, color: "text-accent-soft-text" },
                 { id: "SUB_PACKAGES" as MasterSubTab, label: "Sub-Packages", icon: Layers, count: storeState.packages.length, color: "text-info-text" },
                 { id: "AUTHORITIES" as MasterSubTab, label: "Authorities", icon: ShieldCheck, count: storeState.authorities.length, color: "text-warning-text" },
                 { id: "DOC_TYPES" as MasterSubTab, label: "Document types", icon: Tag, count: docTypes.length, color: "text-accent-soft-text" },
@@ -296,7 +296,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveSubTab(tab.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       isSelected
                         ? "bg-info text-white shadow-xs"
                         : "text-muted hover:text-foreground hover:bg-sunken"
@@ -323,7 +323,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   const res = DesignMasterStore.loadEyTenderMasterData();
                   toast.success(`Loaded Chandak Tender Tracker: ${res.projects} Projects, ${res.towers} Towers, ${res.packages} Sub-Packages, ${res.matrixEntries} Matrix Entries.`);
                 }}
-                className="px-3.5 py-1.5 rounded-xl border border-warning-border bg-warning-soft hover:bg-warning-soft text-warning-text text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg border border-warning-border bg-warning-soft hover:bg-warning-soft text-warning-text text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
                 title="Reload the full Chandak Tender Design Tracker R2 master dataset"
               >
                 <Sparkles className="h-3.5 w-3.5 text-warning-text" />
@@ -340,7 +340,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   setBulkImportTarget(target);
                   setIsBulkImportOpen(true);
                 }}
-                className="px-3.5 py-1.5 rounded-xl border border-info-border bg-info-soft hover:bg-info-soft text-info-text text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg border border-info-border bg-info-soft hover:bg-info-soft text-info-text text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5" />
                 <span>Import Excel (.xlsx)</span>
@@ -392,7 +392,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             {/* Top Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 className="text-sm font-bold text-foreground">Sub-package deliverables master</h4>
+                <h4 className="text-sm font-semibold text-foreground">Sub-package deliverables master</h4>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
@@ -401,7 +401,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     setBulkImportTarget("SUB_PACKAGES");
                     setIsBulkImportOpen(true);
                   }}
-                  className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                  className="px-3.5 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken text-foreground text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
                 >
                   <Upload className="h-3.5 w-3.5 text-info-text" />
                   <span>Import Sub-Packages</span>
@@ -409,7 +409,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 <button
                   type="button"
                   onClick={handleOpenAddPackage}
-                  className="px-3.5 py-1.5 rounded-xl bg-info hover:bg-info text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                  className="px-3.5 py-1.5 rounded-lg bg-info hover:bg-info text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Add sub package</span>
@@ -418,7 +418,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="p-3 rounded-2xl border border-border bg-surface shadow-xs space-y-3">
+            <div className="p-3 rounded-lg border border-border bg-surface shadow-xs space-y-3">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="relative w-full sm:w-72">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -427,7 +427,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     value={packageSearchQuery}
                     onChange={e => setPackageSearchQuery(e.target.value)}
                     placeholder="Search sub-packages by name, code…"
-                    className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
+                    className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
                   />
                 </div>
 
@@ -438,7 +438,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
               {/* Parent Package Filter Chips */}
               <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs">
-                <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
+                <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
                   <SlidersHorizontal className="h-3 w-3" />
                   <span>Parent Package:</span>
                 </span>
@@ -447,7 +447,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   onClick={() => setSelectedDisciplineFilter("ALL")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                     selectedDisciplineFilter === "ALL"
-                      ? "bg-info text-white font-bold shadow-2xs"
+                      ? "bg-info text-white font-semibold shadow-2xs"
                       : "bg-muted/40 text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -462,7 +462,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                       onClick={() => setSelectedDisciplineFilter(cat.name)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                         selectedDisciplineFilter === cat.name
-                          ? "bg-info text-white font-bold shadow-2xs"
+                          ? "bg-info text-white font-semibold shadow-2xs"
                           : "bg-muted/40 text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -479,18 +479,18 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               {filteredPackages.map(pkg => (
                 <div
                   key={pkg.id}
-                  className="p-3.5 rounded-xl border border-border bg-surface hover:border-info-border shadow-xs transition-all flex items-start justify-between gap-3"
+                  className="p-3.5 rounded-lg border border-border bg-surface hover:border-info-border shadow-xs transition-all flex items-start justify-between gap-3"
                 >
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[11px] font-mono font-bold px-1.5 py-0.2 rounded bg-info-soft text-info-text border border-info-border">
+                      <span className="text-[11px] font-mono font-semibold px-1.5 py-0.2 rounded bg-info-soft text-info-text border border-info-border">
                         {pkg.subPackageCode || pkg.packageCode || "PKG"}
                       </span>
                       <span className="text-[11px] font-semibold text-muted-foreground bg-muted/40 px-1.5 py-0.2 rounded">
                         {pkg.disciplineName}
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-foreground truncate">{pkg.subPackageName || pkg.packageName}</h5>
+                    <h5 className="text-xs font-semibold text-foreground truncate">{pkg.subPackageName || pkg.packageName}</h5>
                     {pkg.description && (
                       <p className="text-[11px] text-muted-foreground line-clamp-1">{pkg.description}</p>
                     )}
@@ -527,7 +527,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h4 className="text-sm font-bold text-foreground">Statutory authorities & NOC clearance bodies</h4>
+              <h4 className="text-sm font-semibold text-foreground">Statutory authorities & NOC clearance bodies</h4>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -536,15 +536,15 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   setBulkImportTarget("AUTHORITIES");
                   setIsBulkImportOpen(true);
                 }}
-                className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-sunken text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken text-foreground text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
-                <Upload className="h-3.5 w-3.5 text-theme-icon" />
+                <Upload className="h-3.5 w-3.5 text-accent-soft-text" />
                 <span>Import authorities (Excel)</span>
               </button>
               <button
                 type="button"
                 onClick={() => setIsNewAuthorityModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add authority</span>
@@ -556,13 +556,13 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             {storeState.authorities.map(auth => (
               <div
                 key={auth.id}
-                className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 shadow-xs transition-all flex items-start justify-between gap-3"
+                className="p-3.5 rounded-lg border border-border bg-surface hover:border-border-active shadow-xs transition-all flex items-start justify-between gap-3"
               >
                 <div className="space-y-1 min-w-0">
-                  <span className="text-[11px] font-bold px-1.5 py-0.2 rounded bg-surface text-foreground dark:text-muted-foreground border border-border">
+                  <span className="text-[11px] font-semibold px-1.5 py-0.2 rounded bg-surface text-foreground dark:text-muted-foreground border border-border">
                     {auth.category}
                   </span>
-                  <h5 className="text-xs font-bold text-foreground truncate">{auth.authorityName}</h5>
+                  <h5 className="text-xs font-semibold text-foreground truncate">{auth.authorityName}</h5>
                   <p className="text-[11px] text-muted-foreground line-clamp-1">{auth.scope}</p>
                 </div>
 
@@ -587,7 +587,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h4 className="text-sm font-bold text-foreground">Document types & doc sets master</h4>
+              <h4 className="text-sm font-semibold text-foreground">Document types & doc sets master</h4>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Classifications and folder indexing schemas for drawing sets, specifications, and dossiers.
               </p>
@@ -600,13 +600,13 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   value={docTypeSearch}
                   onChange={e => setDocTypeSearch(e.target.value)}
                   placeholder="Filter document types…"
-                  className="w-full text-xs rounded-xl bg-surface border border-border pl-8 pr-3 py-1.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                  className="w-full text-xs rounded-lg bg-surface border border-border pl-8 pr-3 py-1.5 text-foreground focus:ring-1 focus:ring-ring"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewDocTypeModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl bg-primary hover:brightness-110 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg bg-primary hover:brightness-110 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add document type</span>
@@ -624,13 +624,13 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               .map(dt => (
                 <div
                   key={dt.id}
-                  className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 shadow-xs transition-all flex items-start justify-between gap-3"
+                  className="p-3.5 rounded-lg border border-border bg-surface hover:border-border-active shadow-xs transition-all flex items-start justify-between gap-3"
                 >
                   <div className="space-y-1 min-w-0">
-                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.2 rounded bg-accent-soft text-accent-soft-text border border-border">
+                    <span className="text-[11px] font-mono font-semibold px-1.5 py-0.2 rounded bg-accent-soft text-accent-soft-text border border-border">
                       {dt.code}
                     </span>
-                    <h5 className="text-xs font-bold text-foreground truncate">{dt.name}</h5>
+                    <h5 className="text-xs font-semibold text-foreground truncate">{dt.name}</h5>
                     <p className="text-[11px] text-muted-foreground line-clamp-2">
                       {dt.description || "Core DMS classification set"}
                     </p>
@@ -649,8 +649,8 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       {/* Sub-tab 8: Backup & Templates */}
       {activeSubTab === "TEMPLATES" && (
         <div className="space-y-4 max-w-2xl">
-          <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-            <h4 className="text-sm font-bold text-foreground">Workspace state management</h4>
+          <div className="p-4 rounded-lg border border-border bg-surface space-y-3">
+            <h4 className="text-sm font-semibold text-foreground">Workspace state management</h4>
             
             <div className="flex flex-wrap gap-2 pt-2">
               <button
@@ -659,7 +659,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   setBulkImportTarget("ALL");
                   setIsBulkImportOpen(true);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-info hover:bg-info text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+                className="px-3.5 py-1.5 rounded-lg bg-info hover:bg-info text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span>Bulk import & template center</span>
@@ -676,7 +676,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   downloadAnchor.remove();
                   toast.success("Design masters JSON backup exported successfully!");
                 }}
-                className="px-3.5 py-1.5 rounded-xl border border-border bg-background hover:bg-muted text-foreground text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="h-3.5 w-3.5" />
                 <span>Export JSON backup</span>
@@ -690,7 +690,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     toast.info("Design masters reset to initial blank state.");
                   }
                 }}
-                className="px-3.5 py-1.5 rounded-xl border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg border border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Reset to blank</span>
@@ -729,28 +729,28 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
           <div className="max-w-3xl space-y-6">
             <AppCard>
               <AppCardHeader>
-                <AppCardTitle className="text-sm font-bold text-foreground">Sub-package specifications</AppCardTitle>
+                <AppCardTitle className="text-sm font-semibold text-foreground">Sub-package specifications</AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="space-y-4 text-xs">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Sub-package title / deliverable name <span className="text-danger-text">*</span></label>
+                  <label className="font-semibold text-foreground block">Sub-package title / deliverable name <span className="text-danger-text">*</span></label>
                   <input
                     type="text"
                     required
                     placeholder="e.g., structural foundation & superstructure"
                     value={newPackageName}
                     onChange={e => setNewPackageName(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border font-semibold"
+                    className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border font-semibold"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Parent package <span className="text-danger-text">*</span></label>
+                    <label className="font-semibold text-foreground block">Parent package <span className="text-danger-text">*</span></label>
                     <select
                       value={newPackageDiscipline}
                       onChange={e => setNewPackageDiscipline(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-info-border cursor-pointer"
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-info-border cursor-pointer"
                     >
                       {categories.map(cat => (
                         <option key={cat.id} value={cat.name}>{cat.name}</option>
@@ -759,25 +759,25 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Sub-package code</label>
+                    <label className="font-semibold text-foreground block">Sub-package code</label>
                     <input
                       type="text"
                       placeholder="e.g. STR-001"
                       value={newPackageCode}
                       onChange={e => setNewPackageCode(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-info-border"
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-info-border"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Scope / description</label>
+                  <label className="font-semibold text-foreground block">Scope / description</label>
                   <textarea
                     rows={3}
                     placeholder="Detailed deliverable scope, technical specifications, and milestones…"
                     value={newPackageDescription}
                     onChange={e => setNewPackageDescription(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
+                    className="w-full p-3 rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
                   />
                 </div>
               </AppCardContent>
@@ -807,27 +807,27 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
           <div className="max-w-3xl space-y-6">
             <AppCard>
               <AppCardHeader>
-                <AppCardTitle className="text-sm font-bold text-foreground">Sub-package specifications</AppCardTitle>
+                <AppCardTitle className="text-sm font-semibold text-foreground">Sub-package specifications</AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="space-y-4 text-xs">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Sub-package title / deliverable name <span className="text-danger-text">*</span></label>
+                  <label className="font-semibold text-foreground block">Sub-package title / deliverable name <span className="text-danger-text">*</span></label>
                   <input
                     type="text"
                     required
                     value={newPackageName}
                     onChange={e => setNewPackageName(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border font-semibold"
+                    className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border font-semibold"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Parent package <span className="text-danger-text">*</span></label>
+                    <label className="font-semibold text-foreground block">Parent package <span className="text-danger-text">*</span></label>
                     <select
                       value={newPackageDiscipline}
                       onChange={e => setNewPackageDiscipline(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-info-border cursor-pointer"
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-info-border cursor-pointer"
                     >
                       {categories.map(cat => (
                         <option key={cat.id} value={cat.name}>{cat.name}</option>
@@ -836,23 +836,23 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Sub-package code</label>
+                    <label className="font-semibold text-foreground block">Sub-package code</label>
                     <input
                       type="text"
                       value={newPackageCode}
                       onChange={e => setNewPackageCode(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-info-border"
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-info-border"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Scope / description</label>
+                  <label className="font-semibold text-foreground block">Scope / description</label>
                   <textarea
                     rows={3}
                     value={newPackageDescription}
                     onChange={e => setNewPackageDescription(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
+                    className="w-full p-3 rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-info-border"
                   />
                 </div>
               </AppCardContent>
@@ -867,7 +867,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
           title="Add statutory authority"
           category="Statutory Authority Directory"
           icon={ShieldCheck}
-          iconBg="bg-surface text-theme-icon dark:text-muted-foreground"
+          iconBg="bg-surface text-accent-soft-text dark:text-muted-foreground"
           description="Register civic, municipal, or regulatory authority for compliance and NOC tracking."
           breadcrumbs={[
             { label: "Design Desk" },
@@ -886,29 +886,29 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
           <div className="max-w-3xl space-y-6">
             <AppCard>
               <AppCardHeader>
-                <AppCardTitle className="text-sm font-bold text-foreground">Authority scope details</AppCardTitle>
+                <AppCardTitle className="text-sm font-semibold text-foreground">Authority scope details</AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="space-y-4 text-xs">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Authority / regulatory body name <span className="text-danger-text">*</span></label>
+                  <label className="font-semibold text-foreground block">Authority / regulatory body name <span className="text-danger-text">*</span></label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Chief fire officer (CFO) / tree authority / MahaRERA"
                     value={newAuthorityName}
                     onChange={e => setNewAuthorityName(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring font-semibold"
+                    className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring font-semibold"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Scope / category description</label>
+                  <label className="font-semibold text-foreground block">Scope / category description</label>
                   <input
                     type="text"
                     placeholder="e.g. Fire fighting & life safety NOC / environmental clearance"
                     value={newAuthorityScope}
                     onChange={e => setNewAuthorityScope(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
+                    className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </AppCardContent>
@@ -938,11 +938,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       {/* QUICK ADD DOCUMENT TYPE MODAL IN MASTERS */}
       {isNewDocTypeModalOpen && (
         <div className="fixed inset-0 z-70 bg-[var(--overlay)] flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-xl shadow-lg max-w-md w-full overflow-hidden animate-in zoom-in-95">
+          <div className="bg-surface border border-border rounded-lg shadow-lg max-w-md w-full overflow-hidden animate-in zoom-in-95">
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-accent-soft-text" />
-                <h3 className="text-sm font-bold text-foreground">Add document type master</h3>
+                <h3 className="text-sm font-semibold text-foreground">Add document type master</h3>
               </div>
               <button aria-label="Close"
                 type="button"
@@ -955,7 +955,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
             <form onSubmit={handleCreateDocType} className="p-4 space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Document type name *
                 </label>
                 <input
@@ -980,7 +980,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </div>
 
               <div>
-                <label className="text-xs font-bold text-muted-foreground">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Type code *
                 </label>
                 <input
@@ -996,7 +996,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </div>
 
               <div>
-                <label className="text-xs font-bold text-muted-foreground">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Description
                 </label>
                 <textarea
@@ -1019,7 +1019,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 <button
                   type="submit"
                   disabled={isCreatingDocType || !newDocTypeName.trim()}
-                  className="px-4 py-1.5 text-xs font-bold rounded-lg bg-primary hover:brightness-110 text-white shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:brightness-110 text-white shadow-xs disabled:opacity-50 flex items-center gap-1.5"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>{isCreatingDocType ? "Saving..." : "Create Master"}</span>

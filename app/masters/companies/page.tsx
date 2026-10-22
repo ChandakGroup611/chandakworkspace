@@ -197,10 +197,10 @@ export default function CompanyMasterPage() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface"
       }`}>
-        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
           <Lock className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
+        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
         <p className="text-xs text-muted">You do not have capabilities to view the Company Master.</p>
       </div>
     );
@@ -213,8 +213,8 @@ export default function CompanyMasterPage() {
       <div className="flex items-center justify-between pb-4 border-b border-border">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Building2 className={`h-6 w-6 text-theme-icon`} />
-            <h1 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Company master</h1>
+            <Building2 className={`h-6 w-6 text-accent-soft-text`} />
+            <h1 className={`text-2xl font-semibold tracking-tight ${"text-foreground"}`}>Company master</h1>
             <AppBadge variant="info">Global enterprise</AppBadge>
           </div>
           <p className="text-xs text-muted">Manage client engagements, sister organisations, and enterprise structures.</p>
@@ -244,13 +244,13 @@ export default function CompanyMasterPage() {
       </div>
 
       {errorAlert && (
-        <div className="p-4 rounded-xl bg-danger/10 border border-danger-border text-danger-text text-sm flex items-center gap-2">
+        <div className="p-4 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-sm flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" /> {errorAlert}
         </div>
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-success/10 border border-success-border text-success-text text-sm flex items-center gap-2">
+        <div className="p-4 rounded-lg bg-success-soft border border-success-border text-success-text text-sm flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4" /> {successAlert}
         </div>
       )}
@@ -285,10 +285,10 @@ export default function CompanyMasterPage() {
                 <AppTableRow key={c.id} className={`border-b last:border-0 transition-colors ${
                   "border-border hover:bg-elevated"
                 }`}>
-                  <AppTableCell className="py-3 px-4 font-mono text-xs font-bold text-theme-icon">{c.code}</AppTableCell>
+                  <AppTableCell className="py-3 px-4 font-mono text-xs font-semibold text-accent-soft-text">{c.code}</AppTableCell>
                   <AppTableCell className="py-3 px-4">
                     <div className="flex flex-col">
-                      <span className={`text-sm font-bold ${"text-foreground"}`}>{c.name}</span>
+                      <span className={`text-sm font-semibold ${"text-foreground"}`}>{c.name}</span>
                       <span className="text-xs text-muted">{c.short_name}</span>
                     </div>
                   </AppTableCell>
@@ -305,13 +305,13 @@ export default function CompanyMasterPage() {
                   </AppTableCell>
                   <AppTableCell className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-danger hover:bg-danger/10' : 'text-success hover:bg-success/10'}`}>
+                      <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-danger-text hover:bg-danger-soft' : 'text-success-text hover:bg-success-soft'}`}>
                         {c.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                       </AppButton>
-                      <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-theme-icon hover:bg-accent-soft transition-colors">
+                      <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-accent-soft-text hover:bg-accent-soft transition-colors">
                         Edit
                       </AppButton>
-                      <AppButton aria-label="Delete" variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger/10 transition-colors">
+                      <AppButton aria-label="Delete" variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-danger-text hover:bg-danger-soft transition-colors">
                         <Trash2 className="h-4 w-4" />
                       </AppButton>
                     </div>
@@ -332,40 +332,40 @@ export default function CompanyMasterPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 bg-surface/60 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
-          <AppCard className="w-full max-w-xl p-6 shadow-lg border-theme-btn-primary/20">
-            <h2 className="text-xl font-bold text-foreground mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
+          <AppCard className="w-full max-w-xl p-6 shadow-lg border-border-active">
+            <h2 className="text-xl font-semibold text-foreground mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm text-muted font-bold">Company code</label>
+                  <label className="text-sm text-muted font-semibold">Company code</label>
                   <AppInput disabled placeholder="[Auto-Generated]" value={editId ? formCode : "[Auto-Generated]"} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm text-muted font-bold">Company name *</label>
+                  <label className="text-sm text-muted font-semibold">Company name *</label>
                   <AppInput required placeholder="Acme corporation" value={formName} onChange={e => setFormName(e.target.value)} />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm text-muted font-bold">Short name</label>
+                  <label className="text-sm text-muted font-semibold">Short name</label>
                   <AppInput placeholder="Acme" value={formShortName} onChange={e => setFormShortName(e.target.value)} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm text-muted font-bold">Email address</label>
+                  <label className="text-sm text-muted font-semibold">Email address</label>
                   <AppInput type="email" placeholder="contact@acme.com" value={formEmail} onChange={e => setFormEmail(e.target.value)} />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm text-muted font-bold">Contact number</label>
+                <label className="text-sm text-muted font-semibold">Contact number</label>
                 <AppInput placeholder="+1 (555) 000-0000" value={formContact} onChange={e => setFormContact(e.target.value)} />
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm text-muted font-bold">Physical address</label>
+                <label className="text-sm text-muted font-semibold">Physical address</label>
                 <textarea 
-                  className="w-full bg-surface border border-border dark:border-border rounded-xl p-3 text-sm text-foreground focus:border-theme-btn-primary focus:outline-none"
+                  className="w-full bg-surface border border-border dark:border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:outline-none"
                   rows={2}
                   value={formAddress}
                   onChange={e => setFormAddress(e.target.value)}
@@ -373,9 +373,9 @@ export default function CompanyMasterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm text-muted font-bold">Remarks</label>
+                <label className="text-sm text-muted font-semibold">Remarks</label>
                 <textarea 
-                  className="w-full bg-surface border border-border dark:border-border rounded-xl p-3 text-sm text-foreground focus:border-theme-btn-primary focus:outline-none"
+                  className="w-full bg-surface border border-border dark:border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:outline-none"
                   rows={2}
                   value={formRemarks}
                   onChange={e => setFormRemarks(e.target.value)}
@@ -383,7 +383,7 @@ export default function CompanyMasterPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-                <AppButton variant="outline" type="button" onClick={() => setShowModal(false)} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
+                <AppButton variant="outline" type="button" onClick={() => setShowModal(false)} className="text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">Discard</AppButton>
                 <AppButton variant="primary" type="submit">Save company record</AppButton>
               </div>
             </form>

@@ -107,7 +107,7 @@ export default function CustomFieldsConfigurator() {
     <div className="space-y-6 pt-4 border-t border-border">
       {/* Toast alert notice */}
       {successToast && (
-        <div id="cf-toast-notice" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text px-4 py-3  animate-in slide-in-from-bottom-5 duration-300">
+        <div id="cf-toast-notice" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-3  animate-in slide-in-from-bottom-5 duration-300">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span className="text-xs font-semibold">{successToast}</span>
         </div>
@@ -117,7 +117,7 @@ export default function CustomFieldsConfigurator() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-theme-icon animate-pulse" />
+            <Database className="h-4 w-4 text-accent-soft-text animate-pulse" />
             <h2 className="text-sm font-semibold text-muted">
               Global custom fields configuration engine
             </h2>
@@ -134,7 +134,7 @@ export default function CustomFieldsConfigurator() {
         {/* Left Side Span 4: Module selection tabs & form definition addition */}
         <div className="lg:col-span-4 space-y-6 flex flex-col">
           <AppCard className="p-4 space-y-3">
-            <span className="text-xs font-bold text-muted block">
+            <span className="text-xs font-semibold text-muted block">
               Target entity scope
             </span>
 
@@ -147,10 +147,10 @@ export default function CustomFieldsConfigurator() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveModule(tab.id)}
-                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural border-theme-btn-primary/40 text-white shadow-md font-bold" : "border-border hover:border-border text-muted hover:text-muted" }`}
+                    className={`w-full p-3 rounded-lg text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural border-border-active text-white shadow-md font-semibold" : "border-border hover:border-border text-muted hover:text-muted" }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <div className={`p-1.5 rounded-lg ${isActive ? "bg-theme-btn-primary text-theme-btn-primary-text" : "bg-surface/5 text-muted"}`}>
+                      <div className={`p-1.5 rounded-lg ${isActive ? "bg-primary text-primary-foreground" : "bg-surface/5 text-muted"}`}>
                         <IconComponent className="h-3.5 w-3.5" />
                       </div>
                       <span className="text-xs truncate">{tab.label}</span>
@@ -165,14 +165,14 @@ export default function CustomFieldsConfigurator() {
           </AppCard>
 
           {/* New field definition append form */}
-          <AppCard className="p-5 space-y-4 border-theme-btn-primary/20 bg-gradient-to-b from-info-soft via-transparent to-transparent">
+          <AppCard className="p-5 space-y-4 border-border-active bg-gradient-to-b from-info-soft via-transparent to-transparent">
             <span className="text-xs font-semibold text-foreground block pb-2 border-b border-border">
               Append schema definition
             </span>
 
             <form onSubmit={handleAddField} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-sm font-bold text-muted block">Field display label</label>
+                <label className="text-sm font-semibold text-muted block">Field display label</label>
                 <AppInput 
                   placeholder="e.g. Server kernel patch ID" 
                   value={newLabel}
@@ -187,22 +187,22 @@ export default function CustomFieldsConfigurator() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-bold text-muted block">Internal mapping key</label>
+                <label className="text-sm font-semibold text-muted block">Internal mapping key</label>
                 <AppInput 
                   placeholder="e.g. kernel_patch_id" 
                   value={newKey}
                   onChange={(e) => setNewKey(e.target.value)}
-                  className="h-10 font-mono text-[14px] text-theme-icon"
+                  className="h-10 font-mono text-[14px] text-accent-soft-text"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-sm font-bold text-muted block">Payload type</label>
+                  <label className="text-sm font-semibold text-muted block">Payload type</label>
                   <select 
                     value={newType}
                     onChange={(e: any) => setNewType(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg theme-card-structural border-border text-[14px] text-muted focus:outline-none focus:border-theme-btn-primary/50"
+                    className="w-full h-10 px-3 rounded-lg theme-card-structural border-border text-[14px] text-muted focus:outline-none focus:border-border-active"
                   >
                     <option value="text" className="bg-background">Text string</option>
                     <option value="number" className="bg-background">Numeric scalar</option>
@@ -219,14 +219,14 @@ export default function CustomFieldsConfigurator() {
                       onChange={(e) => setNewRequired(e.target.checked)}
                       className="rounded accent-primary" 
                     />
-                    <span className="text-[0.8rem] font-bold text-muted">Mandatory</span>
+                    <span className="text-[0.8rem] font-semibold text-muted">Mandatory</span>
                   </label>
                 </div>
               </div>
 
               {newType === "select" && (
                 <div className="space-y-1 animate-in fade-in duration-200">
-                  <label className="text-sm font-bold text-muted block">Dropdown options string array</label>
+                  <label className="text-sm font-semibold text-muted block">Dropdown options string array</label>
                   <AppInput 
                     placeholder="Comma-separated items…" 
                     value={newOptionsStr}
@@ -237,7 +237,7 @@ export default function CustomFieldsConfigurator() {
                 </div>
               )}
 
-              <AppButton variant="primary" size="md" type="submit" className="w-full mt-2 font-bold">
+              <AppButton variant="primary" size="md" type="submit" className="w-full mt-2 font-semibold">
                 <Plus className="h-3.5 w-3.5 mr-1" />
                 <span>Inject field mapping</span>
               </AppButton>
@@ -251,10 +251,10 @@ export default function CustomFieldsConfigurator() {
             <AppCardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
               <div className="space-y-0.5">
                 <AppCardTitle className="text-foreground">
-                  Active Dictionaries: <strong className="text-theme-icon capitalize">{activeModule}</strong>
+                  Active Dictionaries: <strong className="text-accent-soft-text capitalize">{activeModule}</strong>
                 </AppCardTitle>
                 </div>
-              <span className="text-xs font-mono font-bold theme-card-structural px-2 py-0.5 rounded text-muted border-border">
+              <span className="text-xs font-mono font-semibold theme-card-structural px-2 py-0.5 rounded text-muted border-border">
                 Target schema: JSONB map
               </span>
             </AppCardHeader>
@@ -276,7 +276,7 @@ export default function CustomFieldsConfigurator() {
                       <AppTableRow key={fItem.id}>
                         <AppTableCell>
                           <div className="space-y-0.5">
-                            <span className="font-bold text-xs text-foreground block">{fItem.field_label}</span>
+                            <span className="font-semibold text-xs text-foreground block">{fItem.field_label}</span>
                             {fItem.field_type === "select" && fItem.options.length > 0 && (
                               <span className="text-xs text-muted italic block truncate max-w-[180px]">
                                 Ops: {fItem.options.join(", ")}
@@ -284,7 +284,7 @@ export default function CustomFieldsConfigurator() {
                             )}
                           </div>
                         </AppTableCell>
-                        <AppTableCell className="font-mono text-xs text-theme-icon font-semibold">
+                        <AppTableCell className="font-mono text-xs text-accent-soft-text font-semibold">
                           {fItem.field_key}
                         </AppTableCell>
                         <AppTableCell>
@@ -301,7 +301,7 @@ export default function CustomFieldsConfigurator() {
                           <AppButton aria-label="Drop field dictionary key" variant="secondary"
                             type="button"
                             onClick={() => handleDeleteField(fItem.id)}
-                            className="p-1 rounded text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                            className="p-1 rounded text-muted hover:text-danger-text hover:bg-danger-soft transition-colors"
                             title="Drop field dictionary key"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -321,7 +321,7 @@ export default function CustomFieldsConfigurator() {
             </div>
 
             <div className="p-4 theme-card-structural border-t border-border space-y-2">
-              <span className="text-xs font-bold text-muted block">End-to-end JSONB data capture simulation</span>
+              <span className="text-xs font-semibold text-muted block">End-to-end JSONB data capture simulation</span>
               <p className="text-[0.8rem] text-muted leading-snug">
                 Records inside the active view render dynamic input strips matching these declared payload parameters. Storage calls append directly to PostgreSQL database tuples automatically.
               </p>

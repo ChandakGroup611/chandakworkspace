@@ -109,26 +109,26 @@ export default function ProviderDashboard() {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-theme-icon" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent-soft-text" /></div>;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-card border border-border p-4 rounded-xl shadow-sm">
+      <div className="flex justify-between items-center bg-card border border-border p-4 rounded-lg shadow-sm">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Routing infrastructure</h2>
+          <h2 className="text-lg font-semibold text-foreground">Routing infrastructure</h2>
           </div>
       </div>
 
       <div className="space-y-6">
         {providers.map((prov) => (
-          <div key={prov.id || prov.priority_level} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+          <div key={prov.id || prov.priority_level} className="bg-card border border-border rounded-lg overflow-hidden shadow-sm">
             <div className={`p-4 border-b border-border flex items-center justify-between ${prov.priority_level === 1 ? 'bg-accent-soft' : 'bg-muted/30'}`}>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-accent-soft' : 'bg-muted'}`}>
-                  <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-theme-icon' : 'text-muted-foreground'}`} />
+                  <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-accent-soft-text' : 'text-muted-foreground'}`} />
                 </div>
                 <div>
-                  <h3 className={`font-bold ${prov.priority_level === 1 ? 'text-theme-icon' : 'text-foreground'}`}>
+                  <h3 className={`font-semibold ${prov.priority_level === 1 ? 'text-accent-soft-text' : 'text-foreground'}`}>
                     {prov.priority_level === 1 ? 'PRIMARY DISPATCH' : `FALLBACK LEVEL ${prov.priority_level - 1}`}
                   </h3>
                   <p className="text-xs text-muted-foreground">
@@ -140,12 +140,12 @@ export default function ProviderDashboard() {
                 <select 
                   value={prov.provider_name}
                   onChange={(e) => updateProviderField(prov.priority_level, "provider_name", e.target.value)}
-                  className="bg-background border border-border rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:border-theme-btn-primary"
+                  className="bg-background border border-border rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:border-primary"
                 >
                   {PROVIDER_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                 </select>
                 <label className="flex items-center gap-2 cursor-pointer ml-4">
-                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-theme-btn-primary' : 'bg-muted-foreground/30'}`}>
+                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${prov.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
@@ -154,7 +154,7 @@ export default function ProviderDashboard() {
                     checked={prov.is_active} 
                     onChange={(e) => updateProviderField(prov.priority_level, "is_active", e.target.checked)}
                   />
-                  <span className="text-xs font-bold text-muted-foreground">Active</span>
+                  <span className="text-xs font-semibold text-muted-foreground">Active</span>
                 </label>
               </div>
             </div>
@@ -163,43 +163,43 @@ export default function ProviderDashboard() {
               {(prov.provider_name === "SMTP" || prov.provider_name === "Microsoft 365") && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground">SMTP host</label>
+                    <label className="text-sm font-semibold text-muted-foreground">SMTP host</label>
                     <input 
                       type="text" 
                       value={prov.config.host || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "host", e.target.value)}
-                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                       placeholder="smtp.office365.com"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground">SMTP port</label>
+                    <label className="text-sm font-semibold text-muted-foreground">SMTP port</label>
                     <input 
                       type="number" 
                       value={prov.config.port || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "port", e.target.value)}
-                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                       placeholder="587"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground">Username / email</label>
+                    <label className="text-sm font-semibold text-muted-foreground">Username / email</label>
                     <input 
                       type="text" 
                       value={prov.config.username || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "username", e.target.value)}
-                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                       placeholder="noreply@enterprise.com"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground">Password / app password</label>
+                    <label className="text-sm font-semibold text-muted-foreground">Password / app password</label>
                     <div className="relative">
                       <input 
                         type="password" 
                         value={prov.config.password || ""}
                         onChange={(e) => updateProviderConfig(prov.priority_level, "password", e.target.value)}
-                        className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                        className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-primary"
                         placeholder="••••••••"
                       />
                       <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
@@ -210,19 +210,19 @@ export default function ProviderDashboard() {
 
               {(prov.provider_name === "Resend" || prov.provider_name === "SendGrid") && (
                 <div className="md:col-span-2 space-y-2">
-                  <label className="text-sm font-bold text-muted-foreground">API key</label>
+                  <label className="text-sm font-semibold text-muted-foreground">API key</label>
                   <div className="relative">
                     <input 
                       type="password" 
                       value={prov.config.api_key || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "api_key", e.target.value)}
-                      className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-primary"
                       placeholder="re_..."
                     />
                     <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3 text-warning" /> Keys are encrypted at rest.
+                    <ShieldAlert className="w-3 h-3 text-warning-text" /> Keys are encrypted at rest.
                   </p>
                 </div>
               )}
@@ -233,19 +233,19 @@ export default function ProviderDashboard() {
                 <AppButton 
                   onClick={() => handleTestConnection(prov)}
                   disabled={testingId === (prov.id || prov.priority_level.toString())}
-                  className="flex items-center gap-2 bg-background hover:bg-surface-hover text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border disabled:opacity-50"
+                  className="flex items-center gap-2 bg-background hover:bg-surface-hover text-foreground px-4 py-1.5 rounded text-sm font-semibold transition-colors border border-border disabled:opacity-50"
                 >
                   {testingId === (prov.id || prov.priority_level.toString()) ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Zap className="w-4 h-4 text-warning" />
+                    <Zap className="w-4 h-4 text-warning-text" />
                   )}
                   {testingId === (prov.id || prov.priority_level.toString()) ? 'Testing...' : 'Test Connection'}
                 </AppButton>
               )}
               <AppButton 
                 onClick={() => handleSave(prov)}
-                className="flex items-center gap-2 bg-theme-btn-primary hover:opacity-90/90 text-theme-btn-primary-text px-4 py-1.5 rounded text-sm font-bold transition-colors shadow-sm"
+                className="flex items-center gap-2 bg-primary hover:opacity-90/90 text-primary-foreground px-4 py-1.5 rounded text-sm font-semibold transition-colors shadow-sm"
               >
                 <Save className="w-4 h-4" /> Save details
               </AppButton>
@@ -255,7 +255,7 @@ export default function ProviderDashboard() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : toastMsg.type === 'warning' ? 'bg-warning' : 'bg-theme-btn-primary'} text-theme-btn-primary-text`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : toastMsg.type === 'warning' ? 'bg-warning' : 'bg-primary'} text-primary-foreground`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

@@ -214,7 +214,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
     >
       <div className="space-y-6 max-w-4xl">
         {uploadError && (
-          <div className="p-3.5 rounded-xl border border-danger-border bg-danger-soft text-danger-text text-xs font-semibold flex items-center gap-2">
+          <div className="p-3.5 rounded-lg border border-danger-border bg-danger-soft text-danger-text text-xs font-semibold flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{uploadError}</span>
           </div>
@@ -222,8 +222,8 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
 
         {/* Section 1: Project & Discipline Specs */}
         <AppCard className="border-border shadow-xs">
-          <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-            <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+          <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+            <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
               <Building2 className="h-4 w-4 text-success-text" />
               <span>Project & discipline classification</span>
             </AppCardTitle>
@@ -231,11 +231,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           <AppCardContent className="p-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Target project *</label>
+                <label className="text-xs font-semibold text-foreground">Target project *</label>
                 <select
                   value={project}
                   onChange={(e) => setProject(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-primary font-semibold"
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-primary font-semibold"
                 >
                   {projects.map(p => (
                     <option key={p.id} value={p.name}>{p.name}</option>
@@ -244,11 +244,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Engineering discipline *</label>
+                <label className="text-xs font-semibold text-foreground">Engineering discipline *</label>
                 <select
                   value={discipline}
                   onChange={(e) => setDiscipline(e.target.value as DesignDiscipline)}
-                  className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-semibold cursor-pointer"
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-semibold cursor-pointer"
                 >
                   <option value="Architectural">Architectural (General Arrangement)</option>
                   <option value="Structural">Structural (RCC & Steel)</option>
@@ -266,8 +266,8 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
 
         {/* Section 2: Drawing Identity & Revision Details */}
         <AppCard className="border-border shadow-xs">
-          <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-            <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+          <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+            <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
               <Tag className="h-4 w-4 text-success-text" />
               <span>Drawing sheet identification</span>
             </AppCardTitle>
@@ -275,74 +275,74 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           <AppCardContent className="p-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-2 space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Drawing sheet code *</label>
+                <label className="text-xs font-semibold text-foreground">Drawing sheet code *</label>
                 <input
                   type="text"
                   required
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="e.g. AR-T1-TYP-101"
-                  className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Revision *</label>
+                <label className="text-xs font-semibold text-foreground">Revision *</label>
                 <input
                   type="text"
                   required
                   value={revision}
                   onChange={(e) => setRevision(e.target.value)}
                   placeholder="e.g. R0, R1"
-                  className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Drawing title / description *</label>
+              <label className="text-xs font-semibold text-foreground">Drawing title / description *</label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Tower 1 - typical floor architectural general arrangement plan"
-                className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Consultant / firm author</label>
+                <label className="text-xs font-semibold text-foreground">Consultant / firm author</label>
                 <input
                   type="text"
                   value={consultant}
                   onChange={(e) => setConsultant(e.target.value)}
                   placeholder="e.g. Hafeez contractor / MEP design partners"
-                  className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">File size indicator</label>
+                <label className="text-xs font-semibold text-foreground">File size indicator</label>
                 <input
                   type="text"
                   value={fileSize}
                   onChange={(e) => setFileSize(e.target.value)}
                   placeholder="Auto-calculated on attachment (e.g. 18.4 MB)"
-                  className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-mono"
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-mono"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Revision change summary & markup notes</label>
+              <label className="text-xs font-semibold text-foreground">Revision change summary & markup notes</label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Detail key structural revisions, grid changes, clash resolution fixes…"
-                className="w-full rounded-xl border border-border bg-background p-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
+                className="w-full rounded-lg border border-border bg-background p-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
               />
             </div>
           </AppCardContent>
@@ -350,8 +350,8 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
 
         {/* Section 3: Interactive File Attachment Dropzone with Zero Blind Uploads */}
         <AppCard className="border-border shadow-xs">
-          <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-            <AppCardTitle className="text-sm font-bold flex items-center justify-between">
+          <AppCardHeader className="bg-surface/50 border-b border-border pb-3">
+            <AppCardTitle className="text-sm font-semibold flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-success-text" />
                 <span>Digital CAD / PDF file attachment</span>
@@ -380,17 +380,17 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`p-8 rounded-2xl border-2 border-dashed transition-all text-center space-y-3 cursor-pointer ${
+                className={`p-8 rounded-lg border-2 border-dashed transition-all text-center space-y-3 cursor-pointer ${
                   isDragging
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-primary/50 hover:bg-muted/10 bg-muted/5"
                 }`}
               >
-                <div className="h-12 w-12 rounded-2xl bg-success-soft text-success-text flex items-center justify-center mx-auto border border-success-border">
+                <div className="h-12 w-12 rounded-lg bg-success-soft text-success-text flex items-center justify-center mx-auto border border-success-border">
                   <Upload className="h-6 w-6" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-foreground">
+                  <div className="text-sm font-semibold text-foreground">
                     Click to browse or drag and drop drawing file
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
@@ -399,13 +399,13 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-xl border border-border bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 rounded-lg border border-border bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-10 w-10 rounded-xl bg-success-soft text-success-text flex items-center justify-center shrink-0 border border-success-border">
+                  <div className="h-10 w-10 rounded-lg bg-success-soft text-success-text flex items-center justify-center shrink-0 border border-success-border">
                     <Paperclip className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-foreground truncate select-all">
+                    <div className="text-xs font-semibold text-foreground truncate select-all">
                       {selectedFile.name}
                     </div>
                     <div className="text-[11px] text-muted-foreground font-mono flex items-center gap-2 mt-0.5">

@@ -154,7 +154,7 @@ function MastersPageContent() {
   const [formAssetTag, setFormAssetTag] = useState("");
   const [formModule, setFormModule] = useState("tickets");
   const [formScopeId, setFormScopeId] = useState<string | number | null>("e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1");
-  const [formColor, setFormColor] = useState<string>("#808080");
+  const [formColor, setFormColor] = useState<string>("#808080"); // ui-audit-ignore colour-picker default must be a hex value
 
   const searchParams = useSearchParams();
   useEffect(() => {
@@ -294,7 +294,7 @@ function MastersPageContent() {
     setFormDesc("");
     setFormAssetTag("");
     setFormSlaMinutes(120);
-    setFormColor("#808080");
+    setFormColor("#808080"); // ui-audit-ignore colour-picker default must be a hex value
   }, [activeTab]);
 
   useEffect(() => {
@@ -352,7 +352,7 @@ function MastersPageContent() {
     setFormAssetTag("");
     setFormModule("tickets");
     setFormScopeId(currentConfig.scopeId || null);
-    setFormColor("#808080");
+    setFormColor("#808080"); // ui-audit-ignore colour-picker default must be a hex value
     setShowModal(true);
   };
 
@@ -373,7 +373,7 @@ function MastersPageContent() {
     setFormAssetTag(rec.asset_tag || "");
     setFormModule(rec.module || "tickets");
     setFormScopeId(rec.scope_id || null);
-    setFormColor(rec.status_color || rec.priority_color || "#808080");
+    setFormColor(rec.status_color || rec.priority_color || "#808080"); // ui-audit-ignore colour-picker default must be a hex value
     setShowModal(true);
   };
 
@@ -552,10 +552,10 @@ function MastersPageContent() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="p-4 rounded-full bg-danger/10 border border-danger-border text-danger">
+        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
           <Lock className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold">Access denied</h2>
+        <h2 className="text-xl font-semibold">Access denied</h2>
       </div>
     );
   }
@@ -579,7 +579,7 @@ function MastersPageContent() {
             <AppButton 
               variant="outline" 
               size="sm" 
-              leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-theme-icon' : ''}`} />}
+              leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-accent-soft-text' : ''}`} />}
               onClick={fetchRecords}
             >
               Refresh
@@ -599,8 +599,8 @@ function MastersPageContent() {
 
       {/* Global Event Trigger Banners */}
       {errorAlert && (
-        <div className="p-4 rounded-xl bg-danger/10 border border-danger-border flex items-start gap-3 animate-in fade-in-20">
-          <AlertTriangle className="h-4 w-4 text-danger dark:text-danger shrink-0 mt-0.5" />
+        <div className="p-4 rounded-lg bg-danger-soft border border-danger-border flex items-start gap-3 animate-in fade-in-20">
+          <AlertTriangle className="h-4 w-4 text-danger-text dark:text-danger-text shrink-0 mt-0.5" />
           <div className="flex-1 text-xs text-danger-text">
             {errorAlert}
           </div>
@@ -611,9 +611,9 @@ function MastersPageContent() {
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-success/10 border border-success-border flex items-center justify-between text-xs text-success-text animate-in fade-in-20">
+        <div className="p-4 rounded-lg bg-success-soft border border-success-border flex items-center justify-between text-xs text-success-text animate-in fade-in-20">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-success dark:text-success" />
+            <CheckCircle2 className="h-4 w-4 text-success-text dark:text-success-text" />
             <span>{successAlert}</span>
           </div>
           <AppButton aria-label="Close" variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-foreground">
@@ -626,7 +626,7 @@ function MastersPageContent() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
         {/* Mobile Navigation Controller (<1024px) */}
         <div className="block lg:hidden space-y-3">
-          <div className="p-1 rounded-xl grid grid-cols-3 sm:grid-cols-6 gap-1 text-xs font-bold tracking-tight bg-elevated/80 text-muted">
+          <div className="p-1 rounded-lg grid grid-cols-3 sm:grid-cols-6 gap-1 text-xs font-semibold tracking-tight bg-sunken text-muted">
             {[
               { id: "ALL", label: "All" },
               { id: "IT INFRA", label: "IT Infra" },
@@ -649,7 +649,7 @@ function MastersPageContent() {
                   }}
                   className={`py-1.5 px-2 rounded-lg text-center transition-all truncate text-xs ${
                     isSelected
-                      ? "bg-surface text-theme-icon shadow-sm ring-1 ring-border/50 font-bold"
+                      ? "bg-surface text-accent-soft-text shadow-sm ring-1 ring-border/50 font-semibold"
                       : "hover:text-foreground hover:bg-surface/50"
                   }`}
                 >
@@ -666,7 +666,7 @@ function MastersPageContent() {
                 setActiveTab(e.target.value);
                 setSearchQuery("");
               }}
-              className="w-full text-xs font-bold p-2.5 rounded-xl border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+              className="w-full text-xs font-semibold p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-ring outline-none cursor-pointer"
             >
               {MASTER_TABLES.filter(t => activeCategoryFilter === "ALL" || t.category === activeCategoryFilter).map(tab => (
                 <option key={tab.id} value={tab.id}>
@@ -682,8 +682,8 @@ function MastersPageContent() {
           <AppCard className="flex-1 p-4 space-y-4 flex flex-col min-h-0 overflow-hidden border-none shadow-none bg-surface/50">
             
             {/* Category Tier Selector Tabs */}
-            <div className={`p-1 rounded-xl grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs font-bold tracking-tight ${
-              "bg-elevated/80 text-muted"
+            <div className={`p-1 rounded-lg grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs font-semibold tracking-tight ${
+              "bg-sunken text-muted"
             }`}>
               {[
                 { id: "ALL", label: "All configs" },
@@ -708,7 +708,7 @@ function MastersPageContent() {
                     }}
                     className={`py-1.5 px-2 rounded-lg text-center transition-all truncate ${
                       isSelected
-                        ? ("bg-surface text-theme-icon shadow-sm ring-1 ring-border/50")
+                        ? ("bg-surface text-accent-soft-text shadow-sm ring-1 ring-border/50")
                         : ("hover:text-foreground hover:bg-surface/50")
                     }`}
                   >
@@ -729,8 +729,8 @@ function MastersPageContent() {
                 return (
                   <div key={groupCategory} className="space-y-1.5 mb-4">
                     <div className="flex items-center gap-2 px-1 pb-1">
-                      <span className={`text-[11px] font-bold ${
-                        "text-theme-icon opacity-80"
+                      <span className={`text-[11px] font-semibold ${
+                        "text-accent-soft-text opacity-80"
                       }`}>
                         {groupCategory}
                       </span>
@@ -747,25 +747,25 @@ function MastersPageContent() {
                             setActiveTab(tab.id);
                             setSearchQuery("");
                           }}
-                          className={`w-full p-3 rounded-xl border text-left transition-all duration-300 cursor-pointer flex items-start gap-3 group relative overflow-hidden ${
+                          className={`w-full p-3 rounded-lg border text-left transition-all duration-300 cursor-pointer flex items-start gap-3 group relative overflow-hidden ${
                             isActive 
-                              ? "theme-card-structural border-theme-btn-primary/30 ring-1 ring-theme-btn-primary/10 shadow-[0_0_15px_rgba(var(--theme-accent-raw),0.1)]" 
+                              ? "theme-card-structural border-border-active ring-1 ring-ring" 
                               : "bg-surface/40 border-transparent hover:bg-elevated hover:border-border/40 hover:shadow-sm"
                           }`}
                         >
                           {isActive && (
-                            <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-theme-btn-primary to-theme-btn-secondary shadow-[0_0_10px_rgba(var(--theme-accent-raw),0.8)]" />
+                            <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-theme-btn-primary to-theme-btn-secondary" />
                           )}
-                          <div className={`p-2.5 rounded-xl mt-0.5 transition-colors ${
+                          <div className={`p-2.5 rounded-lg mt-0.5 transition-colors ${
                             isActive 
-                              ? "bg-accent-soft text-theme-icon" 
-                              : "bg-elevated/80 text-muted group-hover:text-foreground group-hover:bg-surface"
+                              ? "bg-accent-soft text-accent-soft-text" 
+                              : "bg-sunken text-muted group-hover:text-foreground group-hover:bg-surface"
                           }`}>
                             <IconComponent className="h-4 w-4 shrink-0" />
                           </div>
                           <div className="space-y-1 flex-1 min-w-0 pr-1">
                             <div className="flex items-center justify-between gap-2">
-                              <span className={`text-[13px] font-bold tracking-tight truncate block ${
+                              <span className={`text-[13px] font-semibold tracking-tight truncate block ${
                                 isActive ? "text-foreground" : "text-muted group-hover:text-foreground"
                               }`}>
                                 {tab.label}
@@ -775,8 +775,8 @@ function MastersPageContent() {
                             {tab.parentTable && (
                               <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded-md border inline-flex items-center gap-1 mt-1.5 transition-colors ${
                                 isActive
-                                  ? "text-theme-icon bg-accent-soft border-theme-btn-primary/30"
-                                  : "text-muted bg-surface/50 border-border/50"
+                                  ? "text-accent-soft-text bg-accent-soft border-border-active"
+                                  : "text-muted bg-surface/50 border-border"
                               }`}>
                                 <div className="w-1 h-1 rounded-full bg-current opacity-50" />
                                 Depends on {tab.parentTable}
@@ -796,17 +796,17 @@ function MastersPageContent() {
 
         {/* Right Column Span 8: Table Data Inspector */}
         <div className="lg:col-span-8 flex flex-col min-h-0 space-y-4">
-          <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden shadow-xl ${
+          <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden shadow-lg ${
             "border-border"
           }`}>
             {/* Unified Filter Box Header */}
             <div className="bg-surface dark:bg-surface/5 p-4 flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-bold text-foreground tracking-tight">
+                  <h2 className="text-lg font-semibold text-foreground tracking-tight">
                     {currentConfig.label}
                   </h2>
-                  <AppBadge variant="info" className="font-mono text-[11px] border border-theme-btn-primary/20">
+                  <AppBadge variant="info" className="font-mono text-[11px] border border-border-active">
                     {activeTab.replace(/_/g, ' ')}
                   </AppBadge>
                 </div>
@@ -818,7 +818,7 @@ function MastersPageContent() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     leftIcon={<Search className="h-4 w-4 text-muted" />}
-                    className="w-full h-9 bg-elevated/50 border-none"
+                    className="w-full h-9 bg-sunken border-none"
                   />
                 </div>
               </div>
@@ -837,14 +837,14 @@ function MastersPageContent() {
               ) : (
                 <>
                   {records.length === 0 ? (
-                    <div className="py-20 px-6 text-center flex flex-col items-center justify-center relative overflow-hidden rounded-3xl theme-card-structural border border-dashed border-theme-btn-primary/30 bg-surface/30 group">
+                    <div className="py-20 px-6 text-center flex flex-col items-center justify-center relative overflow-hidden rounded-lg theme-card-structural border border-border-active bg-surface/30 group">
                       <div className="absolute inset-0 bg-gradient-to-br from-theme-btn-primary/5 via-transparent to-theme-accent-raw/5 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
                       <div className="relative z-10 space-y-6 flex flex-col items-center">
-                        <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-theme-btn-primary/20 to-theme-btn-primary/5 border border-theme-btn-primary/20 flex items-center justify-center shadow-[0_0_20px_rgba(var(--theme-accent-raw),0.15)] group-hover:shadow-[0_0_30px_rgba(var(--theme-accent-raw),0.3)] transition-shadow duration-500">
-                          <span className="text-2xl font-bold text-theme-icon">!</span>
+                        <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-theme-btn-primary/20 to-theme-btn-primary/5 border border-border-active flex items-center justify-center group- transition-shadow duration-500">
+                          <span className="text-2xl font-semibold text-accent-soft-text">!</span>
                         </div>
                         <div className="space-y-2 max-w-md">
-                          <h4 className="text-lg font-bold text-foreground tracking-tight">No master data configured</h4>
+                          <h4 className="text-lg font-semibold text-foreground tracking-tight">No master data configured</h4>
                           <p className="text-sm text-muted leading-relaxed">
                             No operational items are currently defined in this directory. Add your first record to make it available for workspace selection.
                           </p>
@@ -854,7 +854,7 @@ function MastersPageContent() {
                           size="md" 
                           leftIcon={<Plus className="h-4 w-4" />}
                           onClick={openCreateModal}
-                          className="shadow-[0_0_20px_rgba(var(--theme-accent-raw),0.3)] hover:shadow-[0_0_30px_rgba(var(--theme-accent-raw),0.5)] transition-all duration-300"
+                          className=" transition-all duration-300"
                         >
                           Create initial record
                         </AppButton>
@@ -867,10 +867,10 @@ function MastersPageContent() {
                         {filteredDataset.map((rec) => (
                           <div 
                             key={rec.id}
-                            className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all space-y-3 relative"
+                            className="rounded-lg border border-border bg-surface/90 p-4 shadow-xs hover:border-border-active transition-all space-y-3 relative"
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-mono text-xs font-bold text-theme-icon bg-accent-soft px-2 py-0.5 rounded-md shrink-0">
+                              <span className="font-mono text-xs font-semibold text-accent-soft-text bg-accent-soft px-2 py-0.5 rounded-md shrink-0">
                                 {rec.code}
                               </span>
                               <div className="flex items-center gap-1.5 shrink-0">
@@ -878,7 +878,7 @@ function MastersPageContent() {
                                   type="button"
                                   onClick={() => toggleActive(rec)}
                                   disabled={!hasPermission("MASTERS_UPDATE")}
-                                  className={`px-2 py-0.5 rounded-md border text-[11px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  className={`px-2 py-0.5 rounded-md border text-[11px] font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     rec.is_active 
                                       ? "bg-success-soft border-success-border text-success-text hover:bg-success-soft"
                                       : "bg-elevated border-border text-muted line-through hover:bg-elevated"
@@ -890,7 +890,7 @@ function MastersPageContent() {
                             </div>
 
                             <div>
-                              <h4 className="text-sm font-bold text-foreground">
+                              <h4 className="text-sm font-semibold text-foreground">
                                 {rec.name}
                               </h4>
                               {rec.description && (
@@ -903,17 +903,17 @@ function MastersPageContent() {
                             {/* Additional metadata tags if available */}
                             <div className="flex items-center gap-2 text-xs text-muted flex-wrap">
                               {currentConfig.parentTable && (
-                                <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded border text-theme-icon bg-accent-soft border-theme-btn-primary/30">
+                                <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded border text-accent-soft-text bg-accent-soft border-border-active">
                                   Parent: {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.code || "Unmapped"}
                                 </span>
                               )}
                               {activeTab === "master_priorities" && rec.max_sla_hours !== undefined && (
-                                <span className="text-[11px] font-semibold text-warning bg-warning-soft px-2 py-0.5 rounded flex items-center gap-1">
+                                <span className="text-[11px] font-semibold text-warning-text bg-warning-soft px-2 py-0.5 rounded flex items-center gap-1">
                                   <Clock className="h-3 w-3" /> {rec.max_sla_hours * 60}m SLA
                                 </span>
                               )}
                               {activeTab === "assets" && rec.asset_tag && (
-                                <span className="text-[11px] font-mono font-bold text-success-text bg-success-soft px-2 py-0.5 rounded">
+                                <span className="text-[11px] font-mono font-semibold text-success-text bg-success-soft px-2 py-0.5 rounded">
                                   Tag: {rec.asset_tag}
                                 </span>
                               )}
@@ -925,7 +925,7 @@ function MastersPageContent() {
                                 type="button"
                                 onClick={() => openEditModal(rec)}
                                 disabled={!hasPermission("MASTERS_UPDATE")}
-                                className="px-2.5 py-1 rounded-lg border text-xs text-theme-icon bg-surface hover:bg-elevated border-border"
+                                className="px-2.5 py-1 rounded-lg border text-xs text-accent-soft-text bg-surface hover:bg-elevated border-border"
                               >
                                 <Edit className="h-3.5 w-3.5 mr-1" /> Edit
                               </AppButton>
@@ -933,7 +933,7 @@ function MastersPageContent() {
                                 type="button"
                                 onClick={() => handleDelete(rec)}
                                 disabled={!hasPermission("MASTERS_DELETE")}
-                                className="px-2.5 py-1 rounded-lg border text-xs text-danger bg-surface hover:bg-danger/10 border-border"
+                                className="px-2.5 py-1 rounded-lg border text-xs text-danger-text bg-surface hover:bg-danger-soft border-border"
                               >
                                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                               </AppButton>
@@ -971,19 +971,19 @@ function MastersPageContent() {
                                 <AppTableRow key={rec.id}>
                                   <AppTableCell>
                                     <div className="space-y-0.5">
-                                      <span className={`font-mono text-xs font-bold block text-theme-icon`}>{rec.code}</span>
+                                      <span className={`font-mono text-xs font-semibold block text-accent-soft-text`}>{rec.code}</span>
                                     </div>
                                   </AppTableCell>
                                   <AppTableCell>
                                     <div className="space-y-0.5">
                                       <div className="flex items-center gap-2">
-                                        <span className={`font-bold text-xs block ${"text-foreground"}`}>{rec.name}</span>
-                                        <span className={`text-[0.65rem] font-bold px-1 rounded border tracking-tighter ${
+                                        <span className={`font-semibold text-xs block ${"text-foreground"}`}>{rec.name}</span>
+                                        <span className={`text-[0.65rem] font-semibold px-1 rounded border tracking-tighter ${
                                           rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
-                                            ? "text-theme-icon border-theme-btn-primary/30 bg-accent-soft"
+                                            ? "text-accent-soft-text border-border-active bg-accent-soft"
                                             : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
-                                            ? "text-warning border-warning-border bg-warning/5"
-                                            : "text-theme-icon border-theme-btn-primary/30 bg-accent-soft"
+                                            ? "text-warning-text border-warning-border bg-warning-soft"
+                                            : "text-accent-soft-text border-border-active bg-accent-soft"
                                         }`}>
                                           {rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
                                             ? "FLAG 2 (ERP)"
@@ -1002,7 +1002,7 @@ function MastersPageContent() {
                                   {currentConfig.parentTable && (
                                     <AppTableCell>
                                       <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block whitespace-normal break-words ${
-                                        "text-theme-icon bg-accent-soft border-theme-btn-primary/30"
+                                        "text-accent-soft-text bg-accent-soft border-border-active"
                                       }`} title={rec[currentConfig.parentKey!]}>
                                         {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || 
                                          parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.code || 
@@ -1016,10 +1016,10 @@ function MastersPageContent() {
                                       {rec.max_sla_hours !== undefined ? (
                                         <div className="flex items-center gap-2">
                                           <div className={`p-1 rounded-md bg-warning-soft`}>
-                                            <Clock className="h-3 w-3 text-warning" />
+                                            <Clock className="h-3 w-3 text-warning-text" />
                                           </div>
                                           <span className="font-semibold">{rec.max_sla_hours * 60}m target</span>
-                                          <div className="flex gap-2 text-[0.65rem] opacity-60 font-bold tracking-tighter">
+                                          <div className="flex gap-2 text-[0.65rem] opacity-60 font-semibold tracking-tighter">
                                             <span>Min: {rec.min_sla_hours || 0}h</span>
                                             <span>Max: {rec.max_sla_hours || 0}h</span>
                                           </div>
@@ -1032,7 +1032,7 @@ function MastersPageContent() {
 
                                   {activeTab === "assets" && (
                                     <AppTableCell>
-                                      <span className={`text-xs font-mono font-bold text-success-text`}>
+                                      <span className={`text-xs font-mono font-semibold text-success-text`}>
                                         {rec.asset_tag}
                                       </span>
                                     </AppTableCell>
@@ -1040,8 +1040,8 @@ function MastersPageContent() {
 
                                   {activeTab === "workflow_states" && (
                                     <AppTableCell>
-                                      <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
-                                        "text-theme-icon bg-accent-soft border-theme-btn-primary/30"
+                                      <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded border ${
+                                        "text-accent-soft-text bg-accent-soft border-border-active"
                                       }`}>
                                         {(rec.module || "Universal").replace(/_/g, ' ')}
                                       </span>
@@ -1053,7 +1053,7 @@ function MastersPageContent() {
                                       type="button"
                                       onClick={() => toggleActive(rec)}
                                       disabled={!hasPermission("MASTERS_UPDATE")}
-                                      className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                      className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                         rec.is_active 
                                           ? ("bg-success-soft border-success-border text-success-text hover:bg-success-soft")
                                           : ("bg-elevated border-border text-muted line-through hover:bg-elevated")
@@ -1070,7 +1070,7 @@ function MastersPageContent() {
                                         onClick={() => openEditModal(rec)}
                                         disabled={!hasPermission("MASTERS_UPDATE")}
                                         className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                          "bg-surface border-border text-muted hover:text-theme-icon hover:border-theme-btn-primary/30"
+                                          "bg-surface border-border text-muted hover:text-accent-soft-text hover:border-border-active"
                                         }`}
                                         title="Edit record details"
                                       >
@@ -1081,7 +1081,7 @@ function MastersPageContent() {
                                         onClick={() => handleDelete(rec)}
                                         disabled={!hasPermission("MASTERS_DELETE")}
                                         className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                          "bg-surface border-border text-muted hover:text-danger hover:border-danger-border"
+                                          "bg-surface border-border text-muted hover:text-danger-text hover:border-danger-border"
                                         }`}
                                         title="Delete record"
                                       >
@@ -1104,7 +1104,7 @@ function MastersPageContent() {
             {/* Pagination / Context Footer */}
             <div className="p-4 bg-surface/[0.005] border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted">
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className="h-3 w-3 text-success shrink-0" />
+                <ShieldCheck className="h-3 w-3 text-success-text shrink-0" />
                 <span>Auditing active: all status updates automatically export JSONB snapshots.</span>
               </div>
               <span className="text-muted font-mono">Visible entities: {filteredDataset.length} of {records.length}</span>
@@ -1117,15 +1117,15 @@ function MastersPageContent() {
       {showModal && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center px-4 p-4 overflow-y-auto"
-          style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
+          style={{ backgroundColor: "var(--overlay)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
-          <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl theme-card-structural border border-border/50 shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in-95 duration-300">
+          <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl theme-card-structural border border-border animate-in fade-in zoom-in-95 duration-300">
             {/* Header */}
-            <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-border/50 bg-surface/80">
+            <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-border bg-surface/80">
               <div className="space-y-1">
-                <h3 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-theme-btn-primary shadow-[0_0_10px_rgba(var(--theme-accent-raw),0.8)]" />
+                <h3 className="text-lg font-semibold text-foreground tracking-tight flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary" />
                   {editRecordId ? "Edit Details:" : "Add New"} {currentConfig.label}
                 </h3>
                 <p className="text-xs text-muted font-medium">
@@ -1135,7 +1135,7 @@ function MastersPageContent() {
               <AppButton aria-label="Close" variant="secondary" 
                 type="button" 
                 onClick={() => setShowModal(false)}
-                className="p-2 rounded-xl bg-elevated/50 hover:bg-elevated border-transparent hover:border-border/50 transition-all text-muted hover:text-foreground"
+                className="p-2 rounded-lg bg-sunken hover:bg-elevated border-transparent hover:border-border transition-all text-muted hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </AppButton>
@@ -1145,8 +1145,8 @@ function MastersPageContent() {
             <form onSubmit={handleCreate} className="p-6 space-y-6">
               {/* Code */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-muted block">
-                  Short code <span className="text-danger">*</span>
+                <label className="text-[0.8rem] font-semibold text-muted block">
+                  Short code <span className="text-danger-text">*</span>
                 </label>
                 <AppInput 
                   placeholder="e.g. SEC_INC"
@@ -1160,8 +1160,8 @@ function MastersPageContent() {
 
               {/* Full Display Name */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-muted block">
-                  Display name <span className="text-danger">*</span>
+                <label className="text-[0.8rem] font-semibold text-muted block">
+                  Display name <span className="text-danger-text">*</span>
                 </label>
                 <AppInput 
                   placeholder="e.g. Security incident"
@@ -1174,7 +1174,7 @@ function MastersPageContent() {
 
               {/* Description Context */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-muted block">
+                <label className="text-[0.8rem] font-semibold text-muted block">
                   Description & internal notes
                 </label>
                 <textarea 
@@ -1182,7 +1182,7 @@ function MastersPageContent() {
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   rows={2}
-                  className={`w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-theme-btn-primary/50 resize-none transition-all ${
+                  className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none focus:border-border-active resize-none transition-all ${
                     "bg-surface border-border text-foreground"
                   }`}
                 />
@@ -1191,8 +1191,8 @@ function MastersPageContent() {
               {/* Color Assignment */}
               {(currentConfig.table === "status_master" || currentConfig.table === "priority_master") && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-muted block">
-                    Display colour <span className="text-danger">*</span>
+                  <label className="text-[0.8rem] font-semibold text-muted block">
+                    Display colour <span className="text-danger-text">*</span>
                   </label>
                   <div className="flex items-center gap-3">
                     <input 
@@ -1214,20 +1214,20 @@ function MastersPageContent() {
               {/* Conditional Cascading Mapping dropmenus */}
               {currentConfig.parentTable && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-theme-icon block">
-                    Parent record link <span className="text-danger">*</span>
+                  <label className="text-[0.8rem] font-semibold text-accent-soft-text block">
+                    Parent record link <span className="text-danger-text">*</span>
                   </label>
                   <select
                     value={formParentId}
                     onChange={(e) => setFormParentId(e.target.value)}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-theme-btn-primary/50 cursor-pointer ${
+                    className={`w-full h-9 px-3 rounded-lg border text-xs focus:outline-none focus:border-border-active cursor-pointer ${
                       "bg-surface border-border text-foreground"
                     }`}
                     required={currentConfig.parentRequired}
                   >
-                    {!currentConfig.parentRequired && <option value="" className={"bg-surface text-muted"}>-- Optional (Global Scope) --</option>}
+                    {!currentConfig.parentRequired && <option value="" className={"bg-surface text-muted"}>Optional (Global Scope)</option>}
                     {parentOptions.length === 0 ? (
-                      currentConfig.parentRequired && <option value="" className="bg-surface text-muted">-- No available parent records --</option>
+                      currentConfig.parentRequired && <option value="" className="bg-surface text-muted">No available parent records</option>
                     ) : (
                       parentOptions.map(p => (
                         <option key={p.id} value={p.id} className={"bg-surface text-foreground"}>
@@ -1242,9 +1242,9 @@ function MastersPageContent() {
 
               {/* Target SLA target minutes input */}
               {currentConfig.table === "master_priorities" && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 rounded-lg border border-success-border bg-success/5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 rounded-lg border border-success-border bg-success-soft">
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-success block">
+                    <label className="text-[0.8rem] font-semibold text-success-text block">
                       Min time (mins)
                     </label>
                     <AppInput 
@@ -1255,7 +1255,7 @@ function MastersPageContent() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-success block">
+                    <label className="text-[0.8rem] font-semibold text-success-text block">
                       Standard time (mins)
                     </label>
                     <AppInput 
@@ -1266,7 +1266,7 @@ function MastersPageContent() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-success block">
+                    <label className="text-[0.8rem] font-semibold text-success-text block">
                       Max time (mins)
                     </label>
                     <AppInput 
@@ -1282,14 +1282,14 @@ function MastersPageContent() {
               {/* Associated System Module dropdown removed - dynamically assigned based on Governance Scope */}
 
               {/* Operational Scope Flag (1=INFRA, 2=ERP) */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-surface/[0.02] border border-border">
-                <label className="text-[0.8rem] font-bold text-muted block">
-                  Operational governance scope <span className="text-danger">*</span>
+              <div className="space-y-1.5 p-3 rounded-lg bg-surface/[0.02] border border-border">
+                <label className="text-[0.8rem] font-semibold text-muted block">
+                  Operational governance scope <span className="text-danger-text">*</span>
                 </label>
                 <select
                   value={formScopeId || ""}
                   onChange={(e) => setFormScopeId(e.target.value || null)}
-                  className={`w-full h-9 px-3 rounded-xl border text-xs font-bold focus:outline-none focus:border-theme-btn-primary/50 cursor-pointer ${
+                  className={`w-full h-9 px-3 rounded-lg border text-xs font-semibold focus:outline-none focus:border-border-active cursor-pointer ${
                     "bg-surface border-border text-foreground"
                   }`}
                   required
@@ -1304,7 +1304,7 @@ function MastersPageContent() {
               {/* Custom asset tags */}
               {activeTab === "assets" && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-success block">
+                  <label className="text-[0.8rem] font-semibold text-success-text block">
                     Hardware tag reference ID
                   </label>
                   <AppInput 
@@ -1325,7 +1325,7 @@ function MastersPageContent() {
                   variant="outline" 
                   size="sm"
                   onClick={() => setShowModal(false)}
-                  className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger"
+                  className="text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text"
                 >
                   Discard
                 </AppButton>

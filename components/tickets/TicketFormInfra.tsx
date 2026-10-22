@@ -368,7 +368,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
               </div>
               
               {formData.requirement_domain === "Infrastructure & Hardware" && (
-                <div className="space-y-4 mt-6 p-4 rounded-xl border border-dashed border-theme-btn-primary/30 bg-elevated/30">
+                <div className="space-y-4 mt-6 p-4 rounded-xl border border-theme-btn-primary/30 bg-elevated/30">
                   <div className="flex items-center justify-between">
                     <div>
                       <h5 className="font-bold text-accent">Infrastructure specifications</h5>

@@ -105,12 +105,12 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
                     });
                   }
                 }}
-                className={`p-4 rounded-xl border bg-surface/50 transition-all flex flex-col justify-between ${
+                className={`p-4 rounded-lg border bg-surface/50 transition-all flex flex-col justify-between ${
                   dept.health === "critical"
-                    ? "border-danger-border hover:border-danger-border hover:bg-danger/5"
+                    ? "border-danger-border hover:border-danger-border hover:bg-danger-soft"
                     : dept.health === "warning"
                     ? "border-warning-border hover:border-warning-border hover:bg-warning-soft"
-                    : "border-border/50 hover:border-primary/50 hover:bg-surface-hover/70"
+                    : "border-border hover:border-primary/50 hover:bg-surface-hover/70"
                 } ${isClickable ? "cursor-pointer group" : ""}`}
               >
                 <div>
@@ -120,12 +120,12 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
                         dept.health === "critical" ? "bg-danger animate-ping" :
                         dept.health === "warning" ? "bg-warning" : "bg-success"
                       }`} />
-                      <h3 className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                      <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                         {dept.name}
                       </h3>
                     </div>
 
-                    <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1 shrink-0">
+                    <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1 shrink-0">
                       <Users className="w-3 h-3" /> {dept.userCount} Member{dept.userCount !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -133,16 +133,16 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
                   {/* Metrics Row */}
                   <div className="grid grid-cols-3 gap-2 my-3 p-2.5 rounded-lg bg-background/60 border border-border/40 text-center">
                     <div>
-                      <div className="text-[11px] text-muted-foreground font-bold">Active</div>
+                      <div className="text-[11px] text-muted-foreground font-semibold">Active</div>
                       <div className="text-sm font-semibold text-foreground mt-0.5">{dept.active}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-muted-foreground font-bold">Done</div>
+                      <div className="text-[11px] text-muted-foreground font-semibold">Done</div>
                       <div className="text-sm font-semibold text-success-text mt-0.5">{dept.resolved}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-muted-foreground font-bold">Breached</div>
-                      <div className={`text-sm font-semibold mt-0.5 ${dept.breached > 0 ? "text-danger" : "text-muted-foreground"}`}>
+                      <div className="text-[11px] text-muted-foreground font-semibold">Breached</div>
+                      <div className={`text-sm font-semibold mt-0.5 ${dept.breached > 0 ? "text-danger-text" : "text-muted-foreground"}`}>
                         {dept.breached}
                       </div>
                     </div>
@@ -166,7 +166,7 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
                 </div>
 
                 {isClickable && (
-                  <div className="mt-3 pt-2 border-t border-border/40 flex items-center justify-between text-[11px] font-bold text-primary">
+                  <div className="mt-3 pt-2 border-t border-border/40 flex items-center justify-between text-[11px] font-semibold text-primary">
                     <span>Inspect department</span>
                     <ArrowUpRight className="w-3.5 h-3.5 transition-transform" />
                   </div>

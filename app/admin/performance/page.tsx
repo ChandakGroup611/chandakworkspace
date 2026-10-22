@@ -66,7 +66,7 @@ export default function PerformanceCommandCenter() {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
+          <h2 className="text-2xl font-semibold text-danger-text">Access denied</h2>
           <p className="text-muted">Super Admin privileges are required to view the Performance Command Center.</p>
         </div>
       </div>
@@ -85,11 +85,11 @@ export default function PerformanceCommandCenter() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Enterprise performance command center</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Enterprise performance command center</h1>
         <div className="flex items-center gap-4">
           <AppButton 
             onClick={toggleKillSwitch}
-            className={`px-4 py-2 font-bold rounded-lg transition-colors ${
+            className={`px-4 py-2 font-semibold rounded-lg transition-colors ${
               killSwitchEnabled 
                 ? "bg-danger text-white shadow-[0_0_15px_rgba(220,38,38,0.6)]" 
                 : "bg-elevated text-foreground hover:bg-elevated"
@@ -102,37 +102,37 @@ export default function PerformanceCommandCenter() {
       
       {/* ENTERPRISE SCORE & GOVERNANCE */}
       {govMetrics && (
-        <div className="bg-surface text-white rounded-xl p-6 shadow-xl border border-border">
+        <div className="bg-surface text-white rounded-lg p-6 shadow-lg border border-border">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-xl font-bold text-muted">Weighted enterprise health score</h2>
+              <h2 className="text-xl font-semibold text-muted">Weighted enterprise health score</h2>
               <p className="text-sm text-muted">Aggregated via passive governance engine</p>
             </div>
-            <div className={`text-4xl font-semibold ${govMetrics.totalEnterpriseScore > 90 ? 'text-success' : govMetrics.totalEnterpriseScore > 75 ? 'text-warning' : 'text-danger'}`}>
+            <div className={`text-4xl font-semibold ${govMetrics.totalEnterpriseScore > 90 ? 'text-success-text' : govMetrics.totalEnterpriseScore > 75 ? 'text-warning-text' : 'text-danger-text'}`}>
               {govMetrics.totalEnterpriseScore.toFixed(1)} / 100
             </div>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
-            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Hydration</div><div className="font-bold">{govMetrics.hydrationScore.toFixed(0)}</div></div>
-            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Queries</div><div className="font-bold">{govMetrics.queryLatencyScore.toFixed(0)}</div></div>
-            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Websockets</div><div className="font-bold">{govMetrics.websocketHealthScore.toFixed(0)}</div></div>
-            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Memory</div><div className="font-bold">{govMetrics.memoryPressureScore.toFixed(0)}</div></div>
-            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Payload</div><div className="font-bold">{govMetrics.payloadSizeScore.toFixed(0)}</div></div>
-            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Rerenders</div><div className="font-bold">{govMetrics.rerenderStormScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Hydration</div><div className="font-semibold">{govMetrics.hydrationScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Queries</div><div className="font-semibold">{govMetrics.queryLatencyScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Websockets</div><div className="font-semibold">{govMetrics.websocketHealthScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Memory</div><div className="font-semibold">{govMetrics.memoryPressureScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Payload</div><div className="font-semibold">{govMetrics.payloadSizeScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Rerenders</div><div className="font-semibold">{govMetrics.rerenderStormScore.toFixed(0)}</div></div>
           </div>
 
           <div className="mt-6 p-4 rounded-lg bg-surface/50 border border-border flex items-center justify-between">
             <div>
-              <div className="font-bold text-muted">Degradation stage</div>
+              <div className="font-semibold text-muted">Degradation stage</div>
               <div className="text-sm text-muted">Current self-protection level</div>
             </div>
-            <div className="text-lg font-bold text-warning">
-              {govMetrics.currentStage === DegradationStage.STAGE_0_NORMAL && <span className="text-success">Stage 0: normal</span>}
+            <div className="text-lg font-semibold text-warning-text">
+              {govMetrics.currentStage === DegradationStage.STAGE_0_NORMAL && <span className="text-success-text">Stage 0: normal</span>}
               {govMetrics.currentStage === DegradationStage.STAGE_1_MILD && <span>Stage 1: mild</span>}
               {govMetrics.currentStage === DegradationStage.STAGE_2_MODERATE && <span>Stage 2: moderate</span>}
               {govMetrics.currentStage === DegradationStage.STAGE_3_SEVERE && <span className="text-warning-text">Stage 3: severe</span>}
-              {govMetrics.currentStage === DegradationStage.STAGE_4_CRITICAL && <span className="text-danger">Stage 4: critical</span>}
+              {govMetrics.currentStage === DegradationStage.STAGE_4_CRITICAL && <span className="text-danger-text">Stage 4: critical</span>}
             </div>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function PerformanceCommandCenter() {
 
       {violations.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-danger">Soft governance budget violations</h2>
+          <h2 className="text-xl font-semibold text-danger-text">Soft governance budget violations</h2>
           <div className="overflow-x-auto">
             <AppTableContainer><AppTable className="min-w-full divide-y divide-danger-border text-base">
               <AppTableHeader className="bg-danger-soft">
@@ -185,7 +185,7 @@ export default function PerformanceCommandCenter() {
                 {violations.map((v, i) => (
                   <AppTableRow key={i} className="bg-surface">
                     <AppTableCell className="px-4 py-3 font-medium">{v.route}</AppTableCell>
-                    <AppTableCell className="px-4 py-3 text-right font-bold text-danger">{v.count}</AppTableCell>
+                    <AppTableCell className="px-4 py-3 text-right font-semibold text-danger-text">{v.count}</AppTableCell>
                     <AppTableCell className="px-4 py-3 text-right text-muted">{v.budget}</AppTableCell>
                     <AppTableCell className="px-4 py-3 text-muted">{new Date(v.timestamp).toLocaleTimeString()}</AppTableCell>
                   </AppTableRow>
@@ -231,7 +231,7 @@ export default function PerformanceCommandCenter() {
                       {m.severity.toUpperCase()}
                     </span>
                   </AppTableCell>
-                  <AppTableCell className="px-4 py-3 text-danger font-bold">{m.isDuplicate ? `YES (${m.duplicateCount})` : ''}</AppTableCell>
+                  <AppTableCell className="px-4 py-3 text-danger-text font-semibold">{m.isDuplicate ? `YES (${m.duplicateCount})` : ''}</AppTableCell>
                 </AppTableRow>
               ))}
             </AppTableBody>
@@ -258,9 +258,9 @@ function MetricCard({ title, value, isWarning, isCritical }: { title: string, va
   }
 
   return (
-    <div className={`p-6 rounded-xl border shadow-sm ${bgColor} ${borderColor}`}>
+    <div className={`p-6 rounded-lg border shadow-sm ${bgColor} ${borderColor}`}>
       <h3 className="text-sm font-medium text-muted mb-1">{title}</h3>
-      <p className={`text-3xl font-bold ${textColor}`}>{value}</p>
+      <p className={`text-3xl font-semibold ${textColor}`}>{value}</p>
     </div>
   );
 }

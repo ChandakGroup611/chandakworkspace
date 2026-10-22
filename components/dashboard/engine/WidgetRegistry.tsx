@@ -4,25 +4,25 @@ import React from "react";
 import dynamic from "next/dynamic";
 
 // Base wrappers
-const ExecutiveKPIWidget = dynamic(() => import("../widgets/ExecutiveKPIWidget").then(m => m.ExecutiveKPIWidget), { ssr: false, loading: () => <div className="h-32 bg-surface/50 rounded-2xl animate-pulse" /> });
-const ChartWidget = dynamic(() => import("../widgets/ChartWidget").then(m => m.ChartWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const KanbanWidget = dynamic(() => import("../widgets/KanbanWidget").then(m => m.KanbanWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const DataTableWidget = dynamic(() => import("../widgets/DataTableWidget").then(m => m.DataTableWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const ActivityFeedWidget = dynamic(() => import("../widgets/ActivityFeedWidget").then(m => m.ActivityFeedWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const DeadlinesWidget = dynamic(() => import("../widgets/DeadlinesWidget").then(m => m.DeadlinesWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const PerformanceWidget = dynamic(() => import("../widgets/PerformanceWidget").then(m => m.PerformanceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const SlaGovernanceWidget = dynamic(() => import("../widgets/SlaGovernanceWidget").then(m => m.SlaGovernanceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const WorkloadIntelligenceWidget = dynamic(() => import("../widgets/WorkloadIntelligenceWidget").then(m => m.WorkloadIntelligenceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+const ExecutiveKPIWidget = dynamic(() => import("../widgets/ExecutiveKPIWidget").then(m => m.ExecutiveKPIWidget), { ssr: false, loading: () => <div className="h-32 bg-surface/50 rounded-lg animate-pulse" /> });
+const ChartWidget = dynamic(() => import("../widgets/ChartWidget").then(m => m.ChartWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const KanbanWidget = dynamic(() => import("../widgets/KanbanWidget").then(m => m.KanbanWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const DataTableWidget = dynamic(() => import("../widgets/DataTableWidget").then(m => m.DataTableWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const ActivityFeedWidget = dynamic(() => import("../widgets/ActivityFeedWidget").then(m => m.ActivityFeedWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const DeadlinesWidget = dynamic(() => import("../widgets/DeadlinesWidget").then(m => m.DeadlinesWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const PerformanceWidget = dynamic(() => import("../widgets/PerformanceWidget").then(m => m.PerformanceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const SlaGovernanceWidget = dynamic(() => import("../widgets/SlaGovernanceWidget").then(m => m.SlaGovernanceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const WorkloadIntelligenceWidget = dynamic(() => import("../widgets/WorkloadIntelligenceWidget").then(m => m.WorkloadIntelligenceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
 
-const StatusComparisonWidget = dynamic(() => import("../widgets/StatusComparisonWidget").then(m => m.StatusComparisonWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const RiskIntelligenceWidget = dynamic(() => import("../widgets/RiskIntelligenceWidget").then(m => m.RiskIntelligenceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const ResolutionVelocityWidget = dynamic(() => import("../widgets/ResolutionVelocityWidget").then(m => m.ResolutionVelocityWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+const StatusComparisonWidget = dynamic(() => import("../widgets/StatusComparisonWidget").then(m => m.StatusComparisonWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const RiskIntelligenceWidget = dynamic(() => import("../widgets/RiskIntelligenceWidget").then(m => m.RiskIntelligenceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const ResolutionVelocityWidget = dynamic(() => import("../widgets/ResolutionVelocityWidget").then(m => m.ResolutionVelocityWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
 
 // Next-Gen Enterprise Additions
-const ExecutiveDigestWidget = dynamic(() => import("../widgets/ExecutiveDigestWidget").then(m => m.ExecutiveDigestWidget), { ssr: false, loading: () => <div className="h-48 bg-surface/50 rounded-2xl animate-pulse" /> });
-const SlaCountdownWidget = dynamic(() => import("../widgets/SlaCountdownWidget").then(m => m.SlaCountdownWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const BottleneckRadarWidget = dynamic(() => import("../widgets/BottleneckRadarWidget").then(m => m.BottleneckRadarWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
-const DepartmentalHealthWidget = dynamic(() => import("../widgets/DepartmentalHealthWidget").then(m => m.DepartmentalHealthWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+const ExecutiveDigestWidget = dynamic(() => import("../widgets/ExecutiveDigestWidget").then(m => m.ExecutiveDigestWidget), { ssr: false, loading: () => <div className="h-48 bg-surface/50 rounded-lg animate-pulse" /> });
+const SlaCountdownWidget = dynamic(() => import("../widgets/SlaCountdownWidget").then(m => m.SlaCountdownWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const BottleneckRadarWidget = dynamic(() => import("../widgets/BottleneckRadarWidget").then(m => m.BottleneckRadarWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
+const DepartmentalHealthWidget = dynamic(() => import("../widgets/DepartmentalHealthWidget").then(m => m.DepartmentalHealthWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-lg animate-pulse" /> });
 
 export const WidgetRegistry: Record<string, React.ComponentType<any>> = {
   executive_digest: ExecutiveDigestWidget,

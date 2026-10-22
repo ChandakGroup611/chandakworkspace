@@ -139,7 +139,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
                 JD
               </div>
             ))}
-            <AppButton aria-label="Add person" variant="secondary" className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${
+            <AppButton aria-label="Add person" variant="secondary" className={`h-8 w-8 rounded-full border flex items-center justify-center transition-colors ${
               "border-border bg-elevated/50 text-muted hover:bg-elevated/50"
             }`}>
               <UserPlus className="h-3 w-3" />
@@ -150,7 +150,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         {/* Attachment Zone */}
         <section className="space-y-4">
           <h3 className="text-xs font-bold text-muted">Quick attachments</h3>
-          <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
+          <div className={`p-4 border rounded-lg flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
             "border-border bg-elevated/50 hover:bg-elevated/50"
           }`}>
             <div className={`p-2 rounded-lg bg-surface group-hover:bg-surface-hover`}>

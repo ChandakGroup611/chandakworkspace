@@ -32,7 +32,7 @@ const pricingPlans = [
     price: "$29",
     period: "per user/month",
     description: "Advanced tools for growing teams that need more power.",
-    icon: <Star className="w-5 h-5 text-theme-icon" />,
+    icon: <Star className="w-5 h-5 text-accent-soft-text" />,
     features: [
       "Unlimited Users",
       "Advanced Hierarchy & Workspaces",
@@ -50,7 +50,7 @@ const pricingPlans = [
     price: "Custom",
     period: "billed annually",
     description: "Maximum security, control, and dedicated support for large organisations.",
-    icon: <Crown className="w-5 h-5 text-warning" />,
+    icon: <Crown className="w-5 h-5 text-warning-text" />,
     features: [
       "Everything in Professional",
       "Single Sign-On (SSO)",
@@ -70,7 +70,7 @@ export default function SubscriptionPage() {
     <div className="w-full space-y-8 animate-in fade-in-50 duration-700 py-6 px-4 md:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <header className="text-center space-y-4 pb-8 border-b border-border/30">
-        <AppBadge variant="neutral" className="px-3 py-1 text-theme-icon border border-theme-btn-primary/30 bg-accent-soft rounded-full mb-2">
+        <AppBadge variant="neutral" className="px-3 py-1 text-accent-soft-text border border-border-active bg-accent-soft rounded-full mb-2">
           Plans & pricing
         </AppBadge>
         <h1 id="subscription-page-title" className="text-3xl md:text-5xl font-semibold tracking-tight bg-gradient-to-br from-foreground via-foreground/90 to-foreground/50 bg-clip-text text-transparent">
@@ -86,24 +86,24 @@ export default function SubscriptionPage() {
         {pricingPlans.map((plan, idx) => (
           <AppCard 
             key={plan.name}
-            className={`relative flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl ${
+            className={`relative flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg ${
               plan.highlighted 
-                ? 'border-theme-btn-primary shadow-[0_0_40px_-15px_rgba(var(--accent),0.3)] bg-gradient-to-b from-accent/5 to-transparent' 
-                : 'border-border/40 hover:border-border/80'
+                ? 'border-primary shadow-[0_0_40px_-15px_rgba(var(--accent),0.3)] bg-gradient-to-b from-accent/5 to-transparent' 
+                : 'border-border/40 hover:border-border'
             }`}
           >
             {plan.highlighted && (
-              <div className="absolute top-0 inset-x-0 h-1 bg-theme-btn-primary" />
+              <div className="absolute top-0 inset-x-0 h-1 bg-primary" />
             )}
             
             <div className="p-6 md:p-8 flex-1 flex flex-col">
               <div className="flex items-center gap-3 mb-4">
-                <div className={`p-2 rounded-xl bg-${plan.color}-500/10`}>
+                <div className={`p-2 rounded-lg bg-${plan.color}-500/10`}>
                   {plan.icon}
                 </div>
-                <h3 className="text-xl font-bold">{plan.name}</h3>
+                <h3 className="text-xl font-semibold">{plan.name}</h3>
                 {plan.highlighted && (
-                  <AppBadge className="ml-auto bg-theme-btn-primary text-theme-icon-foreground border-none shadow-sm text-[11px] font-bold">
+                  <AppBadge className="ml-auto bg-primary text-theme-icon-foreground border-none shadow-sm text-[11px] font-semibold">
                     Most popular
                   </AppBadge>
                 )}
@@ -123,7 +123,7 @@ export default function SubscriptionPage() {
               <div className="space-y-4 mb-8 flex-1">
                 {plan.features.map((feature, fIdx) => (
                   <div key={fIdx} className="flex items-start gap-3">
-                    <div className={`mt-0.5 shrink-0 rounded-full p-0.5 ${plan.highlighted ? 'bg-accent-soft text-theme-icon' : 'bg-surface/50 text-muted'}`}>
+                    <div className={`mt-0.5 shrink-0 rounded-full p-0.5 ${plan.highlighted ? 'bg-accent-soft text-accent-soft-text' : 'bg-surface/50 text-muted'}`}>
                       <Check className="w-3.5 h-3.5" strokeWidth={3} />
                     </div>
                     <span className="text-sm font-medium opacity-90">{feature}</span>
@@ -134,7 +134,7 @@ export default function SubscriptionPage() {
               <div className="mt-auto pt-6 border-t border-border/40">
                 <AppButton 
                   variant={plan.highlighted ? "primary" : "outline"} 
-                  className={`w-full py-6 text-sm font-bold shadow-sm transition-all duration-300 ${
+                  className={`w-full py-6 text-sm font-semibold shadow-sm transition-all duration-300 ${
                     plan.highlighted 
                       ? 'shadow-[0_4px_20px_-5px_rgba(var(--accent),0.4)] hover:shadow-[0_6px_25px_-5px_rgba(var(--accent),0.6)]' 
                       : 'hover:bg-surface'
@@ -150,7 +150,7 @@ export default function SubscriptionPage() {
       
       {/* Footer / FAQ Teaser */}
       <div className="mt-16 text-center pb-12">
-        <div className="inline-flex items-center justify-center gap-2 p-4 rounded-2xl bg-surface/30 border border-border/40">
+        <div className="inline-flex items-center justify-center gap-2 p-4 rounded-lg bg-surface/30 border border-border/40">
           <Shield className="w-5 h-5 text-muted" />
           <span className="text-sm font-medium text-muted">All plans include enterprise-grade security and 99.9% uptime SLA.</span>
         </div>

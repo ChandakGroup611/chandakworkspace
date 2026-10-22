@@ -82,13 +82,13 @@ export const DesignStagesRoadmap: React.FC = () => {
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
       {/* Header Ribbon */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-lg border border-border bg-surface shadow-xs flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-info-soft text-info-text flex items-center justify-center border border-info-border shrink-0">
+          <div className="h-9 w-9 rounded-lg bg-info-soft text-info-text flex items-center justify-center border border-info-border shrink-0">
             <Layers className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">
+            <h2 className="text-base font-semibold text-foreground">
               Design stages roadmap
             </h2>
           </div>
@@ -97,13 +97,13 @@ export const DesignStagesRoadmap: React.FC = () => {
 
       {/* Stages Progression Stepper Bar */}
       {groupedStages.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
+        <div className="p-12 text-center rounded-lg border border-border bg-surface space-y-3">
           <Layers className="h-10 w-10 text-muted-foreground/40 mx-auto" />
-          <h4 className="text-sm font-bold text-foreground">No design stage deliverables configured</h4>
+          <h4 className="text-sm font-semibold text-foreground">No design stage deliverables configured</h4>
           
         </div>
       ) : (
-        <div className="p-3 sm:p-4 rounded-2xl border border-border bg-surface shadow-xs overflow-x-auto custom-scrollbar">
+        <div className="p-3 sm:p-4 rounded-lg border border-border bg-surface shadow-xs overflow-x-auto custom-scrollbar">
           <div className="flex items-center gap-2.5 min-w-max">
             {groupedStages.map(([stageName, items], idx) => {
               const isSelected = activeStageIndex === idx;
@@ -116,13 +116,13 @@ export const DesignStagesRoadmap: React.FC = () => {
                     setActiveStageIndex(idx);
                     setSelectedConsultants([]);
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 min-w-[220px] shrink-0 whitespace-nowrap ${
+                  className={`p-3 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-3 min-w-[220px] shrink-0 whitespace-nowrap ${
                     isSelected
                       ? "border-success-border bg-success-soft text-foreground ring-1 ring-success-border shadow-xs"
                       : "border-border bg-surface text-muted-foreground hover:bg-sunken"
                   }`}
                 >
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-semibold text-xs shrink-0 ${
                     isSelected 
                       ? "bg-success text-white" 
                       : "bg-sunken text-foreground"
@@ -136,7 +136,7 @@ export const DesignStagesRoadmap: React.FC = () => {
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground whitespace-nowrap">
                       <span>{items.length} items</span>
                       <span>•</span>
-                      <span className="font-mono font-bold text-success-text">
+                      <span className="font-mono font-semibold text-success-text">
                         {targetInfo.targetPct}
                       </span>
                     </div>
@@ -150,16 +150,16 @@ export const DesignStagesRoadmap: React.FC = () => {
 
       {/* Active Stage Details & Interactive Deliverables Checklist */}
       {currentStage && (
-        <div className="p-5 sm:p-6 rounded-2xl border border-border bg-surface shadow-xs space-y-5">
+        <div className="p-5 sm:p-6 rounded-lg border border-border bg-surface shadow-xs space-y-5">
           {/* Stage Banner Header */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-border pb-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-success-soft text-success-text flex items-center justify-center border border-success-border shrink-0">
                 <Target className="h-5 w-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-success-text">
+                  <span className="text-[11px] font-semibold text-success-text">
                     Stage 0{activeStageIndex + 1} Gateway
                   </span>
                   <span className="text-[11px] font-medium px-2 py-0.2 rounded-full bg-sunken border border-border text-muted-foreground">
@@ -175,7 +175,7 @@ export const DesignStagesRoadmap: React.FC = () => {
             {/* Stage Progress Bar & Counter */}
             <div className="flex items-center gap-4 w-full md:w-auto justify-end">
               <div className="text-right">
-                <div className="text-xs font-bold text-foreground">
+                <div className="text-xs font-semibold text-foreground">
                   {completedCount} of {currentDeliverables.length} Deliverables completed
                 </div>
                 <div className="text-[11px] text-muted-foreground">
@@ -183,7 +183,7 @@ export const DesignStagesRoadmap: React.FC = () => {
                 </div>
               </div>
 
-              <div className="relative h-12 w-12 rounded-2xl bg-sunken border border-border flex items-center justify-center font-mono font-semibold text-xs text-success-text shadow-inner">
+              <div className="relative h-12 w-12 rounded-lg bg-sunken border border-border flex items-center justify-center font-mono font-semibold text-xs text-success-text shadow-inner">
                 {stageProgressPct}%
               </div>
             </div>
@@ -205,7 +205,7 @@ export const DesignStagesRoadmap: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedConsultants([])}
-                  className="h-8 px-2.5 rounded-xl border border-dashed border-danger-border hover:border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                  className="h-8 px-2.5 rounded-lg border border-danger-border hover:border-danger-border bg-danger-soft hover:bg-danger-soft text-danger-text text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <X className="h-3 w-3" />
                   <span>Reset</span>
@@ -214,14 +214,14 @@ export const DesignStagesRoadmap: React.FC = () => {
             </div>
 
             <div className="text-[11px] font-semibold text-muted-foreground">
-              Showing <span className="font-bold text-foreground">{filteredDeliverables.length}</span> of {currentDeliverables.length} items
+              Showing <span className="font-semibold text-foreground">{filteredDeliverables.length}</span> of {currentDeliverables.length} items
             </div>
           </div>
 
           {/* Active Filter Chips Bar */}
           {selectedConsultants.length > 0 && (
             <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="text-[11px] font-bold text-muted-foreground mr-1">Active:</span>
+              <span className="text-[11px] font-semibold text-muted-foreground mr-1">Active:</span>
 
               {selectedConsultants.map(c => (
                 <span
@@ -257,7 +257,7 @@ export const DesignStagesRoadmap: React.FC = () => {
                 <div
                   key={i}
                   onClick={() => toggleDeliverable(i)}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer flex items-start gap-3.5 group select-none ${
+                  className={`p-4 rounded-lg border transition-all cursor-pointer flex items-start gap-3.5 group select-none ${
                     isChecked
                       ? "border-success-border bg-success-soft shadow-2xs"
                       : "border-border bg-sunken hover:border-success-border"

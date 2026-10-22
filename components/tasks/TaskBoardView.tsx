@@ -174,7 +174,7 @@ function BoardColumn({ column, onTaskClick, canUpdateTask }: { column: any, onTa
         </SortableContext>
         
         {column.tasks.length === 0 && (
-          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-border dark:border-border rounded-lg">
+          <div className="flex-1 flex items-center justify-center border border-border dark:border-border rounded-lg">
             <span className="text-xs font-medium text-muted">Drop tasks here</span>
           </div>
         )}
@@ -211,7 +211,7 @@ function SortableTaskCard({ task, onClick, canUpdateTask }: { task: any, onClick
       <div
         ref={setNodeRef}
         style={style}
-        className="opacity-30 border-2 border-theme-btn-primary border-dashed rounded-xl h-[120px] bg-accent-soft"
+        className="opacity-30 border border-theme-btn-primary rounded-xl h-[120px] bg-accent-soft"
       />
     );
   }
@@ -285,7 +285,7 @@ function TaskCard({ task }: { task: any }) {
                 })()}
               </div>
             ) : (
-              <div className="w-5 h-5 rounded-full border border-dashed border-border flex items-center justify-center text-[11px] text-muted" title="Unassigned">?</div>
+              <div className="w-5 h-5 rounded-full border border-border flex items-center justify-center text-[11px] text-muted" title="Unassigned">?</div>
             )}
             
             {task.end_date && (

@@ -323,7 +323,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
   };
 
   if (!mounted) {
-    return <div style={{ padding: '2rem', color: '#8b91a8', fontFamily: 'monospace' }}>Loading next-gen command center…</div>;
+    return <div style={{ padding: '2rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>Loading next-gen command center…</div>;
   }
 
   return (
@@ -336,14 +336,14 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
         <div className="topbar">
           {/* TITLE */}
           <div className="flex items-center gap-3 shrink-0">
-            <h1 className="topbar-title text-base sm:text-lg font-bold text-foreground tracking-tight whitespace-nowrap">
+            <h1 className="topbar-title text-base sm:text-lg font-semibold text-foreground tracking-tight whitespace-nowrap">
               {activeView === "portfolio" ? "My Portfolio" : "Enterprise Command Center"}
             </h1>
           </div>
 
           {/* MAIN DASHBOARD VIEW SWITCHER + NEW ITEM + LIVE BADGE (All in one unified flex group) */}
           <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-            <div className="flex items-center gap-1 p-1 bg-surface/90 dark:bg-surface/50 rounded-xl border border-border/70 shadow-xs shrink-0">
+            <div className="flex items-center gap-1 p-1 bg-surface/90 dark:bg-surface/50 rounded-lg border border-border shadow-xs shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -351,9 +351,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   router.replace("/?view=overview");
                 }}
                 className={cn(
-                  "flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0",
+                  "flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0",
                   activeView === "overview"
-                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                    ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 )}
               >
@@ -368,9 +368,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   router.replace("/?view=portfolio");
                 }}
                 className={cn(
-                  "flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0",
+                  "flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0",
                   activeView === "portfolio"
-                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                    ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 )}
               >
@@ -378,7 +378,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 <span className="whitespace-nowrap">My portfolio</span>
                 <span className={cn(
                   "px-1.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0",
-                  activeView === "portfolio" ? "bg-sunken text-white" : "bg-accent-soft text-theme-icon"
+                  activeView === "portfolio" ? "bg-sunken text-white" : "bg-accent-soft text-accent-soft-text"
                 )}>
                   Live
                 </span>
@@ -392,18 +392,18 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 size="sm" 
                 leftIcon={<Plus className="h-3.5 w-3.5 shrink-0" />} 
                 onClick={() => setNewMetricOpen(!newMetricOpen)}
-                className="text-xs font-bold shadow-xs whitespace-nowrap shrink-0"
+                className="text-xs font-semibold shadow-xs whitespace-nowrap shrink-0"
               >
                 New item
               </AppButton>
               {newMetricOpen && (
-                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 rounded-xl shadow-xl theme-card-structural border border-border/80 z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 rounded-lg shadow-lg theme-card-structural border border-border z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
                   <div className="py-1" role="menu" aria-orientation="vertical">
                     <a href="/workspaces?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">New workspace</a>
                     <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">New task</a>
                     <a href="/tickets?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">New ticket</a>
                     <a href="/requirements?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">New requirement</a>
-                    <div className="border-t border-border/60 my-1"></div>
+                    <div className="border-t border-border my-1"></div>
                     <a href="/masters?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent-soft transition-colors" role="menuitem">Master configuration</a>
                   </div>
                 </div>
@@ -458,9 +458,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
 
         {/* HIERARCHY SCOPE BAR (Overview Mode) */}
         {activeView === "overview" && (
-          <div className="px-3 sm:px-6 py-2 bg-surface/40 border-b border-border/50 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none text-xs">
+          <div className="px-3 sm:px-6 py-2 bg-surface/40 border-b border-border flex items-center justify-between gap-2 overflow-x-auto scrollbar-none text-xs">
             <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
-              <span className="text-[11px] sm:text-[11px] font-bold text-muted-foreground mr-1 shrink-0">
+              <span className="text-[11px] sm:text-[11px] font-semibold text-muted-foreground mr-1 shrink-0">
                 Scope:
               </span>
 
@@ -475,7 +475,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   className={cn(
                     "flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0",
                     hierarchyScope === "all" && selectedDepartmentName === "ALL"
-                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                      ? "bg-primary text-primary-foreground font-semibold shadow-xs"
                       : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
                   )}
                 >
@@ -495,7 +495,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
                     hierarchyScope === "my_reports"
-                      ? "bg-primary text-white font-bold shadow-sm"
+                      ? "bg-primary text-white font-semibold shadow-sm"
                       : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
                   )}
                 >
@@ -516,7 +516,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                     className={cn(
                       "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap",
                       hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
-                        ? "bg-info text-white font-bold shadow-sm"
+                        ? "bg-info text-white font-semibold shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -534,7 +534,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                         setSelectedDepartmentName(e.target.value);
                         setHierarchyScope("my_dept");
                       }}
-                      className="text-xs bg-background/80 border border-border/60 rounded px-2 py-0.5 text-foreground font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs bg-background/80 border border-border rounded px-2 py-0.5 text-foreground font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="ALL">
                         {isSuperAdmin ? "Filter by Dept (All)" : `All Managed (${managedDepts.length})`}
@@ -559,7 +559,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
                   hierarchyScope === "assigned_me"
-                    ? "bg-success text-white font-bold shadow-sm"
+                    ? "bg-success text-white font-semibold shadow-sm"
                     : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
                 )}
               >
@@ -577,7 +577,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
         <div className="content">
           
           {dbError && (
-            <div style={{ marginBottom: '20px', padding: '12px', background: 'rgba(255,95,126,0.1)', color: 'var(--red)', border: '0.5px solid rgba(255,95,126,0.3)', borderRadius: '8px', fontSize: '12px' }}>
+            <div style={{ marginBottom: '20px', padding: '12px', background: 'var(--danger-soft)', color: 'var(--danger-text)', border: '1px solid var(--danger-border)', borderRadius: '8px', fontSize: '12px' }}>
               Data sync warning: {dbError}
             </div>
           )}
@@ -595,7 +595,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
           )}
 
           {degradationStage >= DegradationStage.STAGE_3_SEVERE && (
-            <div style={{ padding: '20px', background: 'rgba(255,200,0,0.1)', color: 'var(--amber)', borderRadius: '8px', textAlign: 'center', marginTop: '20px', fontSize: '12px', border: '1px solid rgba(255,200,0,0.2)' }}>
+            <div style={{ padding: '20px', background: 'var(--warning-soft)', color: 'var(--warning-text)', borderRadius: '8px', textAlign: 'center', marginTop: '20px', fontSize: '12px', border: '1px solid var(--warning-border)' }}>
               <strong>Stage 3 Auto-Governance Active:</strong> Non-essential charts and activity feeds have been paused to protect core system stability.
             </div>
           )}

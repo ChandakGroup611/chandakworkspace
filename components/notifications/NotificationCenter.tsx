@@ -110,7 +110,7 @@ export default function NotificationCenter() {
             className="fixed inset-0 z-[calc(var(--z-popover)-1)] bg-transparent border-0 cursor-default"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl z-[var(--z-popover)] overflow-hidden bg-elevated border border-border shadow-lg animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-lg z-[var(--z-popover)] overflow-hidden bg-elevated border border-border shadow-lg animate-in fade-in zoom-in-95 duration-150">
             <div className="p-3 border-b border-border flex items-center justify-between bg-surface">
               <div className="flex items-center gap-2">
                 <h3 className="text-xs font-semibold text-heading">Notifications</h3>
@@ -125,7 +125,7 @@ export default function NotificationCenter() {
                   variant="ghost" 
                   size="sm" 
                   onClick={handleMarkAllRead} 
-                  className="h-6 px-1.5 text-[11px] text-danger hover:bg-danger-soft"
+                  className="h-6 px-1.5 text-[11px] text-danger-text hover:bg-danger-soft"
                 >
                   Clear all
                 </AppButton>
@@ -161,7 +161,7 @@ export default function NotificationCenter() {
                       size="icon"
                       aria-label="Delete notification"
                       onClick={(e) => handleDelete(e, n.id)}
-                      className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                      className="text-muted hover:text-danger-text opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
                     >
                       <X className="h-3.5 w-3.5" />
                     </AppButton>
