@@ -6782,3 +6782,301 @@ export async function runFleetComplianceExpiryAuditAction(): Promise<{
   }
 }
 
+// ------------------------------------------------------------------------------
+// Vehicle Sales & Disposals Action Suite
+// ------------------------------------------------------------------------------
+
+export interface VehicleSaleRecord {
+  id: string;
+  vehicle_id: string;
+  customer_id?: string | null;
+  sale_date: string;
+  sale_price: number;
+  discount?: number;
+  processing_fee?: number;
+  financed?: boolean;
+  is_financed?: boolean;
+  financier_name?: string | null;
+  loan_amount?: number;
+  loan_tenure_months?: number | null;
+  annual_interest_rate?: number | null;
+  is_resale?: boolean;
+  override_compliance_check?: boolean;
+  override_reason?: string | null;
+  buyer_name?: string | null;
+  buyer_phone?: string | null;
+  buyer_email?: string | null;
+  sale_type?: string;
+  payment_mode?: string;
+  sale_document_url?: string | null;
+  notes?: string | null;
+  recorded_by?: string | null;
+  created_at: string;
+  updated_at?: string;
+  vehicle_plate?: string | null;
+  vehicle_make?: string | null;
+  vehicle_model?: string | null;
+  vehicle_variant?: string | null;
+  vehicle_category?: string | null;
+  vehicle?: {
+    id: string;
+    registration_number: string;
+    make: string;
+    model: string;
+    variant?: string;
+    category?: string;
+    purchase_price?: number;
+    purchase_cost?: number;
+    on_road_price?: number;
+    ex_showroom_price?: number;
+    paint_color?: string;
+    vin_chassis_number?: string;
+    status: string;
+  } | null;
+}
+
+export async function fetchVehicleSalesListAction(): Promise<{
+  success: boolean;
+  sales: VehicleSaleRecord[];
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, sales: [], error: "Unauthorized" };
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_sales")
+      .select(`
+        *,
+        vehicle:vehicles (
+          id,
+          registration_number,
+          make,
+          model,
+          variant,
+          category,
+          purchase_price,
+          purchase_cost,
+          on_road_price,
+          ex_showroom_price,
+          paint_color,
+          vin_chassis_number,
+          status
+        )
+      `)
+      .order("sale_date", { ascending: false });
+
+    if (error) {
+      console.error("[vehicle-actions] fetchVehicleSalesListAction error:", error);
+      return { success: false, sales: [], error: error.message };
+    }
+
+    const salesList: VehicleSaleRecord[] = (data || []).map((row: any) => ({
+      ...row,
+      sale_price: Number(row.sale_price) || 0,
+      discount: Number(row.discount) || 0,
+      processing_fee: Number(row.processing_fee) || 0,
+      loan_amount: Number(row.loan_amount) || 0,
+      annual_interest_rate: Number(row.annual_interest_rate) || 0,
+      is_financed: Boolean(row.financed),
+      vehicle_plate: row.vehicle?.registration_number || null,
+      vehicle_make: row.vehicle?.make || null,
+      vehicle_model: row.vehicle?.model || null,
+      vehicle_variant: row.vehicle?.variant || null,
+      vehicle_category: row.vehicle?.category || null,
+      vehicle: row.vehicle || null
+    }));
+
+    return { success: true, sales: salesList };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehicleSalesListAction exception:", err);
+    return { success: false, sales: [], error: err.message || "Failed to load vehicle sales" };
+  }
+}
+
+export async function recordVehicleSaleAction(payload: {
+  vehicle_id: string;
+  sale_date: string;
+  sale_price: number;
+  buyer_name: string;
+  buyer_phone?: string;
+  buyer_email?: string;
+  sale_type?: string;
+  payment_mode?: string;
+  discount?: number;
+  processing_fee?: number;
+  financed?: boolean;
+  financier_name?: string;
+  loan_amount?: number;
+  loan_tenure_months?: number;
+  sale_document_url?: string;
+  notes?: string;
+}): Promise<{
+  success: boolean;
+  sale?: VehicleSaleRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized. Please sign in." };
+
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) {
+      return { success: false, error: "Access Denied: Insufficient permissions to record vehicle sales/disposals." };
+    }
+
+    if (!payload.vehicle_id) {
+      return { success: false, error: "Vehicle selection is required." };
+    }
+    if (!payload.sale_date) {
+      return { success: false, error: "Sale date is required." };
+    }
+    if (typeof payload.sale_price !== "number" || payload.sale_price < 0) {
+      return { success: false, error: "Valid sale price is required." };
+    }
+    if (!payload.buyer_name?.trim()) {
+      return { success: false, error: "Buyer / Recipient name is required." };
+    }
+
+    // 1. Fetch current vehicle record
+    const { data: vehicle, error: vErr } = await supabaseAdmin
+      .from("vehicles")
+      .select("id, registration_number, make, model, variant, category, status, purchase_price, purchase_cost, on_road_price")
+      .eq("id", payload.vehicle_id)
+      .maybeSingle();
+
+    if (vErr || !vehicle) {
+      return { success: false, error: "Selected vehicle not found in database." };
+    }
+
+    const recordedByName = (user.user_metadata?.full_name as string) || user.email || "Fleet Manager";
+    const saleId = `sale-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+    // 2. Insert record into public.vehicle_sales
+    const newSaleRow = {
+      id: saleId,
+      vehicle_id: payload.vehicle_id,
+      sale_date: payload.sale_date,
+      sale_price: payload.sale_price,
+      buyer_name: payload.buyer_name.trim(),
+      buyer_phone: payload.buyer_phone?.trim() || null,
+      buyer_email: payload.buyer_email?.trim() || null,
+      sale_type: payload.sale_type?.trim() || "Full Sale",
+      payment_mode: payload.payment_mode?.trim() || "Bank Transfer",
+      discount: Number(payload.discount) || 0,
+      processing_fee: Number(payload.processing_fee) || 0,
+      financed: Boolean(payload.financed),
+      financier_name: payload.financed ? (payload.financier_name?.trim() || null) : null,
+      loan_amount: payload.financed ? (Number(payload.loan_amount) || 0) : 0,
+      loan_tenure_months: payload.financed ? (Number(payload.loan_tenure_months) || null) : null,
+      sale_document_url: payload.sale_document_url?.trim() || null,
+      notes: payload.notes?.trim() || null,
+      recorded_by: recordedByName,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: insertedSale, error: saleErr } = await supabaseAdmin
+      .from("vehicle_sales")
+      .insert(newSaleRow)
+      .select()
+      .single();
+
+    if (saleErr) {
+      console.error("[vehicle-actions] recordVehicleSaleAction insert error:", saleErr);
+      return { success: false, error: saleErr.message };
+    }
+
+    // 3. Transition vehicle status to 'SOLD'
+    const newStatus = payload.sale_type?.toLowerCase().includes("scrap") ? "DISPOSED" : "SOLD";
+    const { error: vehUpdateErr } = await supabaseAdmin
+      .from("vehicles")
+      .update({
+        status: newStatus,
+        sale_price: payload.sale_price,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", payload.vehicle_id);
+
+    if (vehUpdateErr) {
+      console.warn("[vehicle-actions] Warning updating vehicle status to SOLD:", vehUpdateErr);
+    }
+
+    // 4. Record vehicle status history
+    try {
+      await supabaseAdmin
+        .from("vehicle_status_history")
+        .insert({
+          vehicle_id: payload.vehicle_id,
+          previous_status: vehicle.status,
+          new_status: newStatus,
+          changed_by: recordedByName,
+          reason: `Vehicle ${payload.sale_type || "Sale"} to ${payload.buyer_name.trim()} for ₹${payload.sale_price.toLocaleString("en-IN")}`
+        });
+    } catch (statHistErr) {
+      console.warn("[vehicle-actions] Warning writing status history:", statHistErr);
+    }
+
+    // 5. If document attached, record in vehicle_documents vault
+    if (payload.sale_document_url?.trim()) {
+      try {
+        await supabaseAdmin
+          .from("vehicle_documents")
+          .insert({
+            id: `vdoc-${Date.now()}-sale`,
+            vehicle_id: payload.vehicle_id,
+            doc_type: "SALE",
+            title: `Sale Deed / Disposal Certificate — ${vehicle.registration_number}`,
+            document_number: `SALE-${payload.vehicle_id.slice(-6).toUpperCase()}`,
+            file_name: `Sale_Invoice_${vehicle.registration_number}.pdf`,
+            file_url: payload.sale_document_url.trim(),
+            status: "VALID",
+            uploaded_at: new Date().toISOString()
+          });
+      } catch (docErr) {
+        console.warn("[vehicle-actions] Warning writing sale document to vault:", docErr);
+      }
+    }
+
+    // 6. Record specification history entry
+    try {
+      await supabaseAdmin
+        .from("vehicle_specification_history")
+        .insert({
+          vehicle_id: payload.vehicle_id,
+          changed_by: user.id,
+          changed_by_name: recordedByName,
+          changed_by_email: user.email || "",
+          change_summary: `Vehicle sold / decommissioned (${payload.sale_type || "Sale"}) to ${payload.buyer_name.trim()} for ₹${payload.sale_price.toLocaleString("en-IN")}`,
+          old_data: { status: vehicle.status, sale_price: null },
+          new_data: { status: newStatus, sale_price: payload.sale_price, sale_id: saleId }
+        });
+    } catch (specHistErr) {
+      console.warn("[vehicle-actions] Warning writing specification history:", specHistErr);
+    }
+
+    const completeRecord: VehicleSaleRecord = {
+      ...insertedSale,
+      sale_price: Number(insertedSale.sale_price) || 0,
+      discount: Number(insertedSale.discount) || 0,
+      processing_fee: Number(insertedSale.processing_fee) || 0,
+      loan_amount: Number(insertedSale.loan_amount) || 0,
+      is_financed: Boolean(insertedSale.financed),
+      vehicle_plate: vehicle.registration_number,
+      vehicle_make: vehicle.make,
+      vehicle_model: vehicle.model,
+      vehicle_variant: vehicle.variant,
+      vehicle_category: vehicle.category,
+      vehicle: {
+        ...vehicle,
+        status: newStatus
+      }
+    };
+
+    return { success: true, sale: completeRecord };
+  } catch (err: any) {
+    console.error("[vehicle-actions] recordVehicleSaleAction exception:", err);
+    return { success: false, error: err.message || "Failed to record vehicle sale" };
+  }
+}
+

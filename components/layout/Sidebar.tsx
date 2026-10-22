@@ -23,7 +23,7 @@ import {
   LayoutDashboard, Ticket, FileCheck2, ShieldAlert, Settings, Database, FolderKanban,
   ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
   Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
-  FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X,
+  FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X, Tag,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
@@ -152,6 +152,7 @@ const vehicleNavGroups: NavGroup[] = [
       { label: "Daily trip sheets", href: "/vehicle/trips", icon: Calendar, fleetModule: "TRIPS" },
       { label: "Driver roster", href: "/vehicle/drivers", icon: Users, fleetModule: "DRIVERS" },
       { label: "Traveller allocations", href: "/vehicle/travelers", icon: UserCheck, fleetModule: "TRAVELERS" },
+      { label: "Vehicle sales & disposals", href: "/vehicle/sales", icon: Tag, fleetModule: "SALES" },
     ]
   },
   {

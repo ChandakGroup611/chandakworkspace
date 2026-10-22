@@ -156,6 +156,7 @@ export function useFleetPermissions(initialAccess?: FleetUserAccessRecord | null
     if (moduleCode === "MY_GARAGE") return true;
     if (moduleCode === "LEARNING") return true;
     if (moduleCode === "REPORTS" && (hasPermission("FLEET_REPORTS_VIEW") || hasPermission("VEHICLES_MANAGE") || userAccessRecord?.canViewReports)) return true;
+    if (moduleCode === "SALES" && (hasPermission("VEHICLES_VIEW") || hasPermission("VEHICLES_MANAGE") || userAccessRecord?.canManageVehicles || effectiveFleetRole === "FLEET_ADMIN")) return true;
     if (moduleCode === "RBAC" && (hasPermission("USERS_VIEW") || effectiveFleetRole === "FLEET_ADMIN")) return true;
     if (moduleCode === "SETTINGS" && (hasPermission("SETTINGS_MANAGE") || userAccessRecord?.canManageSettings || effectiveFleetRole === "FLEET_ADMIN")) return true;
 
@@ -178,6 +179,7 @@ export function useFleetPermissions(initialAccess?: FleetUserAccessRecord | null
     if (moduleCode === "MAINTENANCE" && (hasPermission("FLEET_MAINTENANCE_CREATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
     if (moduleCode === "PARTS" && (hasPermission("FLEET_MAINTENANCE_CREATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
     if (moduleCode === "VENDORS" && (hasPermission("FLEET_VENDORS_CREATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "SALES" && (hasPermission("VEHICLES_MANAGE") || userAccessRecord?.canManageVehicles || effectiveFleetRole === "FLEET_ADMIN")) return true;
     if (moduleCode === "MY_GARAGE") return true;
 
     const pol = policies.find(p => p.roleCode === effectiveFleetRole && (p.module === moduleCode || p.module === "ALL"));

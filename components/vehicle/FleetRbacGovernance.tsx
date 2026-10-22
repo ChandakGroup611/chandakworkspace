@@ -39,7 +39,8 @@ import {
   Calendar,
   LineChart,
   LifeBuoy,
-  BookOpen
+  BookOpen,
+  Tag
 } from "lucide-react";
 import { 
   FleetMasterStore, 
@@ -103,6 +104,7 @@ const FLEET_MODULE_LIST: Array<{ code: FleetFunctionalModule; label: string; ico
   { code: "VENDORS", label: "Insurance vendor master", icon: ShieldCheck },
   { code: "ALERTS", label: "Statutory compliance & alerts", icon: ShieldAlert },
   { code: "REPORTS", label: "Fleet reports & analytics", icon: LineChart },
+  { code: "SALES", label: "Vehicle sales & disposals", icon: Tag },
   { code: "MY_GARAGE", label: "My assigned vehicles (garage)", icon: LifeBuoy },
   { code: "LEARNING", label: "Fleet guidelines / SOPs", icon: BookOpen },
   { code: "RBAC", label: "RBAC access policies", icon: Key },
@@ -131,6 +133,7 @@ const DEFAULT_MODULE_PERMS: Record<FleetFunctionalModule, ModulePermRow> = {
   VENDORS: { module: "VENDORS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   ALERTS: { module: "ALERTS", canCreate: false, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   REPORTS: { module: "REPORTS", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
+  SALES: { module: "SALES", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   MY_GARAGE: { module: "MY_GARAGE", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   LEARNING: { module: "LEARNING", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: false, movementAccessScope: "ALL" },
   RBAC: { module: "RBAC", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: false, movementAccessScope: "ALL" },

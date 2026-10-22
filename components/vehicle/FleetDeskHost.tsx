@@ -84,7 +84,11 @@ import {
   Activity,
   Filter,
   Navigation,
-  Mail
+  Mail,
+  Tag,
+  CreditCard,
+  DollarSign,
+  User
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -187,7 +191,10 @@ import {
   deleteVehicleServiceEntitlementAction,
   fetchVehicleUnifiedRenewalsTimelineAction,
   sendVehicleComplianceExpiryReminderAction,
-  runFleetComplianceExpiryAuditAction
+  runFleetComplianceExpiryAuditAction,
+  VehicleSaleRecord,
+  fetchVehicleSalesListAction,
+  recordVehicleSaleAction
 } from "@/lib/actions/vehicle";
 import { formatDate, formatDateTime } from "@/components/ui/data";
 
@@ -746,6 +753,7 @@ export interface FleetDeskHostProps {
   initialVendors?: InsuranceVendorRecord[];
   initialPurchaseVendors?: PurchaseVendorRecord[];
   initialParts?: PartAccessoryRecord[];
+  initialSales?: VehicleSaleRecord[];
   initialFleetAccess?: FleetUserAccessRecord | null;
 }
 
@@ -759,6 +767,7 @@ export default function FleetDeskHost({
   initialVendors,
   initialPurchaseVendors,
   initialParts,
+  initialSales,
   initialFleetAccess
 }: FleetDeskHostProps) {
   const pathname = usePathname() || "/vehicle";
@@ -818,6 +827,7 @@ export default function FleetDeskHost({
     if (pathname.includes("/vendors") || pathname.includes("/insurance-vendors")) return "vendors";
     if (pathname.includes("/travelers")) return "travelers";
     if (pathname.includes("/alerts")) return "alerts";
+    if (pathname.includes("/sales") || pathname.includes("/disposals")) return "sales";
     if (pathname.includes("/reports")) return "reports";
     if (pathname.includes("/my-garage")) return "my-garage";
     if (pathname.includes("/learning")) return "learning";
@@ -857,6 +867,7 @@ export default function FleetDeskHost({
   const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>(() => initialMaintenance || []);
   const [insuranceVendors, setInsuranceVendors] = useState<InsuranceVendorRecord[]>(() => initialVendors || []);
   const [purchaseVendors, setPurchaseVendors] = useState<PurchaseVendorRecord[]>(() => initialPurchaseVendors || []);
+  const [sales, setSales] = useState<VehicleSaleRecord[]>(() => initialSales || []);
 
   // Granular dataset loaded flags — live data preloaded directly from server
   const [dataLoaded, setDataLoaded] = useState({
@@ -865,8 +876,36 @@ export default function FleetDeskHost({
     trips: initialTrips !== undefined,
     maintenance: initialMaintenance !== undefined,
     vendors: initialVendors !== undefined,
-    parts: initialParts !== undefined
+    parts: initialParts !== undefined,
+    sales: initialSales !== undefined
   });
+
+  // Vehicle Sales & Disposals Tab & Modal States
+  const [isRecordSaleModalOpen, setIsRecordSaleModalOpen] = useState(false);
+  const [saleVehicleId, setSaleVehicleId] = useState("");
+  const [saleDate, setSaleDate] = useState(new Date().toISOString().split("T")[0]);
+  const [salePrice, setSalePrice] = useState<number | "">("");
+  const [saleBuyerName, setSaleBuyerName] = useState("");
+  const [saleBuyerPhone, setSaleBuyerPhone] = useState("");
+  const [saleBuyerEmail, setSaleBuyerEmail] = useState("");
+  const [saleType, setSaleType] = useState<string>("Full Sale");
+  const [salePaymentMode, setSalePaymentMode] = useState("Bank Transfer");
+  const [saleFinanced, setSaleFinanced] = useState(false);
+  const [saleFinancierName, setSaleFinancierName] = useState("");
+  const [saleLoanAmount, setSaleLoanAmount] = useState<number | "">("");
+  const [saleLoanTenure, setSaleLoanTenure] = useState<number | "">("");
+  const [saleNotes, setSaleNotes] = useState("");
+  const [saleStagedFile, setSaleStagedFile] = useState<{
+    file: File;
+    name: string;
+    size: string;
+    previewUrl: string;
+    base64Url?: string;
+  } | null>(null);
+  const [saleDocUrl, setSaleDocUrl] = useState("");
+  const [salesSearchQuery, setSalesSearchQuery] = useState("");
+  const [salesTypeFilter, setSalesTypeFilter] = useState("ALL");
+  const [viewingSale, setViewingSale] = useState<VehicleSaleRecord | null>(null);
 
   // Filtering and search
   const [searchQuery, setSearchQuery] = useState("");
@@ -2686,6 +2725,14 @@ export default function FleetDeskHost({
           setIsEditMaintenanceOpen(false);
           return;
         }
+        if (isRecordSaleModalOpen) {
+          setIsRecordSaleModalOpen(false);
+          return;
+        }
+        if (viewingSale) {
+          setViewingSale(null);
+          return;
+        }
         if (isVendorModalOpen) {
           setIsVendorModalOpen(false);
           return;
@@ -2803,7 +2850,9 @@ export default function FleetDeskHost({
     viewingDriver,
     viewingTrip,
     viewingPart,
-    viewingVendor
+    viewingVendor,
+    isRecordSaleModalOpen,
+    viewingSale
   ]);
 
   // Command Palette Search Results Filter
@@ -3022,7 +3071,8 @@ export default function FleetDeskHost({
         maintSettled,
         vendorsSettled,
         partsSettled,
-        purchaseVendorsSettled
+        purchaseVendorsSettled,
+        salesSettled
       ] = await Promise.allSettled([
         fetchVehicleDashboardStats(),
         fetchVehiclesList({ pageSize: 100 }),
@@ -3031,7 +3081,8 @@ export default function FleetDeskHost({
         fetchMaintenanceList(),
         fetchInsuranceVendorsListAction(),
         fetchVehiclePartsList(),
-        fetchPurchaseVendorsListAction()
+        fetchPurchaseVendorsListAction(),
+        fetchVehicleSalesListAction()
       ]);
 
       const newCache: {
@@ -3043,6 +3094,7 @@ export default function FleetDeskHost({
         vendors?: InsuranceVendorRecord[];
         purchaseVendors?: PurchaseVendorRecord[];
         parts?: PartAccessoryRecord[];
+        sales?: VehicleSaleRecord[];
         timestamp: number;
       } = { timestamp: Date.now() };
 
@@ -3087,13 +3139,19 @@ export default function FleetDeskHost({
         newCache.parts = partsSettled.value.parts;
       }
 
+      if (salesSettled.status === "fulfilled" && salesSettled.value.success && salesSettled.value.sales) {
+        setSales(salesSettled.value.sales);
+        newCache.sales = salesSettled.value.sales;
+      }
+
       setDataLoaded({
         vehicles: true,
         drivers: true,
         trips: true,
         maintenance: true,
         vendors: true,
-        parts: true
+        parts: true,
+        sales: true
       });
 
       fleetDataCache = newCache;
@@ -3190,6 +3248,14 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand purchase vendors load error:", e));
     }
+    if ((activeTab === "sales" || isRecordSaleModalOpen) && !dataLoaded.sales) {
+      fetchVehicleSalesListAction().then((res) => {
+        if (res.success && res.sales) {
+          setSales(res.sales);
+          setDataLoaded((prev) => ({ ...prev, sales: true }));
+        }
+      }).catch((e) => console.warn("On-demand sales load error:", e));
+    }
   }, [
     activeTab, 
     dataLoaded, 
@@ -3202,6 +3268,7 @@ export default function FleetDeskHost({
     isEditPartOpen, 
     isVendorModalOpen, 
     isEditVehicleOpen, 
+    isRecordSaleModalOpen,
     purchaseVendors.length
   ]);
 
@@ -6080,6 +6147,190 @@ export default function FleetDeskHost({
   };
 
   // ----------------------------------------------------------------------------
+  // CRUD Handlers: VEHICLE SALES & DISPOSALS
+  // ----------------------------------------------------------------------------
+
+  const openRecordSaleModal = (targetVehicle?: VehicleRecord) => {
+    const defaultVeh = targetVehicle || vehicles.find((v) => v.status !== "SOLD" && v.status !== "DISPOSED") || vehicles[0];
+    setSaleVehicleId(defaultVeh?.id || "");
+    setSaleDate(new Date().toISOString().split("T")[0]);
+    setSalePrice("");
+    setSaleBuyerName("");
+    setSaleBuyerPhone("");
+    setSaleBuyerEmail("");
+    setSaleType("Full Sale");
+    setSalePaymentMode("Bank Transfer");
+    setSaleFinanced(false);
+    setSaleFinancierName("");
+    setSaleLoanAmount("");
+    setSaleLoanTenure("");
+    setSaleNotes("");
+    setSaleStagedFile(null);
+    setSaleDocUrl("");
+    setIsRecordSaleModalOpen(true);
+  };
+
+  const handleSaleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Url = reader.result as string;
+      setSaleStagedFile({
+        file,
+        name: file.name,
+        size: `${(file.size / 1024).toFixed(1)} KB`,
+        previewUrl,
+        base64Url
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveRecordSale = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
+    if (!saleVehicleId) {
+      triggerToast("Please select a vehicle to record sale or disposal.", true);
+      return;
+    }
+    if (!saleDate) {
+      triggerToast("Sale date is mandatory.", true);
+      return;
+    }
+    const numPrice = Number(salePrice);
+    if (isNaN(numPrice) || numPrice < 0 || salePrice === "") {
+      triggerToast("Please enter a valid sale or scrap salvage price.", true);
+      return;
+    }
+    if (!saleBuyerName.trim()) {
+      triggerToast("Buyer or salvage purchaser entity name is required.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const payload = {
+        vehicle_id: saleVehicleId,
+        sale_date: saleDate,
+        sale_price: numPrice,
+        buyer_name: saleBuyerName.trim(),
+        buyer_phone: saleBuyerPhone.trim() || undefined,
+        buyer_email: saleBuyerEmail.trim() || undefined,
+        sale_type: saleType,
+        payment_mode: salePaymentMode,
+        is_financed: saleFinanced,
+        financier_name: saleFinancierName.trim() || undefined,
+        loan_amount: saleLoanAmount !== "" ? Number(saleLoanAmount) : undefined,
+        loan_tenure_months: saleLoanTenure !== "" ? Number(saleLoanTenure) : undefined,
+        notes: saleNotes.trim() || undefined,
+        document_url: saleStagedFile?.base64Url || saleDocUrl || undefined
+      };
+
+      const res = await recordVehicleSaleAction(payload);
+      if (res.success && res.sale) {
+        setSales((prev) => [res.sale!, ...prev]);
+        const newStatus = saleType === "Scrap / Salvage" ? "DISPOSED" : "SOLD";
+        setVehicles((prev) =>
+          prev.map((v) =>
+            v.id === saleVehicleId
+              ? { ...v, status: newStatus, sale_price: numPrice }
+              : v
+          )
+        );
+        if (viewingVehicle && viewingVehicle.id === saleVehicleId) {
+          setViewingVehicle((prev) =>
+            prev ? { ...prev, status: newStatus, sale_price: numPrice } : null
+          );
+        }
+        triggerToast(`Vehicle sale of ₹${numPrice.toLocaleString("en-IN")} recorded successfully!`);
+        setIsRecordSaleModalOpen(false);
+      } else {
+        triggerToast(res.error || "Failed to record vehicle sale.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to record vehicle sale.", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const exportSalesCSV = () => {
+    if (!sales || sales.length === 0) {
+      triggerToast("No vehicle sale records available to export");
+      return;
+    }
+    const headers = [
+      "Sale Date",
+      "Registration Plate",
+      "Make",
+      "Model",
+      "Variant",
+      "Category",
+      "Sale Type",
+      "Buyer Name",
+      "Buyer Phone",
+      "Buyer Email",
+      "Sale Price (INR)",
+      "Original Capital Cost (INR)",
+      "Net Capital Recovery (INR)",
+      "Payment Mode",
+      "Financed",
+      "Financier Name",
+      "Notes"
+    ];
+
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = sales.map((s) => {
+      const origCost = Number(s.vehicle?.purchase_cost || s.vehicle?.purchase_price || s.vehicle?.on_road_price || 0);
+      const sPrice = Number(s.sale_price) || 0;
+      const diff = sPrice - origCost;
+      const regPlate = s.vehicle_plate || s.vehicle?.registration_number || s.vehicle_id;
+      const make = s.vehicle_make || s.vehicle?.make || "";
+      const model = s.vehicle_model || s.vehicle?.model || "";
+      const variant = s.vehicle_variant || s.vehicle?.variant || "";
+      const cat = s.vehicle_category || s.vehicle?.category || "";
+
+      return [
+        escapeCSV(s.sale_date ? s.sale_date.split("T")[0] : ""),
+        escapeCSV(regPlate),
+        escapeCSV(make),
+        escapeCSV(model),
+        escapeCSV(variant),
+        escapeCSV(cat),
+        escapeCSV(s.sale_type || "Full Sale"),
+        escapeCSV(s.buyer_name || ""),
+        escapeCSV(s.buyer_phone || ""),
+        escapeCSV(s.buyer_email || ""),
+        escapeCSV(sPrice),
+        escapeCSV(origCost),
+        escapeCSV(diff),
+        escapeCSV(s.payment_mode || ""),
+        escapeCSV(s.is_financed ? "Yes" : "No"),
+        escapeCSV(s.financier_name || ""),
+        escapeCSV(s.notes || "")
+      ].join(",");
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Fleet_Vehicle_Sales_Disposals_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    triggerToast("Vehicle sales & disposals register exported successfully!");
+  };
+
+  // ----------------------------------------------------------------------------
   // CRUD Handlers: DRIVERS
   // ----------------------------------------------------------------------------
 
@@ -8041,6 +8292,31 @@ export default function FleetDeskHost({
     });
   }, [insuranceVendors, vendorSearch, vendorStatusFilter]);
 
+  const filteredSales = useMemo(() => {
+    return sales.filter((s) => {
+      const q = (salesSearchQuery || "").toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        (s.vehicle_plate && s.vehicle_plate.toLowerCase().includes(q)) ||
+        (s.vehicle?.registration_number && s.vehicle.registration_number.toLowerCase().includes(q)) ||
+        (s.vehicle_make && s.vehicle_make.toLowerCase().includes(q)) ||
+        (s.vehicle?.make && s.vehicle.make.toLowerCase().includes(q)) ||
+        (s.vehicle_model && s.vehicle_model.toLowerCase().includes(q)) ||
+        (s.vehicle?.model && s.vehicle.model.toLowerCase().includes(q)) ||
+        (s.buyer_name && s.buyer_name.toLowerCase().includes(q)) ||
+        (s.buyer_phone && s.buyer_phone.toLowerCase().includes(q)) ||
+        (s.buyer_email && s.buyer_email.toLowerCase().includes(q)) ||
+        (s.sale_type && s.sale_type.toLowerCase().includes(q)) ||
+        (s.notes && s.notes.toLowerCase().includes(q));
+
+      const matchesType =
+        salesTypeFilter === "ALL" ||
+        (s.sale_type && s.sale_type.toLowerCase() === salesTypeFilter.toLowerCase());
+
+      return matchesSearch && matchesType;
+    });
+  }, [sales, salesSearchQuery, salesTypeFilter]);
+
   const partsKpis = useMemo(() => {
     const totalCount = parts.length;
     const totalValuation = parts.reduce(
@@ -9134,6 +9410,67 @@ export default function FleetDeskHost({
           ]
         };
 
+      case "sales":
+        return {
+          category: "Fleet Operations",
+          badge: "Asset Disposal & Sales",
+          badgeColor: "bg-surface text-foreground border-border",
+          icon: Tag,
+          iconBg: "bg-surface text-theme-icon border-border",
+          title: "Vehicle sales & asset disposals",
+          description: "Record asset sales, scrap decommissions, buyer invoices & realized revenue ledgers",
+          actionBtn: canCreateVehicle ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => openRecordSaleModal()}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Record vehicle sale</span>
+            </AppButton>
+          ) : null,
+          kpis: [
+            {
+              title: "Units sold / disposed",
+              value: sales.length,
+              subtext: "Decommissioned assets",
+              icon: Tag,
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
+            },
+            {
+              title: "Realized sales revenue",
+              value: "₹" + sales.reduce((acc, s) => acc + (s.sale_price || 0), 0).toLocaleString("en-IN"),
+              subtext: "Total liquidation proceeds",
+              icon: IndianRupee,
+              iconColor: "text-success-text",
+              iconBg: "bg-success-soft border-success/30"
+            },
+            {
+              title: "Original cost basis",
+              value: "₹" + sales.reduce((acc, s) => acc + Number(s.vehicle?.purchase_cost || s.vehicle?.purchase_price || s.vehicle?.on_road_price || 0), 0).toLocaleString("en-IN"),
+              subtext: "Landed acquisition cost",
+              icon: Building2,
+              iconColor: "text-info-text",
+              iconBg: "bg-info-soft border-info/30"
+            },
+            {
+              title: "Net capital recovery",
+              value: (() => {
+                const rev = sales.reduce((acc, s) => acc + (s.sale_price || 0), 0);
+                const cost = sales.reduce((acc, s) => acc + Number(s.vehicle?.purchase_cost || s.vehicle?.purchase_price || s.vehicle?.on_road_price || 0), 0);
+                const diff = rev - cost;
+                return (diff >= 0 ? "+₹" : "-₹") + Math.abs(diff).toLocaleString("en-IN");
+              })(),
+              subtext: "Realized vs book cost",
+              icon: LineChart,
+              iconColor: "text-theme-btn-primary",
+              iconBg: "bg-surface border-border"
+            }
+          ]
+        };
+
       default:
         return {
           category: "Fleet Operations",
@@ -9231,6 +9568,8 @@ export default function FleetDeskHost({
     isAddEntitlementModalOpen ||
     isRedeemEntitlementModalOpen ||
     editModalDoc ||
+    isRecordSaleModalOpen ||
+    viewingSale ||
     viewingVehicle ||
     viewingDriver ||
     viewingTrip ||
@@ -9274,7 +9613,9 @@ export default function FleetDeskHost({
     isSpecHistoryModalOpen,
     isUnifiedRenewalsModalOpen,
     isAddEntitlementModalOpen,
-    isRedeemEntitlementModalOpen
+    isRedeemEntitlementModalOpen,
+    isRecordSaleModalOpen,
+    viewingSale
   ]);
 
   const hasRenderableData = vehicles.length > 0 || Boolean(initialVehicles && initialVehicles.length > 0) || Boolean(initialStats && initialStats.totalVehicles > 0);
@@ -16415,6 +16756,364 @@ export default function FleetDeskHost({
             </AppCardContent>
           </AppCard>
         </div>
+        </FleetErrorBoundary>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* VEHICLE SALES & DISPOSALS TAB */}
+      {/* ---------------------------------------------------------------------- */}
+      {!isAnyTransactionFormOpen && activeTab === "sales" && (
+        <FleetErrorBoundary tabName="Vehicle Sales & Disposals" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
+            {/* Top Toolbar & Filter Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 flex-1 max-w-xl">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <AppInput
+                    value={salesSearchQuery}
+                    onChange={(e) => setSalesSearchQuery(e.target.value)}
+                    placeholder="Search by vehicle plate, make, model, buyer entity, or phone..."
+                    className="pl-9 h-9 text-xs"
+                  />
+                  {salesSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSalesSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <select
+                  value={salesTypeFilter}
+                  onChange={(e) => setSalesTypeFilter(e.target.value)}
+                  className="h-9 px-3 text-xs rounded-lg border border-border bg-surface text-foreground font-medium focus:outline-none focus:border-theme-btn-primary"
+                >
+                  <option value="ALL">All Disposal Types</option>
+                  <option value="Full Sale">Full Sale</option>
+                  <option value="Scrap / Salvage">Scrap / Salvage</option>
+                  <option value="Auction">Auction</option>
+                  <option value="Buyback / Trade-In">Buyback / Trade-In</option>
+                  <option value="Transfer">Transfer</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={exportSalesCSV}
+                  disabled={sales.length === 0}
+                  className="h-9 px-3 text-xs gap-1.5 font-semibold"
+                  title="Export vehicle sales register as CSV"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Export CSV</span>
+                </AppButton>
+
+                {canCreateVehicle && (
+                  <AppButton
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => openRecordSaleModal()}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Record vehicle sale</span>
+                  </AppButton>
+                )}
+              </div>
+            </div>
+
+            {/* Sales Register Table Card */}
+            <AppCard className="border-border shadow-xs overflow-hidden">
+              <AppCardHeader className="bg-surface/50 p-4 border-b border-border/50 flex flex-row items-center justify-between">
+                <div>
+                  <AppCardTitle className="text-base flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Vehicle Sales, Disposals & Scrap Register</span>
+                  </AppCardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Showing {filteredSales.length} of {sales.length} decommissioned asset {sales.length === 1 ? "record" : "records"}
+                  </p>
+                </div>
+              </AppCardHeader>
+
+              <AppCardContent className="p-0">
+                <AppTableContainer>
+                  <AppTable>
+                    <AppTableHeader>
+                      <AppTableRow className="border-b border-border bg-sunken/40">
+                        <AppTableHead className="text-xs font-bold py-3 px-3.5">Vehicle Asset</AppTableHead>
+                        <AppTableHead className="text-xs font-bold py-3 px-3.5">Disposal Type & Date</AppTableHead>
+                        <AppTableHead className="text-xs font-bold py-3 px-3.5">Buyer / Purchaser</AppTableHead>
+                        <AppTableHead className="text-xs font-bold py-3 px-3.5 text-right">Realized Price</AppTableHead>
+                        <AppTableHead className="text-xs font-bold py-3 px-3.5 text-right">Capital Recovery</AppTableHead>
+                        <AppTableHead className="text-xs font-bold py-3 px-3.5">Payment & Finance</AppTableHead>
+                        <AppTableHead className="text-xs font-bold py-3 px-3.5 text-center">Transfer Documents</AppTableHead>
+                        <AppTableHead className="text-xs font-bold py-3 px-3.5 text-right">Actions</AppTableHead>
+                      </AppTableRow>
+                    </AppTableHeader>
+
+                    <AppTableBody>
+                      {filteredSales.length === 0 ? (
+                        <AppTableRow>
+                          <AppTableCell colSpan={8} className="py-12 text-center">
+                            <div className="flex flex-col items-center justify-center space-y-2">
+                              <div className="h-10 w-10 rounded-full bg-accent-soft flex items-center justify-center text-theme-btn-primary">
+                                <Tag className="h-5 w-5" />
+                              </div>
+                              <p className="text-sm font-semibold text-foreground">
+                                {sales.length === 0 ? "No vehicle sales or disposals recorded yet" : "No records match current filter criteria"}
+                              </p>
+                              <p className="text-xs text-muted-foreground max-w-sm">
+                                {sales.length === 0
+                                  ? "When fleet vehicles are liquidated, auctioned, or decommissioned to scrap, record them here to maintain capital asset ledgers."
+                                  : "Try adjusting your search query or reset the disposal type filter to view all sale records."}
+                              </p>
+                              {canCreateVehicle && sales.length === 0 && (
+                                <AppButton
+                                  type="button"
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => openRecordSaleModal()}
+                                  className="mt-2 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-8 font-semibold gap-1.5"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                  <span>Record first vehicle sale</span>
+                                </AppButton>
+                              )}
+                            </div>
+                          </AppTableCell>
+                        </AppTableRow>
+                      ) : (
+                        filteredSales.map((sale) => {
+                          const regPlate = sale.vehicle_plate || sale.vehicle?.registration_number || sale.vehicle_id;
+                          const make = sale.vehicle_make || sale.vehicle?.make || "";
+                          const model = sale.vehicle_model || sale.vehicle?.model || "";
+                          const variant = sale.vehicle_variant || sale.vehicle?.variant || "";
+                          const category = sale.vehicle_category || sale.vehicle?.category || "Standard";
+                          const origCost = Number(sale.vehicle?.purchase_cost || sale.vehicle?.purchase_price || sale.vehicle?.on_road_price || 0);
+                          const sPrice = Number(sale.sale_price) || 0;
+                          const netDiff = sPrice - origCost;
+                          const recoveryPercent = origCost > 0 ? Math.round((sPrice / origCost) * 100) : 0;
+                          const targetVeh = vehicles.find((v) => v.id === sale.vehicle_id);
+
+                          return (
+                            <AppTableRow
+                              key={sale.id}
+                              className="hover:bg-sunken/40 transition-colors border-b border-border/60 cursor-pointer"
+                              onClick={() => setViewingSale(sale)}
+                            >
+                              {/* Vehicle Asset */}
+                              <AppTableCell className="p-3.5">
+                                <div className="space-y-1">
+                                  <div className="shrink-0">
+                                    {renderHsrpPlate(regPlate)}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-xs">
+                                    <span className="font-semibold text-foreground">{make} {model}</span>
+                                    {variant && <span className="text-muted-foreground">({variant})</span>}
+                                  </div>
+                                  <span className="inline-block text-2xs px-1.5 py-0.5 rounded bg-sunken border border-border text-muted-foreground font-mono">
+                                    {category}
+                                  </span>
+                                </div>
+                              </AppTableCell>
+
+                              {/* Disposal Type & Date */}
+                              <AppTableCell className="p-3.5">
+                                <div className="space-y-1">
+                                  <div>
+                                    <span
+                                      className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                                        sale.sale_type === "Scrap / Salvage"
+                                          ? "bg-danger-soft text-danger-text border-danger/30"
+                                          : sale.sale_type === "Auction"
+                                          ? "bg-warning-soft text-warning-text border-warning/30"
+                                          : "bg-success-soft text-success-text border-success/30"
+                                      }`}
+                                    >
+                                      {sale.sale_type || "Full Sale"}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+                                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                                    <span>{sale.sale_date ? sale.sale_date.split("T")[0] : "—"}</span>
+                                  </div>
+                                </div>
+                              </AppTableCell>
+
+                              {/* Buyer / Purchaser */}
+                              <AppTableCell className="p-3.5">
+                                <div className="space-y-0.5">
+                                  <div className="font-semibold text-xs text-foreground">
+                                    {sale.buyer_name || "—"}
+                                  </div>
+                                  {sale.buyer_phone && (
+                                    <div className="text-xs text-info-text font-mono">
+                                      <a
+                                        href={`tel:${sale.buyer_phone}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="hover:underline flex items-center gap-1"
+                                      >
+                                        <Phone className="h-3 w-3" />
+                                        <span>{sale.buyer_phone}</span>
+                                      </a>
+                                    </div>
+                                  )}
+                                  {sale.buyer_email && (
+                                    <div className="text-xs text-muted-foreground truncate max-w-[160px]">
+                                      <a
+                                        href={`mailto:${sale.buyer_email}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="hover:underline"
+                                      >
+                                        {sale.buyer_email}
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                              </AppTableCell>
+
+                              {/* Realized Price */}
+                              <AppTableCell className="p-3.5 text-right">
+                                <div className="space-y-0.5">
+                                  <div className="text-xs font-bold font-mono text-foreground">
+                                    ₹{sPrice.toLocaleString("en-IN")}
+                                  </div>
+                                  {origCost > 0 && (
+                                    <div className="text-2xs text-muted-foreground font-mono" title="Original Landed Acquisition Cost">
+                                      Cost: ₹{origCost.toLocaleString("en-IN")}
+                                    </div>
+                                  )}
+                                </div>
+                              </AppTableCell>
+
+                              {/* Capital Recovery */}
+                              <AppTableCell className="p-3.5 text-right">
+                                <div className="space-y-1 inline-flex flex-col items-end">
+                                  <span
+                                    className={`inline-flex items-center text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                                      netDiff >= 0
+                                        ? "bg-success-soft text-success-text border-success/30"
+                                        : "bg-surface text-muted-foreground border-border"
+                                    }`}
+                                  >
+                                    {netDiff >= 0 ? `+₹${netDiff.toLocaleString("en-IN")}` : `-₹${Math.abs(netDiff).toLocaleString("en-IN")}`}
+                                  </span>
+                                  {origCost > 0 && (
+                                    <span className="text-2xs text-muted-foreground font-mono">
+                                      {recoveryPercent}% recovered
+                                    </span>
+                                  )}
+                                </div>
+                              </AppTableCell>
+
+                              {/* Payment & Finance */}
+                              <AppTableCell className="p-3.5">
+                                <div className="space-y-1">
+                                  <span className="text-xs font-medium text-foreground block">
+                                    {sale.payment_mode || "Bank Transfer"}
+                                  </span>
+                                  {sale.is_financed ? (
+                                    <span className="inline-flex items-center gap-1 text-2xs font-semibold px-1.5 py-0.5 rounded bg-info-soft text-info-text border border-info/30">
+                                      Financed {sale.financier_name ? `(${sale.financier_name})` : ""}
+                                    </span>
+                                  ) : (
+                                    <span className="text-2xs text-muted-foreground font-mono">
+                                      Outright / Direct
+                                    </span>
+                                  )}
+                                </div>
+                              </AppTableCell>
+
+                              {/* Transfer Documents (Universal View & Download) */}
+                              <AppTableCell className="p-3.5 text-center">
+                                {sale.sale_document_url ? (
+                                  <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                    <AppButton
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setPreviewAttachment({
+                                          file_name: `Sale_Deed_${regPlate}.pdf`,
+                                          file_url: sale.sale_document_url!,
+                                          file_type: "application/pdf"
+                                        });
+                                        setPreviewZoom(1);
+                                        setPreviewRotation(0);
+                                      }}
+                                      className="h-7 px-2 text-xs gap-1 font-semibold hover:border-theme-btn-primary"
+                                      title="View sale agreement scan"
+                                    >
+                                      <Eye className="h-3 w-3" />
+                                      <span>View</span>
+                                    </AppButton>
+                                    <AppButton
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        downloadAttachment({
+                                          file_name: `Sale_Deed_${regPlate}.pdf`,
+                                          file_url: sale.sale_document_url!
+                                        });
+                                      }}
+                                      className="h-7 px-2 text-xs gap-1 font-semibold"
+                                      title="Download sale agreement scan"
+                                    >
+                                      <Download className="h-3 w-3" />
+                                    </AppButton>
+                                  </div>
+                                ) : (
+                                  <span className="text-2xs text-muted-foreground font-mono">No doc scan</span>
+                                )}
+                              </AppTableCell>
+
+                              {/* Actions */}
+                              <AppTableCell className="p-3.5 text-right">
+                                <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                  {targetVeh && (
+                                    <AppButton
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setViewingVehicle(targetVeh)}
+                                      className="h-7 px-2 text-xs font-semibold text-theme-btn-primary hover:bg-accent-soft"
+                                      title="Open vehicle asset dossier"
+                                    >
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      <span>Dossier</span>
+                                    </AppButton>
+                                  )}
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setViewingSale(sale)}
+                                    className="h-7 px-2 text-xs font-semibold"
+                                  >
+                                    <span>Inspect</span>
+                                  </AppButton>
+                                </div>
+                              </AppTableCell>
+                            </AppTableRow>
+                          );
+                        })
+                      )}
+                    </AppTableBody>
+                  </AppTable>
+                </AppTableContainer>
+              </AppCardContent>
+            </AppCard>
+          </div>
         </FleetErrorBoundary>
       )}
 
@@ -25100,9 +25799,679 @@ export default function FleetDeskHost({
       )}
 
       {/* ---------------------------------------------------------------------- */}
+      {/* RECORD VEHICLE SALE / DISPOSAL MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isRecordSaleModalOpen && (() => {
+        const selectedVehicleForSale = vehicles.find((v) => v.id === saleVehicleId);
+        const origCost = Number(selectedVehicleForSale?.purchase_cost || selectedVehicleForSale?.purchase_price || selectedVehicleForSale?.on_road_price || 0);
+        const numSalePrice = Number(salePrice) || 0;
+        const netDiff = numSalePrice - origCost;
+        const recoveryPercent = origCost > 0 ? Math.round((numSalePrice / origCost) * 100) : 0;
+
+        return (
+          <TransactionFormLayout
+            title="Record vehicle sale & asset disposal"
+            badge="Asset Decommission Form"
+            category="Fleet Liquidation & Salvage"
+            icon={Tag}
+            iconBg="bg-accent-soft text-theme-btn-primary border-theme-btn-primary/25"
+            description="Decommission vehicle from active fleet, record transaction proceeds, buyer details & upload bill of sale / transfer deed."
+            breadcrumbs={[
+              { label: "Vehicle Sales & Disposals", onClick: () => setIsRecordSaleModalOpen(false) },
+              { label: "Record Vehicle Sale" }
+            ]}
+            onBack={() => setIsRecordSaleModalOpen(false)}
+            backLabel="Back to Sales Register"
+            onReset={() => openRecordSaleModal(selectedVehicleForSale)}
+            onSave={handleSaveRecordSale}
+            saveLabel="Confirm & Decommission Asset"
+            saveIcon={Save}
+            isSubmitting={modalSubmitting}
+          >
+            <div className="space-y-6">
+              {/* 1. Target Vehicle Selection */}
+              <AppCard className="border-border shadow-xs">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Car className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Select Fleet Asset to Decommission</span>
+                  </AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="p-4 space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                      Vehicle Plate & Designation <span className="text-danger-text">*</span>
+                    </label>
+                    <select
+                      value={saleVehicleId}
+                      onChange={(e) => setSaleVehicleId(e.target.value)}
+                      className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-surface text-foreground font-medium focus:outline-none focus:border-theme-btn-primary"
+                    >
+                      <option value="" disabled>Select vehicle to liquidate / scrap...</option>
+                      {vehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.registration_number} — {v.make} {v.model} {v.variant ? `(${v.variant})` : ""} [{v.status}]
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedVehicleForSale && (
+                    <div className="p-3.5 rounded-lg bg-sunken/40 border border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="shrink-0">{renderHsrpPlate(selectedVehicleForSale.registration_number)}</div>
+                        <div className="text-xs font-semibold text-foreground">
+                          {selectedVehicleForSale.make} {selectedVehicleForSale.model} {selectedVehicleForSale.variant && `• ${selectedVehicleForSale.variant}`}
+                        </div>
+                        <div className="text-2xs text-muted-foreground font-mono flex items-center gap-2">
+                          <span>Category: {selectedVehicleForSale.category || "Standard"}</span>
+                          <span>•</span>
+                          <span>Odo: {Number(selectedVehicleForSale.odometer_km || 0).toLocaleString("en-IN")} km</span>
+                          <span>•</span>
+                          <span>Status: {selectedVehicleForSale.status}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-right sm:border-l sm:border-border sm:pl-4 space-y-0.5">
+                        <span className="text-2xs uppercase tracking-wider text-muted-foreground block">Original Landed Cost</span>
+                        <span className="text-sm font-mono font-bold text-foreground">
+                          {origCost > 0 ? `₹${origCost.toLocaleString("en-IN")}` : "Unrecorded"}
+                        </span>
+                        <div className="text-2xs text-muted-foreground">
+                          Current Status: <span className="font-semibold text-foreground">{selectedVehicleForSale.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+              {/* 2. Transaction Particulars & Pricing */}
+              <AppCard className="border-border shadow-xs">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Transaction Particulars & Realized Price</span>
+                  </AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                        Disposal / Sale Date <span className="text-danger-text">*</span>
+                      </label>
+                      <AppInput
+                        type="date"
+                        value={saleDate}
+                        onChange={(e) => setSaleDate(e.target.value)}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                        Disposal Classification <span className="text-danger-text">*</span>
+                      </label>
+                      <select
+                        value={saleType}
+                        onChange={(e) => setSaleType(e.target.value)}
+                        className="w-full h-9 px-3 text-xs rounded-lg border border-border bg-surface text-foreground font-medium focus:outline-none focus:border-theme-btn-primary"
+                      >
+                        <option value="Full Sale">Full Outright Sale</option>
+                        <option value="Scrap / Salvage">Scrap / Salvage Disposal</option>
+                        <option value="Auction">Commercial Public Auction</option>
+                        <option value="Buyback / Trade-In">OEM Buyback / Trade-In</option>
+                        <option value="Transfer">Inter-Entity Transfer</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                        Realized Sale Price (₹) <span className="text-danger-text">*</span>
+                      </label>
+                      <AppInput
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={salePrice}
+                        onChange={(e) => setSalePrice(e.target.value === "" ? "" : Number(e.target.value))}
+                        placeholder="e.g. 450000"
+                        className="h-9 text-xs font-mono font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Financial Recovery Telemetry */}
+                  {numSalePrice > 0 && origCost > 0 && (
+                    <div className="p-3.5 rounded-lg bg-surface border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <span className="text-2xs uppercase tracking-wider text-muted-foreground font-semibold">Net Capital Recovery Ledger</span>
+                        <div className="text-xs text-foreground">
+                          Acquisition: <span className="font-mono font-medium">₹{origCost.toLocaleString("en-IN")}</span> ➔ Realized: <span className="font-mono font-bold text-foreground">₹{numSalePrice.toLocaleString("en-IN")}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xs font-mono font-bold px-2.5 py-1 rounded border ${
+                            netDiff >= 0
+                              ? "bg-success-soft text-success-text border-success/30"
+                              : "bg-danger-soft text-danger-text border-danger/30"
+                          }`}
+                        >
+                          {netDiff >= 0 ? `+₹${netDiff.toLocaleString("en-IN")} (Gain)` : `-₹${Math.abs(netDiff).toLocaleString("en-IN")} (Depreciation / Loss)`}
+                        </span>
+                        <span className="text-xs font-mono text-muted-foreground">
+                          ({recoveryPercent}% capital value recovered)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+              {/* 3. Buyer / Purchaser Particulars */}
+              <AppCard className="border-border shadow-xs">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <User className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Buyer / Purchaser / Yard Information</span>
+                  </AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                        Buyer / Entity Name <span className="text-danger-text">*</span>
+                      </label>
+                      <AppInput
+                        value={saleBuyerName}
+                        onChange={(e) => setSaleBuyerName(e.target.value)}
+                        placeholder="e.g. Ramesh Motors / Apex Auto Salvage"
+                        className="h-9 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                        Buyer Phone Number
+                      </label>
+                      <AppInput
+                        type="tel"
+                        value={saleBuyerPhone}
+                        onChange={(e) => setSaleBuyerPhone(e.target.value)}
+                        placeholder="e.g. +91 98765 43210"
+                        className="h-9 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                        Buyer Email Address
+                      </label>
+                      <AppInput
+                        type="email"
+                        value={saleBuyerEmail}
+                        onChange={(e) => setSaleBuyerEmail(e.target.value)}
+                        placeholder="e.g. buyer@example.com"
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                  </div>
+                </AppCardContent>
+              </AppCard>
+
+              {/* 4. Payment Mode & Financing */}
+              <AppCard className="border-border shadow-xs">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Payment Mode & Financing Details</span>
+                  </AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                        Payment Settlement Mode
+                      </label>
+                      <select
+                        value={salePaymentMode}
+                        onChange={(e) => setSalePaymentMode(e.target.value)}
+                        className="w-full h-9 px-3 text-xs rounded-lg border border-border bg-surface text-foreground font-medium focus:outline-none focus:border-theme-btn-primary"
+                      >
+                        <option value="Bank Transfer">Bank Transfer (RTGS / NEFT / IMPS)</option>
+                        <option value="Cheque / DD">Banker's Cheque / Demand Draft</option>
+                        <option value="UPI">UPI Digital Transfer</option>
+                        <option value="Cash">Cash Deposit</option>
+                        <option value="Trade-In Adjustment">Trade-In Fleet Credit Adjustment</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 pt-6">
+                      <input
+                        type="checkbox"
+                        id="saleFinancedCheckbox"
+                        checked={saleFinanced}
+                        onChange={(e) => setSaleFinanced(e.target.checked)}
+                        className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer"
+                      />
+                      <label htmlFor="saleFinancedCheckbox" className="text-xs font-semibold text-foreground cursor-pointer">
+                        Buyer purchased asset via Bank Loan / NBFC financing
+                      </label>
+                    </div>
+                  </div>
+
+                  {saleFinanced && (
+                    <div className="p-3.5 rounded-lg bg-sunken/40 border border-border/60 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                          Financier / Bank Name
+                        </label>
+                        <AppInput
+                          value={saleFinancierName}
+                          onChange={(e) => setSaleFinancierName(e.target.value)}
+                          placeholder="e.g. HDFC Bank Auto Finance"
+                          className="h-9 text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                          Financed Loan Amount (₹)
+                        </label>
+                        <AppInput
+                          type="number"
+                          min="0"
+                          value={saleLoanAmount}
+                          onChange={(e) => setSaleLoanAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                          placeholder="e.g. 350000"
+                          className="h-9 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1.5 block">
+                          Loan Tenure (Months)
+                        </label>
+                        <AppInput
+                          type="number"
+                          min="1"
+                          max="120"
+                          value={saleLoanTenure}
+                          onChange={(e) => setSaleLoanTenure(e.target.value === "" ? "" : Number(e.target.value))}
+                          placeholder="e.g. 36"
+                          className="h-9 text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+              {/* 5. Transfer Document & Deed Upload (Universal View & Download Guarantee) */}
+              <AppCard className="border-border shadow-xs">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Sale Deed / Bill of Sale / RTO Form 29-30 Document</span>
+                  </AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="p-4 space-y-4">
+                  {saleStagedFile ? (
+                    <div className="p-4 rounded-lg bg-surface border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center shrink-0">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-foreground truncate max-w-xs">{saleStagedFile.name}</p>
+                          <p className="text-2xs text-muted-foreground font-mono">{saleStagedFile.size} • Staged for vault persistence</p>
+                        </div>
+                      </div>
+
+                      {/* Universal View & Download Buttons */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setPreviewAttachment({
+                              file_name: saleStagedFile.name,
+                              file_url: saleStagedFile.previewUrl,
+                              file_type: saleStagedFile.file.type || "application/pdf"
+                            });
+                            setPreviewZoom(1);
+                            setPreviewRotation(0);
+                          }}
+                          className="h-8 px-2.5 text-xs font-semibold gap-1.5"
+                          title="Preview staged document"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>View preview</span>
+                        </AppButton>
+
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            downloadAttachment({
+                              file_name: saleStagedFile.name,
+                              file_url: saleStagedFile.previewUrl
+                            });
+                          }}
+                          className="h-8 px-2.5 text-xs font-semibold gap-1.5"
+                          title="Download staged document"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          <span>Download</span>
+                        </AppButton>
+
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSaleStagedFile(null)}
+                          className="h-8 px-2.5 text-xs font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                        >
+                          <span>Remove</span>
+                        </AppButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-theme-btn-primary/50 transition-colors">
+                      <input
+                        type="file"
+                        id="saleDocumentInput"
+                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                        onChange={handleSaleFileChange}
+                        className="hidden"
+                      />
+                      <label htmlFor="saleDocumentInput" className="cursor-pointer flex flex-col items-center">
+                        <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-xs font-semibold text-foreground">Click to upload bill of sale or RTO transfer deed scan</span>
+                        <span className="text-2xs text-muted-foreground mt-1">PDF, DOCX, PNG, JPG up to 15MB</span>
+                      </label>
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+              {/* 6. Remarks / Notes */}
+              <AppCard className="border-border shadow-xs">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Remarks & RTO Transfer Status Notes</span>
+                  </AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="p-4">
+                  <textarea
+                    rows={3}
+                    value={saleNotes}
+                    onChange={(e) => setSaleNotes(e.target.value)}
+                    placeholder="Provide any additional transaction details, RTO NOC status, scrap yard certificate serial number, or conditions of sale..."
+                    className="w-full p-2.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary"
+                  />
+                </AppCardContent>
+              </AppCard>
+            </div>
+          </TransactionFormLayout>
+        );
+      })()}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* VIEW VEHICLE SALE INSPECTOR WORKING DOCUMENT */}
+      {/* ---------------------------------------------------------------------- */}
+      {viewingSale && !isRecordSaleModalOpen && (() => {
+        const origCost = Number(viewingSale.vehicle?.purchase_cost || viewingSale.vehicle?.purchase_price || viewingSale.vehicle?.on_road_price || 0);
+        const sPrice = Number(viewingSale.sale_price) || 0;
+        const netDiff = sPrice - origCost;
+        const recoveryPercent = origCost > 0 ? Math.round((sPrice / origCost) * 100) : 0;
+        const regPlate = viewingSale.vehicle_plate || viewingSale.vehicle?.registration_number || viewingSale.vehicle_id;
+        const targetVeh = vehicles.find((v) => v.id === viewingSale.vehicle_id);
+
+        return (
+          <WorkingDocumentLayout
+            title={`Vehicle Sale & Disposal: ${regPlate}`}
+            badge={viewingSale.sale_type || "Full Sale"}
+            badgeColor={
+              viewingSale.sale_type === "Scrap / Salvage"
+                ? "bg-danger-soft text-danger-text border-danger/30"
+                : viewingSale.sale_type === "Auction"
+                ? "bg-warning-soft text-warning-text border-warning/30"
+                : "bg-success-soft text-success-text border-success/30"
+            }
+            category="Fleet Liquidation & Decommission Dossier"
+            icon={Tag}
+            iconBg="bg-accent-soft text-theme-btn-primary border-theme-btn-primary/25"
+            breadcrumbs={[
+              { label: "Vehicle Sales & Disposals", onClick: () => setViewingSale(null) },
+              { label: `Sale Record (${regPlate})` }
+            ]}
+            onBack={() => setViewingSale(null)}
+            backLabel="Back to Sales Register"
+            headerActions={
+              <div className="flex items-center gap-2">
+                {targetVeh && (
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setViewingSale(null);
+                      setViewingVehicle(targetVeh);
+                    }}
+                    className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-theme-btn-primary"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>View vehicle dossier</span>
+                  </AppButton>
+                )}
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.print()}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>Print deed</span>
+                </AppButton>
+              </div>
+            }
+          >
+            <div className="space-y-6">
+              {/* Asset Header Banner */}
+              <div className="p-4 rounded-xl bg-surface border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="shrink-0">{renderHsrpPlate(regPlate)}</div>
+                  <h3 className="text-base font-bold text-foreground">
+                    {viewingSale.vehicle_make || viewingSale.vehicle?.make} {viewingSale.vehicle_model || viewingSale.vehicle?.model}
+                    {(viewingSale.vehicle_variant || viewingSale.vehicle?.variant) && ` • ${viewingSale.vehicle_variant || viewingSale.vehicle?.variant}`}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+                    <span>Category: {viewingSale.vehicle_category || viewingSale.vehicle?.category || "Standard"}</span>
+                    <span>•</span>
+                    <span>Disposal Date: {viewingSale.sale_date ? viewingSale.sale_date.split("T")[0] : "—"}</span>
+                  </div>
+                </div>
+
+                <div className="text-right sm:border-l sm:border-border sm:pl-6 space-y-1">
+                  <span className="text-2xs uppercase tracking-wider text-muted-foreground font-semibold">Realized Proceeds</span>
+                  <div className="text-2xl font-mono font-bold text-foreground">
+                    ₹{sPrice.toLocaleString("en-IN")}
+                  </div>
+                  {origCost > 0 && (
+                    <div className="text-xs font-mono">
+                      <span className={netDiff >= 0 ? "text-success-text" : "text-danger-text"}>
+                        {netDiff >= 0 ? `+₹${netDiff.toLocaleString("en-IN")} Net Gain` : `-₹${Math.abs(netDiff).toLocaleString("en-IN")} Net Loss`}
+                      </span>
+                      <span className="text-muted-foreground ml-1">({recoveryPercent}% recovery)</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Grid: Financials & Buyer Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Buyer / Purchaser Details */}
+                <AppCard className="border-border shadow-xs">
+                  <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                    <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <User className="h-4 w-4 text-theme-btn-primary" />
+                      <span>Purchaser / Salvage Buyer Entity</span>
+                    </AppCardTitle>
+                  </AppCardHeader>
+                  <AppCardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between text-xs py-1.5 border-b border-border/40">
+                      <span className="text-muted-foreground">Entity Name</span>
+                      <span className="font-semibold text-foreground">{viewingSale.buyer_name || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs py-1.5 border-b border-border/40">
+                      <span className="text-muted-foreground">Contact Phone</span>
+                      <span className="font-mono text-foreground">{viewingSale.buyer_phone || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs py-1.5 border-b border-border/40">
+                      <span className="text-muted-foreground">Email Address</span>
+                      <span className="text-foreground">{viewingSale.buyer_email || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs py-1.5">
+                      <span className="text-muted-foreground">Payment Settlement Mode</span>
+                      <span className="font-medium text-foreground">{viewingSale.payment_mode || "Bank Transfer"}</span>
+                    </div>
+                  </AppCardContent>
+                </AppCard>
+
+                {/* Financing & Ledger Details */}
+                <AppCard className="border-border shadow-xs">
+                  <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                    <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-theme-btn-primary" />
+                      <span>Financing & Capital Ledger</span>
+                    </AppCardTitle>
+                  </AppCardHeader>
+                  <AppCardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between text-xs py-1.5 border-b border-border/40">
+                      <span className="text-muted-foreground">Original Landed Cost</span>
+                      <span className="font-mono font-medium text-foreground">{origCost > 0 ? `₹${origCost.toLocaleString("en-IN")}` : "Unrecorded"}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs py-1.5 border-b border-border/40">
+                      <span className="text-muted-foreground">Realized Sale Proceeds</span>
+                      <span className="font-mono font-bold text-foreground">₹{sPrice.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs py-1.5 border-b border-border/40">
+                      <span className="text-muted-foreground">Financing Status</span>
+                      <span className="text-foreground">{viewingSale.is_financed ? "Financed via Loan" : "Direct / Outright"}</span>
+                    </div>
+                    {viewingSale.is_financed && (
+                      <>
+                        <div className="flex items-center justify-between text-xs py-1.5 border-b border-border/40">
+                          <span className="text-muted-foreground">Financier / Bank</span>
+                          <span className="font-medium text-foreground">{viewingSale.financier_name || "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs py-1.5">
+                          <span className="text-muted-foreground">Loan Amount</span>
+                          <span className="font-mono text-foreground">{viewingSale.loan_amount ? `₹${Number(viewingSale.loan_amount).toLocaleString("en-IN")}` : "—"}</span>
+                        </div>
+                      </>
+                    )}
+                  </AppCardContent>
+                </AppCard>
+              </div>
+
+              {/* Transfer Documents (Universal View & Download Guarantee) */}
+              <AppCard className="border-border shadow-xs">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex flex-row items-center justify-between">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Executed Sale Deed & Transfer Documents</span>
+                  </AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="p-4">
+                  {viewingSale.sale_document_url ? (
+                    <div className="p-4 rounded-lg bg-surface border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center shrink-0">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-foreground">Executed_Sale_Deed_{regPlate}.pdf</p>
+                          <p className="text-2xs text-muted-foreground font-mono">Persisted in Secure Vehicle Documents Vault</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setPreviewAttachment({
+                              file_name: `Sale_Deed_${regPlate}.pdf`,
+                              file_url: viewingSale.sale_document_url!,
+                              file_type: "application/pdf"
+                            });
+                            setPreviewZoom(1);
+                            setPreviewRotation(0);
+                          }}
+                          className="h-8 px-2.5 text-xs font-semibold gap-1.5 hover:border-theme-btn-primary"
+                          title="View sale deed document"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>View Document</span>
+                        </AppButton>
+
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            downloadAttachment({
+                              file_name: `Sale_Deed_${regPlate}.pdf`,
+                              file_url: viewingSale.sale_document_url!
+                            });
+                          }}
+                          className="h-8 px-2.5 text-xs font-semibold gap-1.5"
+                          title="Download sale deed document"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          <span>Download</span>
+                        </AppButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center text-xs text-muted-foreground font-mono">
+                      No document scan was uploaded during vehicle sale recording.
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+              {/* Remarks & Notes */}
+              {viewingSale.notes && (
+                <AppCard className="border-border shadow-xs">
+                  <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
+                    <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-theme-btn-primary" />
+                      <span>Transaction Notes & RTO Status</span>
+                    </AppCardTitle>
+                  </AppCardHeader>
+                  <AppCardContent className="p-4">
+                    <p className="text-xs text-foreground whitespace-pre-wrap">{viewingSale.notes}</p>
+                  </AppCardContent>
+                </AppCard>
+              )}
+            </div>
+          </WorkingDocumentLayout>
+        );
+      })()}
+
+      {/* ---------------------------------------------------------------------- */}
       {/* 1. VIEW VEHICLE INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
-      {viewingVehicle && !isEditVehicleOpen && !isAddMaintenanceOpen && !isEditMaintenanceOpen && !isDispatchTripOpen && !isAddPartOpen && !isEditPartOpen && !isRenewPartOpen && !isRenewPolicyModalOpen && !isPolicyHistoryModalOpen && !isRenewPucModalOpen && !isPucHistoryModalOpen && !isSpecHistoryModalOpen && !isAddEntitlementModalOpen && !isRedeemEntitlementModalOpen && !isAddDriverOpen && !isEditDriverOpen && !editModalDoc && (
+      {viewingVehicle && !isEditVehicleOpen && !isAddMaintenanceOpen && !isEditMaintenanceOpen && !isDispatchTripOpen && !isAddPartOpen && !isEditPartOpen && !isRenewPartOpen && !isRenewPolicyModalOpen && !isPolicyHistoryModalOpen && !isRenewPucModalOpen && !isPucHistoryModalOpen && !isSpecHistoryModalOpen && !isAddEntitlementModalOpen && !isRedeemEntitlementModalOpen && !isAddDriverOpen && !isEditDriverOpen && !editModalDoc && !isRecordSaleModalOpen && !viewingSale && (
         <WorkingDocumentLayout
           title={`Vehicle Master Dossier: ${viewingVehicle.registration_number}`}
           badge={viewingVehicle.status}
@@ -25187,6 +26556,20 @@ export default function FleetDeskHost({
                 <UploadCloud className="h-3.5 w-3.5" />
                 <span>+ Attach doc</span>
               </AppButton>
+              {viewingVehicle.status !== "SOLD" && viewingVehicle.status !== "DISPOSED" && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    openRecordSaleModal(viewingVehicle);
+                  }}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-warning-text border-warning/30 hover:bg-warning-soft"
+                >
+                  <Tag className="h-3.5 w-3.5" />
+                  <span>Record sale</span>
+                </AppButton>
+              )}
               <AppButton
                 type="button"
                 variant="outline"

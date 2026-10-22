@@ -22,6 +22,7 @@ export type FleetFunctionalModule =
   | "VENDORS"
   | "ALERTS"
   | "REPORTS"
+  | "SALES"
   | "MY_GARAGE"
   | "LEARNING"
   | "RBAC"
