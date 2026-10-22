@@ -12,6 +12,7 @@ import {
   fetchPurchaseVendorsListAction,
   fetchVehiclePartsList
 } from "@/lib/actions/vehicle";
+import { fetchMyFleetAccessAction } from "@/lib/actions/vehicleRbac";
 import FleetDeskHost from "@/components/vehicle/FleetDeskHost";
 
 export const metadata = {
@@ -54,7 +55,8 @@ export default async function VehicleModulePage({ params }: PageProps) {
     maintRes,
     vendorsRes,
     purchaseVendorsRes,
-    partsRes
+    partsRes,
+    fleetAccessRes
   ] = await Promise.all([
     fetchVehicleDashboardStats().catch(() => ({ success: false, stats: undefined })),
     fetchVehiclesList({ pageSize: 50 }).catch(() => ({ success: false, vehicles: [] })),
@@ -63,7 +65,8 @@ export default async function VehicleModulePage({ params }: PageProps) {
     primaryTab === "maintenance" ? fetchMaintenanceList().catch(() => ({ success: false, records: [] })) : Promise.resolve(undefined),
     primaryTab === "vendors" ? fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })) : Promise.resolve(undefined),
     (primaryTab === "register" || primaryTab === "new") ? fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })) : Promise.resolve(undefined),
-    primaryTab === "parts" ? fetchVehiclePartsList().catch(() => ({ success: false, parts: [] })) : Promise.resolve(undefined)
+    primaryTab === "parts" ? fetchVehiclePartsList().catch(() => ({ success: false, parts: [] })) : Promise.resolve(undefined),
+    fetchMyFleetAccessAction().catch(() => ({ success: false, fleetAccess: null }))
   ]);
 
   return (
@@ -77,6 +80,7 @@ export default async function VehicleModulePage({ params }: PageProps) {
       initialVendors={vendorsRes?.success ? vendorsRes.vendors : undefined}
       initialPurchaseVendors={purchaseVendorsRes?.success ? purchaseVendorsRes.vendors : undefined}
       initialParts={partsRes?.success ? partsRes.parts : undefined}
+      initialFleetAccess={fleetAccessRes?.success ? fleetAccessRes.fleetAccess : undefined}
     />
   );
 }

@@ -13,19 +13,27 @@ let cachedFleetAccessRecord: FleetUserAccessRecord | null = null;
 let cachedFleetAccessTimestamp = 0;
 const FLEET_ACCESS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-export function useFleetPermissions() {
+export function useFleetPermissions(initialAccess?: FleetUserAccessRecord | null) {
   const pathname = usePathname() || "/";
   const isVehicleRoute = pathname.startsWith("/vehicle");
   const { userId, roleCode: globalRoleCode, hasPermission, loading: authLoading } = usePermissions();
   const [storeState, setStoreState] = useState(() => FleetMasterStore.getState());
   const [serverUserAccess, setServerUserAccess] = useState<FleetUserAccessRecord | null>(() => {
+    if (initialAccess !== undefined) {
+      if (initialAccess && userId) {
+        cachedFleetAccessUserId = userId;
+        cachedFleetAccessRecord = initialAccess;
+        cachedFleetAccessTimestamp = Date.now();
+      }
+      return initialAccess;
+    }
     if (userId && cachedFleetAccessUserId === userId && (Date.now() - cachedFleetAccessTimestamp < FLEET_ACCESS_CACHE_TTL_MS)) {
       return cachedFleetAccessRecord;
     }
     return null;
   });
   const [serverLoaded, setServerLoaded] = useState(() => {
-    return Boolean(userId && cachedFleetAccessUserId === userId && (Date.now() - cachedFleetAccessTimestamp < FLEET_ACCESS_CACHE_TTL_MS));
+    return Boolean(initialAccess !== undefined || (userId && cachedFleetAccessUserId === userId && (Date.now() - cachedFleetAccessTimestamp < FLEET_ACCESS_CACHE_TTL_MS)));
   });
 
   // Sync with store
@@ -47,16 +55,20 @@ export function useFleetPermissions() {
     }, 3500);
 
     // Skip eager DB round-trip on non-vehicle pages if we don't have cached data yet
-    if (!isVehicleRoute && !cachedFleetAccessRecord) {
+    if (!isVehicleRoute && !cachedFleetAccessRecord && initialAccess === undefined) {
       setServerLoaded(true);
       if (safetyTimer) clearTimeout(safetyTimer);
       return;
     }
 
-    // Check valid in-memory cache
-    if (userId && cachedFleetAccessUserId === userId && (Date.now() - cachedFleetAccessTimestamp < FLEET_ACCESS_CACHE_TTL_MS)) {
+    // Check valid in-memory cache or server-provided initialAccess
+    if (initialAccess !== undefined || (userId && cachedFleetAccessUserId === userId && (Date.now() - cachedFleetAccessTimestamp < FLEET_ACCESS_CACHE_TTL_MS))) {
       if (isMounted) {
-        setServerUserAccess(cachedFleetAccessRecord);
+        const resolved = initialAccess !== undefined ? initialAccess : cachedFleetAccessRecord;
+        if (resolved) {
+          setServerUserAccess(resolved);
+          FleetMasterStore.saveUserAccess(resolved);
+        }
         setServerLoaded(true);
         if (safetyTimer) clearTimeout(safetyTimer);
       }
@@ -102,7 +114,7 @@ export function useFleetPermissions() {
       isMounted = false;
       if (safetyTimer) clearTimeout(safetyTimer);
     };
-  }, [userId, isVehicleRoute, authLoading]);
+  }, [userId, isVehicleRoute, authLoading, initialAccess]);
 
   const isGlobalSuperAdmin = useMemo(() => {
     const code = (globalRoleCode || "").toUpperCase();

@@ -101,6 +101,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { AppInput } from "@/components/ui/AppInput";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
+import { FleetUserAccessRecord } from "@/types/vehicleRbacTypes";
 import dynamic from "next/dynamic";
 const FleetRbacGovernance = dynamic(() => import("./FleetRbacGovernance"), {
   ssr: false,
@@ -745,6 +746,7 @@ export interface FleetDeskHostProps {
   initialVendors?: InsuranceVendorRecord[];
   initialPurchaseVendors?: PurchaseVendorRecord[];
   initialParts?: PartAccessoryRecord[];
+  initialFleetAccess?: FleetUserAccessRecord | null;
 }
 
 export default function FleetDeskHost({ 
@@ -756,7 +758,8 @@ export default function FleetDeskHost({
   initialMaintenance,
   initialVendors,
   initialPurchaseVendors,
-  initialParts
+  initialParts,
+  initialFleetAccess
 }: FleetDeskHostProps) {
   const pathname = usePathname() || "/vehicle";
   const router = useRouter();
@@ -771,7 +774,7 @@ export default function FleetDeskHost({
     canExportModule,
     hasAnyFleetAccess,
     loading: fleetPermsLoading
-  } = useFleetPermissions();
+  } = useFleetPermissions(initialFleetAccess);
 
   const isPermissionsResolving = permsLoading || fleetPermsLoading;
 
