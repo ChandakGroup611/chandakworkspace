@@ -292,7 +292,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
               />
 
               <div
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
                   e.preventDefault();
@@ -592,10 +592,10 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
               type="button"
               disabled={!validationResult || (currentResult?.validCount === 0 && currentResult?.duplicateCount === 0) || isImporting}
               onClick={handleExecuteImport}
-              className={`px-6 py-2 rounded-lg text-xs font-semibold text-white shadow-md flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-6 py-2 rounded-lg text-xs font-semibold text-primary-foreground shadow-sm flex items-center gap-2 transition-all cursor-pointer ${
                 !validationResult || (currentResult?.validCount === 0 && currentResult?.duplicateCount === 0) || isImporting
                   ? "bg-border-active cursor-not-allowed opacity-60"
-                  : "bg-info hover:bg-info"
+                  : "bg-primary hover:bg-primary-hover"
               }`}
             >
               {isImporting ? (

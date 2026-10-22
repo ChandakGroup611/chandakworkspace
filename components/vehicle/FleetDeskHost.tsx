@@ -739,13 +739,17 @@ export interface FleetDeskHostProps {
   initialStats?: VehicleDashboardStats;
   initialVehicles?: VehicleRecord[];
   initialDrivers?: DriverRecord[];
+  initialTrips?: TripRecord[];
+  initialMaintenance?: MaintenanceRecord[];
 }
 
 export default function FleetDeskHost({ 
   initialSlug,
   initialStats,
   initialVehicles,
-  initialDrivers
+  initialDrivers,
+  initialTrips,
+  initialMaintenance
 }: FleetDeskHostProps) {
   const pathname = usePathname() || "/vehicle";
   const router = useRouter();
@@ -818,6 +822,16 @@ export default function FleetDeskHost({
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
+  // Safety timeout to prevent any permanent loader hang
+  const [initTimedOut, setInitTimedOut] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitTimedOut(true);
+      setLoading(false);
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Live Data States
   const [stats, setStats] = useState<VehicleDashboardStats>(() => initialStats || {
     totalVehicles: 0,
@@ -829,10 +843,20 @@ export default function FleetDeskHost({
   });
   const [vehicles, setVehicles] = useState<VehicleRecord[]>(() => initialVehicles || []);
   const [drivers, setDrivers] = useState<DriverRecord[]>(() => initialDrivers || []);
-  const [trips, setTrips] = useState<TripRecord[]>([]);
-  const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>([]);
+  const [trips, setTrips] = useState<TripRecord[]>(() => initialTrips || []);
+  const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>(() => initialMaintenance || []);
   const [insuranceVendors, setInsuranceVendors] = useState<InsuranceVendorRecord[]>([]);
   const [purchaseVendors, setPurchaseVendors] = useState<PurchaseVendorRecord[]>([]);
+
+  // Granular dataset loaded flags to display sub-tab loaders instead of premature empty states
+  const [dataLoaded, setDataLoaded] = useState({
+    vehicles: Boolean(initialVehicles && initialVehicles.length > 0),
+    drivers: Boolean(initialDrivers && initialDrivers.length > 0),
+    trips: Boolean(initialTrips && initialTrips.length > 0),
+    maintenance: Boolean(initialMaintenance && initialMaintenance.length > 0),
+    vendors: false,
+    parts: false
+  });
 
   // Filtering and search
   const [searchQuery, setSearchQuery] = useState("");
@@ -2949,39 +2973,25 @@ export default function FleetDeskHost({
   };
 
   // ----------------------------------------------------------------------------
-  // Data Loaders (Module-local operations with 60s in-memory cache)
+  // Data Loaders (Fault-tolerant parallel live data loading with zero hang risk)
   // ----------------------------------------------------------------------------
 
   const loadAllData = useCallback(async (isSilent = false, forceRefresh = false) => {
     try {
-      const now = Date.now();
-      const isCompleteCache = Boolean(
-        fleetDataCache &&
-        fleetDataCache.maintenance !== undefined &&
-        fleetDataCache.trips !== undefined &&
-        fleetDataCache.vendors !== undefined &&
-        fleetDataCache.parts !== undefined &&
-        fleetDataCache.drivers !== undefined
-      );
-
-      // Use cached dataset on quick tab switching or re-renders only if all datasets are present
-      if (!forceRefresh && isCompleteCache && (now - fleetDataCache!.timestamp < 60000)) {
-        if (fleetDataCache!.stats) setStats(fleetDataCache!.stats);
-        if (fleetDataCache!.vehicles) setVehicles(fleetDataCache!.vehicles);
-        if (fleetDataCache!.drivers) setDrivers(fleetDataCache!.drivers);
-        if (fleetDataCache!.trips) setTrips(fleetDataCache!.trips);
-        if (fleetDataCache!.maintenance) setMaintenance(fleetDataCache!.maintenance);
-        if (fleetDataCache!.vendors) setInsuranceVendors(fleetDataCache!.vendors);
-        if (fleetDataCache!.parts) setParts(fleetDataCache!.parts);
-        setLoading(false);
-        return;
-      }
-
       const hasExistingData = (vehicles.length > 0 || Boolean(initialVehicles?.length)) && stats.totalVehicles > 0;
       if (!isSilent && !hasExistingData) setLoading(true);
       else setRefreshing(true);
 
-      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes, partsRes, purchaseVendorsRes] = await Promise.all([
+      const [
+        statsSettled,
+        vehiclesSettled,
+        driversSettled,
+        tripsSettled,
+        maintSettled,
+        vendorsSettled,
+        partsSettled,
+        purchaseVendorsSettled
+      ] = await Promise.allSettled([
         fetchVehicleDashboardStats(),
         fetchVehiclesList({ pageSize: 100 }),
         fetchDriversList(),
@@ -3004,21 +3014,60 @@ export default function FleetDeskHost({
         timestamp: number;
       } = { timestamp: Date.now() };
 
-      const loadedVehicles = vehiclesRes.success ? vehiclesRes.vehicles : [];
+      if (statsSettled.status === "fulfilled" && statsSettled.value.success) {
+        setStats(statsSettled.value.stats);
+        newCache.stats = statsSettled.value.stats;
+      }
 
-      if (statsRes.success) { setStats(statsRes.stats); newCache.stats = statsRes.stats; }
-      if (vehiclesRes.success || loadedVehicles.length > 0) { setVehicles(loadedVehicles); newCache.vehicles = loadedVehicles; }
-      if (driversRes.success) { setDrivers(driversRes.drivers); newCache.drivers = driversRes.drivers; }
-      if (tripsRes.success) { setTrips(tripsRes.trips); newCache.trips = tripsRes.trips; }
-      if (maintRes.success) { setMaintenance(maintRes.records); newCache.maintenance = maintRes.records; }
-      if (vendorsRes.success) { setInsuranceVendors(vendorsRes.vendors); newCache.vendors = vendorsRes.vendors; }
-      if (purchaseVendorsRes.success) { setPurchaseVendors(purchaseVendorsRes.vendors); newCache.purchaseVendors = purchaseVendorsRes.vendors; }
-      if (partsRes.success && partsRes.parts) { setParts(partsRes.parts); newCache.parts = partsRes.parts; }
+      if (vehiclesSettled.status === "fulfilled" && vehiclesSettled.value.success) {
+        const loadedVehicles = vehiclesSettled.value.vehicles || [];
+        setVehicles(loadedVehicles);
+        newCache.vehicles = loadedVehicles;
+      }
+
+      if (driversSettled.status === "fulfilled" && driversSettled.value.success) {
+        setDrivers(driversSettled.value.drivers || []);
+        newCache.drivers = driversSettled.value.drivers;
+      }
+
+      if (tripsSettled.status === "fulfilled" && tripsSettled.value.success) {
+        setTrips(tripsSettled.value.trips || []);
+        newCache.trips = tripsSettled.value.trips;
+      }
+
+      if (maintSettled.status === "fulfilled" && maintSettled.value.success) {
+        setMaintenance(maintSettled.value.records || []);
+        newCache.maintenance = maintSettled.value.records;
+      }
+
+      if (vendorsSettled.status === "fulfilled" && vendorsSettled.value.success) {
+        setInsuranceVendors(vendorsSettled.value.vendors || []);
+        newCache.vendors = vendorsSettled.value.vendors;
+      }
+
+      if (purchaseVendorsSettled.status === "fulfilled" && purchaseVendorsSettled.value.success) {
+        setPurchaseVendors(purchaseVendorsSettled.value.vendors || []);
+        newCache.purchaseVendors = purchaseVendorsSettled.value.vendors;
+      }
+
+      if (partsSettled.status === "fulfilled" && partsSettled.value.success && partsSettled.value.parts) {
+        setParts(partsSettled.value.parts);
+        newCache.parts = partsSettled.value.parts;
+      }
+
+      setDataLoaded({
+        vehicles: true,
+        drivers: true,
+        trips: true,
+        maintenance: true,
+        vendors: true,
+        parts: true
+      });
 
       fleetDataCache = newCache;
 
-      if (vehiclesRes.error && !isSilent) {
-        setErrorBanner(vehiclesRes.error);
+      if (vehiclesSettled.status === "fulfilled" && vehiclesSettled.value.error && !isSilent) {
+        setErrorBanner(vehiclesSettled.value.error);
       }
     } catch (err: any) {
       console.error("[FleetDeskHost] Failed to load data:", err);
@@ -3040,16 +3089,19 @@ export default function FleetDeskHost({
           stats: initialStats,
           vehicles: initialVehicles,
           drivers: initialDrivers || [],
+          trips: initialTrips || [],
+          maintenance: initialMaintenance || [],
           timestamp: Date.now()
         };
       }
       setLoading(false);
-      // Asynchronously fetch secondary background tables (trips, maintenance, vendors, parts) without blocking UI
+      // Fetch live data in background without blocking initial paint
       loadAllData(true, true);
     } else {
       loadAllData(false, true);
     }
-  }, [loadAllData, initialVehicles, initialStats, initialDrivers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Toast banner triggers
   const triggerToast = (msg: string, isError = false) => {
@@ -9078,7 +9130,7 @@ export default function FleetDeskHost({
 
   const hasRenderableData = vehicles.length > 0 || Boolean(initialVehicles && initialVehicles.length > 0) || Boolean(initialStats && initialStats.totalVehicles > 0);
 
-  if ((loading || isPermissionsResolving) && !hasRenderableData) {
+  if (!initTimedOut && (loading || isPermissionsResolving) && !hasRenderableData) {
     return (
       <div className="w-full flex-1 flex flex-col items-center justify-center min-h-[60vh] min-w-0 animate-in fade-in duration-300">
         <ChandakLoader
@@ -9182,19 +9234,24 @@ export default function FleetDeskHost({
                 </kbd>
               </AppButton>
 
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-muted-foreground bg-surface border border-border">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live</span>
+              </div>
+
               <AppButton
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   fleetDataCache = null;
-                  loadAllData(false, true);
+                  loadAllData(true, true);
                 }}
                 disabled={refreshing}
-                className="text-xs h-9 font-medium"
-                title="Refresh module data"
+                className="text-xs h-9 font-medium gap-1.5"
+                title="Refresh live data"
               >
-                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
-                <span>Sync</span>
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-theme-btn-primary" : ""}`} />
+                <span>Refresh</span>
               </AppButton>
 
               {moduleMeta?.actionBtn}
@@ -11129,7 +11186,7 @@ export default function FleetDeskHost({
                       setNewDocExpiry("");
                     }
                   }}
-                  onClick={() => newVehicleDocFileInputRef.current?.click()}
+                  onClick={() => newVehicleDocFileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                   /* ui-audit-ignore-next-line File upload dropzone */
                   className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
                     isDraggingNewVehicleDoc 
@@ -11839,7 +11896,7 @@ export default function FleetDeskHost({
                       {filteredVehicleExpenses.map((item) => (
                         <div
                           key={item.id}
-                          onClick={() => setViewingVehicle(item.vehicle)}
+                          onClick={() => setViewingVehicle(item.vehicle)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                           className="p-3.5 flex flex-col lg:grid lg:grid-cols-12 gap-3 items-start lg:items-center hover:bg-sunken/80 dark:hover:bg-surface transition-colors text-xs cursor-pointer group"
                         >
                           {/* Column 1: Vehicle Identity & Driver (3 Cols) */}
@@ -11975,7 +12032,7 @@ export default function FleetDeskHost({
                 onClick={() => {
                   setSelectedStatus("IN_SERVICE");
                   router.push("/vehicle/inventory");
-                }}
+                }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-theme-btn-primary/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
               >
                 <div className="flex items-start justify-between">
@@ -12027,7 +12084,7 @@ export default function FleetDeskHost({
 
               {/* KPI 2: Maintenance Spend */}
               <div
-                onClick={() => router.push("/vehicle/maintenance")}
+                onClick={() => router.push("/vehicle/maintenance")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-warning/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
               >
                 <div className="flex items-start justify-between">
@@ -12059,7 +12116,7 @@ export default function FleetDeskHost({
 
               {/* KPI 3: Total Mileage */}
               <div
-                onClick={() => router.push("/vehicle/trips")}
+                onClick={() => router.push("/vehicle/trips")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-info/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
               >
                 <div className="flex items-start justify-between">
@@ -12092,7 +12149,7 @@ export default function FleetDeskHost({
 
               {/* KPI 4: Compliance Score */}
               <div
-                onClick={() => router.push("/vehicle/alerts")}
+                onClick={() => router.push("/vehicle/alerts")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-success/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
               >
                 <div className="flex items-start justify-between">
@@ -12374,7 +12431,7 @@ export default function FleetDeskHost({
                       {topWorkshops.map((partner, idx) => (
                         <div
                           key={idx}
-                          onClick={() => router.push("/vehicle/vendors")}
+                          onClick={() => router.push("/vehicle/vendors")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                           className="p-3.5 flex items-center justify-between hover:bg-sunken hover:bg-surface transition-colors cursor-pointer group text-xs"
                         >
                           <div className="min-w-0 pr-2">
@@ -12477,7 +12534,7 @@ export default function FleetDeskHost({
                       {filteredDashboardTrips.slice(0, 5).map(trp => (
                         <div 
                           key={trp.id} 
-                          onClick={() => setViewingTrip(trp)}
+                          onClick={() => setViewingTrip(trp)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                           className="p-3.5 flex items-center justify-between hover:bg-sunken hover:bg-surface transition-colors text-xs cursor-pointer group"
                         >
                           <div className="min-w-0 pr-2">
@@ -12611,7 +12668,7 @@ export default function FleetDeskHost({
                       {filteredDashboardVehicles.slice(0, 5).map(veh => (
                         <div 
                           key={veh.id} 
-                          onClick={() => setViewingVehicle(veh)}
+                          onClick={() => setViewingVehicle(veh)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                           className="p-3.5 flex items-center justify-between hover:bg-sunken hover:bg-surface transition-colors text-xs cursor-pointer group"
                         >
                           <div className="min-w-0 pr-2">
@@ -12744,7 +12801,7 @@ export default function FleetDeskHost({
                         return (
                           <div
                             key={m.id}
-                            onClick={() => setSelectedMaintenanceForView(m)}
+                            onClick={() => setSelectedMaintenanceForView(m)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                             className="p-3.5 flex items-center justify-between hover:bg-sunken hover:bg-surface transition-colors text-xs cursor-pointer group"
                           >
                             <div className="min-w-0 pr-2">
@@ -12828,7 +12885,7 @@ export default function FleetDeskHost({
                       {drivers.slice(0, 5).map(drv => (
                         <div
                           key={drv.id}
-                          onClick={() => setViewingDriver(drv)}
+                          onClick={() => setViewingDriver(drv)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                           className="p-3.5 flex items-center justify-between hover:bg-sunken hover:bg-surface transition-colors text-xs cursor-pointer group"
                         >
                           <div className="min-w-0 pr-2">
@@ -13242,17 +13299,23 @@ export default function FleetDeskHost({
                   {filteredVehicles.length === 0 ? (
                     <AppTableRow>
                       <AppTableCell colSpan={7 + (showDocsCol ? 1 : 0) + (showExShowroomCol ? 1 : 0) + (showRtoCol ? 1 : 0) + (showOtherCol ? 1 : 0) + (showOnRoadCol ? 1 : 0) + 2} className="text-center py-12 text-muted-foreground">
-                        <div className="flex flex-col items-center gap-2">
-                          <span>No vehicles found matching criteria.</span>
-                          <AppButton
-                            variant="primary"
-                            size="sm"
-                            onClick={() => router.push("/vehicle/register")}
-                            className="h-7 px-3 text-xs font-bold rounded-lg"
-                          >
-                            Add vehicle
-                          </AppButton>
-                        </div>
+                        {!dataLoaded.vehicles && vehicles.length === 0 ? (
+                          <div className="py-4 flex justify-center">
+                            <ChandakLoader size="sm" title="Loading fleet inventory…" subtitle="Fetching vehicle records and documents" />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <span>No vehicles found matching criteria.</span>
+                            <AppButton
+                              variant="primary"
+                              size="sm"
+                              onClick={() => router.push("/vehicle/register")}
+                              className="h-7 px-3 text-xs font-bold rounded-lg"
+                            >
+                              Add vehicle
+                            </AppButton>
+                          </div>
+                        )}
                       </AppTableCell>
                     </AppTableRow>
                   ) : (
@@ -13799,7 +13862,13 @@ export default function FleetDeskHost({
                   {filteredDrivers.length === 0 ? (
                     <AppTableRow>
                       <AppTableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                        No drivers recorded. Click <strong>Add driver</strong> to register a new driver.
+                        {!dataLoaded.drivers && drivers.length === 0 ? (
+                          <div className="py-4 flex justify-center">
+                            <ChandakLoader size="sm" title="Loading driver directory…" subtitle="Fetching driver roster and license records" />
+                          </div>
+                        ) : (
+                          <>No drivers recorded. Click <strong>Add driver</strong> to register a new driver.</>
+                        )}
                       </AppTableCell>
                     </AppTableRow>
                   ) : (
@@ -13941,7 +14010,13 @@ export default function FleetDeskHost({
                   {filteredTrips.length === 0 ? (
                     <AppTableRow>
                       <AppTableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                        No trips recorded yet. Click <strong>Dispatch trip</strong> to schedule a trip sheet.
+                        {!dataLoaded.trips && trips.length === 0 ? (
+                          <div className="py-4 flex justify-center">
+                            <ChandakLoader size="sm" title="Loading trip dispatch sheets…" subtitle="Fetching scheduled routes and manifests" />
+                          </div>
+                        ) : (
+                          <>No trips recorded yet. Click <strong>Dispatch trip</strong> to schedule a trip sheet.</>
+                        )}
                       </AppTableCell>
                     </AppTableRow>
                   ) : (
@@ -14132,10 +14207,9 @@ export default function FleetDeskHost({
                   {filteredMaintenance.length === 0 ? (
                     <AppTableRow>
                       <AppTableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                        {refreshing ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <RefreshCw className="h-4 w-4 animate-spin text-theme-icon" />
-                            <span>Loading workshop records…</span>
+                        {!dataLoaded.maintenance && maintenance.length === 0 ? (
+                          <div className="py-4 flex justify-center">
+                            <ChandakLoader size="sm" title="Loading workshop maintenance…" subtitle="Fetching service job cards and maintenance logs" />
                           </div>
                         ) : (
                           <>No maintenance records yet. Click <strong>Log service job card</strong> to record service work.</>
@@ -14878,7 +14952,13 @@ export default function FleetDeskHost({
                     {complianceAlerts.length === 0 ? (
                       <AppTableRow>
                         <AppTableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                          All statutory records are fully validated and up-to-date!
+                          {!dataLoaded.vehicles && vehicles.length === 0 ? (
+                            <div className="py-4 flex justify-center">
+                              <ChandakLoader size="sm" title="Evaluating compliance alerts…" subtitle="Checking statutory expiration dates" />
+                            </div>
+                          ) : (
+                            <>All statutory records are fully validated and up-to-date!</>
+                          )}
                         </AppTableCell>
                       </AppTableRow>
                     ) : (
@@ -15309,22 +15389,30 @@ export default function FleetDeskHost({
                     {filteredParts.length === 0 ? (
                       <AppTableRow>
                         <AppTableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                          <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                          <p className="font-semibold text-sm text-foreground">No parts or accessories found</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {partsSearch || partsItemTypeFilter !== "ALL" || partsExpiryFilter !== "ALL"
-                              ? "Try adjusting your search terms or filter selection."
-                              : "Get started by registering spare parts, batteries, lubricants, or telematics accessories."}
-                          </p>
-                          <AppButton
-                            variant="primary"
-                            size="sm"
-                            onClick={() => openCreatePartModal()}
-                            className="mt-3 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold gap-1.5"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                            <span>Add new part</span>
-                          </AppButton>
+                          {!dataLoaded.parts && parts.length === 0 ? (
+                            <div className="py-4 flex justify-center">
+                              <ChandakLoader size="sm" title="Loading parts inventory…" subtitle="Fetching parts and accessories registry" />
+                            </div>
+                          ) : (
+                            <>
+                              <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                              <p className="font-semibold text-sm text-foreground">No parts or accessories found</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {partsSearch || partsItemTypeFilter !== "ALL" || partsExpiryFilter !== "ALL"
+                                  ? "Try adjusting your search terms or filter selection."
+                                  : "Get started by registering spare parts, batteries, lubricants, or telematics accessories."}
+                              </p>
+                              <AppButton
+                                variant="primary"
+                                size="sm"
+                                onClick={() => openCreatePartModal()}
+                                className="mt-3 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold gap-1.5"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                <span>Add new part</span>
+                              </AppButton>
+                            </>
+                          )}
                         </AppTableCell>
                       </AppTableRow>
                     ) : (
@@ -15744,7 +15832,11 @@ export default function FleetDeskHost({
                     {filteredVendors.length === 0 ? (
                       <AppTableRow>
                         <AppTableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                          {vendorSearch || vendorStatusFilter !== "ALL" ? (
+                          {!dataLoaded.vendors && insuranceVendors.length === 0 ? (
+                            <div className="py-4 flex justify-center">
+                              <ChandakLoader size="sm" title="Loading insurance vendors…" subtitle="Fetching underwriters and contact directory" />
+                            </div>
+                          ) : vendorSearch || vendorStatusFilter !== "ALL" ? (
                             <div className="space-y-2">
                               <p className="font-semibold text-foreground">No matching insurance vendors found.</p>
                               
@@ -15967,7 +16059,7 @@ export default function FleetDeskHost({
                 {vehicles.slice(0, 6).map(veh => (
                   <div 
                     key={veh.id} 
-                    onClick={() => setViewingVehicle(veh)}
+                    onClick={() => setViewingVehicle(veh)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                     className="p-4 rounded-xl border border-border/70 bg-surface space-y-3 shadow-2xs hover:border-theme-btn-primary/40 transition-colors cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -18127,7 +18219,7 @@ export default function FleetDeskHost({
                       setEditDocExpiry("");
                     }
                   }}
-                  onClick={() => editVehicleDocFileInputRef.current?.click()}
+                  onClick={() => editVehicleDocFileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                   /* ui-audit-ignore-next-line File upload dropzone */
                   className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
                     isDraggingEditVehicleDoc 
@@ -19325,7 +19417,7 @@ export default function FleetDeskHost({
                             handleAttachmentFilesSelected(e.dataTransfer.files, setNewMaintAttachments);
                           }
                         }}
-                        onClick={() => newMaintFileInputRef.current?.click()}
+                        onClick={() => newMaintFileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                         /* ui-audit-ignore-next-line File upload dropzone */
                         className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
                           isDraggingNewMaint 
@@ -20137,7 +20229,7 @@ export default function FleetDeskHost({
                             handleAttachmentFilesSelected(e.dataTransfer.files, setEditMaintAttachments);
                           }
                         }}
-                        onClick={() => editMaintFileInputRef.current?.click()}
+                        onClick={() => editMaintFileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                         /* ui-audit-ignore-next-line File upload dropzone */
                         className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
                           isDraggingEditMaint 
@@ -21037,7 +21129,7 @@ export default function FleetDeskHost({
                                 handleAttachmentFilesSelected(e.dataTransfer.files, setPartFormAttachments);
                               }
                             }}
-                            onClick={() => partFileInputRef.current?.click()}
+                            onClick={() => partFileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                             /* ui-audit-ignore-next-line File upload dropzone */
                             className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1 group ${
                               isDraggingPartFile
@@ -26287,7 +26379,7 @@ export default function FleetDeskHost({
                     onClick={() => {
                       const input = document.getElementById("dossier-direct-doc-file-input") as HTMLInputElement;
                       if (input) input.click();
-                    }}
+                    }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                   >
                     <input
                       id="dossier-direct-doc-file-input"
@@ -28294,7 +28386,7 @@ export default function FleetDeskHost({
                     onClick={() => {
                       const input = document.getElementById("viewer-inline-file-picker") as HTMLInputElement;
                       if (input) input.click();
-                    }}
+                    }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                   >
                     <input
                       type="file"
@@ -28492,7 +28584,7 @@ export default function FleetDeskHost({
         <div className="fixed inset-0 z-50 bg-[var(--overlay)]  flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
             className="fixed inset-0"
-            onClick={handleCloseEditDocument}
+             role="presentation" onClick={handleCloseEditDocument}
           />
           <div className="relative w-full max-w-lg bg-surface border border-border shadow-lg rounded-2xl overflow-hidden flex flex-col z-10 animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
@@ -28661,7 +28753,7 @@ export default function FleetDeskHost({
                   onClick={() => {
                     const el = document.getElementById("edit-modal-doc-file-input");
                     if (el) el.click();
-                  }}
+                  }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                   className="border-2 border-border hover:border-theme-btn-primary/60 rounded-xl p-4 text-center cursor-pointer transition-colors bg-surface/50 hover:bg-surface flex flex-col items-center justify-center gap-1.5"
                 >
                   <input
@@ -28746,7 +28838,7 @@ export default function FleetDeskHost({
         <div className="fixed inset-0 z-50 bg-background/80  flex items-start justify-center pt-20 px-4 animate-in fade-in duration-150">
           <div
             className="fixed inset-0"
-            onClick={() => setIsCommandPaletteOpen(false)}
+             role="presentation" onClick={() => setIsCommandPaletteOpen(false)}
           />
           <div className="relative w-full max-w-2xl bg-surface border border-border/80 shadow-lg rounded-2xl overflow-hidden flex flex-col z-10 animate-in zoom-in-95 duration-150">
             {/* Search Input Bar */}
@@ -28782,7 +28874,7 @@ export default function FleetDeskHost({
                   return (
                     <div
                       key={item.id}
-                      onClick={item.onSelect}
+                      onClick={item.onSelect} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                       onMouseEnter={() => setCommandSelectedIndex(idx)}
                       className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors text-xs ${
                         isSelected

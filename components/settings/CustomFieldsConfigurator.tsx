@@ -147,7 +147,7 @@ export default function CustomFieldsConfigurator() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveModule(tab.id)}
-                    className={`w-full p-3 rounded-lg text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural border-border-active text-white shadow-md font-semibold" : "border-border hover:border-border text-muted hover:text-muted" }`}
+                    className={`w-full p-3 rounded-lg text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "bg-selected border-border-active text-foreground font-semibold" : "border-border hover:border-border text-muted hover:text-muted" }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <div className={`p-1.5 rounded-lg ${isActive ? "bg-primary text-primary-foreground" : "bg-surface/5 text-muted"}`}>

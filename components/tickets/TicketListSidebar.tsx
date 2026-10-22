@@ -95,7 +95,7 @@ export function TicketListSidebar({
             return (
               <div
                 key={ticket.dbId || ticket.id}
-                onClick={() => onSelect(ticket)}
+                onClick={() => onSelect(ticket)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border cursor-pointer ${
                   isSelected 
                     ? ("bg-accent-soft border-theme-btn-primary/30 shadow-sm")

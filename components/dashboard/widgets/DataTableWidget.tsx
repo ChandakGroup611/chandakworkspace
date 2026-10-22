@@ -55,7 +55,7 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
       className="h-[400px]"
       collapsible={true}
       noPadding
-      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors" onClick={onOpenList || (() => router.push('/tickets'))}>View all</span>}
+      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors" onClick={onOpenList || (() => router.push('/tickets'))} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>View all</span>}
     >
       <div className="w-full overflow-auto h-full custom-scrollbar">
         <AppTable className="border-b-0">

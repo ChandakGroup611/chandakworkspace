@@ -973,7 +973,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       return (
                         <td
                           key={colIdx}
-                          onClick={() => handleOpenInspector(pkg, col)}
+                          onClick={() => handleOpenInspector(pkg, col)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                           className="p-2 border-r border-border/30 text-center cursor-pointer hover:bg-success-soft transition-colors group/cell"
                           title={`Click to inspect & edit: ${pkg.packageName} • ${col.projectName} (${col.towerName})`}
                         >
@@ -1608,7 +1608,7 @@ export const TenderDesignMatrix: React.FC = () => {
                               setBatchSelectedTowers(prev => 
                                 isChecked ? prev.filter(id => id !== twr.id) : [...prev, twr.id]
                               );
-                            }}
+                            }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                             className={`p-2.5 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
                               isChecked 
                                 ? "bg-info-soft border-info-border text-foreground ring-1 ring-info-border shadow-2xs" 

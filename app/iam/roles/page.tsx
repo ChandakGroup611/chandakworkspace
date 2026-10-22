@@ -154,7 +154,7 @@ export default function IAMRoleBuilder() {
             {roles.map(r => (
               <div 
                 key={r.id}
-                onClick={() => handleSelectRole(r)}
+                onClick={() => handleSelectRole(r)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                   selectedRole?.id === r.id && !isCreating 
                     ? "border-primary bg-accent-soft dark:bg-accent-soft shadow-sm" 
@@ -247,7 +247,7 @@ export default function IAMRoleBuilder() {
                     
                     return (
                       <AppCard key={module} className="overflow-hidden">
-                        <div className="p-4 border-b border-border bg-surface/80 dark:bg-surface/[0.02] flex items-center justify-between cursor-pointer" onClick={() => toggleModulePermissions(module, modulePermIds)}>
+                        <div className="p-4 border-b border-border bg-surface/80 dark:bg-surface/[0.02] flex items-center justify-between cursor-pointer" onClick={() => toggleModulePermissions(module, modulePermIds)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
                           <div className="flex items-center gap-3">
                             <input 
                               type="checkbox" 
@@ -268,7 +268,7 @@ export default function IAMRoleBuilder() {
                             return (
                               <div 
                                 key={p.id} 
-                                onClick={() => togglePermission(p.id)}
+                                onClick={() => togglePermission(p.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                                 className={`flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
                                   isChecked 
                                     ? "bg-accent-soft border-border-active dark:bg-accent-soft dark:border-border-active" 

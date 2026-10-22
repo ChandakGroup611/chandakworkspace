@@ -71,7 +71,7 @@ export default function KnowledgeBaseAuthoring() {
             {articles.map(article => (
               <div 
                 key={article.id}
-                onClick={() => { setActiveArticle(article); setPreviewMode(false); }}
+                onClick={() => { setActiveArticle(article); setPreviewMode(false); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                   activeArticle?.id === article.id
                     ? "border-primary bg-accent-soft dark:bg-accent-soft shadow-sm" 

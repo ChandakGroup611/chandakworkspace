@@ -682,8 +682,8 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               {/* Title Block Bottom Right */}
               <div className="flex items-end justify-between border-t border-border pt-3">
                 <div className="text-[11px] text-muted space-y-0.5">
-                  <div>Author: <strong className="text-white font-semibold">{previewDrawing.consultant}</strong></div>
-                  <div>Sheet no: <strong className="text-white font-mono font-semibold">{previewDrawing.code}</strong></div>
+                  <div>Author: <strong className="text-foreground font-semibold">{previewDrawing.consultant}</strong></div>
+                  <div>Sheet no: <strong className="text-foreground font-mono font-semibold">{previewDrawing.code}</strong></div>
                   <div>Workflow status: <strong className="text-success-text font-semibold">{previewDrawing.status}</strong></div>
                 </div>
 

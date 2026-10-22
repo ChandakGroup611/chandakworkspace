@@ -105,7 +105,7 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
       collapsible={true}
       headerRight={
         <div className="flex items-center gap-3">
-          <span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1" onClick={onOpenList || (() => router.push('/workspaces/tasks'))}>
+          <span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1" onClick={onOpenList || (() => router.push('/workspaces/tasks'))} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
             Full board <ArrowUpRight className="w-3.5 h-3.5" />
           </span>
         </div>

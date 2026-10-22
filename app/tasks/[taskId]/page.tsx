@@ -7,6 +7,7 @@ import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/t
 import { notFound } from "next/navigation";
 import SafeHtml from "@/components/ui/SafeHtml";
 import { AppCard } from "@/components/ui/AppCard";
+import { StatusBadge } from "@/components/ui/data";
 
 interface TaskPageProps {
   params: Promise<{
@@ -54,91 +55,75 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
   const canEditTitle = !effectiveReadOnly && (isSuperAdmin || isTaskAssigneeOrOwner || isExecutor);
 
   return (
-    <div className="space-y-6 pb-6 pt-2">
-      <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl transition-all duration-500 bg-surface/40 p-6 mb-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-5">
-          <div className="flex flex-wrap items-center gap-4">
-            <TaskBackButton 
-              fallbackHref={task.parent_task_id ? `/tasks/${task.parent_task_id}` : (task.sub_workspace_id ? `/workspaces/tasks?workspaceId=${task.sub_workspace_id}` : (task.workspace_id ? `/workspaces/tasks?workspaceId=${task.workspace_id}` : "/workspaces"))}
-              label={`Back to ${task.parent_task_id ? "Parent Task" : "Task List"}`}
-            />
-            <span className="hidden sm:inline text-muted/50 dark:text-subtle/50">|</span>
-            <Link
-              href={`/workspaces${(task.sub_workspace_id || task.workspace_id) ? `?workspace=${task.sub_workspace_id || task.workspace_id}&restoreHierarchy=true` : '?restoreHierarchy=true'}`}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-muted hover:text-foreground transition-colors"
-            >
-              Back to execution hierarchy
-            </Link>
-          </div>
+    <div className="space-y-5 pb-6 pt-2">
+      <header className="flex flex-col gap-3 border-b border-border pb-4">
+        <nav aria-label="Task navigation" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+          <TaskBackButton
+            fallbackHref={task.parent_task_id ? `/tasks/${task.parent_task_id}` : (task.sub_workspace_id ? `/workspaces/tasks?workspaceId=${task.sub_workspace_id}` : (task.workspace_id ? `/workspaces/tasks?workspaceId=${task.workspace_id}` : "/workspaces"))}
+            label={`Back to ${task.parent_task_id ? "parent task" : "task list"}`}
+            className="inline-flex items-center gap-1.5 font-medium text-accent-soft-text hover:underline"
+          />
+          <span aria-hidden className="text-muted">/</span>
+          <Link
+            href={`/workspaces${(task.sub_workspace_id || task.workspace_id) ? `?workspace=${task.sub_workspace_id || task.workspace_id}&restoreHierarchy=true` : '?restoreHierarchy=true'}`}
+            className="font-medium text-muted transition-colors hover:text-foreground"
+          >
+            Execution hierarchy
+          </Link>
+        </nav>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{task.task_code || "TASK"}</span>
+          <StatusBadge status={task.status?.name || task.status?.status_name || null} />
+          <span className="text-[12.5px] text-muted">
+            {task.workspace?.code ? `${task.workspace.code} · ` : ""}{task.workspace?.name || "No workspace"}
+          </span>
         </div>
 
-        {/* Header Tags */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <p className="text-[11px] font-mono tracking-wider text-theme-icon bg-accent-soft px-2 py-0.5 rounded font-bold border border-theme-btn-primary/20">
-            {task.task_code || "TASK"}
-          </p>
-          <p className="text-[11px] tracking-wider text-muted px-2 py-0.5 border border-border dark:border-border rounded font-bold bg-surface dark:bg-transparent">
-            Workspace: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
-          </p>
-        </div>
-        
         <div>
           {effectiveReadOnly || !canEditTitle ? (
-            <h1 className="text-2xl font-bold text-foreground break-words whitespace-normal w-full">{task.title || task.subject}</h1>
+            <h1 className="w-full whitespace-normal break-words text-[20px] font-semibold leading-snug text-heading">{task.title || task.subject}</h1>
           ) : (
             <EditableTaskTitle task={task} asHeading={true} readOnly={effectiveReadOnly || !canEditTitle} />
           )}
         </div>
-      </AppCard>
+      </header>
 
-      <div className="space-y-6">
-
-        {/* DEDICATED CARD FOR SUBJECT AND DESCRIPTION */}
-        <AppCard className="overflow-hidden border border-border shadow-xs bg-surface p-0 mb-4">
-          <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
-              <Type className="w-4 h-4 text-accent" />
-              <h3 className="font-semibold text-sm tracking-wide text-foreground">Task subject & description</h3>
-            </div>
-            <span className="text-[11px] font-mono font-semibold text-accent-soft-text bg-accent-soft px-2.5 py-0.5 rounded-full border border-border">
-              {task.task_code || "TASK"}
-            </span>
-          </div>
-          <div className="p-6 space-y-6">
-            
+      <div className="space-y-5">
+        {(task.description || typeof task.custom_fields?.progress_percentage === 'number') && (
+          <AppCard className="space-y-4 border border-border bg-surface p-5 shadow-xs">
             {task.description && (
-              <div className="w-full">
-                <span className="text-[11px] font-semibold text-muted mb-2 flex items-center gap-1.5">
-                  <AlignLeft className="w-3.5 h-3.5" /> Description
-                </span>
-                <SafeHtml 
-                  className="whitespace-pre-wrap text-[13px] sm:text-sm text-foreground w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-sunken p-4 rounded-xl border border-border shadow-xs"
-                  html={task.description} 
+              <section>
+                <h2 className="mb-2 flex items-center gap-1.5 text-[13px] font-medium text-subtle">
+                  <AlignLeft className="h-4 w-4 text-muted" aria-hidden /> Description
+                </h2>
+                <SafeHtml
+                  className="prose prose-sm w-full max-w-full whitespace-pre-wrap rounded-md border border-border bg-sunken p-4 text-[13.5px] leading-relaxed text-foreground dark:prose-invert"
+                  html={task.description}
                 />
-              </div>
+              </section>
             )}
-            
+
             {typeof task.custom_fields?.progress_percentage === 'number' && (
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-semibold text-muted">Subtask progress</span>
-                <div className="w-64 h-1.5 bg-sunken rounded-full overflow-hidden">
-                  <div className="h-full bg-success rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
+                <span className="text-[12.5px] text-muted">Subtask progress</span>
+                <div className="h-1.5 w-64 max-w-full overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={task.custom_fields.progress_percentage} aria-valuemin={0} aria-valuemax={100} aria-label="Subtask progress">
+                  <div className="h-full rounded-full bg-success transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
                 </div>
-                <span className="text-[11px] font-semibold text-muted">{task.custom_fields.progress_percentage}%</span>
+                <span className="text-[12.5px] font-medium tabular-nums text-foreground">{task.custom_fields.progress_percentage}%</span>
               </div>
             )}
-          </div>
-        </AppCard>
+          </AppCard>
+        )}
 
         <div className="w-full">
           {isFrozen && (
-            <div className="mb-4 rounded-xl bg-warning-soft border border-warning-border p-4 shadow-xs flex items-start gap-3">
-              <ShieldAlert className="w-5 h-5 text-warning-text shrink-0 mt-0.5" />
+            <div role="status" className="mb-4 flex items-start gap-3 rounded-md border border-warning-border bg-warning-soft p-4">
+              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning-text" aria-hidden />
               <div>
-                <h4 className="text-sm font-semibold text-warning-text">Task is frozen</h4>
-                <p className="text-xs text-warning-text mt-1">
-                  This task is strictly frozen because its status is Closed. Only Super Admins and the Task Assignee (Task Owner) can edit or reopen it.
+                <h4 className="text-[13.5px] font-semibold text-warning-text">This task is closed and locked</h4>
+                <p className="mt-1 text-[13px] text-warning-text">
+                  Only a super admin or the task owner can edit or reopen it.
                 </p>
               </div>
             </div>

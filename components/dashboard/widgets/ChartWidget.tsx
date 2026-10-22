@@ -144,7 +144,7 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
         subtitle="14-day cumulative workload"
         icon={<Activity className="w-5 h-5 text-info-text" />}
         collapsible={true}
-        headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">View details</span>}
+        headerRight={<span onClick={onOpenList} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">View details</span>}
         overflowHidden
       >
         <div className="flex-1 w-full h-full pt-4 min-h-[280px] pb-2">
@@ -171,7 +171,7 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
         subtitle="Deliverables segmented by module"
         icon={<LineChart className="w-5 h-5 text-success-text" />}
         collapsible={true}
-        headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">By type</span>}
+        headerRight={<span onClick={onOpenList} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">By type</span>}
         overflowHidden
       >
         <div className="flex items-center flex-1 w-full h-full min-h-[280px] pt-2 pb-2">

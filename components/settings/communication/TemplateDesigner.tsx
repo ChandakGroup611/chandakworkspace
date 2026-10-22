@@ -1,5 +1,6 @@
 "use client";
 
+/* ui-audit-allow emoji: sample email subjects and bodies, not app UI */
 import React, { useState, useEffect } from "react";
 import { AppTable } from "@/components/ui/AppTable";
 import { AppButton } from '@/components/ui/AppButton';

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDate } from "@/components/ui/data";
 import React, { useMemo } from "react";
 import { Activity, CheckCircle2, AlertCircle, MessageSquare, Plus, ArrowUpRight } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
@@ -31,7 +32,7 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
           user: m.user || 'System',
           action: `closed ${m.module.substring(0,4)}`,
           target: targetStr,
-          time: new Date(m.createdAt).toLocaleDateString()
+          time: formatDate(m.createdAt)
         };
       }
       if (isBlocked) {
@@ -41,7 +42,7 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
           user: m.user || 'System',
           action: `marked Blocked`,
           target: targetStr,
-          time: new Date(m.createdAt).toLocaleDateString()
+          time: formatDate(m.createdAt)
         };
       }
       if (isReview) {
@@ -51,7 +52,7 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
           user: m.user || 'System',
           action: `requested review on`,
           target: targetStr,
-          time: new Date(m.createdAt).toLocaleDateString()
+          time: formatDate(m.createdAt)
         };
       }
       
@@ -61,7 +62,7 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
         user: m.user || 'System',
         action: `opened new ${m.module.substring(0,4)}`,
         target: targetStr,
-        time: new Date(m.createdAt).toLocaleDateString()
+        time: formatDate(m.createdAt)
       };
     });
   }, [metrics]);

@@ -119,7 +119,7 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message or @mention someone…"
-          className="flex-1 theme-card-structural rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-primary"
+          className="flex-1 theme-card-structural rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
         />
         <AppButton type="submit" className="bg-primary hover:opacity-90 text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
           Send

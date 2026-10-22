@@ -906,7 +906,7 @@ export const DesignRbacGovernance: React.FC = () => {
                 return (
                   <div
                     key={role.code}
-                    onClick={() => setSelectedBuilderRoleCode(role.code)}
+                    onClick={() => setSelectedBuilderRoleCode(role.code)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                     className={`p-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
                         ? "bg-accent-soft border-border-active ring-1 ring-ring shadow-xs"

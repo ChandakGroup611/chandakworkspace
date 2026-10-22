@@ -104,7 +104,7 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
                       department: dept.name
                     });
                   }
-                }}
+                }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className={`p-4 rounded-lg border bg-surface/50 transition-all flex flex-col justify-between ${
                   dept.health === "critical"
                     ? "border-danger-border hover:border-danger-border hover:bg-danger-soft"

@@ -1,6 +1,8 @@
 "use client";
 
 /* ui-audit-allow hex-literal: markup ink colours are saved with each annotation, and the halo/label colours sit on the white drawing sheet, so they must not follow the app theme */
+/* ui-audit-allow text-white: numbered pins sit on the markup colour chosen by the reviewer */
+import { formatDate } from "@/components/ui/data";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   ZoomIn,
@@ -815,7 +817,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                   <div className="border-t-2 border-border pt-3 flex justify-between items-center text-xs font-mono text-subtle">
                     <div>REV: R{drawing.latestRevNo !== null ? drawing.latestRevNo : 0}</div>
                     <div>Scale: 1:100 (a1 metric)</div>
-                    <div>Date: {new Date().toLocaleDateString("en-IN")}</div>
+                    <div>Date: {formatDate(new Date())}</div>
                     <div>Checked by: {userRole}</div>
                   </div>
                 </div>
@@ -1269,7 +1271,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
                 return (
                   <div
                     key={comm.id}
-                    onClick={() => setSelectedCommentId(comm.id)}
+                    onClick={() => setSelectedCommentId(comm.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                     className={`p-3 rounded-lg border transition-all cursor-pointer ${
                       isSelected
                         ? "bg-accent-soft border-primary shadow-xs"

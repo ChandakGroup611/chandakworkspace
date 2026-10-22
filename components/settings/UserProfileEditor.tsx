@@ -264,14 +264,14 @@ export default function UserProfileEditor() {
     <div className="w-full relative">
       {/* Toast notifications */}
       {successMsg && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-lg bg-success/90 text-white px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-lg border border-success-border bg-success-soft text-success-text shadow-lg px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
           <Check className="h-4 w-4" />
           <span className="text-sm font-semibold">{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-lg bg-danger/90 text-white px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-lg border border-danger-border bg-danger-soft text-danger-text shadow-lg px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
           <AlertCircle className="h-4 w-4" />
           <span className="text-sm font-semibold">{errorMsg}</span>
         </div>
@@ -300,7 +300,7 @@ export default function UserProfileEditor() {
               <div className="flex justify-center -mt-16 mb-4 relative z-10">
                 <div 
                   className="relative group cursor-pointer"
-                  onClick={() => !photoUploading && fileInputRef.current?.click()}
+                  onClick={() => !photoUploading && fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 >
                   <div className={`h-32 w-32 rounded-full p-1 bg-card  transition-transform duration-300 ${!photoUploading ? '' : ''}`}>
                     <div className="h-full w-full rounded-full overflow-hidden relative bg-elevated">
@@ -512,7 +512,7 @@ export default function UserProfileEditor() {
                         
                         <div 
                           className="h-10 w-full flex items-center justify-between rounded-[var(--radius-input,4px)] border-warning-border theme-card-structural px-3 text-[14px] text-foreground shadow-sm cursor-pointer hover:border-warning-border transition-colors"
-                          onClick={() => setManagerDropdownOpen(!managerDropdownOpen)}
+                          onClick={() => setManagerDropdownOpen(!managerDropdownOpen)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                         >
                           {selectedManagerObj ? (
                             <div className="flex items-center gap-3">
@@ -537,7 +537,7 @@ export default function UserProfileEditor() {
                                 <div 
                                   key={m.id}
                                   className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${selectedManager === m.id ? 'bg-accent-soft text-accent-soft-text font-medium' : 'hover:bg-elevated text-foreground'}`}
-                                  onClick={() => { setSelectedManager(m.id); setManagerDropdownOpen(false); }}
+                                  onClick={() => { setSelectedManager(m.id); setManagerDropdownOpen(false); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                                 >
                                   <img 
                                     src={getAvatarUrl(m.full_name, m.profile_photo)} 

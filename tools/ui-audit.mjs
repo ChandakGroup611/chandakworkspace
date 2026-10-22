@@ -131,6 +131,21 @@ function auditFile(file) {
         const cls = src.slice(Math.max(0, m.index - 160), m.index + 40);
         if (/bg-(primary|danger-solid|danger|success|info|warning|sidebar|accent)\b/.test(cls)) continue;
       }
+      // dates kept as ISO for storage, inputs, file names and chart axes aren't display formatting
+      if (id === "date-format") {
+        const around = src.slice(Math.max(0, m.index - 40), m.index + 60);
+        if (/toISOString\(\)\s*$/.test(src.slice(Math.max(0, m.index - 20), m.index))) continue; // x.toISOString().split("T")[0]
+        if (/^\.split/.test(m[0]) && !/^\s*\}/.test(src.slice(m.index + m[0].length, m.index + m[0].length + 3))) continue; // ISO date value, not a JSX child
+        if (/^toLocaleDateString\(/.test(m[0]) && /toLocaleDateString\([^)]*\{\s*(month|weekday|year|day)/.test(around)) continue; // explicit short label e.g. chart axis
+        if (rel.startsWith("lib/") || rel.includes("/services/")) continue; // server-side and data layer
+        if (/^toLocaleString/.test(m[0]) && !/(date|Date|_at|At\b|time|Time|new Date\([^)]*\))\W*$/.test(src.slice(Math.max(0, m.index - 40), m.index - 1))) continue; // a number, e.g. 12,500
+      }
+      // codes are typed in capitals (inputs) and print/email templates set their own CSS
+      if (id === "uppercase") {
+        const ls2 = src.lastIndexOf("\n", m.index) + 1, le2 = src.indexOf("\n", m.index);
+        const line = src.slice(ls2, le2 === -1 ? src.length : le2);
+        if (/<(AppInput|input)\b|inputStyle|text-transform\s*:/.test(line)) continue;
+      }
       // a dashed border is the convention for a file drop zone: allow it when the element handles files
       if (id === "dashed-pill") {
         const ctx = src.slice(Math.max(0, m.index - 600), m.index + 900);

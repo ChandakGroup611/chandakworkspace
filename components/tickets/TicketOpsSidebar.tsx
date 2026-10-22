@@ -133,7 +133,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           </div>
           <div className="flex -space-x-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white bg-theme-btn-primary ${
+              <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-semibold text-primary-foreground bg-primary ${
                 "border-border"
               }`}>
                 JD

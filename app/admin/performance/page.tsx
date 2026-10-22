@@ -102,7 +102,7 @@ export default function PerformanceCommandCenter() {
       
       {/* ENTERPRISE SCORE & GOVERNANCE */}
       {govMetrics && (
-        <div className="bg-surface text-white rounded-lg p-6 shadow-lg border border-border">
+        <div className="bg-surface text-foreground rounded-lg p-6 shadow-lg border border-border">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-xl font-semibold text-muted">Weighted enterprise health score</h2>

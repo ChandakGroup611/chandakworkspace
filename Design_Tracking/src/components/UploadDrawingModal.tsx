@@ -379,7 +379,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className={`p-8 rounded-lg border-2 border-dashed transition-all text-center space-y-3 cursor-pointer ${
                   isDragging
                     ? "border-primary bg-primary/5"

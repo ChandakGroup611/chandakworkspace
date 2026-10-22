@@ -224,7 +224,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     return (
       <div key={node.id} className="select-none group">
         <div
-          onClick={() => setSelectedFolder(node)}
+          onClick={() => setSelectedFolder(node)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
           className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
             isSelected
               ? "bg-accent-soft text-primary font-semibold border border-border-active"

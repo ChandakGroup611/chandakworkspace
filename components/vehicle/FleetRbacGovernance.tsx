@@ -685,7 +685,7 @@ export default function FleetRbacGovernance() {
             className="flex items-center gap-1.5"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            <span>Sync directory</span>
+            <span>Refresh directory</span>
           </AppButton>
         </div>
       </div>

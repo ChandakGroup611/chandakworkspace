@@ -384,7 +384,7 @@ export default function UserFormPage() {
 
       {/* Interactive Assign Modules Modal Dialog */}
       {assignModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
           <div className="bg-surface border border-border w-full max-w-xl rounded-lg shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -589,7 +589,7 @@ export default function UserFormPage() {
             <AppCardContent className="p-6 space-y-8">
               {/* Photo Upload Row */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-border">
-                <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
                   <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ring-4 ring-offset-2 bg-sunken text-muted ring-border ring-offset-surface`}>
                     {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
                       <img src={formPhoto} alt="Profile" className="w-full h-full object-cover" onError={(e) => { (e.target as any).src = '' }} />

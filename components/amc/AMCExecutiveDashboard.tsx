@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDate } from "@/components/ui/data";
 import React, { useMemo, useState } from "react";
 import { CHART_THEME } from "@/components/ui/charts/chartTheme";
 import { AppCard } from "@/components/ui/AppCard";
@@ -294,7 +295,7 @@ export function AMCExecutiveDashboard({
           ...rec,
           daysRemaining: diffDays,
           calculatedRisk,
-          formattedExpiry: expDate.toLocaleDateString()
+          formattedExpiry: formatDate(expDate)
         });
       }
     });

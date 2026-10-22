@@ -538,7 +538,7 @@ export function SystemMasterBulkImportModal({
               />
 
               <div
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
                   e.preventDefault();

@@ -328,7 +328,7 @@ export function MyPortfolioSection() {
             >
               {compareMode ? "Compare Mode Active" : "Compare Users"}
               {compareMode && (
-                <span className="ml-1.5 px-1.5 py-0.2 bg-sunken text-white rounded-full text-[11px]">
+                <span className="ml-1.5 px-1.5 py-0.2 bg-sunken text-subtle rounded-full text-[11px]">
                   ON
                 </span>
               )}
@@ -342,7 +342,7 @@ export function MyPortfolioSection() {
               onClick={() => refetch()}
               className="border-border text-xs"
             >
-              Sync live
+              Refresh
             </AppButton>
 
           </div>

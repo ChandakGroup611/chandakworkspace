@@ -302,11 +302,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                         : "text-muted hover:text-foreground hover:bg-sunken"
                     }`}
                   >
-                    <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-white" : tab.color}`} />
+                    <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-current" : tab.color}`} />
                     <span>{tab.label}</span>
                     {tab.count !== undefined && (
                       <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono ${
-                        isSelected ? "bg-sunken text-white" : "bg-muted/30 text-muted-foreground"
+                        isSelected ? "bg-surface/20 text-current" : "bg-sunken text-muted"
                       }`}>
                         {tab.count}
                       </span>

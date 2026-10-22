@@ -39,10 +39,17 @@ export function useFleetPermissions() {
   // Fetch actual user access record & policies from server when on Vehicle route or cache is cold
   useEffect(() => {
     let isMounted = true;
+    let safetyTimer: NodeJS.Timeout | null = null;
+
+    // Safety timeout: Never let fleet permissions loading hang more than 3.5s
+    safetyTimer = setTimeout(() => {
+      if (isMounted) setServerLoaded(true);
+    }, 3500);
 
     // Skip eager DB round-trip on non-vehicle pages if we don't have cached data yet
     if (!isVehicleRoute && !cachedFleetAccessRecord) {
       setServerLoaded(true);
+      if (safetyTimer) clearTimeout(safetyTimer);
       return;
     }
 
@@ -51,6 +58,7 @@ export function useFleetPermissions() {
       if (isMounted) {
         setServerUserAccess(cachedFleetAccessRecord);
         setServerLoaded(true);
+        if (safetyTimer) clearTimeout(safetyTimer);
       }
       return;
     }
@@ -76,17 +84,25 @@ export function useFleetPermissions() {
       } catch (err) {
         console.warn("[useFleetPermissions] fetchMyFleetAccess error:", err);
       } finally {
-        if (isMounted) setServerLoaded(true);
+        if (isMounted) {
+          setServerLoaded(true);
+          if (safetyTimer) clearTimeout(safetyTimer);
+        }
       }
     }
 
     if (userId) {
       loadMyAccess();
+    } else if (!authLoading) {
+      setServerLoaded(true);
+      if (safetyTimer) clearTimeout(safetyTimer);
     }
+
     return () => {
       isMounted = false;
+      if (safetyTimer) clearTimeout(safetyTimer);
     };
-  }, [userId, isVehicleRoute]);
+  }, [userId, isVehicleRoute, authLoading]);
 
   const isGlobalSuperAdmin = useMemo(() => {
     const code = (globalRoleCode || "").toUpperCase();

@@ -465,7 +465,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                       return (
                         <div
                           key={user.id}
-                          onClick={() => toggleUserSelection(user.id)}
+                          onClick={() => toggleUserSelection(user.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                           className={`flex items-center justify-between p-2.5 text-xs cursor-pointer transition-colors ${
                             isSelected ? "bg-accent-soft" : "hover:bg-muted/40"
                           }`}

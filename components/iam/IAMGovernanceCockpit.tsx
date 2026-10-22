@@ -480,7 +480,7 @@ export default function IAMGovernanceCockpit({
                 return (
                   <div 
                     key={role.id}
-                    onClick={() => setActiveRoleID(role.id)}
+                    onClick={() => setActiveRoleID(role.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                     className={cn("group relative p-4 rounded-lg border transition-all duration-300 cursor-pointer",
                       isSelected
                         ? ("bg-accent-soft border-border-active shadow-xs")
@@ -499,7 +499,7 @@ export default function IAMGovernanceCockpit({
                           </span>
                           {role.is_system && <ShieldCheck className="h-3.5 w-3.5 text-warning/80" />}
                           {!role.is_active && (
-                            <AppBadge variant="danger" className="text-[0.65rem] py-0 px-1 font-mono uppercase bg-danger-soft border-danger-border text-danger-text">Disabled</AppBadge>
+                            <AppBadge variant="danger" className="text-[0.65rem] py-0 px-1 font-mono bg-danger-soft border-danger-border text-danger-text">Disabled</AppBadge>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
@@ -575,7 +575,7 @@ export default function IAMGovernanceCockpit({
                           Capability Matrix: <span className="text-accent-soft-text">{activeRole.name}</span>
                         </h3>
                         {activeRole.is_system && (
-                          <AppBadge className="bg-warning-soft text-warning-text border-warning-border py-0.5 px-1.5 text-[0.65rem] font-mono uppercase">System</AppBadge>
+                          <AppBadge className="bg-warning-soft text-warning-text border-warning-border py-0.5 px-1.5 text-[11px] font-mono">System</AppBadge>
                         )}
                       </div>
                       <div className="flex items-center gap-3">
@@ -652,7 +652,7 @@ export default function IAMGovernanceCockpit({
                             <span className={cn(
                               "text-[0.7rem] font-mono font-semibold px-1.5 py-0.5 rounded-md",
                               isTabSelected
-                                ? "bg-surface/20 text-white"
+                                ? "bg-surface/20 text-current"
                                 : "bg-sunken text-muted"
                             )}>
                               {stats.active}/{stats.total}
@@ -735,7 +735,7 @@ export default function IAMGovernanceCockpit({
                                           <div className={cn("text-xs font-semibold transition-colors", "text-foreground group-hover/row:text-accent-soft-text")}>
                                             {m.submodule}
                                           </div>
-                                          <div className="text-[0.7rem] font-mono text-muted uppercase tracking-tighter">
+                                          <div className="text-[12px] font-mono text-muted">
                                             {m.code}_*
                                           </div>
                                         </div>

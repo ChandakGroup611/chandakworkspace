@@ -211,7 +211,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
         <div className="flex items-center gap-1 shrink-0 ml-1">
           {isFiltered && (
             <span
-              onClick={handleClear}
+              onClick={handleClear} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
               title="Clear selection"
               className="p-0.5 rounded-full hover:bg-sunken text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
             >
@@ -304,7 +304,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                 return (
                   <div
                     key={option.value}
-                    onClick={() => handleToggleOption(option.value)}
+                    onClick={() => handleToggleOption(option.value)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                     className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer select-none ${
                       isSelected
                         ? themeClasses.itemActive

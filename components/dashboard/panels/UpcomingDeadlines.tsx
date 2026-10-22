@@ -60,7 +60,7 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
             };
 
             return (
-              <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border-transparent transition-colors cursor-pointer group" onClick={handleItemClick}>
+              <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border-transparent transition-colors cursor-pointer group" onClick={handleItemClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-md bg-surface group-hover:bg-background transition-colors">{icon}</div>
                   <div>

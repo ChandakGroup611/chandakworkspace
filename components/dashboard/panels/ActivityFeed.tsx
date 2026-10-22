@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDate } from "@/components/ui/data";
 import React, { useMemo } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -30,7 +31,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
           user: m.user || 'System',
           action: `closed ${m.module.substring(0,4)}`,
           target: m.code || `TF-${m.id.substring(0,6).toUpperCase()}`,
-          time: new Date(m.createdAt).toLocaleDateString()
+          time: formatDate(m.createdAt)
         };
       }
       if (isBlocked) {
@@ -40,7 +41,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
           user: m.user || 'System',
           action: `marked Blocked`,
           target: m.code || `TF-${m.id.substring(0,6).toUpperCase()}`,
-          time: new Date(m.createdAt).toLocaleDateString()
+          time: formatDate(m.createdAt)
         };
       }
       if (isReview) {
@@ -50,7 +51,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
           user: m.user || 'System',
           action: `requested review on`,
           target: m.code || `TF-${m.id.substring(0,6).toUpperCase()}`,
-          time: new Date(m.createdAt).toLocaleDateString()
+          time: formatDate(m.createdAt)
         };
       }
       
@@ -60,7 +61,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
         user: m.user || 'System',
         action: `opened new ${m.module.substring(0,4)}`,
         target: m.code || `TF-${m.id.substring(0,6).toUpperCase()}`,
-        time: new Date(m.createdAt).toLocaleDateString()
+        time: formatDate(m.createdAt)
       };
     });
   }, [metrics]);

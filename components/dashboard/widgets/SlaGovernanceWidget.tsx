@@ -44,7 +44,7 @@ export function SlaGovernanceWidget({ analytics, kpis: globalKpis, onDrillDown }
 
         <div className="grid grid-cols-3 gap-4">
           <div 
-            onClick={() => onDrillDown && onDrillDown({ title: "Healthy SLA deliverables", description: "Deliverables progressing within target SLA windows." })}
+            onClick={() => onDrillDown && onDrillDown({ title: "Healthy SLA deliverables", description: "Deliverables progressing within target SLA windows." })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
             className={`p-4 rounded-lg border border-success-border bg-success-soft text-center flex flex-col items-center justify-center transition-colors hover:bg-success-soft ${onDrillDown ? "cursor-pointer group" : ""}`}
           >
             <ShieldCheck className="w-6 h-6 text-success-text mb-2" />
@@ -52,7 +52,7 @@ export function SlaGovernanceWidget({ analytics, kpis: globalKpis, onDrillDown }
             <div className="text-[11px] font-semibold text-success/70 dark:text-success/70 mt-1">Healthy</div>
           </div>
           <div 
-            onClick={() => onDrillDown && onDrillDown({ title: "Warning SLA deliverables", description: "Deliverables nearing their deadline (<24 hours).", urgency: "warning" })}
+            onClick={() => onDrillDown && onDrillDown({ title: "Warning SLA deliverables", description: "Deliverables nearing their deadline (<24 hours).", urgency: "warning" })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
             className={`p-4 rounded-lg border border-warning-border bg-warning-soft text-center flex flex-col items-center justify-center transition-colors hover:bg-warning-soft ${onDrillDown ? "cursor-pointer group" : ""}`}
           >
             <AlertTriangle className="w-6 h-6 text-warning-text mb-2" />
@@ -60,7 +60,7 @@ export function SlaGovernanceWidget({ analytics, kpis: globalKpis, onDrillDown }
             <div className="text-[11px] font-semibold text-warning/70 dark:text-warning/70 mt-1">Warning</div>
           </div>
           <div 
-            onClick={() => onDrillDown && onDrillDown({ title: "Breached SLA deliverables", description: "All deliverables that exceeded resolution deadlines.", urgency: "breached" })}
+            onClick={() => onDrillDown && onDrillDown({ title: "Breached SLA deliverables", description: "All deliverables that exceeded resolution deadlines.", urgency: "breached" })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
             className={`p-4 rounded-lg border border-danger-border bg-danger-soft text-center flex flex-col items-center justify-center transition-colors hover:bg-danger-soft ${onDrillDown ? "cursor-pointer group" : ""}`}
           >
             <ShieldAlert className="w-6 h-6 text-danger-text mb-2" />

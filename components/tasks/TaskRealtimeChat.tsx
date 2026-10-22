@@ -395,7 +395,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             return (
               <div key={m.id || idx} className={`flex gap-3 animate-in fade-in slide-in-from-bottom-2 ${isSender ? "flex-row-reverse" : ""}`}>
                 {!isSender && (
-                  <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-accent to-primary flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-accent-soft flex items-center justify-center text-xs font-bold text-accent-soft-text shadow-sm overflow-hidden">
                     {m.user?.profile_photo ? (
                       <img src={m.user.profile_photo} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -449,7 +449,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                                 att.type?.startsWith('image/') ? (
                                   <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-border dark:border-border">
                                     <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-surface/5 dark:bg-surface/5 transition-transform duration-300" />
-                                    <div className="absolute inset-0 bg-surface/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
+                                    <div className="absolute inset-0 bg-[var(--overlay)] opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
                                       <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="View full image">
                                         <div className="p-2 bg-surface/20 rounded-full shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -531,7 +531,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                       "hover:bg-elevated text-muted"
                     }`}
                   >
-                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-accent to-primary flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden">
+                    <div className="h-6 w-6 rounded-full bg-accent-soft flex items-center justify-center text-accent-soft-text font-bold text-[0.65rem] overflow-hidden">
                       {u.profile_photo ? <img src={u.profile_photo} alt="" className="h-full w-full object-cover" /> : u.full_name.substring(0, 2).toUpperCase()}
                     </div>
                     {u.full_name}

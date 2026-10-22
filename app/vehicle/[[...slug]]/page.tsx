@@ -2,7 +2,13 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { getUserAllowedModules } from "@/lib/actions/module-switcher";
-import { fetchVehicleDashboardStats, fetchVehiclesList } from "@/lib/actions/vehicle";
+import { 
+  fetchVehicleDashboardStats, 
+  fetchVehiclesList, 
+  fetchDriversList, 
+  fetchTripsList, 
+  fetchMaintenanceList 
+} from "@/lib/actions/vehicle";
 import FleetDeskHost from "@/components/vehicle/FleetDeskHost";
 
 export const metadata = {
@@ -33,11 +39,15 @@ export default async function VehicleModulePage({ params }: PageProps) {
 
   const resolvedParams = await params;
   const slug = resolvedParams.slug || [];
+  const activeSection = slug[0] || "dashboard";
 
   // Server-side parallel pre-fetch for instant first paint
-  const [statsRes, vehiclesRes] = await Promise.all([
+  const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes] = await Promise.all([
     fetchVehicleDashboardStats().catch(() => ({ success: false, stats: undefined })),
-    fetchVehiclesList({ pageSize: 100 }).catch(() => ({ success: false, vehicles: [] }))
+    fetchVehiclesList({ pageSize: 100 }).catch(() => ({ success: false, vehicles: [] })),
+    fetchDriversList().catch(() => ({ success: false, drivers: [] })),
+    (activeSection === "trips" ? fetchTripsList().catch(() => ({ success: false, trips: [] })) : Promise.resolve({ success: false, trips: [] })),
+    (activeSection === "maintenance" ? fetchMaintenanceList().catch(() => ({ success: false, records: [] })) : Promise.resolve({ success: false, records: [] }))
   ]);
 
   return (
@@ -45,6 +55,9 @@ export default async function VehicleModulePage({ params }: PageProps) {
       initialSlug={slug} 
       initialStats={statsRes?.success ? statsRes.stats : undefined}
       initialVehicles={vehiclesRes?.success ? vehiclesRes.vehicles : undefined}
+      initialDrivers={driversRes?.success ? driversRes.drivers : undefined}
+      initialTrips={tripsRes?.success ? tripsRes.trips : undefined}
+      initialMaintenance={maintRes?.success ? maintRes.records : undefined}
     />
   );
 }

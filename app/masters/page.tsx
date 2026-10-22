@@ -1118,7 +1118,7 @@ function MastersPageContent() {
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center px-4 p-4 overflow-y-auto"
           style={{ backgroundColor: "var(--overlay)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
+           role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
           <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl theme-card-structural border border-border animate-in fade-in zoom-in-95 duration-300">
             {/* Header */}

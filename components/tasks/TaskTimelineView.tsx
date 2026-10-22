@@ -104,7 +104,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
               return (
                 <div key={task.id} className="flex relative border-b hover:bg-surface/50 dark:hover:theme-card-structural transition-colors group">
                   {/* Fixed left column */}
-                  <div className="w-[250px] shrink-0 sticky left-0 z-10 theme-card-structural border-r p-3 flex flex-col justify-center gap-1 cursor-pointer group-hover:bg-surface/80 dark:group-hover:/[0.02]" onClick={() => onTaskClick(task)}>
+                  <div className="w-[250px] shrink-0 sticky left-0 z-10 theme-card-structural border-r p-3 flex flex-col justify-center gap-1 cursor-pointer group-hover:bg-surface/80 dark:group-hover:/[0.02]" onClick={() => onTaskClick(task)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
                     <div className="font-bold text-xs text-foreground truncate">{task.title}</div>
                     <div className="text-[11px] text-muted flex justify-between">
                       <span className="truncate">{task.code}</span>
@@ -113,7 +113,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
                   </div>
                   
                   {/* Timeline area row */}
-                  <div className="flex-1 h-14 relative cursor-pointer" onClick={() => onTaskClick(task)}>
+                  <div className="flex-1 h-14 relative cursor-pointer" onClick={() => onTaskClick(task)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
                     <div 
                       className={`absolute top-1/2 -translate-y-1/2 h-8 rounded-md shadow-sm border overflow-hidden flex items-center px-2 transition-transform ${isOverdue ? 'bg-danger-soft border-danger-border text-danger-text' : 'bg-accent-soft border-theme-btn-primary/30 text-theme-icon-secondary dark:text-theme-icon'}`}
                       style={{ left: `${left}px`, width: `${width}px` }}

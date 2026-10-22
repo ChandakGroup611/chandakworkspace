@@ -230,7 +230,7 @@ export default function DesignationsMasterPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-surface/40">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 sm:p-6 bg-[var(--overlay)]">
           <div className="bg-surface border border-border shadow-lg rounded-lg w-full max-w-lg flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between p-5 border-b border-border shrink-0">

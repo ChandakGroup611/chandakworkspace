@@ -110,7 +110,7 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
   const modalContent = (
     <div 
       className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-200 overflow-hidden"
-      onClick={(e) => {
+       role="presentation" onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >

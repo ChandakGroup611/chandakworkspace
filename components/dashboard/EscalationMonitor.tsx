@@ -57,7 +57,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
                   <Clock className="h-3 w-3" />
                   <span>{esc.timeRemaining}</span>
                 </div>
-                <div className="p-1 rounded-lg bg-surface/5 text-muted hover:text-white hover:bg-surface/10 cursor-pointer transition-colors">
+                <div className="p-1 rounded-lg bg-surface/5 text-muted hover:text-foreground hover:bg-surface-hover cursor-pointer transition-colors">
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </div>

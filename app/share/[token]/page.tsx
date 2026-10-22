@@ -1,6 +1,7 @@
 // TODO(ui-v2): migrate to tokens
 "use client";
 
+import { formatDate } from "@/components/ui/data";
 import React, { useState, useEffect, use } from "react";
 import {
   ShieldCheck,
@@ -366,7 +367,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
                   return (
                     <div
                       key={item.id}
-                      onClick={() => setSelectedItemId(item.id)}
+                      onClick={() => setSelectedItemId(item.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                       className={`p-3 rounded-lg border transition-all cursor-pointer ${
                         isSelected
                           ? "bg-accent-soft border-primary ring-1 ring-ring"
@@ -484,7 +485,7 @@ export default function SecureSharePortalPage({ params }: SharePageProps) {
 
                   <div className="border-t border-border pt-3 flex justify-between text-[11px] font-mono text-muted">
                     <div>CONFIDENTIAL • RECIPIENT: {email}</div>
-                    <div>Date: {new Date().toLocaleDateString("en-IN")}</div>
+                    <div>Date: {formatDate(new Date())}</div>
                   </div>
                 </div>
               </div>

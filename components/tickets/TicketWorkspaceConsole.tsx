@@ -397,7 +397,7 @@ export function TicketWorkspaceConsole({
                                 } finally {
                                   setIsLinking(false);
                                 }
-                              }}
+                              }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                               className="p-3 border-b hover:theme-card-structural/5 dark:hover:theme-card-structural cursor-pointer transition-colors"
                             >
                               <div className="flex items-center justify-between mb-1">
@@ -726,7 +726,7 @@ export function TicketWorkspaceConsole({
         <div className="mt-3 rounded-md p-3 transition-all duration-150 theme-card-structural text-foreground">
           {/* Header with toggle */}
           <div 
-            onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)} 
+            onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} 
             className="flex items-center justify-between cursor-pointer select-none group"
           >
             <div className="flex items-center gap-2">
@@ -789,7 +789,7 @@ export function TicketWorkspaceConsole({
                               className="h-7 w-7 rounded-full border border-theme-btn-primary/20 object-cover"
                             />
                           ) : (
-                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center text-xs font-semibold text-white border border-theme-btn-primary/20 shadow-md">
+                            <div className="h-7 w-7 rounded-full bg-accent-soft flex items-center justify-center text-xs font-semibold text-accent-soft-text border border-theme-btn-primary/20 shadow-md">
                               {initials}
                             </div>
                           )}
@@ -828,4 +828,4 @@ export function TicketWorkspaceConsole({
 
     </div>
   );
-}
+}

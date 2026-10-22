@@ -113,7 +113,7 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
       }
       className="h-[400px]"
       collapsible={true}
-      headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1">Calendar <ArrowUpRight className="w-3.5 h-3.5" /></span>}
+      headerRight={<span onClick={onOpenList} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1">Calendar <ArrowUpRight className="w-3.5 h-3.5" /></span>}
     >
       <div className="space-y-3">
         {upcoming.map((m, i) => {
@@ -139,7 +139,7 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
                 diff <= 3 ? "bg-warning-soft hover:bg-warning-soft border-warning-border" : 
                 "bg-surface-hover/30 hover:bg-surface-hover/80 border-transparent hover:border-border"
               )}
-              onClick={handleItemClick}
+              onClick={handleItemClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">

@@ -506,7 +506,7 @@ export const LookAheadDashboard: React.FC = () => {
                     return (
                       <div 
                         key={item.id}
-                        onClick={() => setSelectedItem(item)}
+                        onClick={() => setSelectedItem(item)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                         className={`p-2.5 rounded-lg border text-xs flex flex-col gap-1.5 transition-all cursor-pointer group ${
                           item.timeframe === "30_DAYS"
                             ? "bg-danger-soft hover:bg-danger-soft border-danger-border text-foreground"

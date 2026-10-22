@@ -46,7 +46,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 w-full">
         {/* Workspaces KPI */}
         <div 
-          onClick={() => handleCardClick("Workspaces", "Workspaces")}
+          onClick={() => handleCardClick("Workspaces", "Workspaces")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-success-border hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--success) 25%, transparent)" } as React.CSSProperties}>
@@ -78,7 +78,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
 
         {/* Sub Workspaces KPI */}
         <div 
-          onClick={() => handleCardClick("Sub Workspaces", "Sub Workspaces")}
+          onClick={() => handleCardClick("Sub Workspaces", "Sub Workspaces")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-info-border hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--info) 25%, transparent)" } as React.CSSProperties}>
@@ -110,7 +110,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
 
         {/* Tasks KPI */}
         <div 
-          onClick={() => handleCardClick("Tasks", "Tasks")}
+          onClick={() => handleCardClick("Tasks", "Tasks")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-info-border hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--info) 25%, transparent)" } as React.CSSProperties}>
@@ -142,7 +142,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
 
         {/* Sub Tasks KPI */}
         <div 
-          onClick={() => handleCardClick("Sub Tasks", "Sub Tasks")}
+          onClick={() => handleCardClick("Sub Tasks", "Sub Tasks")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-border-active hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--chart-3) 25%, transparent)" } as React.CSSProperties}>
@@ -174,7 +174,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
 
         {/* Requirements KPI */}
         <div 
-          onClick={() => handleCardClick("Requirements", "Requirements")}
+          onClick={() => handleCardClick("Requirements", "Requirements")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-border-active hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--chart-1) 25%, transparent)" } as React.CSSProperties}>
@@ -206,7 +206,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
 
         {/* Tickets KPI */}
         <div 
-          onClick={() => handleCardClick("Tickets", "Tickets")}
+          onClick={() => handleCardClick("Tickets", "Tickets")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-border-active hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--chart-1) 25%, transparent)" } as React.CSSProperties}>

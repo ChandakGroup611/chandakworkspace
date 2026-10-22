@@ -56,7 +56,7 @@ const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), {
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
 import { confirmAction } from "@/components/ui/feedback/confirm";
-import { formatDateTime, formatDate } from "@/components/ui/data";
+import { formatDateTime, formatDate, PriorityIndicator } from "@/components/ui/data";
 
 const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }: { value: string, onChange: (val: string) => void, readOnly?: boolean, placeholder?: string }) => {
   const [mounted, setMounted] = useState(false);
@@ -924,24 +924,18 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       
       {/* High-Contrast Clear Warning / Notice Banner */}
       {error && (
-        <div className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm animate-in slide-in-from-top-1 ${
+        <div role="alert" className={`p-4 rounded-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
           isReloadRequiredError(error)
             ? 'bg-warning-soft border-warning-border text-warning-text'
             : 'bg-danger-soft border-danger-border text-danger-text'
         }`}>
           <div className="flex items-start sm:items-center gap-3">
-            <div className={`p-2 rounded-lg shrink-0 ${
-              isReloadRequiredError(error)
-                ? 'bg-warning-soft text-warning-text'
-                : 'bg-danger-soft text-danger-text'
-            }`}>
-              <AlertTriangle className="w-5 h-5" />
-            </div>
+            <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden />
             <div>
-              <p className="text-xs font-bold opacity-80">
-                {isReloadRequiredError(error) ? 'Application Update Detected' : 'Notice / Error'}
+              <p className="text-[13.5px] font-semibold">
+                {isReloadRequiredError(error) ? 'A new version of the app is available' : 'Something went wrong'}
               </p>
-              <p className="text-sm font-semibold mt-0.5 leading-snug">
+              <p className="text-[13px] mt-0.5 leading-snug">
                 {sanitizeErrorMessage(error)}
               </p>
             </div>
@@ -952,9 +946,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 variant="primary" 
                 size="sm"
                 onClick={() => window.location.reload()} 
-                className="text-xs font-bold px-3 py-1.5 shadow-xs bg-warning hover:bg-warning text-white border-0"
+                leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
               >
-                <RefreshCw className="w-3.5 h-3.5 mr-1" />
                 Reload page
               </AppButton>
             )}
@@ -962,7 +955,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               variant="secondary" 
               size="sm"
               onClick={() => setError(null)} 
-              className="text-xs font-bold px-3 py-1.5"
             >
               Dismiss
             </AppButton>
@@ -975,88 +967,79 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
      
       {/* Extended Metadata Section - Dedicated Card with Background Header */}
       <div>
-        <AppCard className="overflow-hidden shadow-sm p-0 mb-4 border border-border">
-          <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border flex items-center justify-between">
+        <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
+          <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
-              <Clock className="w-4 h-4 text-accent" />
-              <h3 className="font-bold text-sm tracking-wide text-foreground">Timeline & meta</h3>
+              <Clock className="h-4 w-4 text-muted" aria-hidden />
+              <h3 className="text-[14px] font-semibold text-heading">Schedule and people</h3>
             </div>
-            {task.priority?.name && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border dark:border-border bg-accent-soft text-theme-icon">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || 'var(--accent-primary)' }} />
-                {task.priority.name}
-              </span>
-            )}
+
           </div>
           
           <div className="p-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch">
               
               {/* 1. Creator */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
-                <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Creator</span>
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <User className="h-3.5 w-3.5" aria-hidden /> <span>Creator</span>
                 </span>
-                <div className="text-sm font-semibold text-foreground h-9 flex items-center truncate">
-                  {task.creator?.full_name || task.created_by?.full_name || task.created_by_user?.full_name || "System Actor"}
+                <div className="flex h-8 items-center text-[13.5px] text-foreground truncate">
+                  {task.creator?.full_name || task.created_by?.full_name || task.created_by_user?.full_name || "System"}
                 </div>
               </div>
 
               {/* 2. Created At */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
-                <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Created at</span>
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <Calendar className="h-3.5 w-3.5" aria-hidden /> <span>Created at</span>
                 </span>
-                <div className="text-sm font-semibold text-foreground h-9 flex items-center">
+                <div className="flex h-8 items-center text-[13.5px] text-foreground">
                   {task.created_at ? formatDateTime(task.created_at) : "Unknown"}
                 </div>
               </div>
 
               {/* 3. Last Status */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
-                <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Last status</span>
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <Tag className="h-3.5 w-3.5" aria-hidden /> <span>Last status</span>
                 </span>
-                <div className="text-sm font-semibold text-foreground h-9 flex items-center">
+                <div className="flex h-8 items-center text-[13.5px] text-foreground">
                   {task.status?.name || task.status?.status_name || "Open"}
                 </div>
               </div>
 
               {/* 4. Last Updated */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
-                <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Last updated</span>
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <Clock className="h-3.5 w-3.5" aria-hidden /> <span>Last updated</span>
                 </span>
-                <div className="text-sm font-semibold text-foreground h-9 flex items-center">
+                <div className="flex h-8 items-center text-[13.5px] text-foreground">
                   {task.updated_at ? formatDateTime(task.updated_at) : (task.created_at ? formatDateTime(task.created_at) : "Unknown")}
                 </div>
               </div>
 
               {/* 5. Priority */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
-                <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                  <Flag className="w-3.5 h-3.5 text-danger" /> <span className="text-danger font-bold">Priority</span>
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <Flag className="h-3.5 w-3.5" aria-hidden /> <span>Priority</span>
                 </span>
-                <div className="h-9 flex items-center">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border dark:border-border" style={{ backgroundColor: `var(--accent-primary)15` }}>
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
-                    <span className="text-xs font-semibold" style={{ color: task.priority?.color || ("#64748b") }}>{task.priority?.name || "Standard"}</span>
-                  </div>
+                <div className="flex h-8 items-center">
+                  <PriorityIndicator priority={task.priority?.name || null} className="text-[13.5px]" />
                 </div>
               </div>
 
               {/* 6. Duration */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
-                <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                  <Hourglass className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon dark:text-muted-foreground font-bold">Duration</span>
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <Hourglass className="h-3.5 w-3.5" aria-hidden /> <span>Duration</span>
                 </span>
-                <div className="text-sm font-semibold text-foreground h-9 flex items-center">
+                <div className="flex h-8 items-center text-[13.5px] text-foreground">
                   {canEditDates ? (
                     <div className="flex items-center gap-1.5 text-xs">
                       <input
                         type="number"
-                        className="w-16 px-2 py-1 rounded-lg border border-border bg-surface text-foreground font-bold text-center focus:outline-none focus:ring-2 focus:ring-theme-btn-primary text-xs"
+                        aria-label="Duration in days" className="h-8 w-16 rounded-md border border-border bg-surface px-2 text-center text-[13px] tabular-nums text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
                         onChange={(e) => {
                           const days = parseInt(e.target.value, 10);
@@ -1077,26 +1060,26 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             }));
                           }
                         }}
-                      /> <span className="text-muted font-medium text-xs">Days</span>
+                      /> <span className="text-[12.5px] text-muted">days</span>
                     </div>
                   ) : (
                     <span>
-                      {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0} <span className="text-muted font-medium text-xs">Days</span>
+                      {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0} <span className="text-[12.5px] text-muted">days</span>
                     </span>
                   )}
                 </div>
               </div>
 
               {/* 7. Start Date */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
-                <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                  <CalendarDays className="w-3.5 h-3.5 text-success" /> <span className="text-success dark:text-success font-bold">Start date</span> <span className="text-danger">*</span>
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <CalendarDays className="h-3.5 w-3.5" aria-hidden /> <span>Start date</span> <span className="text-danger-text" aria-hidden>*</span>
                 </span>
-                <div className="h-9 flex items-center">
+                <div className="flex h-8 items-center">
                   {canEditDates ? (
                     <input
                       type="date"
-                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-all"
+                      className="h-8 w-full rounded-md border border-border bg-surface px-2.5 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
                       onChange={(e) => {
                         const newStartDate = e.target.value;
@@ -1123,23 +1106,23 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       }}
                     />
                   ) : (
-                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-surface border border-border text-foreground">
-                      {task.start_date ? formatDate(task.start_date) : "Not set"}
-                    </div>
+                    <span className="text-[13.5px] text-foreground">
+                      {task.start_date ? formatDate(task.start_date) : <span className="text-muted">Not set</span>}
+                    </span>
                   )}
                 </div>
               </div>
 
               {/* 8. Due Date */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
-                <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                  <CalendarCheck className="w-3.5 h-3.5 text-warning" /> <span className="text-warning dark:text-warning font-bold">Due date</span> <span className="text-danger">*</span>
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> <span>Due date</span> <span className="text-danger-text" aria-hidden>*</span>
                 </span>
-                <div className="h-9 flex items-center">
+                <div className="flex h-8 items-center">
                   {canEditDates ? (
                     <input
                       type="date"
-                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-all"
+                      className="h-8 w-full rounded-md border border-border bg-surface px-2.5 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
                       onChange={(e) => {
                         const newEndDate = e.target.value;
@@ -1152,37 +1135,38 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       }}
                     />
                   ) : (
-                    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold ${ task.end_date && new Date(task.end_date) < new Date() ? "bg-danger-soft text-danger-text dark:bg-danger/20 dark:text-danger" : "bg-surface border border-border text-foreground" }`}>
-                      {task.end_date ? formatDate(task.end_date) : "Not set"}
-                    </div>
+                    <span className={`text-[13.5px] ${ task.end_date && new Date(task.end_date) < new Date() ? "font-medium text-danger-text" : "text-foreground" }`}>
+                      {task.end_date ? formatDate(task.end_date) : <span className="text-muted">Not set</span>}
+                    </span>
                   )}
                 </div>
               </div>
 
               {/* 9. Primary Assignee */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Primary assignee</span>
+                  <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                    <ShieldCheck className="h-3.5 w-3.5" aria-hidden /> <span>Primary assignee</span>
                   </span>
                   { canEditAssignees && (
                     <AppButton 
-                      variant="secondary" 
+                      variant="link" 
+                      size="sm"
                       onClick={() => openAssigneeModal('primary')}
-                      className="text-[11px] font-bold text-theme-icon hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
+                      className="text-[12.5px]"
                     >
                       Edit
                     </AppButton>
                   )}
                 </div>
-                <div className="flex items-center gap-2 h-9 overflow-hidden">
+                <div className="flex h-8 items-center gap-2 overflow-hidden">
                   {pendingPrimaryAssignee ? (
                     (() => {
                       const pUser = stakeholders.find(s => s.id === pendingPrimaryAssignee);
                       return (
-                        <div className="flex items-center gap-1.5 text-xs text-theme-icon font-bold">
-                          <span className="inline-block w-2 h-2 rounded-full bg-theme-btn-primary animate-pulse" />
-                          <span className="truncate">{pUser?.full_name || "New Primary"} (Pending save)</span>
+                        <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
+                          <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
+                          <span className="truncate">{pUser?.full_name || "New primary assignee"} · not saved yet</span>
                         </div>
                       );
                     })()
@@ -1193,84 +1177,86 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                        return (
                          <>
                            {a.profile_photo ? (
-                             <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-elevated shadow-xs" />
+                             <img src={a.profile_photo} alt="" className="h-6 w-6 rounded-full bg-sunken object-cover" />
                            ) : (
-                             <div className="w-5 h-5 rounded-full bg-accent-soft text-theme-icon flex items-center justify-center text-[11px] font-bold shadow-xs">
+                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
                                {a.full_name?.substring(0, 2).toUpperCase() || "U"}
                              </div>
                            )}
-                           <span className="text-sm font-semibold text-foreground truncate">{a.full_name}</span>
+                           <span className="truncate text-[13.5px] text-foreground">{a.full_name}</span>
                          </>
                        );
                     })()
                   ) : (
-                    <span className="text-xs font-medium text-muted italic">Unassigned</span>
+                    <span className="text-muted">Unassigned</span>
                   )}
                 </div>
               </div>
 
               {/* 10. Executors */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-success" /> <span className="text-success dark:text-success font-bold">Executors</span>
-                    <span className="text-[11px] px-1.5 py-0 bg-success/10 text-success dark:text-success rounded-full font-bold">
+                  <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                    <Users className="h-3.5 w-3.5" aria-hidden /> <span>Executors</span>
+                    <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
                       {pendingAssignees ? pendingAssignees.length : explicitExecutors.length}
                     </span>
                   </span>
                   { canEditAssignees && (
                     <AppButton 
-                      variant="secondary" 
+                      variant="link" 
+                      size="sm"
                       onClick={() => openAssigneeModal('executors')}
-                      className="text-[11px] font-bold text-success dark:text-success hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
+                      className="text-[12.5px]"
                     >
                       Edit
                     </AppButton>
                   )}
                 </div>
                 
-                <div className="text-xs text-foreground h-9 flex items-center overflow-hidden">
+                <div className="flex h-8 items-center overflow-hidden text-[13.5px] text-foreground">
                   {pendingAssignees ? (
-                    <div className="flex items-center gap-1.5 text-xs text-success dark:text-success font-bold">
-                      <span className="inline-block w-2 h-2 rounded-full bg-success animate-pulse" />
-                      <span className="truncate">{pendingAssignees.length} executor(s) (Pending save)</span>
+                    <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
+                      <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
+                      <span className="truncate">{pendingAssignees.length} {pendingAssignees.length === 1 ? "executor" : "executors"} · not saved yet</span>
                     </div>
                   ) : (
-                    <span className="truncate block w-full text-ellipsis whitespace-nowrap overflow-hidden font-semibold">
-                      {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-muted italic text-xs">None</span>}
+                    <span className="block w-full truncate">
+                      {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-muted">None</span>}
                     </span>
                   )}
                 </div>
               </div>
               
               {/* 11. Watchers (Team) */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-warning/5 dark:bg-warning/10 border border-warning-border hover:border-warning-border transition-all duration-200 min-h-[76px] justify-center sm:col-span-2 lg:col-span-2">
+              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5 sm:col-span-2 lg:col-span-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-muted flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5 text-warning" /> <span className="text-warning dark:text-warning font-bold">Watchers (Team)</span>
-                    <span className="text-[11px] px-1.5 py-0 bg-warning/10 text-warning dark:text-warning rounded-full font-bold">
+                  <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                    <Eye className="h-3.5 w-3.5" aria-hidden /> <span>Watchers</span>
+                    <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
                       {pendingWatchers ? pendingWatchers.length : explicitWatchers.length}
                     </span>
                   </span>
                   { canEditWatchers && (
                     <AppButton 
-                      variant="secondary" 
+                      variant="link" 
+                      size="sm"
                       onClick={() => openAssigneeModal('watchers')}
-                      className="text-[11px] font-bold text-warning dark:text-warning hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
+                      className="text-[12.5px]"
                     >
                       Edit
                     </AppButton>
                   )}
                 </div>
-                <div className="text-xs text-foreground h-9 flex items-center overflow-hidden">
+                <div className="flex h-8 items-center overflow-hidden text-[13.5px] text-foreground">
                   {pendingWatchers ? (
-                    <div className="flex items-center gap-1.5 text-xs text-warning dark:text-warning font-bold">
-                      <span className="inline-block w-2 h-2 rounded-full bg-warning animate-pulse" />
-                      <span className="truncate">{pendingWatchers.length} watcher(s) (Pending save)</span>
+                    <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
+                      <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
+                      <span className="truncate">{pendingWatchers.length} {pendingWatchers.length === 1 ? "watcher" : "watchers"} · not saved yet</span>
                     </div>
                   ) : (
-                    <span className="truncate block w-full text-ellipsis whitespace-nowrap overflow-hidden font-semibold">
-                      {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-muted italic text-xs">None</span>}
+                    <span className="block w-full truncate">
+                      {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-muted">None</span>}
                     </span>
                   )}
                 </div>
@@ -1283,16 +1269,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       
       {/* 4. Remarks and Updates Group - Dedicated Card with Background-Colored Header */}
       <div>
-        <AppCard className="overflow-hidden shadow-sm p-0 mb-4 border border-border">
-          <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border flex items-center justify-between">
+        <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
+          <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
-              <MessageSquare className="w-4 h-4 text-accent" />
-              <h3 className="font-bold text-sm tracking-wide text-foreground">Remarks and updates</h3>
+              <MessageSquare className="h-4 w-4 text-muted" aria-hidden />
+              <h3 className="text-[14px] font-semibold text-heading">Status and remarks</h3>
             </div>
-            <span className="text-[11px] font-semibold text-theme-icon bg-accent-soft dark:bg-accent-soft px-2.5 py-0.5 rounded-full border border-theme-btn-primary/30">
-              Data feeding zone
-            </span>
           </div>
           
           <div className="p-5 space-y-6">
@@ -1300,8 +1282,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-muted">Status field</label>
+            <label htmlFor="tec-status" className="text-[13px] font-medium text-subtle">Status</label>
             <select
+              id="tec-status"
               value={pendingStatus || currentStatusCode || ""}
               disabled={readOnly || !canEditCore}
               onChange={(e) => {
@@ -1312,7 +1295,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingStatus(newCode);
                 }
               }}
-              className={`w-full h-10 px-3 rounded-xl text-sm font-semibold border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary transition-all ${(readOnly || !canEditCore) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${(readOnly || !canEditCore) ? 'cursor-not-allowed opacity-60' : ''}`}
             >
               <option value="" disabled>Select status</option>
               {statuses.map(st => (
@@ -1322,8 +1305,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           </div>
           
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-muted">Department field</label>
+            <label htmlFor="tec-dept" className="text-[13px] font-medium text-subtle">Department</label>
             <select
+              id="tec-dept"
               value={pendingDepartment !== null ? pendingDepartment : (task.department_id || "")}
               disabled={readOnly || !canEditCore}
               onChange={(e) => {
@@ -1334,9 +1318,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingDepartment(newDept);
                 }
               }}
-              className={`w-full h-10 px-3 rounded-xl text-sm font-semibold border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary transition-all ${(readOnly || !canEditCore) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${(readOnly || !canEditCore) ? 'cursor-not-allowed opacity-60' : ''}`}
             >
-              <option value="">-- No department --</option>
+              <option value="">No department</option>
               {departments.map(dept => (
                 <option key={dept.id} value={dept.id}>{dept.name}</option>
               ))}
@@ -1344,15 +1328,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           </div>
           
           <div className="space-y-1.5 w-full">
-            <label className="text-xs font-bold text-muted block text-left sm:text-right w-full">
-              Quick action operations
-            </label>
+            <span className="block w-full text-left text-[13px] font-medium text-subtle sm:text-right">
+              Actions
+            </span>
             <div className="flex flex-wrap justify-start sm:justify-end gap-2 pt-0.5 w-full">
               {currentStatusCode === "ST_OPEN" && canEditCore && (
                 <AppButton 
                   size="sm" 
                   variant="primary" 
-                  className="bg-theme-btn-primary hover:opacity-90"
                   leftIcon={<Play className="h-4 w-4" />}
                   disabled={actionLoading}
                   onClick={() => handleStatusTransition("start")}
@@ -1365,12 +1348,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <AppButton 
                   size="sm" 
                   variant="primary" 
-                  className="bg-success hover:bg-success"
                   leftIcon={<CheckCircle2 className="h-4 w-4" />}
                   disabled={actionLoading}
                   onClick={() => handleStatusTransition("resolve")}
                 >
-                  Resolve directive
+                  Mark as resolved
                 </AppButton>
               )}
 
@@ -1379,7 +1361,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <AppButton 
                     size="sm" 
                     variant="primary" 
-                    className="bg-theme-btn-primary hover:opacity-90"
                     leftIcon={<CheckCircle2 className="h-4 w-4" />}
                     disabled={actionLoading}
                     onClick={() => handleStatusTransition("approve")}
@@ -1388,8 +1369,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   </AppButton>
                   <AppButton 
                     size="sm" 
-                    variant="ghost" 
-                    className="text-theme-icon hover:bg-danger-soft dark:hover:bg-danger/10"
+                    variant="secondary" 
                     leftIcon={<RotateCcw className="h-4 w-4" />}
                     disabled={actionLoading}
                     onClick={() => handleStatusTransition("reopen")}
@@ -1414,7 +1394,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <AppButton 
                   variant="outline" 
                   size="sm" 
-                  className="text-theme-icon hover:bg-danger-soft border-danger-border dark:hover:bg-danger/10" 
+                  className="border-danger-border text-danger-text hover:bg-danger-soft" 
                   onClick={handleDeleteTask} 
                   disabled={deleteLoading || actionLoading}
                   leftIcon={<Trash2 className="h-4 w-4" />}
@@ -1425,12 +1405,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
               { canTransferTask && (
                 <AppButton 
-                  variant="outline" 
+                  variant="secondary" 
                   size="sm" 
-                  className="text-theme-icon hover:bg-surface-hover border-theme-btn-primary/30 dark:border-theme-btn-primary/20 dark:hover:bg-surface-hover" 
                   onClick={handleOpenTransfer} 
                   disabled={actionLoading}
-                  leftIcon={<ChevronUp className="h-4 w-4 rotate-90" />}
+                  leftIcon={<FolderPlus className="h-4 w-4" />}
                 >
                   Transfer task
                 </AppButton>
@@ -1439,15 +1418,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             
             {/* Transfer Modal / Inline Panel */}
             {isTransferModalOpen && (
-              <div className="mt-4 p-5 border-2 border-theme-btn-primary/30 bg-accent-soft dark:bg-accent-soft dark:border-theme-btn-primary/20 rounded-xl animate-in fade-in zoom-in-95 w-full text-left shadow-lg">
-                <h4 className="text-sm font-bold text-theme-icon dark:text-theme-icon mb-4 flex items-center gap-2 border-b border-theme-btn-primary/30 pb-2">
-                  <FolderPlus className="w-4 h-4" /> Transfer task to another workspace
+              <div className="mt-4 w-full rounded-md border border-border bg-sunken p-5 text-left">
+                <h4 className="mb-4 flex items-center gap-2 border-b border-border pb-2 text-[14px] font-semibold text-heading">
+                  <FolderPlus className="h-4 w-4 text-muted" aria-hidden /> Transfer task to another workspace
                 </h4>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="theme-data-value text-subtle  mb-1.5 block">Destination workspace <span className="text-danger">*</span></label>
+                      <label htmlFor="tec-transfer-ws" className="mb-1.5 block text-[13px] font-medium text-subtle">Destination workspace <span className="text-danger-text" aria-hidden>*</span></label>
                       <select
+                        id="tec-transfer-ws"
                         value={selectedTransferSubworkspace || selectedTransferWorkspace}
                         onChange={e => {
                           const val = e.target.value;
@@ -1467,16 +1447,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             }
                           }
                         }}
-                        className="w-full p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-border"
+                        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       >
-                        <option value="">-- Select destination workspace --</option>
+                        <option value="">Select a workspace</option>
                         {flattenedWorkspaces.map(w => (
                           <option 
                             key={w.id} 
                             value={w.id} 
                             disabled={w.id === (task.sub_workspace_id || task.workspace_id)}
                           >
-                            {w.pathName} {w.id === (task.sub_workspace_id || task.workspace_id) ? "(Current)" : ""}
+                            {w.pathName} {w.id === (task.sub_workspace_id || task.workspace_id) ? "(current)" : ""}
                           </option>
                         ))}
                       </select>
@@ -1484,28 +1464,29 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   </div>
 
                   {checkingScope && (
-                    <div className="flex items-center gap-2 text-xs text-theme-icon font-bold p-2">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Checking user scope…
+                    <div role="status" className="flex items-center gap-2 p-2 text-[13px] text-muted">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden /> Checking who has access to that workspace…
                     </div>
                   )}
 
                   {!checkingScope && droppedUsers.length > 0 && (
-                    <div className="p-3 bg-warning-soft dark:bg-warning/10 border border-warning-border rounded-lg space-y-3">
-                      <div className="text-xs text-warning-text dark:text-warning font-semibold leading-relaxed">
-                        <span className="font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Out of scope users detected</span>
-                        The following participants do not have access to the destination and will be removed from this task: 
+                    <div className="space-y-3 rounded-md border border-warning-border bg-warning-soft p-3">
+                      <div className="text-[13px] leading-relaxed text-warning-text">
+                        <span className="mb-0.5 flex items-center gap-1 font-semibold"><XCircle className="w-3.5 h-3.5" aria-hidden /> Some people will lose access</span>
+                        These people don&apos;t have access to the destination workspace and will be removed from this task: 
                         <strong className="block mt-1">{droppedUsers.map(u => u.full_name).join(", ")}</strong>
                       </div>
                       
                       {isOwnerDropped && (
-                        <div className="theme-card-structural dark:bg-surface/20 p-3 rounded border-warning-border">
-                          <label className="theme-data-value text-warning-text mb-1.5 block">Assign new primary owner <span className="text-danger">*</span></label>
+                        <div className="rounded-md border border-border bg-surface p-3">
+                          <label htmlFor="tec-new-owner" className="mb-1.5 block text-[13px] font-medium text-subtle">New primary owner <span className="text-danger-text" aria-hidden>*</span></label>
                           <select
+                            id="tec-new-owner"
                             value={newAssigneeId}
                             onChange={e => setNewAssigneeId(e.target.value)}
-                            className="w-full p-2 rounded text-sm border border-warning-border focus:outline-none focus:ring-2 focus:ring-warning-border dark:border-border"
+                            className="h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                           >
-                            <option value="">-- Select new owner --</option>
+                            <option value="">Select a person</option>
                             {targetStakeholders.map(s => (
                               <option key={s.id} value={s.id}>{s.full_name}</option>
                             ))}
@@ -1514,11 +1495,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       )}
                       
                       {true && (
-                        <div className="theme-card-structural dark:bg-surface/20 p-3 rounded border-warning-border mt-2">
-                          <label className="theme-data-value text-warning-text mb-1.5 block">Assign additional executives (optional)</label>
+                        <div className="rounded-md border border-border bg-surface p-3 mt-2">
+                          <span className="mb-1.5 block text-[13px] font-medium text-subtle">Add executors (optional)</span>
                           <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
                             {targetStakeholders.map(s => (
-                              <label key={s.id} className="flex items-center gap-2 text-xs text-subtle  p-1 hover:bg-surface/5 dark:hover:bg-surface/5 rounded cursor-pointer">
+                              <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-[13px] text-foreground hover:bg-surface-hover">
                                 <input 
                                   type="checkbox" 
                                   checked={newExecutors.includes(s.id)}
@@ -1526,7 +1507,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                     if(e.target.checked) setNewExecutors([...newExecutors, s.id]);
                                     else setNewExecutors(newExecutors.filter(id => id !== s.id));
                                   }}
-                                  className="accent-primary rounded h-3 w-3"
+                                  className="h-3.5 w-3.5 rounded accent-primary"
                                 />
                                 {s.full_name}
                               </label>
@@ -1538,18 +1519,19 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   )}
 
                   <div>
-                    <label className="theme-data-value text-subtle  mb-1 block">Transfer remarks (mandatory) <span className="text-danger">*</span></label>
+                    <label htmlFor="tec-transfer-remarks" className="mb-1.5 block text-[13px] font-medium text-subtle">Reason for transfer <span className="text-danger-text" aria-hidden>*</span></label>
                     <textarea 
+                      id="tec-transfer-remarks"
                       value={transferRemarks}
                       onChange={e => setTransferRemarks(e.target.value)}
-                      className="w-full min-h-[60px] p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-border"
+                      className="min-h-[72px] w-full rounded-md border border-border bg-surface p-2.5 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="Why is this task being transferred?"
                     />
                   </div>
-                  <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">
-                    <AppButton variant="outline" size="sm" onClick={() => { setIsTransferModalOpen(false); setSelectedTransferWorkspace(""); setSelectedTransferSubworkspace(""); }} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
-                    <AppButton variant="primary" size="sm" className="bg-theme-btn-primary hover:opacity-90" onClick={submitTransfer} disabled={transferLoading || checkingScope}>
-                      {transferLoading ? "Transferring..." : "Confirm Transfer"}
+                  <div className="mt-5 flex justify-end gap-2 border-t border-border pt-4">
+                    <AppButton variant="ghost" size="sm" onClick={() => { setIsTransferModalOpen(false); setSelectedTransferWorkspace(""); setSelectedTransferSubworkspace(""); }}>Cancel</AppButton>
+                    <AppButton variant="primary" size="sm" onClick={submitTransfer} disabled={transferLoading || checkingScope} isLoading={transferLoading}>
+                      {transferLoading ? "Transferring…" : "Transfer task"}
                     </AppButton>
                   </div>
                 </div>
@@ -1559,94 +1541,92 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         </div>
 
         {pendingStatus && (
-          <div className="p-3.5 bg-danger-soft border-l-4 border-l-danger-border border border-danger-border text-danger-text text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 shadow-sm">
+          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text">
             <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 text-danger-text shrink-0" />
+              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
               <span>
-                Status change to <strong className="font-semibold text-danger-text bg-danger-soft px-1.5 py-0.5 rounded border border-danger-border">{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong className="font-semibold text-danger-text underline">"Commit updates & save remark"</strong> to save both.
+                Status change to <strong className="font-semibold">{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
               </span>
             </div>
             <button 
               type="button" 
               onClick={() => setPendingStatus(null)} 
-              className="text-xs text-danger-text hover:text-danger-text font-bold px-2.5 py-1 rounded-lg bg-danger-soft hover:bg-danger-soft border border-danger-border transition-colors shrink-0 whitespace-nowrap"
+              className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
             >
-              Cancel change
+              Undo
             </button>
           </div>
         )}
 
         {pendingDepartment && (
-          <div className="p-3.5 bg-danger-soft border-l-4 border-l-danger-border border border-danger-border text-danger-text text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mt-3 shadow-sm">
+          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 text-danger-text shrink-0" />
+              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
               <span>
-                Department change to <strong className="font-semibold text-danger-text bg-danger-soft px-1.5 py-0.5 rounded border border-danger-border">{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> is pending. Write a mandatory remark below and click <strong className="font-semibold text-danger-text underline">"Commit updates & save remark"</strong> to save both.
+                Department change to <strong className="font-semibold">{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
               </span>
             </div>
             <button 
               type="button" 
               onClick={() => setPendingDepartment(null)} 
-              className="text-xs text-danger-text hover:text-danger-text font-bold px-2.5 py-1 rounded-lg bg-danger-soft hover:bg-danger-soft border border-danger-border transition-colors shrink-0 whitespace-nowrap"
+              className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
             >
-              Cancel change
+              Undo
             </button>
           </div>
         )}
 
         {pendingAssignees && (
-          <div className="p-3.5 bg-danger-soft border-l-4 border-l-danger-border border border-danger-border text-danger-text text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mt-3 shadow-sm">
+          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 text-danger-text shrink-0" />
+              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
               <span>
-                Executors change is pending. Write a mandatory remark below and click <strong className="font-semibold text-danger-text underline">"Commit updates & save remark"</strong> to save.
+                Executor changes aren&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
               </span>
             </div>
             <button 
               type="button" 
               onClick={() => setPendingAssignees(null)} 
-              className="text-xs text-danger-text hover:text-danger-text font-bold px-2.5 py-1 rounded-lg bg-danger-soft hover:bg-danger-soft border border-danger-border transition-colors shrink-0 whitespace-nowrap"
+              className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
             >
-              Cancel change
+              Undo
             </button>
           </div>
         )}
 
         {pendingPrimaryAssignee && (
-          <div className="p-3.5 bg-danger-soft border-l-4 border-l-danger-border border border-danger-border text-danger-text text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mt-3 shadow-sm">
+          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 text-danger-text shrink-0" />
+              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
               <span>
-                Primary Assignee change is pending. Write a mandatory remark below and click <strong className="font-semibold text-danger-text underline">"Commit updates & save remark"</strong> to save.
+                The primary assignee change isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
               </span>
             </div>
             <button 
               type="button" 
               onClick={() => setPendingPrimaryAssignee(null)} 
-              className="text-xs text-danger-text hover:text-danger-text font-bold px-2.5 py-1 rounded-lg bg-danger-soft hover:bg-danger-soft border border-danger-border transition-colors shrink-0 whitespace-nowrap"
+              className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
             >
-              Cancel change
+              Undo
             </button>
           </div>
         )}
  
-        <div className="space-y-3 p-4 rounded-2xl border border-border bg-surface transition-all">
+        <div className="space-y-3 rounded-md border border-border bg-surface p-4">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              Task remarks <span className="text-danger font-semibold">*</span>
-            </label>
-            <span className="text-[11px] font-semibold tracking-wider text-theme-icon bg-accent-soft px-2 py-0.5 rounded-md border border-theme-btn-primary/30">
-              Required handoff input
+            <span className="flex items-center gap-1 text-[13px] font-medium text-subtle">
+              Remark <span className="text-danger-text" aria-hidden>*</span>
             </span>
+            <span className="text-[12.5px] text-muted">Required when you save a change</span>
           </div>
           <RichTextEditor
             value={remarksDraft}
             onChange={setRemarksDraft}
             readOnly={!canAddRemark}
-            placeholder={!canAddRemark ? "Task is frozen/read-only." : "Add update notes or handoff remarks…"}
+            placeholder={!canAddRemark ? "You can't add remarks to this task." : "What changed, and what happens next?"}
           />
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-muted">Last updated: {task.updated_at ? formatDateTime(task.updated_at) : "Not yet"}</span>
+            <span className="text-[12.5px] text-muted">Last updated {task.updated_at ? formatDateTime(task.updated_at) : "—"}</span>
             {canAddRemark && (
               <AppButton 
                 type="button" 
@@ -1654,64 +1634,54 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 size="sm" 
                 onClick={handleBatchSave} 
                 disabled={saveRemarksLoading}
-                className={(pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee) ? "bg-danger-solid hover:bg-danger-solid text-white font-bold shadow-md" : ""}
+                isLoading={saveRemarksLoading}
               >
-                {saveRemarksLoading ? "Saving..." : (pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee) ? "Commit Updates & Save Remark" : "Save Remarks"}
+                {saveRemarksLoading ? "Saving…" : (pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee) ? "Save changes" : "Save remark"}
               </AppButton>
             )}
           </div>
 
           {/* Remarks History Queue */}
-          <div className={`mt-3 rounded-md border p-3 transition-all duration-150 ${
-            "bg-elevated border-border text-foreground"
-          }`}>
+          <div className="mt-3 rounded-md border border-border bg-sunken p-3 text-foreground">
             {/* Header with toggle */}
-            <div 
-              onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)} 
-              className="flex items-center justify-between cursor-pointer select-none group"
+            <button
+              type="button"
+              onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)}
+              aria-expanded={!isHistoryCollapsed}
+              className="flex w-full select-none items-center justify-between rounded text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-theme-icon" />
-                <span className={`theme-data-value transition-colors ${
-                  "text-muted group-hover:text-theme-icon"
-                }`}>
-                  Remarks history queue
-                </span>
+              <span className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-muted" aria-hidden />
+                <span className="text-[13px] font-medium text-subtle">Remark history</span>
                 {remarksHistory.length > 0 && (
-                  <AppBadge className="text-xs py-0.5 px-2 font-semibold rounded-full bg-accent-soft text-theme-icon border border-theme-btn-primary/30">
+                  <span className="rounded-full bg-surface px-1.5 text-[11px] font-medium tabular-nums text-subtle">
                     {remarksHistory.length}
-                  </AppBadge>
+                  </span>
                 )}
-              </div>
-              
-              <AppButton variant="secondary" 
-                type="button"
-                className={`p-1 rounded-lg transition-colors ${
-                  "hover:bg-elevated text-muted hover:text-foreground"
-                }`}
-              >
+              </span>
+              <span className="p-1 text-muted" aria-hidden>
                 {isHistoryCollapsed ? (
                   <ChevronDown className="h-4 w-4" />
                 ) : (
                   <ChevronUp className="h-4 w-4" />
                 )}
-              </AppButton>
-            </div>
+              </span>
+            </button>
 
             {/* Collapsible Content */}
             {!isHistoryCollapsed && (
-              <div className="mt-4 space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent">
+              <div className="mt-4 space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin">
                 {remarksHistoryLoading ? (
                   <div className="flex items-center justify-center py-6 gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
-                    <span className="text-xs text-muted">Loading history queue…</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-muted" aria-hidden />
+                    <span className="text-[13px] text-muted">Loading remarks…</span>
                   </div>
                 ) : remarksHistory.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-muted italic">
-                    No remark history entries. Create a new remark above to start the queue.
+                  <div className="py-6 text-center text-[13px] text-muted">
+                    No remarks yet. Remarks you add above will appear here.
                   </div>
                 ) : (
-                  <div className="relative pl-4 border-l border-theme-btn-primary/20 space-y-5">
+                  <div className="relative space-y-5 border-l border-border pl-4">
                     {remarksHistory.map((item, index) => {
                       const initials = (item.user?.full_name || "Unknown")
                         .split(" ")
@@ -1723,7 +1693,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       return (
                         <div key={item.id} className="relative group/item">
                           {/* Timeline Node Point */}
-                          <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-theme-btn-primary border-2 border-border-active group-hover/item:scale-125 transition-transform" />
+                          <div className="absolute -left-[21px] top-2 h-2.5 w-2.5 rounded-full border-2 border-sunken bg-border-active" aria-hidden />
                           
                           <div className="flex items-start gap-3">
                             {/* Avatar */}
@@ -1731,10 +1701,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               <img 
                                 src={item.user.profile_photo} 
                                 alt={item.user.full_name} 
-                                className="h-7 w-7 rounded-full border border-theme-btn-primary/20 object-cover"
+                                className="h-7 w-7 rounded-full border border-border object-cover"
                               />
                             ) : (
-                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center text-xs font-semibold text-white border border-theme-btn-primary/20 shadow-md">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
                                 {initials}
                               </div>
                             )}
@@ -1742,20 +1712,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             {/* Content Block */}
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
-                                <span className={`theme-data-value transition-colors ${
-                                  "text-foreground group-hover/item:text-theme-icon"
-                                }`}>
-                                  {item.user?.full_name || "System Actor"}
+                                <span className="text-[13px] font-medium text-foreground">
+                                  {item.user?.full_name || "System"}
                                 </span>
-                                <div className="flex items-center gap-1 text-xs text-muted font-medium">
-                                  <Clock className="h-3 w-3" />
+                                <div className="flex items-center gap-1 text-[12px] text-muted">
+                                  <Clock className="h-3 w-3" aria-hidden />
                                   <span>{formatDateTime(item.created_at)}</span>
                                 </div>
                               </div>
                               
-                              <div className={`text-xs rounded-lg p-2.5 leading-relaxed break-words border ${
-                                "bg-elevated border-border/50 text-muted"
-                              }`}>
+                              <div className="break-words rounded-md border border-border bg-surface p-2.5 text-[13px] leading-relaxed text-foreground">
                                 <SafeHtml html={item.message || item.content || ""} />
                               </div>
                             </div>
@@ -1776,46 +1742,46 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       {/* 5. Utilities & Communication Group - Dedicated Card with 7 Tabs */}
       <div>
-        <AppCard className="overflow-hidden shadow-md transition-all duration-500 theme-card-structural p-0 mb-4">
-          <div className="theme-card-structural dark:bg-elevated/50 px-5 py-3.5 border-b flex items-center justify-between">
+        <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
+          <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
-              <ActivitySquare className="w-4 h-4 text-accent" />
-              <h3 className="font-bold text-sm tracking-wide text-foreground">Utilities & communication</h3>
+              <ActivitySquare className="h-4 w-4 text-muted" aria-hidden />
+              <h3 className="text-[14px] font-semibold text-heading">Details and activity</h3>
             </div>
           </div>
           
           <div className="p-5">
-            {/* 7 Tab Navigation Buttons */}
-            <div className="flex items-center gap-2 p-2 rounded-2xl theme-card-structural dark:bg-elevated/40 mb-6 shadow-xs overflow-x-auto hide-scrollbar flex-nowrap sm:flex-wrap">
+            {/* Tabs */}
+            <div role="tablist" aria-label="Task details" className="-mx-5 -mt-5 mb-2 flex flex-nowrap items-center gap-1 overflow-x-auto border-b border-border px-5 hide-scrollbar">
               {[
                 { id: 'tags', label: 'Tags', icon: Pin },
-                { id: 'links', label: 'Link URL', icon: LinkIcon },
+                { id: 'links', label: 'Links', icon: LinkIcon },
                 { id: 'checklist', label: 'Checklist', icon: CheckSquare, count: task.checklists !== undefined ? task.checklists.length : (task._meta?.checklistCount || 0) },
-                { id: 'attachments', label: 'Attachment', icon: Paperclip, count: task.attachments !== undefined ? task.attachments.length : (task._meta?.attachmentCount || 0) },
+                { id: 'attachments', label: 'Attachments', icon: Paperclip, count: task.attachments !== undefined ? task.attachments.length : (task._meta?.attachmentCount || 0) },
                 { id: 'chat', label: 'Chat', icon: MessageCircle },
-                { id: 'timeline', label: 'Audit (Timeline)', icon: ActivitySquare },
+                { id: 'timeline', label: 'Activity', icon: ActivitySquare },
                 { id: 'time', label: 'Time logs', icon: Clock }
               ].map(t => {
                 const isActive = activeTab === t.id;
                 return (
-                  <AppButton
+                  <button
                     key={t.id}
                     type="button"
-                    variant={isActive ? "primary" : "ghost"}
+                    role="tab"
+                    aria-selected={isActive}
                     onClick={() => setActiveTab(t.id as any)}
-                    className={`theme-tab-standard rounded-xl shrink-0 ${
-                      isActive ? "shadow-md scale-[1.02] border-transparent" : "border border-transparent hover:border-border/60"
+                    className={`-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      isActive ? "border-primary text-foreground" : "border-transparent text-muted hover:text-foreground"
                     }`}
                   >
-                    <t.icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-theme-icon"}`} />
+                    <t.icon className="h-3.5 w-3.5" aria-hidden />
                     <span>{t.label}</span>
                     {t.count !== undefined && t.count > 0 && (
-                      <span className={`ml-1 px-1.5 py-0.2 text-[11px] font-semibold rounded-full ${ isActive ? "theme-card-structural text-white" : "bg-accent-soft text-theme-icon border-theme-btn-primary/20" }`}>
+                      <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
                         {t.count}
                       </span>
                     )}
-                  </AppButton>
+                  </button>
                 );
               })}
             </div>
@@ -1825,20 +1791,20 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {/* Tags Tab */}
               {activeTab === 'tags' && (
                 <div className="space-y-4">
-                  <h4 className="theme-data-value text-muted flex items-center gap-1.5">
-                    <Pin className="w-3.5 h-3.5 text-theme-icon" /> Custom properties & tags
+                  <h4 className="flex items-center gap-1.5 text-[13px] font-medium text-subtle">
+                    <Pin className="h-3.5 w-3.5 text-muted" aria-hidden /> Custom fields and tags
                   </h4>
                   {localCustomFields && Object.keys(localCustomFields).length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {Object.entries(localCustomFields).map(([key, val]) => (
-                        <div key={key} className="p-3 rounded-lg theme-card-structural space-y-1">
-                          <span className="text-[11px] font-bold text-muted">{key.replace(/_/g, ' ')}</span>
-                          <div className="text-xs font-semibold text-foreground">{val ? String(val) : "Not set"}</div>
+                        <div key={key} className="space-y-1 rounded-md border border-border bg-surface p-3">
+                          <span className="text-[12.5px] capitalize text-muted">{key.replace(/_/g, ' ')}</span>
+                          <div className="text-[13.5px] text-foreground">{val ? String(val) : <span className="text-muted">Not set</span>}</div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-xs text-muted italic py-4 text-center">No custom tags assigned to this task.</div>
+                    <div className="py-6 text-center text-[13px] text-muted">No custom fields or tags on this task.</div>
                   )}
                 </div>
               )}
@@ -1846,16 +1812,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {/* Link URL Tab */}
               {activeTab === 'links' && (
                 <div className="space-y-4">
-                  <h4 className="theme-data-value text-muted flex items-center gap-1.5">
-                    <LinkIcon className="w-3.5 h-3.5 text-theme-icon" /> Link URLs & external resources
+                  <h4 className="flex items-center gap-1.5 text-[13px] font-medium text-subtle">
+                    <LinkIcon className="h-3.5 w-3.5 text-muted" aria-hidden /> Links
                   </h4>
                   {localCustomFields?.link_url ? (
-                    <div className="p-4 rounded-xl theme-card-structural flex items-center justify-between gap-4">
+                    <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-surface p-3">
                       <a 
                         href={getSafeExternalUrl(localCustomFields.link_url)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-xs font-semibold text-theme-icon hover:underline truncate flex-1"
+                        className="flex-1 truncate text-[13px] font-medium text-accent-soft-text hover:underline"
                         title={localCustomFields.link_url}
                       >
                         {localCustomFields.link_url}
@@ -1864,13 +1830,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                         href={getSafeExternalUrl(localCustomFields.link_url)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="px-3 py-1.5 rounded-lg bg-accent-soft hover:opacity-90/20 text-theme-icon text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
+                        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-hover"
                       >
-                        Open <ExternalLink className="w-3.5 h-3.5" />
+                        Open <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                       </a>
                     </div>
                   ) : (
-                    <div className="text-xs text-muted italic py-4 text-center">No external links attached to this task.</div>
+                    <div className="py-6 text-center text-[13px] text-muted">No links on this task.</div>
                   )}
                 </div>
               )}
@@ -1881,7 +1847,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   {!readOnly && canEditAux && (
                     <form onSubmit={handleAddChecklist} className="flex gap-2">
                       <AppInput
-                        placeholder="Add new item…"
+                        placeholder="Add a checklist item…"
+                        aria-label="New checklist item"
                         value={newChecklistLabel}
                         onChange={e => setNewChecklistLabel(e.target.value)}
                         className="text-xs"
@@ -1894,7 +1861,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {task.checklists.map((item: any) => (
                         <div 
                           key={item.id} 
-                          className="flex items-center justify-between p-2 rounded-lg transition-colors"
+                          className="flex items-center justify-between rounded-md px-2 py-1.5 transition-colors hover:bg-surface-hover"
                         >
                           <div className="flex items-center gap-2.5">
                             <input
@@ -1904,18 +1871,19 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               disabled={readOnly || !canEditAux}
                               className="h-4 w-4 rounded accent-accent"
                             />
-                            <span className={`text-xs ${item.is_completed ? "line-through text-muted" : "text-foreground"}`}>
+                            <span className={`text-[13.5px] ${item.is_completed ? "line-through text-muted" : "text-foreground"}`}>
                               {item.label}
                             </span>
                           </div>
                           
                           <div className="flex items-center gap-2">
-                            <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                            <Users className="w-3.5 h-3.5 text-muted" aria-hidden />
                             <select
                               value={item.assignee_id || ""}
                               onChange={(e) => handleSetChecklistAssignee(item.id, e.target.value)}
                               disabled={readOnly || !canEditAux}
-                              className="text-[11px] bg-transparent border-none text-muted-foreground outline-none font-semibold focus:ring-0 cursor-pointer w-24"
+                              aria-label="Checklist item assignee"
+                              className="w-32 cursor-pointer rounded border-none bg-transparent text-[12.5px] text-subtle outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               <option value="">Unassigned</option>
                               {task.task_assignees?.map((a: any) => (
@@ -1933,7 +1901,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       ))}
                     </div>
                   ) : (
-                    <div className="text-xs text-muted italic py-4 text-center">No checklist items created.</div>
+                    <div className="py-6 text-center text-[13px] text-muted">No checklist items yet.</div>
                   )}
                 </div>
               )}
@@ -1961,23 +1929,25 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                           : (item.file_url ? `${item.file_url}${item.file_url.includes('?') ? '&' : '?'}download=1` : item.file_url);
 
                         return (
-                          <div key={item.id} className="p-3 rounded-lg bg-surface border border-border flex items-center justify-between">
-                            <span className="text-xs font-semibold truncate pr-2" title={item.file_name}>{item.file_name}</span>
+                          <div key={item.id} className="flex items-center justify-between rounded-md border border-border bg-surface p-3">
+                            <span className="truncate pr-2 text-[13px] font-medium text-foreground" title={item.file_name}>{item.file_name}</span>
                             {viewUrl && (
                               <div className="flex items-center gap-3 shrink-0">
-                                <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent dark:text-accent font-bold hover:underline flex items-center gap-1" title="View attachment">
+                                <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text hover:underline" title="View attachment">
                                   <Eye className="w-3.5 h-3.5" /> View
                                 </a>
-                                <a href={downloadUrl} download={item.file_name || "Attachment"} className="text-xs text-theme-icon font-bold hover:underline flex items-center gap-1" title="Download attachment">
+                                <a href={downloadUrl} download={item.file_name || "Attachment"} className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text hover:underline" title="Download attachment">
                                   <Download className="w-3.5 h-3.5" /> Download
                                 </a>
                                 {roleCode === 'SUPER_ADMIN' && !item.is_temp && (
                                   <AppButton
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={(e) => {
                                       e.preventDefault();
                                       handleDeleteAttachment(item.id);
                                     }}
-                                    className="text-xs text-danger hover:text-danger font-bold hover:underline flex items-center gap-1 ml-2"
+                                    className="h-auto px-1 text-[12.5px] text-danger-text"
                                     title="Delete attachment"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" /> Delete
@@ -1990,7 +1960,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       })}
                     </div>
                   ) : (
-                    <div className="text-xs text-muted italic py-4 text-center">No file attachments uploaded.</div>
+                    <div className="py-6 text-center text-[13px] text-muted">No attachments yet.</div>
                   )}
                 </div>
               )}
@@ -2011,29 +1981,28 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* Dedicated High-Clarity Assignee & Executor Management Modal */}
       {isAssigneeModalOpen && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-200"
-          onClick={() => setIsAssigneeModalOpen(false)}
+          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-150"
+           role="presentation" onClick={() => setIsAssigneeModalOpen(false)}
         >
           <div 
-            className="bg-surface border border-border rounded-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[88vh] shadow-lg animate-in zoom-in-95 duration-200 text-foreground"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tec-people-title"
+            className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-lg border border-border bg-surface text-foreground shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-6 py-4 bg-surface border-b border-border flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-accent-soft flex items-center justify-center text-theme-icon">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">Manage task ownership & executors</h3>
-                </div>
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <div>
+                <h3 id="tec-people-title" className="text-[16px] font-semibold text-heading">Manage people</h3>
+                <p className="mt-0.5 text-[13px] text-muted">Changes are saved together with your next remark.</p>
               </div>
               <AppButton aria-label="Close" 
                 type="button"
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => setIsAssigneeModalOpen(false)} 
-                className="rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                className="text-muted hover:text-foreground"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -2041,69 +2010,73 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
 
             {/* Modal Tabs */}
-            <div className="flex border-b border-border bg-surface px-6 pt-3 gap-2">
+            <div role="tablist" aria-label="People" className="flex gap-1 border-b border-border px-5">
               {canEditAssignees && (
                 <>
-                  <AppButton
+                  <button
                     type="button"
-                    variant="ghost"
+                    role="tab"
+                    aria-selected={assigneeModalTab === 'primary'}
                     onClick={() => setAssigneeModalTab('primary')}
-                    className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'primary' ? 'border-theme-btn-primary text-theme-btn-primary font-bold bg-accent-soft' : 'border-transparent text-muted hover:text-foreground' }`}
+                    className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${ assigneeModalTab === 'primary' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground' }`}
                   >
                     <ShieldCheck className="w-4 h-4" />
                     <span>Primary assignee</span>
                     {selectedPrimaryAssignee && (
-                      <span className="w-2 h-2 rounded-full bg-theme-btn-primary" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
                     )}
-                  </AppButton>
-                  <AppButton
+                  </button>
+                  <button
                     type="button"
-                    variant="ghost"
+                    role="tab"
+                    aria-selected={assigneeModalTab === 'executors'}
                     onClick={() => setAssigneeModalTab('executors')}
-                    className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'executors' ? 'border-success-border text-success-text font-bold bg-success-soft' : 'border-transparent text-muted hover:text-foreground' }`}
+                    className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${ assigneeModalTab === 'executors' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground' }`}
                   >
                     <Users className="w-4 h-4" />
                     <span>Executors</span>
-                    <span className="text-[11px] px-1.5 py-0.2 bg-success-soft text-success-text rounded-full font-bold">
+                    <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
                       {selectedExecutors.length}
                     </span>
-                  </AppButton>
+                  </button>
                 </>
               )}
               {canEditWatchers && (
-                <AppButton
+                <button
                   type="button"
-                  variant="ghost"
+                  role="tab"
+                  aria-selected={assigneeModalTab === 'watchers'}
                   onClick={() => setAssigneeModalTab('watchers')}
-                  className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'watchers' ? 'border-warning-border text-warning-text font-bold bg-warning-soft' : 'border-transparent text-muted hover:text-foreground' }`}
+                  className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${ assigneeModalTab === 'watchers' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground' }`}
                 >
                   <Eye className="w-4 h-4" />
-                  <span>Watchers (Team)</span>
-                  <span className="text-[11px] px-1.5 py-0.2 bg-warning-soft text-warning-text rounded-full font-bold">
+                  <span>Watchers</span>
+                  <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
                     {selectedWatchers.length}
                   </span>
-                </AppButton>
+                </button>
               )}
             </div>
 
             {/* Search Input */}
-            <div className="p-4 border-b border-border bg-surface">
+            <div className="border-b border-border p-4">
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-muted pointer-events-none" />
+                <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted" aria-hidden />
                 <input
                   type="text"
-                  placeholder="Search workspace members by name or email…"
+                  placeholder="Search by name, email or department…"
+                  aria-label="Search workspace members"
                   value={stakeholderSearch}
                   onChange={(e) => setStakeholderSearch(e.target.value)}
-                  className="w-full h-10 pl-9 pr-9 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-all placeholder:text-muted"
+                  className="h-9 w-full rounded-md border border-border bg-surface pl-9 pr-9 text-[13.5px] text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {stakeholderSearch && (
-                  <AppButton aria-label="Close" 
+                  <AppButton aria-label="Clear search" 
                     type="button"
                     variant="ghost"
                     size="icon-sm"
                     onClick={() => setStakeholderSearch("")}
-                    className="absolute right-2.5 top-2.5 text-muted hover:text-foreground"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
                   >
                     <X className="w-4 h-4" />
                   </AppButton>
@@ -2126,8 +2099,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
                 if (filteredStakeholders.length === 0) {
                   return (
-                    <div className="p-8 text-center text-xs text-muted">
-                      {stakeholders.length === 0 ? "Loading workspace members..." : "No matching members found."}
+                    <div className="p-8 text-center text-[13px] text-muted">
+                      {stakeholders.length === 0 ? "Loading workspace members…" : "No one matches that search."}
                     </div>
                   );
                 }
@@ -2135,14 +2108,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 if (assigneeModalTab === 'primary') {
                   return (
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-semibold text-muted px-1 pb-1">
-                        Choose the single primary lead responsible for this task:
+                      <div className="px-1 pb-1 text-[12.5px] text-muted">
+                        Choose the one person accountable for this task.
                       </div>
                       {filteredStakeholders.map(s => {
                         const isSelected = selectedPrimaryAssignee === s.id;
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={s.id}
+                            aria-pressed={isSelected}
                             onClick={async () => {
                               if (checkingDependencyId) return;
                               if (isSelected) {
@@ -2177,35 +2152,35 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                   setSelectedWatchers(remaining);
                                 }
                               }}
-                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-theme-btn-primary bg-accent-soft dark:bg-accent-soft' : 'border-border/60 hover:border-theme-btn-primary/40 hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
+                            className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${ isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               {s.profile_photo ? (
-                                <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
+                                <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-accent-soft text-theme-icon flex items-center justify-center text-xs font-bold shrink-0">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
                                   {s.full_name?.substring(0, 2).toUpperCase() || "U"}
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
+                                <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
                                   <span>{s.full_name}</span>
-                                  {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />}
+                                  {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-muted" aria-label="Checking" />}
                                   {isSelected && (
-                                    <span className="text-[11px] bg-theme-btn-primary text-theme-btn-primary-text px-2 py-0.2 rounded-full font-semibold shrink-0">
+                                    <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[11px] font-medium text-accent-soft-text">
                                       Primary
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-muted truncate">{s.email || "Workspace Member"}</div>
+                                <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                               </div>
                             </div>
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-                              isSelected ? 'border-theme-btn-primary bg-theme-btn-primary text-theme-btn-primary-text' : 'border-border'
+                            <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                              isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
                             }`}>
                               {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -2216,8 +2191,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   return (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between px-1 pb-1">
-                        <span className="text-[11px] font-semibold text-muted">
-                          Select all collaborators who will execute this directive:
+                        <span className="text-[12.5px] text-muted">
+                          People who will do the work.
                         </span>
                         <div className="flex items-center gap-2">
                           <AppButton
@@ -2229,11 +2204,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               setSelectedExecutors(allIds);
                               setSelectedWatchers([]);
                             }}
-                            className="text-[11px] text-success-text font-bold hover:underline"
+                            className="h-auto px-1 text-[12.5px] text-accent-soft-text"
                           >
                             Select all
                           </AppButton>
-                          <span className="text-muted text-xs">•</span>
+                          <span className="text-xs text-muted" aria-hidden>·</span>
                           <AppButton
                             type="button"
                             variant="ghost"
@@ -2244,7 +2219,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               const remaining = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
                               setSelectedWatchers(remaining);
                             }}
-                            className="text-[11px] text-muted hover:text-foreground font-bold hover:underline"
+                            className="h-auto px-1 text-[12.5px] text-muted hover:text-foreground"
                           >
                             Clear all
                           </AppButton>
@@ -2253,8 +2228,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {filteredStakeholders.map(s => {
                         const isSelected = selectedExecutors.includes(s.id);
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={s.id}
+                            aria-pressed={isSelected}
                             onClick={async () => {
                               if (checkingDependencyId) return;
                               let newExecs: string[];
@@ -2286,35 +2263,35 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               const remaining = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
                               setSelectedWatchers(remaining);
                             }}
-                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-success-border bg-success-soft' : 'border-border/60 hover:border-success-border hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
+                            className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${ isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               {s.profile_photo ? (
-                                <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
+                                <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-success-soft text-success-text flex items-center justify-center text-xs font-bold shrink-0">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
                                   {s.full_name?.substring(0, 2).toUpperCase() || "U"}
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
+                                <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
                                   <span>{s.full_name}</span>
-                                  {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />}
+                                  {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-muted" aria-label="Checking" />}
                                   {s.id === selectedPrimaryAssignee && (
-                                    <span className="text-[11px] bg-accent-soft text-theme-icon border border-theme-btn-primary/30 px-1.5 py-0.2 rounded-full font-semibold shrink-0">
-                                      Primary owner
+                                    <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[11px] font-medium text-accent-soft-text">
+                                      Primary
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-muted truncate">{s.email || "Workspace Member"}</div>
+                                <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                               </div>
                             </div>
-                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
-                              isSelected ? 'border-success-border bg-success text-white' : 'border-border'
+                            <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+                              isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
                             }`}>
                               {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -2326,8 +2303,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 return (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between px-1 pb-1">
-                      <span className="text-[11px] font-semibold text-muted">
-                        Select workspace members to watch and observe task updates:
+                      <span className="text-[12.5px] text-muted">
+                        People who get updates but don&apos;t do the work.
                       </span>
                       <div className="flex items-center gap-2">
                         <AppButton
@@ -2338,32 +2315,34 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             const allEligibleIds = stakeholders.filter(s => !selectedExecutors.includes(s.id)).map(s => s.id);
                             setSelectedWatchers(allEligibleIds);
                           }}
-                          className="text-[11px] text-warning-text font-bold hover:underline"
+                          className="h-auto px-1 text-[12.5px] text-accent-soft-text"
                         >
                           Select all
                         </AppButton>
-                        <span className="text-muted text-xs">•</span>
+                        <span className="text-xs text-muted" aria-hidden>·</span>
                         <AppButton
                           type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedWatchers([])}
-                          className="text-[11px] text-muted hover:text-foreground font-bold hover:underline"
+                          className="h-auto px-1 text-[12.5px] text-muted hover:text-foreground"
                         >
                           Clear all
                         </AppButton>
                       </div>
                     </div>
                     {eligibleWatchers.length === 0 ? (
-                      <div className="p-6 text-center text-xs text-muted">
-                        All workspace members are already selected as Executors.
+                      <div className="p-6 text-center text-[13px] text-muted">
+                        Everyone in this workspace is already an executor.
                       </div>
                     ) : (
                       eligibleWatchers.map(s => {
                         const isSelected = selectedWatchers.includes(s.id);
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={s.id}
+                            aria-pressed={isSelected}
                             onClick={() => {
                               if (isSelected) {
                                 setSelectedWatchers(selectedWatchers.filter(id => id !== s.id));
@@ -2371,29 +2350,29 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 setSelectedWatchers([...selectedWatchers, s.id]);
                               }
                             }}
-                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-warning-border bg-warning-soft' : 'border-border/60 hover:border-warning-border hover:bg-surface-hover' }`}
+                            className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${ isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover' }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               {s.profile_photo ? (
-                                <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
+                                <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-warning-soft text-warning-text flex items-center justify-center text-xs font-bold shrink-0">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
                                   {s.full_name?.substring(0, 2).toUpperCase() || "U"}
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
+                                <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
                                   <span>{s.full_name}</span>
                                 </div>
-                                <div className="text-[11px] text-muted truncate">{s.email || "Workspace Member"}</div>
+                                <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                               </div>
                             </div>
-                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
-                              isSelected ? 'border-warning-border bg-warning text-white' : 'border-border'
+                            <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+                              isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
                             }`}>
                               {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </div>
-                          </div>
+                          </button>
                         );
                       })
                     )}
@@ -2403,15 +2382,15 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between">
-              <div className="text-xs text-muted truncate max-w-[50%]">
-                <span className="font-semibold text-foreground">
-                  {selectedPrimaryAssignee ? (stakeholders.find(s => s.id === selectedPrimaryAssignee)?.full_name || "Primary Selected") : "No Primary"}
+            <div className="flex items-center justify-between gap-3 border-t border-border bg-sunken px-5 py-3">
+              <div className="min-w-0 truncate text-[12.5px] text-muted">
+                <span className="font-medium text-foreground">
+                  {selectedPrimaryAssignee ? (stakeholders.find(s => s.id === selectedPrimaryAssignee)?.full_name || "Primary selected") : "No primary assignee"}
                 </span>
-                {" • "}
-                <span>{selectedExecutors.length} executor(s)</span>
-                {" • "}
-                <span>{selectedWatchers.length} watcher(s)</span>
+                {" · "}
+                <span>{selectedExecutors.length} {selectedExecutors.length === 1 ? "executor" : "executors"}</span>
+                {" · "}
+                <span>{selectedWatchers.length} {selectedWatchers.length === 1 ? "watcher" : "watchers"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <AppButton 
@@ -2425,9 +2404,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   variant="primary" 
                   size="sm" 
                   onClick={handleStageAssignees}
-                  className="bg-theme-btn-primary hover:opacity-90"
                 >
-                  Stage assignment
+                  Apply
                 </AppButton>
               </div>
             </div>
@@ -2437,49 +2415,50 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       {/* Dependency Check Modal */}
       {dependencyModal && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
-          <div className="bg-background border border-border rounded-xl  max-w-md w-full overflow-hidden">
-            <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-danger/10 border-danger/20' : 'bg-warning/10 border-warning/20'}`}>
+        <div className="fixed inset-0 z-[calc(var(--z-modal)+1)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-150">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="tec-dep-title" className="w-full max-w-md overflow-hidden rounded-lg border border-border bg-surface shadow-lg">
+            <div className={`border-b p-4 ${dependencyModal.result.type === 'executive' ? 'border-danger-border bg-danger-soft text-danger-text' : 'border-warning-border bg-warning-soft text-warning-text'}`}>
               <div className="flex items-center gap-3">
                 {dependencyModal.result.type === 'executive' ? (
-                  <ShieldAlert className="w-5 h-5 text-danger" />
+                  <ShieldAlert className="w-5 h-5" aria-hidden />
                 ) : (
-                  <ShieldCheck className="w-5 h-5 text-warning" />
+                  <ShieldCheck className="w-5 h-5" aria-hidden />
                 )}
-                <h3 className="font-bold text-sm">Action requires attention</h3>
+                <h3 id="tec-dep-title" className="text-[14px] font-semibold">{dependencyModal.result.type === 'executive' ? "This person can't be removed yet" : "Remove this person?"}</h3>
               </div>
             </div>
             
             <div className="p-5">
-              <p className="text-sm text-foreground leading-relaxed mb-4">
-                <strong>{dependencyModal.userName}</strong> has active dependencies in this task:
+              <p className="mb-3 text-[13.5px] leading-relaxed text-foreground">
+                <strong className="font-semibold">{dependencyModal.userName}</strong> still has open work on this task:
               </p>
               
-              <ul className="text-xs text-muted mb-5 space-y-1 bg-surface p-3 rounded-lg border border-border/50 max-h-40 overflow-y-auto">
+              <ul className="mb-4 max-h-40 space-y-1 overflow-y-auto rounded-md border border-border bg-sunken p-3 text-[13px] text-subtle">
                 {dependencyModal.result.blockingItems.map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <span className="text-theme-icon mt-0.5">•</span>
+                    <span className="mt-0.5 text-muted" aria-hidden>•</span>
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
               
-              <div className="p-3 bg-surface-hover rounded-lg border border-border/50 text-xs text-foreground font-medium">
+              <div className="text-[13px] text-muted">
                 {dependencyModal.result.message}
               </div>
             </div>
             
-            <div className="p-4 border-t border-border flex justify-end gap-3 bg-surface/30">
+            <div className="flex justify-end gap-2 border-t border-border bg-sunken px-4 py-3">
               <AppButton 
-                variant="outline" 
+                variant={dependencyModal.result.type === 'executive' ? 'primary' : 'ghost'} 
+                size="sm"
                 onClick={() => setDependencyModal(null)}
               >
-                {dependencyModal.result.type === 'executive' ? 'Close' : 'No, Go Back'}
+                {dependencyModal.result.type === 'executive' ? 'OK' : 'Keep'}
               </AppButton>
               {dependencyModal.result.type === 'watcher' && (
                 <AppButton 
-                  variant="primary" 
-                  className="bg-danger hover:opacity-90 border-none"
+                  variant="destructive" 
+                  size="sm"
                   onClick={() => {
                     // Safe to remove watcher
                     if (assigneeModalTab === 'primary') {
@@ -2490,7 +2469,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     setDependencyModal(null);
                   }}
                 >
-                  Yes, remove user
+                  Remove
                 </AppButton>
               )}
             </div>
@@ -2500,13 +2479,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       {/* Mobile Floating Action Bar for Pending Changes */}
       {(pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee || (remarksDraft && remarksDraft.trim().length > 0)) && canAddRemark && (
-        <div className="fixed bottom-20 left-4 right-4 z-40 sm:hidden flex items-center justify-between gap-3 p-3.5 bg-foreground text-background dark:bg-surface dark:text-foreground rounded-2xl shadow-lg border border-border/80 animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-20 left-4 right-4 z-[var(--z-sticky)] flex items-center justify-between gap-3 rounded-lg border border-border bg-elevated p-3 text-foreground shadow-lg sm:hidden">
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-[11px] font-bold text-theme-btn-primary truncate">
-              Pending changes
+            <span className="truncate text-[12px] font-medium text-warning-text">
+              Unsaved changes
             </span>
-            <span className="text-xs font-semibold opacity-90 truncate">
-              {pendingStatus ? `Status: ${statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || pendingStatus}` : (pendingDepartment ? 'Department Change' : (pendingAssignees ? 'Executors Change' : 'Unsaved Remark'))}
+            <span className="truncate text-[13px] text-foreground">
+              {pendingStatus ? `Status: ${statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || pendingStatus}` : (pendingDepartment ? 'Department change' : (pendingAssignees ? 'Executor change' : 'Unsaved remark'))}
             </span>
           </div>
           <AppButton
@@ -2515,9 +2494,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             size="sm"
             onClick={handleBatchSave}
             disabled={saveRemarksLoading}
-            className="shrink-0 bg-theme-btn-primary hover:opacity-90 font-bold text-xs px-4 py-2 rounded-xl shadow-md"
+            className="shrink-0"
           >
-            {saveRemarksLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Commit"}
+            {saveRemarksLoading ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Saving" /> : "Save"}
           </AppButton>
         </div>
       )}
@@ -2526,5 +2505,3 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   );
 }
 
-
-// HMR Force Reload: 1785172251227

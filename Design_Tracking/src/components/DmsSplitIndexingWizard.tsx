@@ -334,7 +334,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             {/* File Drop Stage / Queue Indicator */}
             {stagedFiles.length === 0 ? (
               <div
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                 className="border-2 border-dashed border-border hover:border-border-active rounded-lg p-8 text-center cursor-pointer bg-surface/50 hover:bg-accent-soft transition-all group"
               >
                 <Upload className="h-8 w-8 mx-auto text-muted-foreground group-hover:text-primary transition-colors" />

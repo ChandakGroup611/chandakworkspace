@@ -115,7 +115,7 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
           {/* Aging Brackets Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             <div
-              onClick={() => onDrillDown && onDrillDown({ title: "Fresh Flow (<2 Days)", description: "Items modified or progressing in the last 48 hours." })}
+              onClick={() => onDrillDown && onDrillDown({ title: "Fresh Flow (<2 Days)", description: "Items modified or progressing in the last 48 hours." })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
               className="p-3 rounded-lg bg-surface/50 border border-border hover:border-success-border cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-success-text">
@@ -127,7 +127,7 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
             </div>
 
             <div
-              onClick={() => onDrillDown && onDrillDown({ title: "Needs attention (3-5 days)", description: "Items inactive for 3 to 5 days.", agingDaysMin: 3 })}
+              onClick={() => onDrillDown && onDrillDown({ title: "Needs attention (3-5 days)", description: "Items inactive for 3 to 5 days.", agingDaysMin: 3 })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
               className="p-3 rounded-lg bg-surface/50 border border-border hover:border-warning-border cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-warning-text">
@@ -139,7 +139,7 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
             </div>
 
             <div
-              onClick={() => onDrillDown && onDrillDown({ title: "Stale items (6-10 days)", description: "Items inactive for 6 to 10 days.", agingDaysMin: 6 })}
+              onClick={() => onDrillDown && onDrillDown({ title: "Stale items (6-10 days)", description: "Items inactive for 6 to 10 days.", agingDaysMin: 6 })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
               className="p-3 rounded-lg bg-surface/50 border border-border hover:border-warning-border cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-warning-text">
@@ -151,7 +151,7 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
             </div>
 
             <div
-              onClick={() => onDrillDown && onDrillDown({ title: "Severe Bottlenecks (>10 Days)", description: "Items stalled in their current status for over 10 days.", agingDaysMin: 10 })}
+              onClick={() => onDrillDown && onDrillDown({ title: "Severe Bottlenecks (>10 Days)", description: "Items stalled in their current status for over 10 days.", agingDaysMin: 10 })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
               className="p-3 rounded-lg bg-surface/50 border border-border hover:border-danger-border cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-danger-text">

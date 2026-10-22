@@ -171,7 +171,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
               key={b.id}
               onClick={() => {
                 if (isClickable && b.filter) onDrillDown(b.filter);
-              }}
+              }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
               className={`flex items-start gap-3 p-3.5 rounded-lg border transition-all ${
                 b.type === "danger"
                   ? "bg-danger-soft border-danger-border text-danger-foreground hover:bg-danger-soft"

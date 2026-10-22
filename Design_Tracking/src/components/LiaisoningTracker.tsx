@@ -494,7 +494,7 @@ export const LiaisoningTracker: React.FC = () => {
                           onClick={() => {
                             setActiveCell({ authority: item, col, currentVal: val });
                             setCustomRemark("");
-                          }}
+                          }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                           className="p-2 border-r border-border/30 text-center cursor-pointer hover:bg-surface transition-colors"
                           title={`Click to update: ${item.authorityName} • ${col.projectName} (${col.towerName})`}
                         >

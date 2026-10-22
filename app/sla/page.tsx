@@ -30,6 +30,10 @@ import {
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { StatTile, StatTileRow } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
+import { cn } from "@/lib/utils";
 
 interface SLATracker {
   id: string;
@@ -102,175 +106,127 @@ export default function SLAPage() {
   };
 
   const levels = [
-    { level: "Level 1", action: "Agent warning inline tooltip trigger", scope: "Local UI" },
-    { level: "Level 2", action: "Manager high priority webhook notification", scope: "Departmental" },
-    { level: "Level 3", action: "Department routing escalation chain trigger", scope: "Multi-Team" },
-    { level: "Level 4", action: "Executive global operational state breach heatmap", scope: "Global Master" },
+    { level: "Level 1", action: "The assignee sees a warning on the record", scope: "Assignee" },
+    { level: "Level 2", action: "Their manager is notified", scope: "Manager" },
+    { level: "Level 3", action: "The department head is notified", scope: "Department" },
+    { level: "Level 4", action: "Leadership sees it on the breach dashboard", scope: "Leadership" },
   ];
 
+  const SEG_ON = "bg-surface text-foreground font-semibold shadow-sm";
+  const SEG_OFF = "text-muted hover:text-foreground";
+  const SEG_BTN = "inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors";
+  const MODULES = [
+    { id: 'ALL', label: 'All modules' },
+    { id: 'TICKET', label: 'Tickets' },
+    { id: 'TASK', label: 'Tasks' },
+    { id: 'REQUIREMENT', label: 'Requirements' },
+  ] as const;
+
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-400 w-full transition-colors duration-300">
-      {/* SLA Module Title Banner */}
-      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${"border-border"}`}>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>SLA governance & surveillance engine</h1>
-            <AppBadge variant="danger">Realtime tracking</AppBadge>
-          </div>
-          <p className="text-xs text-muted">
-            Continuous timeout computation monitoring active workflow tuples to enforce multi-level escalation routing protocols.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className={`hidden sm:flex p-1 rounded-md border bg-elevated border-border`}>
-            <AppButton variant="secondary"
-              onClick={() => setModuleFilter('ALL')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'ALL' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
-            >
-              All modules
-            </AppButton>
-            <AppButton variant="secondary"
-              onClick={() => setModuleFilter('TICKET')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'TICKET' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
-            >
-              Tickets
-            </AppButton>
-            <AppButton variant="secondary"
-              onClick={() => setModuleFilter('TASK')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'TASK' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
-            >
-              Tasks
-            </AppButton>
-            <AppButton variant="secondary"
-              onClick={() => setModuleFilter('REQUIREMENT')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'REQUIREMENT' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
-            >
-              Requirements
-            </AppButton>
-          </div>
-
-          <AppButton 
-            variant="secondary" 
-            size="sm" 
+    <div className="w-full space-y-5">
+      <PageHeader
+        title="SLA tracking"
+        description="Response and resolution timers for open tickets, tasks and requirements."
+        actions={
+          <AppButton
+            variant="secondary"
+            size="sm"
             onClick={refreshLiveTracking}
             isLoading={isRefreshing}
             leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
-            className="bg-surface border-border text-foreground shadow-sm"
           >
-            Refresh live tracking
+            Refresh
           </AppButton>
-        </div>
-      </div>
-      {/* Interactive SLA Governance Heatmap Metrics */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <AppCard 
-          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${filter === 'ALL' ? 'ring-2 ring-theme-btn-primary' : 'hover:bg-surface/50 dark:hover:bg-surface/5'} bg-surface`}
-          onClick={() => setFilter('ALL')}
-        >
-          <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-semibold text-muted mb-1">Total records</span>
-            <span className="text-3xl font-bold text-theme-icon dark:text-theme-icon">
-              {loading ? '-' : <AnimatedCounter value={totalRecords} />}
-            </span>
-          </AppCardContent>
-        </AppCard>
+        }
+      />
 
-        <AppCard 
-          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${filter === 'UPCOMING' ? 'ring-2 ring-warning' : 'hover:bg-warning-soft/50 dark:hover:bg-warning/10'} bg-surface`}
-          onClick={() => setFilter('UPCOMING')}
-        >
-          <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-semibold text-muted mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Upcoming</span>
-            <span className="text-3xl font-bold text-warning">
-              {loading ? '-' : <AnimatedCounter value={upcomingRecords} />}
-            </span>
-          </AppCardContent>
-        </AppCard>
+      <StatTileRow>
+        <StatTile label="All timers" value={loading ? '—' : totalRecords} tone="neutral" icon={<Clock className="h-4 w-4" />} selected={filter === 'ALL'} onSelect={() => setFilter('ALL')} />
+        <StatTile label="Due soon" value={loading ? '—' : upcomingRecords} tone="warning" icon={<AlertTriangle className="h-4 w-4" />} selected={filter === 'UPCOMING'} onSelect={() => setFilter('UPCOMING')} />
+        <StatTile label="Breached" value={loading ? '—' : escalatedRecords} tone="danger" icon={<Flame className="h-4 w-4" />} selected={filter === 'ESCALATED'} onSelect={() => setFilter('ESCALATED')} />
+      </StatTileRow>
 
-        <AppCard 
-          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${filter === 'ESCALATED' ? 'ring-2 ring-danger' : 'hover:bg-danger-soft/50 dark:hover:bg-danger/10'} bg-surface`}
-          onClick={() => setFilter('ESCALATED')}
-        >
-          <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-semibold text-muted mb-1 flex items-center gap-1.5"><Flame className="h-4 w-4" /> Escalated</span>
-            <span className="text-3xl font-bold text-danger dark:text-danger">
-              {loading ? '-' : <AnimatedCounter value={escalatedRecords} />}
-            </span>
-          </AppCardContent>
-        </AppCard>
-      </div>
-      {/* Primary Orchestration Column Layouts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Span 2: Active Timers & Escalation Targets Matrix */}
-        <div className="lg:col-span-2 space-y-6 flex flex-col">
-          <AppCard className="flex-1 flex flex-col justify-between overflow-hidden">
-            <AppCardHeader className={`flex flex-row items-center justify-between pb-3 border-b border-border bg-elevated/50`}>
-              <div className="space-y-0.5">
-                <AppCardTitle className={`flex items-center gap-2 text-danger`}>
-                  <ShieldAlert className="h-4 w-4" />
-                  <span>Monitored operational timeouts</span>
-                </AppCardTitle>
-                <p className="text-[0.8rem] text-muted">Reactive task timers updating background worker task queue parameters.</p>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="flex flex-col lg:col-span-2">
+          <AppCard className="flex flex-1 flex-col overflow-hidden p-0">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+              <div>
+                <h2 className="text-[14px] font-semibold text-heading">Active timers</h2>
+                <p className="text-[12.5px] text-muted">
+                  {escalatedRecords > 0 ? `${escalatedRecords} breached` : "Nothing breached"}
+                  {upcomingRecords > 0 ? ` · ${upcomingRecords} due soon` : ""}
+                </p>
               </div>
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-medium border inline-flex items-center gap-1.5 bg-danger-soft text-danger border-danger/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-danger animate-ping" />
-                Breach Count: {escalatedRecords}
-              </span>
-            </AppCardHeader>
+              <div className="inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg border border-border bg-sunken p-0.5 no-scrollbar" role="radiogroup" aria-label="Module">
+                {MODULES.map((m) => (
+                  <button key={m.id} type="button" role="radio" aria-checked={moduleFilter === m.id} onClick={() => setModuleFilter(m.id)} className={cn(SEG_BTN, moduleFilter === m.id ? SEG_ON : SEG_OFF)}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            <div className="p-4 flex-1">
-              <AppTableContainer>
+            <div className="flex-1">
+              {loading ? (
+                <div className="space-y-2 p-4" aria-busy="true" aria-label="Loading timers">
+                  {[0, 1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-md bg-sunken" />)}
+                </div>
+              ) : filteredSlas.length === 0 ? (
+                <EmptyState
+                  kind={slas.length === 0 ? "empty" : "no-results"}
+                  compact
+                  title={slas.length === 0 ? "No active SLA timers" : "No timers match these filters"}
+                  description={slas.length === 0 ? "Timers appear here when a ticket, task or requirement with an SLA rule is open." : "Try another module or select All timers."}
+                  action={slas.length === 0 ? undefined : <AppButton variant="secondary" size="sm" onClick={() => { setFilter('ALL'); setModuleFilter('ALL'); }}>Clear filters</AppButton>}
+                />
+              ) : (
+              <AppTableContainer className="rounded-none border-0">
                 <AppTable>
                   <AppTableHeader>
                     <tr>
-                      <AppTableHead>SLA target</AppTableHead>
-                      <AppTableHead>Interval window</AppTableHead>
-                      <AppTableHead>Escalation state</AppTableHead>
-                      <AppTableHead className="text-right">Action gate</AppTableHead>
+                      <AppTableHead>Record</AppTableHead>
+                      <AppTableHead>Target and elapsed</AppTableHead>
+                      <AppTableHead>Status</AppTableHead>
+                      <AppTableHead className="text-right">Actions</AppTableHead>
                     </tr>
                   </AppTableHeader>
                   <AppTableBody>
-                    {filteredSlas.map((item, index) => {
-                      const staggerClass = index < 8 ? `delay-${index + 1}` : "";
+                    {filteredSlas.map((item) => {
                       return (
-                        <AppTableRow key={item.id} className={`hover:bg-elevated transition-colors animate-stagger-in ${staggerClass}`}>
+                        <AppTableRow key={item.id}>
                           <AppTableCell>
-                            <div className="space-y-1">
+                            <div className="min-w-0 space-y-0.5">
                               <div className="flex items-center gap-2">
-                                <span className={`font-mono text-xs font-bold text-theme-icon`}>{item.displayId || item.id}</span>
-                                <AppBadge variant="neutral" className="text-[0.65rem] py-0">{item.module}</AppBadge>
+                                <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{item.displayId || item.id}</span>
+                                <AppBadge variant="neutral">{item.module === "TICKET" ? "Ticket" : item.module === "TASK" ? "Task" : "Requirement"}</AppBadge>
                               </div>
-                              <span className="text-[0.8rem] text-muted block truncate max-w-[150px]">{item.targetEntity}</span>
-                              <span className={`text-xs font-semibold text-theme-icon`}>{item.type}</span>
+                              <span className="block max-w-[260px] truncate text-[13.5px] text-foreground" title={item.targetEntity}>{item.targetEntity}</span>
+                              <span className="block text-[12.5px] text-muted">{item.type}</span>
                             </div>
                           </AppTableCell>
                           <AppTableCell>
-                            <div className="space-y-0.5 text-xs">
-                              <span className={`${"text-foreground"} font-medium block`}>{item.allocatedWindow}</span>
-                              <span className={`text-[0.8rem] font-mono block text-warning font-semibold`}>{item.elapsedTime}</span>
+                            <div className="space-y-0.5">
+                              <span className="block text-[13.5px] text-foreground">{item.allocatedWindow}</span>
+                              <span className={cn("block text-[12.5px] tabular-nums", item.status === "Breached" ? "font-medium text-danger-text" : item.status === "Warning" ? "text-warning-text" : "text-muted")}>{item.elapsedTime}</span>
                             </div>
                           </AppTableCell>
                           <AppTableCell>
                             <div className="space-y-1">
                               <AppBadge 
                                 variant={item.status === "Healthy" ? "success" : item.status === "Warning" ? "warning" : "danger"}
-                                withPulse={item.status === "Breached" || item.status === "Warning"}
                               >
-                                {item.status}
+                                {item.status === "Healthy" ? "On track" : item.status === "Warning" ? "Due soon" : "Breached"}
                               </AppBadge>
-                              <span className="text-xs text-muted block font-medium">{item.escalationTier}</span>
+                              <span className="block text-[12.5px] text-muted">{item.escalationTier}{item.actionRecipient ? ` · ${item.actionRecipient}` : ""}</span>
                             </div>
                           </AppTableCell>
                           <AppTableCell className="text-right">
-                            <div className="space-y-1 flex flex-col items-end">
-                              <span className="text-xs text-muted italic block truncate max-w-[120px]">{item.actionRecipient}</span>
-                              <div className="flex items-center gap-1 mt-1 justify-end">
-                                <AppButton aria-label="View record" 
+                              <div className="flex items-center justify-end gap-0.5">
+                                <AppButton aria-label="Open record" 
                                   variant="ghost" 
-                                  size="sm" 
-                                  className="h-6 w-6 p-0 text-theme-icon hover:bg-accent-soft rounded-lg transition-all" 
-                                  title="View record"
+                                  size="icon-sm" 
+                                  className="text-muted hover:text-foreground" 
+                                  title="Open record"
                                   onClick={() => {
                                     let url = "";
                                     if (item.module === "TICKET") url = `/tickets/${item.entityId}`;
@@ -279,20 +235,19 @@ export default function SLAPage() {
                                     if (url) window.location.href = url;
                                   }}
                                 >
-                                  <Eye className="h-3.5 w-3.5" />
+                                  <Eye className="h-4 w-4" />
                                 </AppButton>
                                 {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (
-                                  <AppButton aria-label="Update thresholds / configure SLA rules" variant="ghost" size="sm" onClick={() => { window.location.href = '/sla/rules'; }} className="h-6 w-6 p-0 text-warning hover:bg-warning/10 rounded-lg transition-all" title="Update thresholds / configure SLA rules">
-                                    <Edit2 className="h-3.5 w-3.5" />
+                                  <AppButton aria-label="Edit SLA rules" variant="ghost" size="icon-sm" onClick={() => { window.location.href = '/sla/rules'; }} className="text-muted hover:text-foreground" title="Edit SLA rules">
+                                    <Edit2 className="h-4 w-4" />
                                   </AppButton>
                                 )}
                                 {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_DELETE")) && (
-                                  <AppButton aria-label="Delete / override alert" variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-danger hover:bg-danger/10 rounded-lg transition-all" title="Delete / override alert">
-                                    <Trash2 className="h-3.5 w-3.5" />
+                                  <AppButton aria-label="Reset alert on this screen (not saved)" variant="ghost" size="icon-sm" onClick={() => overrideBreach(item.id)} className="text-muted hover:bg-danger-soft hover:text-danger-text" title="Reset alert on this screen (not saved)">
+                                    <Trash2 className="h-4 w-4" />
                                   </AppButton>
                                 )}
                               </div>
-                            </div>
                           </AppTableCell>
                         </AppTableRow>
                       );
@@ -300,56 +255,40 @@ export default function SLAPage() {
                   </AppTableBody>
                 </AppTable>
               </AppTableContainer>
+              )}
             </div>
 
-            <div className={`p-4 border-t text-[0.8rem] text-muted flex items-center justify-between bg-elevated border-border`}>
-              <span>Real-time SLA tracking</span>
-              <button type="button" className="cursor-pointer hover:underline text-danger font-semibold" onClick={refreshLiveTracking}>Force Re-sync</button>
+            <div className="flex items-center justify-between border-t border-border bg-sunken px-4 py-2.5 text-[12.5px] text-muted">
+              <span>Showing {filteredSlas.length} of {totalRecords}</span>
+              <button type="button" className="font-medium text-accent-soft-text hover:underline" onClick={refreshLiveTracking}>Refresh now</button>
             </div>
           </AppCard>
         </div>
 
-        {/* Right Span 1: Multi-Level Escalation Routing Architecture */}
-        <div className="space-y-6">
-          <AppCard className="p-5 space-y-4">
-            <div className={`pb-2 border-b ${"border-border"}`}>
-              <span className="text-xs font-semibold flex items-center gap-2 text-muted">
-                <BellRing className={`h-3.5 w-3.5 text-warning`} />
-                <span>Escalation level routing matrix</span>
-              </span>
+        <div className="space-y-5">
+          <AppCard className="space-y-3 p-4">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <BellRing className="h-4 w-4 text-muted" aria-hidden />
+              <h2 className="text-[14px] font-semibold text-heading">How escalation works</h2>
             </div>
 
-            <div className="space-y-3">
+            <ol className="space-y-2">
               {levels.map((lvl, idx) => (
-                <div key={idx} className={`p-3 rounded-xl border space-y-1 relative overflow-hidden ${
-                  "bg-elevated border-border"
-                }`}>
-                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-warning to-danger opacity-60" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground">{lvl.level}</span>
-                    <span className="text-[0.7rem] px-1.5 py-0.2 rounded font-medium border bg-surface text-muted border-border">
-                      {lvl.scope}
-                    </span>
+                <li key={idx} className="flex items-start gap-3 rounded-md border border-border bg-surface p-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sunken text-[11px] font-semibold tabular-nums text-subtle">{idx + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[13px] font-medium text-foreground">{lvl.level}</span>
+                      <span className="text-[12px] text-muted">{lvl.scope}</span>
+                    </div>
+                    <p className="text-[12.5px] text-muted">{lvl.action}</p>
                   </div>
-                  <p className="text-xs text-muted font-medium">{lvl.action}</p>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
 
-            <div className={`pt-2 border-t text-center ${"border-border"}`}>
-              <span className="text-xs text-muted italic">
-                Higher level breaches instantly stack downstream action notifications automatically.
-              </span>
-            </div>
-          </AppCard>
-
-          {/* Operational Trust Advisory Card */}
-          <AppCard className="p-5 space-y-2 border bg-success-soft border-success/20">
-            <span className="text-xs font-semibold block text-success">
-              SLA trust assurance
-            </span>
-            <p className="text-xs text-muted leading-relaxed">
-              Zero ticket leakage past allocated thresholds without strict activity entry logs appended to master audit trails.
+            <p className="text-[12.5px] text-muted">
+              Each level is added on top of the previous one, so earlier notifications keep going.
             </p>
           </AppCard>
         </div>
@@ -357,4 +296,3 @@ export default function SLAPage() {
     </div>
   );
 }
-

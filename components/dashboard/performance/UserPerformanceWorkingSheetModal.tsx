@@ -264,7 +264,7 @@ export function UserPerformanceWorkingSheetModal({
               onClick={loadPerformanceData}
               title="Refresh data"
             >
-              Sync
+              Refresh
             </AppButton>
 
             <AppButton

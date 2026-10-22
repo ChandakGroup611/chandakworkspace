@@ -256,7 +256,7 @@ export const DesignStagesRoadmap: React.FC = () => {
               return (
                 <div
                   key={i}
-                  onClick={() => toggleDeliverable(i)}
+                  onClick={() => toggleDeliverable(i)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                   className={`p-4 rounded-lg border transition-all cursor-pointer flex items-start gap-3.5 group select-none ${
                     isChecked
                       ? "border-success-border bg-success-soft shadow-2xs"

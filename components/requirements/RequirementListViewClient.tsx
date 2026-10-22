@@ -531,7 +531,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
               filtered.map((r) => (
                 <div 
                   key={r.id}
-                  onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
+                  onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                   className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all cursor-pointer space-y-3 relative active:scale-[0.99]"
                 >
                   {/* Top Row: Code, Version, Status, Priority */}

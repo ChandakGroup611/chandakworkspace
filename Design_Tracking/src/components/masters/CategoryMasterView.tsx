@@ -1,5 +1,6 @@
 "use client";
 
+/* ui-audit-allow emoji: the category icon picker offers emoji as icon choices that are saved with each category */
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "react-toastify";

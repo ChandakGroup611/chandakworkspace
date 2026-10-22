@@ -1392,7 +1392,7 @@ export default function UserMasterPage() {
         <div 
           className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-150"
           style={{ backgroundColor: "var(--overlay)" }}
-          onClick={() => { if (!deleteWarningData.loading) { setDeleteInspectUser(null); setDeleteWarningData(null); } }}
+           role="presentation" onClick={() => { if (!deleteWarningData.loading) { setDeleteInspectUser(null); setDeleteWarningData(null); } }}
         >
           <div className={`relative w-full max-w-md rounded-lg border shadow-lg overflow-hidden flex flex-col p-6 space-y-6 ${
             "bg-surface border-border text-foreground"
@@ -1571,7 +1571,7 @@ export default function UserMasterPage() {
       {moduleModalOpen && moduleModalUser && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-150"
-          onClick={() => { if (!moduleModalSaving) setModuleModalOpen(false); }}
+           role="presentation" onClick={() => { if (!moduleModalSaving) setModuleModalOpen(false); }}
         >
           <div 
             className="relative w-full max-w-lg rounded-lg border border-border bg-surface shadow-lg p-6 space-y-5 text-foreground"
@@ -1668,7 +1668,7 @@ export default function UserMasterPage() {
                           } else {
                             setModalSelectedCodes([...modalSelectedCodes, mod.code]);
                           }
-                        }}
+                        }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                         className={`p-3.5 rounded-lg border transition-all cursor-pointer flex items-start justify-between gap-3 ${
                           isSelected 
                             ? "bg-surface border-border shadow-xs ring-1 ring-ring" 
