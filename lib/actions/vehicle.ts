@@ -3788,8 +3788,8 @@ export async function fetchMaintenanceList(): Promise<{
             file_size: a.file_size,
             file_type: a.file_type || resolveMimeFromName(a.file_name || ""),
             uploaded_at: a.uploaded_at,
-            has_file: !!a.file_url,
-            file_url: a.file_url || ""
+            has_file: Boolean(a.has_file || (a.file_url && a.file_url.trim()) || (a.file_name && a.file_name.trim())),
+            file_url: "" // Stripped from list payload for enterprise scale; retrieved on-demand via fetchServiceAttachmentContentAction
           }))
         };
       }

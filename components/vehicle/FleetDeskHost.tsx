@@ -3116,6 +3116,70 @@ export default function FleetDeskHost({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // On-demand loader for sub-tabs and transaction modals when not pre-fetched in initial payload
+  useEffect(() => {
+    if ((activeTab === "maintenance" || isAddMaintenanceOpen || isEditMaintenanceOpen) && !dataLoaded.maintenance) {
+      fetchMaintenanceList().then((res) => {
+        if (res.success && res.records) {
+          setMaintenance(res.records);
+          setDataLoaded((prev) => ({ ...prev, maintenance: true }));
+        }
+      }).catch((e) => console.warn("On-demand maintenance load error:", e));
+    }
+    if ((activeTab === "drivers" || isAddDriverOpen || isEditDriverOpen || isDispatchTripOpen) && !dataLoaded.drivers) {
+      fetchDriversList().then((res) => {
+        if (res.success && res.drivers) {
+          setDrivers(res.drivers);
+          setDataLoaded((prev) => ({ ...prev, drivers: true }));
+        }
+      }).catch((e) => console.warn("On-demand drivers load error:", e));
+    }
+    if ((activeTab === "trips" || isDispatchTripOpen) && !dataLoaded.trips) {
+      fetchTripsList().then((res) => {
+        if (res.success && res.trips) {
+          setTrips(res.trips);
+          setDataLoaded((prev) => ({ ...prev, trips: true }));
+        }
+      }).catch((e) => console.warn("On-demand trips load error:", e));
+    }
+    if ((activeTab === "parts" || isAddPartOpen || isEditPartOpen) && !dataLoaded.parts) {
+      fetchVehiclePartsList().then((res) => {
+        if (res.success && res.parts) {
+          setParts(res.parts);
+          setDataLoaded((prev) => ({ ...prev, parts: true }));
+        }
+      }).catch((e) => console.warn("On-demand parts load error:", e));
+    }
+    if ((activeTab === "vendors" || isVendorModalOpen) && !dataLoaded.vendors) {
+      fetchInsuranceVendorsListAction().then((res) => {
+        if (res.success && res.vendors) {
+          setInsuranceVendors(res.vendors);
+          setDataLoaded((prev) => ({ ...prev, vendors: true }));
+        }
+      }).catch((e) => console.warn("On-demand vendors load error:", e));
+    }
+    if ((activeTab === "register" || isEditVehicleOpen) && purchaseVendors.length === 0) {
+      fetchPurchaseVendorsListAction().then((res) => {
+        if (res.success && res.vendors) {
+          setPurchaseVendors(res.vendors);
+        }
+      }).catch((e) => console.warn("On-demand purchase vendors load error:", e));
+    }
+  }, [
+    activeTab, 
+    dataLoaded, 
+    isAddMaintenanceOpen, 
+    isEditMaintenanceOpen, 
+    isAddDriverOpen, 
+    isEditDriverOpen, 
+    isDispatchTripOpen, 
+    isAddPartOpen, 
+    isEditPartOpen, 
+    isVendorModalOpen, 
+    isEditVehicleOpen, 
+    purchaseVendors.length
+  ]);
+
   // Toast banner triggers
   const triggerToast = (msg: string, isError = false) => {
     let displayMsg = msg || (isError ? "An error occurred. Please try again." : "Operation completed successfully.");

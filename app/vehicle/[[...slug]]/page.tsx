@@ -42,8 +42,10 @@ export default async function VehicleModulePage({ params }: PageProps) {
 
   const resolvedParams = await params;
   const slug = resolvedParams.slug || [];
+  const primaryTab = slug[0] || "dashboard";
 
-  // Server-side parallel pre-fetch for instant live paint on dedicated pages
+  // Route-aware pre-fetch: Always load stats and fleet directory for instant shell & metrics.
+  // Specialized domain datasets are loaded when deep-linking to that route or on-demand via sub-tab click.
   const [
     statsRes, 
     vehiclesRes, 
@@ -55,13 +57,13 @@ export default async function VehicleModulePage({ params }: PageProps) {
     partsRes
   ] = await Promise.all([
     fetchVehicleDashboardStats().catch(() => ({ success: false, stats: undefined })),
-    fetchVehiclesList({ pageSize: 100 }).catch(() => ({ success: false, vehicles: [] })),
-    fetchDriversList().catch(() => ({ success: false, drivers: [] })),
-    fetchTripsList().catch(() => ({ success: false, trips: [] })),
-    fetchMaintenanceList().catch(() => ({ success: false, records: [] })),
-    fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })),
-    fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })),
-    fetchVehiclePartsList().catch(() => ({ success: false, parts: [] }))
+    fetchVehiclesList({ pageSize: 50 }).catch(() => ({ success: false, vehicles: [] })),
+    primaryTab === "drivers" ? fetchDriversList().catch(() => ({ success: false, drivers: [] })) : Promise.resolve(undefined),
+    primaryTab === "trips" ? fetchTripsList().catch(() => ({ success: false, trips: [] })) : Promise.resolve(undefined),
+    primaryTab === "maintenance" ? fetchMaintenanceList().catch(() => ({ success: false, records: [] })) : Promise.resolve(undefined),
+    primaryTab === "vendors" ? fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })) : Promise.resolve(undefined),
+    (primaryTab === "register" || primaryTab === "new") ? fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })) : Promise.resolve(undefined),
+    primaryTab === "parts" ? fetchVehiclePartsList().catch(() => ({ success: false, parts: [] })) : Promise.resolve(undefined)
   ]);
 
   return (
