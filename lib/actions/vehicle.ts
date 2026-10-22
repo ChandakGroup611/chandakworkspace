@@ -2224,6 +2224,14 @@ export async function createVehicleAction(formData: {
   insurance_expiry_date?: string;
   insurance_vendor_id?: string;
   insurance_vendor?: string;
+  own_insurance_policy_number?: string;
+  own_insurance_expiry_date?: string;
+  own_insurance_vendor_id?: string;
+  own_insurance_vendor?: string;
+  tp_insurance_policy_number?: string;
+  tp_insurance_expiry_date?: string;
+  tp_insurance_vendor_id?: string;
+  tp_insurance_vendor?: string;
   puc_expiry_date?: string;
   fitness_expiry_date?: string;
   has_roadside_assistance?: boolean;
@@ -2295,8 +2303,14 @@ export async function createVehicleAction(formData: {
     let reg_owner = formData.registered_owner?.trim();
     let rto_rmn = formData.rto_rmn?.trim();
     let reg_date = formData.registration_date;
-    let ins_policy = formData.insurance_policy_number?.trim();
-    let ins_exp = formData.insurance_expiry_date;
+    let ins_policy = formData.own_insurance_policy_number?.trim() || formData.insurance_policy_number?.trim();
+    let ins_exp = formData.own_insurance_expiry_date || formData.insurance_expiry_date;
+    let ins_vendor = formData.own_insurance_vendor?.trim() || formData.insurance_vendor?.trim();
+    let ins_vendor_id = formData.own_insurance_vendor_id || formData.insurance_vendor_id || null;
+    let tp_policy = formData.tp_insurance_policy_number?.trim() || null;
+    let tp_exp = formData.tp_insurance_expiry_date || null;
+    let tp_vendor = formData.tp_insurance_vendor?.trim() || null;
+    let tp_vendor_id = formData.tp_insurance_vendor_id || null;
     let puc_exp = formData.puc_expiry_date;
     let fit_exp = formData.fitness_expiry_date;
     let paint_color = formData.paint_color;
@@ -2306,6 +2320,9 @@ export async function createVehicleAction(formData: {
     // Date Sequence Validation
     if (reg_date && ins_exp && ins_exp < reg_date) {
       return { success: false, error: "Insurance Expiry Date cannot be earlier than Vehicle Registration Date." };
+    }
+    if (reg_date && tp_exp && tp_exp < reg_date) {
+      return { success: false, error: "Third Party Insurance Expiry Date cannot be earlier than Vehicle Registration Date." };
     }
     if (reg_date && puc_exp && puc_exp < reg_date) {
       return { success: false, error: "PUC Expiry Date cannot be earlier than Vehicle Registration Date." };
@@ -2476,8 +2493,16 @@ export async function createVehicleAction(formData: {
       rto_rmn: rto_rmn || null,
       insurance_policy_number: ins_policy || null,
       insurance_expiry_date: ins_exp || null,
-      insurance_vendor_id: formData.insurance_vendor_id || null,
-      insurance_vendor: formData.insurance_vendor?.trim() || null,
+      insurance_vendor_id: ins_vendor_id || null,
+      insurance_vendor: ins_vendor || null,
+      own_insurance_policy_number: ins_policy || null,
+      own_insurance_expiry_date: ins_exp || null,
+      own_insurance_vendor_id: ins_vendor_id || null,
+      own_insurance_vendor: ins_vendor || null,
+      tp_insurance_policy_number: tp_policy || null,
+      tp_insurance_expiry_date: tp_exp || null,
+      tp_insurance_vendor_id: tp_vendor_id || null,
+      tp_insurance_vendor: tp_vendor || null,
       puc_expiry_date: finalIsElectric ? null : (puc_exp || null),
       fitness_expiry_date: fit_exp || null,
       status: formData.status || "IN_STOCK",
@@ -2547,6 +2572,51 @@ export async function createVehicleAction(formData: {
         old_data: {},
         new_data: newRecord,
       });
+
+    // Insert initial active insurance policies for Own Insurance and Third Party Insurance if provided
+    if (ins_policy || ins_exp) {
+      try {
+        await supabaseAdmin.from("insurance_policies").insert({
+          vehicle_id: vehicleId,
+          insurance_category: "Own Insurance",
+          insurer_name: ins_vendor || "Authorized Insurer",
+          insurance_vendor_id: ins_vendor_id || null,
+          policy_number: ins_policy || `POL-${Date.now().toString().slice(-6)}`,
+          policy_type: "Comprehensive",
+          start_date: reg_date || new Date().toISOString().split("T")[0],
+          end_date: ins_exp,
+          idv: Number(formData.ex_showroom_price) || 0,
+          premium_amount: Number(formData.insurance_cost) || 0,
+          is_active: true,
+          has_roadside_assistance: formData.has_roadside_assistance !== undefined ? formData.has_roadside_assistance : true,
+          renewed_by: creatorName
+        });
+      } catch (ownPolErr) {
+        console.warn("[vehicle-actions] Warning creating initial Own Insurance policy record:", ownPolErr);
+      }
+    }
+
+    if (tp_policy || tp_exp) {
+      try {
+        await supabaseAdmin.from("insurance_policies").insert({
+          vehicle_id: vehicleId,
+          insurance_category: "Third Party Insurance",
+          insurer_name: tp_vendor || "Authorized Insurer",
+          insurance_vendor_id: tp_vendor_id || null,
+          policy_number: tp_policy || `TP-${Date.now().toString().slice(-6)}`,
+          policy_type: "Third-Party Liability",
+          start_date: reg_date || new Date().toISOString().split("T")[0],
+          end_date: tp_exp,
+          idv: 0,
+          premium_amount: 0,
+          is_active: true,
+          has_roadside_assistance: true,
+          renewed_by: creatorName
+        });
+      } catch (tpPolErr) {
+        console.warn("[vehicle-actions] Warning creating initial Third Party policy record:", tpPolErr);
+      }
+    }
 
     // Insert attached documents into vehicle_documents vault if provided
     let insertedDocs: VehicleDocumentRecord[] = [];
@@ -2620,6 +2690,14 @@ export async function updateVehicleAction(
     insurance_expiry_date?: string;
     insurance_vendor_id?: string | null;
     insurance_vendor?: string | null;
+    own_insurance_policy_number?: string | null;
+    own_insurance_expiry_date?: string | null;
+    own_insurance_vendor_id?: string | null;
+    own_insurance_vendor?: string | null;
+    tp_insurance_policy_number?: string | null;
+    tp_insurance_expiry_date?: string | null;
+    tp_insurance_vendor_id?: string | null;
+    tp_insurance_vendor?: string | null;
     puc_expiry_date?: string;
     fitness_expiry_date?: string;
     has_roadside_assistance?: boolean;
@@ -2798,16 +2876,21 @@ export async function updateVehicleAction(
       const rmnTrim = typeof formData.rto_rmn === 'string' ? formData.rto_rmn.trim() : null;
       updates.rto_rmn = rmnTrim && rmnTrim !== "" ? rmnTrim : null;
     }
-    if (formData.insurance_policy_number !== undefined) {
-      const polTrim = typeof formData.insurance_policy_number === 'string' ? formData.insurance_policy_number.trim() : null;
+    if (formData.insurance_policy_number !== undefined || formData.own_insurance_policy_number !== undefined) {
+      const polVal = formData.own_insurance_policy_number !== undefined ? formData.own_insurance_policy_number : formData.insurance_policy_number;
+      const polTrim = typeof polVal === 'string' ? polVal.trim() : null;
       updates.insurance_policy_number = polTrim && polTrim !== "" ? polTrim : null;
+      updates.own_insurance_policy_number = polTrim && polTrim !== "" ? polTrim : null;
     }
-    if (formData.insurance_expiry_date !== undefined) {
-      const insTrim = typeof formData.insurance_expiry_date === 'string' ? formData.insurance_expiry_date.trim() : null;
+    if (formData.insurance_expiry_date !== undefined || formData.own_insurance_expiry_date !== undefined) {
+      const insVal = formData.own_insurance_expiry_date !== undefined ? formData.own_insurance_expiry_date : formData.insurance_expiry_date;
+      const insTrim = typeof insVal === 'string' ? insVal.trim() : null;
       updates.insurance_expiry_date = insTrim && insTrim !== "" ? insTrim : null;
+      updates.own_insurance_expiry_date = insTrim && insTrim !== "" ? insTrim : null;
     }
-    if (formData.insurance_vendor_id !== undefined) {
-      const cleanVendorId = formData.insurance_vendor_id ? formData.insurance_vendor_id.trim() : null;
+    if (formData.insurance_vendor_id !== undefined || formData.own_insurance_vendor_id !== undefined) {
+      const rawVendorId = formData.own_insurance_vendor_id !== undefined ? formData.own_insurance_vendor_id : formData.insurance_vendor_id;
+      const cleanVendorId = rawVendorId ? rawVendorId.trim() : null;
       const isUuid = cleanVendorId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanVendorId);
       if (isUuid) {
         const { data: vRow } = await supabaseAdmin
@@ -2816,16 +2899,52 @@ export async function updateVehicleAction(
           .eq("id", cleanVendorId)
           .maybeSingle();
         updates.insurance_vendor_id = vRow ? vRow.id : null;
-        if (vRow && !formData.insurance_vendor) {
+        updates.own_insurance_vendor_id = vRow ? vRow.id : null;
+        if (vRow && !formData.insurance_vendor && !formData.own_insurance_vendor) {
           updates.insurance_vendor = vRow.name;
+          updates.own_insurance_vendor = vRow.name;
         }
       } else {
         updates.insurance_vendor_id = null;
+        updates.own_insurance_vendor_id = null;
       }
     }
-    if (formData.insurance_vendor !== undefined) {
-      const venTrim = typeof formData.insurance_vendor === 'string' ? formData.insurance_vendor.trim() : null;
+    if (formData.insurance_vendor !== undefined || formData.own_insurance_vendor !== undefined) {
+      const venVal = formData.own_insurance_vendor !== undefined ? formData.own_insurance_vendor : formData.insurance_vendor;
+      const venTrim = typeof venVal === 'string' ? venVal.trim() : null;
       updates.insurance_vendor = venTrim && venTrim !== "" ? venTrim : null;
+      updates.own_insurance_vendor = venTrim && venTrim !== "" ? venTrim : null;
+    }
+
+    // Third Party Insurance Updates
+    if (formData.tp_insurance_policy_number !== undefined) {
+      const tpTrim = typeof formData.tp_insurance_policy_number === 'string' ? formData.tp_insurance_policy_number.trim() : null;
+      updates.tp_insurance_policy_number = tpTrim && tpTrim !== "" ? tpTrim : null;
+    }
+    if (formData.tp_insurance_expiry_date !== undefined) {
+      const tpExpTrim = typeof formData.tp_insurance_expiry_date === 'string' ? formData.tp_insurance_expiry_date.trim() : null;
+      updates.tp_insurance_expiry_date = tpExpTrim && tpExpTrim !== "" ? tpExpTrim : null;
+    }
+    if (formData.tp_insurance_vendor_id !== undefined) {
+      const cleanTpVendorId = formData.tp_insurance_vendor_id ? formData.tp_insurance_vendor_id.trim() : null;
+      const isUuid = cleanTpVendorId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanTpVendorId);
+      if (isUuid) {
+        const { data: vRow } = await supabaseAdmin
+          .from("fleet_insurance_vendors")
+          .select("id, name")
+          .eq("id", cleanTpVendorId)
+          .maybeSingle();
+        updates.tp_insurance_vendor_id = vRow ? vRow.id : null;
+        if (vRow && !formData.tp_insurance_vendor) {
+          updates.tp_insurance_vendor = vRow.name;
+        }
+      } else {
+        updates.tp_insurance_vendor_id = null;
+      }
+    }
+    if (formData.tp_insurance_vendor !== undefined) {
+      const tpVenTrim = typeof formData.tp_insurance_vendor === 'string' ? formData.tp_insurance_vendor.trim() : null;
+      updates.tp_insurance_vendor = tpVenTrim && tpVenTrim !== "" ? tpVenTrim : null;
     }
     if (formData.fitness_expiry_date !== undefined) {
       const fitTrim = typeof formData.fitness_expiry_date === 'string' ? formData.fitness_expiry_date.trim() : null;
@@ -2972,21 +3091,23 @@ export async function updateVehicleAction(
     }
 
     // 6. If insurance policy details updated, sync with insurance_policies table
-    if (updates.insurance_policy_number || updates.insurance_expiry_date) {
-      const activePolicyNum = updates.insurance_policy_number || existingVehicle.insurance_policy_number;
-      const activePolicyEnd = updates.insurance_expiry_date || existingVehicle.insurance_expiry_date;
-      const activeVendorId = updates.insurance_vendor_id !== undefined ? updates.insurance_vendor_id : existingVehicle.insurance_vendor_id;
-      const activeVendorName = updates.insurance_vendor || existingVehicle.insurance_vendor || "General Fleet Insurer";
+    // 6a. Own Insurance synchronization
+    if (updates.own_insurance_policy_number || updates.own_insurance_expiry_date || updates.insurance_policy_number || updates.insurance_expiry_date) {
+      const activePolicyNum = updates.own_insurance_policy_number || updates.insurance_policy_number || existingVehicle.own_insurance_policy_number || existingVehicle.insurance_policy_number;
+      const activePolicyEnd = updates.own_insurance_expiry_date || updates.insurance_expiry_date || existingVehicle.own_insurance_expiry_date || existingVehicle.insurance_expiry_date;
+      const activeVendorId = updates.own_insurance_vendor_id !== undefined ? updates.own_insurance_vendor_id : (updates.insurance_vendor_id !== undefined ? updates.insurance_vendor_id : existingVehicle.own_insurance_vendor_id || existingVehicle.insurance_vendor_id);
+      const activeVendorName = updates.own_insurance_vendor || updates.insurance_vendor || existingVehicle.own_insurance_vendor || existingVehicle.insurance_vendor || "General Fleet Insurer";
 
       if (activePolicyNum && activePolicyEnd) {
-        const { data: existingPolicy } = await supabaseAdmin
+        const { data: existingOwnPolicy } = await supabaseAdmin
           .from("insurance_policies")
           .select("id, policy_number, end_date")
           .eq("vehicle_id", id)
+          .eq("insurance_category", "Own Insurance")
           .eq("is_active", true)
           .maybeSingle();
 
-        if (existingPolicy) {
+        if (existingOwnPolicy) {
           await supabaseAdmin
             .from("insurance_policies")
             .update({
@@ -2997,12 +3118,13 @@ export async function updateVehicleAction(
               has_roadside_assistance: updates.has_roadside_assistance !== undefined ? updates.has_roadside_assistance : existingVehicle.has_roadside_assistance,
               updated_at: new Date().toISOString()
             })
-            .eq("id", existingPolicy.id);
+            .eq("id", existingOwnPolicy.id);
         } else {
           await supabaseAdmin
             .from("insurance_policies")
             .insert({
               vehicle_id: id,
+              insurance_category: "Own Insurance",
               policy_number: activePolicyNum,
               insurer_name: activeVendorName,
               policy_type: "Comprehensive",
@@ -3011,6 +3133,55 @@ export async function updateVehicleAction(
               insurance_vendor_id: activeVendorId || null,
               is_active: true,
               has_roadside_assistance: updates.has_roadside_assistance !== undefined ? updates.has_roadside_assistance : true,
+              renewed_by: (user.user_metadata?.full_name as string) || user.email || "Fleet Manager"
+            });
+        }
+      }
+    }
+
+    // 6b. Third Party Insurance synchronization
+    if (updates.tp_insurance_policy_number || updates.tp_insurance_expiry_date) {
+      const activeTpPolicyNum = updates.tp_insurance_policy_number || existingVehicle.tp_insurance_policy_number;
+      const activeTpPolicyEnd = updates.tp_insurance_expiry_date || existingVehicle.tp_insurance_expiry_date;
+      const activeTpVendorId = updates.tp_insurance_vendor_id !== undefined ? updates.tp_insurance_vendor_id : existingVehicle.tp_insurance_vendor_id;
+      const activeTpVendorName = updates.tp_insurance_vendor || existingVehicle.tp_insurance_vendor || "Authorized Insurer";
+
+      if (activeTpPolicyNum && activeTpPolicyEnd) {
+        const { data: existingTpPolicy } = await supabaseAdmin
+          .from("insurance_policies")
+          .select("id, policy_number, end_date")
+          .eq("vehicle_id", id)
+          .eq("insurance_category", "Third Party Insurance")
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (existingTpPolicy) {
+          await supabaseAdmin
+            .from("insurance_policies")
+            .update({
+              policy_number: activeTpPolicyNum,
+              end_date: activeTpPolicyEnd,
+              insurer_name: activeTpVendorName,
+              insurance_vendor_id: activeTpVendorId || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", existingTpPolicy.id);
+        } else {
+          await supabaseAdmin
+            .from("insurance_policies")
+            .insert({
+              vehicle_id: id,
+              insurance_category: "Third Party Insurance",
+              policy_number: activeTpPolicyNum,
+              insurer_name: activeTpVendorName,
+              policy_type: "Third-Party Liability",
+              start_date: updates.registration_date || existingVehicle.registration_date || new Date().toISOString().split("T")[0],
+              end_date: activeTpPolicyEnd,
+              insurance_vendor_id: activeTpVendorId || null,
+              idv: 0,
+              premium_amount: 0,
+              is_active: true,
+              has_roadside_assistance: true,
               renewed_by: (user.user_metadata?.full_name as string) || user.email || "Fleet Manager"
             });
         }

@@ -1372,6 +1372,11 @@ export default function FleetDeskHost({
   const [newVehicleInsuranceVendor, setNewVehicleInsuranceVendor] = useState("");
   const [newVehicleInsurancePolicy, setNewVehicleInsurancePolicy] = useState("");
   const [newVehicleInsuranceExpiry, setNewVehicleInsuranceExpiry] = useState("");
+  const [newVehicleInsuranceCategoryTab, setNewVehicleInsuranceCategoryTab] = useState<"Own Insurance" | "Third Party Insurance">("Own Insurance");
+  const [newVehicleTpInsuranceVendorId, setNewVehicleTpInsuranceVendorId] = useState("");
+  const [newVehicleTpInsuranceVendor, setNewVehicleTpInsuranceVendor] = useState("");
+  const [newVehicleTpInsurancePolicy, setNewVehicleTpInsurancePolicy] = useState("");
+  const [newVehicleTpInsuranceExpiry, setNewVehicleTpInsuranceExpiry] = useState("");
   const [newVehiclePucExpiry, setNewVehiclePucExpiry] = useState("");
   const [newVehicleFitnessExpiry, setNewVehicleFitnessExpiry] = useState("");
   const [newVehicleHsrp, setNewVehicleHsrp] = useState(true);
@@ -1457,6 +1462,11 @@ export default function FleetDeskHost({
   const [editVehicleInsuranceVendor, setEditVehicleInsuranceVendor] = useState("");
   const [editVehicleInsurancePolicy, setEditVehicleInsurancePolicy] = useState("");
   const [editVehicleInsuranceExpiry, setEditVehicleInsuranceExpiry] = useState("");
+  const [editVehicleInsuranceCategoryTab, setEditVehicleInsuranceCategoryTab] = useState<"Own Insurance" | "Third Party Insurance">("Own Insurance");
+  const [editVehicleTpInsuranceVendorId, setEditVehicleTpInsuranceVendorId] = useState("");
+  const [editVehicleTpInsuranceVendor, setEditVehicleTpInsuranceVendor] = useState("");
+  const [editVehicleTpInsurancePolicy, setEditVehicleTpInsurancePolicy] = useState("");
+  const [editVehicleTpInsuranceExpiry, setEditVehicleTpInsuranceExpiry] = useState("");
   const [editVehiclePucExpiry, setEditVehiclePucExpiry] = useState("");
   const [editVehicleFitnessExpiry, setEditVehicleFitnessExpiry] = useState("");
   const [editVehicleHsrp, setEditVehicleHsrp] = useState(true);
@@ -2304,6 +2314,10 @@ export default function FleetDeskHost({
         newVehicleInsuranceVendor,
         newVehicleInsurancePolicy,
         newVehicleInsuranceExpiry,
+        newVehicleTpInsuranceVendorId,
+        newVehicleTpInsuranceVendor,
+        newVehicleTpInsurancePolicy,
+        newVehicleTpInsuranceExpiry,
         newVehiclePucExpiry,
         newVehicleFitnessExpiry,
         newVehicleHsrp,
@@ -2345,6 +2359,10 @@ export default function FleetDeskHost({
     newVehicleInsuranceVendor,
     newVehicleInsurancePolicy,
     newVehicleInsuranceExpiry,
+    newVehicleTpInsuranceVendorId,
+    newVehicleTpInsuranceVendor,
+    newVehicleTpInsurancePolicy,
+    newVehicleTpInsuranceExpiry,
     newVehiclePucExpiry,
     newVehicleFitnessExpiry,
     newVehicleHsrp,
@@ -2386,6 +2404,10 @@ export default function FleetDeskHost({
       if (draft.newVehicleInsuranceVendor) setNewVehicleInsuranceVendor(draft.newVehicleInsuranceVendor);
       if (draft.newVehicleInsurancePolicy) setNewVehicleInsurancePolicy(draft.newVehicleInsurancePolicy);
       if (draft.newVehicleInsuranceExpiry) setNewVehicleInsuranceExpiry(draft.newVehicleInsuranceExpiry);
+      if (draft.newVehicleTpInsuranceVendorId) setNewVehicleTpInsuranceVendorId(draft.newVehicleTpInsuranceVendorId);
+      if (draft.newVehicleTpInsuranceVendor) setNewVehicleTpInsuranceVendor(draft.newVehicleTpInsuranceVendor);
+      if (draft.newVehicleTpInsurancePolicy) setNewVehicleTpInsurancePolicy(draft.newVehicleTpInsurancePolicy);
+      if (draft.newVehicleTpInsuranceExpiry) setNewVehicleTpInsuranceExpiry(draft.newVehicleTpInsuranceExpiry);
       if (draft.newVehiclePucExpiry) setNewVehiclePucExpiry(draft.newVehiclePucExpiry);
       if (draft.newVehicleFitnessExpiry) setNewVehicleFitnessExpiry(draft.newVehicleFitnessExpiry);
       if (draft.newVehicleHsrp !== undefined) setNewVehicleHsrp(draft.newVehicleHsrp);
@@ -3782,6 +3804,11 @@ export default function FleetDeskHost({
     setNewVehicleInsuranceVendor("");
     setNewVehicleInsurancePolicy("");
     setNewVehicleInsuranceExpiry("");
+    setNewVehicleInsuranceCategoryTab("Own Insurance");
+    setNewVehicleTpInsuranceVendorId("");
+    setNewVehicleTpInsuranceVendor("");
+    setNewVehicleTpInsurancePolicy("");
+    setNewVehicleTpInsuranceExpiry("");
     setNewVehiclePucExpiry("");
     setNewVehicleFitnessExpiry("");
     setNewVehicleHsrp(true);
@@ -5364,6 +5391,11 @@ export default function FleetDeskHost({
         setModalSubmitting(false);
         return;
       }
+      if (newVehicleTpInsuranceExpiry && regDate && newVehicleTpInsuranceExpiry < regDate) {
+        triggerToast("Third Party Insurance Expiry Date cannot be earlier than Vehicle Registration Date.", true);
+        setModalSubmitting(false);
+        return;
+      }
       if (!isElectric && pucExp && regDate && pucExp < regDate) {
         triggerToast("PUC Expiry Date cannot be earlier than Vehicle Registration Date.", true);
         setModalSubmitting(false);
@@ -5412,6 +5444,14 @@ export default function FleetDeskHost({
         insurance_vendor: insVendor || undefined,
         insurance_policy_number: insPolicy || undefined,
         insurance_expiry_date: insExp,
+        own_insurance_vendor_id: insVendorId || undefined,
+        own_insurance_vendor: insVendor || undefined,
+        own_insurance_policy_number: insPolicy || undefined,
+        own_insurance_expiry_date: insExp,
+        tp_insurance_vendor_id: newVehicleTpInsuranceVendorId || undefined,
+        tp_insurance_vendor: newVehicleTpInsuranceVendor.trim() || undefined,
+        tp_insurance_policy_number: newVehicleTpInsurancePolicy.trim() || undefined,
+        tp_insurance_expiry_date: newVehicleTpInsuranceExpiry || undefined,
         puc_expiry_date: isElectric ? undefined : pucExp,
         fitness_expiry_date: fitExp || undefined,
         purchase_vendor: newVehiclePurchaseVendor.trim() || undefined,
@@ -5494,11 +5534,16 @@ export default function FleetDeskHost({
     setEditVehicleRtoOffice(veh.rto_office || "");
     setEditVehicleOwner(veh.registered_owner || "");
     setEditVehicleRtoRmn(veh.rto_rmn || "");
-    setEditVehicleInsuranceVendorId(veh.insurance_vendor_id || "");
-    setEditVehicleInsuranceVendor(veh.insurance_vendor || "");
-    setEditVehicleInsurancePolicy(veh.insurance_policy_number || "");
+    setEditVehicleInsuranceCategoryTab("Own Insurance");
+    setEditVehicleInsuranceVendorId(veh.own_insurance_vendor_id || veh.insurance_vendor_id || "");
+    setEditVehicleInsuranceVendor(veh.own_insurance_vendor || veh.insurance_vendor || "");
+    setEditVehicleInsurancePolicy(veh.own_insurance_policy_number || veh.insurance_policy_number || "");
     const isEv = isElectricFuel(veh.fuel_type);
-    setEditVehicleInsuranceExpiry(normalizeDateToInputFormat(veh.insurance_expiry_date));
+    setEditVehicleInsuranceExpiry(normalizeDateToInputFormat(veh.own_insurance_expiry_date || veh.insurance_expiry_date));
+    setEditVehicleTpInsuranceVendorId(veh.tp_insurance_vendor_id || "");
+    setEditVehicleTpInsuranceVendor(veh.tp_insurance_vendor || "");
+    setEditVehicleTpInsurancePolicy(veh.tp_insurance_policy_number || "");
+    setEditVehicleTpInsuranceExpiry(normalizeDateToInputFormat(veh.tp_insurance_expiry_date));
     setEditVehiclePucExpiry(isEv ? "" : normalizeDateToInputFormat(veh.puc_expiry_date));
     setEditVehicleFitnessExpiry(normalizeDateToInputFormat(veh.fitness_expiry_date));
     setEditVehicleHsrp(veh.has_hsrp_plate !== undefined ? veh.has_hsrp_plate : true);
@@ -5644,6 +5689,14 @@ export default function FleetDeskHost({
         insurance_vendor: editVehicleInsuranceVendor || null,
         insurance_policy_number: editVehicleInsurancePolicy.trim() || undefined,
         insurance_expiry_date: editVehicleInsuranceExpiry || undefined,
+        own_insurance_vendor_id: editVehicleInsuranceVendorId || null,
+        own_insurance_vendor: editVehicleInsuranceVendor || null,
+        own_insurance_policy_number: editVehicleInsurancePolicy.trim() || undefined,
+        own_insurance_expiry_date: editVehicleInsuranceExpiry || undefined,
+        tp_insurance_vendor_id: editVehicleTpInsuranceVendorId || null,
+        tp_insurance_vendor: editVehicleTpInsuranceVendor || null,
+        tp_insurance_policy_number: editVehicleTpInsurancePolicy.trim() || undefined,
+        tp_insurance_expiry_date: editVehicleTpInsuranceExpiry || undefined,
         puc_expiry_date: isElectricFuel(editVehicleFuel) ? undefined : (editVehiclePucExpiry || undefined),
         fitness_expiry_date: editVehicleFitnessExpiry || undefined,
         purchase_vendor: editVehiclePurchaseVendor.trim() || null,
@@ -5748,6 +5801,14 @@ export default function FleetDeskHost({
               insurance_vendor: editVehicleInsuranceVendor || null,
               insurance_policy_number: editVehicleInsurancePolicy.trim() || v.insurance_policy_number,
               insurance_expiry_date: editVehicleInsuranceExpiry || v.insurance_expiry_date,
+              own_insurance_vendor_id: editVehicleInsuranceVendorId || null,
+              own_insurance_vendor: editVehicleInsuranceVendor || null,
+              own_insurance_policy_number: editVehicleInsurancePolicy.trim() || v.own_insurance_policy_number,
+              own_insurance_expiry_date: editVehicleInsuranceExpiry || v.own_insurance_expiry_date,
+              tp_insurance_vendor_id: editVehicleTpInsuranceVendorId || null,
+              tp_insurance_vendor: editVehicleTpInsuranceVendor || null,
+              tp_insurance_policy_number: editVehicleTpInsurancePolicy.trim() || v.tp_insurance_policy_number,
+              tp_insurance_expiry_date: editVehicleTpInsuranceExpiry || v.tp_insurance_expiry_date,
               puc_expiry_date: editVehiclePucExpiry || v.puc_expiry_date,
               fitness_expiry_date: editVehicleFitnessExpiry || v.fitness_expiry_date,
               has_roadside_assistance: editVehicleRsa,
@@ -5790,6 +5851,14 @@ export default function FleetDeskHost({
             insurance_vendor: editVehicleInsuranceVendor || null,
             insurance_policy_number: editVehicleInsurancePolicy.trim() || prev.insurance_policy_number,
             insurance_expiry_date: editVehicleInsuranceExpiry || prev.insurance_expiry_date,
+            own_insurance_vendor_id: editVehicleInsuranceVendorId || null,
+            own_insurance_vendor: editVehicleInsuranceVendor || null,
+            own_insurance_policy_number: editVehicleInsurancePolicy.trim() || prev.own_insurance_policy_number,
+            own_insurance_expiry_date: editVehicleInsuranceExpiry || prev.own_insurance_expiry_date,
+            tp_insurance_vendor_id: editVehicleTpInsuranceVendorId || null,
+            tp_insurance_vendor: editVehicleTpInsuranceVendor || null,
+            tp_insurance_policy_number: editVehicleTpInsurancePolicy.trim() || prev.tp_insurance_policy_number,
+            tp_insurance_expiry_date: editVehicleTpInsuranceExpiry || prev.tp_insurance_expiry_date,
             puc_expiry_date: editVehiclePucExpiry || prev.puc_expiry_date,
             fitness_expiry_date: editVehicleFitnessExpiry || prev.fitness_expiry_date,
             has_roadside_assistance: editVehicleRsa,
@@ -10915,68 +10984,333 @@ export default function FleetDeskHost({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                      <ShieldCheck className="h-3.5 w-3.5 text-info-text" />
-                      <span>Insurance vendor / company</span>
-                    </label>
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={openCreateVendorModal}
-                      className="h-7 px-2.5 text-xs font-semibold rounded-lg border-border hover:bg-surface-hover flex items-center gap-1"
-                    >
-                      <Plus className="h-3 w-3" />
-                      <span>New vendor</span>
-                    </AppButton>
+              {/* INSURANCE POLICY CONFIGURATION (OWN INSURANCE & THIRD PARTY INSURANCE) */}
+              <div className="rounded-xl border border-border bg-surface/50 dark:bg-surface p-4 space-y-4 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/80 pb-3">
+                  <div>
+                    <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <ShieldCheck className="h-4 w-4 text-theme-btn-primary" />
+                      <span>Insurance policy configuration</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Configure statutory Own Insurance (OD / Comprehensive) and Third Party (TP) Insurance.
+                    </p>
                   </div>
-                  <select
-                    value={newVehicleInsuranceVendorId}
-                    onChange={(e) => {
-                      const selId = e.target.value;
-                      setNewVehicleInsuranceVendorId(selId);
-                      const sel = insuranceVendors.find(v => v.id === selId);
-                      setNewVehicleInsuranceVendor(sel ? sel.name : "");
-                    }}
-                    className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-muted-foreground">Category:</span>
+                    <div className="inline-flex rounded-lg border border-border bg-surface p-0.5 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setNewVehicleInsuranceCategoryTab("Own Insurance")}
+                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                          newVehicleInsuranceCategoryTab === "Own Insurance"
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <ShieldCheck className="h-3 w-3" />
+                        <span>Own Insurance</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewVehicleInsuranceCategoryTab("Third Party Insurance")}
+                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                          newVehicleInsuranceCategoryTab === "Third Party Insurance"
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Shield className="h-3 w-3" />
+                        <span>Third Party</span>
+                        {Boolean(newVehicleTpInsurancePolicy || newVehicleTpInsuranceExpiry) && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-success inline-block ml-0.5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category Switcher Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setNewVehicleInsuranceCategoryTab("Own Insurance")}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      newVehicleInsuranceCategoryTab === "Own Insurance"
+                        ? "border-theme-btn-primary bg-accent-soft text-foreground ring-1 ring-theme-btn-primary shadow-2xs"
+                        : "border-border bg-surface hover:bg-surface-hover text-muted-foreground"
+                    }`}
                   >
-                    <option value="">— Select insurance vendor —</option>
-                    {insuranceVendors.map((vendor) => (
-                      <option key={vendor.id} value={vendor.id}>
-                        {vendor.name} ({vendor.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center gap-1">
-                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>Insurance policy number</span>
-                  </label>
-                  <AppInput 
-                    value={newVehicleInsurancePolicy} 
-                    onChange={(e) => setNewVehicleInsurancePolicy(e.target.value)} 
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                      <Shield className="h-3.5 w-3.5 text-success-text" />
-                      <span>Insurance end date *</span>
-                    </label>
-                    {newVehicleInsuranceExpiry && (
-                      <div>{renderExpiryBadge(calculateDaysRemaining(newVehicleInsuranceExpiry))}</div>
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <ShieldCheck className="h-4 w-4 text-success-text" />
+                        <span>Own Insurance (OD / Comprehensive) *</span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        Covers own vehicle damage, loss, theft & bumper-to-bumper IDV
+                      </div>
+                      <div className="text-[11px] font-mono text-muted-foreground pt-1 flex items-center gap-2">
+                        <span>Policy: {newVehicleInsurancePolicy || "Pending"}</span>
+                        <span>•</span>
+                        <span>Expires: {newVehicleInsuranceExpiry || "Not set"}</span>
+                      </div>
+                    </div>
+                    {newVehicleInsuranceCategoryTab === "Own Insurance" && (
+                      <CheckCircle2 className="h-4 w-4 text-theme-btn-primary shrink-0" />
                     )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewVehicleInsuranceCategoryTab("Third Party Insurance")}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      newVehicleInsuranceCategoryTab === "Third Party Insurance"
+                        ? "border-theme-btn-primary bg-accent-soft text-foreground ring-1 ring-theme-btn-primary shadow-2xs"
+                        : "border-border bg-surface hover:bg-surface-hover text-muted-foreground"
+                    }`}
+                  >
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Shield className="h-4 w-4 text-info-text" />
+                        <span>Third Party Insurance (Mandatory TP)</span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        Statutory legal liability coverage for 3rd party life & property
+                      </div>
+                      <div className="text-[11px] font-mono text-muted-foreground pt-1 flex items-center gap-2">
+                        <span>Policy: {newVehicleTpInsurancePolicy || "Same / Unset"}</span>
+                        <span>•</span>
+                        <span>Expires: {newVehicleTpInsuranceExpiry || (newVehicleInsuranceExpiry ? `${newVehicleInsuranceExpiry} (Default)` : "Not set")}</span>
+                      </div>
+                    </div>
+                    {newVehicleInsuranceCategoryTab === "Third Party Insurance" && (
+                      <CheckCircle2 className="h-4 w-4 text-theme-btn-primary shrink-0" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Form Inputs for Active Category */}
+                {newVehicleInsuranceCategoryTab === "Own Insurance" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                          <Building2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                          <span>Own insurance provider *</span>
+                        </label>
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={openCreateVendorModal}
+                          className="h-6 px-2 text-[11px] font-semibold rounded border-border hover:bg-surface-hover flex items-center gap-1"
+                        >
+                          <Plus className="h-3 w-3" />
+                          <span>New</span>
+                        </AppButton>
+                      </div>
+                      <select
+                        value={newVehicleInsuranceVendorId}
+                        onChange={(e) => {
+                          const selId = e.target.value;
+                          setNewVehicleInsuranceVendorId(selId);
+                          const sel = insuranceVendors.find(v => v.id === selId);
+                          setNewVehicleInsuranceVendor(sel ? sel.name : "");
+                        }}
+                        className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+                      >
+                        <option value="">— Select insurance vendor —</option>
+                        {insuranceVendors.map((vendor) => (
+                          <option key={vendor.id} value={vendor.id}>
+                            {vendor.name} ({vendor.code})
+                          </option>
+                        ))}
+                      </select>
+                      {(!newVehicleInsuranceVendorId || !insuranceVendors.some(v => v.id === newVehicleInsuranceVendorId)) && (
+                        <AppInput
+                          value={newVehicleInsuranceVendor}
+                          placeholder="Or enter custom insurer name"
+                          onChange={(e) => setNewVehicleInsuranceVendor(e.target.value)}
+                          className="mt-1.5 text-xs"
+                        />
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center gap-1">
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>Own damage policy number</span>
+                      </label>
+                      <AppInput 
+                        value={newVehicleInsurancePolicy} 
+                        onChange={(e) => setNewVehicleInsurancePolicy(e.target.value)} 
+                        placeholder="e.g. 3001/OD-2026/00"
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                          <Shield className="h-3.5 w-3.5 text-success-text" />
+                          <span>Own insurance expiry date *</span>
+                        </label>
+                        {newVehicleInsuranceExpiry && (
+                          <div>{renderExpiryBadge(calculateDaysRemaining(newVehicleInsuranceExpiry))}</div>
+                        )}
+                      </div>
+                      <AppInput 
+                        type="date"
+                        value={newVehicleInsuranceExpiry} 
+                        onChange={(e) => setNewVehicleInsuranceExpiry(e.target.value)} 
+                        required
+                        className="text-xs font-mono"
+                      />
+                    </div>
                   </div>
-                  <AppInput 
-                    type="date"
-                    value={newVehicleInsuranceExpiry} 
-                    onChange={(e) => setNewVehicleInsuranceExpiry(e.target.value)} 
-                    required
-                  />
+                ) : (
+                  <div className="space-y-3 pt-1">
+                    {/* Quick Helper for Bundled Policies */}
+                    <div className="flex items-center justify-between flex-wrap gap-2 p-2.5 rounded-lg bg-surface border border-border text-xs">
+                      <span className="text-muted-foreground text-[11px]">
+                        Have a bundled policy with identical vendor & policy number?
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewVehicleTpInsuranceVendorId(newVehicleInsuranceVendorId);
+                            setNewVehicleTpInsuranceVendor(newVehicleInsuranceVendor);
+                            setNewVehicleTpInsurancePolicy(newVehicleInsurancePolicy);
+                            setNewVehicleTpInsuranceExpiry(newVehicleInsuranceExpiry);
+                            triggerToast("Third Party details auto-filled from Own Insurance!");
+                          }}
+                          className="px-2.5 py-1 rounded bg-theme-btn-primary/10 hover:bg-theme-btn-primary/20 text-theme-btn-primary font-semibold text-[11px] transition-colors cursor-pointer"
+                        >
+                          Copy from Own Insurance
+                        </button>
+                        {(newVehicleTpInsurancePolicy || newVehicleTpInsuranceExpiry) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewVehicleTpInsuranceVendorId("");
+                              setNewVehicleTpInsuranceVendor("");
+                              setNewVehicleTpInsurancePolicy("");
+                              setNewVehicleTpInsuranceExpiry("");
+                            }}
+                            className="px-2 py-1 rounded hover:bg-danger-soft text-danger-text text-[11px] transition-colors cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                            <Building2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                            <span>TP insurance provider</span>
+                          </label>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={openCreateVendorModal}
+                            className="h-6 px-2 text-[11px] font-semibold rounded border-border hover:bg-surface-hover flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" />
+                            <span>New</span>
+                          </AppButton>
+                        </div>
+                        <select
+                          value={newVehicleTpInsuranceVendorId}
+                          onChange={(e) => {
+                            const selId = e.target.value;
+                            setNewVehicleTpInsuranceVendorId(selId);
+                            const sel = insuranceVendors.find(v => v.id === selId);
+                            setNewVehicleTpInsuranceVendor(sel ? sel.name : "");
+                          }}
+                          className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+                        >
+                          <option value="">— Select TP vendor —</option>
+                          {insuranceVendors.map((vendor) => (
+                            <option key={vendor.id} value={vendor.id}>
+                              {vendor.name} ({vendor.code})
+                            </option>
+                          ))}
+                        </select>
+                        {(!newVehicleTpInsuranceVendorId || !insuranceVendors.some(v => v.id === newVehicleTpInsuranceVendorId)) && (
+                          <AppInput
+                            value={newVehicleTpInsuranceVendor}
+                            placeholder="Or enter custom insurer name"
+                            onChange={(e) => setNewVehicleTpInsuranceVendor(e.target.value)}
+                            className="mt-1.5 text-xs"
+                          />
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center gap-1">
+                          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Third party policy number</span>
+                        </label>
+                        <AppInput 
+                          value={newVehicleTpInsurancePolicy} 
+                          onChange={(e) => setNewVehicleTpInsurancePolicy(e.target.value)} 
+                          placeholder="e.g. 3001/TP-2026/00"
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                            <Shield className="h-3.5 w-3.5 text-info-text" />
+                            <span>TP expiry date</span>
+                          </label>
+                          {newVehicleTpInsuranceExpiry && (
+                            <div>{renderExpiryBadge(calculateDaysRemaining(newVehicleTpInsuranceExpiry))}</div>
+                          )}
+                        </div>
+                        <AppInput 
+                          type="date"
+                          value={newVehicleTpInsuranceExpiry} 
+                          onChange={(e) => setNewVehicleTpInsuranceExpiry(e.target.value)} 
+                          className="text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Configuration Summary Strip */}
+                <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-border text-[11px]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-muted-foreground">Configured status:</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono ${
+                      newVehicleInsurancePolicy || newVehicleInsuranceExpiry
+                        ? "bg-success-soft text-success-text border border-success/30"
+                        : "bg-warning-soft text-warning-text border border-warning/30"
+                    }`}>
+                      <ShieldCheck className="h-3 w-3" />
+                      <span>Own: {newVehicleInsuranceVendor ? `${newVehicleInsuranceVendor} ` : ""}{newVehicleInsurancePolicy ? `#${newVehicleInsurancePolicy}` : "Pending"}{newVehicleInsuranceExpiry ? ` (Exp: ${newVehicleInsuranceExpiry})` : ""}</span>
+                    </span>
+
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono ${
+                      newVehicleTpInsurancePolicy || newVehicleTpInsuranceExpiry
+                        ? "bg-info-soft text-info-text border border-info/30"
+                        : "bg-surface text-muted-foreground border border-border"
+                    }`}>
+                      <Shield className="h-3 w-3" />
+                      <span>TP: {newVehicleTpInsurancePolicy ? `${newVehicleTpInsuranceVendor ? `${newVehicleTpInsuranceVendor} ` : ""}#${newVehicleTpInsurancePolicy}` : "Optional / Unset"}{newVehicleTpInsuranceExpiry ? ` (Exp: ${newVehicleTpInsuranceExpiry})` : ""}</span>
+                    </span>
+                  </div>
+
+                  <span className="text-muted-foreground text-[11px]">
+                    Both policies are registered as independent records upon saving.
+                  </span>
                 </div>
               </div>
 
@@ -18002,68 +18336,251 @@ export default function FleetDeskHost({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold flex items-center gap-1">
-                        <ShieldCheck className="h-3.5 w-3.5 text-info-text" />
-                        <span>Insurance vendor</span>
-                      </label>
-                      <AppButton
+                {/* INSURANCE POLICY CONFIGURATION (OWN INSURANCE & THIRD PARTY INSURANCE) */}
+                <div className="rounded-xl border border-border bg-surface/50 dark:bg-surface p-3.5 space-y-3.5 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/80 pb-2.5">
+                    <div>
+                      <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <ShieldCheck className="h-4 w-4 text-theme-btn-primary" />
+                        <span>Insurance policy configuration</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Manage independent Own Insurance (OD / Comprehensive) and Third Party (TP) Insurance.
+                      </p>
+                    </div>
+                    <div className="inline-flex rounded-lg border border-border bg-surface p-0.5 text-xs font-semibold">
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={openCreateVendorModal}
-                        className="p-0 h-auto text-xs font-semibold text-theme-btn-primary hover:underline flex items-center gap-0.5"
+                        onClick={() => setEditVehicleInsuranceCategoryTab("Own Insurance")}
+                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                          editVehicleInsuranceCategoryTab === "Own Insurance"
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
                       >
-                        <Plus className="h-2.5 w-2.5" />
-                        <span>New</span>
-                      </AppButton>
+                        <ShieldCheck className="h-3 w-3" />
+                        <span>Own Insurance</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditVehicleInsuranceCategoryTab("Third Party Insurance")}
+                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                          editVehicleInsuranceCategoryTab === "Third Party Insurance"
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Shield className="h-3 w-3" />
+                        <span>Third Party</span>
+                        {Boolean(editVehicleTpInsurancePolicy || editVehicleTpInsuranceExpiry) && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-success inline-block ml-0.5" />
+                        )}
+                      </button>
                     </div>
-                    <select
-                      value={editVehicleInsuranceVendorId}
-                      onChange={(e) => {
-                        const selId = e.target.value;
-                        setEditVehicleInsuranceVendorId(selId);
-                        const sel = insuranceVendors.find(v => v.id === selId);
-                        setEditVehicleInsuranceVendor(sel ? sel.name : "");
-                      }}
-                      className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
-                    >
-                      <option value="">— Select vendor —</option>
-                      {insuranceVendors.map((vendor) => (
-                        <option key={vendor.id} value={vendor.id}>
-                          {vendor.name} ({vendor.code})
-                        </option>
-                      ))}
-                    </select>
                   </div>
-                  <div>
-                    <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>Insurance policy number</span>
-                    </label>
-                    <AppInput 
-                      value={editVehicleInsurancePolicy} 
-                      onChange={(e) => setEditVehicleInsurancePolicy(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold flex items-center gap-1">
-                        <Shield className="h-3.5 w-3.5 text-success-text" />
-                        <span>Insurance expiry date *</span>
-                      </label>
-                      {editVehicleInsuranceExpiry && (
-                        <div>{renderExpiryBadge(calculateDaysRemaining(editVehicleInsuranceExpiry))}</div>
-                      )}
+
+                  {/* Form Inputs for Active Category */}
+                  {editVehicleInsuranceCategoryTab === "Own Insurance" ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="font-semibold text-xs flex items-center gap-1">
+                            <Building2 className="h-3.5 w-3.5 text-info-text" />
+                            <span>Own insurer</span>
+                          </label>
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={openCreateVendorModal}
+                            className="p-0 h-auto text-xs font-semibold text-theme-btn-primary hover:underline flex items-center gap-0.5"
+                          >
+                            <Plus className="h-2.5 w-2.5" />
+                            <span>New</span>
+                          </AppButton>
+                        </div>
+                        <select
+                          value={editVehicleInsuranceVendorId}
+                          onChange={(e) => {
+                            const selId = e.target.value;
+                            setEditVehicleInsuranceVendorId(selId);
+                            const sel = insuranceVendors.find(v => v.id === selId);
+                            setEditVehicleInsuranceVendor(sel ? sel.name : "");
+                          }}
+                          className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+                        >
+                          <option value="">— Select vendor —</option>
+                          {insuranceVendors.map((vendor) => (
+                            <option key={vendor.id} value={vendor.id}>
+                              {vendor.name} ({vendor.code})
+                            </option>
+                          ))}
+                        </select>
+                        {(!editVehicleInsuranceVendorId || !insuranceVendors.some(v => v.id === editVehicleInsuranceVendorId)) && (
+                          <AppInput
+                            value={editVehicleInsuranceVendor}
+                            placeholder="Or enter custom insurer name"
+                            onChange={(e) => setEditVehicleInsuranceVendor(e.target.value)}
+                            className="mt-1.5 text-xs"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <label className="font-semibold text-xs block mb-1 flex items-center gap-1">
+                          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Own policy number</span>
+                        </label>
+                        <AppInput 
+                          value={editVehicleInsurancePolicy} 
+                          onChange={(e) => setEditVehicleInsurancePolicy(e.target.value)}
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="font-semibold text-xs flex items-center gap-1">
+                            <Shield className="h-3.5 w-3.5 text-success-text" />
+                            <span>Own expiry date *</span>
+                          </label>
+                          {editVehicleInsuranceExpiry && (
+                            <div>{renderExpiryBadge(calculateDaysRemaining(editVehicleInsuranceExpiry))}</div>
+                          )}
+                        </div>
+                        <AppInput 
+                          type="date"
+                          value={editVehicleInsuranceExpiry} 
+                          onChange={(e) => setEditVehicleInsuranceExpiry(e.target.value)} 
+                          required
+                          className="text-xs font-mono"
+                        />
+                      </div>
                     </div>
-                    <AppInput 
-                      type="date"
-                      value={editVehicleInsuranceExpiry} 
-                      onChange={(e) => setEditVehicleInsuranceExpiry(e.target.value)} 
-                      required
-                    />
+                  ) : (
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between flex-wrap gap-2 p-2 rounded-lg bg-surface border border-border text-xs">
+                        <span className="text-muted-foreground text-[11px]">
+                          Sync Third Party from Own Insurance details?
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditVehicleTpInsuranceVendorId(editVehicleInsuranceVendorId);
+                              setEditVehicleTpInsuranceVendor(editVehicleInsuranceVendor);
+                              setEditVehicleTpInsurancePolicy(editVehicleInsurancePolicy);
+                              setEditVehicleTpInsuranceExpiry(editVehicleInsuranceExpiry);
+                              triggerToast("Third Party details copied from Own Insurance!");
+                            }}
+                            className="px-2 py-0.5 rounded bg-theme-btn-primary/10 hover:bg-theme-btn-primary/20 text-theme-btn-primary font-semibold text-[11px] transition-colors cursor-pointer"
+                          >
+                            Copy from Own Insurance
+                          </button>
+                          {(editVehicleTpInsurancePolicy || editVehicleTpInsuranceExpiry) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditVehicleTpInsuranceVendorId("");
+                                setEditVehicleTpInsuranceVendor("");
+                                setEditVehicleTpInsurancePolicy("");
+                                setEditVehicleTpInsuranceExpiry("");
+                              }}
+                              className="px-2 py-0.5 rounded hover:bg-danger-soft text-danger-text text-[11px] transition-colors cursor-pointer"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="font-semibold text-xs flex items-center gap-1">
+                              <Building2 className="h-3.5 w-3.5 text-info-text" />
+                              <span>TP insurer</span>
+                            </label>
+                            <AppButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={openCreateVendorModal}
+                              className="p-0 h-auto text-xs font-semibold text-theme-btn-primary hover:underline flex items-center gap-0.5"
+                            >
+                              <Plus className="h-2.5 w-2.5" />
+                              <span>New</span>
+                            </AppButton>
+                          </div>
+                          <select
+                            value={editVehicleTpInsuranceVendorId}
+                            onChange={(e) => {
+                              const selId = e.target.value;
+                              setEditVehicleTpInsuranceVendorId(selId);
+                              const sel = insuranceVendors.find(v => v.id === selId);
+                              setEditVehicleTpInsuranceVendor(sel ? sel.name : "");
+                            }}
+                            className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+                          >
+                            <option value="">— Select TP vendor —</option>
+                            {insuranceVendors.map((vendor) => (
+                              <option key={vendor.id} value={vendor.id}>
+                                {vendor.name} ({vendor.code})
+                              </option>
+                            ))}
+                          </select>
+                          {(!editVehicleTpInsuranceVendorId || !insuranceVendors.some(v => v.id === editVehicleTpInsuranceVendorId)) && (
+                            <AppInput
+                              value={editVehicleTpInsuranceVendor}
+                              placeholder="Or enter custom insurer name"
+                              onChange={(e) => setEditVehicleTpInsuranceVendor(e.target.value)}
+                              className="mt-1.5 text-xs"
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <label className="font-semibold text-xs block mb-1 flex items-center gap-1">
+                            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span>TP policy number</span>
+                          </label>
+                          <AppInput 
+                            value={editVehicleTpInsurancePolicy} 
+                            onChange={(e) => setEditVehicleTpInsurancePolicy(e.target.value)}
+                            className="font-mono text-xs"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="font-semibold text-xs flex items-center gap-1">
+                              <Shield className="h-3.5 w-3.5 text-info-text" />
+                              <span>TP expiry date</span>
+                            </label>
+                            {editVehicleTpInsuranceExpiry && (
+                              <div>{renderExpiryBadge(calculateDaysRemaining(editVehicleTpInsuranceExpiry))}</div>
+                            )}
+                          </div>
+                          <AppInput 
+                            type="date"
+                            value={editVehicleTpInsuranceExpiry} 
+                            onChange={(e) => setEditVehicleTpInsuranceExpiry(e.target.value)} 
+                            className="text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Summary Status */}
+                  <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-border text-[11px]">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-muted-foreground">Configured:</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success-soft text-success-text border border-success/30 font-mono">
+                        <ShieldCheck className="h-3 w-3" />
+                        <span>Own: {editVehicleInsurancePolicy ? `#${editVehicleInsurancePolicy}` : "None"}{editVehicleInsuranceExpiry ? ` (${editVehicleInsuranceExpiry})` : ""}</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-info-soft text-info-text border border-info/30 font-mono">
+                        <Shield className="h-3 w-3" />
+                        <span>TP: {editVehicleTpInsurancePolicy ? `#${editVehicleTpInsurancePolicy}` : "None"}{editVehicleTpInsuranceExpiry ? ` (${editVehicleTpInsuranceExpiry})` : ""}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
