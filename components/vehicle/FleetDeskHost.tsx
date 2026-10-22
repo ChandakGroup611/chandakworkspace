@@ -9167,7 +9167,7 @@ export default function FleetDeskHost({
             You do not currently have permissions configured for the Fleet Desk module. Contact your administrator to assign role access.
           </p>
         </div>
-        <AppButton variant="primary" size="sm" onClick={() => window.location.href = "/select-module"}>
+        <AppButton variant="primary" size="sm" onClick={() => window.location.href = "/select-module?choose=1"}>
           Return to workspace
         </AppButton>
       </div>

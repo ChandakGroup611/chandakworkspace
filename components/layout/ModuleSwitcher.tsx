@@ -52,6 +52,12 @@ function moduleFromPath(pathname: string) {
   if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
   if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
   if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
+  if (pathname.startsWith("/settings") || pathname === "/profile") {
+    if (typeof document !== "undefined") {
+      const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
+      if (m && m[1]) return decodeURIComponent(m[1]);
+    }
+  }
   return "TASK_WORKFLOW";
 }
 
@@ -70,13 +76,16 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     return () => { alive = false; };
   }, []);
 
-  // keep the cookie in sync when the user crosses module boundaries
+  // keep the cookie in sync when the user crosses module boundaries (do not overwrite on shared preference routes)
   useEffect(() => {
+    if (pathname.startsWith("/settings") || pathname === "/profile") {
+      return;
+    }
     const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
     if ((m ? m[1] : null) !== activeCode) {
       document.cookie = `active_module=${activeCode}; path=/; max-age=2592000; SameSite=Lax`;
     }
-  }, [activeCode]);
+  }, [activeCode, pathname]);
 
   const modules = data?.modules ?? [];
   const active = useMemo(
@@ -204,7 +213,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
             })}
           </ul>
           <div className="mt-1 border-t border-border pt-1">
-            <a href="/select-module" onClick={() => onCloseMobile?.()} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12.5px] font-medium text-accent-soft-text hover:bg-surface-hover">
+            <a href="/select-module?choose=1" onClick={() => onCloseMobile?.()} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12.5px] font-medium text-accent-soft-text hover:bg-surface-hover">
               Manage modules <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           </div>

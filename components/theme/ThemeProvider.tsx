@@ -165,30 +165,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (themeMode(prefs.theme) === "light") lastLight.current = prefs.theme; else lastDark.current = prefs.theme;
   }, [prefs, loaded]);
 
-  // First visit on a new device: pull saved preferences from the DB
-  useEffect(() => {
-    let cancelled = false;
-    const hadLocalTheme = safeGet(STORAGE_KEYS.theme) !== null;
-    if (hadLocalTheme) {
-      hydratedFromDb.current = true;
-      return;
-    }
-
+  // Hydrate user's saved account preferences from the database
+  const hydrateFromDatabase = useCallback(async () => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
       if (path.startsWith("/login") || path.startsWith("/register") || path.startsWith("/auth/")) {
-        hydratedFromDb.current = true;
         return;
       }
     }
 
-    (async () => {
-      try {
-        const { fetchDesignPreferences } = await import("@/lib/actions/preferences");
-        const res = await fetchDesignPreferences();
-        if (cancelled || !res?.success || !res.data) return;
-        const db = res.data as Record<string, unknown>;
-        setPrefs((p) => ({
+    try {
+      const { fetchDesignPreferences } = await import("@/lib/actions/preferences");
+      const res = await fetchDesignPreferences();
+      if (!res?.success || !res.data) {
+        hydratedFromDb.current = true;
+        return;
+      }
+      const db = res.data as Record<string, unknown>;
+      setPrefs((p) => {
+        const next: Prefs = {
           ...p,
           theme: db.theme ? normalizeTheme(db.theme) : p.theme,
           density: db.density ? normalizeDensity(db.density) : p.density,
@@ -198,15 +193,45 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           accentColor: db.accentColor ? normalizeAccent(db.accentColor) : p.accentColor,
           baseFontSize: clampSize(db.baseFontSize, 12, 20, p.baseFontSize),
           subtextFontSize: clampSize(db.subtextFontSize, 10, 18, p.subtextFontSize),
-        }));
-      } catch {
-        /* offline or action missing: local prefs are fine */
-      } finally {
-        hydratedFromDb.current = true;
-      }
-    })();
-    return () => { cancelled = true; };
+        };
+        applyToDocument(next);
+        writeStoredPrefs(next);
+        return next;
+      });
+    } catch {
+      /* offline or action missing: local prefs are fine */
+    } finally {
+      hydratedFromDb.current = true;
+    }
   }, []);
+
+  useEffect(() => {
+    hydrateFromDatabase();
+
+    const onPrefsSaved = () => {
+      hydrateFromDatabase();
+    };
+    window.addEventListener("app:preferences-saved", onPrefsSaved);
+
+    let authSub: { unsubscribe: () => void } | null = null;
+    try {
+      const { createClient } = require("@/utils/supabase/client");
+      const supabase = createClient();
+      const { data } = supabase.auth.onAuthStateChange((event: string, session: any) => {
+        if (event === "SIGNED_IN" || (event === "INITIAL_SESSION" && session?.user)) {
+          hydrateFromDatabase();
+        } else if (event === "SIGNED_OUT") {
+          hydratedFromDb.current = false;
+        }
+      });
+      authSub = data?.subscription || null;
+    } catch {}
+
+    return () => {
+      window.removeEventListener("app:preferences-saved", onPrefsSaved);
+      authSub?.unsubscribe();
+    };
+  }, [hydrateFromDatabase]);
 
   // Save to DB (debounced) after the initial load, so every device follows the user
   useEffect(() => {

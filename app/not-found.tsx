@@ -19,7 +19,7 @@ export default function NotFound() {
         <Link href="/" className={`${btn} bg-primary text-primary-foreground hover:bg-primary-hover`}>
           <Home className="h-4 w-4" aria-hidden /> Go to my workspace
         </Link>
-        <Link href="/select-module" className={`${btn} text-foreground hover:bg-surface-hover`}>
+        <Link href="/select-module?choose=1" className={`${btn} text-foreground hover:bg-surface-hover`}>
           <ArrowLeft className="h-4 w-4" aria-hidden /> Switch module
         </Link>
       </div>

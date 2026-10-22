@@ -5,21 +5,23 @@
  * - Uses the --sidebar-* tokens, so themes can have a dark navigation rail on a light page.
  *   v1 used .theme-card-structural, which gave the rail rounded corners and, in some themes,
  *   overflow:hidden that clipped the collapse button and the compact module menu.
- * - Collapsed mode no longer expands on mouse hover. v1 widened the rail on hover AND
- *   broadcast that to the layout, so the whole page reflowed every time the mouse crossed it.
- *   Collapsed state is remembered.
+ * - Collapse/expand with the arrow at the top of the rail (remembered). When collapsed, hovering
+ *   the rail opens it as an overlay above the page, so the page itself doesn't reflow; it closes
+ *   again when the pointer (or keyboard focus) leaves.
+ * - Only one module group is open at a time: opening one closes the others.
+
  * - Exactly one item looks "active". v1 highlighted every expanded group as active too.
  * - No hover bold / slide / icon rotate (text jitter).
  * - aria-current, aria-expanded, nav landmark, labelled icon buttons, Esc closes mobile menu.
  * - Removed React <Profiler> + useRenderLog from the production render path.
  */
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   LayoutDashboard, Ticket, FileCheck2, ShieldAlert, Settings, Database, FolderKanban,
-  ChevronLeft, ShieldCheck, ChevronRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
+  ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
   Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
   FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X,
 } from "lucide-react";
@@ -264,11 +266,27 @@ function isSubActive(href: string, pathname: string, sp: URLSearchParams | null)
   return pathname === href;
 }
 
+function getActiveModuleCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 function useModuleContext(pathname: string) {
   return useMemo(() => {
     if (pathname.startsWith("/vehicle")) return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
     if (pathname.startsWith("/design")) return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
     if (pathname.startsWith("/dashboards")) return { code: "DASHBOARDS", groups: dashboardsNavGroups, home: "/dashboards" };
+    
+    // Shared global preference and account routes (/settings, /profile): preserve user's active module
+    if (pathname.startsWith("/settings") || pathname === "/profile") {
+      const activeCookie = getActiveModuleCookie();
+      if (activeCookie === "VEHICLE_DESK") return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
+      if (activeCookie === "DESIGN_TRACKING") return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
+      if (activeCookie === "DASHBOARDS") return { code: "DASHBOARDS", groups: dashboardsNavGroups, home: "/dashboards" };
+      return { code: "TASK_WORKFLOW", groups: taskNavGroups, home: "/" };
+    }
+
     return { code: "TASK_WORKFLOW", groups: taskNavGroups, home: "/" };
   }, [pathname]);
 }
@@ -297,7 +315,24 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const darkRail = getTheme(theme).sidebarTone === "dark";
 
   const [isCompact, setIsCompact] = useState(false);
+  const [hoverOpen, setHoverOpen] = useState(false);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // accordion: one module group open at a time
+  const openOnly = (href: string) => setExpanded({ [href]: true });
+
+  // when collapsed, the rail opens on hover (after a short delay, so passing the mouse across doesn't flicker it)
+  const showFull = !isCompact || hoverOpen;
+  const scheduleHover = (open: boolean) => {
+    if (!isCompact) return;
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => {
+      // keep the rail open while its module menu (a portalled popover) is open
+      if (!open && document.querySelector("[data-radix-popper-content-wrapper]")) return;
+      setHoverOpen(open);
+    }, open ? 120 : 220);
+  };
+  useEffect(() => () => { if (hoverTimer.current) clearTimeout(hoverTimer.current); }, []);
 
   // remember collapsed state
   useEffect(() => {
@@ -306,6 +341,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const toggleCompact = () => {
     setIsCompact((c) => {
       const next = !c;
+      setHoverOpen(false);
       try { localStorage.setItem(COMPACT_KEY, next ? "1" : "0"); } catch { /* ignore */ }
       window.dispatchEvent(new CustomEvent("sidebar:toggle", { detail: { compact: next } }));
       return next;
@@ -315,7 +351,8 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   // open the group that contains the current page; close the mobile drawer on navigation
   useEffect(() => {
     const owner = navGroups.flatMap((g) => g.items).find((i) => i.subItems && (isItemActive(i, pathname, searchParams) || i.subItems.some((s) => isSubActive(s.href, pathname, searchParams))));
-    if (owner) setExpanded((p) => ({ ...p, [owner.href]: true }));
+    if (owner) openOnly(owner.href);
+    setHoverOpen(false);
     onCloseMobile?.();
   }, [pathname, navGroups]);
 
@@ -381,7 +418,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                       aria-current={showSelf ? "page" : undefined}
                       onClick={() => {
                         onCloseMobile?.();
-                        if (item.subItems) setExpanded((p) => ({ ...p, [item.href]: true }));
+                        if (item.subItems) openOnly(item.href);
                       }}
                       className={cn(
                         "group relative flex min-w-0 items-center rounded-md text-[13.5px] transition-colors",
@@ -403,7 +440,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                     {!compact && item.subItems && (
                       <button
                         type="button"
-                        onClick={() => setExpanded((p) => ({ ...p, [item.href]: !isOpen }))}
+                        onClick={() => (isOpen ? setExpanded({}) : openOnly(item.href))}
                         aria-expanded={isOpen}
                         aria-label={`${isOpen ? "Collapse" : "Expand"} ${item.label}`}
                         className="absolute right-1 inline-flex h-7 w-7 items-center justify-center rounded text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
@@ -469,35 +506,45 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* Desktop rail */}
+      {/* Desktop rail. The <aside> keeps the layout width (64px collapsed, 248px open); when collapsed
+          and hovered, the inner panel widens over the page instead of pushing it. */}
       <aside
         className={cn(
-          "relative z-[var(--z-sidebar)] hidden h-full shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 md:flex",
+          "relative z-[var(--z-sidebar)] hidden h-full shrink-0 transition-[width] duration-200 md:block",
           isCompact ? "w-[64px]" : "w-[248px]"
         )}
+        onMouseEnter={() => scheduleHover(true)}
+        onMouseLeave={() => scheduleHover(false)}
+        onFocusCapture={() => { if (isCompact) { if (hoverTimer.current) clearTimeout(hoverTimer.current); setHoverOpen(true); } }}
+        onBlurCapture={(e) => { if (isCompact && !e.currentTarget.contains(e.relatedTarget as Node | null)) scheduleHover(false); }}
       >
-        <div className={cn("flex shrink-0 flex-col gap-3", isCompact ? "items-center px-2 pb-2 pt-4" : "px-3 pb-3 pt-4")}>
-          <Link href={moduleHomeHref} aria-label="Chandak Workspace home" className={cn("flex items-center", isCompact ? "h-9 w-9 justify-center" : "h-11 px-1")}>
-            <Logo compact={isCompact} invert={darkRail} />
-          </Link>
-          <ModuleSwitcher isCompact={isCompact} />
-        </div>
-
-        {renderNav(isCompact)}
-
-        <div className={cn("shrink-0 border-t border-sidebar-border p-2", isCompact && "flex justify-center")}>
+        <div
+          className={cn(
+            "absolute inset-y-0 left-0 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width,box-shadow] duration-200",
+            showFull ? "w-[248px]" : "w-[64px]",
+            isCompact && hoverOpen && "shadow-lg"
+          )}
+        >
+          {/* collapse / expand arrow on the rail edge */}
           <button
             type="button"
             onClick={toggleCompact}
             aria-label={isCompact ? "Expand sidebar" : "Collapse sidebar"}
             aria-pressed={isCompact}
-            className={cn(
-              "inline-flex h-8 items-center gap-2 rounded-md px-2 text-[12.5px] text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
-              !isCompact && "w-full"
-            )}
+            title={isCompact ? "Expand sidebar" : "Collapse sidebar"}
+            className="absolute -right-3 top-7 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-muted shadow-sm transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {isCompact ? <ChevronRight className="h-4 w-4" aria-hidden /> : <><ChevronLeft className="h-4 w-4" aria-hidden /><span>Collapse</span></>}
+            {isCompact ? <ChevronsRight className="h-3.5 w-3.5" aria-hidden /> : <ChevronsLeft className="h-3.5 w-3.5" aria-hidden />}
           </button>
+
+          <div className={cn("flex shrink-0 flex-col gap-3", showFull ? "px-3 pb-3 pt-4" : "items-center px-2 pb-2 pt-4")}>
+            <Link href={moduleHomeHref} aria-label="Chandak Workspace home" className={cn("flex items-center", showFull ? "h-11 px-1" : "h-9 w-9 justify-center")}>
+              <Logo compact={!showFull} invert={darkRail} />
+            </Link>
+            <ModuleSwitcher isCompact={!showFull} />
+          </div>
+
+          {renderNav(!showFull)}
         </div>
       </aside>
     </>

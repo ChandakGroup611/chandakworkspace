@@ -276,6 +276,8 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       httpOnly: false,
     });
+    // a module has been opened in this browser session (see lib/module-gate.ts); no maxAge = session cookie
+    response.cookies.set("module_chosen", "1", { path: "/", sameSite: "lax", httpOnly: false });
 
     return response;
   } catch (err: any) {

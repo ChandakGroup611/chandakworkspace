@@ -21,6 +21,7 @@ import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { AppButton } from "@/components/ui/AppButton";
 import { Lock } from "lucide-react";
+import { MODULE_CHOSEN_COOKIE, MODULE_HOME, moduleOfPath, isDeepLink, markModuleChosen } from "@/lib/module-gate";
 
 const INITIAL_MODULES_DATA: UserModulesResult = {
   modules: [],
@@ -34,6 +35,8 @@ export default function SelectModulePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
+  // ?choose=1 = opened on purpose from "Manage modules": always show the choices
+  const forceChoose = searchParams.get("choose") === "1";
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +46,7 @@ export default function SelectModulePage() {
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const autoOpening = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,9 +58,21 @@ export default function SelectModulePage() {
         if (res.ok) {
           const modulesData: UserModulesResult = await res.json();
           if (isMounted) {
+            const mods = modulesData.modules || [];
+            const targetMod = isDeepLink(nextParam) ? moduleOfPath(nextParam) : null;
+            const nextModule = targetMod && mods.some((m) => m.code === targetMod) ? targetMod : null;
+            const alreadyChosen = typeof document !== "undefined" && new RegExp(`(?:^|; )${MODULE_CHOSEN_COOKIE}=1`).test(document.cookie);
+            // Module gate (lib/module-gate.ts): open straight away when only one module is allowed or a
+            // default is saved — unless this screen was opened on purpose to switch.
+            if (!forceChoose && !alreadyChosen && (mods.length === 1 || (modulesData.hasExplicitDefault && modulesData.defaultModule))) {
+              const code = mods.length === 1 ? mods[0].code : (nextModule || modulesData.defaultModule!.code);
+              autoOpening.current = true;
+              handleEnterWorkspace(code, true);
+              return;
+            }
             setData(modulesData);
             if (modulesData.modules && modulesData.modules.length > 0) {
-              const initialChoice = modulesData.defaultModule?.code || modulesData.activeModuleCode || modulesData.modules[0]?.code;
+              const initialChoice = nextModule || modulesData.defaultModule?.code || modulesData.modules[0]?.code;
               setSelectedModuleCode(initialChoice);
               if (modulesData.hasExplicitDefault && modulesData.defaultModule) {
                 setRememberDefault(true);
@@ -67,7 +83,7 @@ export default function SelectModulePage() {
       } catch (err: any) {
         console.warn("Module load error:", err);
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted && !autoOpening.current) setLoading(false);
       }
     }
 
@@ -92,7 +108,7 @@ export default function SelectModulePage() {
     };
   }, [dropdownOpen]);
 
-  const handleEnterWorkspace = async (overrideModuleCode?: string) => {
+  const handleEnterWorkspace = async (overrideModuleCode?: string, auto = false) => {
     const targetCode = overrideModuleCode || selectedModuleCode;
     if (!targetCode) return;
 
@@ -103,7 +119,7 @@ export default function SelectModulePage() {
       const res = await fetch("/api/modules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleCode: targetCode, setAsDefault: rememberDefault })
+        body: JSON.stringify({ moduleCode: targetCode, setAsDefault: auto ? false : rememberDefault })
       });
 
       const result = await res.json().catch(() => ({}));
@@ -132,6 +148,7 @@ export default function SelectModulePage() {
       }
 
       document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
+      markModuleChosen();
       window.location.href = destination;
     } catch (err: any) {
       console.error("Error activating module:", err);

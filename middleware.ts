@@ -1,5 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
+import { MODULE_CHOSEN_COOKIE } from "@/lib/module-gate";
+
+// Pages that never go through the module gate (sign-in flow, onboarding, public share links, shared user settings).
+const GATE_EXEMPT = /^\/(select-module|login|register|auth\/|api\/|profile|settings|share\/|verify-drawing\/|offline|_next\/)/;
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -31,6 +35,8 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  const moduleChosen = request.cookies.get(MODULE_CHOSEN_COOKIE)?.value === "1";
+
   // If user is authenticated and trying to access login/register, redirect to active module or workspaces
   if (user && isAuthPage) {
     const nextParam = request.nextUrl.searchParams.get("next");
@@ -40,11 +46,38 @@ export async function middleware(request: NextRequest) {
     if (activeModule === "VEHICLE_DESK") defaultDest = "/vehicle";
     else if (activeModule === "DESIGN_TRACKING") defaultDest = "/design/matrix";
 
-    const target = nextParam && nextParam !== "/" ? nextParam : defaultDest;
+    // No module opened yet in this browser session: let the selection screen apply the default-module rule
+    const target = !moduleChosen
+      ? `/select-module${nextParam && nextParam !== "/" ? `?next=${encodeURIComponent(nextParam)}` : ""}`
+      : nextParam && nextParam !== "/" ? nextParam : defaultDest;
     const redirectUrl = new URL(target, request.url);
     const response = NextResponse.redirect(redirectUrl);
     
     // Copy refreshed Supabase cookies to avoid session desynchronization
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return response;
+  }
+
+  // Module gate: a signed-in user who hasn't opened a module in this browser session (fresh sign-in,
+  // or the browser was reopened with a remembered session) goes through the selection screen, which
+  // opens their default module straight away or asks them to choose. Only full page loads are
+  // redirected — never server actions, RSC/prefetch requests or API calls.
+  const isDocumentGet =
+    request.method === "GET" &&
+    !request.headers.get("rsc") &&
+    !request.headers.get("next-action") &&
+    !request.headers.get("next-router-prefetch") &&
+    !request.nextUrl.searchParams.has("_rsc") &&
+    (request.headers.get("accept") || "").includes("text/html");
+  if (user && !moduleChosen && isDocumentGet && !isApiRoute && !isAuthCallback && !GATE_EXEMPT.test(pathname + "/") && !/^\/dashboards\/[^/]+\/(api|static|healthz)(\/|$)/.test(pathname)) {
+    const gateUrl = request.nextUrl.clone();
+    gateUrl.pathname = "/select-module";
+    gateUrl.search = "";
+    const here = pathname + request.nextUrl.search;
+    if (here !== "/") gateUrl.searchParams.set("next", here);
+    const response = NextResponse.redirect(gateUrl);
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       response.cookies.set(cookie.name, cookie.value, cookie);
     });

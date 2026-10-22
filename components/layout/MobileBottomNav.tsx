@@ -42,7 +42,17 @@ const TABS: Record<string, Tab[]> = {
 
 export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
   const pathname = usePathname() || "/";
-  const key = pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
+  let key = pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
+  if (pathname.startsWith("/settings") || pathname === "/profile") {
+    if (typeof document !== "undefined") {
+      const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
+      const mod = m ? decodeURIComponent(m[1]) : "";
+      if (mod === "VEHICLE_DESK") key = "vehicle";
+      else if (mod === "DESIGN_TRACKING") key = "design";
+      else if (mod === "DASHBOARDS") key = "dashboards";
+      else key = "task";
+    }
+  }
   const tabs = TABS[key];
 
   const item = "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-[11px] transition-colors";

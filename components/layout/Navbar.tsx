@@ -180,7 +180,7 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
           {isLight ? <Moon className="h-4 w-4" aria-hidden /> : <Sun className="h-4 w-4" aria-hidden />}
         </button>
         <ThemeMenu />
-        <Link href="/settings" aria-label="Settings" className={iconBtn}>
+        <Link href="/settings" aria-label="Design gallery" title="Design gallery" className={iconBtn}>
           <Settings className="h-4 w-4" aria-hidden />
         </Link>
         <RealtimeNotificationsDrawer />

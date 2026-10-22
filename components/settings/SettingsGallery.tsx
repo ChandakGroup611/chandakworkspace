@@ -15,8 +15,12 @@ import {
 } from "lucide-react";
 import CustomFieldsConfigurator from "@/components/settings/CustomFieldsConfigurator";
 import { saveDesignPreferences } from "@/lib/actions/preferences";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SettingsGallery() {
+  const { hasPermission, roleCode } = usePermissions();
+  const canManageCustomFields = roleCode === "SUPER_ADMIN" || hasPermission("SETTINGS_MANAGE") || hasPermission("SETTINGS_CUSTOM_FIELDS");
+
   const { 
     theme, 
     density, 
@@ -42,13 +46,16 @@ export default function SettingsGallery() {
 
   const handleSavePreferences = async () => {
     setIsSaving(true);
-    const prefs = {
+    const prefsPayload = {
       theme, density, tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize
     };
-    const res = await saveDesignPreferences(prefs);
+    const res = await saveDesignPreferences(prefsPayload);
     setIsSaving(false);
     if (res.success) {
-      triggerToast("Preferences saved to your account permanently.");
+      triggerToast("Default account preferences saved successfully.");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("app:preferences-saved"));
+      }
     } else {
       triggerToast(res.error || "Failed to save preferences.");
     }
@@ -231,10 +238,12 @@ export default function SettingsGallery() {
         </div>
       </section>
 
-      {/* Row 3: End-to-End Dynamic Custom Fields Dictionaries Map */}
-      <section className="space-y-4 pt-4">
-        <CustomFieldsConfigurator />
-      </section>
+      {/* Row 3: End-to-End Dynamic Custom Fields Dictionaries Map (Admin only) */}
+      {canManageCustomFields && (
+        <section className="space-y-4 pt-4">
+          <CustomFieldsConfigurator />
+        </section>
+      )}
 
       {/* Row 4: Persistent Saving */}
       <section className="space-y-4 pt-6 border-t border-border">

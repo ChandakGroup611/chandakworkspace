@@ -2,36 +2,16 @@
 
 import React from "react";
 import SettingsGallery from "@/components/settings/SettingsGallery";
-import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SettingsPage() {
-  const { hasPermission, roleCode } = usePermissions();
-  const canManage = roleCode === "SUPER_ADMIN" || hasPermission("SETTINGS_THEME_VIEW") || hasPermission("SETTINGS_MANAGE");
-
-  if (!canManage) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold text-danger-text">Access denied</h2>
-          <p className="text-muted">You do not have permission to manage settings.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full space-y-6 animate-in fade-in-50 duration-500">
-      {/* Semantic main header wrapper ensuring heading hierarchy */}
       <header className="border-b border-border pb-4">
-        <h1 id="settings-page-title" className="text-xl font-semibold tracking-tight">
-          Design gallery & UI governance engine
+        <h1 id="settings-page-title" className="text-xl font-semibold tracking-tight text-foreground">
+          Design gallery
         </h1>
-        <p className="text-xs text-muted mt-1">
-          Centralized visual preference repository managing multi-tier styling layers, cognitive density, and tactile response metrics.
-        </p>
       </header>
 
-      {/* Interactive client sandbox orchestration layer */}
       <SettingsGallery />
     </div>
   );

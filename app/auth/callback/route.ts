@@ -145,8 +145,11 @@ export async function GET(request: Request) {
         }
       }
 
-      // Step 5: Validate rawNext if requested
-      if (rawNext && rawNext !== '/' && rawNext !== '/select-module' && !rawNext.includes('/login')) {
+      // Step 5: Validate rawNext if requested. With several modules and no default, the deep link is
+      // handed to the selection screen instead of overriding it (the person still chooses first).
+      if (destination === '/select-module' && rawNext && rawNext !== '/' && !rawNext.startsWith('/select-module') && !rawNext.includes('/login')) {
+        destination = `/select-module?next=${encodeURIComponent(rawNext)}`;
+      } else if (rawNext && rawNext !== '/' && rawNext !== '/select-module' && !rawNext.includes('/login')) {
         let requestedModule = 'TASK_WORKFLOW';
         if (rawNext.startsWith('/vehicle')) requestedModule = 'VEHICLE_DESK';
         else if (rawNext.startsWith('/design')) requestedModule = 'DESIGN_TRACKING';
@@ -166,6 +169,12 @@ export async function GET(request: Request) {
         sameSite: 'lax',
         httpOnly: false,
       });
+      // Module gate (lib/module-gate.ts): a fresh sign-in starts unchosen unless a rule already opened a module
+      if (destination.startsWith('/select-module')) {
+        response.cookies.set('module_chosen', '', { path: '/', maxAge: 0 });
+      } else {
+        response.cookies.set('module_chosen', '1', { path: '/', sameSite: 'lax', httpOnly: false });
+      }
 
       return response;
     } else {

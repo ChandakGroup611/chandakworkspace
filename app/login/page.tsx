@@ -1,4 +1,5 @@
 "use client";
+import { MODULE_HOME, moduleOfPath, isDeepLink, markModuleChosen, clearModuleChosen } from "@/lib/module-gate";
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect } from "react";
@@ -32,17 +33,18 @@ export default function LoginPage() {
   const [noticeMsg, setNoticeMsg] = useState<{ type: 'warning' | 'info' | 'error'; title: string; description: string } | null>(null);
   const [isOAuthCallback, setIsOAuthCallback] = useState(false);
 
+  // Where to go after sign-in. Rules (lib/module-gate.ts): one module → open it; a saved default →
+  // open it; otherwise the "Choose a module" screen. A deep link (?next=) is honoured only when a
+  // module is opened automatically and the link belongs to a module the person can use; with no
+  // default it is passed to the selection screen, which opens it if they pick its module.
   const resolvePostLoginDestination = async (rawNext?: string | null, userId?: string): Promise<string> => {
-    if (rawNext && rawNext !== "/" && !rawNext.includes("/login") && !rawNext.includes("/select-module")) {
-      let targetCode = "TASK_WORKFLOW";
-      if (rawNext.startsWith("/vehicle")) targetCode = "VEHICLE_DESK";
-      else if (rawNext.startsWith("/design")) targetCode = "DESIGN_TRACKING";
-      else if (rawNext.startsWith("/dashboards")) targetCode = "DASHBOARDS";
+    clearModuleChosen();
+    const nextQs = isDeepLink(rawNext) ? `?next=${encodeURIComponent(rawNext)}` : "";
+    const setActive = (code: string) => {
       if (typeof document !== "undefined") {
-        document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
+        document.cookie = `active_module=${code}; path=/; max-age=2592000; SameSite=Lax`;
       }
-      return rawNext;
-    }
+    };
 
     try {
       const url = userId ? `/api/modules?userId=${encodeURIComponent(userId)}` : "/api/modules";
@@ -55,38 +57,32 @@ export default function LoginPage() {
           return "/login?error=no-module-access";
         }
 
-        const routeMap: Record<string, string> = {
-          TASK_WORKFLOW: "/",
-          VEHICLE_DESK: "/vehicle",
-          DESIGN_TRACKING: "/design/matrix",
-          DASHBOARDS: "/dashboards"
-        };
+        const allowed = (code: string) => data.modules.some((m: any) => m.code === code);
+        const targetMod = isDeepLink(rawNext) ? moduleOfPath(rawNext) : null;
+        const nextModule = targetMod && allowed(targetMod) ? targetMod : null;
 
         // Exactly one module authorized -> land directly on that module
         if (data.modules.length === 1) {
           const mod = data.modules[0];
-          const dest = routeMap[mod.code] || mod.route_path || "/";
-          if (typeof document !== "undefined") {
-            document.cookie = `active_module=${mod.code}; path=/; max-age=2592000; SameSite=Lax`;
-          }
-          return dest;
+          setActive(mod.code);
+          markModuleChosen();
+          return nextModule === mod.code && rawNext ? rawNext : (MODULE_HOME[mod.code] || mod.route_path || "/");
         }
 
-        // Multiple modules authorized and explicit default configured -> land on default
+        // Multiple modules authorized and explicit default configured -> land on default (or the deep link)
         if (data.hasExplicitDefault && data.defaultModule?.code) {
-          const dest = routeMap[data.defaultModule.code] || data.defaultModule.route_path || "/";
-          if (typeof document !== "undefined") {
-            document.cookie = `active_module=${data.defaultModule.code}; path=/; max-age=2592000; SameSite=Lax`;
-          }
-          return dest;
+          const code = nextModule || data.defaultModule.code;
+          setActive(code);
+          markModuleChosen();
+          return nextModule && rawNext ? rawNext : (MODULE_HOME[code] || data.defaultModule.route_path || "/");
         }
 
         // Multiple modules authorized but no default configured -> open Module Selection screen
-        return "/select-module";
+        return `/select-module${nextQs}`;
       }
     } catch (e) {}
 
-    return "/select-module";
+    return `/select-module${nextQs}`;
   };
 
   useEffect(() => {
@@ -204,10 +200,12 @@ export default function LoginPage() {
       const newToken = crypto.randomUUID();
       if (typeof window !== "undefined") {
         localStorage.setItem("app_session_token", newToken);
-        let activeMod = "TASK_WORKFLOW";
-        if (destination.startsWith("/vehicle")) activeMod = "VEHICLE_DESK";
-        else if (destination.startsWith("/design")) activeMod = "DESIGN_TRACKING";
-        document.cookie = `active_module=${activeMod}; path=/; max-age=2592000; SameSite=Lax`;
+        if (!destination.startsWith("/select-module") && !destination.startsWith("/login")) {
+          const destMod = moduleOfPath(destination);
+          if (destMod) {
+            document.cookie = `active_module=${destMod}; path=/; max-age=2592000; SameSite=Lax`;
+          }
+        }
       }
       
       // Register session via REST endpoint

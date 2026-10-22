@@ -29,6 +29,18 @@ export async function saveDesignPreferences(payload: any) {
     return { success: false, error: `Failed to save preferences: ${dbError.message}` };
   }
 
+  // Synchronize server-side cookies for instant rendering and middleware awareness
+  try {
+    const opts = { path: "/", maxAge: 31536000, sameSite: "lax" as const };
+    if (payload.theme) cookieStore.set("chandak_theme_id", payload.theme, opts);
+    if (payload.density) cookieStore.set("chandak_density", payload.density, opts);
+    if (payload.fontFamily) cookieStore.set("chandak_font", payload.fontFamily, opts);
+    if (payload.fontWeightProfile) cookieStore.set("chandak_weight", payload.fontWeightProfile, opts);
+    if (payload.accentColor) cookieStore.set("chandak_accent", payload.accentColor, opts);
+    if (payload.baseFontSize) cookieStore.set("chandak_base_size", String(payload.baseFontSize), opts);
+    if (payload.subtextFontSize) cookieStore.set("chandak_subtext_size", String(payload.subtextFontSize), opts);
+  } catch {}
+
   return { success: true };
 }
 
@@ -45,19 +57,22 @@ export async function fetchDesignPreferences() {
   // Read from the user's configuration record using service role bypass
   const { data, error } = await supabaseAdmin
     .from("user_dashboard_preferences")
-    .select("widget_layout")
+    .select("widget_layout, selected_theme")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (error || !data) {
     // If no preferences exist, return null instead of defaults.
-    // This ensures we do not overwrite a new user's valid localStorage (e.g. they clicked Sun/Moon toggle)
-    // with hardcoded defaults before they have actively saved to the DB.
     return { 
       success: true, 
       data: null 
     };
   }
 
-  return { success: true, data: data.widget_layout };
+  const layout = (data.widget_layout as Record<string, any>) || {};
+  if (!layout.theme && data.selected_theme) {
+    layout.theme = data.selected_theme;
+  }
+
+  return { success: true, data: layout };
 }

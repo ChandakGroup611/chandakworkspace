@@ -6,8 +6,9 @@
  * Keyboard and touch friendly via Radix Popover.
  */
 import React from "react";
+import Link from "next/link";
 import * as Popover from "@radix-ui/react-popover";
-import { Check, Palette } from "lucide-react";
+import { Check, Palette, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./ThemeProvider";
 import { THEMES } from "./theme-registry";
@@ -47,7 +48,7 @@ export function ThemeMenu() {
                     active ? "bg-accent-soft text-accent-soft-text font-semibold" : "text-foreground hover:bg-surface-hover"
                   )}
                 >
-                  <span className="flex h-4 w-6 overflow-hidden rounded-sm border border-border" aria-hidden>
+                  <span className="flex h-4 w-4 overflow-hidden rounded-sm border border-border" aria-hidden>
                     <span className="w-1/3" style={{ background: t.swatch[1] }} />
                     <span className="flex-1" style={{ background: t.swatch[0] }} />
                     <span className="w-1/4" style={{ background: t.swatch[2] }} />
@@ -57,6 +58,15 @@ export function ThemeMenu() {
                 </button>
               );
             })}
+          </div>
+          <div className="mt-1 border-t border-border pt-1">
+            <Link
+              href="/settings"
+              className="flex items-center justify-between rounded-md px-2 py-1.5 text-[12.5px] font-medium text-accent-soft-text hover:bg-surface-hover"
+            >
+              <span>Design gallery</span>
+              <Settings className="h-3.5 w-3.5 text-muted" aria-hidden />
+            </Link>
           </div>
         </Popover.Content>
       </Popover.Portal>
