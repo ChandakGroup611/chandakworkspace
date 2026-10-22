@@ -318,6 +318,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const [isCompact, setIsCompact] = useState(false);
   const [hoverOpen, setHoverOpen] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTogglingRef = useRef(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   // accordion: one module group open at a time
   const openOnly = (href: string) => setExpanded({ [href]: true });
@@ -325,11 +326,12 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   // when collapsed, the rail opens on hover (after a short delay, so passing the mouse across doesn't flicker it)
   const showFull = !isCompact || hoverOpen;
   const scheduleHover = (open: boolean) => {
-    if (!isCompact) return;
+    if (!isCompact || isTogglingRef.current) return;
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     hoverTimer.current = setTimeout(() => {
       // keep the rail open while its module menu (a portalled popover) is open
       if (!open && document.querySelector("[data-radix-popper-content-wrapper]")) return;
+      if (open && isTogglingRef.current) return;
       setHoverOpen(open);
     }, open ? 120 : 220);
   };
@@ -340,6 +342,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
     try { setIsCompact(localStorage.getItem(COMPACT_KEY) === "1"); } catch { /* ignore */ }
   }, []);
   const toggleCompact = () => {
+    isTogglingRef.current = true;
     setIsCompact((c) => {
       const next = !c;
       setHoverOpen(false);
@@ -347,6 +350,9 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
       window.dispatchEvent(new CustomEvent("sidebar:toggle", { detail: { compact: next } }));
       return next;
     });
+    setTimeout(() => {
+      isTogglingRef.current = false;
+    }, 400);
   };
 
   // open the group that contains the current page; close the mobile drawer on navigation
@@ -507,46 +513,37 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* Desktop rail. The <aside> keeps the layout width (64px collapsed, 248px open); when collapsed
-          and hovered, the inner panel widens over the page instead of pushing it. */}
+      {/* Desktop rail: adjusts width responsively so header and search bar adapt seamlessly */}
       <aside
         className={cn(
-          "relative z-[var(--z-sidebar)] hidden h-full shrink-0 transition-[width] duration-200 md:block",
-          isCompact ? "w-[64px]" : "w-[248px]"
+          "relative z-[var(--z-sidebar)] hidden h-full shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-in-out select-none md:flex",
+          showFull ? "w-[248px]" : "w-[64px]"
         )}
         onMouseEnter={() => scheduleHover(true)}
         onMouseLeave={() => scheduleHover(false)}
-        onFocusCapture={() => { if (isCompact) { if (hoverTimer.current) clearTimeout(hoverTimer.current); setHoverOpen(true); } }}
+        onFocusCapture={() => { if (isCompact && !isTogglingRef.current) { if (hoverTimer.current) clearTimeout(hoverTimer.current); setHoverOpen(true); } }}
         onBlurCapture={(e) => { if (isCompact && !e.currentTarget.contains(e.relatedTarget as Node | null)) scheduleHover(false); }}
       >
-        <div
-          className={cn(
-            "absolute inset-y-0 left-0 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width,box-shadow] duration-200",
-            showFull ? "w-[248px]" : "w-[64px]",
-            isCompact && hoverOpen && "shadow-lg"
-          )}
+        {/* collapse / expand arrow on the rail edge */}
+        <button
+          type="button"
+          onClick={toggleCompact}
+          aria-label={isCompact ? "Expand sidebar" : "Collapse sidebar"}
+          aria-pressed={isCompact}
+          title={isCompact ? "Expand sidebar" : "Collapse sidebar"}
+          className="absolute -right-3 top-7 z-50 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-muted shadow-sm transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {/* collapse / expand arrow on the rail edge */}
-          <button
-            type="button"
-            onClick={toggleCompact}
-            aria-label={isCompact ? "Expand sidebar" : "Collapse sidebar"}
-            aria-pressed={isCompact}
-            title={isCompact ? "Expand sidebar" : "Collapse sidebar"}
-            className="absolute -right-3 top-7 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-muted shadow-sm transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {isCompact ? <ChevronsRight className="h-3.5 w-3.5" aria-hidden /> : <ChevronsLeft className="h-3.5 w-3.5" aria-hidden />}
-          </button>
+          {isCompact ? <ChevronsRight className="h-3.5 w-3.5" aria-hidden /> : <ChevronsLeft className="h-3.5 w-3.5" aria-hidden />}
+        </button>
 
-          <div className={cn("flex shrink-0 flex-col gap-3", showFull ? "px-3 pb-3 pt-4" : "items-center px-2 pb-2 pt-4")}>
-            <Link href={moduleHomeHref} aria-label="Chandak Workspace home" className={cn("flex items-center", showFull ? "h-11 px-1" : "h-9 w-9 justify-center")}>
-              <Logo compact={!showFull} invert={darkRail} />
-            </Link>
-            <ModuleSwitcher isCompact={!showFull} />
-          </div>
-
-          {renderNav(!showFull)}
+        <div className={cn("flex shrink-0 flex-col gap-3", showFull ? "px-3 pb-3 pt-4" : "items-center px-2 pb-2 pt-4")}>
+          <Link href={moduleHomeHref} aria-label="Chandak Workspace home" className={cn("flex items-center", showFull ? "h-11 px-1" : "h-9 w-9 justify-center")}>
+            <Logo compact={!showFull} invert={darkRail} />
+          </Link>
+          <ModuleSwitcher isCompact={!showFull} />
         </div>
+
+        {renderNav(!showFull)}
       </aside>
     </>
   );

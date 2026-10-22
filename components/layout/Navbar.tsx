@@ -117,8 +117,8 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
   const iconBtn = "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground";
 
   return (
-    <header className="sticky top-0 z-[var(--z-header)] flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-3 sm:px-4 md:px-6">
-      <div ref={boxRef} className="relative flex max-w-xl flex-1 items-center gap-2">
+    <header className="sticky top-0 z-[var(--z-header)] flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-3 sm:px-4 md:px-6 transition-all duration-200">
+      <div ref={boxRef} className="relative flex w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl flex-1 items-center gap-2 transition-[max-width,width] duration-200">
         <button type="button" onClick={() => onOpenMobileMenu?.()} aria-label="Open menu" className={cn(iconBtn, "md:hidden")}>
           <Menu className="h-5 w-5" aria-hidden />
         </button>
@@ -138,13 +138,13 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
             onFocus={() => setSearchOpen(true)}
             onKeyDown={onSearchKey}
             placeholder="Search tasks, tickets, vehicles…"
-            className="h-9 w-full rounded-md border-border bg-sunken pl-9 pr-14 text-[13.5px] focus:bg-surface"
+            className="h-9 w-full rounded-md border border-border bg-sunken pl-9 pr-14 text-[13.5px] transition-all duration-200 focus:bg-surface focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary/20 focus:outline-none"
           />
           <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-surface px-1.5 font-sans text-[11px] text-muted sm:block">Ctrl K</kbd>
         </div>
 
         {searchOpen && (
-          <div className="fixed inset-x-3 top-[60px] z-[var(--z-popover)] overflow-hidden rounded-[10px] border border-border bg-elevated shadow-lg sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+6px)] sm:w-[min(560px,calc(100vw-2rem))]">
+          <div className="fixed inset-x-3 top-[60px] z-[var(--z-popover)] overflow-hidden rounded-[10px] border border-border bg-elevated shadow-lg sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+6px)] sm:w-full sm:max-w-md md:sm:max-w-xl lg:sm:max-w-2xl">
             <div className="flex items-center justify-between px-3 pb-1 pt-2.5">
               <span className="theme-label">{query.trim() ? "Results" : "Quick actions"}</span>
               {searching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" aria-label="Searching" />}

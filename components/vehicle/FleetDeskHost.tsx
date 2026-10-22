@@ -2683,6 +2683,10 @@ export default function FleetDeskHost({
     const handleKeyDown = (e: KeyboardEvent) => {
       // Toggle Command Palette
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || (target as any).isContentEditable)) {
+          return;
+        }
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
         setCommandQuery("");
