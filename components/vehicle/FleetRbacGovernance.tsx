@@ -13,7 +13,6 @@ import {
   XCircle, 
   Edit3, 
   Trash2, 
-  RefreshCw, 
   FileText, 
   Check, 
   Layers, 
@@ -673,20 +672,6 @@ export default function FleetRbacGovernance() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Vehicle RBAC access policies
           </h1>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          <AppButton
-            variant="outline"
-            size="sm"
-            onClick={loadWorkspaceUsers}
-            disabled={isLoading}
-            className="flex items-center gap-1.5"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            <span>Refresh directory</span>
-          </AppButton>
         </div>
       </div>
 

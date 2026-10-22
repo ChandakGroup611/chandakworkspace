@@ -263,6 +263,7 @@ let fleetDataCache: {
   trips?: TripRecord[];
   maintenance?: MaintenanceRecord[];
   vendors?: InsuranceVendorRecord[];
+  purchaseVendors?: PurchaseVendorRecord[];
   parts?: PartAccessoryRecord[];
   timestamp: number;
 } | null = null;
@@ -741,6 +742,9 @@ export interface FleetDeskHostProps {
   initialDrivers?: DriverRecord[];
   initialTrips?: TripRecord[];
   initialMaintenance?: MaintenanceRecord[];
+  initialVendors?: InsuranceVendorRecord[];
+  initialPurchaseVendors?: PurchaseVendorRecord[];
+  initialParts?: PartAccessoryRecord[];
 }
 
 export default function FleetDeskHost({ 
@@ -749,7 +753,10 @@ export default function FleetDeskHost({
   initialVehicles,
   initialDrivers,
   initialTrips,
-  initialMaintenance
+  initialMaintenance,
+  initialVendors,
+  initialPurchaseVendors,
+  initialParts
 }: FleetDeskHostProps) {
   const pathname = usePathname() || "/vehicle";
   const router = useRouter();
@@ -845,17 +852,17 @@ export default function FleetDeskHost({
   const [drivers, setDrivers] = useState<DriverRecord[]>(() => initialDrivers || []);
   const [trips, setTrips] = useState<TripRecord[]>(() => initialTrips || []);
   const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>(() => initialMaintenance || []);
-  const [insuranceVendors, setInsuranceVendors] = useState<InsuranceVendorRecord[]>([]);
-  const [purchaseVendors, setPurchaseVendors] = useState<PurchaseVendorRecord[]>([]);
+  const [insuranceVendors, setInsuranceVendors] = useState<InsuranceVendorRecord[]>(() => initialVendors || []);
+  const [purchaseVendors, setPurchaseVendors] = useState<PurchaseVendorRecord[]>(() => initialPurchaseVendors || []);
 
-  // Granular dataset loaded flags to display sub-tab loaders instead of premature empty states
+  // Granular dataset loaded flags — live data preloaded directly from server
   const [dataLoaded, setDataLoaded] = useState({
-    vehicles: Boolean(initialVehicles && initialVehicles.length > 0),
-    drivers: Boolean(initialDrivers && initialDrivers.length > 0),
-    trips: Boolean(initialTrips && initialTrips.length > 0),
-    maintenance: Boolean(initialMaintenance && initialMaintenance.length > 0),
-    vendors: false,
-    parts: false
+    vehicles: initialVehicles !== undefined,
+    drivers: initialDrivers !== undefined,
+    trips: initialTrips !== undefined,
+    maintenance: initialMaintenance !== undefined,
+    vendors: initialVendors !== undefined,
+    parts: initialParts !== undefined
   });
 
   // Filtering and search
@@ -981,7 +988,7 @@ export default function FleetDeskHost({
   const [vendorFormDesc, setVendorFormDesc] = useState("");
 
   // Parts & Accessories Data & Filter States
-  const [parts, setParts] = useState<PartAccessoryRecord[]>([]);
+  const [parts, setParts] = useState<PartAccessoryRecord[]>(() => initialParts || []);
   const [partsSearch, setPartsSearch] = useState("");
   const [partsItemTypeFilter, setPartsItemTypeFilter] = useState("ALL");
   const [partsExpiryFilter, setPartsExpiryFilter] = useState("ALL");
@@ -2980,7 +2987,7 @@ export default function FleetDeskHost({
     try {
       const hasExistingData = (vehicles.length > 0 || Boolean(initialVehicles?.length)) && stats.totalVehicles > 0;
       if (!isSilent && !hasExistingData) setLoading(true);
-      else setRefreshing(true);
+      else if (!isSilent) setRefreshing(true);
 
       const [
         statsSettled,
@@ -3082,7 +3089,11 @@ export default function FleetDeskHost({
     if (typeof document !== "undefined") {
       document.cookie = "active_module=VEHICLE_DESK; path=/; max-age=2592000; SameSite=Lax";
     }
-    const hasPreloaded = Boolean((initialVehicles && initialVehicles.length > 0) || (initialStats && initialStats.totalVehicles > 0));
+    const hasPreloaded = Boolean(
+      (initialVehicles && initialVehicles.length > 0) || 
+      (initialStats && initialStats.totalVehicles > 0) ||
+      initialVehicles !== undefined
+    );
     if (hasPreloaded) {
       if (!fleetDataCache) {
         fleetDataCache = {
@@ -3091,14 +3102,16 @@ export default function FleetDeskHost({
           drivers: initialDrivers || [],
           trips: initialTrips || [],
           maintenance: initialMaintenance || [],
+          vendors: initialVendors || [],
+          purchaseVendors: initialPurchaseVendors || [],
+          parts: initialParts || [],
           timestamp: Date.now()
         };
       }
       setLoading(false);
-      // Fetch live data in background without blocking initial paint
-      loadAllData(true, true);
+      // Live data delivered directly from server pre-fetch during page load; no background sync needed
     } else {
-      loadAllData(false, true);
+      loadAllData(false, false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -9235,24 +9248,9 @@ export default function FleetDeskHost({
               </AppButton>
 
               <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-muted-foreground bg-surface border border-border">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
                 <span>Live</span>
               </div>
-
-              <AppButton
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  fleetDataCache = null;
-                  loadAllData(true, true);
-                }}
-                disabled={refreshing}
-                className="text-xs h-9 font-medium gap-1.5"
-                title="Refresh live data"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-theme-btn-primary" : ""}`} />
-                <span>Refresh</span>
-              </AppButton>
 
               {moduleMeta?.actionBtn}
             </div>
@@ -11441,17 +11439,6 @@ export default function FleetDeskHost({
                     </button>
                   )}
                 </div>
-
-                {/* Refresh Data Trigger */}
-                <AppButton aria-label="Refresh"
-                  variant="outline"
-                  size="icon-sm"
-                  title="Refresh"
-                  onClick={() => loadAllData(true)}
-                  className="h-8 w-8 shrink-0 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-theme-btn-primary" : ""}`} />
-                </AppButton>
               </div>
             </div>
 

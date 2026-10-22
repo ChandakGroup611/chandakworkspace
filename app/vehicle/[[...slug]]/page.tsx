@@ -7,7 +7,10 @@ import {
   fetchVehiclesList, 
   fetchDriversList, 
   fetchTripsList, 
-  fetchMaintenanceList 
+  fetchMaintenanceList,
+  fetchInsuranceVendorsListAction,
+  fetchPurchaseVendorsListAction,
+  fetchVehiclePartsList
 } from "@/lib/actions/vehicle";
 import FleetDeskHost from "@/components/vehicle/FleetDeskHost";
 
@@ -39,15 +42,26 @@ export default async function VehicleModulePage({ params }: PageProps) {
 
   const resolvedParams = await params;
   const slug = resolvedParams.slug || [];
-  const activeSection = slug[0] || "dashboard";
 
-  // Server-side parallel pre-fetch for instant first paint
-  const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes] = await Promise.all([
+  // Server-side parallel pre-fetch for instant live paint on dedicated pages
+  const [
+    statsRes, 
+    vehiclesRes, 
+    driversRes, 
+    tripsRes, 
+    maintRes,
+    vendorsRes,
+    purchaseVendorsRes,
+    partsRes
+  ] = await Promise.all([
     fetchVehicleDashboardStats().catch(() => ({ success: false, stats: undefined })),
     fetchVehiclesList({ pageSize: 100 }).catch(() => ({ success: false, vehicles: [] })),
     fetchDriversList().catch(() => ({ success: false, drivers: [] })),
-    (activeSection === "trips" ? fetchTripsList().catch(() => ({ success: false, trips: [] })) : Promise.resolve({ success: false, trips: [] })),
-    (activeSection === "maintenance" ? fetchMaintenanceList().catch(() => ({ success: false, records: [] })) : Promise.resolve({ success: false, records: [] }))
+    fetchTripsList().catch(() => ({ success: false, trips: [] })),
+    fetchMaintenanceList().catch(() => ({ success: false, records: [] })),
+    fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })),
+    fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })),
+    fetchVehiclePartsList().catch(() => ({ success: false, parts: [] }))
   ]);
 
   return (
@@ -58,6 +72,9 @@ export default async function VehicleModulePage({ params }: PageProps) {
       initialDrivers={driversRes?.success ? driversRes.drivers : undefined}
       initialTrips={tripsRes?.success ? tripsRes.trips : undefined}
       initialMaintenance={maintRes?.success ? maintRes.records : undefined}
+      initialVendors={vendorsRes?.success ? vendorsRes.vendors : undefined}
+      initialPurchaseVendors={purchaseVendorsRes?.success ? purchaseVendorsRes.vendors : undefined}
+      initialParts={partsRes?.success ? partsRes.parts : undefined}
     />
   );
 }
