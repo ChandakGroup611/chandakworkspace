@@ -20,8 +20,8 @@ function sseChunk(event: string, data: any): Uint8Array {
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Server Kill-Switch
-    const copilotEnabled = process.env.COPILOT_ENABLED === "true";
+    // 1. Server Kill-Switch (Active by default; soft kill-switch engaged only if explicitly set to 'false')
+    const copilotEnabled = process.env.COPILOT_ENABLED !== "false";
     if (!copilotEnabled) {
       return NextResponse.json(
         { error: "SERVICE_UNAVAILABLE", message: "Chandak AI Copilot is currently offline." },

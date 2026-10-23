@@ -158,15 +158,26 @@ export const VEHICLE_WORKFLOW_GUIDES = {
 
 export function explainVehicleConcept(concept: string): VehicleConceptDefinition | null {
   const normalized = concept.trim().toUpperCase().replace(/[\s-]/g, "_");
-  if (VEHICLE_CONCEPTS[normalized]) {
-    return VEHICLE_CONCEPTS[normalized];
-  }
+  const matches: VehicleConceptDefinition[] = [];
+
   for (const [key, val] of Object.entries(VEHICLE_CONCEPTS)) {
-    if (normalized.includes(key) || key.includes(normalized) || val.concept.toUpperCase().includes(concept.trim().toUpperCase())) {
-      return val;
+    if (normalized.includes(key) || concept.toUpperCase().includes(val.concept.toUpperCase())) {
+      if (!matches.some(m => m.concept === val.concept)) {
+        matches.push(val);
+      }
     }
   }
-  return null;
+
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0];
+
+  return {
+    concept: matches.map(m => m.concept).join(" & "),
+    definition: matches.map(m => `**${m.concept}:** ${m.definition}`).join("\n\n"),
+    applicableRoles: Array.from(new Set(matches.flatMap(m => m.applicableRoles))),
+    rules: matches.flatMap(m => m.rules.map(r => `[${m.concept}] ${r}`)),
+    sourceDocument: matches.map(m => m.sourceDocument).join(" | ")
+  };
 }
 
 export function guideVehicleWorkflow(action: string) {
