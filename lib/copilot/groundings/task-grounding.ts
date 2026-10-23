@@ -119,6 +119,24 @@ export function explainTaskConcept(query: string): GroundedExplanation | null {
     };
   }
 
+  if (q.includes("report") || q.includes("analytic") || q.includes("kpi") || q.includes("export")) {
+    return {
+      topic: "Workspace Task Reports & Analytics",
+      sourceDocument: "app/workspaces/reports/page.tsx",
+      definition: "The enterprise reporting engine for tracking task completion turnaround times, status distributions, overdue deliverables, and team productivity.",
+      keyRules: [
+        "Navigate to Workspaces -> Reports & analytics (/workspaces/reports).",
+        "Interactive filters: Workspace, Status (Pending, In Progress, Completed, Overdue), Assignee, and Date Range.",
+        "One-click data export to Excel (.xlsx) and PDF formats.",
+        "Requires 'REPORTS_VIEW' permission or Super Admin status."
+      ],
+      rolePermissions: {
+        "Super Admin": "Universal organization reporting access",
+        "Standard User / Lead": "Access granted with 'REPORTS_VIEW' permission"
+      }
+    };
+  }
+
   if (q.includes("checklist") || q.includes("subtask") || q.includes("task") || q.includes("workspace") || q.includes("ticket")) {
     const taskModule = learningModules.find(m => m.code === "TASK_WORKFLOW" || m.id === "task_management");
     if (taskModule) {
@@ -144,9 +162,13 @@ export function explainTaskConcept(query: string): GroundedExplanation | null {
  */
 export function guideTaskWorkflow(action: string) {
   const normalized = action.trim().toUpperCase().replace(/[\s-]/g, "_");
-  let resolvedAction: "CREATE" | "TRANSITION_STATUS" | "RESOLVE" | "TRANSFER" = "CREATE";
+  let resolvedAction: "CREATE" | "TRANSITION_STATUS" | "RESOLVE" | "TRANSFER" | "VIEW_REPORTS" | "CHECK_STATUS" = "CREATE";
 
-  if (normalized.includes("RESOLVE") || normalized.includes("COMPLETE") || normalized.includes("CLOSE")) {
+  if (normalized.includes("REPORT") || normalized.includes("ANALYTIC") || normalized.includes("EXPORT")) {
+    resolvedAction = "VIEW_REPORTS";
+  } else if (normalized.includes("WHERE") && (normalized.includes("STATUS") || normalized.includes("CHECK") || normalized.includes("FIND"))) {
+    resolvedAction = "CHECK_STATUS";
+  } else if (normalized.includes("RESOLVE") || normalized.includes("COMPLETE") || normalized.includes("CLOSE")) {
     resolvedAction = "RESOLVE";
   } else if (normalized.includes("TRANSFER") || normalized.includes("REASSIGN")) {
     resolvedAction = "TRANSFER";
@@ -157,6 +179,40 @@ export function guideTaskWorkflow(action: string) {
   }
 
   switch (resolvedAction) {
+    case "VIEW_REPORTS":
+      return {
+        title: "Workspace Task Status Reports & Analytics",
+        workflow: "Task Status Reports",
+        summary: "Viewing aggregated task progress, completion metrics, overdue status, and Excel/PDF reports.",
+        sourceDocument: "app/workspaces/reports/page.tsx & components/reports/ReportsClient.tsx",
+        applicableRule: "Reporting Authorization: Access requires 'REPORTS_VIEW' permission or Super Admin role.",
+        prerequisites: ["Active Workspace Enrollment", "'REPORTS_VIEW' or Super Admin authorization"],
+        requiredFields: ["Target Workspace Scope", "Date Filter (optional)"],
+        steps: [
+          "1. Navigate to 'Workspaces' from the top navigation bar.",
+          "2. Click 'Reports & analytics' in the workspace menu (or open direct route: /workspaces/reports).",
+          "3. Use the Workspace Selector to filter by a specific project workspace or select 'All Workspaces'.",
+          "4. Apply Status filters (In Progress, Under Review, Completed, Overdue) or Assignee filters.",
+          "5. Inspect the live KPI Bar for Total Tasks, Completion %, Overdue Count, and Turnaround Time.",
+          "6. To download the report, click 'Export XLSX' for full Excel spreadsheet or 'Export PDF' for formatted executive report."
+        ]
+      };
+    case "CHECK_STATUS":
+      return {
+        title: "Check Task Status & Progress",
+        workflow: "Check Task Status",
+        summary: "Checking real-time status, subtask progress, and deliverable state for tasks.",
+        sourceDocument: "docs/BUSINESS_RULES.md & app/workspaces/tasks/page.tsx",
+        applicableRule: "Visibility Rule: Users can view task status across workspaces where they have active access.",
+        prerequisites: ["Enrolled in target Workspace"],
+        requiredFields: ["Task ID / Subject"],
+        steps: [
+          "1. Open Workspaces -> Workspace Tasks (/workspaces/tasks) or your active workspace dashboard.",
+          "2. Use the Hierarchy Scope selector: 'All', 'My Department', 'My Reporting Tree', or 'Assigned to Me'.",
+          "3. View status pill badges (Pending, In Progress, Under Review, Completed, On Hold).",
+          "4. Click on any task row to open the Task Execution Controller for deep inspection of checklists and progress remarks."
+        ]
+      };
     case "CREATE":
       return {
         title: "Task Creation Workflow",

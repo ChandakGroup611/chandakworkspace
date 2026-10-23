@@ -318,6 +318,15 @@ export async function POST(req: NextRequest) {
             normalizedQuery.includes("procedure to") ||
             normalizedQuery.includes("how do we") ||
             normalizedQuery.includes("step by step") ||
+            normalizedQuery.includes("where to") ||
+            normalizedQuery.includes("where can i") ||
+            normalizedQuery.includes("where do i") ||
+            normalizedQuery.includes("where is") ||
+            normalizedQuery.includes("where are") ||
+            normalizedQuery.includes("where check") ||
+            normalizedQuery.includes("report") ||
+            normalizedQuery.includes("analytics") ||
+            normalizedQuery.includes("export") ||
             normalizedQuery.includes("add") || 
             normalizedQuery.includes("register") || 
             normalizedQuery.includes("create") || 

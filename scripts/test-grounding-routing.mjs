@@ -62,6 +62,20 @@ if (test8.title !== "Task Workspace Transfer") {
   throw new Error(`FAIL: Expected 'Task Workspace Transfer', got '${test8.title}'`);
 }
 
+const test8b = guideTaskWorkflow("where to check task status report");
+console.log("[8b] Query: 'where to check task status report'");
+console.log("     -> Result Title:", test8b.title);
+if (test8b.title !== "Workspace Task Status Reports & Analytics") {
+  throw new Error(`FAIL: Expected 'Workspace Task Status Reports & Analytics', got '${test8b.title}'`);
+}
+
+const test8c = guideTaskWorkflow("where to check task status");
+console.log("[8c] Query: 'where to check task status'");
+console.log("     -> Result Title:", test8c.title);
+if (test8c.title !== "Check Task Status & Progress") {
+  throw new Error(`FAIL: Expected 'Check Task Status & Progress', got '${test8c.title}'`);
+}
+
 // 3. Design Tracking Tests
 const test9 = guideDesignWorkflow("how to upload drawing");
 console.log("[9] Query: 'how to upload drawing'");
@@ -94,4 +108,8 @@ const exp4 = explainTaskConcept("Primary Assignee");
 console.log("[14] Concept: 'Primary Assignee' ->", exp4?.topic);
 if (!exp4) throw new Error("FAIL: Primary Assignee concept not found");
 
-console.log("\n>>> ALL 14 TESTS PASSED ACCURATELY! NO HARDCODED OR DUPLICATE ANSWERS! <<<");
+const exp5 = explainTaskConcept("task reports");
+console.log("[15] Concept: 'task reports' ->", exp5?.topic);
+if (!exp5 || exp5.topic !== "Workspace Task Reports & Analytics") throw new Error("FAIL: Workspace Task Reports concept not matched");
+
+console.log("\n>>> ALL 16 TESTS PASSED ACCURATELY! NO HARDCODED OR DUPLICATE ANSWERS! <<<");
