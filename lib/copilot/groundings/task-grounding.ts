@@ -142,12 +142,28 @@ export function explainTaskConcept(query: string): GroundedExplanation | null {
 /**
  * Returns step-by-step guidance for Task workflows
  */
-export function guideTaskWorkflow(action: "CREATE" | "TRANSITION_STATUS" | "RESOLVE" | "TRANSFER") {
-  switch (action) {
+export function guideTaskWorkflow(action: string) {
+  const normalized = action.trim().toUpperCase().replace(/[\s-]/g, "_");
+  let resolvedAction: "CREATE" | "TRANSITION_STATUS" | "RESOLVE" | "TRANSFER" = "CREATE";
+
+  if (normalized.includes("RESOLVE") || normalized.includes("COMPLETE") || normalized.includes("CLOSE")) {
+    resolvedAction = "RESOLVE";
+  } else if (normalized.includes("TRANSFER") || normalized.includes("REASSIGN")) {
+    resolvedAction = "TRANSFER";
+  } else if (normalized.includes("STATUS") || normalized.includes("TRANSITION") || normalized.includes("PROGRESS")) {
+    resolvedAction = "TRANSITION_STATUS";
+  } else {
+    resolvedAction = "CREATE";
+  }
+
+  switch (resolvedAction) {
     case "CREATE":
       return {
+        title: "Task Creation Workflow",
         workflow: "Task Creation",
+        summary: "Creating a new task deliverable within a workspace boundary.",
         sourceDocument: "lib/data/learning-data.ts",
+        applicableRule: "Workspace Policy: Task must have Title, Priority, and Primary Assignee.",
         prerequisites: ["Enrolled in target Workspace", "Active user account"],
         requiredFields: ["Workspace ID", "Title / Subject", "Priority (LOW, MEDIUM, HIGH, URGENT)"],
         optionalFields: ["Primary Assignee", "Executors", "Watchers", "Start Date", "Due Date", "Checklists"],
@@ -162,9 +178,13 @@ export function guideTaskWorkflow(action: "CREATE" | "TRANSITION_STATUS" | "RESO
       };
     case "TRANSITION_STATUS":
       return {
+        title: "Status Transition Workflow",
         workflow: "Status Transition",
+        summary: "Progressing a task through its operational status lifecycle.",
         sourceDocument: "docs/BUSINESS_RULES.md & lib/actions/tasks.ts",
+        applicableRule: "Task Governance: Parent tasks cannot be completed if subtasks remain open.",
         prerequisites: ["User must be Primary Assignee, Executor, or Super Admin"],
+        requiredFields: ["Target Status ID", "Transition Remark (optional)"],
         steps: [
           "1. Open Task Execution details modal or page.",
           "2. Locate Status dropdown (In Progress, Under Review, Completed).",
@@ -174,9 +194,13 @@ export function guideTaskWorkflow(action: "CREATE" | "TRANSITION_STATUS" | "RESO
       };
     case "RESOLVE":
       return {
+        title: "Task Resolution Workflow",
         workflow: "Task Resolution",
+        summary: "Closing and resolving a task after deliverable completion.",
         sourceDocument: "docs/BUSINESS_RULES.md",
+        applicableRule: "Resolution Standard: All child subtasks must be closed before parent resolution.",
         prerequisites: ["All subtasks and mandatory checklist items completed"],
+        requiredFields: ["Completed Checklists", "Closure Remark"],
         steps: [
           "1. Check off all checklist deliverables.",
           "2. Upload completion evidence attachment if required.",
@@ -186,9 +210,13 @@ export function guideTaskWorkflow(action: "CREATE" | "TRANSITION_STATUS" | "RESO
       };
     case "TRANSFER":
       return {
+        title: "Task Workspace Transfer",
         workflow: "Task Workspace Transfer",
+        summary: "Transferring task ownership and execution to a different workspace.",
         sourceDocument: "docs/BUSINESS_RULES.md",
+        applicableRule: "Transfer Authority: Only Primary Assignee or Super Admin may transfer tasks.",
         prerequisites: ["User must be Primary Assignee or Super Admin", "Target workspace must exist and be active"],
+        requiredFields: ["Destination Workspace ID"],
         steps: [
           "1. Click 'Transfer Task' action in Task Execution Controller.",
           "2. Select destination workspace.",

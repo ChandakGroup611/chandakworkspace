@@ -86,6 +86,26 @@ export const VEHICLE_CONCEPTS: Record<string, VehicleConceptDefinition> = {
       "Expired PUC flags a high-priority compliance warning and blocks trip dispatch."
     ],
     sourceDocument: "Fleet Compliance & Statutory Guidelines § 5"
+  },
+  "VEHICLE_DESK": {
+    concept: "Vehicle Desk (FleetDesk)",
+    definition: "Enterprise fleet management module governing company and leased vehicle inventory, trip passes, drivers, maintenance, and statutory documents.",
+    applicableRoles: ["FLEET_ADMIN", "FLEET_DISPATCHER", "FLEET_WORKSHOP", "SUPER_ADMIN"],
+    rules: [
+      "Manages vehicle lifecycle from registration (IN_STOCK), dispatch (IN_TRANSIT), maintenance (MAINTENANCE), to disposal (SOLD).",
+      "Requires authenticated Fleet Desk role or module permission under user_modules."
+    ],
+    sourceDocument: "FleetDesk Enterprise Operating Specification § 1"
+  },
+  "DRIVER": {
+    concept: "Fleet Driver",
+    definition: "Certified commercial or private vehicle operator assigned to transport runs and movements.",
+    applicableRoles: ["FLEET_ADMIN", "FLEET_DISPATCHER"],
+    rules: [
+      "Driver must hold an active, non-expired driving license matching vehicle class.",
+      "Driver allocation is recorded against Movement Passes and validated before dispatch."
+    ],
+    sourceDocument: "FleetDesk Driver Governance Policy § 2"
   }
 };
 
@@ -153,6 +173,44 @@ export const VEHICLE_WORKFLOW_GUIDES = {
       "Service Description"
     ],
     applicableRule: "Fleet Workshop Standard: All maintenance exceeding ₹5,000 must include an attached GST invoice."
+  },
+  ADD_DRIVER: {
+    action: "ADD_DRIVER",
+    title: "Driver Onboarding Workflow",
+    summary: "Registering a certified driver into FleetDesk for authorized vehicle operation.",
+    steps: [
+      "1. Open Fleet Desk -> Drivers tab -> 'Add Driver'.",
+      "2. Enter Driver Full Name, Primary Mobile Number, and Residential Address.",
+      "3. Provide Driving License Number, License Class, and Expiry Date.",
+      "4. Upload clear scans of Driving License and Medical Fitness Certificate.",
+      "5. Confirm active employment status and save profile."
+    ],
+    requiredFields: [
+      "Driver Name",
+      "Mobile Contact",
+      "Driving License Number",
+      "License Expiry Date"
+    ],
+    applicableRule: "Statutory Rule: Unlicensed drivers or drivers with expired licenses cannot be assigned to trips."
+  },
+  SELL_VEHICLE: {
+    action: "SELL_VEHICLE",
+    title: "Vehicle Decommission & Sale Workflow",
+    summary: "Decommissioning or transferring ownership of an asset out of active Chandak ownership.",
+    steps: [
+      "1. Verify target vehicle is in premises with status 'IN_STOCK'.",
+      "2. Select 'Sell / Decommission Vehicle' action.",
+      "3. Record Buyer Name, Contact, Sale Date, and Sale Amount (₹).",
+      "4. Upload buyer acknowledgment and RTO Form 29/30 transfer forms.",
+      "5. Confirm transaction to permanently transition vehicle status to 'SOLD'."
+    ],
+    requiredFields: [
+      "Sale Price / Amount",
+      "Sale Date",
+      "Buyer Details",
+      "Transfer Documentation"
+    ],
+    applicableRule: "Asset Disposal Policy: Sold vehicles are permanently locked from dispatch and maintenance logging."
   }
 };
 
@@ -161,7 +219,7 @@ export function explainVehicleConcept(concept: string): VehicleConceptDefinition
   const matches: VehicleConceptDefinition[] = [];
 
   for (const [key, val] of Object.entries(VEHICLE_CONCEPTS)) {
-    if (normalized.includes(key) || concept.toUpperCase().includes(val.concept.toUpperCase())) {
+    if (normalized.includes(key) || concept.toUpperCase().includes(val.concept.toUpperCase()) || key.includes(normalized)) {
       if (!matches.some(m => m.concept === val.concept)) {
         matches.push(val);
       }
@@ -182,25 +240,39 @@ export function explainVehicleConcept(concept: string): VehicleConceptDefinition
 
 export function guideVehicleWorkflow(action: string) {
   const normalized = action.trim().toUpperCase().replace(/[\s-]/g, "_");
-  if (normalized.includes("REGISTER") || normalized.includes("CREATE")) {
-    return VEHICLE_WORKFLOW_GUIDES.REGISTER_VEHICLE;
+
+  if (normalized.includes("DRIVER")) {
+    return VEHICLE_WORKFLOW_GUIDES.ADD_DRIVER;
   }
-  if (normalized.includes("DISPATCH") || normalized.includes("TRIP") || normalized.includes("PASS")) {
+
+  if (
+    normalized.includes("DISPATCH") ||
+    normalized.includes("TRIP") ||
+    normalized.includes("PASS") ||
+    normalized.includes("MOVEMENT")
+  ) {
     return VEHICLE_WORKFLOW_GUIDES.DISPATCH_TRIP;
   }
-  if (normalized.includes("MAINTENANCE") || normalized.includes("SERVICE") || normalized.includes("REPAIR")) {
+
+  if (
+    normalized.includes("MAINTENANCE") ||
+    normalized.includes("SERVICE") ||
+    normalized.includes("REPAIR") ||
+    normalized.includes("WORKSHOP")
+  ) {
     return VEHICLE_WORKFLOW_GUIDES.LOG_MAINTENANCE;
   }
-  return {
-    action,
-    title: `Guidance for ${action}`,
-    summary: "General Fleet Desk workflow guidance.",
-    steps: [
-      "1. Ensure you have the required Fleet Desk role (Fleet Admin, Staff, or Workshop).",
-      "2. Select the target vehicle from the fleet inventory.",
-      "3. Choose the appropriate action from the contextual menu."
-    ],
-    requiredFields: ["Vehicle Registration Number"],
-    applicableRule: "Fleet Desk Operating Procedures."
-  };
+
+  if (
+    normalized.includes("SELL") ||
+    normalized.includes("SALE") ||
+    normalized.includes("DECOMMISSION") ||
+    normalized.includes("DISPOSE")
+  ) {
+    return VEHICLE_WORKFLOW_GUIDES.SELL_VEHICLE;
+  }
+
+  // Any variation of adding, registering, creating, onboarding, or inserting a vehicle
+  // OR general question about vehicle without matching dispatch/maintenance/sell
+  return VEHICLE_WORKFLOW_GUIDES.REGISTER_VEHICLE;
 }

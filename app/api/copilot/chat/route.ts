@@ -125,16 +125,33 @@ export async function POST(req: NextRequest) {
           let fullAssistantText = "";
           let actionPreviewData: any = null;
 
+          // Dynamically detect module context if query explicitly targets another domain
+          let effectiveModule = moduleCode;
+          const vRegex = /\b(vehicle|vehicles|car|cars|fleet|trip|trips|hsrp|puc|odometer|chassis|engine number|rc|driver|drivers|movement pass|dispatch)\b/i;
+          const dRegex = /\b(drawing|drawings|transmittal|transmittals|gfc|architect|architects|consultant|consultants|discipline|disciplines|revision|revisions|rfi|rfis)\b/i;
+          const tRegex = /\b(task|tasks|subtask|subtasks|assignee|assignees|executor|executors|watcher|watchers|workspace|workspaces|checklist|checklists)\b/i;
+
+          if (vRegex.test(message)) {
+            effectiveModule = "VEHICLE_DESK";
+          } else if (dRegex.test(message)) {
+            effectiveModule = "DESIGN_TRACKING";
+          } else if (tRegex.test(message)) {
+            effectiveModule = "TASK_WORKFLOW";
+          }
+
+          // Entity pattern matchers
+          const taskUuidMatch = message.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+          const vehMatch = message.match(/veh-[a-z0-9]+/i) || message.match(/MH-[0-9]{2}-[A-Z]{1,2}-[0-9]{4}/i);
+          const dwgMatch = message.match(/DWG-[a-z0-9-]+/i) || message.match(/PRJ-[a-z0-9-]+/i);
+
           // Capability Detection & Execution
           // ------------------------------------------------------------------
           // CAPABILITY 5: ACTION ASSIST INTENT
           // ------------------------------------------------------------------
           const isActionIntent = (
-            (normalizedQuery.includes("update") || normalizedQuery.includes("change") || normalizedQuery.includes("set")) &&
-            (normalizedQuery.includes("status") || normalizedQuery.includes("state"))
+            (normalizedQuery.includes("update") || normalizedQuery.includes("change") || normalizedQuery.includes("set") || normalizedQuery.includes("mark")) &&
+            (normalizedQuery.includes("status") || normalizedQuery.includes("state") || normalizedQuery.includes("hold") || normalizedQuery.includes("progress"))
           );
-
-          const taskUuidMatch = message.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
 
           if (isActionIntent && taskUuidMatch) {
             const taskId = taskUuidMatch[0];
@@ -193,12 +210,37 @@ export async function POST(req: NextRequest) {
           // ------------------------------------------------------------------
           // CAPABILITY 4: DIAGNOSE INTENT
           // ------------------------------------------------------------------
-          else if (normalizedQuery.includes("why") || normalizedQuery.includes("block") || normalizedQuery.includes("cannot") || normalizedQuery.includes("can't") || normalizedQuery.includes("disabled")) {
-            if (moduleCode === "VEHICLE_DESK") {
-              const vehMatch = message.match(/veh-[a-z0-9]+/i) || message.match(/MH-[0-9]{2}-[A-Z]{1,2}-[0-9]{4}/i);
-              const targetId = vehMatch ? vehMatch[0] : "veh-mu41ekf2";
+          else if (
+            normalizedQuery.includes("why") || 
+            normalizedQuery.includes("block") || 
+            normalizedQuery.includes("cannot") || 
+            normalizedQuery.includes("can't") || 
+            normalizedQuery.includes("disabled") ||
+            normalizedQuery.includes("unable") ||
+            normalizedQuery.includes("denied")
+          ) {
+            if (effectiveModule === "VEHICLE_DESK") {
+              let targetId = vehMatch ? vehMatch[0] : null;
+              if (!targetId) {
+                const { data: firstVeh } = await supabaseAdmin
+                  .from("vehicles")
+                  .select("id, registration_number")
+                  .limit(1)
+                  .maybeSingle();
+                targetId = firstVeh ? firstVeh.id : "veh-mu41ekf2";
+              }
+
+              let attemptedAction = "DISPATCH";
+              if (normalizedQuery.includes("sold") || normalizedQuery.includes("sell")) {
+                attemptedAction = "MARK_SOLD";
+              } else if (normalizedQuery.includes("delete") || normalizedQuery.includes("remove")) {
+                attemptedAction = "DELETE";
+              } else if (normalizedQuery.includes("maintain") || normalizedQuery.includes("repair") || normalizedQuery.includes("service")) {
+                attemptedAction = "LOG_MAINTENANCE";
+              }
+
               const diag = await vehicleModuleTools.diagnose_vehicle_blocker.execute(
-                { vehicleId: targetId, attemptedAction: "DISPATCH" },
+                { vehicleId: targetId, attemptedAction },
                 executionContext
               );
 
@@ -208,9 +250,18 @@ export async function POST(req: NextRequest) {
                 (diag.workingHypotheses.length > 0 ? `**Working Hypotheses:**\n${diag.workingHypotheses.map((h: string) => `- ${h}`).join("\n")}\n\n` : "") +
                 (diag.applicableRule ? `**Applicable Rule:**\n> ${diag.applicableRule}\n\n` : "") +
                 `**Recommendation:**\n${diag.recommendedSafeAction}`;
-            } else if (moduleCode === "DESIGN_TRACKING") {
+            } else if (effectiveModule === "DESIGN_TRACKING") {
+              let attemptedAction = "APPROVE_GFC";
+              if (normalizedQuery.includes("matrix") || normalizedQuery.includes("edit")) {
+                attemptedAction = "EDIT_MATRIX";
+              } else if (normalizedQuery.includes("transmittal") || normalizedQuery.includes("send")) {
+                attemptedAction = "CREATE_TRANSMITTAL";
+              } else if (normalizedQuery.includes("master")) {
+                attemptedAction = "MANAGE_MASTERS";
+              }
+
               const diag = await designModuleTools.diagnose_design_blocker.execute(
-                { projectId: "PRJ-01", attemptedAction: "APPROVE_GFC" },
+                { projectId: "PRJ-01", attemptedAction },
                 executionContext
               );
 
@@ -221,9 +272,29 @@ export async function POST(req: NextRequest) {
                 (diag.applicableRule ? `**Applicable Rule:**\n> ${diag.applicableRule}\n\n` : "") +
                 `**Recommendation:**\n${diag.recommendedSafeAction}`;
             } else {
-              const targetId = taskUuidMatch ? taskUuidMatch[0] : "763b4433-833d-4c63-bb09-c7e456d53616";
+              let targetId = taskUuidMatch ? taskUuidMatch[0] : null;
+              if (!targetId) {
+                const { data: firstTask } = await supabaseAdmin
+                  .from("tasks")
+                  .select("id")
+                  .limit(1)
+                  .maybeSingle();
+                targetId = firstTask ? firstTask.id : "763b4433-833d-4c63-bb09-c7e456d53616";
+              }
+
+              let attemptedAction = "EDIT_SCHEDULE";
+              if (normalizedQuery.includes("resolve") || normalizedQuery.includes("complete") || normalizedQuery.includes("close")) {
+                attemptedAction = "RESOLVE";
+              } else if (normalizedQuery.includes("reassign") || normalizedQuery.includes("assignee")) {
+                attemptedAction = "REASSIGN";
+              } else if (normalizedQuery.includes("delete") || normalizedQuery.includes("remove")) {
+                attemptedAction = "DELETE";
+              } else if (normalizedQuery.includes("transfer")) {
+                attemptedAction = "TRANSFER";
+              }
+
               const diag = await taskModuleTools.diagnose_task_action_blocker.execute(
-                { taskId: targetId, attemptedAction: "EDIT_SCHEDULE" },
+                { taskId: targetId, attemptedAction },
                 executionContext
               );
 
@@ -238,23 +309,66 @@ export async function POST(req: NextRequest) {
           // ------------------------------------------------------------------
           // CAPABILITY 2: GUIDE WORKFLOW INTENT
           // ------------------------------------------------------------------
-          else if (normalizedQuery.includes("guide") || normalizedQuery.includes("how to") || normalizedQuery.includes("how do i") || normalizedQuery.includes("steps to")) {
-            if (moduleCode === "VEHICLE_DESK") {
-              const guide = await vehicleModuleTools.guide_vehicle_workflow.execute({ action: "DISPATCH_TRIP" }, executionContext);
+          else if (
+            normalizedQuery.includes("guide") || 
+            normalizedQuery.includes("how to") || 
+            normalizedQuery.includes("how do i") || 
+            normalizedQuery.includes("steps to") ||
+            normalizedQuery.includes("how can i") ||
+            normalizedQuery.includes("procedure to") ||
+            normalizedQuery.includes("how do we") ||
+            normalizedQuery.includes("step by step") ||
+            normalizedQuery.includes("add") || 
+            normalizedQuery.includes("register") || 
+            normalizedQuery.includes("create") || 
+            normalizedQuery.includes("new") ||
+            normalizedQuery.includes("onboard") ||
+            normalizedQuery.includes("dispatch") ||
+            normalizedQuery.includes("service") ||
+            normalizedQuery.includes("transmittal") ||
+            normalizedQuery.includes("drawing")
+          ) {
+            if (effectiveModule === "VEHICLE_DESK") {
+              const guide = await vehicleModuleTools.guide_vehicle_workflow.execute({ action: message }, executionContext);
               fullAssistantText = `### ${guide.title}\n${guide.summary}\n\n**Step-by-Step Procedure:**\n${guide.steps.join("\n")}\n\n**Mandatory Required Fields:**\n${guide.requiredFields.map((f: string) => `- ${f}`).join("\n")}\n\n**Governance Rule:**\n> ${guide.applicableRule}`;
-            } else if (moduleCode === "DESIGN_TRACKING") {
-              const guide = await designModuleTools.guide_design_workflow.execute({ action: "CREATE_TRANSMITTAL" }, executionContext);
+            } else if (effectiveModule === "DESIGN_TRACKING") {
+              const guide = await designModuleTools.guide_design_workflow.execute({ action: message }, executionContext);
               fullAssistantText = `### ${guide.title}\n${guide.summary}\n\n**Step-by-Step Procedure:**\n${guide.steps.join("\n")}\n\n**Mandatory Required Fields:**\n${guide.requiredFields.map((f: string) => `- ${f}`).join("\n")}\n\n**Governance Rule:**\n> ${guide.applicableRule}`;
             } else {
-              const guide = await taskModuleTools.guide_task_workflow.execute({ action: "CREATE" }, executionContext);
-              fullAssistantText = `### ${guide.title}\n${guide.summary}\n\n**Step-by-Step Procedure:**\n${guide.steps.join("\n")}\n\n**Mandatory Required Fields:**\n${guide.requiredFields.map((f: string) => `- ${f}`).join("\n")}\n\n**Governance Rule:**\n> ${guide.applicableRule}`;
+              const guide = await taskModuleTools.guide_task_workflow.execute({ action: message }, executionContext);
+              fullAssistantText = `### ${guide.title || guide.workflow}\n${guide.summary ? `${guide.summary}\n\n` : ""}**Step-by-Step Procedure:**\n${guide.steps.join("\n")}\n\n**Mandatory Required Fields:**\n${guide.requiredFields.map((f: string) => `- ${f}`).join("\n")}\n\n**Governance Rule:**\n> ${guide.applicableRule || guide.sourceDocument}`;
             }
           }
           // ------------------------------------------------------------------
           // CAPABILITY 3: RETRIEVE LIVE DATA INTENT
           // ------------------------------------------------------------------
-          else if (taskUuidMatch || normalizedQuery.includes("show") || normalizedQuery.includes("details") || normalizedQuery.includes("get")) {
-            if (taskUuidMatch) {
+          else if (
+            taskUuidMatch || 
+            vehMatch || 
+            dwgMatch || 
+            normalizedQuery.includes("show") || 
+            normalizedQuery.includes("details") || 
+            normalizedQuery.includes("get") || 
+            normalizedQuery.includes("fetch") || 
+            normalizedQuery.includes("lookup")
+          ) {
+            if (vehMatch) {
+              const res = await vehicleModuleTools.get_vehicle_details.execute({ vehicleId: vehMatch[0] }, executionContext);
+              if (res.success && res.verifiedRecord) {
+                const rec = res.verifiedRecord;
+                fullAssistantText = `### Vehicle Details: ${rec.registrationNumber} (${rec.make} ${rec.model} ${rec.variant || ""})\n\n` +
+                  `- **ID:** \`${rec.id}\`\n` +
+                  `- **Status:** \`${rec.status}\`\n` +
+                  `- **Category:** ${rec.category || "General"}\n` +
+                  `- **VIN / Chassis:** \`${rec.vinChassisNumber || "N/A"}\`\n` +
+                  `- **Engine Number:** \`${rec.engineNumber || "N/A"}\`\n` +
+                  `- **Odometer:** ${rec.odometerKm || 0} km\n` +
+                  `- **Insurance Policy:** ${rec.insurancePolicyNumber || "N/A"} (Expiry: ${rec.insuranceExpiryDate || "N/A"})\n` +
+                  `- **PUC Expiry:** ${rec.pucExpiryDate || "N/A"}`;
+              } else {
+                fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+              }
+            } else if (taskUuidMatch) {
               const res = await taskModuleTools.get_task_details.execute({ taskId: taskUuidMatch[0] }, executionContext);
               if (res.success && res.verifiedRecord) {
                 const rec = res.verifiedRecord;
@@ -269,8 +383,21 @@ export async function POST(req: NextRequest) {
               } else {
                 fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
               }
+            } else if (dwgMatch) {
+              const res = await designModuleTools.get_drawing_details.execute({ drawingId: dwgMatch[0] }, executionContext);
+              if (res.success && res.verifiedRecord) {
+                const rec = res.verifiedRecord;
+                fullAssistantText = `### Drawing Details: ${rec.drawingNumber}\n\n` +
+                  `- **Title:** ${rec.title}\n` +
+                  `- **Revision:** \`${rec.currentRevision}\`\n` +
+                  `- **Status:** \`${rec.approvalStatus}\`\n` +
+                  `- **Discipline:** ${rec.discipline}\n` +
+                  `- **Consultant:** ${rec.consultantName || "Internal"}`;
+              } else {
+                fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+              }
             } else {
-              fullAssistantText = "Please provide the unique Task UUID or Vehicle Registration Number you wish to retrieve.";
+              fullAssistantText = "Please specify a unique Task UUID, Vehicle Registration Number (e.g. MH-02-EE-8522), or Drawing ID to retrieve live details.";
             }
           }
           // ------------------------------------------------------------------
@@ -278,21 +405,43 @@ export async function POST(req: NextRequest) {
           // ------------------------------------------------------------------
           else {
             let explanation: any = null;
-            if (moduleCode === "VEHICLE_DESK") {
+            if (effectiveModule === "VEHICLE_DESK") {
               explanation = await vehicleModuleTools.explain_vehicle_concept.execute({ concept: message }, executionContext);
-            } else if (moduleCode === "DESIGN_TRACKING") {
+            } else if (effectiveModule === "DESIGN_TRACKING") {
               explanation = await designModuleTools.explain_design_concept.execute({ concept: message }, executionContext);
             } else {
               explanation = await taskModuleTools.explain_task_concept.execute({ concept: message }, executionContext);
             }
 
-            if (explanation.found) {
-              fullAssistantText = `### ${explanation.concept}\n\n${explanation.definition}\n\n` +
-                `**Applicable Roles:**\n${explanation.applicableRoles.map((r: string) => `- ${r}`).join("\n")}\n\n` +
-                `**Key Rules:**\n${explanation.rules.map((r: string) => `- ${r}`).join("\n")}\n\n` +
+            if (explanation && explanation.found) {
+              fullAssistantText = `### ${explanation.concept || explanation.topic}\n\n${explanation.definition}\n\n` +
+                (explanation.applicableRoles ? `**Applicable Roles:**\n${explanation.applicableRoles.map((r: string) => `- ${r}`).join("\n")}\n\n` : "") +
+                (explanation.rules || explanation.keyRules ? `**Key Rules:**\n${(explanation.rules || explanation.keyRules).map((r: string) => `- ${r}`).join("\n")}\n\n` : "") +
                 `*Source: ${explanation.sourceDocument}*`;
             } else {
-              fullAssistantText = explanation.message + "\n\n" + (explanation.safeGuidance || "");
+              // Cross-module fallback if not found in current module
+              let fallbackExp: any = null;
+              if (effectiveModule !== "VEHICLE_DESK") {
+                const tryVeh = await vehicleModuleTools.explain_vehicle_concept.execute({ concept: message }, executionContext);
+                if (tryVeh && tryVeh.found) fallbackExp = tryVeh;
+              }
+              if (!fallbackExp && effectiveModule !== "TASK_WORKFLOW") {
+                const tryTsk = await taskModuleTools.explain_task_concept.execute({ concept: message }, executionContext);
+                if (tryTsk && tryTsk.found) fallbackExp = tryTsk;
+              }
+              if (!fallbackExp && effectiveModule !== "DESIGN_TRACKING") {
+                const tryDsg = await designModuleTools.explain_design_concept.execute({ concept: message }, executionContext);
+                if (tryDsg && tryDsg.found) fallbackExp = tryDsg;
+              }
+
+              if (fallbackExp) {
+                fullAssistantText = `### ${fallbackExp.concept || fallbackExp.topic}\n\n${fallbackExp.definition}\n\n` +
+                  (fallbackExp.applicableRoles ? `**Applicable Roles:**\n${fallbackExp.applicableRoles.map((r: string) => `- ${r}`).join("\n")}\n\n` : "") +
+                  (fallbackExp.rules || fallbackExp.keyRules ? `**Key Rules:**\n${(fallbackExp.rules || fallbackExp.keyRules).map((r: string) => `- ${r}`).join("\n")}\n\n` : "") +
+                  `*Source: ${fallbackExp.sourceDocument}*`;
+              } else {
+                fullAssistantText = (explanation && explanation.message) ? (explanation.message + "\n\n" + (explanation.safeGuidance || "")) : `I could not find verified documentation for '${message}'. Please check your spelling or refer to the module user manual.`;
+              }
             }
           }
 

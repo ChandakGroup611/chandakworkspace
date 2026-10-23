@@ -141,6 +141,27 @@ export const DESIGN_WORKFLOW_GUIDES = {
       "Approved By Sign-off"
     ],
     applicableRule: "Quality Assurance Standard § 4: GFC approval cannot be delegated to coordinators or external consultants."
+  },
+  UPLOAD_DRAWING: {
+    action: "UPLOAD_DRAWING",
+    title: "Drawing Upload & Revision Workflow",
+    summary: "Registering or revising a design drawing across Architecture, Structure, or MEP.",
+    steps: [
+      "1. Navigate to Design Tracking -> Drawings -> 'Upload Drawing' or 'New Revision'.",
+      "2. Select Project, relevant Package / Discipline, and Building / Tower.",
+      "3. Specify Drawing Number, Title, and Revision Code (e.g. R0, R1).",
+      "4. Upload the PDF/DWG drawing file (View & Download automatically enabled).",
+      "5. Input Author / Lead Consultant and submission remarks.",
+      "6. Submit record to trigger multidisciplinary coordination review."
+    ],
+    requiredFields: [
+      "Project ID",
+      "Drawing Number",
+      "Discipline / Package",
+      "Revision Code",
+      "Drawing File Upload"
+    ],
+    applicableRule: "Document Protocol: Drawings must be uploaded with verified revision numbering and legible titles."
   }
 };
 
@@ -168,16 +189,15 @@ export function guideDesignWorkflow(action: string) {
   if (normalized.includes("GFC") || normalized.includes("APPROVE")) {
     return DESIGN_WORKFLOW_GUIDES.APPROVE_GFC;
   }
-  return {
-    action,
-    title: `Guidance for ${action}`,
-    summary: "General Design Tracking workflow guidance.",
-    steps: [
-      "1. Confirm you have active enrollment in Design Tracking with appropriate role permissions.",
-      "2. Select the relevant Project from the Project switcher.",
-      "3. Access the appropriate sub-module (Matrix, Drawings, Transmittals, or RFIs)."
-    ],
-    requiredFields: ["Project Code / Name"],
-    applicableRule: "Design Document Control Procedures."
-  };
+  if (
+    normalized.includes("DRAWING") ||
+    normalized.includes("UPLOAD") ||
+    normalized.includes("REVISION") ||
+    normalized.includes("ADD") ||
+    normalized.includes("CREATE") ||
+    normalized.includes("NEW")
+  ) {
+    return DESIGN_WORKFLOW_GUIDES.UPLOAD_DRAWING;
+  }
+  return DESIGN_WORKFLOW_GUIDES.CREATE_TRANSMITTAL;
 }

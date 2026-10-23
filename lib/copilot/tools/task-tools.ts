@@ -65,7 +65,7 @@ export const guideTaskWorkflowTool: ToolDefinition = {
     },
     required: ["action"]
   },
-  async execute({ action }: { action: "CREATE" | "TRANSITION_STATUS" | "RESOLVE" | "TRANSFER" }) {
+  async execute({ action }: { action: string }) {
     return guideTaskWorkflow(action);
   }
 };
