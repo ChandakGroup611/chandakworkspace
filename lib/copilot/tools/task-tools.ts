@@ -311,11 +311,161 @@ export const diagnoseTaskBlockerTool: ToolDefinition = {
 };
 
 // ============================================================================
+// 5. Capability 5: SUMMARY & AGGREGATION TOOL (Task Counts & Overdue Metrics)
+// ============================================================================
+export const getUserTaskSummaryTool: ToolDefinition = {
+  name: "get_user_task_summary",
+  description: "Retrieves live counts, status breakdown (To do, In Progress, Pending, Completed), and overdue counts for tasks.",
+  parameters: {
+    type: "object",
+    properties: {
+      statusFilter: {
+        type: "string",
+        description: "Optional status filter (e.g. 'PENDING', 'TO DO', 'IN_PROGRESS', 'COMPLETED', 'OVERDUE', 'ALL')"
+      },
+      scope: {
+        type: "string",
+        description: "Task scope: 'ASSIGNED_TO_ME', 'CREATED_BY_ME', 'ALL'",
+        enum: ["ASSIGNED_TO_ME", "CREATED_BY_ME", "ALL"]
+      }
+    },
+    required: []
+  },
+  async execute({ statusFilter, scope }: { statusFilter?: string; scope?: string } = {}, context: ToolExecutionContext) {
+    const isSuperAdmin = await hasPermission(context.userId, "SUPER_ADMIN");
+
+    // Step 1: Pre-fetch all status definitions to avoid foreign-key ambiguity
+    const { data: statuses } = await supabaseAdmin
+      .from("status_master")
+      .select("id, status_name, status_code, is_closed");
+
+    const statusMap = new Map<string, { name: string; code: string; isClosed: boolean }>();
+    (statuses || []).forEach(s => {
+      statusMap.set(s.id, {
+        name: s.status_name || s.status_code,
+        code: s.status_code || "",
+        isClosed: s.is_closed === true
+      });
+      if (s.status_code) {
+        statusMap.set(s.status_code, {
+          name: s.status_name || s.status_code,
+          code: s.status_code,
+          isClosed: s.is_closed === true
+        });
+      }
+    });
+
+    // Step 2: Fetch user's enrolled workspaces if not Super Admin
+    let workspaceIds: string[] = [];
+    if (!isSuperAdmin) {
+      const { data: userWorkspaces } = await supabaseAdmin
+        .from("workspace_members")
+        .select("workspace_id")
+        .eq("user_id", context.userId)
+        .eq("is_deleted", false);
+      workspaceIds = (userWorkspaces || []).map(w => w.workspace_id).filter(Boolean);
+    }
+
+    // Step 3: Query active tasks
+    let query = supabaseAdmin
+      .from("tasks")
+      .select("id, subject, status_id, start_date, end_date, assigned_to, created_by, workspace_id")
+      .eq("is_deleted", false);
+
+    if (!isSuperAdmin) {
+      if (scope === "ASSIGNED_TO_ME") {
+        query = query.eq("assigned_to", context.userId);
+      } else if (scope === "CREATED_BY_ME") {
+        query = query.eq("created_by", context.userId);
+      } else {
+        if (workspaceIds.length > 0) {
+          query = query.or(`assigned_to.eq.${context.userId},created_by.eq.${context.userId},workspace_id.in.(${workspaceIds.join(",")})`);
+        } else {
+          query = query.or(`assigned_to.eq.${context.userId},created_by.eq.${context.userId}`);
+        }
+      }
+    } else if (scope === "ASSIGNED_TO_ME") {
+      query = query.eq("assigned_to", context.userId);
+    } else if (scope === "CREATED_BY_ME") {
+      query = query.eq("created_by", context.userId);
+    }
+
+    const { data: rawTasks, error } = await query;
+    if (error) {
+      return {
+        error: "QUERY_FAILED",
+        message: `Failed to retrieve task summary: ${error.message}`
+      };
+    }
+
+    const tasks = rawTasks || [];
+    const now = Date.now();
+
+    const totalTasks = tasks.length;
+    let completedCount = 0;
+    let activeCount = 0;
+    let overdueCount = 0;
+    const statusBreakdown: Record<string, number> = {};
+
+    const overdueList: Array<{ id: string; subject: string; status: string; dueDate: string }> = [];
+    const activeList: Array<{ id: string; subject: string; status: string; dueDate: string | null }> = [];
+
+    for (const t of tasks) {
+      const stInfo = statusMap.get(t.status_id) || { name: t.status_id || "Unknown", code: "", isClosed: false };
+      const statusName = stInfo.name;
+      const isClosed = stInfo.isClosed;
+
+      statusBreakdown[statusName] = (statusBreakdown[statusName] || 0) + 1;
+
+      if (isClosed) {
+        completedCount++;
+      } else {
+        activeCount++;
+        const isOverdue = t.end_date && new Date(t.end_date).getTime() < now;
+        if (isOverdue) {
+          overdueCount++;
+          if (overdueList.length < 5) {
+            overdueList.push({
+              id: t.id,
+              subject: t.subject || "Untitled Task",
+              status: statusName,
+              dueDate: t.end_date
+            });
+          }
+        } else if (activeList.length < 5) {
+          activeList.push({
+            id: t.id,
+            subject: t.subject || "Untitled Task",
+            status: statusName,
+            dueDate: t.end_date
+          });
+        }
+      }
+    }
+
+    return {
+      success: true,
+      summary: {
+        totalTasks,
+        activeTasks: activeCount,
+        completedTasks: completedCount,
+        overdueTasks: overdueCount,
+        statusBreakdown,
+        sampleOverdue: overdueList,
+        sampleActive: activeList
+      }
+    };
+  }
+};
+
+// ============================================================================
 // Phase 2 Task Tool Registry
 // ============================================================================
 export const taskModuleTools: Record<string, ToolDefinition> = {
   explain_task_concept: explainTaskTool,
   guide_task_workflow: guideTaskWorkflowTool,
   get_task_details: getTaskDetailsTool,
-  diagnose_task_action_blocker: diagnoseTaskBlockerTool
+  diagnose_task_action_blocker: diagnoseTaskBlockerTool,
+  get_user_task_summary: getUserTaskSummaryTool
 };
+

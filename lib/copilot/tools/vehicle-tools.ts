@@ -341,9 +341,83 @@ export const diagnoseVehicleBlockerTool: ToolDefinition = {
   }
 };
 
+// ============================================================================
+// 5. Capability 5: FLEET SUMMARY & INVENTORY TOOL
+// ============================================================================
+export const getFleetSummaryTool: ToolDefinition = {
+  name: "get_fleet_summary",
+  description: "Retrieves live count and status breakdown of all fleet vehicles (In Stock, In Transit, Maintenance, Sold).",
+  parameters: {
+    type: "object",
+    properties: {
+      statusFilter: {
+        type: "string",
+        description: "Optional status filter (e.g. 'IN_STOCK', 'IN_TRANSIT', 'MAINTENANCE', 'SOLD', 'ALL')",
+        enum: ["IN_STOCK", "IN_TRANSIT", "MAINTENANCE", "SOLD", "ALL"]
+      }
+    },
+    required: []
+  },
+  async execute({ statusFilter }: { statusFilter?: string } = {}, context: ToolExecutionContext) {
+    const access = await checkFleetAccess(context.userId);
+    if (!access.allowed) {
+      return {
+        error: "ACCESS_DENIED",
+        message: "You do not have permission to view Fleet Desk vehicles.",
+        safeGuidance: "Contact your Fleet Administrator or System Admin to assign Vehicle Desk access."
+      };
+    }
+
+    let query = supabaseAdmin
+      .from("vehicles")
+      .select("id, registration_number, make, model, variant, status, category, odometer_km");
+
+    if (statusFilter && statusFilter !== "ALL") {
+      query = query.eq("status", statusFilter);
+    }
+
+    const { data: rawVehicles, error } = await query;
+    if (error) {
+      return {
+        error: "QUERY_FAILED",
+        message: `Failed to retrieve fleet summary: ${error.message}`
+      };
+    }
+
+    const list = rawVehicles || [];
+    const statusCounts: Record<string, number> = {
+      IN_STOCK: 0,
+      IN_TRANSIT: 0,
+      MAINTENANCE: 0,
+      SOLD: 0
+    };
+
+    for (const v of list) {
+      const st = v.status || "IN_STOCK";
+      statusCounts[st] = (statusCounts[st] || 0) + 1;
+    }
+
+    return {
+      success: true,
+      totalVehicles: list.length,
+      statusCounts,
+      sampleVehicles: list.slice(0, 8).map(v => ({
+        id: v.id,
+        registrationNumber: v.registration_number,
+        name: `${v.make || ""} ${v.model || ""} ${v.variant || ""}`.trim(),
+        status: v.status,
+        category: v.category || "General",
+        odometerKm: v.odometer_km || 0
+      }))
+    };
+  }
+};
+
 export const vehicleModuleTools: Record<string, ToolDefinition> = {
   explain_vehicle_concept: explainVehicleTool,
   guide_vehicle_workflow: guideVehicleWorkflowTool,
   get_vehicle_details: getVehicleDetailsTool,
-  diagnose_vehicle_blocker: diagnoseVehicleBlockerTool
+  diagnose_vehicle_blocker: diagnoseVehicleBlockerTool,
+  get_fleet_summary: getFleetSummaryTool
 };
+

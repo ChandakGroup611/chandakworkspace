@@ -153,6 +153,24 @@ export function explainTaskConcept(query: string): GroundedExplanation | null {
     }
   }
 
+  if (q.includes("copilot") || q.includes("chandak ai") || q.includes("assistant")) {
+    return {
+      topic: "Chandak AI Copilot",
+      sourceDocument: "Chandak Enterprise Portal Architecture",
+      definition: "Chandak AI Copilot is the intelligent operational assistant embedded across the platform to assist with task tracking, fleet management, and design transmittals.",
+      keyRules: [
+        "Accessible from the floating Copilot trigger button at the bottom-right corner of any page or the top navigation bar.",
+        "Available across Task Workflow, Vehicle Desk, and Design Tracking modules.",
+        "Enforces strict RBAC and ownership mirroring: only authorized users can view details or propose actions.",
+        "Supports real-time blocker diagnostics, live KPI summaries, workflow guidance, and multi-turn conversation memory."
+      ],
+      rolePermissions: {
+        "All Authorized Users": "Access grounded tools corresponding to their assigned module permissions",
+        "Super Admin": "Universal operational diagnostics across all modules"
+      }
+    };
+  }
+
   // Explicit abstention for non-matching or unknown concepts
   return null;
 }

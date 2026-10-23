@@ -112,4 +112,12 @@ const exp5 = explainTaskConcept("task reports");
 console.log("[15] Concept: 'task reports' ->", exp5?.topic);
 if (!exp5 || exp5.topic !== "Workspace Task Reports & Analytics") throw new Error("FAIL: Workspace Task Reports concept not matched");
 
-console.log("\n>>> ALL 16 TESTS PASSED ACCURATELY! NO HARDCODED OR DUPLICATE ANSWERS! <<<");
+const exp6 = explainTaskConcept("chandak ai copilot");
+console.log("[16] Concept: 'chandak ai copilot' ->", exp6?.topic);
+if (!exp6 || exp6.topic !== "Chandak AI Copilot") throw new Error("FAIL: Chandak AI Copilot concept not found");
+
+const exp7 = explainTaskConcept("where i can see Chandak AI Copilot");
+console.log("[17] Concept: 'where i can see Chandak AI Copilot' ->", exp7?.topic);
+if (!exp7 || exp7.topic !== "Chandak AI Copilot") throw new Error("FAIL: Copilot query resolution failed");
+
+console.log("\n>>> ALL 18 TESTS PASSED ACCURATELY! NO HARDCODED OR DUPLICATE ANSWERS! <<<");

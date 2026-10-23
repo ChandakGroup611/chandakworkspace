@@ -94,6 +94,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 4.1 Fetch recent conversation history to provide multi-turn context
+    const { data: pastMessages } = await supabaseAdmin
+      .from("copilot_messages")
+      .select("role, content")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
     // Persist User Message
     await supabaseAdmin.from("copilot_messages").insert({
       conversation_id: conversationId,
@@ -140,9 +148,42 @@ export async function POST(req: NextRequest) {
           }
 
           // Entity pattern matchers
-          const taskUuidMatch = message.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-          const vehMatch = message.match(/veh-[a-z0-9]+/i) || message.match(/MH-[0-9]{2}-[A-Z]{1,2}-[0-9]{4}/i);
-          const dwgMatch = message.match(/DWG-[a-z0-9-]+/i) || message.match(/PRJ-[a-z0-9-]+/i);
+          let taskUuidMatch = message.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+          let vehMatch = message.match(/veh-[a-z0-9]+/i) || message.match(/MH-[0-9]{2}-[A-Z]{1,2}-[0-9]{4}/i);
+          let dwgMatch = message.match(/DWG-[a-z0-9-]+/i) || message.match(/PRJ-[a-z0-9-]+/i);
+
+          // Contextual Pronoun & Follow-Up Resolution from Conversation History
+          if (!taskUuidMatch && !vehMatch && !dwgMatch && pastMessages && pastMessages.length > 0) {
+            const isFollowUp = /\b(it|its|this|that|the vehicle|the car|that vehicle|the task|that task|the drawing|car|status|details|assignee|due date|expiry|blocked|why|odometer|puc|insurance|rc|same)\b/i.test(normalizedQuery);
+            if (isFollowUp) {
+              for (const prevMsg of pastMessages) {
+                if (!vehMatch) {
+                  const m = prevMsg.content.match(/veh-[a-z0-9]+/i) || prevMsg.content.match(/MH-[0-9]{2}-[A-Z]{1,2}-[0-9]{4}/i);
+                  if (m) {
+                    vehMatch = m;
+                    effectiveModule = "VEHICLE_DESK";
+                    break;
+                  }
+                }
+                if (!taskUuidMatch) {
+                  const m = prevMsg.content.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+                  if (m) {
+                    taskUuidMatch = m;
+                    effectiveModule = "TASK_WORKFLOW";
+                    break;
+                  }
+                }
+                if (!dwgMatch) {
+                  const m = prevMsg.content.match(/DWG-[a-z0-9-]+/i) || prevMsg.content.match(/PRJ-[a-z0-9-]+/i);
+                  if (m) {
+                    dwgMatch = m;
+                    effectiveModule = "DESIGN_TRACKING";
+                    break;
+                  }
+                }
+              }
+            }
+          }
 
           // Capability Detection & Execution
           // ------------------------------------------------------------------
@@ -205,6 +246,69 @@ export async function POST(req: NextRequest) {
               fullAssistantText = `I have prepared an action proposal to update Task \`${taskId}\` status to **${targetStatus.status_name || targetStatus.status_code}**.\n\nPlease review the preview card below and click **Confirm & Execute** to apply the change.`;
             } else {
               fullAssistantText = `I identified the target task (\`${taskId}\`), but could not determine the requested status from your message. Please specify the desired status (e.g., HOLD, IN_PROGRESS, RESOLVED).`;
+            }
+          }
+          // ------------------------------------------------------------------
+          // CAPABILITY 6: SUMMARY & AGGREGATION INTENT (Counts, Workload, Overdue)
+          // ------------------------------------------------------------------
+          else if (
+            normalizedQuery.includes("how many") ||
+            normalizedQuery.includes("count of") ||
+            normalizedQuery.includes("total task") ||
+            normalizedQuery.includes("total vehicle") ||
+            normalizedQuery.includes("task summary") ||
+            normalizedQuery.includes("summary of task") ||
+            normalizedQuery.includes("fleet summary") ||
+            normalizedQuery.includes("work status") ||
+            normalizedQuery.includes("overall work") ||
+            normalizedQuery.includes("my workload") ||
+            normalizedQuery.includes("team workload") ||
+            (normalizedQuery.includes("summary") && (normalizedQuery.includes("task") || normalizedQuery.includes("work") || normalizedQuery.includes("vehicle") || normalizedQuery.includes("fleet"))) ||
+            (normalizedQuery.includes("pending") && normalizedQuery.includes("task")) ||
+            (normalizedQuery.includes("pending") && normalizedQuery.includes("how many"))
+          ) {
+            if (effectiveModule === "VEHICLE_DESK" || vRegex.test(message)) {
+              const res = await vehicleModuleTools.get_fleet_summary.execute({}, executionContext);
+              if (res.success) {
+                fullAssistantText = `### 🚗 Fleet Desk Summary & Status Breakdown\n\n` +
+                  `- **Total Fleet Vehicles:** **${res.totalVehicles}**\n` +
+                  `- **In Stock (Available):** ${res.statusCounts.IN_STOCK || 0}\n` +
+                  `- **In Transit (Active Trips):** ${res.statusCounts.IN_TRANSIT || 0}\n` +
+                  `- **Maintenance / Workshop:** ${res.statusCounts.MAINTENANCE || 0}\n` +
+                  `- **Decommissioned / Sold:** ${res.statusCounts.SOLD || 0}\n\n` +
+                  (res.sampleVehicles && res.sampleVehicles.length > 0 ?
+                    `**Fleet Inventory (Sample):**\n` +
+                    res.sampleVehicles.map((v: any) => `- **${v.registrationNumber}** — ${v.name || "Fleet Vehicle"} (\`${v.status}\` | ${v.category} | ${v.odometerKm} km)`).join("\n") +
+                    `\n\n*View and manage movement passes in the Fleet Desk portal.*` : "");
+              } else {
+                fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+              }
+            } else {
+              const res = await taskModuleTools.get_user_task_summary.execute({}, executionContext);
+              if (res.success && res.summary) {
+                const s = res.summary;
+                const breakdownEntries = Object.entries(s.statusBreakdown || {});
+                const breakdownText = breakdownEntries.length > 0
+                  ? breakdownEntries.map(([st, cnt]) => `- **${st}:** ${cnt}`).join("\n")
+                  : "- None";
+
+                fullAssistantText = `### 📋 Workspace Tasks & Work Status Summary\n\n` +
+                  `**Key Metrics:**\n` +
+                  `- **Total Tasks in Scope:** **${s.totalTasks}**\n` +
+                  `- **Active / Pending Tasks:** **${s.activeTasks}**\n` +
+                  `- **Completed / Closed Tasks:** **${s.completedTasks}**\n` +
+                  `- **Overdue Deliverables:** **${s.overdueTasks}**\n\n` +
+                  `**Status Breakdown:**\n${breakdownText}\n\n` +
+                  (s.sampleOverdue && s.sampleOverdue.length > 0 ?
+                    `⚠️ **Top Overdue Tasks:**\n` +
+                    s.sampleOverdue.map((t: any) => `- \`${t.id.slice(0, 8)}\` **${t.subject}** (Due: ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "Overdue"} | *${t.status}*)`).join("\n") + "\n\n" : "") +
+                  (s.sampleActive && s.sampleActive.length > 0 ?
+                    `📌 **Active Tasks In Flight:**\n` +
+                    s.sampleActive.map((t: any) => `- \`${t.id.slice(0, 8)}\` **${t.subject}** (Due: ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "Not set"} | *${t.status}*)`).join("\n") + "\n\n" : "") +
+                  `*To inspect full task boards or export Excel/PDF reports, open [Workspace Reports](/workspaces/reports).*`;
+              } else {
+                fullAssistantText = `⚠️ **${res.error}:** ${res.message}`;
+              }
             }
           }
           // ------------------------------------------------------------------
@@ -361,52 +465,127 @@ export async function POST(req: NextRequest) {
             normalizedQuery.includes("fetch") || 
             normalizedQuery.includes("lookup")
           ) {
-            if (vehMatch) {
-              const res = await vehicleModuleTools.get_vehicle_details.execute({ vehicleId: vehMatch[0] }, executionContext);
-              if (res.success && res.verifiedRecord) {
-                const rec = res.verifiedRecord;
-                fullAssistantText = `### Vehicle Details: ${rec.registrationNumber} (${rec.make} ${rec.model} ${rec.variant || ""})\n\n` +
-                  `- **ID:** \`${rec.id}\`\n` +
-                  `- **Status:** \`${rec.status}\`\n` +
-                  `- **Category:** ${rec.category || "General"}\n` +
-                  `- **VIN / Chassis:** \`${rec.vinChassisNumber || "N/A"}\`\n` +
-                  `- **Engine Number:** \`${rec.engineNumber || "N/A"}\`\n` +
-                  `- **Odometer:** ${rec.odometerKm || 0} km\n` +
-                  `- **Insurance Policy:** ${rec.insurancePolicyNumber || "N/A"} (Expiry: ${rec.insuranceExpiryDate || "N/A"})\n` +
-                  `- **PUC Expiry:** ${rec.pucExpiryDate || "N/A"}`;
+            // 1. Task Module Scoped Retrieval
+            if (effectiveModule === "TASK_WORKFLOW") {
+              if (taskUuidMatch) {
+                const res = await taskModuleTools.get_task_details.execute({ taskId: taskUuidMatch[0] }, executionContext);
+                if (res.success && res.verifiedRecord) {
+                  const rec = res.verifiedRecord;
+                  fullAssistantText = `### Task Details: ${rec.title}\n\n` +
+                    `- **ID:** \`${rec.id}\`\n` +
+                    `- **Status:** \`${rec.status}\`\n` +
+                    `- **Primary Assignee:** ${rec.primaryAssignee}\n` +
+                    `- **Creator:** ${rec.creator}\n` +
+                    `- **Your Verified Role:** ${rec.callerRoleOnTask}\n` +
+                    `- **Checklists:** ${rec.completedChecklistsCount}/${rec.checklistsCount} completed\n` +
+                    `- **Due Date:** ${rec.dueDate || "Not set"}`;
+                } else {
+                  fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+                }
               } else {
-                fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+                // Natural keyword / title search for tasks (e.g. "show my sfdc task")
+                const cleanSearchTerm = message
+                  .replace(/\b(show|get|find|fetch|lookup|search|details|of|for|my|the|task|tasks|please|me|all)\b/gi, "")
+                  .trim();
+
+                if (cleanSearchTerm.length >= 2) {
+                  const { data: matchedTasks } = await supabaseAdmin
+                    .from("tasks")
+                    .select(`
+                      id, subject, task_code, status_id, start_date, end_date, assigned_to,
+                      status:status_master(status_name, status_code, is_closed)
+                    `)
+                    .ilike("subject", `%${cleanSearchTerm}%`)
+                    .eq("is_deleted", false)
+                    .limit(10);
+
+                  if (matchedTasks && matchedTasks.length > 0) {
+                    if (matchedTasks.length === 1) {
+                      const res = await taskModuleTools.get_task_details.execute({ taskId: matchedTasks[0].id }, executionContext);
+                      if (res.success && res.verifiedRecord) {
+                        const rec = res.verifiedRecord;
+                        fullAssistantText = `### Task Details: ${rec.title}\n\n` +
+                          `- **ID:** \`${rec.id}\`\n` +
+                          `- **Status:** \`${rec.status}\`\n` +
+                          `- **Primary Assignee:** ${rec.primaryAssignee}\n` +
+                          `- **Creator:** ${rec.creator}\n` +
+                          `- **Your Verified Role:** ${rec.callerRoleOnTask}\n` +
+                          `- **Checklists:** ${rec.completedChecklistsCount}/${rec.checklistsCount} completed\n` +
+                          `- **Due Date:** ${rec.dueDate || "Not set"}`;
+                      } else {
+                        fullAssistantText = `⚠️ **${res.error}:** ${res.message}`;
+                      }
+                    } else {
+                      fullAssistantText = `### 📋 Tasks Matching "${cleanSearchTerm}"\n\n` +
+                        `Found **${matchedTasks.length}** matching task(s) in your workspace:\n\n` +
+                        matchedTasks.map((t: any, idx: number) => {
+                          const stName = (t.status as any)?.status_name || (t.status as any)?.status_code || "Unknown";
+                          const due = t.end_date ? new Date(t.end_date).toLocaleDateString() : "Not set";
+                          return `${idx + 1}. **${t.subject || "Untitled Task"}** (Status: \`${stName}\` | Due: ${due})\n   - Task ID: \`${t.id}\``;
+                        }).join("\n\n") +
+                        `\n\n*To view full details or checklists for any task, reply with its Task ID or open [Workspace Tasks](/workspaces/tasks).*`;
+                    }
+                  } else {
+                    fullAssistantText = `No tasks found matching "${cleanSearchTerm}" in your accessible workspaces. Please check your spelling or verify from the [Workspace Tasks](/workspaces/tasks) board.`;
+                  }
+                } else {
+                  // User said "show my tasks" -> provide active task summary
+                  const res = await taskModuleTools.get_user_task_summary.execute({}, executionContext);
+                  if (res.success && res.summary) {
+                    const s = res.summary;
+                    fullAssistantText = `### 📋 Your Active Tasks Summary\n\n` +
+                      `- **Total Tasks in Scope:** **${s.totalTasks}**\n` +
+                      `- **Active / Pending:** **${s.activeTasks}**\n` +
+                      `- **Completed / Closed:** **${s.completedTasks}**\n` +
+                      `- **Overdue Deliverables:** **${s.overdueTasks}**\n\n` +
+                      (s.sampleActive && s.sampleActive.length > 0 ?
+                        `📌 **Current Tasks:**\n` +
+                        s.sampleActive.map((t: any) => `- \`${t.id.slice(0, 8)}\` **${t.subject}** (*${t.status}*)`).join("\n") + "\n\n" : "") +
+                      `*To search for a specific task, specify a keyword (e.g. 'show my sfdc task') or Task ID.*`;
+                  } else {
+                    fullAssistantText = "Please provide a Task ID (e.g. TSK-102 or UUID) or a task subject keyword (e.g. SFDC) to retrieve task details.";
+                  }
+                }
               }
-            } else if (taskUuidMatch) {
-              const res = await taskModuleTools.get_task_details.execute({ taskId: taskUuidMatch[0] }, executionContext);
-              if (res.success && res.verifiedRecord) {
-                const rec = res.verifiedRecord;
-                fullAssistantText = `### Task Details: ${rec.title}\n\n` +
-                  `- **ID:** \`${rec.id}\`\n` +
-                  `- **Status:** \`${rec.status}\`\n` +
-                  `- **Primary Assignee:** ${rec.primaryAssignee}\n` +
-                  `- **Creator:** ${rec.creator}\n` +
-                  `- **Your Verified Role:** ${rec.callerRoleOnTask}\n` +
-                  `- **Checklists:** ${rec.completedChecklistsCount}/${rec.checklistsCount} completed\n` +
-                  `- **Due Date:** ${rec.dueDate || "Not set"}`;
+            } else if (effectiveModule === "VEHICLE_DESK") {
+              if (vehMatch) {
+                const res = await vehicleModuleTools.get_vehicle_details.execute({ vehicleId: vehMatch[0] }, executionContext);
+                if (res.success && res.verifiedRecord) {
+                  const rec = res.verifiedRecord;
+                  fullAssistantText = `### Vehicle Details: ${rec.registrationNumber} (${rec.make} ${rec.model} ${rec.variant || ""})\n\n` +
+                    `- **ID:** \`${rec.id}\`\n` +
+                    `- **Status:** \`${rec.status}\`\n` +
+                    `- **Category:** ${rec.category || "General"}\n` +
+                    `- **VIN / Chassis:** \`${rec.vinChassisNumber || "N/A"}\`\n` +
+                    `- **Engine Number:** \`${rec.engineNumber || "N/A"}\`\n` +
+                    `- **Odometer:** ${rec.odometerKm || 0} km\n` +
+                    `- **Insurance Policy:** ${rec.insurancePolicyNumber || "N/A"} (Expiry: ${rec.insuranceExpiryDate || "N/A"})\n` +
+                    `- **PUC Expiry:** ${rec.pucExpiryDate || "N/A"}`;
+                } else {
+                  fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+                }
               } else {
-                fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+                fullAssistantText = "Please specify a Vehicle Registration Number (e.g. MH-02-EE-8522) to retrieve live fleet details.";
               }
-            } else if (dwgMatch) {
-              const res = await designModuleTools.get_drawing_details.execute({ drawingId: dwgMatch[0] }, executionContext);
-              if (res.success && res.verifiedRecord) {
-                const rec = res.verifiedRecord;
-                fullAssistantText = `### Drawing Details: ${rec.drawingNumber}\n\n` +
-                  `- **Title:** ${rec.title}\n` +
-                  `- **Revision:** \`${rec.currentRevision}\`\n` +
-                  `- **Status:** \`${rec.approvalStatus}\`\n` +
-                  `- **Discipline:** ${rec.discipline}\n` +
-                  `- **Consultant:** ${rec.consultantName || "Internal"}`;
+            } else if (effectiveModule === "DESIGN_TRACKING") {
+              if (dwgMatch) {
+                const res = await designModuleTools.get_drawing_details.execute({ drawingId: dwgMatch[0] }, executionContext);
+                if (res.success && res.verifiedRecord) {
+                  const rec = res.verifiedRecord;
+                  fullAssistantText = `### Drawing Details: ${rec.drawingNumber}\n\n` +
+                    `- **Title:** ${rec.title}\n` +
+                    `- **Revision:** \`${rec.currentRevision}\`\n` +
+                    `- **Status:** \`${rec.approvalStatus}\`\n` +
+                    `- **Discipline:** ${rec.discipline}\n` +
+                    `- **Consultant:** ${rec.consultantName || "Internal"}`;
+                } else {
+                  fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+                }
               } else {
-                fullAssistantText = `⚠️ **${res.error}:** ${res.message}\n\n*${res.safeGuidance || ""}*`;
+                fullAssistantText = "Please specify a Drawing Number (e.g. DWG-001) or Transmittal ID to retrieve design details.";
               }
             } else {
-              fullAssistantText = "Please specify a unique Task UUID, Vehicle Registration Number (e.g. MH-02-EE-8522), or Drawing ID to retrieve live details.";
+              fullAssistantText = "Please specify a Task ID or keyword to look up live records in your current module.";
             }
           }
           // ------------------------------------------------------------------
@@ -428,19 +607,26 @@ export async function POST(req: NextRequest) {
                 (explanation.rules || explanation.keyRules ? `**Key Rules:**\n${(explanation.rules || explanation.keyRules).map((r: string) => `- ${r}`).join("\n")}\n\n` : "") +
                 `*Source: ${explanation.sourceDocument}*`;
             } else {
-              // Cross-module fallback if not found in current module
+              // Cross-module fallback ONLY if user explicitly asked across domains
               let fallbackExp: any = null;
-              if (effectiveModule !== "VEHICLE_DESK") {
-                const tryVeh = await vehicleModuleTools.explain_vehicle_concept.execute({ concept: message }, executionContext);
-                if (tryVeh && tryVeh.found) fallbackExp = tryVeh;
-              }
-              if (!fallbackExp && effectiveModule !== "TASK_WORKFLOW") {
-                const tryTsk = await taskModuleTools.explain_task_concept.execute({ concept: message }, executionContext);
-                if (tryTsk && tryTsk.found) fallbackExp = tryTsk;
-              }
-              if (!fallbackExp && effectiveModule !== "DESIGN_TRACKING") {
-                const tryDsg = await designModuleTools.explain_design_concept.execute({ concept: message }, executionContext);
-                if (tryDsg && tryDsg.found) fallbackExp = tryDsg;
+              if (effectiveModule === "TASK_WORKFLOW") {
+                if (vRegex.test(message)) {
+                  const tryVeh = await vehicleModuleTools.explain_vehicle_concept.execute({ concept: message }, executionContext);
+                  if (tryVeh && tryVeh.found) fallbackExp = tryVeh;
+                } else if (dRegex.test(message)) {
+                  const tryDsg = await designModuleTools.explain_design_concept.execute({ concept: message }, executionContext);
+                  if (tryDsg && tryDsg.found) fallbackExp = tryDsg;
+                }
+              } else if (effectiveModule === "VEHICLE_DESK") {
+                if (tRegex.test(message)) {
+                  const tryTsk = await taskModuleTools.explain_task_concept.execute({ concept: message }, executionContext);
+                  if (tryTsk && tryTsk.found) fallbackExp = tryTsk;
+                }
+              } else if (effectiveModule === "DESIGN_TRACKING") {
+                if (tRegex.test(message)) {
+                  const tryTsk = await taskModuleTools.explain_task_concept.execute({ concept: message }, executionContext);
+                  if (tryTsk && tryTsk.found) fallbackExp = tryTsk;
+                }
               }
 
               if (fallbackExp) {
