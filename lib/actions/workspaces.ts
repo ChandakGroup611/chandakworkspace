@@ -479,6 +479,52 @@ export async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspace
   }
 }
 
+/**
+ * Resolves user task enrollment filter criteria.
+ * Returns participant task IDs, subordinate user IDs (if manager), and managed department IDs.
+ */
+export async function getUserTaskEnrollmentContext(userId: string) {
+  const [partRes, scopeRes] = await Promise.all([
+    supabaseAdmin.from("task_participants").select("task_id").eq("user_id", userId),
+    import("@/lib/auth/scope").then(m => m.getUserAccessScope(userId)).catch(() => null)
+  ]);
+
+  const partTaskIds: string[] = (partRes.data || []).map((p: any) => p.task_id);
+  const subordinateUserIds: string[] = scopeRes?.subordinateUserIds && scopeRes.subordinateUserIds.length > 0 
+    ? scopeRes.subordinateUserIds 
+    : [userId];
+  const managedDeptIds: string[] = scopeRes?.managedDepartmentIds || [];
+
+  return {
+    partTaskIds,
+    subordinateUserIds,
+    managedDeptIds
+  };
+}
+
+/**
+ * Builds PostgREST OR filter string for strict task enrollment checking.
+ */
+function buildTaskEnrollmentFilter(context: {
+  partTaskIds: string[];
+  subordinateUserIds: string[];
+  managedDeptIds: string[];
+}): string {
+  const { partTaskIds, subordinateUserIds, managedDeptIds } = context;
+  const orClauses: string[] = [
+    `assigned_to.in.(${subordinateUserIds.join(',')})`,
+    `created_by.in.(${subordinateUserIds.join(',')})`,
+    `owner_id.in.(${subordinateUserIds.join(',')})`
+  ];
+  if (partTaskIds.length > 0) {
+    orClauses.push(`id.in.(${partTaskIds.join(',')})`);
+  }
+  if (managedDeptIds.length > 0) {
+    orClauses.push(`department_id.in.(${managedDeptIds.join(',')})`);
+  }
+  return orClauses.join(',');
+}
+
 export async function fetchHierarchyChildren(parentId: string, parentType: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
@@ -487,20 +533,18 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
   const userId = authUser?.id;
   if (!userId) return [];
 
+  // Check if user is super admin
+  const canManageAll = await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
+
   // If expanding a Workspace/Sub-Workspace, fetch its Sub-Workspaces and Direct Tasks
   if (parentType === 'WORKSPACE' || parentType === 'SUB_WORKSPACE') {
-    // Check if user is super admin
-    const canManageAll = await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
-    
     let allowedWorkspaceIds: string[] = [];
     if (!canManageAll) {
-      const [memberRes, ownerRes] = await Promise.all([
-        supabaseAdmin.from('workspace_members').select('workspace_id').eq('user_id', userId).eq('is_deleted', false),
-        supabaseAdmin.from('workspaces').select('id').eq('workspace_owner_id', userId).eq('is_deleted', false)
-      ]);
-      const wsIds = new Set<string>();
-      memberRes.data?.forEach((w: any) => wsIds.add(w.workspace_id));
-      ownerRes.data?.forEach((w: any) => wsIds.add(w.id));
+      const visibleWorkspaces = await getVisibleWorkspaces(userId);
+      const wsIds = new Set<string>(visibleWorkspaces.map((w: any) => w.id));
+      if (!wsIds.has(parentId)) {
+        return [];
+      }
       allowedWorkspaceIds = Array.from(wsIds);
     }
 
@@ -513,24 +557,30 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 
     if (!canManageAll) {
       if (allowedWorkspaceIds.length === 0) {
-        // If they have no workspace memberships, they can't see any subworkspaces
         subWsQuery = subWsQuery.eq('id', '00000000-0000-0000-0000-000000000000');
       } else {
         subWsQuery = subWsQuery.in('id', allowedWorkspaceIds);
       }
     }
 
+    let tasksQuery = supabaseAdmin
+      .from('tasks')
+      .select('id, name:subject, code:task_code, description, owner_id, assigned_to, workspace_id, parent_task_id, status_id, priority_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), priority:priority_master!tasks_priority_id_fkey(name:priority_name, priority_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code), assignees:task_participants(user_id, participation_role)')
+      .eq('workspace_id', parentId)
+      .is('parent_task_id', null)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false })
+      .limit(100); // Safety net to prevent UI freeze on expansion
+
+    if (!canManageAll) {
+      const enrollContext = await getUserTaskEnrollmentContext(userId);
+      tasksQuery = tasksQuery.or(buildTaskEnrollmentFilter(enrollContext));
+    }
+
     // 1 & 2. Fetch Sub-Workspaces & Tasks Concurrently
     const [subWsRes, tasksRes] = await Promise.all([
       subWsQuery,
-      supabaseAdmin
-        .from('tasks')
-        .select('id, name:subject, code:task_code, description, owner_id, assigned_to, workspace_id, parent_task_id, status_id, priority_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), priority:priority_master!tasks_priority_id_fkey(name:priority_name, priority_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code), assignees:task_participants(user_id, participation_role)')
-        .eq('workspace_id', parentId)
-        .is('parent_task_id', null)
-        .eq('is_deleted', false)
-        .order('created_at', { ascending: false })
-        .limit(100) // Safety net to prevent UI freeze on expansion
+      tasksQuery
     ]);
 
     const subWs = subWsRes.data;
@@ -560,13 +610,40 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 
   // If expanding a Task/Sub-Task, fetch its Sub-Tasks
   if (parentType === 'TASK' || parentType === 'SUB_TASK') {
-    const { data: subTasks } = await supabaseAdmin
+    let subTasksQuery = supabaseAdmin
       .from('tasks')
       .select('id, name:subject, code:task_code, description, owner_id, assigned_to, workspace_id, parent_task_id, status_id, priority_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), priority:priority_master!tasks_priority_id_fkey(name:priority_name, priority_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code), assignees:task_participants(user_id, participation_role)')
       .eq('parent_task_id', parentId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
       .limit(100);
+
+    if (!canManageAll) {
+      const enrollContext = await getUserTaskEnrollmentContext(userId);
+      const { partTaskIds, subordinateUserIds, managedDeptIds } = enrollContext;
+
+      // Check if user is enrolled in the parent task itself
+      const { data: parentTask } = await supabaseAdmin
+        .from('tasks')
+        .select('id, assigned_to, created_by, owner_id, department_id')
+        .eq('id', parentId)
+        .maybeSingle();
+
+      const isEnrolledInParent = parentTask && (
+        subordinateUserIds.includes(parentTask.assigned_to) ||
+        subordinateUserIds.includes(parentTask.created_by) ||
+        subordinateUserIds.includes(parentTask.owner_id) ||
+        partTaskIds.includes(parentId) ||
+        (parentTask.department_id && managedDeptIds.includes(parentTask.department_id))
+      );
+
+      // If user is not enrolled in parent task, only return subtasks they are directly enrolled in
+      if (!isEnrolledInParent) {
+        subTasksQuery = subTasksQuery.or(buildTaskEnrollmentFilter(enrollContext));
+      }
+    }
+
+    const { data: subTasks } = await subTasksQuery;
 
     if (subTasks) {
       return subTasks.map((t: any) => ({
@@ -624,6 +701,7 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     .eq("user_id", user.id)
     .neq("participation_role", "WATCHER");
   const myParticipantTaskIds = new Set<string>((userPartData || []).map((p: any) => p.task_id));
+  const { subordinateUserIds, managedDeptIds } = await getUserTaskEnrollmentContext(user.id);
 
   // Resolve multi-select array filters with single-value fallback
   const selectedWorkspaceIds = Array.isArray(filters?.workspaceIds) && filters.workspaceIds.length > 0
@@ -784,8 +862,17 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     }
   }
 
-  // Strictly enforce user assignment filtering (ONLY when explicitly filtered by user/assignee)
+  // Strictly enforce user assignment / enrollment filtering
   tasks = tasks.filter((t: any) => {
+    if (!canManageAll) {
+      const isEnrolled = subordinateUserIds.includes(t.assigned_to) ||
+                         subordinateUserIds.includes(t.owner_id) ||
+                         subordinateUserIds.includes(t.created_by) ||
+                         myParticipantTaskIds.has(t.id) ||
+                         t.assignees?.some((a: any) => subordinateUserIds.includes(a.user_id)) ||
+                         (t.department_id && managedDeptIds.includes(t.department_id));
+      if (!isEnrolled) return false;
+    }
     if (selectedAssigneeIds.length > 0) {
       const isAssigned = selectedAssigneeIds.includes(t.assigned_to) || 
                          selectedAssigneeIds.includes(t.owner_id) ||
@@ -1045,7 +1132,7 @@ export async function fetchAllHierarchyBranches() {
   if (visibleWsIds.length === 0) return [];
 
   // Fetch all tasks for visible workspaces
-  const { data: allTasks } = await supabaseAdmin
+  let tasksQuery = supabaseAdmin
     .from('tasks')
     .select(`
       id,
@@ -1069,8 +1156,14 @@ export async function fetchAllHierarchyBranches() {
       assignees:task_participants(user_id, participation_role)
     `)
     .in('workspace_id', visibleWsIds)
-    .eq('is_deleted', false)
-    .order('created_at', { ascending: false });
+    .eq('is_deleted', false);
+
+  if (!canManageAll) {
+    const enrollContext = await getUserTaskEnrollmentContext(user.id);
+    tasksQuery = tasksQuery.or(buildTaskEnrollmentFilter(enrollContext));
+  }
+
+  const { data: allTasks } = await tasksQuery.order('created_at', { ascending: false });
 
   const tasksMap = new Map<string, any>();
   (allTasks || []).forEach((t: any) => {
@@ -1521,20 +1614,16 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
 
     if (!canManageAll) {
       const visibleWorkspaces = await getVisibleWorkspaces(userData.user.id);
-      const visibleWsIds = visibleWorkspaces.map((w: any) => w.id);
+      const visibleWsIds = new Set<string>(visibleWorkspaces.map((w: any) => w.id));
 
-      const { data: partData } = await supabaseAdmin.from("task_participants").select("task_id").eq("user_id", userData.user.id);
-      const partTaskIds = partData ? partData.map((p: any) => p.task_id) : [];
-
-      if (visibleWsIds.length > 0 && partTaskIds.length > 0) {
-        query = query.or(`workspace_id.in.(${visibleWsIds.join(',')}),id.in.(${partTaskIds.join(',')}),assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
-      } else if (visibleWsIds.length > 0) {
-        query = query.or(`workspace_id.in.(${visibleWsIds.join(',')}),assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
-      } else if (partTaskIds.length > 0) {
-        query = query.or(`id.in.(${partTaskIds.join(',')}),assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
-      } else {
-        query = query.or(`assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
+      const allowedWsIds = targetWorkspaceIds.filter(id => visibleWsIds.has(id));
+      if (allowedWsIds.length === 0) {
+        return [];
       }
+
+      query = query.in("workspace_id", allowedWsIds);
+      const enrollContext = await getUserTaskEnrollmentContext(userData.user.id);
+      query = query.or(buildTaskEnrollmentFilter(enrollContext));
     }
 
     const { data: workspaceTasks, error: tasksError } = await query
@@ -1669,9 +1758,10 @@ export async function fetchAllTasks() {
   const visibleWorkspaces = await getVisibleWorkspaces(user.id);
   const visibleWsIds = visibleWorkspaces.map((w: any) => w.id);
 
-  // Fetch task IDs where user is a participant
-  const { data: partData } = await supabaseAdmin.from("task_participants").select("task_id").eq("user_id", user.id);
-  const partTaskIds = partData ? partData.map((p: any) => p.task_id) : [];
+  // If non-admin user has NO visible workspaces, they have 0 workspace tasks
+  if (!canManageAll && visibleWsIds.length === 0) {
+    return [];
+  }
 
   let query = supabase
     .from("tasks")
@@ -1686,14 +1776,10 @@ export async function fetchAllTasks() {
     `)
     .eq("is_deleted", false);
 
-  if (visibleWsIds.length > 0 && partTaskIds.length > 0) {
-    query = query.or(`workspace_id.in.(${visibleWsIds.join(',')}),id.in.(${partTaskIds.join(',')}),assigned_to.eq.${user.id},owner_id.eq.${user.id}`);
-  } else if (visibleWsIds.length > 0) {
-    query = query.or(`workspace_id.in.(${visibleWsIds.join(',')}),assigned_to.eq.${user.id},owner_id.eq.${user.id}`);
-  } else if (partTaskIds.length > 0) {
-    query = query.or(`id.in.(${partTaskIds.join(',')}),assigned_to.eq.${user.id},owner_id.eq.${user.id}`);
-  } else {
-    query = query.or(`assigned_to.eq.${user.id},owner_id.eq.${user.id}`);
+  if (!canManageAll) {
+    query = query.in("workspace_id", visibleWsIds);
+    const enrollContext = await getUserTaskEnrollmentContext(user.id);
+    query = query.or(buildTaskEnrollmentFilter(enrollContext));
   }
 
   const { data: allTasks, error: tasksError } = await query.order("created_at", { ascending: false });

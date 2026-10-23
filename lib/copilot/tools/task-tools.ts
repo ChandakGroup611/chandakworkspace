@@ -378,11 +378,24 @@ export const getUserTaskSummaryTool: ToolDefinition = {
       } else if (scope === "CREATED_BY_ME") {
         query = query.eq("created_by", context.userId);
       } else {
-        if (workspaceIds.length > 0) {
-          query = query.or(`assigned_to.eq.${context.userId},created_by.eq.${context.userId},workspace_id.in.(${workspaceIds.join(",")})`);
-        } else {
-          query = query.or(`assigned_to.eq.${context.userId},created_by.eq.${context.userId}`);
+        const { data: partData } = await supabaseAdmin
+          .from("task_participants")
+          .select("task_id")
+          .eq("user_id", context.userId);
+        const partTaskIds = (partData || []).map((p: any) => p.task_id);
+
+        const orClauses = [
+          `assigned_to.eq.${context.userId}`,
+          `created_by.eq.${context.userId}`
+        ];
+        if (partTaskIds.length > 0) {
+          orClauses.push(`id.in.(${partTaskIds.join(',')})`);
         }
+
+        if (workspaceIds.length > 0) {
+          query = query.in("workspace_id", workspaceIds);
+        }
+        query = query.or(orClauses.join(','));
       }
     } else if (scope === "ASSIGNED_TO_ME") {
       query = query.eq("assigned_to", context.userId);
