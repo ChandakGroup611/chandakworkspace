@@ -18,7 +18,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as Popover from "@radix-ui/react-popover";
-import { Search, Moon, Sun, LogOut, User, Settings, Terminal, FileText, CheckSquare, Car, Menu, FolderPlus, Loader2 } from "lucide-react";
+import { Search, Moon, Sun, LogOut, User, Settings, Terminal, FileText, CheckSquare, Car, Menu, FolderPlus, Loader2, Sparkles } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { globalSearch } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/repositories/search";
@@ -27,6 +27,7 @@ import { ThemeMenu } from "@/components/theme/ThemeMenu";
 import { useProfile, usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
+import { CopilotDrawer } from "@/components/copilot/CopilotDrawer";
 
 type QuickAction = { id: string; label: string; href: string; icon: React.ElementType };
 const QUICK_ACTIONS: QuickAction[] = [
@@ -56,16 +57,20 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ⌘K / Ctrl+K focuses search
+  // ⌘K / Ctrl+K focuses search, Ctrl+/ toggles Copilot
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen(true);
         inputRef.current?.focus();
+      } else if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        e.preventDefault();
+        setCopilotOpen((prev) => !prev);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -184,6 +189,15 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
           <Settings className="h-4 w-4" aria-hidden />
         </Link>
         <RealtimeNotificationsDrawer />
+        <button
+          type="button"
+          onClick={() => setCopilotOpen(true)}
+          aria-label="Open Chandak Copilot"
+          title="Chandak Copilot (Ctrl+/)"
+          className={cn(iconBtn, "text-accent-soft-text hover:text-foreground")}
+        >
+          <Sparkles className="h-4 w-4" aria-hidden />
+        </button>
 
         <div className="mx-2 hidden h-6 w-px bg-border lg:block" aria-hidden />
 
@@ -224,6 +238,8 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
           </Popover.Portal>
         </Popover.Root>
       </div>
+
+      <CopilotDrawer open={copilotOpen} onClose={() => setCopilotOpen(false)} />
     </header>
   );
 }
