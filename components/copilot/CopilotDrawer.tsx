@@ -321,8 +321,10 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
       onClose={onClose}
       size="md"
       title={
-        <div className="flex items-center gap-2">
-          <ChandakMitraIcon className="h-5 w-5 shrink-0" animated />
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/25 shrink-0">
+            <ChandakMitraIcon className="h-5 w-5 shrink-0" animated />
+          </div>
           <span className="font-semibold text-foreground text-[14.5px]">Chandak Mitra</span>
           <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-medium text-accent-soft-text border border-border">
             {moduleDisplayName}
@@ -336,8 +338,8 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="rounded-full bg-surface p-3.5 border border-border shadow-xs mb-3 group hover:scale-105 transition-transform">
-                <ChandakMitraIcon className="h-9 w-9" animated />
+              <div className="rounded-2xl bg-amber-500/10 p-3 border border-amber-500/25 shadow-xs mb-3 group hover:scale-105 transition-transform flex items-center justify-center">
+                <ChandakMitraIcon className="h-12 w-12" animated />
               </div>
               <h4 className="text-[14.5px] font-semibold text-foreground">Namaste! Main hoon aapka Chandak Mitra 🤝</h4>
               <p className="mt-1 max-w-sm text-[12.5px] text-muted leading-relaxed">
@@ -376,10 +378,10 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px]",
                     m.role === "user"
                       ? "bg-theme-btn-primary text-theme-btn-primary-text"
-                      : "bg-surface border border-border text-foreground"
+                      : "bg-amber-500/10 border border-amber-500/25 overflow-hidden"
                   )}
                 >
-                  {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <ChandakMitraIcon className="h-4 w-4" />}
+                  {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <ChandakMitraIcon className="h-5 w-5" />}
                 </div>
 
                 <div className="flex flex-col space-y-2">

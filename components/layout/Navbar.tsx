@@ -195,9 +195,9 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
           onClick={() => setCopilotOpen(true)}
           aria-label="Open Chandak Mitra"
           title="Chandak Mitra (Ctrl+/)"
-          className={cn(iconBtn, "text-accent-soft-text hover:text-foreground group")}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-hover group transition-colors"
         >
-          <ChandakMitraIcon className="h-5 w-5 transition-transform group-hover:scale-110" animated />
+          <ChandakMitraIcon className="h-6 w-6 transition-transform group-hover:scale-110 shrink-0" animated />
         </button>
 
         <div className="mx-2 hidden h-6 w-px bg-border lg:block" aria-hidden />
