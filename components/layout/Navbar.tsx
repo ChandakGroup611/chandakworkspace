@@ -28,6 +28,7 @@ import { useProfile, usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
 import { CopilotDrawer } from "@/components/copilot/CopilotDrawer";
+import { ChandakMitraIcon } from "@/components/copilot/ChandakMitraIcon";
 
 type QuickAction = { id: string; label: string; href: string; icon: React.ElementType };
 const QUICK_ACTIONS: QuickAction[] = [
@@ -192,11 +193,11 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
         <button
           type="button"
           onClick={() => setCopilotOpen(true)}
-          aria-label="Open Chandak Copilot"
-          title="Chandak Copilot (Ctrl+/)"
-          className={cn(iconBtn, "text-accent-soft-text hover:text-foreground")}
+          aria-label="Open Chandak Mitra"
+          title="Chandak Mitra (Ctrl+/)"
+          className={cn(iconBtn, "text-accent-soft-text hover:text-foreground group")}
         >
-          <Sparkles className="h-4 w-4" aria-hidden />
+          <ChandakMitraIcon className="h-5 w-5 transition-transform group-hover:scale-110" animated />
         </button>
 
         <div className="mx-2 hidden h-6 w-px bg-border lg:block" aria-hidden />

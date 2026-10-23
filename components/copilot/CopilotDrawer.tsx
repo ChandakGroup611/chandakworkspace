@@ -19,6 +19,7 @@ import {
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { AppButton } from "@/components/ui/AppButton";
 import { cn } from "@/lib/utils";
+import { ChandakMitraIcon } from "./ChandakMitraIcon";
 
 export interface CopilotDrawerProps {
   open: boolean;
@@ -49,15 +50,15 @@ interface ActionPreviewState {
 
 const STARTER_PROMPTS: Record<string, string[]> = {
   TASK_WORKFLOW: [
-    "Explain Primary Assignee vs Executor",
-    "Guide me to create a new Task",
+    "Show my SFDC tasks",
+    "How many tasks are pending?",
     "Why is my task schedule edit blocked?",
-    "Explain Task Watcher rules"
+    "Explain Primary Assignee vs Executor"
   ],
   VEHICLE_DESK: [
-    "What is a Movement Pass?",
+    "What is our fleet summary?",
     "Guide me to dispatch a vehicle",
-    "Why is trip dispatch disabled for Fleet Workshop?",
+    "What is a Movement Pass?",
     "Explain HSRP and PUC compliance"
   ],
   DESIGN_TRACKING: [
@@ -321,26 +322,26 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
       size="md"
       title={
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-theme-btn-primary" aria-hidden />
-          <span className="font-semibold text-foreground text-[14.5px]">Chandak Copilot</span>
+          <ChandakMitraIcon className="h-5 w-5 shrink-0" animated />
+          <span className="font-semibold text-foreground text-[14.5px]">Chandak Mitra</span>
           <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-medium text-accent-soft-text border border-border">
             {moduleDisplayName}
           </span>
         </div>
       }
-      subtitle="Application-aware AI assistant grounded in verified Chandak governance."
+      subtitle="Aapka Digital Dost — Always on duty, zero chai breaks!"
     >
       <div className="flex h-[calc(100vh-140px)] flex-col justify-between -mx-4 -my-3">
         {/* Messages Container */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="rounded-full bg-surface p-3 border border-border shadow-xs mb-3">
-                <Bot className="h-6 w-6 text-muted" />
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="rounded-full bg-surface p-3.5 border border-border shadow-xs mb-3 group hover:scale-105 transition-transform">
+                <ChandakMitraIcon className="h-9 w-9" animated />
               </div>
-              <h4 className="text-[14px] font-medium text-foreground">How can I assist you?</h4>
-              <p className="mt-1 max-w-sm text-[12.5px] text-muted">
-                Ask questions about Chandak workflows, explain terminology, diagnose permissions, or execute verified operations.
+              <h4 className="text-[14.5px] font-semibold text-foreground">Namaste! Main hoon aapka Chandak Mitra 🤝</h4>
+              <p className="mt-1 max-w-sm text-[12.5px] text-muted leading-relaxed">
+                Task dhoondhna ho, workload check karna ho ya koi blocker samajhna ho — bas ek sawaal pucho!
               </p>
 
               {/* Quick Prompt Pills */}
@@ -378,7 +379,7 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
                       : "bg-surface border border-border text-foreground"
                   )}
                 >
-                  {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                  {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <ChandakMitraIcon className="h-4 w-4" />}
                 </div>
 
                 <div className="flex flex-col space-y-2">
@@ -434,7 +435,13 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
                   handleSend();
                 }
               }}
-              placeholder={`Ask about ${moduleDisplayName.toLowerCase()}, explain rules, or request actions…`}
+              placeholder={
+                activeModule === "TASK_WORKFLOW"
+                  ? "Poochiye Chandak Mitra se... (e.g. 'show my sfdc task' ya 'task summary')"
+                  : activeModule === "VEHICLE_DESK"
+                  ? "Poochiye Chandak Mitra se... (e.g. 'fleet summary' ya vehicle registration number)"
+                  : "Poochiye Chandak Mitra se... (e.g. 'explain GFC' ya drawing number)"
+              }
               className="w-full resize-none bg-transparent text-[13px] text-foreground placeholder:text-muted outline-none"
             />
             <div className="flex items-center justify-between pt-1 border-t border-border/40">
