@@ -7,8 +7,13 @@ const nextConfig = {
   serverExternalPackages: ['onnxruntime-web', 'sharp'],
   outputFileTracingIncludes: {
     '/api/vehicle/image/cutout': [
+      // cutout.ts imports the runtime at run time (hidden from the bundler), so ship what Node needs to
+      // resolve it: the package manifest, its Node entry, the .wasm, and its one runtime dependency
+      './node_modules/onnxruntime-web/package.json',
       './node_modules/onnxruntime-web/dist/ort.node.min.*',
-      './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.*',
+      './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs',
+      './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
+      './node_modules/onnxruntime-common/**/*',
     ],
   },
   generateBuildId: async () => {

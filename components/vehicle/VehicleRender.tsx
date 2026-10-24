@@ -101,6 +101,34 @@ const canCutOut = (src: string) => {
   try { const u = new URL(src); return u.protocol === "https:" && (u.hostname === "upload.wikimedia.org" || (!!SUPABASE_HOST && u.hostname === SUPABASE_HOST)); } catch { return false; }
 };
 
+/* cut-outs are fetched (not <img>) so we can wait while the server is still making one (HTTP 202),
+   at most two at a time so the rest of the app's requests are never queued behind them */
+const cutoutCache = new Map<string, Promise<string>>();
+let cutoutActive = 0;
+const cutoutWaiting: (() => void)[] = [];
+async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (cutoutActive >= 2) await new Promise<void>((r) => cutoutWaiting.push(r));
+  cutoutActive++;
+  try { return await fn(); } finally { cutoutActive--; cutoutWaiting.shift()?.(); }
+}
+function loadCutout(url: string): Promise<string> {
+  if (!cutoutCache.has(url)) {
+    const p = (async () => {
+      for (let attempt = 0; attempt < 40; attempt++) {
+        const res = await withSlot(() => fetch(url, { credentials: "same-origin" }));
+        if (res.status === 200) return URL.createObjectURL(await res.blob());
+        if (res.status !== 202) throw new Error(`cut-out ${res.status}`);
+        const wait = Math.min(8, Number(res.headers.get("Retry-After")) || 3) * 1000;
+        await new Promise((r) => setTimeout(r, wait));
+      }
+      throw new Error("cut-out timed out");
+    })();
+    p.catch(() => cutoutCache.delete(url)); // a later page visit may try again
+    cutoutCache.set(url, p);
+  }
+  return cutoutCache.get(url)!;
+}
+
 type Candidate = { src: string; kind: "cutout" | "photo" | "render"; credit?: { page: string; title?: string } };
 export type PaintTone = "dark" | "light" | null;
 
@@ -178,10 +206,27 @@ export function useVehicleImage(vehicle: VehicleRenderInput) {
 
   const current: Candidate | undefined = candidates[failed];
   const staged = !current || current.kind !== "photo";
+
+  // resolve a cut-out to a local object URL; until then the stage shows the brand mark
+  const [resolved, setResolved] = useState<{ for: string; url: string } | null>(null);
+  const cutoutSrc = current?.kind === "cutout" ? current.src : null;
+  useEffect(() => {
+    if (!cutoutSrc) return;
+    let alive = true;
+    loadCutout(cutoutSrc).then(
+      (url) => { if (alive) setResolved({ for: cutoutSrc, url }); },
+      () => { if (alive) setFailed((f) => f + 1); }
+    );
+    return () => { alive = false; };
+  }, [cutoutSrc]);
+  const src = !current ? null : current.kind === "cutout" ? (resolved?.for === current.src ? resolved.url : null) : current.src;
+  const loading = !!current && !src;
   // the master's paint (when the user set one) wins; otherwise the measured lightness of the cut-out
   const tone = toneFromPaint(vehicle.paint_color) ?? (staged ? measured : null);
   return {
     current,
+    src,
+    loading,
     staged,
     tone,
     label: `${vehicle.make || ""} ${vehicle.model || ""}`.trim() || "Vehicle",
@@ -216,21 +261,30 @@ function Credit({ credit, onStage }: { credit?: Candidate["credit"]; onStage: bo
   );
 }
 
+function BrandMark({ vehicle, label, size, loading }: { vehicle: VehicleRenderInput; label: string; size: number; loading: boolean }) {
+  return (
+    <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 text-center ${loading ? "animate-pulse" : ""}`}>
+      <VehicleBrandLogo brand={vehicle.make} model={vehicle.model} size={size} />
+      <span className="max-w-[90%] truncate text-[13px] font-medium" style={{ color: STAGE_INK.muted }}>{loading ? "Preparing picture…" : label}</span>
+    </div>
+  );
+}
+
 /** Card picture: the car on a small studio stage (inventory grid, thumbnails). */
 export function VehicleRender({ vehicle, className = "" }: { vehicle: VehicleRenderInput; className?: string }) {
-  const { current, staged, tone, label, onError, onLoad } = useVehicleImage(vehicle);
+  const { current, src, loading, staged, tone, label, onError, onLoad } = useVehicleImage(vehicle);
   const studio = studioColors(tone);
   return (
     <div className={`relative overflow-hidden ${className}`} role="img" aria-label={label} style={{ background: studio.wall, transition: "background 300ms" }}>
       <div className="absolute inset-x-0 bottom-0 h-[34%]" style={{ background: studio.floor }} aria-hidden />
-      {current && staged && (
+      {src && staged && (
         <div className="absolute inset-x-[12%] bottom-[9%] h-[9%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />
       )}
-      {current ? (
+      {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          key={current.src}
-          src={current.src}
+          key={src}
+          src={src}
           alt=""
           loading="lazy"
           onError={onError}
@@ -238,10 +292,7 @@ export function VehicleRender({ vehicle, className = "" }: { vehicle: VehicleRen
           className={staged ? "absolute inset-x-[6%] bottom-[10%] top-[8%] h-[82%] w-[88%] object-contain object-bottom" : "absolute inset-0 h-full w-full object-cover"}
         />
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center">
-          <VehicleBrandLogo brand={vehicle.make} model={vehicle.model} size={44} />
-          <span className="max-w-[90%] truncate text-[13px] font-medium" style={{ color: STAGE_INK.muted }}>{label}</span>
-        </div>
+        <BrandMark vehicle={vehicle} label={label} size={44} loading={loading} />
       )}
       <Credit credit={current?.credit} onStage={staged} />
     </div>
@@ -253,21 +304,21 @@ export function VehicleRender({ vehicle, className = "" }: { vehicle: VehicleRen
  * `top` and `children` render on the stage above and below the car (use STAGE_INK colours there).
  */
 export function VehicleStage({ vehicle, className = "", top, children }: { vehicle: VehicleRenderInput; className?: string; top?: React.ReactNode; children?: React.ReactNode }) {
-  const { current, staged, tone, label, onError, onLoad } = useVehicleImage(vehicle);
+  const { current, src, loading, staged, tone, label, onError, onLoad } = useVehicleImage(vehicle);
   const studio = studioColors(tone);
   return (
     <div className={`relative flex flex-col overflow-hidden ${className}`} style={{ background: studio.wall, color: STAGE_INK.text, transition: "background 300ms" }}>
       <div className="absolute inset-x-0 bottom-0 h-[38%]" style={{ background: studio.floor }} aria-hidden />
       {top && <div className="relative z-[1]">{top}</div>}
       <div className="relative min-h-0 flex-1" role="img" aria-label={label}>
-        {current && staged && (
+        {src && staged && (
           <>
             <div className="absolute bottom-[21%] left-[19%] right-[19%] h-[8%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img key={current.src} src={current.src} alt="" onError={onError} onLoad={onLoad} className="absolute bottom-[24%] left-[15%] h-[70%] w-[70%] object-contain object-bottom" />
+            <img key={src} src={src} alt="" onError={onError} onLoad={onLoad} className="absolute bottom-[24%] left-[15%] h-[70%] w-[70%] object-contain object-bottom" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={current.src}
+              src={src}
               alt=""
               aria-hidden
               className="pointer-events-none absolute left-[15%] top-[76%] h-[70%] w-[70%] object-contain object-bottom opacity-[0.18]"
@@ -275,16 +326,11 @@ export function VehicleStage({ vehicle, className = "", top, children }: { vehic
             />
           </>
         )}
-        {current && !staged && (
+        {src && !staged && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img key={current.src} src={current.src} alt="" onError={onError} className="absolute inset-0 h-full w-full object-cover" />
+          <img key={src} src={src} alt="" onError={onError} className="absolute inset-0 h-full w-full object-cover" />
         )}
-        {!current && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
-            <VehicleBrandLogo brand={vehicle.make} model={vehicle.model} size={72} />
-            <span className="text-[14px] font-medium" style={{ color: STAGE_INK.muted }}>{label}</span>
-          </div>
-        )}
+        {!src && <BrandMark vehicle={vehicle} label={label} size={72} loading={loading} />}
         <Credit credit={current?.credit} onStage={staged} />
       </div>
       {children && <div className="relative z-[1]">{children}</div>}
