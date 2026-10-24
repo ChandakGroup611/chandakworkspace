@@ -24,6 +24,24 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Change ID:** FLEET-009 / SEC-002 (Vehicle Master Dropdowns, Dossier Connections & Dependency Security Patches)
+* **Date:** 2026-10-24
+* **Requested functionality:** Fix empty insurance vendor and purchase vendor dropdowns across registration, edit, renew, and vault modals; fix master creation and bulk import column mappings for `fleet_insurance_vendors`; auto-link operational connections (maintenance job cards, mounted parts, trips, drivers) in the vehicle 360° dossier; remediate 5 upstream security vulnerabilities (`dompurify`, `next`, `sharp`, `source-map-js`, `nodemailer`).
+* **Reason:** Ensure insurance vendors and masters list reliably; prevent database schema cache errors when provisioning masters; provide real-time reactive linkages in vehicle dossiers; maintain zero-vulnerability security posture.
+* **Modules affected:** Vehicle Desk (`FleetDeskHost.tsx`, `page.tsx`, `lib/actions/vehicle.ts`), System Masters (`app/masters/page.tsx`, `lib/actions/masters.ts`), Core Dependencies (`package.json`).
+* **Files changed:** `app/vehicle/[[...slug]]/page.tsx`, `components/vehicle/FleetDeskHost.tsx`, `lib/actions/vehicle.ts`, `app/masters/page.tsx`, `lib/actions/masters.ts`, `package.json`, `package-lock.json`, `docs/CHANGELOG.md`.
+* **Database changes:** None (preserved existing PostgreSQL schemas and RLS).
+* **API changes:** `createServiceRecordAction`, `createTripPlanAction`, `createVehiclePartAction`, and `createVehiclePartsBatchAction` now automatically populate and return joined vehicle and driver metadata (`vehicle_reg`, `driver_name`).
+* **UI changes:** Master dropdowns pre-fetch and lazily populate without blank states; vehicle dossier loads maintenance, parts, and trips on-demand upon row inspection; optimistic local state updates for odometer, status, and driver assignments.
+* **Business logic changes:** Guarded `scope_id` insertion on unscoped master tables; soft-delete fallback on master records.
+* **Security impact:** Zero security regressions. Resolved all 5 upstream vulnerabilities (`npm audit` reporting 0 vulnerabilities).
+* **RBAC impact:** Fully preserved all existing role permissions and permissions boundaries.
+* **Performance impact:** Eliminated N+1 lookups; preserved pagination; pre-fetched lightweight vendor dictionaries while keeping heavy operational ledgers on-demand.
+* **Testing performed:** TypeScript verification (`npx tsc --noEmit`), automated dual insurance lifecycle (`scripts/test-dual-insurance-creation.js`), vehicle sales lifecycle (`scripts/test-vehicle-sales-module.js`), independent policy test (`scripts/test-independent-insurance-policies.js`), production build (`npm run build`).
+* **Regression testing performed:** Verified backward compatibility across vehicle inventory, registration, dossier views, and task modules.
+* **Deployment status:** Deployed & Verified.
+* **Rollback information:** `git revert 34cb2db5 9351d857`.
+
 * **Change ID:** FLEET-008 (Vehicle Quotation & On-Road Cost Breakdown Engine)
 * **Requested functionality:** Expand vehicle purchase price into detailed quotation breakdown with 14 statutory taxes, fitments, and user-requested "Other" charges column (`other_charges`).
 * **Reason:** Provide comprehensive transparency for fleet acquisition, standard Indian automotive GST/Cess matrix calculation, RTO, 1% TCS under Sec 206C(1F), insurance, accessories, and net on-road capitalized valuation.

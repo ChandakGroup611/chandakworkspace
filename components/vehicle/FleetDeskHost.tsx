@@ -99,6 +99,8 @@ import {
   isElectricFuel
 } from "./vehicleQuickPicks";
 import { VehicleBrandLogo } from "./VehicleBrandLogo";
+import { VehicleRender } from "./VehicleRender";
+import { LayoutGrid, List as ListIcon } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -1001,6 +1003,15 @@ export default function FleetDeskHost({
   const [showOnRoadCol, setShowOnRoadCol] = useState<boolean>(true);
   const [showInventoryRelations, setShowInventoryRelations] = useState<boolean>(true);
   const [isColumnOptionsOpen, setIsColumnOptionsOpen] = useState<boolean>(false);
+  // Inventory layout: table (list) or picture cards (grid); remembered per browser
+  const [inventoryView, setInventoryView] = useState<"list" | "grid">("list");
+  useEffect(() => {
+    try { const v = localStorage.getItem("fleet_inventory_view"); if (v === "grid" || v === "list") setInventoryView(v); } catch { /* ignore */ }
+  }, []);
+  const changeInventoryView = (v: "list" | "grid") => {
+    setInventoryView(v);
+    try { localStorage.setItem("fleet_inventory_view", v); } catch { /* ignore */ }
+  };
 
   // Modal Dialog States
   const [isEditVehicleOpen, setIsEditVehicleOpen] = useState(false);
@@ -3205,7 +3216,7 @@ export default function FleetDeskHost({
 
   // On-demand loader for sub-tabs and transaction modals when not pre-fetched in initial payload
   useEffect(() => {
-    if ((activeTab === "maintenance" || isAddMaintenanceOpen || isEditMaintenanceOpen || Boolean(viewingVehicle)) && !dataLoaded.maintenance) {
+    if ((activeTab === "maintenance" || isAddMaintenanceOpen || isEditMaintenanceOpen) && !dataLoaded.maintenance) {
       fetchMaintenanceList().then((res) => {
         if (res.success && res.records) {
           setMaintenance(res.records);
@@ -3213,7 +3224,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand maintenance load error:", e));
     }
-    if ((activeTab === "drivers" || isAddDriverOpen || isEditDriverOpen || isDispatchTripOpen || Boolean(viewingVehicle) || activeTab === "register" || isEditVehicleOpen) && !dataLoaded.drivers) {
+    if ((activeTab === "drivers" || isAddDriverOpen || isEditDriverOpen || isDispatchTripOpen) && !dataLoaded.drivers) {
       fetchDriversList().then((res) => {
         if (res.success && res.drivers) {
           setDrivers(res.drivers);
@@ -3221,7 +3232,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand drivers load error:", e));
     }
-    if ((activeTab === "trips" || isDispatchTripOpen || Boolean(viewingVehicle)) && !dataLoaded.trips) {
+    if ((activeTab === "trips" || isDispatchTripOpen) && !dataLoaded.trips) {
       fetchTripsList().then((res) => {
         if (res.success && res.trips) {
           setTrips(res.trips);
@@ -3229,7 +3240,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand trips load error:", e));
     }
-    if ((activeTab === "parts" || isAddPartOpen || isEditPartOpen || Boolean(viewingVehicle)) && !dataLoaded.parts) {
+    if ((activeTab === "parts" || isAddPartOpen || isEditPartOpen) && !dataLoaded.parts) {
       fetchVehiclePartsList().then((res) => {
         if (res.success && res.parts) {
           setParts(res.parts);
@@ -3237,7 +3248,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand parts load error:", e));
     }
-    if ((insuranceVendors.length === 0 || activeTab === "vendors" || isVendorModalOpen || isRenewPolicyModalOpen || isEditVehicleOpen || activeTab === "register" || Boolean(viewingVehicle)) && !dataLoaded.vendors) {
+    if ((activeTab === "vendors" || isVendorModalOpen) && !dataLoaded.vendors) {
       fetchInsuranceVendorsListAction().then((res) => {
         if (res.success && res.vendors) {
           setInsuranceVendors(res.vendors);
@@ -3245,7 +3256,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand vendors load error:", e));
     }
-    if ((activeTab === "register" || isEditVehicleOpen || Boolean(viewingVehicle)) && purchaseVendors.length === 0) {
+    if ((activeTab === "register" || isEditVehicleOpen) && purchaseVendors.length === 0) {
       fetchPurchaseVendorsListAction().then((res) => {
         if (res.success && res.vendors) {
           setPurchaseVendors(res.vendors);
@@ -3263,7 +3274,6 @@ export default function FleetDeskHost({
   }, [
     activeTab, 
     dataLoaded, 
-    viewingVehicle,
     isAddMaintenanceOpen, 
     isEditMaintenanceOpen, 
     isAddDriverOpen, 
@@ -3273,10 +3283,8 @@ export default function FleetDeskHost({
     isEditPartOpen, 
     isVendorModalOpen, 
     isEditVehicleOpen, 
-    isRenewPolicyModalOpen,
     isRecordSaleModalOpen,
-    purchaseVendors.length,
-    insuranceVendors.length
+    purchaseVendors.length
   ]);
 
   // Toast banner triggers
@@ -5568,13 +5576,6 @@ export default function FleetDeskHost({
 
       if (res.success) {
         triggerToast(`Vehicle ${newVehiclePlate.toUpperCase()} registered successfully!`);
-        if (res.vehicle) {
-          setVehicles((prev) => [res.vehicle, ...prev]);
-        }
-        if (newVehicleDriverId && res.vehicle?.id) {
-          const registeredId = res.vehicle.id;
-          setDrivers((prev) => prev.map((d) => d.id === newVehicleDriverId ? { ...d, assigned_vehicle_id: registeredId } : d));
-        }
         handleResetVehicleForm();
         loadAllData(true);
         router.push("/vehicle/inventory");
@@ -5901,20 +5902,6 @@ export default function FleetDeskHost({
           return v;
         }));
 
-        if (editVehicleDriverId) {
-          setDrivers((prev) => prev.map((d) => {
-            if (d.id === editVehicleDriverId) {
-              return { ...d, assigned_vehicle_id: updatedVehId };
-            }
-            if (d.assigned_vehicle_id === updatedVehId) {
-              return { ...d, assigned_vehicle_id: null };
-            }
-            return d;
-          }));
-        } else {
-          setDrivers((prev) => prev.map((d) => d.assigned_vehicle_id === updatedVehId ? { ...d, assigned_vehicle_id: null } : d));
-        }
-
         if (viewingVehicle?.id === updatedVehId) {
           const matchedDriver = drivers.find(d => d.id === editVehicleDriverId);
           setViewingVehicle(prev => prev ? { 
@@ -6135,13 +6122,6 @@ export default function FleetDeskHost({
       if (res.success) {
         triggerToast(`Insurance vendor '${payload.name}' saved successfully!`);
         setIsVendorModalOpen(false);
-        if (res.vendor) {
-          if (selectedVendorForEdit) {
-            setInsuranceVendors((prev) => prev.map((v) => v.id === res.vendor!.id ? res.vendor! : v));
-          } else {
-            setInsuranceVendors((prev) => [res.vendor!, ...prev]);
-          }
-        }
         // Auto-select in form if adding from a vehicle creation or edit flow
         if (!selectedVendorForEdit && res.vendor) {
           if (activeTab === "register") {
@@ -6501,18 +6481,6 @@ export default function FleetDeskHost({
 
       if (res.success) {
         triggerToast("Trip successfully dispatched!");
-        if (res.trip) {
-          const matchedVeh = vehicles.find((v) => v.id === newTripVehicleId) || viewingVehicle;
-          const matchedDriver = drivers.find((d) => d.id === newTripDriverId);
-          const enrichedTrip: TripRecord = {
-            ...res.trip,
-            vehicle_reg: res.trip.vehicle_reg || matchedVeh?.registration_number || "",
-            driver_name: res.trip.driver_name || matchedDriver?.full_name || "Unassigned"
-          };
-          setTrips((prev) => [enrichedTrip, ...prev]);
-        }
-        setVehicles((prev) => prev.map((v) => v.id === newTripVehicleId ? { ...v, status: "IN_SERVICE" } : v));
-        setViewingVehicle((prev) => (prev && prev.id === newTripVehicleId ? { ...prev, status: "IN_SERVICE" } : prev));
         setIsDispatchTripOpen(false);
         setNewTripTraveler("");
         setNewTripPurpose("");
@@ -6614,42 +6582,14 @@ export default function FleetDeskHost({
       if (res.success) {
         triggerToast("Workshop job card & service bill logged successfully!");
         if (res.record) {
-          const matchedVeh = vehicles.find((v) => v.id === newMaintVehicleId) || viewingVehicle;
-          const fullRecord: MaintenanceRecord = {
-            ...res.record,
-            vehicle_reg: res.record.vehicle_reg || matchedVeh?.registration_number || ""
-          };
-          setMaintenance((prev) => [fullRecord, ...prev]);
-        }
-        const odoVal = Number(newMaintOdometer) || 0;
-        const postStat = newMaintPostStatus;
-        if (odoVal > 0 || postStat) {
-          setVehicles((prev) => prev.map((v) => {
-            if (v.id === newMaintVehicleId) {
-              return {
-                ...v,
-                ...(odoVal > (v.odometer_km || 0) ? { odometer_km: odoVal } : {}),
-                ...(postStat ? { status: postStat } : {})
-              };
-            }
-            return v;
-          }));
-          setViewingVehicle((prev) => {
-            if (prev && prev.id === newMaintVehicleId) {
-              return {
-                ...prev,
-                ...(odoVal > (prev.odometer_km || 0) ? { odometer_km: odoVal } : {}),
-                ...(postStat ? { status: postStat } : {})
-              };
-            }
-            return prev;
-          });
+          setMaintenance((prev) => [res.record!, ...prev]);
         }
         setIsAddMaintenanceOpen(false);
         resetMaintenanceForm();
         fleetDataCache = null;
         loadAllData(true, true);
         if (dossierOriginVehicle) {
+          setViewingVehicle(dossierOriginVehicle);
           if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
           setDossierOriginVehicle(null);
         }
@@ -7737,64 +7677,6 @@ export default function FleetDeskHost({
           }
         });
 
-        const targetRenewVehId = selectedVehicleForPolicyRenew.id;
-        setVehicles((prev) => prev.map((v) => {
-          if (v.id === targetRenewVehId) {
-            if (category === "Third Party Insurance") {
-              return {
-                ...v,
-                tp_insurance_policy_number: draft.policyNumber.trim(),
-                tp_insurance_expiry_date: draft.endDate,
-                tp_insurance_vendor: draft.vendorName.trim(),
-                tp_insurance_vendor_id: draft.vendorId || null
-              };
-            } else {
-              return {
-                ...v,
-                own_insurance_policy_number: draft.policyNumber.trim(),
-                own_insurance_expiry_date: draft.endDate,
-                own_insurance_vendor: draft.vendorName.trim(),
-                own_insurance_vendor_id: draft.vendorId || null,
-                insurance_policy_number: draft.policyNumber.trim(),
-                insurance_expiry_date: draft.endDate,
-                insurance_vendor: draft.vendorName.trim(),
-                insurance_vendor_id: draft.vendorId || null
-              };
-            }
-          }
-          return v;
-        }));
-
-        setViewingVehicle((prev) => {
-          if (prev && prev.id === targetRenewVehId) {
-            return {
-              ...prev,
-              ...(category === "Third Party Insurance" ? {
-                tp_insurance_policy_number: draft.policyNumber.trim(),
-                tp_insurance_expiry_date: draft.endDate,
-                tp_insurance_vendor: draft.vendorName.trim(),
-                tp_insurance_vendor_id: draft.vendorId || null
-              } : {
-                own_insurance_policy_number: draft.policyNumber.trim(),
-                own_insurance_expiry_date: draft.endDate,
-                own_insurance_vendor: draft.vendorName.trim(),
-                own_insurance_vendor_id: draft.vendorId || null,
-                insurance_policy_number: draft.policyNumber.trim(),
-                insurance_expiry_date: draft.endDate,
-                insurance_vendor: draft.vendorName.trim(),
-                insurance_vendor_id: draft.vendorId || null
-              })
-            };
-          }
-          return prev;
-        });
-
-        fetchVehicleInsurancePoliciesAction(targetRenewVehId).then((pRes) => {
-          if (pRes.success && pRes.policies) {
-            setViewingVehiclePolicies(pRes.policies);
-          }
-        }).catch((err) => console.error("Error refreshing policies:", err));
-
         // If in TABS mode, close modal
         if (insuranceModalViewMode === "TABS") {
           setIsRenewPolicyModalOpen(false);
@@ -7805,8 +7687,25 @@ export default function FleetDeskHost({
         loadAllData(true, true);
 
         if (dossierOriginVehicle) {
+          setViewingVehicle(prev => prev ? {
+            ...prev,
+            ...(category === "Third Party Insurance" ? {
+              tp_insurance_policy_number: draft.policyNumber.trim(),
+              tp_insurance_expiry_date: draft.endDate,
+              tp_insurance_vendor: draft.vendorName.trim(),
+              tp_insurance_vendor_id: draft.vendorId || null
+            } : {
+              own_insurance_policy_number: draft.policyNumber.trim(),
+              own_insurance_expiry_date: draft.endDate,
+              own_insurance_vendor: draft.vendorName.trim(),
+              own_insurance_vendor_id: draft.vendorId || null,
+              insurance_policy_number: draft.policyNumber.trim(),
+              insurance_expiry_date: draft.endDate,
+              insurance_vendor: draft.vendorName.trim(),
+              insurance_vendor_id: draft.vendorId || null
+            })
+          } : null);
           if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
-          setDossierOriginVehicle(null);
         }
       } else {
         triggerToast(res.error || `Failed to save ${category}.`, true);
@@ -7980,35 +7879,13 @@ export default function FleetDeskHost({
 
       if (res.success) {
         triggerToast(`PUC Certificate #${renewPucNumber} successfully issued until ${renewPucValidUpto}!`);
-        const targetPucVehId = selectedVehicleForPucRenew.id;
-        setVehicles((prev) => prev.map((v) => {
-          if (v.id === targetPucVehId) {
-            return {
-              ...v,
-              puc_expiry_date: renewPucValidUpto,
-              puc_certificate_number: renewPucNumber.trim()
-            };
-          }
-          return v;
-        }));
-        setViewingVehicle((prev) => (prev && prev.id === targetPucVehId ? {
-          ...prev,
-          puc_expiry_date: renewPucValidUpto,
-          puc_certificate_number: renewPucNumber.trim()
-        } : prev));
-
-        fetchVehiclePucCertificatesAction(targetPucVehId).then((pRes) => {
-          if (pRes.success && pRes.certificates) {
-            setViewingVehiclePucs(pRes.certificates);
-          }
-        }).catch((err) => console.error("Error refreshing PUCs:", err));
-
         setIsRenewPucModalOpen(false);
         setSelectedVehicleForPucRenew(null);
         setRenewPucStagedFile(null);
         fleetDataCache = null;
         loadAllData(true, true);
         if (dossierOriginVehicle) {
+          setViewingVehicle(dossierOriginVehicle);
           if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
           setDossierOriginVehicle(null);
         }
@@ -14018,7 +13895,26 @@ export default function FleetDeskHost({
                 <option value="RESERVED">Reserved</option>
               </select>
 
-              {/* Column Options Selector */}
+              {/* List / grid view */}
+              <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="Inventory view">
+                {([["list", "List", ListIcon], ["grid", "Grid", LayoutGrid]] as const).map(([mode, label, Icon]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="radio"
+                    aria-checked={inventoryView === mode}
+                    onClick={() => changeInventoryView(mode)}
+                    title={`${label} view`}
+                    className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors ${inventoryView === mode ? "bg-surface font-semibold text-foreground shadow-sm" : "text-muted hover:text-foreground"}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" aria-hidden />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Column Options Selector (table only) */}
+              {inventoryView === "list" && (
               <div className="relative">
                 <AppButton
                   type="button"
@@ -14104,6 +14000,7 @@ export default function FleetDeskHost({
                   </div>
                 )}
               </div>
+              )}
 
               <AppButton
                 type="button"
@@ -14131,6 +14028,113 @@ export default function FleetDeskHost({
             </div>
           </AppCardHeader>
 
+          {inventoryView === "grid" ? (
+          <AppCardContent className="p-4">
+            {filteredVehicles.length === 0 ? (
+              !dataLoaded.vehicles && vehicles.length === 0 ? (
+                <div className="flex justify-center py-12">
+                  <ChandakLoader size="sm" title="Loading fleet inventory…" subtitle="Fetching vehicle records and documents" />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 py-12 text-[13px] text-muted">
+                  <span>No vehicles match these filters.</span>
+                  {canCreateVehicle && (
+                    <AppButton variant="primary" size="sm" onClick={() => router.push("/vehicle/register")} leftIcon={<Plus className="h-3.5 w-3.5" />}>
+                      Register vehicle
+                    </AppButton>
+                  )}
+                </div>
+              )
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {filteredVehicles.map((veh) => {
+                  const vDocs = computeVehicleAggregatedDocs(veh, maintenance, parts, trips, drivers);
+                  const open = (tab: any) => { setViewingVehicle(veh); setVehicleDossierTab(tab); };
+                  const statusTone = veh.status === "IN_SERVICE" ? "bg-success-soft text-success-text border-success-border" : veh.status === "IN_STOCK" ? "bg-info-soft text-info-text border-info-border" : "bg-warning-soft text-warning-text border-warning-border";
+                  const statusLabel = veh.status === "IN_STOCK" ? "Available" : veh.status === "IN_SERVICE" ? "On route" : veh.status === "RESERVED" ? "Reserved" : "In workshop";
+                  const expiry = (d?: string | null) => {
+                    if (!d) return { text: "—", cls: "text-muted" };
+                    const days = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
+                    return { text: formatDate(d), cls: days < 0 ? "font-medium text-danger-text" : days <= 30 ? "font-medium text-warning-text" : "text-foreground" };
+                  };
+                  const ins = expiry(veh.insurance_expiry_date || veh.own_insurance_expiry_date || veh.compliance?.insuranceExpiry);
+                  const puc = expiry(veh.puc_expiry_date || veh.compliance?.pucExpiry);
+                  return (
+                    <div
+                      key={veh.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => open("OVERVIEW")}
+                      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open("OVERVIEW"); } }}
+                      className="group flex cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-xs transition-shadow hover:border-border-active hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <div className="relative h-40 border-b border-border bg-gradient-to-b from-surface to-sunken">
+                        <VehicleRender vehicle={veh} className="h-full w-full" />
+                        <span className={`absolute right-2.5 top-2.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusTone}`}>{statusLabel}</span>
+                        {veh.fuel_type && (
+                          <span className={`absolute left-2.5 top-2.5 rounded-full border px-2 py-0.5 text-[11px] font-medium ${isElectricFuel(veh.fuel_type) ? "border-success-border bg-success-soft text-success-text" : "border-border bg-surface text-subtle"}`}>{veh.fuel_type}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-1 flex-col gap-2.5 p-3.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 text-[14px] font-semibold text-heading">
+                              <VehicleBrandLogo brand={veh.make} model={veh.model} size={16} />
+                              <span className="truncate">{veh.make} {veh.model}</span>
+                            </div>
+                            <div className="mt-0.5 truncate text-[12.5px] text-muted">
+                              {[veh.variant, veh.year, veh.transmission, veh.seating_capacity ? `${veh.seating_capacity} seats` : null].filter(Boolean).join(" · ") || (veh.category || "Vehicle")}
+                            </div>
+                          </div>
+                        </div>
+                        <div>{renderHsrpPlate(veh.registration_number, veh.fuel_type || undefined, veh.category)}</div>
+                        <dl className="grid grid-cols-3 gap-2 border-t border-border pt-2.5 text-[12px]">
+                          <div className="min-w-0">
+                            <dt className="text-muted">Odometer</dt>
+                            <dd className="truncate font-medium tabular-nums text-foreground">{veh.odometer_km ? `${Number(veh.odometer_km).toLocaleString("en-IN")} km` : "—"}</dd>
+                          </div>
+                          <div className="min-w-0">
+                            <dt className="text-muted">Insurance</dt>
+                            <dd className={`truncate tabular-nums ${ins.cls}`}>{ins.text}</dd>
+                          </div>
+                          <div className="min-w-0">
+                            <dt className="text-muted">PUC</dt>
+                            <dd className={`truncate tabular-nums ${puc.cls}`}>{puc.text}</dd>
+                          </div>
+                        </dl>
+                        <div className="mt-auto flex items-center gap-1.5 pt-1" onClick={(e) => e.stopPropagation()}>
+                          <AppButton variant="secondary" size="sm" className="h-7 flex-1" onClick={() => open("OVERVIEW")} leftIcon={<Eye className="h-3.5 w-3.5" />}>
+                            Details
+                          </AppButton>
+                          <AppButton variant="ghost" size="sm" className="h-7" onClick={() => open("DOCS")} title="Documents" leftIcon={<FileCheck className="h-3.5 w-3.5" />}>
+                            {vDocs.length}
+                          </AppButton>
+                          {canEditVehicle && (
+                            <AppButton variant="ghost" size="icon-sm" aria-label={`Edit ${veh.registration_number}`} title="Edit" onClick={() => openEditVehicleModal(veh)}>
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </AppButton>
+                          )}
+                          {canDeleteVehicle && (
+                            <AppButton
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Delete ${veh.registration_number}`}
+                              title="Delete"
+                              className="text-muted hover:bg-danger-soft hover:text-danger-text"
+                              onClick={() => setDeleteTarget({ type: "vehicle", id: veh.id, label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})` })}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </AppButton>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </AppCardContent>
+          ) : (
           <AppCardContent className="p-0 overflow-x-auto">
             <AppTableContainer className="rounded-none border-none">
               <AppTable className="w-full text-left text-xs">
@@ -14659,6 +14663,7 @@ export default function FleetDeskHost({
               </AppTable>
             </AppTableContainer>
           </AppCardContent>
+          )}
         </AppCard>
           </div>
         </FleetErrorBoundary>
