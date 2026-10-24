@@ -46,27 +46,28 @@ export default async function VehicleModulePage({ params }: PageProps) {
   const slug = resolvedParams.slug || [];
   const primaryTab = slug[0] || "dashboard";
 
-  // Route-aware pre-fetch: Always load stats and fleet directory for instant shell & metrics.
-  // Specialized domain datasets are loaded when deep-linking to that route or on-demand via sub-tab click.
+  // Always load stats, fleet directory, and lightweight master lookups (insurance vendors, purchase vendors, drivers)
+  // for instant dropdown population and driver linkage across all modules.
+  // Large operational ledgers (trips, maintenance, parts, sales) are pre-fetched on direct route or on-demand.
   const [
     statsRes, 
     vehiclesRes, 
     driversRes, 
     tripsRes, 
-    maintRes,
-    vendorsRes,
-    purchaseVendorsRes,
-    partsRes,
-    salesRes,
+    maintRes, 
+    vendorsRes, 
+    purchaseVendorsRes, 
+    partsRes, 
+    salesRes, 
     fleetAccessRes
   ] = await Promise.all([
     fetchVehicleDashboardStats().catch(() => ({ success: false, stats: undefined })),
     fetchVehiclesList({ pageSize: 50 }).catch(() => ({ success: false, vehicles: [] })),
-    primaryTab === "drivers" ? fetchDriversList().catch(() => ({ success: false, drivers: [] })) : Promise.resolve(undefined),
+    fetchDriversList().catch(() => ({ success: false, drivers: [] })),
     primaryTab === "trips" ? fetchTripsList().catch(() => ({ success: false, trips: [] })) : Promise.resolve(undefined),
     primaryTab === "maintenance" ? fetchMaintenanceList().catch(() => ({ success: false, records: [] })) : Promise.resolve(undefined),
-    primaryTab === "vendors" ? fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })) : Promise.resolve(undefined),
-    (primaryTab === "register" || primaryTab === "new") ? fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })) : Promise.resolve(undefined),
+    fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })),
+    fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })),
     primaryTab === "parts" ? fetchVehiclePartsList().catch(() => ({ success: false, parts: [] })) : Promise.resolve(undefined),
     primaryTab === "sales" ? fetchVehicleSalesListAction().catch(() => ({ success: false, sales: [] })) : Promise.resolve(undefined),
     fetchMyFleetAccessAction().catch(() => ({ success: false, fleetAccess: null }))

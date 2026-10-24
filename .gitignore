@@ -39,3 +39,5 @@ next-env.d.ts
 /_ui-kit/
 /ui-audit-report.md
 /ui-audit-report.json
+# vehicle photo cut-outs and model (regenerated on demand)
+/.cache/

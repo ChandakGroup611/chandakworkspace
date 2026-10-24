@@ -2,6 +2,15 @@
 const nextConfig = {
   output: 'standalone',
   turbopack: {},
+  // Vehicle photo background removal (lib/vehicle/cutout.ts) runs a WebAssembly model on the server.
+  // Keep these packages out of the bundle and ship the .wasm files with the standalone build.
+  serverExternalPackages: ['onnxruntime-web', 'sharp'],
+  outputFileTracingIncludes: {
+    '/api/vehicle/image/cutout': [
+      './node_modules/onnxruntime-web/dist/ort.node.min.*',
+      './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.*',
+    ],
+  },
   generateBuildId: async () => {
     return `build-${Date.now()}`;
   },

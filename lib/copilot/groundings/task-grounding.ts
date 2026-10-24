@@ -137,7 +137,16 @@ export function explainTaskConcept(query: string): GroundedExplanation | null {
     };
   }
 
-  if (q.includes("checklist") || q.includes("subtask") || q.includes("task") || q.includes("workspace") || q.includes("ticket")) {
+  if (
+    q === "checklist" ||
+    q.includes("task checklist") ||
+    q.includes("task management") ||
+    q.includes("workspace task") ||
+    q.includes("task overview") ||
+    q.includes("task workflow") ||
+    q === "tasks" ||
+    q === "task"
+  ) {
     const taskModule = learningModules.find(m => m.code === "TASK_WORKFLOW" || m.id === "task_management");
     if (taskModule) {
       return {
@@ -180,23 +189,49 @@ export function explainTaskConcept(query: string): GroundedExplanation | null {
  */
 export function guideTaskWorkflow(action: string) {
   const normalized = action.trim().toUpperCase().replace(/[\s-]/g, "_");
-  let resolvedAction: "CREATE" | "TRANSITION_STATUS" | "RESOLVE" | "TRANSFER" | "VIEW_REPORTS" | "CHECK_STATUS" = "CREATE";
+  let resolvedAction: "CREATE" | "TRANSITION_STATUS" | "RESOLVE" | "TRANSFER" | "DELETE" | "VIEW_REPORTS" | "CHECK_STATUS" | null = null;
 
   if (normalized.includes("REPORT") || normalized.includes("ANALYTIC") || normalized.includes("EXPORT")) {
     resolvedAction = "VIEW_REPORTS";
   } else if (normalized.includes("WHERE") && (normalized.includes("STATUS") || normalized.includes("CHECK") || normalized.includes("FIND"))) {
     resolvedAction = "CHECK_STATUS";
+  } else if (normalized.includes("DELETE") || normalized.includes("REMOVE") || normalized.includes("CANCEL") || normalized.includes("ARCHIVE")) {
+    resolvedAction = "DELETE";
   } else if (normalized.includes("RESOLVE") || normalized.includes("COMPLETE") || normalized.includes("CLOSE")) {
     resolvedAction = "RESOLVE";
   } else if (normalized.includes("TRANSFER") || normalized.includes("REASSIGN")) {
     resolvedAction = "TRANSFER";
   } else if (normalized.includes("STATUS") || normalized.includes("TRANSITION") || normalized.includes("PROGRESS")) {
     resolvedAction = "TRANSITION_STATUS";
-  } else {
+  } else if (normalized.includes("CREATE") || normalized.includes("ADD") || normalized.includes("NEW") || normalized.includes("MAKE") || normalized.includes("START")) {
     resolvedAction = "CREATE";
+  } else {
+    // Return null instead of silently falling back to CREATE
+    return null;
   }
 
   switch (resolvedAction) {
+    case "DELETE":
+      return {
+        title: "Task Deletion Workflow",
+        workflow: "Task Deletion",
+        summary: "Removing a task deliverable from the workspace. Requires appropriate administrative authority and dependency clearance.",
+        sourceDocument: "docs/BUSINESS_RULES.md § 1 & lib/actions/tasks.ts",
+        applicableRule: "Deletion Authority: Only Workspace Owners, Super Admins, or users with explicit 'TASKS_DELETE' permission can delete a task. Deletion is blocked if open dependencies or active subtasks exist.",
+        prerequisites: [
+          "User must be Workspace Owner, Super Admin, or have explicit 'TASKS_DELETE' permission",
+          "All child subtasks must be closed or removed",
+          "All task dependencies (predecessors/successors) must be cleared"
+        ],
+        requiredFields: ["Task ID", "Confirmation"],
+        steps: [
+          "1. Open the Task Execution Controller or Task Details page for the target task.",
+          "2. Check the Dependencies section to ensure no tasks list this task as a predecessor or successor.",
+          "3. Verify that all child subtasks have been completed or removed.",
+          "4. Click the 'Delete Task' button (visible only to Workspace Owners, Admins, or users with TASKS_DELETE permission).",
+          "5. Confirm the action in the prompt. The task is soft-deleted and an audit log event is recorded."
+        ]
+      };
     case "VIEW_REPORTS":
       return {
         title: "Workspace Task Status Reports & Analytics",

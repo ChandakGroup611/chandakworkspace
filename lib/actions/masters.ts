@@ -453,10 +453,17 @@ export async function bulkImportMasterRecords(
         payload.address = raw.address || null;
         payload.remarks = raw.remarks || raw.description || null;
       } else if (table === "fleet_insurance_vendors") {
-        payload.vendor_name = cleanName || cleanCode;
+        payload.name = cleanName || cleanCode;
+        payload.code = cleanCode || (cleanName ? cleanName.toUpperCase().replace(/[^A-Z0-9]/g, "_").slice(0, 30) : `VEND_${Date.now().toString().slice(-4)}`);
         payload.contact_person = raw.contact_person || raw.contact_name || null;
-        payload.phone = raw.phone || null;
-        payload.email = raw.email || null;
+        payload.contact_phone = raw.contact_phone || raw.phone || null;
+        payload.contact_email = raw.contact_email || raw.email || null;
+        payload.toll_free_number = raw.toll_free_number || raw.support_toll_free || null;
+        payload.website = raw.website || null;
+        payload.claim_portal_url = raw.claim_portal_url || null;
+        payload.address = raw.address || raw.description || null;
+        payload.is_active = raw.is_active !== undefined ? raw.is_active : true;
+        payload.is_deleted = false;
       } else if (table === "vendor_master") {
         payload.name = cleanName || cleanCode;
         payload.website = raw.website || null;

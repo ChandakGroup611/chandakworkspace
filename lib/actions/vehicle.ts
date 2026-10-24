@@ -685,61 +685,7 @@ export async function fetchVehiclesList(params?: {
 
     let query = supabaseAdmin
       .from("vehicles")
-      .select(`
-        id,
-        category,
-        make,
-        model,
-        variant,
-        registration_number,
-        status,
-        odometer_km,
-        paint_color,
-        image_url,
-        nickname,
-        has_roadside_assistance,
-        has_hsrp_plate,
-        vin_chassis_number,
-        engine_number,
-        fuel_type,
-        registration_date,
-        rto_office,
-        registered_owner,
-        insurance_policy_number,
-        insurance_expiry_date,
-        insurance_vendor_id,
-        insurance_vendor,
-        puc_expiry_date,
-        fitness_expiry_date,
-        rto_rmn,
-        purchase_price,
-        purchase_cost,
-        purchase_vendor,
-        purchase_vendor_id,
-        purchase_date,
-        battery_warranty_km,
-        battery_warranty_years,
-        battery_warranty_expiry_date,
-        battery_capacity_kwh,
-        basic_price,
-        gst_percentage,
-        gst_amount,
-        cess_percentage,
-        cess_amount,
-        ex_showroom_price,
-        rto_road_tax,
-        tcs_amount,
-        insurance_cost,
-        hsrp_smart_card_fee,
-        fastag_charges,
-        accessories_cost,
-        extended_warranty_cost,
-        other_charges,
-        discount_amount,
-        on_road_price,
-        custom_extended_expiry_date,
-        created_at
-      `, { count: "exact" })
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
 
@@ -3894,7 +3840,18 @@ export async function createTripPlanAction(formData: {
       .update({ status: "IN_SERVICE" })
       .eq("id", formData.vehicle_id);
 
-    return { success: true, trip: inserted as TripRecord };
+    const [vRow, dRow] = await Promise.all([
+      supabaseAdmin.from("vehicles").select("registration_number").eq("id", formData.vehicle_id).maybeSingle(),
+      supabaseAdmin.from("drivers").select("full_name").eq("id", formData.driver_id).maybeSingle()
+    ]);
+
+    const enrichedTrip: TripRecord = {
+      ...(inserted as TripRecord),
+      vehicle_reg: vRow.data?.registration_number || "N/A",
+      driver_name: dRow.data?.full_name || "Unassigned"
+    };
+
+    return { success: true, trip: enrichedTrip };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
@@ -4175,7 +4132,18 @@ export async function createServiceRecordAction(formData: {
       console.warn("[vehicle-actions] Service audit history insert error (non-fatal):", auditErr);
     }
 
-    return { success: true, record: inserted as MaintenanceRecord };
+    const { data: vData } = await supabaseAdmin
+      .from("vehicles")
+      .select("registration_number")
+      .eq("id", formData.vehicle_id)
+      .maybeSingle();
+
+    const fullRecord: MaintenanceRecord = {
+      ...(inserted as MaintenanceRecord),
+      vehicle_reg: vData?.registration_number || "N/A"
+    };
+
+    return { success: true, record: fullRecord };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
@@ -5175,6 +5143,16 @@ export async function createVehiclePartAction(formData: {
       }
     }
 
+    let assignedReg = formData.assigned_vehicle_reg?.trim() || null;
+    if (formData.vehicle_id && formData.vehicle_id !== "UNASSIGNED_STOCK" && !assignedReg) {
+      const { data: vRow } = await supabaseAdmin
+        .from("vehicles")
+        .select("registration_number")
+        .eq("id", formData.vehicle_id)
+        .maybeSingle();
+      if (vRow?.registration_number) assignedReg = vRow.registration_number;
+    }
+
     const payload = {
       bill_id: formData.bill_id?.trim() || null,
       name: formData.name.trim(),
@@ -5203,7 +5181,7 @@ export async function createVehiclePartAction(formData: {
       renewal_reminder_days: Number(formData.renewal_reminder_days) || 30,
       status: formData.status || (formData.vehicle_id && formData.vehicle_id !== "UNASSIGNED_STOCK" ? "INSTALLED" : "IN_STOCK"),
       vehicle_id: formData.vehicle_id || "UNASSIGNED_STOCK",
-      assigned_vehicle_reg: formData.assigned_vehicle_reg?.trim() || null,
+      assigned_vehicle_reg: assignedReg,
       installation_date: formData.installation_date?.trim() || null,
       installed_odometer_km: formData.installed_odometer_km !== undefined ? Number(formData.installed_odometer_km) : null,
       installed_by: formData.installed_by?.trim() || null,
@@ -5321,6 +5299,20 @@ export async function createVehiclePartsBatchAction(
       }
     }
 
+    const targetVehIds = Array.from(new Set([
+      billData.default_vehicle_id,
+      ...billData.items.map(i => i.vehicle_id)
+    ].filter(id => id && id !== "UNASSIGNED_STOCK"))) as string[];
+
+    const vRegMap = new Map<string, string>();
+    if (targetVehIds.length > 0) {
+      const { data: vList } = await supabaseAdmin
+        .from("vehicles")
+        .select("id, registration_number")
+        .in("id", targetVehIds);
+      (vList || []).forEach((v: any) => vRegMap.set(v.id, v.registration_number));
+    }
+
     const payloads = billData.items.map((item) => {
       // Auto calculate warranty expiry if not given but purchase_date and warranty_months are provided
       let calculatedWarrantyExpiry = item.warranty_expiry_date?.trim() || null;
@@ -5336,7 +5328,8 @@ export async function createVehiclePartsBatchAction(
         ? item.vehicle_id 
         : (billData.default_vehicle_id && billData.default_vehicle_id !== "UNASSIGNED_STOCK" ? billData.default_vehicle_id : "UNASSIGNED_STOCK");
 
-      const assignedReg = item.assigned_vehicle_reg?.trim() || billData.default_assigned_vehicle_reg?.trim() || null;
+      const fallbackReg = vRegMap.get(assignedVehId) || null;
+      const assignedReg = item.assigned_vehicle_reg?.trim() || billData.default_assigned_vehicle_reg?.trim() || fallbackReg;
       const status = assignedVehId !== "UNASSIGNED_STOCK" ? "INSTALLED" : (item.status || "IN_STOCK");
 
       const unitPrice = item.unit_price !== undefined ? Number(item.unit_price) : Number(item.purchase_amount) || 0;

@@ -391,9 +391,12 @@ function MastersPageContent() {
       code: formCode.trim().toUpperCase(),
       name: formName.trim(),
       description: formDesc.trim() || null,
-      is_active: true,
-      scope_id: formScopeId || null
+      is_active: true
     };
+
+    if (currentConfig.scopeId !== null && currentConfig.scopeId !== undefined) {
+      payload.scope_id = formScopeId || currentConfig.scopeId;
+    }
 
     // Table specific mappings
     if (currentConfig.table === "status_master") {

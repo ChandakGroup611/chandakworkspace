@@ -53,20 +53,28 @@ export const explainTaskTool: ToolDefinition = {
 // ============================================================================
 export const guideTaskWorkflowTool: ToolDefinition = {
   name: "guide_task_workflow",
-  description: "Provides verified, step-by-step guidance for Task creation, status transition, resolution, or transfer.",
+  description: "Provides verified, step-by-step guidance for Task creation, deletion, status transition, resolution, or transfer.",
   parameters: {
     type: "object",
     properties: {
       action: {
         type: "string",
-        description: "Workflow action to guide: CREATE, TRANSITION_STATUS, RESOLVE, TRANSFER",
-        enum: ["CREATE", "TRANSITION_STATUS", "RESOLVE", "TRANSFER"]
+        description: "Workflow action to guide: CREATE, TRANSITION_STATUS, RESOLVE, TRANSFER, DELETE",
+        enum: ["CREATE", "TRANSITION_STATUS", "RESOLVE", "TRANSFER", "DELETE"]
       }
     },
     required: ["action"]
   },
   async execute({ action }: { action: string }) {
-    return guideTaskWorkflow(action);
+    const guide = guideTaskWorkflow(action);
+    if (!guide) {
+      return {
+        found: false,
+        message: `I could not find verified procedure guidance for '${action}'.`,
+        safeGuidance: "Please refer to the Chandak Workspace Documentation or contact your workspace administrator."
+      };
+    }
+    return guide;
   }
 };
 
@@ -203,9 +211,24 @@ export const diagnoseTaskBlockerTool: ToolDefinition = {
         enum: ["EDIT_SCHEDULE", "REASSIGN", "DELETE", "RESOLVE", "TRANSFER"]
       }
     },
-    required: ["taskId", "attemptedAction"]
+    required: ["attemptedAction"]
   },
-  async execute({ taskId, attemptedAction }: { taskId: string; attemptedAction: string }, context: ToolExecutionContext): Promise<DiagnosticResult> {
+  async execute({ taskId, attemptedAction }: { taskId?: string; attemptedAction: string }, context: ToolExecutionContext): Promise<DiagnosticResult> {
+    if (!taskId || typeof taskId !== "string" || taskId.trim() === "") {
+      return {
+        isBlocked: true,
+        blockerType: "VALIDATION_FAILED",
+        verifiedFacts: [
+          "Fact: No Task ID was specified for this diagnostic check."
+        ],
+        workingHypotheses: [
+          "Hypothesis: You are inquiring about general permission rules or encountering a restricted button on a task."
+        ],
+        applicableRule: TASK_OWNERSHIP_RULES.source + ": 'Only the Primary Assignee (Task Owner) or Super Admin can edit dates, duration, reassign, transfer, or delete tasks. Collaborators (Executors) and Watchers cannot modify ownership or dates.'",
+        recommendedSafeAction: "Please provide the specific Task ID or URL to inspect your exact assignment role and blocker details."
+      };
+    }
+
     // Step 1: Verify read access to the task
     const allowed = await canAccessTask(context.userId, taskId);
     if (!allowed) {
