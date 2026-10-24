@@ -64,11 +64,11 @@ export default async function VehicleModulePage({ params }: PageProps) {
     fetchVehicleDashboardStats().catch(() => ({ success: false, stats: undefined })),
     fetchVehiclesList({ pageSize: 50 }).catch(() => ({ success: false, vehicles: [] })),
     fetchDriversList().catch(() => ({ success: false, drivers: [] })),
-    primaryTab === "trips" ? fetchTripsList().catch(() => ({ success: false, trips: [] })) : Promise.resolve(undefined),
-    primaryTab === "maintenance" ? fetchMaintenanceList().catch(() => ({ success: false, records: [] })) : Promise.resolve(undefined),
+    (primaryTab === "trips" || primaryTab === "dashboard") ? fetchTripsList().catch(() => ({ success: false, trips: [] })) : Promise.resolve(undefined),
+    (primaryTab === "maintenance" || primaryTab === "dashboard") ? fetchMaintenanceList().catch(() => ({ success: false, records: [] })) : Promise.resolve(undefined),
     fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })),
     fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })),
-    primaryTab === "parts" ? fetchVehiclePartsList().catch(() => ({ success: false, parts: [] })) : Promise.resolve(undefined),
+    (primaryTab === "parts" || primaryTab === "dashboard") ? fetchVehiclePartsList().catch(() => ({ success: false, parts: [] })) : Promise.resolve(undefined),
     primaryTab === "sales" ? fetchVehicleSalesListAction().catch(() => ({ success: false, sales: [] })) : Promise.resolve(undefined),
     fetchMyFleetAccessAction().catch(() => ({ success: false, fleetAccess: null }))
   ]);

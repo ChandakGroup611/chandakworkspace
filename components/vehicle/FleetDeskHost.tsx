@@ -915,9 +915,9 @@ export default function FleetDeskHost({
   const [selectedStatus, setSelectedStatus] = useState("ALL");
 
   // Interactive Dashboard Telemetry States
-  const [dashboardTimeframe, setDashboardTimeframe] = useState<"24H" | "7D" | "30D" | "FY">("30D");
+  const [dashboardTimeframe, setDashboardTimeframe] = useState<"ALL" | "FY" | "30D" | "7D" | "24H">("ALL");
   const [dashboardTripFilter, setDashboardTripFilter] = useState<"ALL" | "IN_PROGRESS" | "PLANNED">("ALL");
-  const [dashboardVehicleFilter, setDashboardVehicleFilter] = useState<"ALL" | "IN_STOCK" | "MAINTENANCE">("ALL");
+  const [dashboardVehicleFilter, setDashboardVehicleFilter] = useState<"ALL" | "IN_STOCK" | "IN_SERVICE" | "MAINTENANCE">("ALL");
   const [dashboardFuelFilter, setDashboardFuelFilter] = useState<string | null>(null);
   const [dashboardRenewalHorizon, setDashboardRenewalHorizon] = useState<"ALL" | "OVERDUE" | "7D" | "30D" | "90D">("ALL");
   const [dashboardRenewalDocType, setDashboardRenewalDocType] = useState<"ALL" | "INSURANCE" | "PUC" | "FITNESS" | "RC" | "DRIVER_DL">("ALL");
@@ -3217,7 +3217,7 @@ export default function FleetDeskHost({
 
   // On-demand loader for sub-tabs and transaction modals when not pre-fetched in initial payload
   useEffect(() => {
-    if ((activeTab === "maintenance" || isAddMaintenanceOpen || isEditMaintenanceOpen || Boolean(viewingVehicle)) && !dataLoaded.maintenance) {
+    if ((activeTab === "maintenance" || activeTab === "dashboard" || isAddMaintenanceOpen || isEditMaintenanceOpen || Boolean(viewingVehicle)) && !dataLoaded.maintenance) {
       fetchMaintenanceList().then((res) => {
         if (res.success && res.records) {
           setMaintenance(res.records);
@@ -3233,7 +3233,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand drivers load error:", e));
     }
-    if ((activeTab === "trips" || isDispatchTripOpen || Boolean(viewingVehicle)) && !dataLoaded.trips) {
+    if ((activeTab === "trips" || activeTab === "dashboard" || isDispatchTripOpen || Boolean(viewingVehicle)) && !dataLoaded.trips) {
       fetchTripsList().then((res) => {
         if (res.success && res.trips) {
           setTrips(res.trips);
@@ -3241,7 +3241,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand trips load error:", e));
     }
-    if ((activeTab === "parts" || isAddPartOpen || isEditPartOpen || Boolean(viewingVehicle)) && !dataLoaded.parts) {
+    if ((activeTab === "parts" || activeTab === "dashboard" || isAddPartOpen || isEditPartOpen || Boolean(viewingVehicle)) && !dataLoaded.parts) {
       fetchVehiclePartsList().then((res) => {
         if (res.success && res.parts) {
           setParts(res.parts);
@@ -8588,16 +8588,46 @@ export default function FleetDeskHost({
 
     return list.sort((a, b) => a.daysRemaining - b.daysRemaining);
   }, [vehicles, drivers]);
+  const isWithinDashboardTimeframe = (dateStr?: string | null, timeframe: "ALL" | "FY" | "30D" | "7D" | "24H" = "ALL"): boolean => {
+    if (timeframe === "ALL") return true;
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+    const now = new Date();
+    if (timeframe === "24H") {
+      return (now.getTime() - d.getTime()) <= 24 * 60 * 60 * 1000 && d.getTime() <= now.getTime();
+    }
+    if (timeframe === "7D") {
+      return (now.getTime() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000 && d.getTime() <= now.getTime();
+    }
+    if (timeframe === "30D") {
+      return (now.getTime() - d.getTime()) <= 30 * 24 * 60 * 60 * 1000 && d.getTime() <= now.getTime();
+    }
+    if (timeframe === "FY") {
+      const curYear = now.getFullYear();
+      const fyStartYear = now.getMonth() >= 3 ? curYear : curYear - 1;
+      const fyStart = new Date(fyStartYear, 3, 1, 0, 0, 0);
+      const fyEnd = new Date(fyStartYear + 1, 2, 31, 23, 59, 59);
+      return d >= fyStart && d <= fyEnd;
+    }
+    return true;
+  };
 
   // Analytics & Reports statistics
   const fleetReportsData = useMemo(() => {
-    const totalMaintenanceSpend = maintenance.reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
+    const filteredMaint = maintenance.filter(m => isWithinDashboardTimeframe(m.service_date, dashboardTimeframe));
+    const filteredP = parts.filter(p => isWithinDashboardTimeframe(p.purchase_date || p.installation_date || p.created_at, dashboardTimeframe));
+
+    const totalServiceSpend = filteredMaint.reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
+    const totalPartsSpend = filteredP.reduce((sum, p) => sum + (Number(p.purchase_amount) || 0), 0);
+    const totalMaintenanceSpend = totalServiceSpend + totalPartsSpend;
+
     const totalOdometerKm = vehicles.reduce((sum, v) => sum + (Number(v.odometer_km) || 0), 0);
     const avgOdometer = vehicles.length > 0 ? Math.round(totalOdometerKm / vehicles.length) : 0;
     
     // Top mileage vehicles
     const topMileageVehicles = [...vehicles]
-      .sort((a, b) => b.odometer_km - a.odometer_km)
+      .sort((a, b) => (b.odometer_km || 0) - (a.odometer_km || 0))
       .slice(0, 5);
 
     // Fuel breakdown
@@ -8609,12 +8639,16 @@ export default function FleetDeskHost({
 
     return {
       totalMaintenanceSpend,
+      totalServiceSpend,
+      totalPartsSpend,
+      totalServicesCount: filteredMaint.length,
+      totalPartsCount: filteredP.length,
       totalOdometerKm,
       avgOdometer,
       topMileageVehicles,
       fuelCounts
     };
-  }, [vehicles, maintenance]);
+  }, [vehicles, maintenance, parts, dashboardTimeframe]);
 
   // Upcoming service & license expiry helpers for module-specific KPIs
   const servicesDueCount = useMemo(() => {
@@ -8649,9 +8683,11 @@ export default function FleetDeskHost({
 
   // Executive Telemetry: Asset Utilization Rate %
   const utilizationRate = useMemo(() => {
-    if (!stats.totalVehicles || stats.totalVehicles === 0) return 0;
-    return Math.min(100, Math.round((stats.onRouteVehicles / stats.totalVehicles) * 100));
-  }, [stats.totalVehicles, stats.onRouteVehicles]);
+    const total = stats.totalVehicles || vehicles.length || 0;
+    if (total === 0) return 0;
+    const onRoute = stats.onRouteVehicles || vehicles.filter(v => v.status === "IN_SERVICE").length;
+    return Math.min(100, Math.round((onRoute / total) * 100));
+  }, [stats.totalVehicles, stats.onRouteVehicles, vehicles]);
 
   // Executive Telemetry: Compliance Health Score %
   const complianceHealthScore = useMemo(() => {
@@ -8703,35 +8739,53 @@ export default function FleetDeskHost({
         if (!m.service_date) return false;
         return m.service_date.startsWith(monthKey);
       });
+      const maintSpend = matchingLogs.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
 
-      const spend = matchingLogs.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
+      const matchingParts = parts.filter(p => {
+        const pDate = p.purchase_date || p.created_at;
+        if (!pDate) return false;
+        return pDate.startsWith(monthKey);
+      });
+      const partsSpend = matchingParts.reduce((acc, p) => acc + (Number(p.purchase_amount) || 0), 0);
+
+      const spend = maintSpend + partsSpend;
+      const count = matchingLogs.length + matchingParts.length;
+
       last6Months.push({
         month: mName,
         year: yr,
         spend,
-        count: matchingLogs.length
+        count
       });
     }
 
     const maxSpend = Math.max(...last6Months.map(x => x.spend), 1000);
     return { data: last6Months, maxSpend };
-  }, [maintenance]);
+  }, [maintenance, parts]);
 
-  // Executive Telemetry: Top Authorized Workshop Partners Ranking
+  // Executive Telemetry: Top Authorized Workshop & Parts Partners Ranking
   const topWorkshops = useMemo(() => {
     const partnerMap: Record<string, { count: number; spend: number }> = {};
     maintenance.forEach(m => {
-      const partner = m.service_center || "Authorized Workshop";
+      const partner = (m.service_center || "Authorized Workshop").trim();
       if (!partnerMap[partner]) partnerMap[partner] = { count: 0, spend: 0 };
       partnerMap[partner].count += 1;
       partnerMap[partner].spend += Number(m.cost) || 0;
+    });
+    parts.forEach(p => {
+      if (p.vendor_name && p.vendor_name.trim()) {
+        const partner = p.vendor_name.trim();
+        if (!partnerMap[partner]) partnerMap[partner] = { count: 0, spend: 0 };
+        partnerMap[partner].count += 1;
+        partnerMap[partner].spend += Number(p.purchase_amount) || 0;
+      }
     });
 
     return Object.entries(partnerMap)
       .map(([name, val]) => ({ name, ...val }))
       .sort((a, b) => b.spend - a.spend)
       .slice(0, 3);
-  }, [maintenance]);
+  }, [maintenance, parts]);
 
   // Executive Telemetry: Filtered Dispatches List
   const filteredDashboardTrips = useMemo(() => {
@@ -8897,16 +8951,32 @@ export default function FleetDeskHost({
 
   // Executive Telemetry: Vehicle-Wise Expense Summary List
   const vehicleExpenseSummaries = useMemo(() => {
-    const totalFleetSpend = maintenance.reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
+    const norm = (s?: string | null) => (s || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const filteredMaint = maintenance.filter(m => isWithinDashboardTimeframe(m.service_date, dashboardTimeframe));
+    const filteredP = parts.filter(p => isWithinDashboardTimeframe(p.purchase_date || p.installation_date || p.created_at, dashboardTimeframe));
+
+    const totalFleetSpend = filteredMaint.reduce((sum, m) => sum + (Number(m.cost) || 0), 0) +
+      filteredP.reduce((sum, p) => sum + (Number(p.purchase_amount) || 0), 0);
 
     const list = vehicles.map(v => {
-      const matchingLogs = maintenance.filter(m => 
+      const vPlate = norm(v.registration_number);
+      const matchingLogs = filteredMaint.filter(m => 
         (m.vehicle_id && m.vehicle_id === v.id) || 
-        (m.vehicle_reg && v.registration_number && m.vehicle_reg.trim().toUpperCase() === v.registration_number.trim().toUpperCase())
+        (m.vehicle_reg && vPlate && norm(m.vehicle_reg) === vPlate)
       );
-      const totalSpend = matchingLogs.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
+      const maintSpend = matchingLogs.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
+
+      const matchingParts = filteredP.filter(p => 
+        (p.vehicle_id && p.vehicle_id === v.id) || 
+        (p.assigned_vehicle_reg && vPlate && norm(p.assigned_vehicle_reg) === vPlate)
+      );
+      const partsSpend = matchingParts.reduce((acc, p) => acc + (Number(p.purchase_amount) || 0), 0);
+
+      const totalSpend = maintSpend + partsSpend;
       const jobCount = matchingLogs.length;
-      const avgSpend = jobCount > 0 ? Math.round(totalSpend / jobCount) : 0;
+      const partsCount = matchingParts.length;
+      const totalTransactions = jobCount + partsCount;
+      const avgSpend = totalTransactions > 0 ? Math.round(totalSpend / totalTransactions) : 0;
       const odo = Number(v.odometer_km) || 0;
       const costPerKm = odo > 0 && totalSpend > 0 ? (totalSpend / odo).toFixed(2) : "0.00";
       const spendSharePct = totalFleetSpend > 0 ? Math.round((totalSpend / totalFleetSpend) * 100) : 0;
@@ -8935,7 +9005,11 @@ export default function FleetDeskHost({
         status: v.status,
         odometer_km: odo,
         totalSpend,
+        maintSpend,
+        partsSpend,
         jobCount,
+        partsCount,
+        totalTransactions,
         avgSpend,
         costPerKm,
         spendSharePct,
@@ -8950,7 +9024,7 @@ export default function FleetDeskHost({
     });
 
     return list;
-  }, [vehicles, maintenance]);
+  }, [vehicles, maintenance, parts, dashboardTimeframe]);
 
   // Filtered & Sorted Vehicle Expense Summaries
   const filteredVehicleExpenses = useMemo(() => {
@@ -12282,11 +12356,11 @@ export default function FleetDeskHost({
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-sm text-foreground tracking-tight">Fleet overview</span>
                     <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-success-soft text-success-text border border-success/30">
-                      {stats.totalVehicles > 0 ? `${utilizationRate}% Utilization` : "Depot Ready"}
+                      {(stats.totalVehicles || vehicles.length) > 0 ? `${utilizationRate}% Utilization` : "Depot Ready"}
                     </span>
                     <span className="text-[11px] font-medium text-muted-foreground hidden sm:inline-flex items-center gap-1">
                       <span className="h-1.5 w-1.5 rounded-full bg-muted dark:bg-muted"></span>
-                      {stats.totalVehicles} Assets
+                      {stats.totalVehicles || vehicles.length} Assets
                     </span>
                   </div>
                 </div>
@@ -12296,7 +12370,7 @@ export default function FleetDeskHost({
               <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
                 {/* Timeframe Switcher */}
                 <div className="flex items-center p-1 bg-sunken bg-surface/90 rounded-xl border border-border">
-                  {(["24H", "7D", "30D", "FY"] as const).map((tf) => (
+                  {(["ALL", "FY", "30D", "7D", "24H"] as const).map((tf) => (
                     <button
                       key={tf}
                       type="button"
@@ -12307,7 +12381,7 @@ export default function FleetDeskHost({
                           : "text-muted-foreground hover:text-foreground hover:bg-surface/60"
                       }`}
                     >
-                      {tf === "24H" ? "24H" : tf === "7D" ? "7D" : tf === "30D" ? "30D" : "FY 25-26"}
+                      {tf === "ALL" ? "All" : tf === "24H" ? "24H" : tf === "7D" ? "7D" : tf === "30D" ? "30D" : "FY 25-26"}
                     </button>
                   ))}
                 </div>
@@ -12738,7 +12812,7 @@ export default function FleetDeskHost({
                   <div className="p-2.5 rounded-xl bg-sunken bg-surface/60 border border-border/70">
                     <span className="text-[11px] font-bold text-muted-foreground block">Total services</span>
                     <span className="text-base font-semibold text-foreground mt-0.5 block">
-                      {maintenance.length}
+                      {fleetReportsData.totalServicesCount} {fleetReportsData.totalPartsCount > 0 ? `+ ${fleetReportsData.totalPartsCount} parts` : ""}
                     </span>
                   </div>
 
@@ -12824,7 +12898,7 @@ export default function FleetDeskHost({
                               {item.jobCount} {item.jobCount === 1 ? "Service" : "Services"}
                             </span>
                             <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                              {item.jobCount > 0 ? `Avg ₹${Math.round(item.avgSpend / 1000)}k` : "No bills"}
+                              {item.partsCount > 0 ? `+ ${item.partsCount} parts` : (item.jobCount > 0 ? `Avg ₹${Math.round(item.avgSpend / 1000)}k` : "No bills")}
                             </span>
                           </div>
 
@@ -12985,10 +13059,10 @@ export default function FleetDeskHost({
                 <div className="pt-2 border-t border-border/60 flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-[11px] text-warning-text font-semibold">
                     <Wrench className="h-3 w-3" />
-                    <span>{maintenance.length} services</span>
+                    <span>{fleetReportsData.totalServicesCount} services{fleetReportsData.totalPartsCount > 0 ? ` • ${fleetReportsData.totalPartsCount} parts` : ""}</span>
                   </div>
                   <span className="text-[11px] text-foreground text-muted bg-sunken bg-surface border border-border/60 px-2 py-0.5 rounded font-medium">
-                    {maintenance.length > 0 ? `Avg ₹${Math.round(fleetReportsData.totalMaintenanceSpend / maintenance.length).toLocaleString()}` : "No bills"}
+                    {(fleetReportsData.totalServicesCount + fleetReportsData.totalPartsCount) > 0 ? `Avg ₹${Math.round(fleetReportsData.totalMaintenanceSpend / (fleetReportsData.totalServicesCount + fleetReportsData.totalPartsCount)).toLocaleString()}` : "No bills"}
                   </span>
                 </div>
               </div>
@@ -13275,7 +13349,7 @@ export default function FleetDeskHost({
                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
                       <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-theme-btn-primary inline-block"></span>
-                        <span className="font-medium text-foreground">Authorised services</span>
+                        <span className="font-medium text-foreground">Authorised services & parts</span>
                       </span>
                       <span>Total: <strong className="text-foreground">₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")}</strong></span>
                     </div>
@@ -13487,7 +13561,7 @@ export default function FleetDeskHost({
                   </AppCardTitle>
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center p-0.5 bg-sunken bg-surface rounded-lg border border-border text-[11px]">
-                      {(["ALL", "IN_STOCK", "MAINTENANCE"] as const).map((st) => (
+                      {(["ALL", "IN_STOCK", "IN_SERVICE", "MAINTENANCE"] as const).map((st) => (
                         <button
                           key={st}
                           type="button"
@@ -13498,7 +13572,7 @@ export default function FleetDeskHost({
                               : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
                           }`}
                         >
-                          {st === "ALL" ? "All" : st === "IN_STOCK" ? "Ready" : "Workshop"}
+                          {st === "ALL" ? "All" : st === "IN_STOCK" ? "Ready" : st === "IN_SERVICE" ? "On Route" : "Workshop"}
                         </button>
                       ))}
                     </div>
