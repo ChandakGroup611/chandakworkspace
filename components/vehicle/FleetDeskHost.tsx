@@ -100,7 +100,8 @@ import {
 } from "./vehicleQuickPicks";
 import { VehicleBrandLogo } from "./VehicleBrandLogo";
 import { VehicleRender } from "./VehicleRender";
-import { LayoutGrid, List as ListIcon } from "lucide-react";
+import { LayoutGrid, List as ListIcon, GalleryHorizontal } from "lucide-react";
+import { VehicleShowroom, VehicleDossierStage } from "./VehicleShowroom";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -1003,12 +1004,12 @@ export default function FleetDeskHost({
   const [showOnRoadCol, setShowOnRoadCol] = useState<boolean>(true);
   const [showInventoryRelations, setShowInventoryRelations] = useState<boolean>(true);
   const [isColumnOptionsOpen, setIsColumnOptionsOpen] = useState<boolean>(false);
-  // Inventory layout: table (list) or picture cards (grid); remembered per browser
-  const [inventoryView, setInventoryView] = useState<"list" | "grid">("list");
+  // Inventory layout: table (list), picture cards (grid) or one-at-a-time showroom; remembered per browser
+  const [inventoryView, setInventoryView] = useState<"list" | "grid" | "showroom">("list");
   useEffect(() => {
-    try { const v = localStorage.getItem("fleet_inventory_view"); if (v === "grid" || v === "list") setInventoryView(v); } catch { /* ignore */ }
+    try { const v = localStorage.getItem("fleet_inventory_view"); if (v === "grid" || v === "list" || v === "showroom") setInventoryView(v); } catch { /* ignore */ }
   }, []);
-  const changeInventoryView = (v: "list" | "grid") => {
+  const changeInventoryView = (v: "list" | "grid" | "showroom") => {
     setInventoryView(v);
     try { localStorage.setItem("fleet_inventory_view", v); } catch { /* ignore */ }
   };
@@ -3216,7 +3217,7 @@ export default function FleetDeskHost({
 
   // On-demand loader for sub-tabs and transaction modals when not pre-fetched in initial payload
   useEffect(() => {
-    if ((activeTab === "maintenance" || isAddMaintenanceOpen || isEditMaintenanceOpen) && !dataLoaded.maintenance) {
+    if ((activeTab === "maintenance" || isAddMaintenanceOpen || isEditMaintenanceOpen || Boolean(viewingVehicle)) && !dataLoaded.maintenance) {
       fetchMaintenanceList().then((res) => {
         if (res.success && res.records) {
           setMaintenance(res.records);
@@ -3224,7 +3225,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand maintenance load error:", e));
     }
-    if ((activeTab === "drivers" || isAddDriverOpen || isEditDriverOpen || isDispatchTripOpen) && !dataLoaded.drivers) {
+    if ((activeTab === "drivers" || isAddDriverOpen || isEditDriverOpen || isDispatchTripOpen || Boolean(viewingVehicle) || activeTab === "register" || isEditVehicleOpen) && !dataLoaded.drivers) {
       fetchDriversList().then((res) => {
         if (res.success && res.drivers) {
           setDrivers(res.drivers);
@@ -3232,7 +3233,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand drivers load error:", e));
     }
-    if ((activeTab === "trips" || isDispatchTripOpen) && !dataLoaded.trips) {
+    if ((activeTab === "trips" || isDispatchTripOpen || Boolean(viewingVehicle)) && !dataLoaded.trips) {
       fetchTripsList().then((res) => {
         if (res.success && res.trips) {
           setTrips(res.trips);
@@ -3240,7 +3241,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand trips load error:", e));
     }
-    if ((activeTab === "parts" || isAddPartOpen || isEditPartOpen) && !dataLoaded.parts) {
+    if ((activeTab === "parts" || isAddPartOpen || isEditPartOpen || Boolean(viewingVehicle)) && !dataLoaded.parts) {
       fetchVehiclePartsList().then((res) => {
         if (res.success && res.parts) {
           setParts(res.parts);
@@ -3248,7 +3249,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand parts load error:", e));
     }
-    if ((activeTab === "vendors" || isVendorModalOpen) && !dataLoaded.vendors) {
+    if ((insuranceVendors.length === 0 || activeTab === "vendors" || isVendorModalOpen || isRenewPolicyModalOpen || isEditVehicleOpen || activeTab === "register" || Boolean(viewingVehicle)) && !dataLoaded.vendors) {
       fetchInsuranceVendorsListAction().then((res) => {
         if (res.success && res.vendors) {
           setInsuranceVendors(res.vendors);
@@ -3256,7 +3257,7 @@ export default function FleetDeskHost({
         }
       }).catch((e) => console.warn("On-demand vendors load error:", e));
     }
-    if ((activeTab === "register" || isEditVehicleOpen) && purchaseVendors.length === 0) {
+    if ((activeTab === "register" || isEditVehicleOpen || Boolean(viewingVehicle)) && purchaseVendors.length === 0) {
       fetchPurchaseVendorsListAction().then((res) => {
         if (res.success && res.vendors) {
           setPurchaseVendors(res.vendors);
@@ -3274,6 +3275,7 @@ export default function FleetDeskHost({
   }, [
     activeTab, 
     dataLoaded, 
+    viewingVehicle,
     isAddMaintenanceOpen, 
     isEditMaintenanceOpen, 
     isAddDriverOpen, 
@@ -3283,8 +3285,10 @@ export default function FleetDeskHost({
     isEditPartOpen, 
     isVendorModalOpen, 
     isEditVehicleOpen, 
+    isRenewPolicyModalOpen,
     isRecordSaleModalOpen,
-    purchaseVendors.length
+    purchaseVendors.length,
+    insuranceVendors.length
   ]);
 
   // Toast banner triggers
@@ -5576,6 +5580,13 @@ export default function FleetDeskHost({
 
       if (res.success) {
         triggerToast(`Vehicle ${newVehiclePlate.toUpperCase()} registered successfully!`);
+        if (res.vehicle) {
+          setVehicles((prev) => [res.vehicle, ...prev]);
+        }
+        if (newVehicleDriverId && res.vehicle?.id) {
+          const registeredId = res.vehicle.id;
+          setDrivers((prev) => prev.map((d) => d.id === newVehicleDriverId ? { ...d, assigned_vehicle_id: registeredId } : d));
+        }
         handleResetVehicleForm();
         loadAllData(true);
         router.push("/vehicle/inventory");
@@ -5902,6 +5913,20 @@ export default function FleetDeskHost({
           return v;
         }));
 
+        if (editVehicleDriverId) {
+          setDrivers((prev) => prev.map((d) => {
+            if (d.id === editVehicleDriverId) {
+              return { ...d, assigned_vehicle_id: updatedVehId };
+            }
+            if (d.assigned_vehicle_id === updatedVehId) {
+              return { ...d, assigned_vehicle_id: null };
+            }
+            return d;
+          }));
+        } else {
+          setDrivers((prev) => prev.map((d) => d.assigned_vehicle_id === updatedVehId ? { ...d, assigned_vehicle_id: null } : d));
+        }
+
         if (viewingVehicle?.id === updatedVehId) {
           const matchedDriver = drivers.find(d => d.id === editVehicleDriverId);
           setViewingVehicle(prev => prev ? { 
@@ -6122,6 +6147,13 @@ export default function FleetDeskHost({
       if (res.success) {
         triggerToast(`Insurance vendor '${payload.name}' saved successfully!`);
         setIsVendorModalOpen(false);
+        if (res.vendor) {
+          if (selectedVendorForEdit) {
+            setInsuranceVendors((prev) => prev.map((v) => v.id === res.vendor!.id ? res.vendor! : v));
+          } else {
+            setInsuranceVendors((prev) => [res.vendor!, ...prev]);
+          }
+        }
         // Auto-select in form if adding from a vehicle creation or edit flow
         if (!selectedVendorForEdit && res.vendor) {
           if (activeTab === "register") {
@@ -6481,6 +6513,18 @@ export default function FleetDeskHost({
 
       if (res.success) {
         triggerToast("Trip successfully dispatched!");
+        if (res.trip) {
+          const matchedVeh = vehicles.find((v) => v.id === newTripVehicleId) || viewingVehicle;
+          const matchedDriver = drivers.find((d) => d.id === newTripDriverId);
+          const enrichedTrip: TripRecord = {
+            ...res.trip,
+            vehicle_reg: res.trip.vehicle_reg || matchedVeh?.registration_number || "",
+            driver_name: res.trip.driver_name || matchedDriver?.full_name || "Unassigned"
+          };
+          setTrips((prev) => [enrichedTrip, ...prev]);
+        }
+        setVehicles((prev) => prev.map((v) => v.id === newTripVehicleId ? { ...v, status: "IN_SERVICE" } : v));
+        setViewingVehicle((prev) => (prev && prev.id === newTripVehicleId ? { ...prev, status: "IN_SERVICE" } : prev));
         setIsDispatchTripOpen(false);
         setNewTripTraveler("");
         setNewTripPurpose("");
@@ -6582,14 +6626,42 @@ export default function FleetDeskHost({
       if (res.success) {
         triggerToast("Workshop job card & service bill logged successfully!");
         if (res.record) {
-          setMaintenance((prev) => [res.record!, ...prev]);
+          const matchedVeh = vehicles.find((v) => v.id === newMaintVehicleId) || viewingVehicle;
+          const fullRecord: MaintenanceRecord = {
+            ...res.record,
+            vehicle_reg: res.record.vehicle_reg || matchedVeh?.registration_number || ""
+          };
+          setMaintenance((prev) => [fullRecord, ...prev]);
+        }
+        const odoVal = Number(newMaintOdometer) || 0;
+        const postStat = newMaintPostStatus;
+        if (odoVal > 0 || postStat) {
+          setVehicles((prev) => prev.map((v) => {
+            if (v.id === newMaintVehicleId) {
+              return {
+                ...v,
+                ...(odoVal > (v.odometer_km || 0) ? { odometer_km: odoVal } : {}),
+                ...(postStat ? { status: postStat } : {})
+              };
+            }
+            return v;
+          }));
+          setViewingVehicle((prev) => {
+            if (prev && prev.id === newMaintVehicleId) {
+              return {
+                ...prev,
+                ...(odoVal > (prev.odometer_km || 0) ? { odometer_km: odoVal } : {}),
+                ...(postStat ? { status: postStat } : {})
+              };
+            }
+            return prev;
+          });
         }
         setIsAddMaintenanceOpen(false);
         resetMaintenanceForm();
         fleetDataCache = null;
         loadAllData(true, true);
         if (dossierOriginVehicle) {
-          setViewingVehicle(dossierOriginVehicle);
           if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
           setDossierOriginVehicle(null);
         }
@@ -7677,6 +7749,64 @@ export default function FleetDeskHost({
           }
         });
 
+        const targetRenewVehId = selectedVehicleForPolicyRenew.id;
+        setVehicles((prev) => prev.map((v) => {
+          if (v.id === targetRenewVehId) {
+            if (category === "Third Party Insurance") {
+              return {
+                ...v,
+                tp_insurance_policy_number: draft.policyNumber.trim(),
+                tp_insurance_expiry_date: draft.endDate,
+                tp_insurance_vendor: draft.vendorName.trim(),
+                tp_insurance_vendor_id: draft.vendorId || null
+              };
+            } else {
+              return {
+                ...v,
+                own_insurance_policy_number: draft.policyNumber.trim(),
+                own_insurance_expiry_date: draft.endDate,
+                own_insurance_vendor: draft.vendorName.trim(),
+                own_insurance_vendor_id: draft.vendorId || null,
+                insurance_policy_number: draft.policyNumber.trim(),
+                insurance_expiry_date: draft.endDate,
+                insurance_vendor: draft.vendorName.trim(),
+                insurance_vendor_id: draft.vendorId || null
+              };
+            }
+          }
+          return v;
+        }));
+
+        setViewingVehicle((prev) => {
+          if (prev && prev.id === targetRenewVehId) {
+            return {
+              ...prev,
+              ...(category === "Third Party Insurance" ? {
+                tp_insurance_policy_number: draft.policyNumber.trim(),
+                tp_insurance_expiry_date: draft.endDate,
+                tp_insurance_vendor: draft.vendorName.trim(),
+                tp_insurance_vendor_id: draft.vendorId || null
+              } : {
+                own_insurance_policy_number: draft.policyNumber.trim(),
+                own_insurance_expiry_date: draft.endDate,
+                own_insurance_vendor: draft.vendorName.trim(),
+                own_insurance_vendor_id: draft.vendorId || null,
+                insurance_policy_number: draft.policyNumber.trim(),
+                insurance_expiry_date: draft.endDate,
+                insurance_vendor: draft.vendorName.trim(),
+                insurance_vendor_id: draft.vendorId || null
+              })
+            };
+          }
+          return prev;
+        });
+
+        fetchVehicleInsurancePoliciesAction(targetRenewVehId).then((pRes) => {
+          if (pRes.success && pRes.policies) {
+            setViewingVehiclePolicies(pRes.policies);
+          }
+        }).catch((err) => console.error("Error refreshing policies:", err));
+
         // If in TABS mode, close modal
         if (insuranceModalViewMode === "TABS") {
           setIsRenewPolicyModalOpen(false);
@@ -7687,25 +7817,8 @@ export default function FleetDeskHost({
         loadAllData(true, true);
 
         if (dossierOriginVehicle) {
-          setViewingVehicle(prev => prev ? {
-            ...prev,
-            ...(category === "Third Party Insurance" ? {
-              tp_insurance_policy_number: draft.policyNumber.trim(),
-              tp_insurance_expiry_date: draft.endDate,
-              tp_insurance_vendor: draft.vendorName.trim(),
-              tp_insurance_vendor_id: draft.vendorId || null
-            } : {
-              own_insurance_policy_number: draft.policyNumber.trim(),
-              own_insurance_expiry_date: draft.endDate,
-              own_insurance_vendor: draft.vendorName.trim(),
-              own_insurance_vendor_id: draft.vendorId || null,
-              insurance_policy_number: draft.policyNumber.trim(),
-              insurance_expiry_date: draft.endDate,
-              insurance_vendor: draft.vendorName.trim(),
-              insurance_vendor_id: draft.vendorId || null
-            })
-          } : null);
           if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+          setDossierOriginVehicle(null);
         }
       } else {
         triggerToast(res.error || `Failed to save ${category}.`, true);
@@ -7879,13 +7992,35 @@ export default function FleetDeskHost({
 
       if (res.success) {
         triggerToast(`PUC Certificate #${renewPucNumber} successfully issued until ${renewPucValidUpto}!`);
+        const targetPucVehId = selectedVehicleForPucRenew.id;
+        setVehicles((prev) => prev.map((v) => {
+          if (v.id === targetPucVehId) {
+            return {
+              ...v,
+              puc_expiry_date: renewPucValidUpto,
+              puc_certificate_number: renewPucNumber.trim()
+            };
+          }
+          return v;
+        }));
+        setViewingVehicle((prev) => (prev && prev.id === targetPucVehId ? {
+          ...prev,
+          puc_expiry_date: renewPucValidUpto,
+          puc_certificate_number: renewPucNumber.trim()
+        } : prev));
+
+        fetchVehiclePucCertificatesAction(targetPucVehId).then((pRes) => {
+          if (pRes.success && pRes.certificates) {
+            setViewingVehiclePucs(pRes.certificates);
+          }
+        }).catch((err) => console.error("Error refreshing PUCs:", err));
+
         setIsRenewPucModalOpen(false);
         setSelectedVehicleForPucRenew(null);
         setRenewPucStagedFile(null);
         fleetDataCache = null;
         loadAllData(true, true);
         if (dossierOriginVehicle) {
-          setViewingVehicle(dossierOriginVehicle);
           if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
           setDossierOriginVehicle(null);
         }
@@ -13895,9 +14030,9 @@ export default function FleetDeskHost({
                 <option value="RESERVED">Reserved</option>
               </select>
 
-              {/* List / grid view */}
+              {/* List / grid / showroom view */}
               <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="Inventory view">
-                {([["list", "List", ListIcon], ["grid", "Grid", LayoutGrid]] as const).map(([mode, label, Icon]) => (
+                {([["list", "List", ListIcon], ["grid", "Grid", LayoutGrid], ["showroom", "Showroom", GalleryHorizontal]] as const).map(([mode, label, Icon]) => (
                   <button
                     key={mode}
                     type="button"
@@ -14028,7 +14163,16 @@ export default function FleetDeskHost({
             </div>
           </AppCardHeader>
 
-          {inventoryView === "grid" ? (
+          {inventoryView === "showroom" && filteredVehicles.length > 0 ? (
+          <AppCardContent className="p-4">
+            <VehicleShowroom
+              vehicles={filteredVehicles}
+              docCount={(veh) => computeVehicleAggregatedDocs(veh, maintenance, parts, trips, drivers).length}
+              onOpen={(veh, tab) => { setViewingVehicle(veh); setVehicleDossierTab(tab); }}
+              onEdit={canEditVehicle ? (veh) => openEditVehicleModal(veh) : undefined}
+            />
+          </AppCardContent>
+          ) : inventoryView !== "list" ? (
           <AppCardContent className="p-4">
             {filteredVehicles.length === 0 ? (
               !dataLoaded.vehicles && vehicles.length === 0 ? (
@@ -27041,6 +27185,8 @@ export default function FleetDeskHost({
           {/* ========================================================================= */}
           {vehicleDossierTab === "OVERVIEW" && (
             <div className="space-y-6">
+              {/* Studio picture of this vehicle */}
+              <VehicleDossierStage vehicle={viewingVehicle} />
               {/* Section 1: Basic Information & Technical Specifications */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b border-border pb-2">

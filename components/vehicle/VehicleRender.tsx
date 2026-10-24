@@ -1,5 +1,6 @@
 "use client";
-/* ui-audit-allow hex-literal: paint colours come from the vehicle master and are matched to the render provider's paint names */
+/* ui-audit-allow hex-literal: the studio stage keeps fixed colours in every theme so the car stays readable, and paint colours come from the vehicle master */
+/* ui-audit-allow rgb-literal: studio stage shadows and ink are fixed so they read the same in every theme */
 
 /**
  * Picture of a vehicle for the inventory grid, chosen automatically from the vehicle master:
@@ -9,9 +10,11 @@
  *   3. a free photo of that exact make + model from Wikipedia / Wikimedia Commons, looked up by
  *      /api/vehicle/image and credited on the card as the licence requires;
  *   4. otherwise a brand tile (logo + model), never a made-up drawing.
- * Photos are cut out of their background on the server (/api/vehicle/image/cutout) and placed on
- * one standard studio backdrop, so every card looks the same; if a cut-out fails, the photo itself
- * is shown instead.
+ * Photos are cut out of their background on the server (/api/vehicle/image/cutout) and placed on a
+ * studio stage. The stage does NOT follow the app theme (a dark car on a dark theme would vanish);
+ * it adapts to the car instead: a dark car gets a bright white studio, a white/silver car a deeper
+ * grey one. The car's lightness is measured from the cut-out itself, so nothing needs setting.
+ * If a cut-out fails, the photo itself is shown instead.
  * An image that fails to load (unknown model, no key, offline) falls back to the next option.
  */
 import React, { useEffect, useMemo, useState } from "react";
@@ -99,20 +102,50 @@ const canCutOut = (src: string) => {
 };
 
 type Candidate = { src: string; kind: "cutout" | "photo" | "render"; credit?: { page: string; title?: string } };
+export type PaintTone = "dark" | "light" | null;
 
-/** One standard studio backdrop for every vehicle card (soft wall, floor line, contact shadow). */
-function Studio({ children, shadow }: { children: React.ReactNode; shadow: boolean }) {
-  return (
-    <div className="absolute inset-0 bg-[linear-gradient(180deg,#fafbfc_0%,#eef0f3_66%,#e3e6ea_66.5%,#f1f3f5_100%)]">
-      {shadow && <div className="absolute inset-x-[12%] bottom-[9%] h-[9%] rounded-[50%] bg-[radial-gradient(closest-side,rgba(0,0,0,0.28),rgba(0,0,0,0))]" aria-hidden />}
-      {children}
-    </div>
-  );
+/* lightness of the car itself (opaque pixels of the cut-out), remembered per image */
+const toneCache = new Map<string, PaintTone>();
+function measureTone(img: HTMLImageElement): PaintTone {
+  if (toneCache.has(img.src)) return toneCache.get(img.src)!;
+  let tone: PaintTone = null;
+  try {
+    const c = document.createElement("canvas");
+    c.width = 64; c.height = 32;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    if (ctx) {
+      ctx.drawImage(img, 0, 0, 64, 32);
+      const d = ctx.getImageData(0, 0, 64, 32).data;
+      let sum = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 200) continue;
+        sum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+        n++;
+      }
+      if (n > 20) tone = sum / n / 255 > 0.5 ? "light" : "dark";
+    }
+  } catch { /* cross-origin image: keep the neutral studio */ }
+  toneCache.set(img.src, tone);
+  return tone;
+}
+/* before the picture loads, guess from the master's paint colour */
+function toneFromPaint(paint?: string | null): PaintTone {
+  const p = (paint || "").trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(p)) {
+    const n = parseInt(p.slice(1), 16);
+    const l = (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+    return l > 0.5 ? "light" : "dark";
+  }
+  if (/white|silver|beige|pearl|cream|yellow|gold/.test(p)) return "light";
+  if (/black|grey|gray|blue|maroon|brown|green|red/.test(p)) return "dark";
+  return null;
 }
 
-export function VehicleRender({ vehicle, className = "" }: { vehicle: VehicleRenderInput; className?: string }) {
+/** The best picture for this vehicle, its fallbacks and the car's tone. */
+export function useVehicleImage(vehicle: VehicleRenderInput) {
   const [wiki, setWiki] = useState<WikiHit | null>(null);
   const [failed, setFailed] = useState(0);
+  const [measured, setMeasured] = useState<PaintTone>(null);
 
   const base = useMemo(() => {
     const list: Candidate[] = [];
@@ -141,48 +174,120 @@ export function VehicleRender({ vehicle, className = "" }: { vehicle: VehicleRen
     return () => { alive = false; };
   }, [needWiki, wiki, vehicle.make, vehicle.model]);
 
-  useEffect(() => { setFailed(0); setWiki(null); }, [vehicle.image_url, vehicle.make, vehicle.model]);
+  useEffect(() => { setFailed(0); setWiki(null); setMeasured(null); }, [vehicle.image_url, vehicle.make, vehicle.model]);
 
-  const current = candidates[failed];
-  const label = `${vehicle.make || ""} ${vehicle.model || ""}`.trim() || "Vehicle";
-  const onStage = !current || current.kind !== "photo";
+  const current: Candidate | undefined = candidates[failed];
+  const staged = !current || current.kind !== "photo";
+  // the master's paint (when the user set one) wins; otherwise the measured lightness of the cut-out
+  const tone = toneFromPaint(vehicle.paint_color) ?? (staged ? measured : null);
+  return {
+    current,
+    staged,
+    tone,
+    label: `${vehicle.make || ""} ${vehicle.model || ""}`.trim() || "Vehicle",
+    onError: () => setFailed((f) => f + 1),
+    onLoad: (e: React.SyntheticEvent<HTMLImageElement>) => { if (current && current.kind !== "photo") setMeasured(measureTone(e.currentTarget)); },
+  };
+}
 
+/** Fixed studio colours (independent of the app theme), chosen by the car's tone. */
+export function studioColors(tone: PaintTone) {
+  if (tone === "dark") return { wall: "radial-gradient(120% 90% at 50% 18%, #ffffff 0%, #dde1e7 72%)", floor: "linear-gradient(180deg, #d3d8df, #eceef1)", shadow: "rgba(10,12,16,0.34)" };
+  if (tone === "light") return { wall: "radial-gradient(120% 90% at 50% 18%, #eceff2 0%, #b4bbc5 72%)", floor: "linear-gradient(180deg, #a9b1bc, #c6cbd3)", shadow: "rgba(10,12,16,0.42)" };
+  return { wall: "radial-gradient(120% 90% at 50% 18%, #f7f8fa 0%, #cfd4db 72%)", floor: "linear-gradient(180deg, #c5cbd3, #e1e4e8)", shadow: "rgba(10,12,16,0.36)" };
+}
+/** Ink for anything drawn on the stage; fixed like the stage, so it reads in every theme. */
+export const STAGE_INK = { text: "#14161a", muted: "#4b515b", border: "rgba(20,22,26,0.16)", button: "#ffffff" };
+
+function Credit({ credit, onStage }: { credit?: Candidate["credit"]; onStage: boolean }) {
+  if (!credit) return null;
   return (
-    <div className={`relative overflow-hidden ${className}`} role="img" aria-label={label}>
-      <Studio shadow={!!current && current.kind !== "photo"}>
-        {current ? (
+    <a
+      href={credit.page}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      title={`Photo: ${credit.title || "Wikipedia"} (free licence)`}
+      className="absolute bottom-1 right-1.5 z-[2] rounded px-1 text-[10.5px] leading-4 hover:underline"
+      style={onStage ? { color: STAGE_INK.muted } : { background: "rgba(0,0,0,0.55)", color: "#ffffff" }}
+    >
+      Wikipedia
+    </a>
+  );
+}
+
+/** Card picture: the car on a small studio stage (inventory grid, thumbnails). */
+export function VehicleRender({ vehicle, className = "" }: { vehicle: VehicleRenderInput; className?: string }) {
+  const { current, staged, tone, label, onError, onLoad } = useVehicleImage(vehicle);
+  const studio = studioColors(tone);
+  return (
+    <div className={`relative overflow-hidden ${className}`} role="img" aria-label={label} style={{ background: studio.wall, transition: "background 300ms" }}>
+      <div className="absolute inset-x-0 bottom-0 h-[34%]" style={{ background: studio.floor }} aria-hidden />
+      {current && staged && (
+        <div className="absolute inset-x-[12%] bottom-[9%] h-[9%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />
+      )}
+      {current ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={current.src}
+          src={current.src}
+          alt=""
+          loading="lazy"
+          onError={onError}
+          onLoad={onLoad}
+          className={staged ? "absolute inset-x-[6%] bottom-[10%] top-[8%] h-[82%] w-[88%] object-contain object-bottom" : "absolute inset-0 h-full w-full object-cover"}
+        />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center">
+          <VehicleBrandLogo brand={vehicle.make} model={vehicle.model} size={44} />
+          <span className="max-w-[90%] truncate text-[13px] font-medium" style={{ color: STAGE_INK.muted }}>{label}</span>
+        </div>
+      )}
+      <Credit credit={current?.credit} onStage={staged} />
+    </div>
+  );
+}
+
+/**
+ * Large showroom stage: spotlight wall, floor, contact shadow and reflection.
+ * `top` and `children` render on the stage above and below the car (use STAGE_INK colours there).
+ */
+export function VehicleStage({ vehicle, className = "", top, children }: { vehicle: VehicleRenderInput; className?: string; top?: React.ReactNode; children?: React.ReactNode }) {
+  const { current, staged, tone, label, onError, onLoad } = useVehicleImage(vehicle);
+  const studio = studioColors(tone);
+  return (
+    <div className={`relative flex flex-col overflow-hidden ${className}`} style={{ background: studio.wall, color: STAGE_INK.text, transition: "background 300ms" }}>
+      <div className="absolute inset-x-0 bottom-0 h-[38%]" style={{ background: studio.floor }} aria-hidden />
+      {top && <div className="relative z-[1]">{top}</div>}
+      <div className="relative min-h-0 flex-1" role="img" aria-label={label}>
+        {current && staged && (
+          <>
+            <div className="absolute bottom-[21%] left-[19%] right-[19%] h-[8%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img key={current.src} src={current.src} alt="" onError={onError} onLoad={onLoad} className="absolute bottom-[24%] left-[15%] h-[70%] w-[70%] object-contain object-bottom" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={current.src}
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute left-[15%] top-[76%] h-[70%] w-[70%] object-contain object-bottom opacity-[0.18]"
+              style={{ transform: "scaleY(-1)", WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 30%)", maskImage: "linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 30%)" }}
+            />
+          </>
+        )}
+        {current && !staged && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={current.src}
-            src={current.src}
-            alt=""
-            loading="lazy"
-            onError={() => setFailed((f) => f + 1)}
-            className={
-              current.kind === "photo"
-                ? "absolute inset-0 h-full w-full object-cover"
-                : "absolute inset-x-[6%] bottom-[10%] top-[8%] h-[82%] w-[88%] object-contain object-bottom drop-shadow-[0_6px_6px_rgba(0,0,0,0.12)]"
-            }
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center">
-            <VehicleBrandLogo brand={vehicle.make} model={vehicle.model} size={44} />
-            <span className="max-w-[90%] truncate text-[13px] font-medium text-subtle">{label}</span>
+          <img key={current.src} src={current.src} alt="" onError={onError} className="absolute inset-0 h-full w-full object-cover" />
+        )}
+        {!current && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
+            <VehicleBrandLogo brand={vehicle.make} model={vehicle.model} size={72} />
+            <span className="text-[14px] font-medium" style={{ color: STAGE_INK.muted }}>{label}</span>
           </div>
         )}
-        {current?.credit && (
-          <a
-            href={current.credit.page}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            title={`Photo: ${current.credit.title || "Wikipedia"} (free licence)`}
-            className={`absolute bottom-1 right-1.5 rounded px-1 text-[10.5px] leading-4 ${onStage ? "text-subtle hover:text-foreground" : "bg-[var(--overlay)] text-white/90 hover:text-white"}`}
-          >
-            Wikipedia
-          </a>
-        )}
-      </Studio>
+        <Credit credit={current?.credit} onStage={staged} />
+      </div>
+      {children && <div className="relative z-[1]">{children}</div>}
     </div>
   );
 }
