@@ -145,6 +145,11 @@ export function useVehicleImage(vehicle: VehicleRenderInput) {
         kind: "library",
         credit: libItem.source === "commons" && libItem.sourceUrl ? { page: libItem.sourceUrl, title: libItem.credit || undefined, label: "Wikimedia" } : undefined,
       }
+    : vehicle.image_url && !failed
+    ? {
+        src: vehicle.image_url,
+        kind: "library",
+      }
     : undefined;
   const src = current?.src || null;
   // the master's paint (when the user set one) wins; otherwise the measured lightness of the picture
@@ -152,7 +157,7 @@ export function useVehicleImage(vehicle: VehicleRenderInput) {
   return {
     current,
     src,
-    loading: !lib || (!libItem && !!lib?.autoFill && (autoFillPending.has(key) || !autoFillAsked.has(key))),
+    loading: !current && (!lib || (!libItem && !!lib?.autoFill && (autoFillPending.has(key) || !autoFillAsked.has(key)))),
     staged: true,
     /** true when no picture has been set for this model yet */
     suggested: !!lib && !libItem,

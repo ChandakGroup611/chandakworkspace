@@ -2505,6 +2505,46 @@ export async function createVehicleAction(formData: {
         .eq("id", formData.assigned_driver_id);
     }
 
+    // Auto-assign model picture from library or trigger parameter-based background generation
+    try {
+      const { colourKey, modelKey } = await import("@/lib/vehicle/model-key");
+      const cKey = colourKey(make, model, paint_color || "#1e293b");
+      const mKey = modelKey(make, model);
+      const { data: matchedImg } = await supabaseAdmin
+        .from("vehicle_model_images")
+        .select("model_key, updated_at")
+        .in("model_key", [cKey, mKey])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (matchedImg) {
+        const publicUrl = `/api/vehicle/model-image/file?key=${encodeURIComponent(matchedImg.model_key)}&v=${new Date(matchedImg.updated_at).getTime()}`;
+        await supabaseAdmin.from("vehicles").update({ image_url: publicUrl }).eq("id", vehicleId);
+      } else {
+        import("@/lib/vehicle/model-images").then(({ autoFillModel, autoFillEnabled }) => {
+          if (autoFillEnabled()) {
+            autoFillModel({
+              make,
+              model,
+              variant: variant || null,
+              year: reg_date ? String(new Date(reg_date).getFullYear()) : null,
+              paint: paint_color || "#1e293b",
+              fuel: fuel_type || null,
+              category: category || null,
+            }).then((row) => {
+              if (row) {
+                const url = `/api/vehicle/model-image/file?key=${encodeURIComponent(row.model_key)}&v=${Date.now()}`;
+                supabaseAdmin.from("vehicles").update({ image_url: url }).eq("id", vehicleId).then(() => {});
+              }
+            }).catch(() => {});
+          }
+        }).catch(() => {});
+      }
+    } catch {
+      // Non-fatal enhancement
+    }
+
     // Record initial creation specification history
     const creatorName = (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "Fleet Officer";
     await supabaseAdmin
