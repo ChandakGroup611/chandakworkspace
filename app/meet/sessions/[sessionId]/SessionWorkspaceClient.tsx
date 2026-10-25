@@ -32,6 +32,7 @@ import InvitationsCard from "@/components/meet/InvitationsCard";
 import AttendanceCard from "@/components/meet/AttendanceCard";
 import MeetingNotesCard from "@/components/meet/MeetingNotesCard";
 import AIMinutesCard from "@/components/meet/AIMinutesCard";
+import DraggableLiveNotesWidget from "@/components/meet/DraggableLiveNotesWidget";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus, updatePoint, deletePoint } from "@/lib/actions/meet/points";
 import {
@@ -1226,6 +1227,9 @@ export default function SessionWorkspaceClient({
           </div>
         </div>
       )}
+
+      {/* Draggable High-Visibility Floating Live Notes Action Widget */}
+      <DraggableLiveNotesWidget sessionId={session.id} />
     </div>
   );
 }

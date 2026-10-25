@@ -24,6 +24,7 @@ import { QuickPointCapture } from "@/components/meet/QuickPointCapture";
 import { CreateTaskModal } from "@/components/meet/CreateTaskModal";
 import { EndSessionModal } from "@/components/meet/EndSessionModal";
 import RunningNotesCard from "@/components/meet/RunningNotesCard";
+import DraggableLiveNotesWidget from "@/components/meet/DraggableLiveNotesWidget";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus, updateSessionPointNotes } from "@/lib/actions/meet/points";
 import { updateSessionAttendance, startSession } from "@/lib/actions/meet/sessions";
@@ -492,6 +493,15 @@ export default function LiveMeetingClient({
         sessionId={session.id}
         sessionCode={session.code}
         points={points}
+      />
+      {/* Draggable High-Visibility Floating Live Notes Action Widget */}
+      <DraggableLiveNotesWidget
+        sessionId={session.id}
+        focusedPointId={focusedPoint?.id}
+        focusedPointCode={focusedPoint?.code}
+        onOpenConvert={(block) => {
+          if (focusedPoint) setTaskModalPoint(focusedPoint);
+        }}
       />
     </div>
   );
