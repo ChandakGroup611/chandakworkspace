@@ -85,7 +85,7 @@ function deny(api: boolean, status: number, message: string) {
     return NextResponse.json({ error: status === 401 ? "signed_out" : "forbidden", message }, { status });
   }
   const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dashboards</title><body style="font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0;background:#f8fafc;color:#0f172a">
+<title>Dashboards</title><body style="font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0;background:#ffffff;color:#0f172a">
 <div style="max-width:420px;text-align:center;padding:24px"><h1 style="font-size:20px;margin:0 0 8px">${status === 403 ? "No access" : "Dashboard unavailable"}</h1>
 <p style="color:#475569;font-size:14px;line-height:1.5">${message}</p><p><a href="/dashboards" style="color:#6d2158;font-weight:600">Back to dashboards</a></p></div></body>`;
   return new NextResponse(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
