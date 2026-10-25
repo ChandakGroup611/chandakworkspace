@@ -146,17 +146,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [hierarchyScope, setHierarchyScope] = useState<"all" | "my_dept" | "my_reports" | "assigned_me">("all");
   const [selectedDepartmentName, setSelectedDepartmentName] = useState<string>("ALL");
 
-  const [openDropdown, setOpenDropdown] = useState<'scope' | 'workspace' | 'company' | 'status' | 'priority' | 'assignee' | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<'scope' | 'workspace' | 'subworkspace' | 'company' | 'status' | 'priority' | 'assignee' | null>(null);
 
   const [filters, setFilters] = useState<HierarchyFilterOptions>({
     entityType: 'ALL',
     entityTypes: [],
     workspaceIds: [],
+    subWorkspaceIds: [],
     companyIds: [],
     statusIds: [],
     priorityIds: [],
     assigneeIds: [],
     workspaceId: '',
+    subWorkspaceId: '',
     companyId: '',
     statusId: '',
     priorityId: '',
@@ -179,6 +181,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       debouncedSearchQuery.trim() || 
       (filters.workspaceIds && filters.workspaceIds.length > 0) ||
       filters.workspaceId ||
+      (filters.subWorkspaceIds && filters.subWorkspaceIds.length > 0) ||
+      filters.subWorkspaceId ||
       (filters.companyIds && filters.companyIds.length > 0) ||
       filters.companyId ||
       (filters.statusIds && filters.statusIds.length > 0) ||
@@ -241,6 +245,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     setSearchQuery(payload.searchQuery || "");
     const pf = payload.filters || {};
     const loadedWsIds = pf.workspaceIds || (pf.workspaceId ? [pf.workspaceId] : []);
+    const loadedSubWsIds = pf.subWorkspaceIds || (pf.subWorkspaceId ? [pf.subWorkspaceId] : []);
     const loadedCompIds = pf.companyIds || (pf.companyId ? [pf.companyId] : []);
     const loadedStatusIds = pf.statusIds || (pf.statusId ? [pf.statusId] : []);
     const loadedPriorityIds = pf.priorityIds || (pf.priorityId ? [pf.priorityId] : []);
@@ -250,6 +255,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       entityTypes: pf.entityTypes || [],
       workspaceIds: loadedWsIds,
       workspaceId: pf.workspaceId || '',
+      subWorkspaceIds: loadedSubWsIds,
+      subWorkspaceId: pf.subWorkspaceId || '',
       companyIds: loadedCompIds,
       companyId: pf.companyId || '',
       statusIds: loadedStatusIds,
@@ -279,6 +286,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         setSearchQuery(payload.searchQuery || "");
         const pf = payload.filters || {};
         const loadedWsIds = pf.workspaceIds || (pf.workspaceId ? [pf.workspaceId] : []);
+        const loadedSubWsIds = pf.subWorkspaceIds || (pf.subWorkspaceId ? [pf.subWorkspaceId] : []);
         const loadedCompIds = pf.companyIds || (pf.companyId ? [pf.companyId] : []);
         const loadedStatusIds = pf.statusIds || (pf.statusId ? [pf.statusId] : []);
         const loadedPriorityIds = pf.priorityIds || (pf.priorityId ? [pf.priorityId] : []);
@@ -288,6 +296,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           entityTypes: pf.entityTypes || [],
           workspaceIds: loadedWsIds,
           workspaceId: pf.workspaceId || '',
+          subWorkspaceIds: loadedSubWsIds,
+          subWorkspaceId: pf.subWorkspaceId || '',
           companyIds: loadedCompIds,
           companyId: pf.companyId || '',
           statusIds: loadedStatusIds,
@@ -319,6 +329,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     if (filters.workspaceIds && filters.workspaceIds.length > 0) {
       count += filters.workspaceIds.length;
     } else if (filters.workspaceId) {
+      count++;
+    }
+
+    if (filters.subWorkspaceIds && filters.subWorkspaceIds.length > 0) {
+      count += filters.subWorkspaceIds.length;
+    } else if (filters.subWorkspaceId) {
       count++;
     }
 
@@ -356,11 +372,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       entityType: 'ALL',
       entityTypes: [],
       workspaceIds: [],
+      subWorkspaceIds: [],
       companyIds: [],
       statusIds: [],
       priorityIds: [],
       assigneeIds: [],
       workspaceId: '',
+      subWorkspaceId: '',
       companyId: '',
       statusId: '',
       priorityId: '',
@@ -400,13 +418,38 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   ], []);
   const scopeLabel = (id: string) => scopeOptions.find(o => o.id === id)?.label || id;
 
+  const rootWorkspaces = useMemo(() => {
+    return (workspaces || []).filter((w: any) => !w.parent_workspace_id);
+  }, [workspaces]);
+
   const workspaceOptions = useMemo(() => {
-    return (workspaces || []).map((w: any) => ({
+    const list = rootWorkspaces.length > 0 ? rootWorkspaces : (workspaces || []);
+    return list.map((w: any) => ({
       id: w.id,
       label: w.name || w.workspace_name || 'Workspace',
       sublabel: w.code || w.workspace_code ? `(${w.code || w.workspace_code})` : undefined
     }));
-  }, [workspaces]);
+  }, [rootWorkspaces, workspaces]);
+
+  const subWorkspaceOptions = useMemo(() => {
+    const allSubs = (workspaces || []).filter((w: any) => !!w.parent_workspace_id);
+    const parentWsIds = filters.workspaceIds && filters.workspaceIds.length > 0
+      ? filters.workspaceIds
+      : (filters.workspaceId ? [filters.workspaceId] : []);
+    
+    const filteredSubs = parentWsIds.length > 0
+      ? allSubs.filter((w: any) => parentWsIds.includes(w.parent_workspace_id))
+      : allSubs;
+
+    return filteredSubs.map((w: any) => {
+      const parentObj = workspaces.find((p: any) => p.id === w.parent_workspace_id);
+      return {
+        id: w.id,
+        label: w.name || w.workspace_name || 'Sub-workspace',
+        sublabel: parentObj ? `(${parentObj.name || parentObj.workspace_name})` : (w.code ? `(${w.code})` : undefined)
+      };
+    });
+  }, [workspaces, filters.workspaceIds, filters.workspaceId]);
 
   const companyOptions = useMemo(() => {
     return (companies || []).map((c: any) => ({
@@ -1314,6 +1357,20 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       />
                     )}
 
+                    {/* Sub-workspace Multi-Select */}
+                    {subWorkspaceOptions.length > 0 && (
+                      <WorkspaceFilterMultiSelect
+                        label="Sub-workspace"
+                        placeholder="All sub-workspaces"
+                        options={subWorkspaceOptions}
+                        selectedIds={filters.subWorkspaceIds || (filters.subWorkspaceId ? [filters.subWorkspaceId] : [])}
+                        onChange={(ids) => setFilters(prev => ({ ...prev, subWorkspaceIds: ids, subWorkspaceId: ids.length === 1 ? ids[0] : '' }))}
+                        isOpen={openDropdown === 'subworkspace'}
+                        onToggle={() => setOpenDropdown(prev => prev === 'subworkspace' ? null : 'subworkspace')}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    )}
+
                     {/* Company Multi-Select */}
                     {companyOptions.length > 1 && (
                       <WorkspaceFilterMultiSelect
@@ -1591,6 +1648,33 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   })}
                   className={CHIP_X}
                   title="Remove workspace filter"
+                >
+                  <X className="h-3 w-3" aria-hidden />
+                </button>
+              </span>
+            );
+          })}
+
+          {/* Sub-workspace Chips */}
+          {(filters.subWorkspaceIds && filters.subWorkspaceIds.length > 0
+            ? filters.subWorkspaceIds
+            : (filters.subWorkspaceId ? [filters.subWorkspaceId] : [])
+          ).map(swId => {
+            const swObj = workspaces.find((w: any) => w.id === swId);
+            const swName = swObj?.name || swObj?.workspace_name || 'Sub-workspace';
+            return (
+              <span key={swId} className={CHIP}>
+                Sub-workspace: {swName}
+                <button
+                  type="button"
+                  aria-label="Remove sub-workspace filter"
+                  onClick={() => setFilters(p => {
+                    const currentIds = p.subWorkspaceIds && p.subWorkspaceIds.length > 0 ? p.subWorkspaceIds : (p.subWorkspaceId ? [p.subWorkspaceId] : []);
+                    const next = currentIds.filter(id => id !== swId);
+                    return { ...p, subWorkspaceIds: next, subWorkspaceId: next.length === 1 ? next[0] : '' };
+                  })}
+                  className={CHIP_X}
+                  title="Remove sub-workspace filter"
                 >
                   <X className="h-3 w-3" aria-hidden />
                 </button>

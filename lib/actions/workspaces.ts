@@ -663,6 +663,8 @@ export interface HierarchyFilterOptions {
   entityTypes?: ('WORKSPACES' | 'SUB_WORKSPACES' | 'TASKS')[];
   workspaceId?: string;
   workspaceIds?: string[];
+  subWorkspaceId?: string;
+  subWorkspaceIds?: string[];
   companyId?: string;
   companyIds?: string[];
   statusId?: string;
@@ -708,6 +710,10 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     ? filters.workspaceIds
     : (filters?.workspaceId ? [filters.workspaceId] : []);
 
+  const selectedSubWorkspaceIds = Array.isArray(filters?.subWorkspaceIds) && filters.subWorkspaceIds.length > 0
+    ? filters.subWorkspaceIds
+    : (filters?.subWorkspaceId ? [filters.subWorkspaceId] : []);
+
   const selectedCompanyIds = Array.isArray(filters?.companyIds) && filters.companyIds.length > 0
     ? filters.companyIds
     : (filters?.companyId ? [filters.companyId] : []);
@@ -740,6 +746,17 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     }
   }
 
+  let subWsTargetIds = new Set<string>();
+  let parentIdsOfSelectedSubWs = new Set<string>();
+  if (selectedSubWorkspaceIds.length > 0) {
+    selectedSubWorkspaceIds.forEach(id => subWsTargetIds.add(id));
+    visibleWorkspaces.forEach((w: any) => {
+      if (subWsTargetIds.has(w.id) && w.parent_workspace_id) {
+        parentIdsOfSelectedSubWs.add(w.parent_workspace_id);
+      }
+    });
+  }
+
   let companyWsIds = new Set<string>();
   if (selectedCompanyIds.length > 0) {
     visibleWorkspaces.forEach((w: any) => {
@@ -760,10 +777,11 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
   }
 
   let filteredWsIds = visibleWsIds;
-  if (selectedWorkspaceIds.length > 0 || selectedCompanyIds.length > 0) {
+  if (selectedWorkspaceIds.length > 0 || selectedCompanyIds.length > 0 || selectedSubWorkspaceIds.length > 0) {
     filteredWsIds = visibleWsIds.filter(id => {
       if (selectedWorkspaceIds.length > 0 && !targetWsIds.has(id)) return false;
       if (selectedCompanyIds.length > 0 && !companyWsIds.has(id)) return false;
+      if (selectedSubWorkspaceIds.length > 0 && !subWsTargetIds.has(id) && !parentIdsOfSelectedSubWs.has(id)) return false;
       return true;
     });
     if (filteredWsIds.length === 0) {
@@ -792,6 +810,7 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
 
   const hasFilters = !!(
     selectedWorkspaceIds.length > 0 ||
+    selectedSubWorkspaceIds.length > 0 ||
     selectedCompanyIds.length > 0 ||
     selectedStatusIds.length > 0 || 
     selectedPriorityIds.length > 0 || 
@@ -813,6 +832,10 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     : (filters?.entityType !== 'WORKSPACES' && filters?.entityType !== 'SUB_WORKSPACES');
 
   if (includeTasks) {
+    const effectiveTaskWsIds = selectedSubWorkspaceIds.length > 0
+      ? Array.from(subWsTargetIds)
+      : filteredWsIds;
+
     let taskQuery = supabaseAdmin
       .from('tasks')
       .select(`
@@ -836,7 +859,7 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
         parent:tasks!parent_task_id(id, name:subject, code:task_code),
         assignees:task_participants(user_id, participation_role)
       `)
-      .in('workspace_id', filteredWsIds)
+      .in('workspace_id', effectiveTaskWsIds)
       .eq('is_deleted', false);
 
     if (cleanQuery) {

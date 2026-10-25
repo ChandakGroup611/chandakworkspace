@@ -1,5 +1,6 @@
 // TODO(ui-v2): migrate to tokens
 "use client";
+/* eslint-disable no-restricted-syntax */
 import { toast } from 'react-toastify';
 
 import React, { useMemo, useState, useEffect, useRef } from "react";
@@ -39,6 +40,7 @@ import { HierarchyManager } from "@/lib/services/HierarchyManager";
 import { HierarchyStateManager } from "@/lib/services/HierarchyStateManager";
 import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
 import { MultiSelectFilter } from "@/components/ui/MultiSelectFilter";
+import { WorkspaceFilterMultiSelect } from "@/components/workspaces/WorkspaceFilterMultiSelect";
 import * as Popover from "@radix-ui/react-popover";
 
 const getSafeExternalUrl = (url: string | undefined | null) => {
@@ -77,12 +79,18 @@ interface TaskFilterPayload {
   scope?: "ALL" | "ASSIGNEE" | "ENROLLED";
   hierarchyScope?: "all" | "my_dept" | "my_reports" | "assigned_me";
   selectedDepartmentName?: string;
+  selectedDepartmentNames?: string[];
   query?: string;
   columnFilters?: Record<string, string[]>;
   kpiFilter?: string | null;
   selectedWorkspaceId?: string | null;
+  selectedWorkspaceIds?: string[];
+  selectedSubWorkspaceIds?: string[];
   selectedStatus?: string;
+  selectedStatuses?: string[];
   selectedPriority?: string;
+  selectedPriorities?: string[];
+  selectedAssigneeIds?: string[];
   showEscalatedOnly?: boolean;
   dateFrom?: string;
   dateTo?: string;
@@ -331,8 +339,16 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
   };
 
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
+  const [selectedSubWorkspaceIds, setSelectedSubWorkspaceIds] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPriority, setSelectedPriority] = useState<string>("");
+  const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
+  const [selectedDepartmentNames, setSelectedDepartmentNames] = useState<string[]>([]);
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
+  const [openDropdown, setOpenDropdown] = useState<'workspace' | 'subworkspace' | 'status' | 'priority' | 'department' | 'assignee' | null>(null);
+  const [kpiFilter, setKpiFilter] = useState<string | null>(null);
   const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
@@ -357,17 +373,34 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
     if (payload.scope) setScope(payload.scope);
     if (payload.hierarchyScope) setHierarchyScope(payload.hierarchyScope);
     if (payload.selectedDepartmentName !== undefined) setSelectedDepartmentName(payload.selectedDepartmentName);
+    if (payload.selectedDepartmentNames !== undefined) setSelectedDepartmentNames(payload.selectedDepartmentNames);
     if (payload.query !== undefined) setQuery(payload.query);
     if (payload.columnFilters) setColumnFilters(payload.columnFilters);
     if (payload.kpiFilter !== undefined) setKpiFilter(payload.kpiFilter);
     if (payload.selectedWorkspaceId !== undefined) {
       setSelectedWorkspaceId(payload.selectedWorkspaceId || null);
-      if (payload.selectedWorkspaceId) {
-        fetchTasksData(payload.selectedWorkspaceId);
-      }
+    }
+    if (payload.selectedWorkspaceIds !== undefined) {
+      setSelectedWorkspaceIds(payload.selectedWorkspaceIds);
+    } else if (payload.selectedWorkspaceId) {
+      setSelectedWorkspaceIds([payload.selectedWorkspaceId]);
+    }
+    if (payload.selectedSubWorkspaceIds !== undefined) {
+      setSelectedSubWorkspaceIds(payload.selectedSubWorkspaceIds);
     }
     if (payload.selectedStatus !== undefined) setSelectedStatus(payload.selectedStatus);
+    if (payload.selectedStatuses !== undefined) {
+      setSelectedStatuses(payload.selectedStatuses);
+    } else if (payload.selectedStatus) {
+      setSelectedStatuses([payload.selectedStatus]);
+    }
     if (payload.selectedPriority !== undefined) setSelectedPriority(payload.selectedPriority);
+    if (payload.selectedPriorities !== undefined) {
+      setSelectedPriorities(payload.selectedPriorities);
+    } else if (payload.selectedPriority) {
+      setSelectedPriorities([payload.selectedPriority]);
+    }
+    if (payload.selectedAssigneeIds !== undefined) setSelectedAssigneeIds(payload.selectedAssigneeIds);
     if (payload.showEscalatedOnly !== undefined) setShowEscalatedOnly(Boolean(payload.showEscalatedOnly));
     if (payload.dateFrom !== undefined) setDateFrom(payload.dateFrom);
     if (payload.dateTo !== undefined) setDateTo(payload.dateTo);
@@ -378,12 +411,18 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
       scope,
       hierarchyScope,
       selectedDepartmentName,
+      selectedDepartmentNames,
       query,
       columnFilters,
       kpiFilter,
       selectedWorkspaceId,
+      selectedWorkspaceIds,
+      selectedSubWorkspaceIds,
       selectedStatus,
+      selectedStatuses,
       selectedPriority,
+      selectedPriorities,
+      selectedAssigneeIds,
       showEscalatedOnly,
       dateFrom,
       dateTo
@@ -397,34 +436,24 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         setScope(payload.scope || "ALL");
         setHierarchyScope(payload.hierarchyScope || "all");
         setSelectedDepartmentName(payload.selectedDepartmentName || "ALL");
+        setSelectedDepartmentNames(payload.selectedDepartmentNames || []);
         setQuery(payload.query || "");
         setColumnFilters(payload.columnFilters || {});
         setKpiFilter(payload.kpiFilter ?? null);
         setSelectedWorkspaceId(payload.selectedWorkspaceId || null);
+        setSelectedWorkspaceIds(payload.selectedWorkspaceIds || (payload.selectedWorkspaceId ? [payload.selectedWorkspaceId] : []));
+        setSelectedSubWorkspaceIds(payload.selectedSubWorkspaceIds || []);
         setSelectedStatus(payload.selectedStatus || "");
+        setSelectedStatuses(payload.selectedStatuses || (payload.selectedStatus ? [payload.selectedStatus] : []));
         setSelectedPriority(payload.selectedPriority || "");
+        setSelectedPriorities(payload.selectedPriorities || (payload.selectedPriority ? [payload.selectedPriority] : []));
+        setSelectedAssigneeIds(payload.selectedAssigneeIds || []);
         setShowEscalatedOnly(Boolean(payload.showEscalatedOnly));
         setDateFrom(payload.dateFrom || "");
         setDateTo(payload.dateTo || "");
-
-        if (payload.selectedWorkspaceId !== undefined) {
-          fetchTasksData(payload.selectedWorkspaceId || null);
-        }
       },
       () => {
-        setScope("ALL");
-        setHierarchyScope("all");
-        setSelectedDepartmentName("ALL");
-        setQuery("");
-        setColumnFilters({});
-        setKpiFilter(null);
-        setSelectedWorkspaceId(null);
-        setSelectedStatus("");
-        setSelectedPriority("");
-        setShowEscalatedOnly(false);
-        setDateFrom("");
-        setDateTo("");
-        fetchTasksData(null);
+        handleResetAllFilters();
       }
     );
   };
@@ -568,7 +597,140 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
     return Array.from(map.values()) as any[];
   }, [initialTasks]);
 
-  const [kpiFilter, setKpiFilter] = useState<string | null>(null);
+  const rootWorkspaces = useMemo(() => {
+    return (allWorkspaces || []).filter((w: any) => !w.parent_workspace_id);
+  }, [allWorkspaces]);
+
+  const allSubWorkspaces = useMemo(() => {
+    const list: Array<{ id: string; name: string; parent_workspace_id?: string; parentName?: string }> = [];
+    const seen = new Set<string>();
+
+    (allWorkspaces || []).forEach((w: any) => {
+      if (w.parent_workspace_id) {
+        seen.add(w.id);
+        const parent = allWorkspaces.find((p: any) => p.id === w.parent_workspace_id);
+        list.push({
+          id: w.id,
+          name: w.workspace_name || w.name,
+          parent_workspace_id: w.parent_workspace_id,
+          parentName: parent?.workspace_name || parent?.name
+        });
+      }
+    });
+
+    tasks.forEach((t: any) => {
+      if (t.sub_workspace && t.sub_workspace.id && !seen.has(t.sub_workspace.id)) {
+        seen.add(t.sub_workspace.id);
+        list.push({
+          id: t.sub_workspace.id,
+          name: t.sub_workspace.name || t.sub_workspace.code,
+          parent_workspace_id: t.sub_workspace.parent_workspace_id || t.workspace?.id,
+          parentName: t.workspace?.name || t.workspace?.code
+        });
+      }
+    });
+
+    return list;
+  }, [allWorkspaces, tasks]);
+
+  const workspaceFilterOptions = useMemo(() => {
+    const list = rootWorkspaces.length > 0 ? rootWorkspaces : allWorkspaces;
+    return list.map((w: any) => ({
+      id: w.id,
+      label: w.workspace_name || w.name || 'Workspace',
+      sublabel: w.workspace_code || w.code ? `(${w.workspace_code || w.code})` : undefined
+    }));
+  }, [rootWorkspaces, allWorkspaces]);
+
+  const subWorkspaceFilterOptions = useMemo(() => {
+    const activeWs = selectedWorkspaceIds.length > 0 ? selectedWorkspaceIds : (selectedWorkspaceId ? [selectedWorkspaceId] : []);
+    const filteredSubs = activeWs.length > 0
+      ? allSubWorkspaces.filter(sw => sw.parent_workspace_id && activeWs.includes(sw.parent_workspace_id))
+      : allSubWorkspaces;
+
+    return filteredSubs.map(sw => ({
+      id: sw.id,
+      label: sw.name,
+      sublabel: sw.parentName ? `(${sw.parentName})` : undefined
+    }));
+  }, [allSubWorkspaces, selectedWorkspaceIds, selectedWorkspaceId]);
+
+  const statusFilterOptions = useMemo(() => {
+    return uniqueStatuses.map(s => {
+      const match = masterStatuses.find(ms => ms.name === s || ms.status_name === s);
+      return {
+        id: s,
+        label: s,
+        color: match?.status_color
+      };
+    });
+  }, [uniqueStatuses, masterStatuses]);
+
+  const priorityFilterOptions = useMemo(() => {
+    return uniquePriorities.map(p => {
+      const match = masterPriorities.find(mp => mp.name === p || mp.priority_name === p);
+      return {
+        id: p,
+        label: p,
+        color: match?.priority_color
+      };
+    });
+  }, [uniquePriorities, masterPriorities]);
+
+  const departmentFilterOptions = useMemo(() => {
+    return (departments || []).map(d => ({
+      id: d.name,
+      label: d.name
+    }));
+  }, [departments]);
+
+  const assigneeFilterOptions = useMemo(() => {
+    return (masterAssignees || []).map(u => ({
+      id: u.id,
+      label: u.full_name,
+      sublabel: u.user_code ? `(${u.user_code})` : undefined
+    }));
+  }, [masterAssignees]);
+
+  const totalActiveFilterCount = useMemo(() => {
+    let count = 0;
+    count += selectedWorkspaceIds.length > 0 ? selectedWorkspaceIds.length : (selectedWorkspaceId ? 1 : 0);
+    count += selectedSubWorkspaceIds.length;
+    count += selectedStatuses.length > 0 ? selectedStatuses.length : (selectedStatus ? 1 : 0);
+    count += selectedPriorities.length > 0 ? selectedPriorities.length : (selectedPriority ? 1 : 0);
+    count += selectedDepartmentNames.length;
+    count += selectedAssigneeIds.length;
+    if (showEscalatedOnly) count++;
+    if (dateFrom || dateTo) count++;
+    return count;
+  }, [selectedWorkspaceIds, selectedWorkspaceId, selectedSubWorkspaceIds, selectedStatuses, selectedStatus, selectedPriorities, selectedPriority, selectedDepartmentNames, selectedAssigneeIds, showEscalatedOnly, dateFrom, dateTo]);
+
+  const handleResetAllFilters = () => {
+    setSelectedStatus("");
+    setSelectedPriority("");
+    setSelectedStatuses([]);
+    setSelectedPriorities([]);
+    setSelectedWorkspaceId(null);
+    setSelectedWorkspaceIds([]);
+    setSelectedSubWorkspaceIds([]);
+    setSelectedDepartmentNames([]);
+    setSelectedAssigneeIds([]);
+    setShowEscalatedOnly(false);
+    setDateFrom("");
+    setDateTo("");
+    setColumnFilters({});
+    setScope("ALL");
+    setHierarchyScope("all");
+    setSelectedDepartmentName("ALL");
+    setKpiFilter(null);
+    setQuery("");
+    setActiveSavedFilterId(null);
+    setOpenDropdown(null);
+    if (effectiveUserId) {
+      localStorage.removeItem(`chandak_tasks_active_id_${effectiveUserId}`);
+    }
+    fetchTasksData(null);
+  };
 
   const baseFiltered = useMemo(() => {
     return tasks.filter(t => {
@@ -596,6 +758,10 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         if (t.department?.name !== selectedDepartmentName) return false;
       }
 
+      if (selectedDepartmentNames.length > 0 && !selectedDepartmentNames.includes(t.department?.name)) {
+        return false;
+      }
+
       if (scope === "ASSIGNEE") {
         const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
         if (a?.id !== effectiveUserId && t.assigned_to !== effectiveUserId) return false;
@@ -606,16 +772,43 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         if (!isExecutor && !isReviewer) return false;
       }
 
-      if (selectedWorkspaceId) {
-        const matchesWs = t.workspace_id === selectedWorkspaceId || 
-                          t.workspace?.id === selectedWorkspaceId || 
-                          t.sub_workspace?.id === selectedWorkspaceId ||
-                          t.workspace?.parent_workspace_id === selectedWorkspaceId;
+      // Workspace multi-select matching
+      const activeWsIds = selectedWorkspaceIds.length > 0 ? selectedWorkspaceIds : (selectedWorkspaceId ? [selectedWorkspaceId] : []);
+      if (activeWsIds.length > 0) {
+        const matchesWs = activeWsIds.some(wsId => 
+          t.workspace_id === wsId || 
+          t.workspace?.id === wsId || 
+          t.sub_workspace?.id === wsId ||
+          t.workspace?.parent_workspace_id === wsId
+        );
         if (!matchesWs) return false;
       }
+
+      // Sub-workspace multi-select matching
+      if (selectedSubWorkspaceIds.length > 0) {
+        const matchesSubWs = selectedSubWorkspaceIds.some(subWsId => 
+          t.sub_workspace?.id === subWsId ||
+          t.workspace_id === subWsId ||
+          t.sub_workspace?.name === subWsId ||
+          getSubWorkspaceName(t) === subWsId
+        );
+        if (!matchesSubWs) return false;
+      }
       
-      if (selectedStatus && t.status?.name !== selectedStatus) return false;
-      if (selectedPriority && t.priority?.name !== selectedPriority) return false;
+      // Status multi-select matching
+      const activeStatuses = selectedStatuses.length > 0 ? selectedStatuses : (selectedStatus ? [selectedStatus] : []);
+      if (activeStatuses.length > 0 && !activeStatuses.includes(t.status?.name)) return false;
+
+      // Priority multi-select matching
+      const activePriorities = selectedPriorities.length > 0 ? selectedPriorities : (selectedPriority ? [selectedPriority] : []);
+      if (activePriorities.length > 0 && !activePriorities.includes(t.priority?.name || t.priority?.priority_name)) return false;
+
+      // Assignee multi-select matching
+      if (selectedAssigneeIds.length > 0) {
+        const aId = (Array.isArray(t.assignee) ? t.assignee[0]?.id : t.assignee?.id) || t.assigned_to;
+        if (!selectedAssigneeIds.includes(aId)) return false;
+      }
+
       if (showEscalatedOnly) {
         const sName = t.status?.name?.toLowerCase() || "";
         const isStatusEscalated = sName.includes("escalat") || sName.includes("block");
@@ -684,7 +877,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
 
       return true;
     });
-  }, [tasks, scope, hierarchyScope, selectedDepartmentName, userScope, managedDepts, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo, columnFilters, combinedFields]);
+  }, [tasks, scope, hierarchyScope, selectedDepartmentName, userScope, managedDepts, query, currentUserId, selectedWorkspaceId, selectedWorkspaceIds, selectedSubWorkspaceIds, selectedStatus, selectedStatuses, selectedPriority, selectedPriorities, selectedDepartmentNames, selectedAssigneeIds, showEscalatedOnly, dateFrom, dateTo, columnFilters, combinedFields]);
 
   const kpis = useMemo(() => {
     const total = baseFiltered.length;
@@ -1345,76 +1538,127 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               <Popover.Trigger asChild>
                 <AppButton variant="secondary" className="shrink-0" leftIcon={<Filter className="h-4 w-4" />}>
                   Filters
-                  {(() => {
-                    const n = [selectedStatus, selectedPriority, showEscalatedOnly, dateFrom || dateTo, selectedWorkspaceId].filter(Boolean).length;
-                    return n > 0 ? <span className="rounded bg-primary px-1.5 text-[11px] leading-[18px] text-primary-foreground tabular">{n}</span> : null;
-                  })()}
+                  {totalActiveFilterCount > 0 ? (
+                    <span className="rounded bg-primary px-1.5 text-[11px] leading-[18px] text-primary-foreground tabular">
+                      {totalActiveFilterCount}
+                    </span>
+                  ) : null}
                 </AppButton>
               </Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content align="end" sideOffset={8} className="z-[var(--z-popover)] w-80 space-y-4 rounded-[10px] border border-border bg-elevated p-4 text-foreground shadow-lg outline-none">
+                <Popover.Content align="end" sideOffset={8} className="z-[var(--z-popover)] w-80 sm:w-96 max-h-[85vh] overflow-y-auto space-y-4 rounded-[10px] border border-border bg-elevated p-4 text-foreground shadow-lg outline-none">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-[14px] font-semibold text-heading">Filters</h4>
-                    <AppButton variant="ghost" size="sm" onClick={() => { 
-                      setSelectedStatus(""); 
-                      setSelectedPriority(""); 
-                      setShowEscalatedOnly(false); 
-                      setDateFrom(""); 
-                      setDateTo(""); 
-                      setColumnFilters({}); 
-                      setSelectedWorkspaceId(null); 
-                      setScope("ALL");
-                      setHierarchyScope("all");
-                      setSelectedDepartmentName("ALL");
-                      setKpiFilter(null);
-                      setQuery("");
-                      setActiveSavedFilterId(null);
-                      if (effectiveUserId) {
-                        localStorage.removeItem(`chandak_tasks_active_id_${effectiveUserId}`);
-                      }
-                      fetchTasksData(null); 
-                    }} className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text">
+                    <AppButton variant="ghost" size="sm" onClick={handleResetAllFilters} className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text">
                       <RotateCcw className="h-3 w-3" aria-hidden /> Reset all
                     </AppButton>
                   </div>
                   
                   <div className="space-y-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[13px] font-medium text-subtle">Workspace</label>
-                      <select value={selectedWorkspaceId || ""} onChange={(e) => { const v = e.target.value || null; setSelectedWorkspaceId(v); fetchTasksData(v); }} className="h-9 w-full px-3 text-[13.5px]">
-                        <option value="">All workspaces</option>
-                        {allWorkspaces.map((ws: any) => <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>)}
-                      </select>
-                    </div>
+                    {/* Workspace Multi-Select */}
+                    <WorkspaceFilterMultiSelect
+                      label="Workspace"
+                      placeholder="All workspaces"
+                      options={workspaceFilterOptions}
+                      selectedIds={selectedWorkspaceIds.length > 0 ? selectedWorkspaceIds : (selectedWorkspaceId ? [selectedWorkspaceId] : [])}
+                      onChange={(ids) => {
+                        setSelectedWorkspaceIds(ids);
+                        setSelectedWorkspaceId(ids.length === 1 ? ids[0] : null);
+                        if (ids.length > 0) {
+                          setSelectedSubWorkspaceIds(prev => prev.filter(swId => {
+                            const sw = allSubWorkspaces.find(s => s.id === swId);
+                            return sw?.parent_workspace_id && ids.includes(sw.parent_workspace_id);
+                          }));
+                        }
+                      }}
+                      isOpen={openDropdown === 'workspace'}
+                      onToggle={() => setOpenDropdown(prev => prev === 'workspace' ? null : 'workspace')}
+                      onClose={() => setOpenDropdown(null)}
+                    />
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[13px] font-medium text-subtle">Status</label>
-                        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="h-9 w-full px-3 text-[13.5px]">
-                          <option value="">All</option>
-                          {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[13px] font-medium text-subtle">Priority</label>
-                        <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="h-9 w-full px-3 text-[13.5px]">
-                          <option value="">All</option>
-                          {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
-                        </select>
-                      </div>
-                    </div>
+                    {/* Sub-workspace Multi-Select */}
+                    {subWorkspaceFilterOptions.length > 0 && (
+                      <WorkspaceFilterMultiSelect
+                        label="Sub-workspace"
+                        placeholder="All sub-workspaces"
+                        options={subWorkspaceFilterOptions}
+                        selectedIds={selectedSubWorkspaceIds}
+                        onChange={(ids) => setSelectedSubWorkspaceIds(ids)}
+                        isOpen={openDropdown === 'subworkspace'}
+                        onToggle={() => setOpenDropdown(prev => prev === 'subworkspace' ? null : 'subworkspace')}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    )}
+
+                    {/* Status Multi-Select */}
+                    <WorkspaceFilterMultiSelect
+                      label="Status"
+                      placeholder="All statuses"
+                      options={statusFilterOptions}
+                      selectedIds={selectedStatuses.length > 0 ? selectedStatuses : (selectedStatus ? [selectedStatus] : [])}
+                      onChange={(ids) => {
+                        setSelectedStatuses(ids);
+                        setSelectedStatus(ids.length === 1 ? ids[0] : "");
+                      }}
+                      isOpen={openDropdown === 'status'}
+                      onToggle={() => setOpenDropdown(prev => prev === 'status' ? null : 'status')}
+                      onClose={() => setOpenDropdown(null)}
+                    />
+
+                    {/* Priority Multi-Select */}
+                    <WorkspaceFilterMultiSelect
+                      label="Priority"
+                      placeholder="All priorities"
+                      options={priorityFilterOptions}
+                      selectedIds={selectedPriorities.length > 0 ? selectedPriorities : (selectedPriority ? [selectedPriority] : [])}
+                      onChange={(ids) => {
+                        setSelectedPriorities(ids);
+                        setSelectedPriority(ids.length === 1 ? ids[0] : "");
+                      }}
+                      isOpen={openDropdown === 'priority'}
+                      onToggle={() => setOpenDropdown(prev => prev === 'priority' ? null : 'priority')}
+                      onClose={() => setOpenDropdown(null)}
+                    />
+
+                    {/* Department Multi-Select */}
+                    {departmentFilterOptions.length > 0 && (
+                      <WorkspaceFilterMultiSelect
+                        label="Department"
+                        placeholder="All departments"
+                        options={departmentFilterOptions}
+                        selectedIds={selectedDepartmentNames}
+                        onChange={(ids) => setSelectedDepartmentNames(ids)}
+                        isOpen={openDropdown === 'department'}
+                        onToggle={() => setOpenDropdown(prev => prev === 'department' ? null : 'department')}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    )}
+
+                    {/* Assignee Multi-Select */}
+                    {assigneeFilterOptions.length > 0 && (
+                      <WorkspaceFilterMultiSelect
+                        label="Assignee"
+                        placeholder="All assignees"
+                        options={assigneeFilterOptions}
+                        selectedIds={selectedAssigneeIds}
+                        onChange={(ids) => setSelectedAssigneeIds(ids)}
+                        isOpen={openDropdown === 'assignee'}
+                        onToggle={() => setOpenDropdown(prev => prev === 'assignee' ? null : 'assignee')}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    )}
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[13px] font-medium text-subtle">Due between</label>
                       <div className="flex items-center gap-2">
-                        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 w-full px-2 text-[13.5px]" />
+                        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 w-full px-2 text-[13.5px] rounded-md border border-border bg-surface text-foreground" />
                         <span className="text-muted text-xs">to</span>
-                        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 w-full px-2 text-[13.5px]" />
+                        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 w-full px-2 text-[13.5px] rounded-md border border-border bg-surface text-foreground" />
                       </div>
                     </div>
 
                     <label className="flex cursor-pointer items-center gap-2 rounded-md p-1 text-[13.5px] text-foreground">
-                      <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="h-4 w-4" />
+                      <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="h-4 w-4 rounded border-border" />
                       Escalated tasks only
                     </label>
                   </div>
@@ -1465,6 +1709,110 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
           </div>
           </div>
         </div>
+
+        {/* Active Filter Chips Bar */}
+        {totalActiveFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 bg-surface/60 rounded-lg border border-border text-xs">
+            <span className="text-[11px] font-semibold text-muted mr-1">Active filters:</span>
+            
+            {/* Workspaces */}
+            {(selectedWorkspaceIds.length > 0 ? selectedWorkspaceIds : (selectedWorkspaceId ? [selectedWorkspaceId] : [])).map(id => {
+              const ws = allWorkspaces.find((w: any) => w.id === id);
+              return (
+                <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent-soft text-accent-soft-text border border-border">
+                  Workspace: {ws?.workspace_name || ws?.name || id}
+                  <button type="button" aria-label={`Remove workspace ${ws?.workspace_name || ws?.name || id}`} onClick={() => { setSelectedWorkspaceIds(prev => prev.filter(x => x !== id)); setSelectedWorkspaceId(null); }} className="hover:text-danger">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              );
+            })}
+
+            {/* Sub-workspaces */}
+            {selectedSubWorkspaceIds.map(id => {
+              const sw = allSubWorkspaces.find(s => s.id === id);
+              return (
+                <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent-soft text-accent-soft-text border border-border">
+                  Sub-workspace: {sw?.name || id}
+                  <button type="button" aria-label={`Remove sub-workspace ${sw?.name || id}`} onClick={() => setSelectedSubWorkspaceIds(prev => prev.filter(x => x !== id))} className="hover:text-danger">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              );
+            })}
+
+            {/* Statuses */}
+            {(selectedStatuses.length > 0 ? selectedStatuses : (selectedStatus ? [selectedStatus] : [])).map(s => (
+              <span key={s} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface text-foreground border border-border">
+                Status: {s}
+                <button type="button" aria-label={`Remove status ${s}`} onClick={() => { setSelectedStatuses(prev => prev.filter(x => x !== s)); setSelectedStatus(""); }} className="hover:text-danger">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+
+            {/* Priorities */}
+            {(selectedPriorities.length > 0 ? selectedPriorities : (selectedPriority ? [selectedPriority] : [])).map(p => (
+              <span key={p} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface text-foreground border border-border">
+                Priority: {p}
+                <button type="button" aria-label={`Remove priority ${p}`} onClick={() => { setSelectedPriorities(prev => prev.filter(x => x !== p)); setSelectedPriority(""); }} className="hover:text-danger">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+
+            {/* Departments */}
+            {selectedDepartmentNames.map(d => (
+              <span key={d} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface text-foreground border border-border">
+                Dept: {d}
+                <button type="button" aria-label={`Remove department ${d}`} onClick={() => setSelectedDepartmentNames(prev => prev.filter(x => x !== d))} className="hover:text-danger">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+
+            {/* Assignees */}
+            {selectedAssigneeIds.map(id => {
+              const u = masterAssignees.find((a: any) => a.id === id);
+              return (
+                <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface text-foreground border border-border">
+                  Assignee: {u?.full_name || id}
+                  <button type="button" aria-label={`Remove assignee ${u?.full_name || id}`} onClick={() => setSelectedAssigneeIds(prev => prev.filter(x => x !== id))} className="hover:text-danger">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              );
+            })}
+
+            {/* Escalated */}
+            {showEscalatedOnly && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger-text border border-danger-border">
+                Escalated only
+                <button type="button" aria-label="Remove escalated filter" onClick={() => setShowEscalatedOnly(false)} className="hover:text-danger">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+
+            {/* Date Range */}
+            {(dateFrom || dateTo) && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface text-foreground border border-border">
+                Due: {dateFrom || "…"} to {dateTo || "…"}
+                <button type="button" aria-label="Remove due date filter" onClick={() => { setDateFrom(""); setDateTo(""); }} className="hover:text-danger">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={handleResetAllFilters}
+              className="text-xs text-accent-soft-text hover:underline font-medium ml-auto"
+            >
+              Reset all
+            </button>
+          </div>
+        )}
 
         <DynamicReportBuilder 
           isOpen={isConfigOpen} 

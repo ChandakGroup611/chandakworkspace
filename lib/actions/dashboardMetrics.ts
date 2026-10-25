@@ -268,6 +268,9 @@ export async function fetchLiveDashboardMetrics() {
     const requirements = requirementsData || [];
     const workspaces = workspacesData || [];
 
+    const wsLookup = new Map<string, any>();
+    workspaces.forEach((w: any) => wsLookup.set(w.id, w));
+
     tasks.forEach((t: any) => {
       const isSubTask = !!t.parent_task_id;
       if (!isSubTask) totalTasks++;
@@ -289,6 +292,34 @@ export async function fetchLiveDashboardMetrics() {
       const daysInStatus = updatedAtDate ? Math.max(0, Math.floor((now - new Date(updatedAtDate).getTime()) / (1000 * 3600 * 24))) : 0;
       const slaRemainingMs = t.end_date ? (new Date(t.end_date).getTime() - now) : null;
 
+      let wsId: string | null = null;
+      let wsName: string | null = null;
+      let subWsId: string | null = null;
+      let subWsName: string | null = null;
+
+      if (t.workspace_id) {
+        const directWs = wsLookup.get(t.workspace_id);
+        if (directWs) {
+          if (directWs.parent_workspace_id) {
+            subWsId = directWs.id;
+            subWsName = directWs.workspace_name;
+            const parentWs = wsLookup.get(directWs.parent_workspace_id);
+            if (parentWs) {
+              wsId = parentWs.id;
+              wsName = parentWs.workspace_name;
+            } else {
+              wsId = directWs.id;
+              wsName = directWs.workspace_name;
+            }
+          } else {
+            wsId = directWs.id;
+            wsName = directWs.workspace_name;
+          }
+        } else {
+          wsId = t.workspace_id;
+        }
+      }
+
       allItems.push({
         module: isSubTask ? "Sub Tasks" : "Tasks",
         id: t.id,
@@ -303,6 +334,10 @@ export async function fetchLiveDashboardMetrics() {
         departmentName: assignedUser?.departmentName || "General",
         managerId: assignedUser?.managerId || null,
         priority: t.priority?.priority_name || "Standard",
+        workspaceId: wsId,
+        workspaceName: wsName,
+        subWorkspaceId: subWsId,
+        subWorkspaceName: subWsName,
         createdAt: t.created_at,
         updatedAt: updatedAtDate,
         dueDate: t.end_date,
@@ -433,6 +468,13 @@ export async function fetchLiveDashboardMetrics() {
       const updatedAtDate = w.updated_at || w.created_at;
       const daysInStatus = updatedAtDate ? Math.max(0, Math.floor((now - new Date(updatedAtDate).getTime()) / (1000 * 3600 * 24))) : 0;
 
+      const isSub = !!w.parent_workspace_id;
+      const wsId = isSub ? w.parent_workspace_id : w.id;
+      const parentWs = isSub ? wsLookup.get(w.parent_workspace_id) : null;
+      const wsName = isSub ? (parentWs?.workspace_name || "Workspace") : w.workspace_name;
+      const subWsId = isSub ? w.id : null;
+      const subWsName = isSub ? w.workspace_name : null;
+
       allItems.push({
         module: w.parent_workspace_id ? "Sub Workspaces" : "Workspaces",
         id: w.id,
@@ -447,6 +489,10 @@ export async function fetchLiveDashboardMetrics() {
         departmentName: ownerUser?.departmentName || "General",
         managerId: ownerUser?.managerId || null,
         priority: "Standard",
+        workspaceId: wsId,
+        workspaceName: wsName,
+        subWorkspaceId: subWsId,
+        subWorkspaceName: subWsName,
         createdAt: w.created_at,
         updatedAt: updatedAtDate,
         dueDate: w.end_date,

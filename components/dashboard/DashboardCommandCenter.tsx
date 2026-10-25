@@ -85,6 +85,8 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
   const [globalScopes, setGlobalScopes] = useState<string[]>(SCOPE_OPTIONS.map(o => o.value));
   const [globalStatuses, setGlobalStatuses] = useState<string[]>(STATUS_OPTIONS.map(o => o.value));
   const [globalUsers, setGlobalUsers] = useState<string[]>([]);
+  const [globalWorkspaces, setGlobalWorkspaces] = useState<string[]>([]);
+  const [globalSubWorkspaces, setGlobalSubWorkspaces] = useState<string[]>([]);
   const [usersInitialized, setUsersInitialized] = useState(false);
   
   const [degradationStage, setDegradationStage] = useState<DegradationStage>(DegradationStage.STAGE_0_NORMAL);
@@ -121,6 +123,27 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
   const userOptions = useMemo(() => {
     return uniqueUsers.map(u => ({ value: u, label: u }));
   }, [uniqueUsers]);
+
+  // Get unique workspaces for multi-select
+  const workspaceOptions = useMemo(() => {
+    const wsSet = new Set<string>();
+    metrics.forEach(m => {
+      if (m.workspaceName) wsSet.add(String(m.workspaceName));
+    });
+    return Array.from(wsSet).sort().map(w => ({ value: w, label: w }));
+  }, [metrics]);
+
+  // Get unique sub-workspaces for multi-select (context-filtered if workspaces are selected)
+  const subWorkspaceOptions = useMemo(() => {
+    const swSet = new Set<string>();
+    metrics.forEach(m => {
+      if (globalWorkspaces.length > 0 && m.workspaceName && !globalWorkspaces.includes(m.workspaceName)) {
+        return;
+      }
+      if (m.subWorkspaceName) swSet.add(String(m.subWorkspaceName));
+    });
+    return Array.from(swSet).sort().map(sw => ({ value: sw, label: sw }));
+  }, [metrics, globalWorkspaces]);
 
   // Initialize globalUsers when uniqueUsers are first loaded
   useEffect(() => {
@@ -166,11 +189,19 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
         if (m.departmentName !== selectedDepartmentName) return false;
       }
 
-      // 3. Scope Matching
+      // 3. Workspace & Sub-workspace Matching
+      if (globalWorkspaces.length > 0) {
+        if (!m.workspaceName || !globalWorkspaces.includes(m.workspaceName)) return false;
+      }
+      if (globalSubWorkspaces.length > 0) {
+        if (!m.subWorkspaceName || !globalSubWorkspaces.includes(m.subWorkspaceName)) return false;
+      }
+
+      // 4. Scope Matching
       const scopeMatch = globalScopes.includes(m.module);
       if (!scopeMatch) return false;
       
-      // 4. User Matching
+      // 5. User Matching
       let userMatch = false;
       if (m.user === 'System') {
         userMatch = true;
@@ -181,7 +212,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
       }
       if (!userMatch) return false;
       
-      // 5. Status Matching
+      // 6. Status Matching
       let statusMatch = false;
       const sLower = String(m.status).toLowerCase();
       const isResolved = sLower.includes('resolv') || sLower.includes('done') || sLower.includes('clos') || sLower.includes('complete');
@@ -198,7 +229,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
 
       return statusMatch;
     });
-  }, [metrics, hierarchyScope, selectedDepartmentName, currentUser, managedDepts, globalScopes, globalUsers, globalStatuses, usersInitialized, uniqueUsers]);
+  }, [metrics, hierarchyScope, selectedDepartmentName, currentUser, managedDepts, globalWorkspaces, globalSubWorkspaces, globalScopes, globalUsers, globalStatuses, usersInitialized, uniqueUsers]);
 
   // Dynamic KPIs calculated strictly from filteredMetrics for full segregation
   const dynamicKpis = useMemo(() => {
@@ -421,6 +452,32 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
           {/* FILTERS & SNAPSHOT (Right side) */}
           {activeView === "overview" && (
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 shrink-0 ml-auto flex-nowrap">
+              {workspaceOptions.length > 0 && (
+                <MultiSelectFilter
+                  options={workspaceOptions}
+                  selectedValues={globalWorkspaces}
+                  onChange={(vals) => {
+                    setGlobalWorkspaces(vals);
+                    if (vals.length > 0) {
+                      setGlobalSubWorkspaces(prev => prev.filter(sw => {
+                        const match = metrics.find(m => m.subWorkspaceName === sw);
+                        return match?.workspaceName && vals.includes(match.workspaceName);
+                      }));
+                    }
+                  }}
+                  placeholder="Workspaces"
+                />
+              )}
+
+              {subWorkspaceOptions.length > 0 && (
+                <MultiSelectFilter
+                  options={subWorkspaceOptions}
+                  selectedValues={globalSubWorkspaces}
+                  onChange={setGlobalSubWorkspaces}
+                  placeholder="Sub-workspaces"
+                />
+              )}
+
               <MultiSelectFilter
                 options={SCOPE_OPTIONS}
                 selectedValues={globalScopes}
