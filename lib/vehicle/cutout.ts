@@ -132,7 +132,8 @@ export function isAllowedSource(src: string): boolean {
   try {
     const u = new URL(src);
     if (u.protocol !== "https:") return false;
-    if (u.hostname === "upload.wikimedia.org") return true;
+    // Wikipedia serves photos from upload.wikimedia.org and (newer API answers) thumb.wikimedia.org
+    if (u.hostname === "upload.wikimedia.org" || u.hostname === "thumb.wikimedia.org") return true;
     const supa = process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname : null;
     return !!supa && u.hostname === supa;
   } catch {

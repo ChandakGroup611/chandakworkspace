@@ -98,7 +98,7 @@ const cutoutUrl = (src: string) => `/api/vehicle/image/cutout?src=${encodeURICom
 // sources the server will cut out (see lib/vehicle/cutout.ts → isAllowedSource)
 const SUPABASE_HOST = (() => { try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").hostname; } catch { return ""; } })();
 const canCutOut = (src: string) => {
-  try { const u = new URL(src); return u.protocol === "https:" && (u.hostname === "upload.wikimedia.org" || (!!SUPABASE_HOST && u.hostname === SUPABASE_HOST)); } catch { return false; }
+  try { const u = new URL(src); return u.protocol === "https:" && (u.hostname === "upload.wikimedia.org" || u.hostname === "thumb.wikimedia.org" || (!!SUPABASE_HOST && u.hostname === SUPABASE_HOST)); } catch { return false; }
 };
 
 /* cut-outs are fetched (not <img>) so we can wait while the server is still making one (HTTP 202),
