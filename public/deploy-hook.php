@@ -178,7 +178,17 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
             if ($pid > 1 && $pid !== getmypid()) {
                 $cmd = @file_get_contents($pDir . '/cmdline');
                 if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false)) {
-                    $nodePids[] = ['pid' => $pid, 'cmd' => substr(str_replace("\0", " ", $cmd), 0, 100)];
+                    $status = @file_get_contents($pDir . '/status');
+                    $threads = 0;
+                    if (preg_match('/Threads:\s+(\d+)/', (string)$status, $m)) {
+                        $threads = (int)$m[1];
+                    }
+                    $nodePids[] = [
+                        'pid' => $pid,
+                        'threads' => $threads,
+                        'cwd' => @readlink($pDir . '/cwd'),
+                        'cmd' => substr(str_replace("\0", " ", $cmd), 0, 100)
+                    ];
                 }
             }
         }
@@ -226,6 +236,28 @@ if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
             }
         }
     }
+
+    // Clean up stray server.js and package.json from public_html
+    @unlink($domainRoot . '/public_html/server.js');
+    @unlink($domainRoot . '/public_html/package.json');
+
+    // Remove duplicate .htaccess from canonicalAppRoot and old version directories
+    if ($canonicalAppRoot !== $domainRoot . '/public_html') {
+        @unlink($canonicalAppRoot . '/.htaccess');
+    }
+    if ($versionedDirs) {
+        foreach ($versionedDirs as $vDir) {
+            if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
+                @unlink($vDir . '/.htaccess');
+                @unlink($vDir . '/public/.htaccess');
+                @unlink($vDir . '/tmp/restart.txt');
+            }
+        }
+    }
+
+    // Rewrite pristine public_html/.htaccess with V8 thread pool bound
+    $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
+    @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
 
     $futureTime = time() + 120;
     foreach ($primaryAppRoots as $target) {
@@ -389,20 +421,23 @@ if ($zipFile && class_exists('ZipArchive')) {
 $htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
-// STRICT: Exactly 1 persistent warm worker instance to prevent process proliferation, port clashes, and uv_thread_create exhaustion
-$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxInstances 1\nPassengerMinInstances 1\nPassengerMaxPoolSize 1\nPassengerPoolIdleTime 3600\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 2\n";
+// STRICT: Bound V8 and libuv thread pools so total threads per process <= 3, staying far below CloudLinux NPROC ceiling
+$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
 
 // 1. Write to public_html/.htaccess pointing exclusively to canonical app root
 $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
 @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
 @touch($domainRoot . '/public_html/.htaccess');
 
-// 2. Write to canonical app root .htaccess if it's not public_html
+// 2. Remove .htaccess from canonical app root so LiteSpeed NEVER spawns duplicate Passenger pools!
+// ONLY public_html/.htaccess should declare PassengerAppRoot.
 if ($canonicalAppRoot !== $domainRoot . '/public_html') {
-    $cHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
-    @file_put_contents($canonicalAppRoot . '/.htaccess', $cHtaccess);
-    @touch($canonicalAppRoot . '/.htaccess');
+    @unlink($canonicalAppRoot . '/.htaccess');
 }
+
+// 3. Clean up any stray server.js in public_html
+@unlink($domainRoot . '/public_html/server.js');
+@unlink($domainRoot . '/public_html/package.json');
 
 // 3. Purge .htaccess from all other versioned directories so LiteSpeed NEVER spawns duplicate Passenger pools
 if ($versionedDirs) {

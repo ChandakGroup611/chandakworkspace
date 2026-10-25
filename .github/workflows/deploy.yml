@@ -63,6 +63,10 @@ jobs:
           cat << EOF > .next/standalone/.env
           NODE_ENV=production
           PORT=3000
+          UV_THREADPOOL_SIZE=1
+          TOKIO_WORKER_THREADS=1
+          DOTENV_CONFIG_QUIET=true
+          NODE_OPTIONS=--v8-pool-size=1 --max-old-space-size=384
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -72,6 +76,9 @@ jobs:
           CLOUDFLARE_AI_TOKEN=${{ secrets.CLOUDFLARE_AI_TOKEN }}
           VEHICLE_AI_IMAGE_MODEL=@cf/black-forest-labs/flux-2-klein-9b
           EOF
+
+          # Prepend thread bounds directly to standalone server.js to guarantee 100% enforcement at process entry
+          sed -i '1s/^/process.env.UV_THREADPOOL_SIZE = "1"; process.env.TOKIO_WORKER_THREADS = "1"; process.env.DOTENV_CONFIG_QUIET = "true";\n/' .next/standalone/server.js
 
           cp .next/standalone/.env .next/standalone/.env.production
           cp .next/standalone/.env .next/standalone/.env.local
@@ -126,7 +133,7 @@ jobs:
             echo "Current Directory: $ROOT_DIR"
             
             ZIP_PATH=""
-            for cand in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a1294b-6e33-7230-bb26-79b878f1cbfe/nodejs/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a1294b-6e33-7230-bb26-79b878f1cbfe/nodejs/public/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/public/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip"; do
+            for cand in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip"; do
               if [ -f "$cand" ]; then
                 ZIP_PATH="$cand"
                 break
@@ -145,7 +152,6 @@ jobs:
             
             TARGET_DIRS=(
               "$DOMAIN_ROOT/hbuilds/current/nodejs"
-              "$DOMAIN_ROOT/public_html"
             )
             
             # Clean up old version directories so they never run duplicate Node apps
@@ -154,6 +160,10 @@ jobs:
                 rm -f "$old_ver/.htaccess" "$old_ver/public/.htaccess" "$old_ver/tmp/restart.txt"
               fi
             done
+
+            # Prevent dual-app collision by removing stray server.js from public_html and duplicate .htaccess from app root
+            rm -f "$DOMAIN_ROOT/public_html/server.js" "$DOMAIN_ROOT/public_html/package.json"
+            rm -f "$DOMAIN_ROOT/hbuilds/current/nodejs/.htaccess"
 
             echo "Target directories to update: ${TARGET_DIRS[*]}"
             
@@ -172,9 +182,8 @@ jobs:
                 if [ -f "$target/package.json" ]; then
                   touch "$target/package.json"
                 fi
-                if [ -f "$target/.htaccess" ]; then
-                  touch "$target/.htaccess"
-                fi
+                # Never keep .htaccess in app root - only public_html/.htaccess controls routing
+                rm -f "$target/.htaccess"
                 if [ -d "$target/.next" ]; then
                   cp -rf "$target/.next" "$DOMAIN_ROOT/public_html/" 2>/dev/null || true
                   cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/_next/" 2>/dev/null || true
@@ -188,20 +197,9 @@ jobs:
                 fi
                 if [ -f "$target/public/deploy-hook.php" ]; then
                   cp -f "$target/public/deploy-hook.php" "$DOMAIN_ROOT/public_html/deploy-hook.php" 2>/dev/null || true
-                  for vpub in $(find "$DOMAIN_ROOT/hbuilds" -type d -name "public" 2>/dev/null); do
-                    cp -f "$target/public/deploy-hook.php" "$vpub/deploy-hook.php" 2>/dev/null || true
-                  done
                 fi
               fi
             done
-
-            # Ensure public_html/.htaccess has LiteSpeed anti-caching rules
-            HT_DEST="$DOMAIN_ROOT/public_html/.htaccess"
-            if [ -f "$HT_DEST" ]; then
-              if ! grep -q "no-lscache" "$HT_DEST"; then
-                echo -e "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json|js|css)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=3600, must-revalidate\"\n    </FilesMatch>\n</IfModule>\n\n$(cat "$HT_DEST")" > "$HT_DEST"
-              fi
-            fi
 
             # Force reload web server and restart passenger
             pkill -9 -u $(whoami) -f node 2>/dev/null || true
