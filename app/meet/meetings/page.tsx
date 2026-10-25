@@ -176,11 +176,18 @@ export default async function MeetingsPage({
                   </span>
                 </div>
 
-                <Link href={`/meet/meetings/${meeting.id}`}>
-                  <AppButton variant="ghost" size="sm" rightIcon={<ArrowRight className="h-3.5 w-3.5" />}>
-                    Details
-                  </AppButton>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link href={`/meet/meetings/${meeting.id}`}>
+                    <AppButton variant="outline" size="sm">
+                      Manage
+                    </AppButton>
+                  </Link>
+                  <Link href={`/meet/meetings/${meeting.id}`}>
+                    <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-3 w-3" />}>
+                      Session
+                    </AppButton>
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

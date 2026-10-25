@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import type { MeetingTask, TaskStatus, PointPriority } from "@/types/meet";
 
 export interface CreateTaskInput {
-  point_id: string;
+  point_id?: string | null;
   session_id?: string;
   title: string;
   description?: string;
@@ -105,7 +105,7 @@ export async function createTask(input: CreateTaskInput) {
     const { data: task, error: tErr } = await supabaseAdmin
       .from("meet_tasks")
       .insert({
-        point_id: input.point_id,
+        point_id: input.point_id || null,
         session_id: input.session_id || null,
         title: input.title,
         description: input.description || null,
@@ -332,6 +332,37 @@ export async function decideTaskExtension(input: {
         })
         .eq("id", ext.entity_id);
     }
+
+    revalidatePath("/meet/my-work");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Delete a task (Soft delete)
+ */
+export async function deleteTask(taskId: string) {
+  try {
+    const { user } = await getCachedUser();
+    const { error } = await supabaseAdmin
+      .from("meet_tasks")
+      .update({
+        is_deleted: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", taskId);
+
+    if (error) return { success: false, error: error.message };
+
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "task",
+      entity_id: taskId,
+      action: "deleted",
+      user_id: user?.id || null,
+      channel: "web",
+    });
 
     revalidatePath("/meet/my-work");
     return { success: true };

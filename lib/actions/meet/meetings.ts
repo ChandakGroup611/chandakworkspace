@@ -332,3 +332,142 @@ export async function archiveMeeting(meetingId: string) {
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * Update an existing meeting series (M1/M8)
+ */
+export async function updateMeeting(input: {
+  meetingId: string;
+  title?: string;
+  description?: string;
+  recurrence?: string;
+  organizerId?: string;
+  roomId?: string;
+  defaultDurationMinutes?: number;
+  mode?: string;
+  videoLink?: string;
+}) {
+  try {
+    const { user } = await getCachedUser();
+    const updatePayload: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (input.title !== undefined) updatePayload.title = input.title;
+    if (input.description !== undefined) updatePayload.description = input.description;
+    if (input.recurrence !== undefined) updatePayload.recurrence = input.recurrence;
+    if (input.organizerId !== undefined) updatePayload.organizer_id = input.organizerId;
+    if (input.roomId !== undefined) updatePayload.room_id = input.roomId || null;
+    if (input.defaultDurationMinutes !== undefined) updatePayload.default_duration_minutes = input.defaultDurationMinutes;
+    if (input.mode !== undefined) updatePayload.mode = input.mode;
+    if (input.videoLink !== undefined) updatePayload.video_link = input.videoLink || null;
+
+    const { data, error } = await supabaseAdmin
+      .from("meet_meetings")
+      .update(updatePayload)
+      .eq("id", input.meetingId)
+      .select()
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "meeting",
+      entity_id: input.meetingId,
+      action: "updated",
+      field: "details",
+      user_id: user?.id || null,
+      channel: "web",
+    });
+
+    revalidatePath(`/meet/meetings/${input.meetingId}`);
+    revalidatePath("/meet/meetings");
+    return { success: true, meeting: data };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Add a standing member to a meeting series roster
+ */
+export async function addMeetingMember(input: {
+  meetingId: string;
+  userId?: string;
+  role: string;
+  guestName?: string;
+  guestEmail?: string;
+}) {
+  try {
+    const { data: member, error } = await supabaseAdmin
+      .from("meet_meeting_members")
+      .insert({
+        meeting_id: input.meetingId,
+        user_id: input.userId || null,
+        role: input.role || "attendee",
+        guest_name: input.guestName || null,
+        guest_email: input.guestEmail || null,
+      })
+      .select(`
+        *,
+        user:user_master(id, full_name, email, profile_photo)
+      `)
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/meet/meetings/${input.meetingId}`);
+    return { success: true, member };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Remove a standing member from a meeting series roster
+ */
+export async function removeMeetingMember(memberId: string, meetingId: string) {
+  try {
+    const { error } = await supabaseAdmin
+      .from("meet_meeting_members")
+      .delete()
+      .eq("id", memberId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/meet/meetings/${meetingId}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Get all points across all sessions of a meeting series (Spec P10)
+ */
+export async function getMeetingAllPoints(meetingId: string) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("meet_points")
+      .select(`
+        *,
+        owner:user_master!meet_points_owner_id_fkey(id, full_name, email, profile_photo),
+        category:meet_point_categories(id, name, default_tat_days),
+        origin_session:meet_sessions!meet_points_origin_session_id_fkey(id, code, session_no),
+        current_session:meet_sessions!meet_points_current_session_id_fkey(id, code, session_no)
+      `)
+      .eq("meeting_id", meetingId)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching all points for meeting:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err: any) {
+    console.error("Unexpected error in getMeetingAllPoints:", err);
+    return [];
+  }
+}

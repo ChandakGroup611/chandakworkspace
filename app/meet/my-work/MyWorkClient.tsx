@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -12,18 +12,27 @@ import {
   Search,
   RotateCcw,
   Plus,
+  Trash2,
+  X,
 } from "lucide-react";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
-import { updateTaskStatus, toggleTaskChecklist, requestTaskExtension } from "@/lib/actions/meet/tasks";
+import {
+  updateTaskStatus,
+  toggleTaskChecklist,
+  requestTaskExtension,
+  createTask,
+  deleteTask,
+} from "@/lib/actions/meet/tasks";
 import { toast } from "react-toastify";
-import type { MeetingTask, TaskStatus } from "@/types/meet";
+import type { MeetingTask, TaskStatus, PointPriority } from "@/types/meet";
 
 interface MyWorkClientProps {
   initialTasks: MeetingTask[];
+  users?: any[];
 }
 
-export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
+export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientProps) {
   const [tasks, setTasks] = useState<MeetingTask[]>(initialTasks);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [statusTab, setStatusTab] = useState<"all" | "overdue" | "due_soon" | "open" | "completed">("all");
@@ -32,6 +41,17 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
   const [extensionDate, setExtensionDate] = useState("");
   const [extensionReason, setExtensionReason] = useState("");
   const [isSubmittingExt, setIsSubmittingExt] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  // Create Task Modal State
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDesc, setNewTaskDesc] = useState("");
+  const [newTaskOwnerId, setNewTaskOwnerId] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState<PointPriority>("medium");
+  const [newTaskTat, setNewTaskTat] = useState(3);
+  const [newTaskChecklist, setNewTaskChecklist] = useState<string[]>([]);
+  const [checklistInput, setChecklistInput] = useState("");
 
   const todayStr = new Date().toISOString().split("T")[0];
   const tomorrow = new Date();
@@ -116,6 +136,63 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
     }
   };
 
+  const handleCreateTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+
+    startTransition(async () => {
+      try {
+        const res = await createTask({
+          title: newTaskTitle.trim(),
+          description: newTaskDesc.trim() || undefined,
+          owner_id: newTaskOwnerId || undefined,
+          priority: newTaskPriority,
+          tat_days: Number(newTaskTat),
+          checklist: newTaskChecklist.length > 0 ? newTaskChecklist : undefined,
+        });
+
+        if (res.success && res.task) {
+          toast.success("Action item created successfully");
+          setTasks((prev) => [res.task, ...prev]);
+          setIsCreateTaskOpen(false);
+          setNewTaskTitle("");
+          setNewTaskDesc("");
+          setNewTaskChecklist([]);
+        } else {
+          toast.error(res.error || "Failed to create task");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to create task");
+      }
+    });
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm("Are you sure you want to delete this action item?")) return;
+
+    startTransition(async () => {
+      try {
+        const res = await deleteTask(taskId);
+        if (res.success) {
+          toast.success("Task deleted");
+          setTasks((prev) => prev.filter((t) => t.id !== taskId));
+        } else {
+          toast.error(res.error || "Failed to delete task");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to delete task");
+      }
+    });
+  };
+
+  const handleAddChecklistItem = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && checklistInput.trim()) {
+      e.preventDefault();
+      setNewTaskChecklist((prev) => [...prev, checklistInput.trim()]);
+      setChecklistInput("");
+    }
+  };
+
   // Kanban Columns
   const kanbanColumns: { status: TaskStatus; label: string }[] = [
     { status: "not_started", label: "Not Started" },
@@ -144,8 +221,8 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
           ))}
         </div>
 
-        {/* View Mode Toggle & Search */}
-        <div className="flex items-center gap-2">
+        {/* View Mode Toggle, Search, and + New Task Action */}
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
             <input
@@ -175,6 +252,15 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
               <LayoutGrid className="h-4 w-4" />
             </button>
           </div>
+
+          <AppButton
+            variant="primary"
+            size="sm"
+            leftIcon={<Plus className="h-3.5 w-3.5" />}
+            onClick={() => setIsCreateTaskOpen(true)}
+          >
+            New Action Item
+          </AppButton>
         </div>
       </div>
 
@@ -185,6 +271,16 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
             <div className="p-8 text-center text-muted">
               <CheckCircle2 className="mx-auto h-7 w-7 text-muted mb-2" />
               <p className="text-[13.5px] font-medium text-foreground">No tasks matching criteria</p>
+              <div className="mt-3">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<Plus className="h-3.5 w-3.5" />}
+                  onClick={() => setIsCreateTaskOpen(true)}
+                >
+                  Create First Action Item
+                </AppButton>
+              </div>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -202,19 +298,24 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
                 <tbody className="divide-y divide-border">
                   {filteredTasks.map((task) => {
                     const effectiveDue = task.revised_due_date || task.due_date;
-                    const isOverdue = task.status !== "completed" && effectiveDue < todayStr;
+                    const isOverdue =
+                      task.status !== "completed" &&
+                      task.status !== "cancelled" &&
+                      effectiveDue < todayStr;
 
                     return (
                       <tr key={task.id} className="hover:bg-sunken/20 transition-colors">
                         <td className="py-3 px-4 font-mono font-medium text-primary">
                           {task.code}
                         </td>
-                        <td className="py-3 px-4 max-w-sm">
-                          <p className="font-medium text-foreground">{task.title}</p>
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-foreground">{task.title}</div>
                           {task.point && (
-                            <span className="text-[11.5px] text-muted">
-                              Point: {task.point.code} · {task.point.title}
-                            </span>
+                            <div className="text-[11px] text-muted flex items-center gap-1 mt-0.5">
+                              <span className="font-mono">{task.point.code}</span>
+                              <span>·</span>
+                              <span>{(task.point as any)?.meeting?.title || "Meeting"}</span>
+                            </div>
                           )}
 
                           {/* Checklist preview */}
@@ -268,16 +369,26 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
                           </select>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setExtensionTask(task);
-                              setExtensionDate(effectiveDue);
-                            }}
-                            className="text-[11.5px] font-medium text-primary hover:underline"
-                          >
-                            Extension
-                          </button>
+                          <div className="inline-flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setExtensionTask(task);
+                                setExtensionDate(effectiveDue);
+                              }}
+                              className="text-[11.5px] font-medium text-primary hover:underline"
+                            >
+                              Extension
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTask(task.id)}
+                              title="Delete task"
+                              className="p-1 text-muted hover:text-danger-text transition-colors rounded"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -289,46 +400,36 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
         </div>
       )}
 
-      {/* Kanban Board View */}
+      {/* Kanban View */}
       {viewMode === "kanban" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {kanbanColumns.map((col) => {
             const colTasks = filteredTasks.filter((t) => t.status === col.status);
             return (
-              <div key={col.status} className="theme-card-structural p-3.5 space-y-3 bg-sunken/30">
+              <div key={col.status} className="theme-card-structural p-3 space-y-3 bg-sunken/10">
                 <div className="flex items-center justify-between pb-2 border-b border-border">
-                  <span className="text-[13px] font-semibold text-heading">{col.label}</span>
-                  <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-subtle">
+                  <span className="text-[12.5px] font-semibold text-heading uppercase tracking-wider">
+                    {col.label}
+                  </span>
+                  <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium text-muted">
                     {colTasks.length}
                   </span>
                 </div>
 
-                <div className="space-y-2.5 min-h-64">
-                  {colTasks.map((t) => (
+                <div className="space-y-2 min-h-[300px]">
+                  {colTasks.map((task) => (
                     <div
-                      key={t.id}
-                      className="rounded-lg border border-border bg-surface p-3 shadow-xs space-y-2 hover:border-border-active transition-all"
+                      key={task.id}
+                      className="rounded-lg border border-border bg-surface p-3 space-y-2 hover:border-border-active transition-all"
                     >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="font-mono text-[10.5px] font-semibold text-primary">
-                          {t.code}
-                        </span>
-                        <StatusBadge status={t.priority} type="priority" />
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-mono text-primary font-semibold">{task.code}</span>
+                        <StatusBadge status={task.priority} type="priority" />
                       </div>
-                      <h4 className="text-[13px] font-medium text-foreground line-clamp-2">
-                        {t.title}
-                      </h4>
-                      <div className="flex items-center justify-between text-[11px] text-muted pt-1 border-t border-border">
-                        <span>Due: {t.revised_due_date || t.due_date}</span>
-                        <select
-                          value={t.status}
-                          onChange={(e) => handleStatusChange(t.id, e.target.value as TaskStatus)}
-                          className="rounded border border-border bg-background px-1.5 py-0.5 text-[10.5px] text-foreground"
-                        >
-                          <option value="not_started">Start</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="completed">Complete</option>
-                        </select>
+                      <h4 className="text-[13px] font-semibold text-heading">{task.title}</h4>
+                      <div className="flex items-center justify-between text-[11px] text-muted pt-2 border-t border-border">
+                        <span>{task.owner?.full_name || "Unassigned"}</span>
+                        <span>{task.revised_due_date || task.due_date}</span>
                       </div>
                     </div>
                   ))}
@@ -339,47 +440,50 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
         </div>
       )}
 
-      {/* Extension Request Modal */}
+      {/* Extension Modal */}
       {extensionTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-xl space-y-4">
-            <h3 className="text-[15px] font-semibold text-heading">
-              Request TAT Due Date Extension
-            </h3>
-            <p className="text-[12.5px] text-muted">
-              Task: {extensionTask.code} · {extensionTask.title}
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-[15px] font-semibold text-heading">Request TAT Extension</h3>
+              <button
+                onClick={() => setExtensionTask(null)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-            <form onSubmit={handleSubmitExtension} className="space-y-3">
+            <form onSubmit={handleSubmitExtension} className="mt-4 space-y-3 text-[13px]">
               <div>
                 <label className="block text-[12px] font-medium text-foreground mb-1">
-                  Requested New Due Date *
+                  Requested Due Date *
                 </label>
                 <input
                   type="date"
-                  required
-                  min={todayStr}
                   value={extensionDate}
                   onChange={(e) => setExtensionDate(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-[12.5px] text-foreground focus:border-primary focus:outline-none"
+                  min={todayStr}
+                  required
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-[12px] font-medium text-foreground mb-1">
-                  Reason for Extension *
+                  Justification / Reason *
                 </label>
                 <textarea
-                  required
-                  rows={2}
                   value={extensionReason}
                   onChange={(e) => setExtensionReason(e.target.value)}
-                  placeholder="Operational reason, delay from external vendor/bank..."
-                  className="w-full rounded-md border border-border bg-background p-2.5 text-[12.5px] text-foreground placeholder:text-muted focus:border-primary focus:outline-none"
+                  required
+                  rows={3}
+                  placeholder="Provide concrete reason for deadline extension..."
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">
                 <AppButton
                   type="button"
                   variant="outline"
@@ -395,6 +499,151 @@ export default function MyWorkClient({ initialTasks }: MyWorkClientProps) {
                   isLoading={isSubmittingExt}
                 >
                   Submit Request
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* New Task Modal */}
+      {isCreateTaskOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-[15px] font-semibold text-heading">Create Action Item</h3>
+              <button
+                onClick={() => setIsCreateTaskOpen(false)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTaskSubmit} className="mt-4 space-y-3 text-[13px]">
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Task Title *
+                </label>
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  required
+                  placeholder="What needs to be done..."
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newTaskDesc}
+                  onChange={(e) => setNewTaskDesc(e.target.value)}
+                  rows={2}
+                  placeholder="Additional context or deliverables..."
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    Assignee
+                  </label>
+                  <select
+                    value={newTaskOwnerId}
+                    onChange={(e) => setNewTaskOwnerId(e.target.value)}
+                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="">Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={newTaskPriority}
+                    onChange={(e) => setNewTaskPriority(e.target.value as PointPriority)}
+                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  TAT Working Days (calculates due date)
+                </label>
+                <input
+                  type="number"
+                  value={newTaskTat}
+                  onChange={(e) => setNewTaskTat(Number(e.target.value))}
+                  min={1}
+                  max={30}
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Checklist Items (press Enter to add)
+                </label>
+                <input
+                  type="text"
+                  value={checklistInput}
+                  onChange={(e) => setChecklistInput(e.target.value)}
+                  onKeyDown={handleAddChecklistItem}
+                  placeholder="Type item and press Enter..."
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+                {newTaskChecklist.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {newTaskChecklist.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-[11.5px] bg-sunken/40 px-2 py-1 rounded">
+                        <span>• {item}</span>
+                        <button
+                          type="button"
+                          onClick={() => setNewTaskChecklist((p) => p.filter((_, i) => i !== idx))}
+                          className="text-muted hover:text-danger-text"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCreateTaskOpen(false)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isPending}
+                >
+                  Create Action Item
                 </AppButton>
               </div>
             </form>

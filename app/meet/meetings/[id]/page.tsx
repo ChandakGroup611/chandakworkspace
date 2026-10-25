@@ -1,8 +1,9 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getMeetingById } from "@/lib/actions/meet/meetings";
+import { getMeetingById, getMeetingAllPoints } from "@/lib/actions/meet/meetings";
 import { getSessionsForMeeting } from "@/lib/actions/meet/sessions";
+import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -34,9 +35,11 @@ export default async function MeetingDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [meeting, sessions] = await Promise.all([
+  const [meeting, sessions, masters, allPoints] = await Promise.all([
     getMeetingById(id),
     getSessionsForMeeting(id),
+    getMeetingMasters(),
+    getMeetingAllPoints(id),
   ]);
 
   if (!meeting) {
@@ -118,7 +121,12 @@ export default async function MeetingDetailPage({
       </div>
 
       {/* Detail Tabs */}
-      <MeetingDetailTabs meeting={meeting} sessions={sessions} />
+      <MeetingDetailTabs
+        meeting={meeting}
+        sessions={sessions}
+        masters={masters}
+        initialPoints={allPoints}
+      />
     </div>
   );
 }

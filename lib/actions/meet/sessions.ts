@@ -487,3 +487,271 @@ export async function submitPreMeetingUpdate(input: {
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * Manually create a session for a meeting series (M1/M8)
+ */
+export async function createSessionForMeeting(input: {
+  meetingId: string;
+  scheduledStart: string;
+  durationMinutes?: number;
+  roomId?: string;
+  videoLink?: string;
+}) {
+  try {
+    const { user } = await getCachedUser();
+    const userId = user?.id || null;
+
+    // Get meeting info and highest session number
+    const { data: meeting, error: mErr } = await supabaseAdmin
+      .from("meet_meetings")
+      .select("id, code, title, default_duration_minutes, room_id, video_link")
+      .eq("id", input.meetingId)
+      .single();
+
+    if (mErr || !meeting) {
+      return { success: false, error: "Meeting series not found" };
+    }
+
+    const { data: latestSession } = await supabaseAdmin
+      .from("meet_sessions")
+      .select("session_no")
+      .eq("meeting_id", input.meetingId)
+      .order("session_no", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextSessionNo = (latestSession?.session_no || 0) + 1;
+    const sessionCode = `${meeting.code}/S-${String(nextSessionNo).padStart(3, "0")}`;
+    const durationMin = input.durationMinutes || meeting.default_duration_minutes || 60;
+    const scheduledStart = new Date(input.scheduledStart).toISOString();
+    const scheduledEnd = new Date(new Date(scheduledStart).getTime() + durationMin * 60 * 1000).toISOString();
+
+    const { data: newSession, error: sErr } = await supabaseAdmin
+      .from("meet_sessions")
+      .insert({
+        meeting_id: input.meetingId,
+        session_no: nextSessionNo,
+        code: sessionCode,
+        scheduled_start: scheduledStart,
+        scheduled_end: scheduledEnd,
+        room_id: input.roomId || meeting.room_id || null,
+        video_link: input.videoLink || meeting.video_link || null,
+        status: "scheduled",
+        created_by: userId,
+      })
+      .select()
+      .single();
+
+    if (sErr || !newSession) {
+      return { success: false, error: sErr?.message || "Failed to create session" };
+    }
+
+    // Populate attendees from meeting standing members
+    const { data: members } = await supabaseAdmin
+      .from("meet_meeting_members")
+      .select("user_id, role, guest_name, guest_email")
+      .eq("meeting_id", input.meetingId);
+
+    if (members && members.length > 0) {
+      await supabaseAdmin.from("meet_session_attendees").insert(
+        members.map((m) => ({
+          session_id: newSession.id,
+          user_id: m.user_id || null,
+          guest_name: m.guest_name || null,
+          guest_email: m.guest_email || null,
+          role: m.role || "attendee",
+          invite_status: "invited",
+          attendance: "present",
+        }))
+      );
+    }
+
+    // Standard review agenda
+    await supabaseAdmin.from("meet_agenda_items").insert([
+      { session_id: newSession.id, title: "Review of Action Items & Backup Points", planned_minutes: 15, sort_order: 1 },
+      { session_id: newSession.id, title: "Current Updates & Critical Deliberations", planned_minutes: 30, sort_order: 2 },
+      { session_id: newSession.id, title: "Decisions & Action Items Confirmation", planned_minutes: 15, sort_order: 3 },
+    ]);
+
+    revalidatePath(`/meet/meetings/${input.meetingId}`);
+    revalidatePath("/meet");
+    return { success: true, session: newSession };
+  } catch (err: any) {
+    console.error("Error creating session for meeting:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Reschedule an upcoming session (M8)
+ */
+export async function rescheduleSession(input: {
+  sessionId: string;
+  scheduledStart: string;
+  durationMinutes?: number;
+  reason?: string;
+}) {
+  try {
+    const { user } = await getCachedUser();
+    const { data: session } = await supabaseAdmin
+      .from("meet_sessions")
+      .select("id, meeting_id, scheduled_start, scheduled_end")
+      .eq("id", input.sessionId)
+      .single();
+
+    if (!session) return { success: false, error: "Session not found" };
+
+    const oldStart = session.scheduled_start;
+    const oldDurationMs = new Date(session.scheduled_end).getTime() - new Date(session.scheduled_start).getTime();
+    const durationMs = input.durationMinutes ? input.durationMinutes * 60 * 1000 : oldDurationMs;
+    const newStart = new Date(input.scheduledStart).toISOString();
+    const newEnd = new Date(new Date(newStart).getTime() + durationMs).toISOString();
+
+    const { error } = await supabaseAdmin
+      .from("meet_sessions")
+      .update({
+        scheduled_start: newStart,
+        scheduled_end: newEnd,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.sessionId);
+
+    if (error) return { success: false, error: error.message };
+
+    // Activity log
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "session",
+      entity_id: input.sessionId,
+      action: "rescheduled",
+      field: "scheduled_start",
+      old_value: oldStart,
+      new_value: newStart,
+      user_id: user?.id || null,
+      channel: "web",
+    });
+
+    revalidatePath(`/meet/sessions/${input.sessionId}`);
+    revalidatePath(`/meet/meetings/${session.meeting_id}`);
+    revalidatePath("/meet");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Cancel a session (M8)
+ */
+export async function cancelSession(input: {
+  sessionId: string;
+  reason?: string;
+}) {
+  try {
+    const { user } = await getCachedUser();
+    const { data: session } = await supabaseAdmin
+      .from("meet_sessions")
+      .select("id, meeting_id, status")
+      .eq("id", input.sessionId)
+      .single();
+
+    if (!session) return { success: false, error: "Session not found" };
+
+    const { error } = await supabaseAdmin
+      .from("meet_sessions")
+      .update({
+        status: "cancelled",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.sessionId);
+
+    if (error) return { success: false, error: error.message };
+
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "session",
+      entity_id: input.sessionId,
+      action: "cancelled",
+      field: "status",
+      old_value: session.status,
+      new_value: "cancelled",
+      user_id: user?.id || null,
+      channel: "web",
+    });
+
+    revalidatePath(`/meet/sessions/${input.sessionId}`);
+    revalidatePath(`/meet/meetings/${session.meeting_id}`);
+    revalidatePath("/meet");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Add an agenda item to a session
+ */
+export async function addAgendaItem(input: {
+  sessionId: string;
+  title: string;
+  plannedMinutes?: number;
+  presenterId?: string;
+}) {
+  try {
+    const { data: existing } = await supabaseAdmin
+      .from("meet_agenda_items")
+      .select("sort_order")
+      .eq("session_id", input.sessionId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const sortOrder = (existing?.sort_order || 0) + 1;
+
+    const { data: item, error } = await supabaseAdmin
+      .from("meet_agenda_items")
+      .insert({
+        session_id: input.sessionId,
+        title: input.title,
+        planned_minutes: input.plannedMinutes || 15,
+        presenter_id: input.presenterId || null,
+        sort_order: sortOrder,
+        status: "pending",
+      })
+      .select(`
+        *,
+        presenter:user_master(id, full_name, email)
+      `)
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/meet/sessions/${input.sessionId}`);
+    revalidatePath(`/meet/live/${input.sessionId}`);
+    return { success: true, agendaItem: item };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Delete an agenda item
+ */
+export async function deleteAgendaItem(input: {
+  agendaItemId: string;
+  sessionId: string;
+}) {
+  try {
+    const { error } = await supabaseAdmin
+      .from("meet_agenda_items")
+      .delete()
+      .eq("id", input.agendaItemId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/meet/sessions/${input.sessionId}`);
+    revalidatePath(`/meet/live/${input.sessionId}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}

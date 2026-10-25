@@ -1,5 +1,5 @@
-import React from "react";
 import { getTasks } from "@/lib/actions/meet/tasks";
+import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import MyWorkClient from "./MyWorkClient";
 
@@ -9,7 +9,10 @@ export const metadata = {
 };
 
 export default async function MyWorkPage() {
-  const tasks = await getTasks({ statusTab: "all" });
+  const [tasks, masters] = await Promise.all([
+    getTasks({ statusTab: "all" }),
+    getMeetingMasters(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -19,7 +22,7 @@ export default async function MyWorkPage() {
         breadcrumbs={[{ label: "My Work" }]}
       />
 
-      <MyWorkClient initialTasks={tasks} />
+      <MyWorkClient initialTasks={tasks} users={masters.users} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -18,6 +18,11 @@ import {
   Sparkles,
   Send,
   Loader2,
+  Edit,
+  Trash2,
+  X,
+  CalendarDays,
+  Ban,
 } from "lucide-react";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
@@ -28,7 +33,13 @@ import AttendanceCard from "@/components/meet/AttendanceCard";
 import MeetingNotesCard from "@/components/meet/MeetingNotesCard";
 import AIMinutesCard from "@/components/meet/AIMinutesCard";
 import { AppButton } from "@/components/ui/AppButton";
-import { updatePointStatus } from "@/lib/actions/meet/points";
+import { updatePointStatus, updatePoint, deletePoint } from "@/lib/actions/meet/points";
+import {
+  rescheduleSession,
+  cancelSession,
+  addAgendaItem,
+  deleteAgendaItem,
+} from "@/lib/actions/meet/sessions";
 import { generateMoMSnapshot, publishMoM } from "@/lib/actions/meet/mom";
 import { toast } from "react-toastify";
 import type {
@@ -37,6 +48,7 @@ import type {
   AgendaItem,
   SessionAttendee,
   PointStatus,
+  PointPriority,
 } from "@/types/meet";
 
 interface SessionWorkspaceClientProps {
@@ -55,17 +67,49 @@ interface SessionWorkspaceClientProps {
 export default function SessionWorkspaceClient({
   session,
   points: initialPoints,
-  agenda,
+  agenda: initialAgenda,
   attendees,
   masters,
   invitationsData,
   initialAIMinutes,
 }: SessionWorkspaceClientProps) {
   const [points, setPoints] = useState<MeetingPoint[]>(initialPoints);
+  const [agenda, setAgenda] = useState<AgendaItem[]>(initialAgenda);
   const [taskModalPoint, setTaskModalPoint] = useState<MeetingPoint | null>(null);
   const [generatingMoM, setGeneratingMoM] = useState(false);
   const [publishingMoM, setPublishingMoM] = useState(false);
   const [momSnapshot, setMomSnapshot] = useState<any>(null);
+  const [isPending, startTransition] = useTransition();
+
+  // Modals state
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState(
+    new Date(session.scheduled_start).toISOString().split("T")[0]
+  );
+  const [rescheduleTime, setRescheduleTime] = useState(
+    new Date(session.scheduled_start).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+  );
+  const [rescheduleReason, setRescheduleReason] = useState("");
+
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
+  const [isAddAgendaOpen, setIsAddAgendaOpen] = useState(false);
+  const [agendaTitle, setAgendaTitle] = useState("");
+  const [agendaMins, setAgendaMins] = useState(15);
+  const [agendaPresenterId, setAgendaPresenterId] = useState("");
+
+  const [editingPoint, setEditingPoint] = useState<MeetingPoint | null>(null);
+  const [editPointTitle, setEditPointTitle] = useState("");
+  const [editPointDesc, setEditPointDesc] = useState("");
+  const [editPointPriority, setEditPointPriority] = useState<PointPriority>("medium");
+  const [editPointOwnerId, setEditPointOwnerId] = useState("");
+  const [editPointCategory, setEditPointCategory] = useState("");
+  const [editPointTat, setEditPointTat] = useState(3);
+
+  // Closure Remarks Modal (Spec P6)
+  const [closingPoint, setClosingPoint] = useState<MeetingPoint | null>(null);
+  const [closureRemarks, setClosureRemarks] = useState("");
 
   const backupPoints = points.filter((p) => p.is_backup || p.carry_forward_count > 0);
   const newPoints = points.filter((p) => !p.is_backup && p.carry_forward_count === 0);
@@ -75,6 +119,13 @@ export default function SessionWorkspaceClient({
   };
 
   const handleStatusChange = async (pointId: string, status: PointStatus) => {
+    const targetPt = points.find((p) => p.id === pointId);
+    if (status === "closed") {
+      setClosingPoint(targetPt || null);
+      setClosureRemarks("");
+      return;
+    }
+
     try {
       const res = await updatePointStatus({
         pointId,
@@ -90,6 +141,197 @@ export default function SessionWorkspaceClient({
     } catch (err: any) {
       toast.error(err.message || "Failed to update status");
     }
+  };
+
+  const handleConfirmClosure = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!closingPoint) return;
+    if (!closureRemarks.trim()) {
+      toast.warn("Closure remarks are required to close this point");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const res = await updatePointStatus({
+          pointId: closingPoint.id,
+          sessionId: session.id,
+          status: "closed",
+          closureRemarks: closureRemarks.trim(),
+        });
+
+        if (res.success) {
+          toast.success("Point closed with closure remarks logged");
+          setPoints((prev) =>
+            prev.map((p) =>
+              p.id === closingPoint.id
+                ? { ...p, status: "closed", closure_remarks: closureRemarks.trim() }
+                : p
+            )
+          );
+          setClosingPoint(null);
+        } else {
+          toast.error(res.error || "Failed to close point");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to close point");
+      }
+    });
+  };
+
+  const handleOpenEditPoint = (pt: MeetingPoint) => {
+    setEditingPoint(pt);
+    setEditPointTitle(pt.title);
+    setEditPointDesc(pt.description || "");
+    setEditPointPriority(pt.priority);
+    setEditPointOwnerId(pt.owner_id || "");
+    setEditPointCategory(pt.category_id || "");
+    setEditPointTat(pt.tat_days || 3);
+  };
+
+  const handleSaveEditPoint = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPoint) return;
+
+    startTransition(async () => {
+      try {
+        const res = await updatePoint({
+          pointId: editingPoint.id,
+          sessionId: session.id,
+          title: editPointTitle,
+          description: editPointDesc,
+          priority: editPointPriority,
+          ownerId: editPointOwnerId || undefined,
+          categoryId: editPointCategory || undefined,
+          tatDays: Number(editPointTat),
+        });
+
+        if (res.success && res.point) {
+          toast.success("Point updated");
+          setPoints((prev) =>
+            prev.map((p) => (p.id === editingPoint.id ? { ...p, ...res.point } : p))
+          );
+          setEditingPoint(null);
+        } else {
+          toast.error(res.error || "Failed to update point");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to update point");
+      }
+    });
+  };
+
+  const handleDeletePoint = async (pointId: string) => {
+    if (!confirm("Are you sure you want to delete this point?")) return;
+
+    startTransition(async () => {
+      try {
+        const res = await deletePoint(pointId, session.id);
+        if (res.success) {
+          toast.success("Point deleted");
+          setPoints((prev) => prev.filter((p) => p.id !== pointId));
+        } else {
+          toast.error(res.error || "Failed to delete point");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to delete point");
+      }
+    });
+  };
+
+  const handleRescheduleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      try {
+        const scheduledStart = `${rescheduleDate}T${rescheduleTime}:00`;
+        const res = await rescheduleSession({
+          sessionId: session.id,
+          scheduledStart,
+          reason: rescheduleReason,
+        });
+
+        if (res.success) {
+          toast.success("Session rescheduled");
+          setIsRescheduleOpen(false);
+          window.location.reload();
+        } else {
+          toast.error(res.error || "Failed to reschedule session");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to reschedule session");
+      }
+    });
+  };
+
+  const handleCancelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      try {
+        const res = await cancelSession({
+          sessionId: session.id,
+          reason: cancelReason,
+        });
+
+        if (res.success) {
+          toast.success("Session cancelled");
+          setIsCancelOpen(false);
+          window.location.reload();
+        } else {
+          toast.error(res.error || "Failed to cancel session");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to cancel session");
+      }
+    });
+  };
+
+  const handleAddAgendaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!agendaTitle.trim()) return;
+
+    startTransition(async () => {
+      try {
+        const res = await addAgendaItem({
+          sessionId: session.id,
+          title: agendaTitle.trim(),
+          plannedMinutes: Number(agendaMins),
+          presenterId: agendaPresenterId || undefined,
+        });
+
+        if (res.success && res.agendaItem) {
+          toast.success("Agenda item added");
+          setAgenda((prev) => [...prev, res.agendaItem]);
+          setIsAddAgendaOpen(false);
+          setAgendaTitle("");
+        } else {
+          toast.error(res.error || "Failed to add agenda item");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to add agenda item");
+      }
+    });
+  };
+
+  const handleDeleteAgenda = async (agendaItemId: string) => {
+    if (!confirm("Are you sure you want to remove this agenda item?")) return;
+
+    startTransition(async () => {
+      try {
+        const res = await deleteAgendaItem({
+          agendaItemId,
+          sessionId: session.id,
+        });
+
+        if (res.success) {
+          toast.success("Agenda item removed");
+          setAgenda((prev) => prev.filter((a) => a.id !== agendaItemId));
+        } else {
+          toast.error(res.error || "Failed to remove agenda item");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to remove agenda item");
+      }
+    });
   };
 
   const handleGenerateMoM = async () => {
@@ -147,7 +389,28 @@ export default function SessionWorkspaceClient({
         ]}
         badge={<StatusBadge status={session.status} type="session" />}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {session.status === "scheduled" && (
+              <>
+                <AppButton
+                  variant="outline"
+                  size="md"
+                  leftIcon={<CalendarDays className="h-4 w-4" />}
+                  onClick={() => setIsRescheduleOpen(true)}
+                >
+                  Reschedule
+                </AppButton>
+                <AppButton
+                  variant="outline"
+                  size="md"
+                  leftIcon={<Ban className="h-4 w-4 text-danger-text" />}
+                  onClick={() => setIsCancelOpen(true)}
+                >
+                  Cancel
+                </AppButton>
+              </>
+            )}
+
             <AppButton
               variant="outline"
               size="md"
@@ -221,21 +484,33 @@ export default function SessionWorkspaceClient({
       )}
 
       {/* Agenda & Time Breakdown */}
-      {agenda.length > 0 && (
-        <div className="theme-card-structural p-5">
-          <h3 className="text-[14px] font-semibold text-heading mb-3 flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              Time-Boxed Agenda Run Sheet
-            </span>
-            <span className="text-[12px] font-normal text-muted">
+      <div className="theme-card-structural p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[14px] font-semibold text-heading flex items-center gap-2">
+            <Clock className="h-4 w-4 text-primary" />
+            Time-Boxed Agenda Run Sheet
+          </h3>
+          <div className="flex items-center gap-3">
+            <span className="text-[12px] text-muted">
               Total Planned: {agenda.reduce((acc, a) => acc + (a.planned_minutes || 0), 0)} min
             </span>
-          </h3>
+            <AppButton
+              variant="outline"
+              size="sm"
+              leftIcon={<Plus className="h-3.5 w-3.5" />}
+              onClick={() => setIsAddAgendaOpen(true)}
+            >
+              Add Agenda Item
+            </AppButton>
+          </div>
+        </div>
 
+        {agenda.length === 0 ? (
+          <p className="text-[12.5px] text-muted py-2 text-center">No agenda items configured for this review session.</p>
+        ) : (
           <div className="divide-y divide-border">
             {agenda.map((item, idx) => (
-              <div key={item.id} className="py-2.5 flex items-center justify-between text-[13px]">
+              <div key={item.id} className="py-2.5 flex items-center justify-between text-[13px] group">
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-[11px] font-semibold text-muted w-5">
                     0{idx + 1}
@@ -252,12 +527,19 @@ export default function SessionWorkspaceClient({
                     {item.planned_minutes} min
                   </span>
                   <StatusBadge status={item.status} />
+                  <button
+                    onClick={() => handleDeleteAgenda(item.id)}
+                    title="Remove agenda item"
+                    className="p-1 text-muted hover:text-danger-text transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Quick Point Capture Bar */}
       <div>
@@ -333,11 +615,28 @@ export default function SessionWorkspaceClient({
                     <AppButton
                       variant="outline"
                       size="sm"
+                      leftIcon={<Edit className="h-3 w-3" />}
+                      onClick={() => handleOpenEditPoint(pt)}
+                    >
+                      Edit
+                    </AppButton>
+
+                    <AppButton
+                      variant="outline"
+                      size="sm"
                       leftIcon={<Plus className="h-3 w-3" />}
                       onClick={() => setTaskModalPoint(pt)}
                     >
                       Action Item
                     </AppButton>
+
+                    <button
+                      onClick={() => handleDeletePoint(pt.id)}
+                      title="Delete point"
+                      className="p-1.5 text-muted hover:text-danger-text transition-colors rounded"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
 
@@ -368,13 +667,10 @@ export default function SessionWorkspaceClient({
                     <span className="text-[11px] font-semibold text-muted uppercase">Action Items:</span>
                     {pt.tasks.map((tsk) => (
                       <div key={tsk.id} className="flex items-center justify-between text-[12px]">
-                        <span className="flex items-center gap-2 text-foreground">
-                          <span className="font-mono text-[10.5px] text-muted">{tsk.code}</span>
-                          {tsk.title} ({tsk.owner?.full_name || "Unassigned"})
-                        </span>
+                        <span className="font-medium text-foreground">{tsk.title}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-muted text-[11px]">Due: {tsk.due_date}</span>
-                          <StatusBadge status={tsk.status} type="task" />
+                          <span className="text-muted">{tsk.owner?.full_name || "Unassigned"}</span>
+                          <StatusBadge status={tsk.status} />
                         </div>
                       </div>
                     ))}
@@ -386,16 +682,16 @@ export default function SessionWorkspaceClient({
         )}
       </div>
 
-      {/* New Points Raised in this Session */}
-      <div className="space-y-3 pt-2">
+      {/* New Points Raised In This Session */}
+      <div className="space-y-3">
         <h3 className="text-[14px] font-semibold text-heading flex items-center gap-2">
-          <Plus className="h-4 w-4 text-primary" />
-          New Discussion Points Raised in this Session ({newPoints.length})
+          <FileText className="h-4 w-4 text-primary" />
+          New Points Raised in This Session ({newPoints.length})
         </h3>
 
         {newPoints.length === 0 ? (
           <div className="theme-card-structural p-5 text-center text-muted text-[13px]">
-            No new points recorded yet. Use the quick capture bar above to add items.
+            No new points recorded yet. Use the capture bar above to log items.
           </div>
         ) : (
           <div className="space-y-2.5">
@@ -435,11 +731,28 @@ export default function SessionWorkspaceClient({
                     <AppButton
                       variant="outline"
                       size="sm"
+                      leftIcon={<Edit className="h-3 w-3" />}
+                      onClick={() => handleOpenEditPoint(pt)}
+                    >
+                      Edit
+                    </AppButton>
+
+                    <AppButton
+                      variant="outline"
+                      size="sm"
                       leftIcon={<Plus className="h-3 w-3" />}
                       onClick={() => setTaskModalPoint(pt)}
                     >
                       Action Item
                     </AppButton>
+
+                    <button
+                      onClick={() => handleDeletePoint(pt.id)}
+                      title="Delete point"
+                      className="p-1.5 text-muted hover:text-danger-text transition-colors rounded"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
 
@@ -532,6 +845,386 @@ export default function SessionWorkspaceClient({
             );
           }}
         />
+      )}
+
+      {/* Reschedule Modal */}
+      {isRescheduleOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-[15px] font-semibold text-heading">Reschedule Session</h3>
+              <button
+                onClick={() => setIsRescheduleOpen(false)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRescheduleSubmit} className="mt-4 space-y-3 text-[13px]">
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  New Date *
+                </label>
+                <input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  required
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  New Start Time *
+                </label>
+                <input
+                  type="time"
+                  value={rescheduleTime}
+                  onChange={(e) => setRescheduleTime(e.target.value)}
+                  required
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Reason for Rescheduling
+                </label>
+                <textarea
+                  value={rescheduleReason}
+                  onChange={(e) => setRescheduleReason(e.target.value)}
+                  rows={2}
+                  placeholder="e.g. Key stakeholders unavailable..."
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsRescheduleOpen(false)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isPending}
+                >
+                  Confirm Reschedule
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Session Modal */}
+      {isCancelOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-[15px] font-semibold text-danger-text flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" /> Cancel Review Session
+              </h3>
+              <button
+                onClick={() => setIsCancelOpen(false)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCancelSubmit} className="mt-4 space-y-3 text-[13px]">
+              <p className="text-[12px] text-muted">
+                Are you sure you want to cancel session <strong>{session.code}</strong>? All invited attendees will be notified.
+              </p>
+
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Cancellation Reason *
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  required
+                  rows={2}
+                  placeholder="Reason for cancelling..."
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCancelOpen(false)}
+                >
+                  Back
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="destructive"
+                  size="sm"
+                  isLoading={isPending}
+                >
+                  Confirm Cancellation
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Agenda Item Modal */}
+      {isAddAgendaOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-[15px] font-semibold text-heading">Add Agenda Item</h3>
+              <button
+                onClick={() => setIsAddAgendaOpen(false)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddAgendaSubmit} className="mt-4 space-y-3 text-[13px]">
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Agenda Topic *
+                </label>
+                <input
+                  type="text"
+                  value={agendaTitle}
+                  onChange={(e) => setAgendaTitle(e.target.value)}
+                  required
+                  placeholder="e.g. Budget variance review..."
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    Planned Mins
+                  </label>
+                  <input
+                    type="number"
+                    value={agendaMins}
+                    onChange={(e) => setAgendaMins(Number(e.target.value))}
+                    min={5}
+                    step={5}
+                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    Presenter
+                  </label>
+                  <select
+                    value={agendaPresenterId}
+                    onChange={(e) => setAgendaPresenterId(e.target.value)}
+                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="">None / Open</option>
+                    {masters.users?.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddAgendaOpen(false)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isPending}
+                >
+                  Add Agenda Item
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Point Modal */}
+      {editingPoint && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-[15px] font-semibold text-heading">
+                Edit Point ({editingPoint.code})
+              </h3>
+              <button
+                onClick={() => setEditingPoint(null)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditPoint} className="mt-4 space-y-3 text-[13px]">
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Point Title *
+                </label>
+                <input
+                  type="text"
+                  value={editPointTitle}
+                  onChange={(e) => setEditPointTitle(e.target.value)}
+                  required
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editPointDesc}
+                  onChange={(e) => setEditPointDesc(e.target.value)}
+                  rows={2}
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={editPointPriority}
+                    onChange={(e) => setEditPointPriority(e.target.value as PointPriority)}
+                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    Owner
+                  </label>
+                  <select
+                    value={editPointOwnerId}
+                    onChange={(e) => setEditPointOwnerId(e.target.value)}
+                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="">Unassigned</option>
+                    {masters.users?.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingPoint(null)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isPending}
+                >
+                  Save Point
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Closure Remarks Modal (Spec P6) */}
+      {closingPoint && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-[15px] font-semibold text-heading flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success-text" /> Close Point ({closingPoint.code})
+              </h3>
+              <button
+                onClick={() => setClosingPoint(null)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmClosure} className="mt-4 space-y-3 text-[13px]">
+              <p className="text-[12px] text-muted">
+                Per governance policy (Spec P6), closing a point requires official closure remarks and automatically completes any child tasks within TAT.
+              </p>
+
+              <div>
+                <label className="block text-[12px] font-medium text-foreground mb-1">
+                  Closure Remarks / Outcome *
+                </label>
+                <textarea
+                  value={closureRemarks}
+                  onChange={(e) => setClosureRemarks(e.target.value)}
+                  required
+                  rows={3}
+                  placeholder="State the resolution, committee decision, or outcome..."
+                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setClosingPoint(null)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isPending}
+                >
+                  Confirm & Close Point
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -234,3 +234,96 @@ export async function updateSessionPointNotes(input: {
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * Update point details (P1/P7)
+ */
+export async function updatePoint(input: {
+  pointId: string;
+  sessionId?: string;
+  title?: string;
+  description?: string;
+  priority?: PointPriority;
+  categoryId?: string;
+  ownerId?: string;
+  tatDays?: number;
+}) {
+  try {
+    const { user } = await getCachedUser();
+    const updatePayload: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (input.title !== undefined) updatePayload.title = input.title;
+    if (input.description !== undefined) updatePayload.description = input.description;
+    if (input.priority !== undefined) updatePayload.priority = input.priority;
+    if (input.categoryId !== undefined) updatePayload.category_id = input.categoryId || null;
+    if (input.ownerId !== undefined) updatePayload.owner_id = input.ownerId || null;
+    if (input.tatDays !== undefined) updatePayload.tat_days = input.tatDays;
+
+    const { data: updatedPoint, error } = await supabaseAdmin
+      .from("meet_points")
+      .update(updatePayload)
+      .eq("id", input.pointId)
+      .select(`
+        *,
+        owner:user_master!meet_points_owner_id_fkey(id, full_name, email, profile_photo),
+        category:meet_point_categories(id, name, default_tat_days)
+      `)
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "point",
+      entity_id: input.pointId,
+      action: "updated",
+      field: "details",
+      user_id: user?.id || null,
+      channel: "web",
+    });
+
+    if (input.sessionId) {
+      revalidatePath(`/meet/sessions/${input.sessionId}`);
+      revalidatePath(`/meet/live/${input.sessionId}`);
+    }
+    revalidatePath("/meet/my-work");
+    return { success: true, point: updatedPoint };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Delete a point (Soft delete)
+ */
+export async function deletePoint(pointId: string, sessionId?: string) {
+  try {
+    const { user } = await getCachedUser();
+    const { error } = await supabaseAdmin
+      .from("meet_points")
+      .update({
+        is_deleted: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", pointId);
+
+    if (error) return { success: false, error: error.message };
+
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "point",
+      entity_id: pointId,
+      action: "deleted",
+      user_id: user?.id || null,
+      channel: "web",
+    });
+
+    if (sessionId) {
+      revalidatePath(`/meet/sessions/${sessionId}`);
+      revalidatePath(`/meet/live/${sessionId}`);
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
