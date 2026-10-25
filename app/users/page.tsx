@@ -55,7 +55,8 @@ import {
   AlertCircle,
   EyeOff,
   Compass,
-  LineChart
+  LineChart,
+  Video
 } from "lucide-react";
 
 // Initial premium fallback/mock user datasets to guarantee absolute rich presentation
@@ -871,6 +872,13 @@ export default function UserMasterPage() {
                       desc: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC.", 
                       icon: Compass, 
                       color: "text-accent-soft-text bg-accent-soft border-border" 
+                    },
+                    { 
+                      code: "CHANDAK_MEET", 
+                      name: "Chandak Meet", 
+                      desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.", 
+                      icon: Video, 
+                      color: "text-purple-500 bg-purple-500/10 border-purple-500/30" 
                     }
                   ].map((mod) => {
                     const isChecked = inviteSelectedModules.includes(mod.code);
@@ -1006,7 +1014,8 @@ export default function UserMasterPage() {
                   { code: "VEHICLE_DESK", name: "Vehicle Module", desc: "Fleet inventory, trip sheets, driver rosters, maintenance & spare parts.", icon: Car, color: "text-success-text bg-success-soft border-success-border" },
                   { code: "TASK_WORKFLOW", name: "Workspace Module", desc: "Executive task tracker, sprints, ticketing/helpdesk, requirements & AMC.", icon: FolderKanban, color: "text-info-text bg-info-soft border-info-border" },
                   { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-accent-soft-text bg-surface border-border" },
-                  { code: "DASHBOARDS", name: "Dashboards", desc: "IT & Marketing budget dashboards. What each user can do is set by DASH_* role permissions.", icon: LineChart, color: "text-accent-soft-text bg-accent-soft border-border" }
+                  { code: "DASHBOARDS", name: "Dashboards", desc: "IT & Marketing budget dashboards. What each user can do is set by DASH_* role permissions.", icon: LineChart, color: "text-accent-soft-text bg-accent-soft border-border" },
+                  { code: "CHANDAK_MEET", name: "Chandak Meet", desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.", icon: Video, color: "text-purple-500 bg-purple-500/10 border-purple-500/30" }
                 ].map((mod) => {
                   const isChecked = modalSelectedCodes.includes(mod.code);
                   const isDefault = modalDefaultCode === mod.code;
@@ -1091,7 +1100,7 @@ export default function UserMasterPage() {
 
             <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between gap-3">
               <span className="text-xs text-muted">
-                {modalSelectedCodes.length} of 3 modules enabled
+                {modalSelectedCodes.length} of 5 modules enabled
               </span>
               <div className="flex items-center gap-2">
                 <AppButton 
@@ -1645,6 +1654,13 @@ export default function UserMasterPage() {
                       desc: "IT & Marketing budget dashboards on live IN4 data. Actions are set by DASH_* role permissions.",
                       icon: LineChart,
                       color: "text-accent-soft-text border-border bg-accent-soft"
+                    },
+                    {
+                      code: "CHANDAK_MEET",
+                      name: "Chandak Meet",
+                      desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.",
+                      icon: Video,
+                      color: "text-purple-500 border-purple-500/30 bg-purple-500/10"
                     }
                   ].map(mod => {
                     const isSelected = modalSelectedCodes.includes(mod.code);
@@ -1716,7 +1732,7 @@ export default function UserMasterPage() {
                   >
                     {modalSelectedCodes.map(code => (
                       <option key={code} value={code}>
-                        {code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : code === "DASHBOARDS" ? "Dashboards" : "Vehicle Desk"}
+                        {code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : code === "DASHBOARDS" ? "Dashboards" : code === "CHANDAK_MEET" ? "Chandak Meet" : "Vehicle Desk"}
                       </option>
                     ))}
                   </select>

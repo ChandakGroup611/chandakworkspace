@@ -21,6 +21,7 @@ export const MODULE_HOME: Record<string, string> = {
   VEHICLE_DESK: "/vehicle",
   DESIGN_TRACKING: "/design/matrix",
   DASHBOARDS: "/dashboards",
+  CHANDAK_MEET: "/meet",
 };
 
 /** Module that owns a path, or null if the path is shared across modules (e.g. /settings, /profile). */
@@ -28,6 +29,7 @@ export function moduleOfPath(path: string): string | null {
   if (path.startsWith("/vehicle")) return "VEHICLE_DESK";
   if (path.startsWith("/design")) return "DESIGN_TRACKING";
   if (path.startsWith("/dashboards")) return "DASHBOARDS";
+  if (path.startsWith("/meet")) return "CHANDAK_MEET";
   if (path.startsWith("/settings") || path.startsWith("/profile")) return null;
   return "TASK_WORKFLOW";
 }

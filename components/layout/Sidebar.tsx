@@ -24,6 +24,7 @@ import {
   ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
   Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
   FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X, Tag,
+  Video,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
@@ -240,11 +241,33 @@ const designNavGroups: NavGroup[] = [
   }
 ];
 
+const meetNavGroups: NavGroup[] = [
+  {
+    label: "Meeting hub",
+    items: [
+      { label: "Meet dashboard", href: "/meet", icon: LayoutDashboard },
+      { label: "Meeting series", href: "/meet/meetings", icon: Calendar },
+      { label: "Live session mode", href: "/meet/live", icon: Video },
+      { label: "My work & items", href: "/meet/my-work", icon: CheckCircle2 },
+      { label: "Meeting calendar", href: "/meet/calendar", icon: Clock },
+      { label: "Decisions register", href: "/meet/decisions", icon: ShieldCheck },
+    ]
+  },
+  {
+    label: "Review & masters",
+    items: [
+      { label: "Reports & analytics", href: "/meet/reports", icon: LineChart },
+      { label: "Meet masters & setup", href: "/meet/admin", icon: Settings2 },
+    ]
+  }
+];
+
 /* ---------- active-route rules (same behaviour as v1, pulled out of the render loop) ---------- */
 function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchParams | null) {
   if (item.href === "/requirements" && searchParams?.get("from") === "approvals") return false;
   switch (item.href) {
     case "/": return pathname === "/";
+    case "/meet": return pathname === "/meet";
     case "/design/matrix": return ["/design", "/design/matrix", "/design/dashboard"].includes(pathname);
     case "/vehicle": return pathname === "/vehicle" || pathname === "/vehicle/dashboard";
     case "/design/masters":
@@ -275,6 +298,7 @@ function getActiveModuleCookie(): string | null {
 
 function useModuleContext(pathname: string) {
   return useMemo(() => {
+    if (pathname.startsWith("/meet")) return { code: "CHANDAK_MEET", groups: meetNavGroups, home: "/meet" };
     if (pathname.startsWith("/vehicle")) return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
     if (pathname.startsWith("/design")) return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
     if (pathname.startsWith("/dashboards")) return { code: "DASHBOARDS", groups: dashboardsNavGroups, home: "/dashboards" };
@@ -282,6 +306,7 @@ function useModuleContext(pathname: string) {
     // Shared global preference and account routes (/settings, /profile): preserve user's active module
     if (pathname.startsWith("/settings") || pathname === "/profile") {
       const activeCookie = getActiveModuleCookie();
+      if (activeCookie === "CHANDAK_MEET") return { code: "CHANDAK_MEET", groups: meetNavGroups, home: "/meet" };
       if (activeCookie === "VEHICLE_DESK") return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
       if (activeCookie === "DESIGN_TRACKING") return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
       if (activeCookie === "DASHBOARDS") return { code: "DASHBOARDS", groups: dashboardsNavGroups, home: "/dashboards" };

@@ -14,7 +14,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import * as Popover from "@radix-ui/react-popover";
-import { FolderKanban, Car, Compass, Layers, LineChart, ChevronsUpDown, Check, Star, Loader2, ExternalLink } from "lucide-react";
+import { FolderKanban, Car, Compass, Layers, LineChart, Video, ChevronsUpDown, Check, Star, Loader2, ExternalLink } from "lucide-react";
 import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import { cn } from "@/lib/utils";
 
@@ -23,18 +23,21 @@ const ICONS: Record<string, React.ElementType> = {
   VEHICLE_DESK: Car,
   DESIGN_TRACKING: Compass,
   DASHBOARDS: LineChart,
+  CHANDAK_MEET: Video,
 };
 const FALLBACK_NAMES: Record<string, string> = {
   TASK_WORKFLOW: "Task Workflow",
   VEHICLE_DESK: "Vehicle Desk",
   DESIGN_TRACKING: "Design Tracking",
   DASHBOARDS: "Dashboards",
+  CHANDAK_MEET: "Chandak Meet",
 };
 const FALLBACK_ROUTES: Record<string, string> = {
   TASK_WORKFLOW: "/",
   VEHICLE_DESK: "/vehicle",
   DESIGN_TRACKING: "/design/matrix",
   DASHBOARDS: "/dashboards",
+  CHANDAK_MEET: "/meet",
 };
 const CORE = new Set(Object.keys(ICONS));
 
@@ -52,6 +55,7 @@ function moduleFromPath(pathname: string) {
   if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
   if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
   if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
+  if (pathname.startsWith("/meet")) return "CHANDAK_MEET";
   if (pathname.startsWith("/settings") || pathname === "/profile") {
     if (typeof document !== "undefined") {
       const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);

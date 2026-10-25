@@ -29,7 +29,8 @@ import {
   Layers,
   LineChart,
   Star,
-  CheckCircle2
+  CheckCircle2,
+  Video
 } from "lucide-react";
 
 const PRESET_AVATARS = [
@@ -76,6 +77,12 @@ const getModuleMeta = (code: string) => {
         icon: Compass,
         badgeBg: "bg-success-soft text-success-text border-success-border",
         description: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC."
+      };
+    case "CHANDAK_MEET":
+      return {
+        icon: Video,
+        badgeBg: "bg-purple-500/10 text-purple-500 border-purple-500/30",
+        description: "Meetings, agendas, points with automated carry-forward, decisions & action items."
       };
     default:
       return {
@@ -415,6 +422,8 @@ export default function UserFormPage() {
                 { id: "mod-1", code: "VEHICLE_DESK", name: "Vehicle Module", description: "Fleet master, vehicle inventory, daily trip sheets, driver roster, maintenance & parts." },
                 { id: "mod-2", code: "TASK_WORKFLOW", name: "Workspace Module", description: "Executive task tracker, sprints, ticketing/helpdesk, requirements lifecycle & AMC." },
                 { id: "mod-3", code: "DESIGN_TRACKING", name: "Design Tracking", description: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC." },
+                { id: "mod-4", code: "DASHBOARDS", name: "Dashboards", description: "Department budget & expense dashboards on live IN4 data." },
+                { id: "mod-5", code: "CHANDAK_MEET", name: "Chandak Meet", description: "Meetings, agendas, points with automated carry-forward, decisions & action items." },
               ]).map((mod) => {
                 const isChecked = selectedModuleCodes.includes(mod.code);
                 const isDefault = defaultModuleCode === mod.code;

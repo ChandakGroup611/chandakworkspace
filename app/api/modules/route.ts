@@ -54,6 +54,17 @@ const DEFAULT_MODULES = [
     is_active: true,
     is_default: false,
   },
+  {
+    id: "mod-meet",
+    code: "CHANDAK_MEET",
+    name: "Chandak Meet",
+    description: "Meetings, Agendas, Points with Carry-Forward, Decisions & Action Items",
+    icon: "Video",
+    route_path: "/meet",
+    display_order: 5,
+    is_active: true,
+    is_default: false,
+  },
 ];
 
 export async function GET(request: NextRequest) {
@@ -130,7 +141,7 @@ export async function GET(request: NextRequest) {
     const assignedModuleIds = new Set(userAssignments.map(a => a.module_id));
     const defaultAssignment = userAssignments.find(a => a.is_default);
 
-    const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
+    const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET"]);
 
     // Strict Authorization: Non-admins only see modules they are explicitly assigned
     const allowedModules = allActive
@@ -139,6 +150,7 @@ export async function GET(request: NextRequest) {
         if (isAdmin) return true;
         if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
         // Strict: Non-admin users MUST have an active entry in user_modules
+        if (assignedModuleIds.size === 0) return m.code === "TASK_WORKFLOW";
         return assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code);
       })
       .map(m => {
@@ -147,6 +159,7 @@ export async function GET(request: NextRequest) {
         if (m.code === "VEHICLE_DESK" && (!route || route === "/vehicle/dashboard")) route = "/vehicle";
         if (m.code === "DESIGN_TRACKING" && (!route || route === "/design/dashboard")) route = "/design/matrix";
         if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
+        if (m.code === "CHANDAK_MEET" && !route) route = "/meet";
         
         const isThisDefault = defaultAssignment 
           ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code || (defaultAssignment.module && (defaultAssignment.module as any).code === m.code))

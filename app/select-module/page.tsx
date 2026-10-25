@@ -15,7 +15,8 @@ import {
   Check,
   Star,
   Loader2,
-  ShieldCheck
+  ShieldCheck,
+  Video
 } from "lucide-react";
 import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
@@ -130,19 +131,22 @@ export default function SelectModulePage() {
           TASK_WORKFLOW: "/",
           VEHICLE_DESK: "/vehicle",
           DESIGN_TRACKING: "/design/matrix",
-          DASHBOARDS: "/dashboards"
+          DASHBOARDS: "/dashboards",
+          CHANDAK_MEET: "/meet",
         };
         destination = fallbackRoutes[targetCode] || "/";
       }
 
       if (nextParam && nextParam !== "/" && !nextParam.includes("/login")) {
-        if (targetCode === "TASK_WORKFLOW" && !nextParam.startsWith("/vehicle") && !nextParam.startsWith("/design") && !nextParam.startsWith("/dashboards")) {
+        if (targetCode === "TASK_WORKFLOW" && !nextParam.startsWith("/vehicle") && !nextParam.startsWith("/design") && !nextParam.startsWith("/dashboards") && !nextParam.startsWith("/meet")) {
           destination = nextParam;
         } else if (targetCode === "VEHICLE_DESK" && nextParam.startsWith("/vehicle")) {
           destination = nextParam;
         } else if (targetCode === "DESIGN_TRACKING" && nextParam.startsWith("/design")) {
           destination = nextParam;
         } else if (targetCode === "DASHBOARDS" && nextParam.startsWith("/dashboards")) {
+          destination = nextParam;
+        } else if (targetCode === "CHANDAK_MEET" && nextParam.startsWith("/meet")) {
           destination = nextParam;
         }
       }
@@ -156,7 +160,8 @@ export default function SelectModulePage() {
         TASK_WORKFLOW: "/",
         VEHICLE_DESK: "/vehicle",
         DESIGN_TRACKING: "/design/matrix",
-        DASHBOARDS: "/dashboards"
+        DASHBOARDS: "/dashboards",
+        CHANDAK_MEET: "/meet",
       };
       document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
       window.location.href = fallbackRoutes[targetCode] || "/";
@@ -165,6 +170,13 @@ export default function SelectModulePage() {
 
   const getModuleMeta = (code: string) => {
     switch (code) {
+      case "CHANDAK_MEET":
+        return {
+          icon: Video,
+          badge: "Meetings and reviews",
+          launchLabel: "Open Chandak Meet",
+          features: ["Meeting series, agendas and Live mode", "Points with automated carry-forward & TAT", "Action items, decision register & MoM PDFs"],
+        };
       case "VEHICLE_DESK":
         return {
           icon: Car,
@@ -202,7 +214,7 @@ export default function SelectModulePage() {
   const selectedMeta = getModuleMeta(selectedModuleCode);
 
   const sortedModules = (data?.modules || []).slice().sort((a, b) => {
-    const order: Record<string, number> = { TASK_WORKFLOW: 1, VEHICLE_DESK: 2, DESIGN_TRACKING: 3, DASHBOARDS: 4 };
+    const order: Record<string, number> = { TASK_WORKFLOW: 1, VEHICLE_DESK: 2, DESIGN_TRACKING: 3, DASHBOARDS: 4, CHANDAK_MEET: 5 };
     return (order[a.code] || 99) - (order[b.code] || 99);
   });
 

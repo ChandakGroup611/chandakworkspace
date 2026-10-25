@@ -31,7 +31,7 @@ export interface UserModulesResult {
   userEmail?: string;
 }
 
-const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
+const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET"]);
 
 const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
   {
@@ -75,6 +75,17 @@ const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
     icon: "LineChart",
     route_path: "/dashboards",
     display_order: 4,
+    is_active: true,
+    is_default: false
+  },
+  {
+    id: "mod-meet",
+    code: "CHANDAK_MEET",
+    name: "Chandak Meet",
+    description: "Meetings, Agendas, Points with Carry-Forward, Decisions & Action Items",
+    icon: "Video",
+    route_path: "/meet",
+    display_order: 5,
     is_active: true,
     is_default: false
   }
@@ -162,7 +173,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
         if (!ALLOWED_CORE_MODULE_CODES.has(m.code)) return false;
         if (isAdmin) return true;
         if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
-        if (assignedModuleIds.size === 0) return true;
+        if (assignedModuleIds.size === 0) return m.code === "TASK_WORKFLOW";
         return assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code);
       })
       .map(m => {
@@ -171,6 +182,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
         if (m.code === "VEHICLE_DESK" && (!route || route === "/vehicle/dashboard")) route = "/vehicle";
         if (m.code === "DESIGN_TRACKING" && (!route || route === "/design/dashboard")) route = "/design/matrix";
         if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
+        if (m.code === "CHANDAK_MEET" && !route) route = "/meet";
         return {
           ...m,
           route_path: route,
