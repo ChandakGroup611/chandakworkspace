@@ -36,6 +36,21 @@ if (empty($expectedToken) || empty($token) || !hash_equals($expectedToken, $toke
     exit;
 }
 
+// Helper: Safe command execution without crashing if exec is disabled in php.ini
+function safeExec($cmd, &$out = []) {
+    if (function_exists('exec')) {
+        $disabled = array_map('trim', explode(',', (string)ini_get('disable_functions')));
+        if (!in_array('exec', $disabled)) {
+            try {
+                return @exec($cmd, $out);
+            } catch (\Throwable $t) {
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
 // Helper: Fast recursive directory copy
 function recursiveCopy($src, $dst) {
     if (!is_dir($src)) return false;
@@ -148,7 +163,7 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     }
 
     $psOutput = [];
-    @exec('ps aux 2>/dev/null || ps -u $(whoami) -f 2>/dev/null', $psOutput);
+    safeExec('ps aux 2>/dev/null || ps -u $(whoami) -f 2>/dev/null', $psOutput);
     
     echo json_encode([
         'success' => true,
@@ -169,9 +184,9 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
 // Dedicated Force Restart Action
 if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     $killOut = [];
-    @exec('pkill -9 -u $(whoami) -f node 2>&1', $killOut);
-    @exec('killall -9 node 2>&1', $killOut);
-    @exec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killOut);
+    safeExec('pkill -9 -u $(whoami) -f node 2>&1', $killOut);
+    safeExec('killall -9 node 2>&1', $killOut);
+    safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killOut);
     
     $futureTime = time() + 120;
     foreach ($primaryAppRoots as $target) {
@@ -311,9 +326,9 @@ if ($zipFile && class_exists('ZipArchive')) {
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
 
     // Force kill old node processes so Passenger is forced to spawn a fresh worker
-    @exec('pkill -9 -u $(whoami) -f node 2>&1', $killResults);
-    @exec('killall -9 node 2>&1', $killResults);
-    @exec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
+    safeExec('pkill -9 -u $(whoami) -f node 2>&1', $killResults);
+    safeExec('killall -9 node 2>&1', $killResults);
+    safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
 }
 
 // Base performance caching header for LiteSpeed & Apache
