@@ -201,21 +201,23 @@ export async function GET(request: NextRequest) {
   }
 }
 
+const MODULE_ROUTE_MAP: Record<string, string> = {
+  TASK_WORKFLOW: "/",
+  VEHICLE_DESK: "/vehicle",
+  DESIGN_TRACKING: "/design/matrix",
+  DASHBOARDS: "/dashboards",
+  CHANDAK_MEET: "/meet",
+};
+
 export async function POST(request: NextRequest) {
+  let targetCode = "TASK_WORKFLOW";
   try {
     const body = await request.json().catch(() => ({}));
     const { moduleCode, setAsDefault, userId: bodyUserId } = body || {};
 
-    const targetCode = moduleCode || "TASK_WORKFLOW";
+    if (moduleCode) targetCode = moduleCode;
 
-    const routeMap: Record<string, string> = {
-      TASK_WORKFLOW: "/",
-      VEHICLE_DESK: "/vehicle",
-      DESIGN_TRACKING: "/design/matrix",
-      DASHBOARDS: "/dashboards"
-    };
-
-    const redirectUrl = routeMap[targetCode] || "/";
+    const redirectUrl = MODULE_ROUTE_MAP[targetCode] || "/";
 
     // If setAsDefault is requested, save to database
     if (setAsDefault) {
@@ -297,8 +299,8 @@ export async function POST(request: NextRequest) {
     console.error("[API /api/modules] POST error:", err);
     return NextResponse.json({
       success: true,
-      redirectUrl: "/",
-      moduleCode: "TASK_WORKFLOW"
+      redirectUrl: MODULE_ROUTE_MAP[targetCode] || "/",
+      moduleCode: targetCode
     });
   }
 }

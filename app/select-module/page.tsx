@@ -60,7 +60,7 @@ export default function SelectModulePage() {
           const modulesData: UserModulesResult = await res.json();
           if (isMounted) {
             const mods = modulesData.modules || [];
-            const targetMod = isDeepLink(nextParam) ? moduleOfPath(nextParam) : null;
+            const targetMod = nextParam ? moduleOfPath(nextParam) : null;
             const nextModule = targetMod && mods.some((m) => m.code === targetMod) ? targetMod : null;
             const alreadyChosen = typeof document !== "undefined" && new RegExp(`(?:^|; )${MODULE_CHOSEN_COOKIE}=1`).test(document.cookie);
             // Module gate (lib/module-gate.ts): open straight away when only one module is allowed or a
@@ -126,7 +126,7 @@ export default function SelectModulePage() {
       const result = await res.json().catch(() => ({}));
 
       let destination = result?.redirectUrl;
-      if (!destination) {
+      if (!destination || (targetCode !== "TASK_WORKFLOW" && destination === "/")) {
         const fallbackRoutes: Record<string, string> = {
           TASK_WORKFLOW: "/",
           VEHICLE_DESK: "/vehicle",

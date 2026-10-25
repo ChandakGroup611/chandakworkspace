@@ -107,7 +107,10 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
       const json = await res.json();
       if (json.success) {
         onCloseMobile?.();
-        window.location.href = json.redirectUrl || FALLBACK_ROUTES[code] || "/";
+        const dest = (json.redirectUrl && (code === "TASK_WORKFLOW" || json.redirectUrl !== "/"))
+          ? json.redirectUrl
+          : (FALLBACK_ROUTES[code] || "/");
+        window.location.href = dest;
         return;
       }
     } catch (e) {

@@ -9,7 +9,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = { label: string; href: string; icon: React.ElementType; match: (p: string) => boolean };
@@ -38,16 +38,23 @@ const TABS: Record<string, Tab[]> = {
     { label: "IT", href: "/dashboards/it", icon: LineChart, match: (p) => p.startsWith("/dashboards/it") },
     { label: "Marketing", href: "/dashboards/mkt", icon: LineChart, match: (p) => p.startsWith("/dashboards/mkt") },
   ],
+  meet: [
+    { label: "Overview", href: "/meet", icon: LayoutDashboard, match: (p) => p === "/meet" },
+    { label: "Meetings", href: "/meet/meetings", icon: Video, match: (p) => p.startsWith("/meet/meetings") || p.startsWith("/meet/sessions") || p.startsWith("/meet/live") },
+    { label: "My Work", href: "/meet/my-work", icon: CheckCircle2, match: (p) => p.startsWith("/meet/my-work") },
+    { label: "Calendar", href: "/meet/calendar", icon: Calendar, match: (p) => p.startsWith("/meet/calendar") },
+  ],
 };
 
 export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
   const pathname = usePathname() || "/";
-  let key = pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
+  let key = pathname.startsWith("/meet") ? "meet" : pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
   if (pathname.startsWith("/settings") || pathname === "/profile") {
     if (typeof document !== "undefined") {
       const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
       const mod = m ? decodeURIComponent(m[1]) : "";
-      if (mod === "VEHICLE_DESK") key = "vehicle";
+      if (mod === "CHANDAK_MEET") key = "meet";
+      else if (mod === "VEHICLE_DESK") key = "vehicle";
       else if (mod === "DESIGN_TRACKING") key = "design";
       else if (mod === "DASHBOARDS") key = "dashboards";
       else key = "task";

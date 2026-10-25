@@ -58,7 +58,7 @@ export default function LoginPage() {
         }
 
         const allowed = (code: string) => data.modules.some((m: any) => m.code === code);
-        const targetMod = isDeepLink(rawNext) ? moduleOfPath(rawNext) : null;
+        const targetMod = rawNext ? moduleOfPath(rawNext) : null;
         const nextModule = targetMod && allowed(targetMod) ? targetMod : null;
 
         // Exactly one module authorized -> land directly on that module

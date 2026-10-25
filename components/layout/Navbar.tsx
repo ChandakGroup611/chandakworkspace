@@ -18,7 +18,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as Popover from "@radix-ui/react-popover";
-import { Search, Moon, Sun, LogOut, User, Settings, Terminal, FileText, CheckSquare, Car, Menu, FolderPlus, Loader2, Sparkles } from "lucide-react";
+import { Search, Moon, Sun, LogOut, User, Settings, Terminal, FileText, CheckSquare, Car, Menu, FolderPlus, Loader2, Sparkles, Video } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { globalSearch } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/repositories/search";
@@ -35,6 +35,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   { id: "ws", label: "Create new workspace", href: "/workspaces" /* TODO: open the create form, e.g. ?create=1 */, icon: FolderPlus },
   { id: "task", label: "Create new task", href: "/workspaces/tasks", icon: CheckSquare },
   { id: "fleet", label: "Open fleet & logistics desk", href: "/vehicle", icon: Car },
+  { id: "meet", label: "Open Chandak Meet", href: "/meet", icon: Video },
 ];
 
 const RESULT_ICON: Record<string, React.ElementType> = { TASK: CheckSquare, TICKET: FileText, VEHICLE: Car };

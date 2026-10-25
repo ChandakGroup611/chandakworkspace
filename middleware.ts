@@ -45,6 +45,8 @@ export async function middleware(request: NextRequest) {
     let defaultDest = "/";
     if (activeModule === "VEHICLE_DESK") defaultDest = "/vehicle";
     else if (activeModule === "DESIGN_TRACKING") defaultDest = "/design/matrix";
+    else if (activeModule === "DASHBOARDS") defaultDest = "/dashboards";
+    else if (activeModule === "CHANDAK_MEET") defaultDest = "/meet";
 
     // No module opened yet in this browser session: let the selection screen apply the default-module rule
     const target = !moduleChosen
