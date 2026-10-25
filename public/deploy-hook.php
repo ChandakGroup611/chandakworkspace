@@ -128,6 +128,13 @@ $primaryAppRoots = array_values(array_unique(array_filter([
     $domainRoot . '/hbuilds/current/nodejs'
 ])));
 
+// Base performance caching header for LiteSpeed & Apache
+$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
+
+// Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
+// STRICT: Bound V8 and libuv thread pools so total threads per process <= 3, staying far below CloudLinux NPROC ceiling
+$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
+
 // Keep canonicalAppRoot and current/nodejs synchronized if one is newer
 if ($canonicalAppRoot !== $domainRoot . '/hbuilds/current/nodejs') {
     $currBuild = $domainRoot . '/hbuilds/current/nodejs/.next/BUILD_ID';
@@ -417,13 +424,6 @@ if ($zipFile && class_exists('ZipArchive')) {
     safeExec('killall -9 node 2>&1', $killResults);
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
 }
-
-// Base performance caching header for LiteSpeed & Apache
-$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
-
-// Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
-// STRICT: Bound V8 and libuv thread pools so total threads per process <= 3, staying far below CloudLinux NPROC ceiling
-$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
 
 // 1. Write to public_html/.htaccess pointing exclusively to canonical app root
 $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;

@@ -86,7 +86,7 @@ export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
         .in("status", ["mom_draft", "mom_pending_approval"])
         .eq("is_deleted", false),
 
-      // 8. Upcoming sessions (next 6)
+      // 8. Upcoming sessions (next 6 active or scheduled)
       supabaseAdmin
         .from("meet_sessions")
         .select(`
@@ -94,7 +94,7 @@ export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
           meeting:meet_meetings(id, title, code, mode),
           room:meet_rooms(id, name, location)
         `)
-        .gte("scheduled_start", new Date().toISOString())
+        .in("status", ["scheduled", "in_progress"])
         .eq("is_deleted", false)
         .order("scheduled_start", { ascending: true })
         .limit(6),
