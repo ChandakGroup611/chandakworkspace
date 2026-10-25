@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import os from "node:os";
+import { cleanMask } from "./model-key";
 
 /**
  * Background removal for vehicle photos (server side, runs once per photo, result cached on disk).
@@ -48,7 +49,7 @@ function noteError(e: unknown) {
 
 /** first cache folder we can actually write to (the app folder may be read-only on some hosts) */
 let cacheDirPromise: Promise<string | null> | null = null;
-function cacheDir(): Promise<string | null> {
+export function cacheDir(): Promise<string | null> {
   if (!cacheDirPromise) {
     cacheDirPromise = (async () => {
       for (const d of CACHE_DIRS) {
@@ -99,7 +100,8 @@ async function loadSession() {
   return sessionPromise;
 }
 
-async function removeBackground(input: Buffer): Promise<Buffer> {
+/** Photo → transparent, trimmed WebP of just the vehicle. */
+export async function removeBackground(input: Buffer): Promise<Buffer> {
   const sharp = (await import("sharp")).default;
   const { ort, session } = await loadSession();
   // work at ≤1024 px: plenty for a card, keeps memory and time low
@@ -120,6 +122,7 @@ async function removeBackground(input: Buffer): Promise<Buffer> {
   for (const v of m) { if (v < lo) lo = v; if (v > hi) hi = v; }
   const mask = Buffer.alloc(plane);
   for (let i = 0; i < plane; i++) mask[i] = Math.round(((m[i] - lo) / (hi - lo || 1)) * 255);
+  cleanMask(mask, SIZE, SIZE);
 
   const alpha = await sharp(mask, { raw: { width: SIZE, height: SIZE, channels: 1 } }).resize(width, height, { fit: "fill" }).extractChannel(0).raw().toBuffer();
   const px = Buffer.alloc(width * height * 4);
@@ -132,7 +135,7 @@ export function isAllowedSource(src: string): boolean {
   try {
     const u = new URL(src);
     if (u.protocol !== "https:") return false;
-    // Wikipedia serves photos from upload.wikimedia.org and (newer API answers) thumb.wikimedia.org
+    // Wikipedia serves its photos from upload.wikimedia.org and (newer API answers) thumb.wikimedia.org
     if (u.hostname === "upload.wikimedia.org" || u.hostname === "thumb.wikimedia.org") return true;
     const supa = process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname : null;
     return !!supa && u.hostname === supa;

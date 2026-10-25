@@ -102,6 +102,7 @@ import { VehicleBrandLogo } from "./VehicleBrandLogo";
 import { VehicleRender } from "./VehicleRender";
 import { LayoutGrid, List as ListIcon, GalleryHorizontal } from "lucide-react";
 import { VehicleShowroom, VehicleDossierStage } from "./VehicleShowroom";
+import { ModelPicturesButton } from "./VehicleModelPictures";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -14210,6 +14211,9 @@ export default function FleetDeskHost({
                 )}
               </div>
               )}
+
+              {/* Standard picture per vehicle model (admins / fleet managers only) */}
+              <ModelPicturesButton vehicles={vehicles} />
 
               <AppButton
                 type="button"

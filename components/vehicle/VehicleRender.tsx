@@ -3,22 +3,21 @@
 /* ui-audit-allow rgb-literal: studio stage shadows and ink are fixed so they read the same in every theme */
 
 /**
- * Picture of a vehicle for the inventory grid, chosen automatically from the vehicle master:
- *   1. the vehicle's own photo (image_url), if one was uploaded;
- *   2. optional: an exact studio 3D render from IMAGIN.studio, only if NEXT_PUBLIC_IMAGIN_CUSTOMER_KEY
- *      is set (paid; off by default);
- *   3. a free photo of that exact make + model from Wikipedia / Wikimedia Commons, looked up by
- *      /api/vehicle/image and credited on the card as the licence requires;
- *   4. otherwise a brand tile (logo + model), never a made-up drawing.
- * Photos are cut out of their background on the server (/api/vehicle/image/cutout) and placed on a
- * studio stage. The stage does NOT follow the app theme (a dark car on a dark theme would vanish);
- * it adapts to the car instead: a dark car gets a bright white studio, a white/silver car a deeper
- * grey one. The car's lightness is measured from the cut-out itself, so nothing needs setting.
- * If a cut-out fails, the photo itself is shown instead.
- * An image that fails to load (unknown model, no key, offline) falls back to the next option.
+ * Picture of a vehicle, chosen automatically from the vehicle master:
+ *   1. the approved picture for its make + model from the model picture library: a standardised
+ *      studio cut-out, set up once per model by an admin (see VehicleModelPictures);
+ *   2. when a studio-render service is configured on the server (IMAGIN_CUSTOMER_KEY), a missing
+ *      model is fetched automatically and stored in the same library, so it fills in by itself;
+ *   3. otherwise a clean brand tile (logo + model, "Picture pending" for admins) until an official
+ *      picture is set for the model; street photos are never shown automatically.
+ * Pictures of the individual car (number plates, streets) are not used here.
+ * The studio stage does NOT follow the app theme (a dark car on a dark theme would vanish); it
+ * adapts to the car instead: a dark car gets a bright white studio, a white/silver car a deeper
+ * grey one, measured from the picture itself.
  */
 import React, { useEffect, useMemo, useState } from "react";
-import { resolveVehicleBrandKey, VehicleBrandLogo } from "./VehicleBrandLogo";
+import { VehicleBrandLogo } from "./VehicleBrandLogo";
+import { colourKey, modelKey } from "@/lib/vehicle/model-key";
 
 export type VehicleRenderInput = {
   make?: string | null;
@@ -31,105 +30,60 @@ export type VehicleRenderInput = {
   fuel_type?: string | null;
 };
 
-/* paint: the master stores a hex colour (or sometimes a name); the render service wants a paint name */
-const NAMED: Record<string, string> = {
-  white: "#f1f3f5", silver: "#b8bec6", grey: "#6b7280", black: "#1f2328", red: "#b91c1c", maroon: "#7f1d1d",
-  blue: "#1d4ed8", green: "#15803d", brown: "#6b4226", beige: "#d6c7a8", gold: "#b08d3c", orange: "#c2410c", yellow: "#ca8a04",
-};
-function paintName(paint?: string | null): string | null {
-  const p = (paint || "").trim().toLowerCase();
-  if (!p) return null;
-  const named = Object.keys(NAMED).find((k) => p.includes(k)) || (p.includes("gray") ? "grey" : null);
-  if (named) return named;
-  if (!/^#([0-9a-f]{6})$/.test(p)) return null;
-  const n = parseInt(p.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  let best = "silver", d = Infinity;
-  for (const [name, h] of Object.entries(NAMED)) {
-    const m = parseInt(h.slice(1), 16);
-    const dd = (r - ((m >> 16) & 255)) ** 2 + (g - ((m >> 8) & 255)) ** 2 + (b - (m & 255)) ** 2;
-    if (dd < d) { d = dd; best = name; }
+type Candidate = { src: string; kind: "library"; credit?: { page: string; title?: string; label?: string } };
+
+/* ---------------- model picture library (one request per page) ---------------- */
+export type LibraryItem = { key: string; make: string; model: string; variant: string | null; url: string; credit: string | null; source: "upload" | "commons" | "render" | "ai"; sourceUrl: string | null; flipped: boolean; updatedAt: string };
+/** autoFill: a studio-render service is configured on the server, so missing models fill in by themselves */
+export type ModelLibrary = { canManage: boolean; autoFill: boolean; items: Map<string, LibraryItem> };
+let libraryPromise: Promise<ModelLibrary> | null = null;
+let libraryValue: ModelLibrary | null = null;
+const libraryListeners = new Set<(l: ModelLibrary) => void>();
+export function loadModelLibrary(): Promise<ModelLibrary> {
+  if (!libraryPromise) {
+    libraryPromise = fetch("/api/vehicle/model-images", { credentials: "same-origin", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { canManage: false, autoFill: false, items: [] }))
+      .catch(() => ({ canManage: false, autoFill: false, items: [] }))
+      .then((j: { canManage: boolean; autoFill?: boolean; items: LibraryItem[] }) => {
+        libraryValue = { canManage: !!j.canManage, autoFill: !!j.autoFill, items: new Map((j.items || []).map((i) => [i.key, i])) };
+        libraryListeners.forEach((l) => l(libraryValue!));
+        return libraryValue;
+      });
   }
-  return best;
+  return libraryPromise;
 }
-
-const IMAGIN_KEY = process.env.NEXT_PUBLIC_IMAGIN_CUSTOMER_KEY;
-// brand keys from VehicleBrandLogo → the make names the render service uses
-const MAKE_ALIAS: Record<string, string> = { mercedes: "mercedes-benz", "land rover": "land-rover", landrover: "land-rover" };
-
-export function imaginRenderUrl(v: VehicleRenderInput, angle = "28"): string | null {
-  if (!IMAGIN_KEY || !v.make || !v.model) return null;
-  const cat = (v.category || "").toUpperCase();
-  if (cat === "BIKE" || cat === "BUS") return null; // the service covers cars and light commercials
-  const brand = resolveVehicleBrandKey(`${v.make} ${v.model}`) || v.make.toLowerCase().trim();
-  const make = MAKE_ALIAS[brand] || brand.replace(/\s+/g, "-");
-  const makeWord = v.make.toLowerCase().trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const model = v.model.toLowerCase().replace(new RegExp(`^${makeWord}\\s+`), "").trim();
-  const words = model.split(/\s+/).filter(Boolean);
-  if (!words.length) return null;
-  const q = new URLSearchParams({ customer: IMAGIN_KEY, make, modelFamily: words[0], zoomtype: "fullscreen", angle });
-  if (words.length > 1) q.set("modelRange", words.join("-"));
-  const paint = paintName(v.paint_color);
-  if (paint) q.set("paintDescription", paint);
-  const y = String(v.year || "").match(/\d{4}/)?.[0];
-  if (y) q.set("modelYear", y);
-  const fuel = (v.fuel_type || "").toLowerCase();
-  if (/electric|\bev\b|bev/.test(fuel)) q.set("powerTrain", "electric");
-  else if (/hybrid/.test(fuel)) q.set("powerTrain", "hybrid");
-  return `https://cdn.imagin.studio/getImage?${q.toString()}`;
+/** Re-read the library (after a picture is approved or removed); every picture on the page updates. */
+export function refreshModelLibrary() { libraryPromise = null; return loadModelLibrary(); }
+/* a model + colour with no picture yet: the server makes one (once, then it's stored for everyone).
+   One request at a time from this page; 202 means "still making it", so ask again shortly. */
+const autoFillAsked = new Set<string>();
+let autoFillChain: Promise<unknown> = Promise.resolve();
+export const autoFillPending = new Set<string>();
+function requestAutoFill(key: string, v: VehicleRenderInput) {
+  if (autoFillAsked.has(key)) return;
+  autoFillAsked.add(key);
+  autoFillPending.add(key);
+  autoFillChain = autoFillChain.then(async () => {
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const r = await fetch("/api/vehicle/model-image/auto", {
+        method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ make: v.make, model: v.model, variant: v.variant, year: v.year, paint: v.paint_color, fuel: v.fuel_type, category: v.category }),
+      }).catch(() => null);
+      if (r?.status === 202) { await new Promise((ok) => setTimeout(ok, 4000)); continue; }
+      if (r?.ok) await refreshModelLibrary();
+      break;
+    }
+  }).finally(() => { autoFillPending.delete(key); libraryListeners.forEach((l) => libraryValue && l({ ...libraryValue })); });
 }
-
-/* one lookup per make + model for the whole page, however many cards show it */
-type WikiHit = { image: string | null; page?: string; title?: string; credit?: string };
-const wikiCache = new Map<string, Promise<WikiHit>>();
-function lookupModelPhoto(make: string, model: string): Promise<WikiHit> {
-  const key = `${make}|${model}`.toLowerCase();
-  if (!wikiCache.has(key)) {
-    wikiCache.set(
-      key,
-      fetch(`/api/vehicle/image?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`)
-        .then((r) => (r.ok ? r.json() : { image: null }))
-        .catch(() => ({ image: null }))
-    );
-  }
-  return wikiCache.get(key)!;
+export function useModelLibrary(): ModelLibrary | null {
+  const [lib, setLib] = useState<ModelLibrary | null>(libraryValue);
+  useEffect(() => {
+    libraryListeners.add(setLib);
+    loadModelLibrary().then(setLib);
+    return () => { libraryListeners.delete(setLib); };
+  }, []);
+  return lib;
 }
-
-const cutoutUrl = (src: string) => `/api/vehicle/image/cutout?src=${encodeURIComponent(src)}`;
-// sources the server will cut out (see lib/vehicle/cutout.ts → isAllowedSource)
-const SUPABASE_HOST = (() => { try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").hostname; } catch { return ""; } })();
-const canCutOut = (src: string) => {
-  try { const u = new URL(src); return u.protocol === "https:" && (u.hostname === "upload.wikimedia.org" || u.hostname === "thumb.wikimedia.org" || (!!SUPABASE_HOST && u.hostname === SUPABASE_HOST)); } catch { return false; }
-};
-
-/* cut-outs are fetched (not <img>) so we can wait while the server is still making one (HTTP 202),
-   at most two at a time so the rest of the app's requests are never queued behind them */
-const cutoutCache = new Map<string, Promise<string>>();
-let cutoutActive = 0;
-const cutoutWaiting: (() => void)[] = [];
-async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
-  if (cutoutActive >= 2) await new Promise<void>((r) => cutoutWaiting.push(r));
-  cutoutActive++;
-  try { return await fn(); } finally { cutoutActive--; cutoutWaiting.shift()?.(); }
-}
-function loadCutout(url: string): Promise<string> {
-  if (!cutoutCache.has(url)) {
-    const p = (async () => {
-      for (let attempt = 0; attempt < 40; attempt++) {
-        const res = await withSlot(() => fetch(url, { credentials: "same-origin" }));
-        if (res.status === 200) return URL.createObjectURL(await res.blob());
-        if (res.status !== 202) throw new Error(`cut-out ${res.status}`);
-        const wait = Math.min(8, Number(res.headers.get("Retry-After")) || 3) * 1000;
-        await new Promise((r) => setTimeout(r, wait));
-      }
-      throw new Error("cut-out timed out");
-    })();
-    p.catch(() => cutoutCache.delete(url)); // a later page visit may try again
-    cutoutCache.set(url, p);
-  }
-  return cutoutCache.get(url)!;
-}
-
-type Candidate = { src: string; kind: "cutout" | "photo" | "render"; credit?: { page: string; title?: string } };
 export type PaintTone = "dark" | "light" | null;
 
 /* lightness of the car itself (opaque pixels of the cut-out), remembered per image */
@@ -169,69 +123,44 @@ function toneFromPaint(paint?: string | null): PaintTone {
   return null;
 }
 
-/** The best picture for this vehicle, its fallbacks and the car's tone. */
+/** The standard picture for this vehicle's model and the car's tone. */
 export function useVehicleImage(vehicle: VehicleRenderInput) {
-  const [wiki, setWiki] = useState<WikiHit | null>(null);
-  const [failed, setFailed] = useState(0);
+  const lib = useModelLibrary();
+  // a picture set for the whole model wins; otherwise the automatic one for this model in this colour
+  const key = colourKey(vehicle.make, vehicle.model, vehicle.paint_color);
+  const libItem = lib?.items.get(modelKey(vehicle.make, vehicle.model)) || lib?.items.get(key) || null;
+  const [failed, setFailed] = useState(false);
   const [measured, setMeasured] = useState<PaintTone>(null);
 
-  const base = useMemo(() => {
-    const list: Candidate[] = [];
-    if (vehicle.image_url) {
-      if (canCutOut(vehicle.image_url)) list.push({ src: cutoutUrl(vehicle.image_url), kind: "cutout" });
-      list.push({ src: vehicle.image_url, kind: "photo" });
-    }
-    const render = imaginRenderUrl(vehicle);
-    if (render) list.push({ src: render, kind: "render" });
-    return list;
+  useEffect(() => { setFailed(false); setMeasured(null); }, [libItem?.url]);
+  useEffect(() => {
+    if (lib?.autoFill && !libItem && vehicle.model) requestAutoFill(key, vehicle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicle.image_url, vehicle.make, vehicle.model, vehicle.year, vehicle.paint_color, vehicle.category, vehicle.fuel_type]);
+  }, [lib?.autoFill, !!libItem, key]);
 
-  const candidates = useMemo(() => {
-    if (!wiki?.image) return base;
-    const credit = wiki.page ? { page: wiki.page, title: wiki.title } : undefined;
-    return [...base, { src: cutoutUrl(wiki.image), kind: "cutout" as const, credit }, { src: wiki.image, kind: "photo" as const, credit }];
-  }, [base, wiki]);
-
-  // look up the free model photo once our own sources are used up
-  const needWiki = failed >= base.length;
-  useEffect(() => {
-    if (!needWiki || wiki || !vehicle.model) return;
-    let alive = true;
-    lookupModelPhoto(vehicle.make || "", vehicle.model).then((h) => { if (alive) setWiki(h); });
-    return () => { alive = false; };
-  }, [needWiki, wiki, vehicle.make, vehicle.model]);
-
-  useEffect(() => { setFailed(0); setWiki(null); setMeasured(null); }, [vehicle.image_url, vehicle.make, vehicle.model]);
-
-  const current: Candidate | undefined = candidates[failed];
-  const staged = !current || current.kind !== "photo";
-
-  // resolve a cut-out to a local object URL; until then the stage shows the brand mark
-  const [resolved, setResolved] = useState<{ for: string; url: string } | null>(null);
-  const cutoutSrc = current?.kind === "cutout" ? current.src : null;
-  useEffect(() => {
-    if (!cutoutSrc) return;
-    let alive = true;
-    loadCutout(cutoutSrc).then(
-      (url) => { if (alive) setResolved({ for: cutoutSrc, url }); },
-      () => { if (alive) setFailed((f) => f + 1); }
-    );
-    return () => { alive = false; };
-  }, [cutoutSrc]);
-  const src = !current ? null : current.kind === "cutout" ? (resolved?.for === current.src ? resolved.url : null) : current.src;
-  const loading = !!current && !src;
-  // the master's paint (when the user set one) wins; otherwise the measured lightness of the cut-out
-  const tone = toneFromPaint(vehicle.paint_color) ?? (staged ? measured : null);
+  // every vehicle shows its model's standard picture, never a snapshot of the individual car
+  const current: Candidate | undefined = libItem && !failed
+    ? {
+        src: libItem.url,
+        kind: "library",
+        credit: libItem.source === "commons" && libItem.sourceUrl ? { page: libItem.sourceUrl, title: libItem.credit || undefined, label: "Wikimedia" } : undefined,
+      }
+    : undefined;
+  const src = current?.src || null;
+  // the master's paint (when the user set one) wins; otherwise the measured lightness of the picture
+  const tone = toneFromPaint(vehicle.paint_color) ?? measured;
   return {
     current,
     src,
-    loading,
-    staged,
+    loading: !lib || (!libItem && !!lib?.autoFill && (autoFillPending.has(key) || !autoFillAsked.has(key))),
+    staged: true,
+    /** true when no picture has been set for this model yet */
+    suggested: !!lib && !libItem,
+    canManage: !!lib?.canManage,
     tone,
     label: `${vehicle.make || ""} ${vehicle.model || ""}`.trim() || "Vehicle",
-    onError: () => setFailed((f) => f + 1),
-    onLoad: (e: React.SyntheticEvent<HTMLImageElement>) => { if (current && current.kind !== "photo") setMeasured(measureTone(e.currentTarget)); },
+    onError: () => setFailed(true),
+    onLoad: (e: React.SyntheticEvent<HTMLImageElement>) => setMeasured(measureTone(e.currentTarget)),
   };
 }
 
@@ -256,7 +185,7 @@ function Credit({ credit, onStage }: { credit?: Candidate["credit"]; onStage: bo
       className="absolute bottom-1 right-1.5 z-[2] rounded px-1 text-[10.5px] leading-4 hover:underline"
       style={onStage ? { color: STAGE_INK.muted } : { background: "rgba(0,0,0,0.55)", color: "#ffffff" }}
     >
-      Wikipedia
+      {credit.label || "Wikipedia"}
     </a>
   );
 }
@@ -272,13 +201,13 @@ function BrandMark({ vehicle, label, size, loading }: { vehicle: VehicleRenderIn
 
 /** Card picture: the car on a small studio stage (inventory grid, thumbnails). */
 export function VehicleRender({ vehicle, className = "" }: { vehicle: VehicleRenderInput; className?: string }) {
-  const { current, src, loading, staged, tone, label, onError, onLoad } = useVehicleImage(vehicle);
+  const { current, src, loading, staged, suggested, canManage, tone, label, onError, onLoad } = useVehicleImage(vehicle);
   const studio = studioColors(tone);
   return (
     <div className={`relative overflow-hidden ${className}`} role="img" aria-label={label} style={{ background: studio.wall, transition: "background 300ms" }}>
       <div className="absolute inset-x-0 bottom-0 h-[34%]" style={{ background: studio.floor }} aria-hidden />
       {src && staged && (
-        <div className="absolute inset-x-[12%] bottom-[9%] h-[9%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />
+        <div className="absolute inset-x-[12%] bottom-[5%] h-[9%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />
       )}
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -289,12 +218,31 @@ export function VehicleRender({ vehicle, className = "" }: { vehicle: VehicleRen
           loading="lazy"
           onError={onError}
           onLoad={onLoad}
-          className={staged ? "absolute inset-x-[6%] bottom-[10%] top-[8%] h-[82%] w-[88%] object-contain object-bottom" : "absolute inset-0 h-full w-full object-cover"}
+          className="absolute inset-0 h-full w-full object-contain" // the standard 16:9 canvas carries its own margins
         />
       ) : (
         <BrandMark vehicle={vehicle} label={label} size={44} loading={loading} />
       )}
       <Credit credit={current?.credit} onStage={staged} />
+      {suggested && canManage && !loading && (
+        <span className="absolute bottom-1 left-1.5 z-[2] text-[10.5px] leading-4" style={{ color: STAGE_INK.muted }} title="No official picture set for this model yet. Add one in Model pictures.">
+          Picture pending
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** A finished (transparent) picture on the studio stage, e.g. a preview in the picture library. */
+export function StudioPicture({ src, className = "", tone = null, label = "Vehicle" }: { src: string | null; className?: string; tone?: PaintTone; label?: string }) {
+  const [measured, setMeasured] = useState<PaintTone>(null);
+  const studio = studioColors(tone ?? measured);
+  return (
+    <div className={`relative overflow-hidden ${className}`} role="img" aria-label={label} style={{ background: studio.wall, transition: "background 300ms" }}>
+      <div className="absolute inset-x-0 bottom-0 h-[34%]" style={{ background: studio.floor }} aria-hidden />
+      {src && <div className="absolute inset-x-[12%] bottom-[6%] h-[9%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {src && <img key={src} src={src} alt="" onLoad={(e) => setMeasured(measureTone(e.currentTarget))} className="absolute inset-0 h-full w-full object-contain" />}
     </div>
   );
 }
@@ -313,22 +261,18 @@ export function VehicleStage({ vehicle, className = "", top, children }: { vehic
       <div className="relative min-h-0 flex-1" role="img" aria-label={label}>
         {src && staged && (
           <>
-            <div className="absolute bottom-[21%] left-[19%] right-[19%] h-[8%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />
+            <div className="absolute bottom-[22%] left-[14%] right-[14%] h-[8%] rounded-[50%]" style={{ background: `radial-gradient(closest-side, ${studio.shadow}, rgba(0,0,0,0))` }} aria-hidden />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img key={src} src={src} alt="" onError={onError} onLoad={onLoad} className="absolute bottom-[24%] left-[15%] h-[70%] w-[70%] object-contain object-bottom" />
+            <img key={src} src={src} alt="" onError={onError} onLoad={onLoad} className="absolute bottom-[20%] left-[8%] h-[84%] w-[84%] object-contain object-bottom" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={src}
               alt=""
               aria-hidden
-              className="pointer-events-none absolute left-[15%] top-[76%] h-[70%] w-[70%] object-contain object-bottom opacity-[0.18]"
+              className="pointer-events-none absolute left-[8%] top-[67%] h-[84%] w-[84%] object-contain object-bottom opacity-[0.18]"
               style={{ transform: "scaleY(-1)", WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 30%)", maskImage: "linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0) 30%)" }}
             />
           </>
-        )}
-        {src && !staged && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={src} src={src} alt="" onError={onError} className="absolute inset-0 h-full w-full object-cover" />
         )}
         {!src && <BrandMark vehicle={vehicle} label={label} size={72} loading={loading} />}
         <Credit credit={current?.credit} onStage={staged} />

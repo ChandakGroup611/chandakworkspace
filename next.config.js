@@ -6,13 +6,15 @@ const nextConfig = {
   // Keep these packages out of the bundle and ship the .wasm files with the standalone build.
   serverExternalPackages: ['onnxruntime-web', 'sharp'],
   outputFileTracingIncludes: {
-    '/api/vehicle/image/cutout': [
+    // vehicle picture routes (cut-outs on the server, and the runtime the picture library sends to the browser)
+    '/api/vehicle/**': [
       // cutout.ts imports the runtime at run time (hidden from the bundler), so ship what Node needs to
       // resolve it: the package manifest, its Node entry, the .wasm, and its one runtime dependency
       './node_modules/onnxruntime-web/package.json',
       './node_modules/onnxruntime-web/dist/ort.node.min.*',
       './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs',
       './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
+      './node_modules/onnxruntime-web/dist/ort.wasm.min.mjs',
       './node_modules/onnxruntime-common/**/*',
     ],
   },

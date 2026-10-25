@@ -1,0 +1,353 @@
+import crypto from "node:crypto";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { hasPermission } from "@/lib/permissions";
+import { removeBackground } from "./cutout";
+import { colourKey, modelKey, paintName } from "./model-key";
+
+export { modelKey };
+
+/**
+ * Vehicle model picture library (server side).
+ *
+ * One approved picture per make + model. Whatever goes in (a manufacturer press photo, a
+ * Wikimedia Commons photo, a transparent PNG), what comes out is the same standard format:
+ *   - background removed (skipped when the upload is already transparent),
+ *   - optionally mirrored so every car faces the same way,
+ *   - scaled to fit a fixed box and placed on a fixed baseline,
+ *   - 1600 x 900 transparent WebP.
+ * So every card, showroom stage and details page shows the cars at the same size and position.
+ */
+
+export const MODEL_IMAGE_BUCKET = "vehicle-model-images";
+const TABLE = "vehicle_model_images";
+export const CANVAS = { width: 1600, height: 900 };
+const BOX = { width: 1400, height: 600 }; // the car is scaled to fit inside this
+const BASELINE = 830;                       // y of the tyres' contact line
+
+export type ModelImageRow = {
+  id: string;
+  model_key: string;
+  make: string;
+  model: string;
+  variant: string | null;
+  storage_path: string;
+  source: "upload" | "commons" | "render" | "ai";
+  source_url: string | null;
+  credit: string | null;
+  flipped: boolean;
+  updated_at: string;
+};
+
+const norm = (s?: string | null) => (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/* ---------------- permissions ---------------- */
+/**
+ * Who may approve or change library pictures: administrators and fleet managers only.
+ * (Stricter than everyday vehicle editing, because one picture is used for the whole fleet.)
+ */
+export async function canManageModelImages(userId: string): Promise<boolean> {
+  try {
+    for (const code of ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "FLEET_ADMIN", "VEHICLES_MANAGE", "FLEET_MANAGE"]) {
+      if (await hasPermission(userId, code)) return true;
+    }
+    const { data } = await supabaseAdmin.from("fleet_user_access").select("can_manage_vehicles, fleet_role").eq("user_id", userId).maybeSingle();
+    return !!data && data.fleet_role !== "NONE" && (data.fleet_role === "FLEET_ADMIN" || data.fleet_role === "FLEET_MANAGER" || data.can_manage_vehicles === true);
+  } catch {
+    return false;
+  }
+}
+
+/* ---------------- standardising ---------------- */
+async function isAlreadyCutOut(input: Buffer): Promise<boolean> {
+  const sharp = (await import("sharp")).default;
+  const meta = await sharp(input).metadata();
+  if (!meta.hasAlpha) return false;
+  const { data, info } = await sharp(input).resize(96, 96, { fit: "inside" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let clear = 0;
+  for (let i = 3; i < data.length; i += 4) if (data[i] < 16) clear++;
+  return clear / (info.width * info.height) > 0.08; // a real cut-out has plenty of transparent pixels
+}
+
+/** Any picture → standard 1600 x 900 transparent WebP with the car on the baseline. */
+export async function standardise(input: Buffer, opts: { flip?: boolean } = {}): Promise<{ webp: Buffer; width: number; height: number }> {
+  const sharp = (await import("sharp")).default;
+  const cut = (await isAlreadyCutOut(input))
+    ? await sharp(input).rotate().ensureAlpha().trim({ threshold: 4 }).png().toBuffer()
+    : await removeBackground(input);
+
+  let car = sharp(cut).ensureAlpha();
+  if (opts.flip) car = car.flop();
+  const carBuf = await car.resize(BOX.width, BOX.height, { fit: "inside", withoutEnlargement: false }).png().toBuffer();
+  const m = await sharp(carBuf).metadata();
+  const w = m.width || BOX.width, h = m.height || BOX.height;
+  const left = Math.round((CANVAS.width - w) / 2);
+  const top = Math.max(0, BASELINE - h);
+
+  const webp = await sharp({ create: { width: CANVAS.width, height: CANVAS.height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: carBuf, left, top }])
+    .webp({ quality: 90, alphaQuality: 95, effort: 5 })
+    .toBuffer();
+  return { webp, width: w, height: h };
+}
+
+/* ---------------- previews (kept briefly so "Approve" doesn't re-process) ---------------- */
+type Preview = { webp: Buffer; flip: boolean; source: "upload" | "commons"; sourceUrl: string | null; credit: string | null; userId: string; at: number };
+const previews = new Map<string, Preview>();
+const PREVIEW_TTL = 20 * 60 * 1000;
+export function keepPreview(p: Omit<Preview, "at">): string {
+  const now = Date.now();
+  for (const [k, v] of previews) if (now - v.at > PREVIEW_TTL) previews.delete(k);
+  const token = crypto.randomBytes(16).toString("hex");
+  previews.set(token, { ...p, at: now });
+  return token;
+}
+export function takePreview(token: string, userId: string): Preview | null {
+  const p = previews.get(token);
+  if (!p || p.userId !== userId || Date.now() - p.at > PREVIEW_TTL) return null;
+  previews.delete(token);
+  return p;
+}
+
+/* ---------------- storage + table ---------------- */
+async function ensureBucket() {
+  const { data } = await supabaseAdmin.storage.getBucket(MODEL_IMAGE_BUCKET);
+  if (!data) await supabaseAdmin.storage.createBucket(MODEL_IMAGE_BUCKET, { public: false, fileSizeLimit: 5 * 1024 * 1024, allowedMimeTypes: ["image/webp"] });
+}
+
+export async function listModelImages(): Promise<ModelImageRow[]> {
+  const { data, error } = await supabaseAdmin.from(TABLE).select("id, model_key, make, model, variant, storage_path, source, source_url, credit, flipped, updated_at");
+  if (error) {
+    // table not created yet (migration not applied): behave as an empty library
+    console.warn("[vehicle-model-images] list failed:", error.message);
+    return [];
+  }
+  return (data || []) as ModelImageRow[];
+}
+
+export async function saveModelImage(args: {
+  key?: string; make: string; model: string; variant?: string | null; webp: Buffer; flip: boolean;
+  source: "upload" | "commons" | "render" | "ai"; sourceUrl: string | null; credit: string | null; userId: string | null;
+}): Promise<ModelImageRow> {
+  const key = args.key || modelKey(args.make, args.model);
+  const path = `models/${crypto.createHash("sha1").update(key).digest("hex")}-${Date.now()}.webp`;
+  await ensureBucket();
+  const up = await supabaseAdmin.storage.from(MODEL_IMAGE_BUCKET).upload(path, args.webp, { contentType: "image/webp", upsert: true });
+  if (up.error) throw new Error(`storage upload failed: ${up.error.message}`);
+
+  const { data: old } = await supabaseAdmin.from(TABLE).select("storage_path").eq("model_key", key).maybeSingle();
+  const row = {
+    model_key: key, make: args.make.trim(), model: args.model.trim(), variant: args.variant?.trim() || null,
+    storage_path: path, source: args.source, source_url: args.sourceUrl, credit: args.credit, flipped: args.flip,
+    width: CANVAS.width, height: CANVAS.height, updated_by: args.userId, updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await supabaseAdmin.from(TABLE).upsert({ ...row, created_by: args.userId }, { onConflict: "model_key" }).select("id, model_key, make, model, variant, storage_path, source, source_url, credit, flipped, updated_at").single();
+  if (error) {
+    await supabaseAdmin.storage.from(MODEL_IMAGE_BUCKET).remove([path]);
+    throw new Error(error.message.includes("does not exist") ? "The picture library table is missing. Apply migration 20261025090000_vehicle_model_picture_library.sql." : error.message);
+  }
+  if (old?.storage_path && old.storage_path !== path) await supabaseAdmin.storage.from(MODEL_IMAGE_BUCKET).remove([old.storage_path]);
+  return data as ModelImageRow;
+}
+
+export async function deleteModelImage(key: string): Promise<void> {
+  const { data } = await supabaseAdmin.from(TABLE).select("storage_path").eq("model_key", key).maybeSingle();
+  const { error } = await supabaseAdmin.from(TABLE).delete().eq("model_key", key);
+  if (error) throw new Error(error.message);
+  if (data?.storage_path) await supabaseAdmin.storage.from(MODEL_IMAGE_BUCKET).remove([data.storage_path]);
+}
+
+/** Picture bytes for a library entry (cached in memory; entries are immutable per storage path). */
+const fileCache = new Map<string, Buffer>();
+export async function readModelImage(key: string): Promise<{ data: Buffer; path: string } | null> {
+  const { data: row } = await supabaseAdmin.from(TABLE).select("storage_path").eq("model_key", key).maybeSingle();
+  if (!row?.storage_path) return null;
+  const hit = fileCache.get(row.storage_path);
+  if (hit) return { data: hit, path: row.storage_path };
+  const { data, error } = await supabaseAdmin.storage.from(MODEL_IMAGE_BUCKET).download(row.storage_path);
+  if (error || !data) return null;
+  const buf = Buffer.from(await data.arrayBuffer());
+  fileCache.set(row.storage_path, buf);
+  if (fileCache.size > 200) fileCache.delete(fileCache.keys().next().value as string);
+  return { data: buf, path: row.storage_path };
+}
+
+/* ---------------- candidate pictures from Wikimedia Commons ---------------- */
+export type Candidate = { thumb: string; full: string; title: string; page: string; credit: string; width: number; height: number };
+const UA = "ChandakWorkspace/1.0 (https://chandakgroup.tech; vehicle picture library)";
+const strip = (html?: string) => (html || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+
+export async function findCandidates(make: string, model: string): Promise<Candidate[]> {
+  const key = modelKey(make, model);
+  const [brand, mdl] = key.split("|");
+  const words = mdl.split(" ").filter((w) => w.length > 1 && !/^(vx|zx|lx|sx|o|at|mt|amt|cvt|dct|ivt|plus|std|base|top)$/.test(w));
+  const core = words.slice(0, 3).join(" ");
+  const queries = [`${brand} ${core} front`, `${brand} ${core}`, `${brand} ${words[0] || ""}`].map((q) => q.trim());
+  const seen = new Set<string>();
+  const out: Candidate[] = [];
+  for (const q of queries) {
+    if (out.length >= 18) break;
+    const u = new URL("https://commons.wikimedia.org/w/api.php");
+    u.search = new URLSearchParams({
+      action: "query", format: "json", generator: "search", gsrnamespace: "6", gsrlimit: "30",
+      gsrsearch: `${q} filetype:bitmap`, prop: "imageinfo", iiprop: "url|size|extmetadata|mime", iiurlwidth: "640", origin: "*",
+    }).toString();
+    try {
+      const res = await fetch(u, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(12000) });
+      if (!res.ok) continue;
+      const json: any = await res.json();
+      const pages: any[] = Object.values(json?.query?.pages || {}).sort((a: any, b: any) => (a.index || 0) - (b.index || 0));
+      for (const p of pages) {
+        const ii = p.imageinfo?.[0];
+        if (!ii || seen.has(ii.url)) continue;
+        if (!/image\/(jpeg|png|webp)/.test(ii.mime || "")) continue;
+        if ((ii.width || 0) < 900 || (ii.height || 0) < 450 || ii.width < ii.height) continue; // landscape, reasonably large
+        const title = String(p.title || "").replace(/^File:/, "");
+        const t = norm(title);
+        if (!t.includes(words[0] || "")) continue; // must be about this model
+        if (/interior|dashboard|engine|badge|logo|wheel|rear light|seat|steering|detail/.test(t)) continue;
+        seen.add(ii.url);
+        const meta = ii.extmetadata || {};
+        const credit = [strip(meta.Artist?.value), strip(meta.LicenseShortName?.value)].filter(Boolean).join(" · ") || "Wikimedia Commons";
+        out.push({
+          thumb: ii.thumburl || ii.url,
+          // a 1600 px rendition is plenty and much smaller to fetch than the original
+          full: ii.width > 1600 && ii.thumburl ? ii.thumburl.replace(/\/\d+px-/, "/1600px-") : ii.url,
+          title, page: ii.descriptionurl, credit, width: ii.width, height: ii.height,
+        });
+      }
+    } catch { /* try the next query */ }
+  }
+  return out.slice(0, 18);
+}
+
+export const isCommonsUrl = (src: string) => {
+  try { const u = new URL(src); return u.protocol === "https:" && (u.hostname === "upload.wikimedia.org" || u.hostname === "thumb.wikimedia.org"); } catch { return false; }
+};
+
+/* ---------------- automatic pictures (no one uploads anything) ---------------- */
+/**
+ * A vehicle whose model + colour has no picture yet gets one made automatically, once, and stored
+ * in the library like any other picture (so the next vehicle of that model and colour is instant):
+ *   - IMAGIN.studio exact studio renders, if IMAGIN_CUSTOMER_KEY is set (paid); otherwise
+ *   - an AI-generated studio photograph from Cloudflare Workers AI (free daily allowance), if
+ *     CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are set.
+ * The result is cut out and placed on the standard canvas, so it matches every other picture.
+ */
+const RENDER_KEY = process.env.IMAGIN_CUSTOMER_KEY || process.env.NEXT_PUBLIC_IMAGIN_CUSTOMER_KEY || "";
+const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || "";
+const CF_TOKEN = process.env.CLOUDFLARE_AI_TOKEN || "";
+const CF_MODEL = process.env.VEHICLE_AI_IMAGE_MODEL || "@cf/black-forest-labs/flux-1-schnell";
+export const autoFillEnabled = () => !!RENDER_KEY || (!!CF_ACCOUNT && !!CF_TOKEN);
+export const autoFillProvider = () => (RENDER_KEY ? "render" : CF_ACCOUNT && CF_TOKEN ? "ai" : null);
+
+const RENDER_MAKE: Record<string, string> = { mercedes: "mercedes-benz", "land rover": "land-rover", maruti: "maruti-suzuki", "rolls royce": "rolls-royce", "aston martin": "aston-martin", "alfa romeo": "alfa-romeo" };
+const BRAND_NAME: Record<string, string> = { maruti: "Maruti Suzuki", mercedes: "Mercedes-Benz", bmw: "BMW", mg: "MG", "land rover": "Land Rover" };
+export type AutoFillInput = { make?: string | null; model?: string | null; variant?: string | null; year?: string | number | null; paint?: string | null; fuel?: string | null; category?: string | null };
+
+function renderUrl(v: AutoFillInput): string | null {
+  if (!RENDER_KEY || !v.model) return null;
+  const cat = (v.category || "").toUpperCase();
+  if (cat === "BIKE" || cat === "BUS") return null;
+  const [brand, mdl] = modelKey(v.make, v.model).split("|");
+  const words = mdl.split(" ").filter(Boolean);
+  if (!brand || !words.length) return null;
+  const q = new URLSearchParams({ customer: RENDER_KEY, make: RENDER_MAKE[brand] || brand.replace(/\s+/g, "-"), modelFamily: words[0], zoomtype: "fullscreen", angle: "23", width: "1600" });
+  if (words.length > 1) q.set("modelRange", words.join("-"));
+  const paint = paintName(v.paint);
+  if (paint) q.set("paintDescription", paint);
+  const y = String(v.year || "").match(/\d{4}/)?.[0];
+  if (y) q.set("modelYear", y);
+  const fuel = (v.fuel || "").toLowerCase();
+  if (/electric|\bev\b|bev/.test(fuel)) q.set("powerTrain", "electric");
+  else if (/hybrid/.test(fuel)) q.set("powerTrain", "hybrid");
+  return `https://cdn.imagin.studio/getImage?${q.toString()}`;
+}
+
+/** The prompt that makes every AI picture look like a manufacturer's studio press photo. */
+export function aiPrompt(v: AutoFillInput): string {
+  const [brand] = modelKey(v.make, v.model).split("|");
+  const make = BRAND_NAME[brand] || (v.make || "").trim();
+  const makeWord = (v.make || "").trim().toLowerCase();
+  const model = (v.model || "").trim().replace(new RegExp(`^${makeWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+`, "i"), "");
+  const year = String(v.year || "").match(/\d{4}/)?.[0];
+  const paint = paintName(v.paint);
+  const cat = (v.category || "").toUpperCase();
+  const kind = cat === "BIKE" ? "motorcycle" : cat === "BUS" ? "bus" : cat === "COMMERCIAL" ? "commercial vehicle" : "car";
+  const fuel = (v.fuel || "").toLowerCase();
+  const ev = /electric|\bev\b|bev/.test(fuel) ? ", electric version" : "";
+  return [
+    `Official manufacturer press photo of a ${[year, make, model].filter(Boolean).join(" ")} ${kind}${ev}`,
+    paint ? `${paint} paint` : "",
+    "accurate real-world design of this exact model as sold in India",
+    "front three-quarter view, the front of the vehicle pointing to the left, whole vehicle in frame with space around it",
+    "seamless pure white studio background, soft even studio lighting, subtle shadow under the tyres",
+    "no number plate, blank plate area, no text, no logos added, no people, no other vehicles",
+    "photorealistic, sharp focus, high detail, 4k",
+  ].filter(Boolean).join(", ");
+}
+
+async function generateAi(v: AutoFillInput): Promise<Buffer | null> {
+  const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/run/${CF_MODEL}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${CF_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt: aiPrompt(v), steps: 8, seed: seedFor(v) }),
+    signal: AbortSignal.timeout(45000),
+  });
+  if (!res.ok) throw new Error(`AI picture service: HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
+  const type = res.headers.get("content-type") || "";
+  if (type.startsWith("image/")) return Buffer.from(await res.arrayBuffer());
+  const j: any = await res.json();
+  const b64 = j?.result?.image || j?.image;
+  return b64 ? Buffer.from(b64, "base64") : null;
+}
+// same model + colour → same seed, so a re-generation looks the same
+function seedFor(v: AutoFillInput) {
+  const h = crypto.createHash("sha1").update(colourKey(v.make, v.model, v.paint)).digest();
+  return h.readUInt32BE(0) % 2147483647;
+}
+
+const autoInflight = new Map<string, Promise<ModelImageRow | null>>();
+const autoMissed = new Map<string, number>(); // don't hammer a provider that can't make this model: retry after an hour
+let autoQueue: Promise<unknown> = Promise.resolve(); // one picture at a time
+export const autoStatus: { provider: string | null; made: number; lastError: string | null; lastErrorAt: string | null } = { provider: null, made: 0, lastError: null, lastErrorAt: null };
+
+export function autoFillModel(v: AutoFillInput): Promise<ModelImageRow | null> {
+  const key = colourKey(v.make, v.model, v.paint);
+  if (!v.model || !autoFillEnabled()) return Promise.resolve(null);
+  const missedAt = autoMissed.get(key);
+  if (missedAt && Date.now() - missedAt < 3600 * 1000) return Promise.resolve(null);
+  const running = autoInflight.get(key);
+  if (running) return running;
+  const job = autoQueue.then(async () => {
+    autoStatus.provider = autoFillProvider();
+    const { data: existing } = await supabaseAdmin.from(TABLE).select("id, model_key, make, model, variant, storage_path, source, source_url, credit, flipped, updated_at").eq("model_key", key).maybeSingle();
+    if (existing) return existing as ModelImageRow;
+    let picture: Buffer | null = null;
+    let source: "render" | "ai" = "render";
+    const url = renderUrl(v);
+    if (url) {
+      const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20000) });
+      if (res.ok && (res.headers.get("content-type") || "").startsWith("image/")) {
+        const b = Buffer.from(await res.arrayBuffer());
+        if (b.length > 5000) picture = b;
+      }
+    }
+    if (!picture && CF_ACCOUNT && CF_TOKEN) { picture = await generateAi(v); source = "ai"; }
+    if (!picture) { autoMissed.set(key, Date.now()); return null; }
+    const { webp } = await standardise(picture, { flip: false });
+    const row = await saveModelImage({
+      key, make: String(v.make || ""), model: String(v.model), variant: paintName(v.paint), webp, flip: false, source,
+      sourceUrl: null, credit: source === "ai" ? "AI-generated picture" : "Studio render (IMAGIN.studio)", userId: null,
+    });
+    autoStatus.made++;
+    return row;
+  }).catch((e) => {
+    autoMissed.set(key, Date.now());
+    autoStatus.lastError = e instanceof Error ? e.message : String(e);
+    autoStatus.lastErrorAt = new Date().toISOString();
+    throw e;
+  }).finally(() => autoInflight.delete(key));
+  autoQueue = job.catch(() => undefined);
+  autoInflight.set(key, job);
+  return job;
+}
