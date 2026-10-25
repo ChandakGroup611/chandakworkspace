@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable no-restricted-syntax */
 import { toast } from 'react-toastify';
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { AppButton } from "@/components/ui/AppButton";
@@ -13,12 +14,14 @@ import {
   AppTableHead,
   AppTableCell
 } from "@/components/ui/AppTable";
-import { Loader2, Filter, FileSpreadsheet, FileText, Briefcase, LayoutList, Layers, AlignLeft } from "lucide-react";
+import { Loader2, Filter, FileSpreadsheet, FileText, Briefcase, LayoutList, Layers, AlignLeft, X, RotateCcw } from "lucide-react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { generateWorkspaceReportData, getAllReportCustomFields, ReportEntityType, ReportScope } from "@/lib/actions/workspace_reports";
+import { fetchWorkspaces } from "@/lib/actions/workspaces";
+import { WorkspaceFilterMultiSelect } from "@/components/workspaces/WorkspaceFilterMultiSelect";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useLocalReportConfig, UIFieldDefinition } from "@/hooks/useLocalReportConfig";
@@ -118,6 +121,18 @@ export default function ReportsClient() {
   const [query, setQuery] = useState("");
   
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
+  const [selectedSubWorkspaceIds, setSelectedSubWorkspaceIds] = useState<string[]>([]);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [allWorkspaces, setAllWorkspaces] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchWorkspaces().then(ws => {
+      if (Array.isArray(ws)) setAllWorkspaces(ws);
+    }).catch(console.error);
+  }, []);
+
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
@@ -163,6 +178,9 @@ export default function ReportsClient() {
     // Reset filters on entity change
     setQuery("");
     setSelectedStatus("");
+    setSelectedStatuses([]);
+    setSelectedWorkspaceIds([]);
+    setSelectedSubWorkspaceIds([]);
     setDateFrom("");
     setDateTo("");
     setColumnFilters({});
@@ -170,9 +188,124 @@ export default function ReportsClient() {
 
   const uniqueStatuses = useMemo(() => Array.from(new Set(data.map(d => d.status).filter(s => s !== "—"))) as string[], [data]);
 
+  // Root workspaces options
+  const rootWorkspaces = useMemo(() => {
+    const map = new Map<string, { id: string; label: string; sublabel?: string }>();
+    allWorkspaces.forEach(w => {
+      if (!w.parent_workspace_id) {
+        map.set(w.id, {
+          id: w.id,
+          label: w.workspace_name || w.name || "Workspace",
+          sublabel: w.workspace_code || w.code ? `(${w.workspace_code || w.code})` : undefined
+        });
+      }
+    });
+    data.forEach(d => {
+      if (d.workspace_id && !d.parent_workspace_id && !map.has(d.workspace_id)) {
+        map.set(d.workspace_id, {
+          id: d.workspace_id,
+          label: d.workspace || "Workspace"
+        });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [allWorkspaces, data]);
+
+  // Sub-workspaces catalog
+  const allSubWorkspaces = useMemo(() => {
+    const list: Array<{ id: string; label: string; parentId?: string; sublabel?: string }> = [];
+    const seen = new Set<string>();
+
+    allWorkspaces.forEach(w => {
+      if (w.parent_workspace_id) {
+        seen.add(w.id);
+        const parent = allWorkspaces.find(p => p.id === w.parent_workspace_id);
+        list.push({
+          id: w.id,
+          label: w.workspace_name || w.name || "Sub-workspace",
+          parentId: w.parent_workspace_id,
+          sublabel: parent?.workspace_name || parent?.name ? `(${parent.workspace_name || parent.name})` : undefined
+        });
+      }
+    });
+
+    data.forEach(d => {
+      if (d.sub_workspace && d.sub_workspace !== "—") {
+        const id = d.workspace_id;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          list.push({
+            id,
+            label: d.sub_workspace,
+            parentId: d.parent_workspace_id,
+            sublabel: d.workspace ? `(${d.workspace})` : undefined
+          });
+        }
+      }
+    });
+
+    return list;
+  }, [allWorkspaces, data]);
+
+  const subWorkspaceOptions = useMemo(() => {
+    const filteredSubs = selectedWorkspaceIds.length > 0
+      ? allSubWorkspaces.filter(sw => sw.parentId && selectedWorkspaceIds.includes(sw.parentId))
+      : allSubWorkspaces;
+
+    return filteredSubs.sort((a, b) => a.label.localeCompare(b.label));
+  }, [allSubWorkspaces, selectedWorkspaceIds]);
+
+  const statusOptions = useMemo(() => {
+    return uniqueStatuses.map(s => ({ id: s, label: s }));
+  }, [uniqueStatuses]);
+
+  const totalActiveFilterCount = useMemo(() => {
+    let count = 0;
+    count += selectedWorkspaceIds.length;
+    count += selectedSubWorkspaceIds.length;
+    count += selectedStatuses.length > 0 ? selectedStatuses.length : (selectedStatus ? 1 : 0);
+    if (dateFrom || dateTo) count++;
+    if (query) count++;
+    count += Object.keys(columnFilters).filter(k => columnFilters[k]).length;
+    return count;
+  }, [selectedWorkspaceIds, selectedSubWorkspaceIds, selectedStatuses, selectedStatus, dateFrom, dateTo, query, columnFilters]);
+
+  const handleClearAllFilters = () => {
+    setSelectedStatus("");
+    setSelectedStatuses([]);
+    setSelectedWorkspaceIds([]);
+    setSelectedSubWorkspaceIds([]);
+    setDateFrom("");
+    setDateTo("");
+    setQuery("");
+    setColumnFilters({});
+    setOpenDropdown(null);
+  };
+
   const filtered = useMemo(() => {
     return data.filter(item => {
+      // Status single or multi
+      if (selectedStatuses.length > 0 && !selectedStatuses.includes(item.status)) return false;
       if (selectedStatus && item.status !== selectedStatus) return false;
+
+      // Workspace filter
+      if (selectedWorkspaceIds.length > 0) {
+        const matchWs = selectedWorkspaceIds.some(wsId => 
+          item.workspace_id === wsId || 
+          item.parent_workspace_id === wsId || 
+          item.workspace === wsId
+        );
+        if (!matchWs) return false;
+      }
+
+      // Sub-workspace filter
+      if (selectedSubWorkspaceIds.length > 0) {
+        const matchSub = selectedSubWorkspaceIds.some(subId => 
+          item.workspace_id === subId || 
+          item.sub_workspace === subId
+        );
+        if (!matchSub) return false;
+      }
 
       if (dateFrom) {
         const fromDate = new Date(dateFrom).getTime();
@@ -192,6 +325,7 @@ export default function ReportsClient() {
           (item.code || "").toLowerCase().includes(q) ||
           (item.description || "").toLowerCase().includes(q) ||
           (item.workspace || "").toLowerCase().includes(q) ||
+          (item.sub_workspace || "").toLowerCase().includes(q) ||
           (item.assigned_to || "").toLowerCase().includes(q)
         )) return false;
       }
@@ -214,7 +348,7 @@ export default function ReportsClient() {
 
       return true;
     });
-  }, [data, query, selectedStatus, dateFrom, dateTo, columnFilters]);
+  }, [data, query, selectedStatus, selectedStatuses, selectedWorkspaceIds, selectedSubWorkspaceIds, dateFrom, dateTo, columnFilters]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -391,11 +525,58 @@ export default function ReportsClient() {
             )}
           </div>
 
-          {(entityType === "TASK" || entityType === "SUB_TASK") && (
-            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-semibold px-3 py-2.5 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-2 focus:ring-ring`}>
-              <option value="">All statuses</option>
-              {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+          {/* Workspace Filter Multi-Select */}
+          <div className="w-48">
+            <WorkspaceFilterMultiSelect
+              label="Workspace"
+              placeholder="All workspaces"
+              options={rootWorkspaces}
+              selectedIds={selectedWorkspaceIds}
+              onChange={(ids) => {
+                setSelectedWorkspaceIds(ids);
+                if (ids.length > 0) {
+                  setSelectedSubWorkspaceIds(prev => prev.filter(swId => {
+                    const sw = allSubWorkspaces.find(s => s.id === swId);
+                    return sw?.parentId && ids.includes(sw.parentId);
+                  }));
+                }
+              }}
+              isOpen={openDropdown === 'workspace'}
+              onToggle={() => setOpenDropdown(prev => prev === 'workspace' ? null : 'workspace')}
+              onClose={() => setOpenDropdown(null)}
+            />
+          </div>
+
+          {/* Sub-workspace Filter Multi-Select */}
+          {subWorkspaceOptions.length > 0 && (
+            <div className="w-48">
+              <WorkspaceFilterMultiSelect
+                label="Sub-workspace"
+                placeholder="All sub-workspaces"
+                options={subWorkspaceOptions}
+                selectedIds={selectedSubWorkspaceIds}
+                onChange={(ids) => setSelectedSubWorkspaceIds(ids)}
+                isOpen={openDropdown === 'subworkspace'}
+                onToggle={() => setOpenDropdown(prev => prev === 'subworkspace' ? null : 'subworkspace')}
+                onClose={() => setOpenDropdown(null)}
+              />
+            </div>
+          )}
+
+          {/* Status Multi-Select */}
+          {(entityType === "TASK" || entityType === "SUB_TASK" || uniqueStatuses.length > 0) && (
+            <div className="w-44">
+              <WorkspaceFilterMultiSelect
+                label="Status"
+                placeholder="All statuses"
+                options={statusOptions}
+                selectedIds={selectedStatuses}
+                onChange={(ids) => setSelectedStatuses(ids)}
+                isOpen={openDropdown === 'status'}
+                onToggle={() => setOpenDropdown(prev => prev === 'status' ? null : 'status')}
+                onClose={() => setOpenDropdown(null)}
+              />
+            </div>
           )}
         </div>
 
@@ -437,6 +618,77 @@ export default function ReportsClient() {
         />
 
       </div>
+
+      {/* Active Filter Chips Bar */}
+      {totalActiveFilterCount > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 bg-surface/60 rounded-lg border border-border text-xs">
+          <span className="text-[11px] font-semibold text-muted mr-1">Active filters:</span>
+
+          {/* Workspaces */}
+          {selectedWorkspaceIds.map(id => {
+            const ws = rootWorkspaces.find(w => w.id === id);
+            return (
+              <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent-soft text-accent-soft-text border border-border">
+                Workspace: {ws?.label || id}
+                <button type="button" aria-label={`Remove workspace ${ws?.label || id}`} onClick={() => setSelectedWorkspaceIds(prev => prev.filter(x => x !== id))} className="hover:text-danger">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            );
+          })}
+
+          {/* Sub-workspaces */}
+          {selectedSubWorkspaceIds.map(id => {
+            const sw = allSubWorkspaces.find(s => s.id === id);
+            return (
+              <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent-soft text-accent-soft-text border border-border">
+                Sub-workspace: {sw?.label || id}
+                <button type="button" aria-label={`Remove sub-workspace ${sw?.label || id}`} onClick={() => setSelectedSubWorkspaceIds(prev => prev.filter(x => x !== id))} className="hover:text-danger">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            );
+          })}
+
+          {/* Statuses */}
+          {selectedStatuses.map(s => (
+            <span key={s} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface text-foreground border border-border">
+              Status: {s}
+              <button type="button" aria-label={`Remove status ${s}`} onClick={() => setSelectedStatuses(prev => prev.filter(x => x !== s))} className="hover:text-danger">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+
+          {/* Date Range */}
+          {(dateFrom || dateTo) && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface text-foreground border border-border">
+              Date: {dateFrom || "…"} to {dateTo || "…"}
+              <button type="button" aria-label="Remove date range filter" onClick={() => { setDateFrom(""); setDateTo(""); }} className="hover:text-danger">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {/* Query */}
+          {query && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface text-foreground border border-border">
+              Query: "{query}"
+              <button type="button" aria-label="Clear query filter" onClick={() => setQuery("")} className="hover:text-danger">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={handleClearAllFilters}
+            className="ml-auto text-[11px] font-semibold text-muted hover:text-danger flex items-center gap-1"
+          >
+            <RotateCcw className="h-3 w-3" /> Clear all
+          </button>
+        </div>
+      )}
 
       {/* Results Summary */}
       <ReportKPIBar kpis={[
