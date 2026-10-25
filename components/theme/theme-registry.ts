@@ -9,11 +9,11 @@
 export type ThemeMode = "light" | "dark";
 
 export const THEMES = [
-  { id: "chandak-classic",   label: "Chandak Classic",   mode: "light", group: "Light",         blurb: "Brand plum on cool neutrals. The default for everyday work.",                 sidebarTone: "light", swatch: ["#f4f5f8", "#ffffff", "#702963"] },
-  { id: "chandak-executive", label: "Chandak Executive", mode: "light", group: "Light",         blurb: "Deep aubergine navigation rail with a bright, quiet workspace.",             sidebarTone: "dark", swatch: ["#f5f4f6", "#23101f", "#702963"] },
-  { id: "corporate-blue",    label: "Corporate Blue",    mode: "light", group: "Light",         blurb: "Navy rail, blue actions. Familiar to anyone who lives in ERP and Office.",    sidebarTone: "dark", swatch: ["#f3f5f9", "#0f1e3d", "#1d4ed8"] },
-  { id: "teal-ledger",       label: "Teal Ledger",       mode: "light", group: "Light",         blurb: "Calm teal for finance, AMC and approval-heavy screens.",                      sidebarTone: "light", swatch: ["#f3f6f6", "#ffffff", "#0f766e"] },
-  { id: "saffron-site",      label: "Saffron Site",      mode: "light", group: "Light",         blurb: "Warm construction-site orange with charcoal rail. Good for Design Tracking.", sidebarTone: "dark", swatch: ["#f6f5f3", "#1f1d1b", "#b4410b"] },
+  { id: "chandak-classic",   label: "Chandak Classic",   mode: "light", group: "Light",         blurb: "Brand plum on cool neutrals. The default for everyday work.",                 sidebarTone: "light", swatch: ["#ffffff", "#ffffff", "#702963"] },
+  { id: "chandak-executive", label: "Chandak Executive", mode: "light", group: "Light",         blurb: "Deep aubergine navigation rail with a bright, quiet workspace.",             sidebarTone: "dark", swatch: ["#ffffff", "#23101f", "#702963"] },
+  { id: "corporate-blue",    label: "Corporate Blue",    mode: "light", group: "Light",         blurb: "Navy rail, blue actions. Familiar to anyone who lives in ERP and Office.",    sidebarTone: "dark", swatch: ["#ffffff", "#0f1e3d", "#1d4ed8"] },
+  { id: "teal-ledger",       label: "Teal Ledger",       mode: "light", group: "Light",         blurb: "Calm teal for finance, AMC and approval-heavy screens.",                      sidebarTone: "light", swatch: ["#ffffff", "#ffffff", "#0f766e"] },
+  { id: "saffron-site",      label: "Saffron Site",      mode: "light", group: "Light",         blurb: "Warm construction-site orange with charcoal rail. Good for Design Tracking.", sidebarTone: "dark", swatch: ["#ffffff", "#1f1d1b", "#b4410b"] },
   { id: "high-contrast",     label: "High Contrast",     mode: "light", group: "Accessibility", blurb: "Maximum legibility for long shifts, projectors and low-vision users.",        sidebarTone: "light", swatch: ["#ffffff", "#ffffff", "#0039a6"] },
   { id: "midnight-plum",     label: "Midnight Plum",     mode: "dark",  group: "Dark",          blurb: "Low-glare dark mode that keeps the Chandak plum identity.",                   sidebarTone: "dark", swatch: ["#0e1016", "#0b0d12", "#d38bc2"] },
   { id: "graphite",          label: "Graphite",          mode: "dark",  group: "Dark",          blurb: "Neutral charcoal with blue actions. Quiet enough for 8-hour days.",          sidebarTone: "dark", swatch: ["#101113", "#0c0d0f", "#5b9bff"] },

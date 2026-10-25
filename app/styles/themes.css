@@ -7,7 +7,7 @@
 
 :root {
   color-scheme: light;
-  --bg-primary: #f4f5f8;
+  --bg-primary: #ffffff;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
   --bg-sunken: #f0f2f6;
@@ -81,7 +81,7 @@
 /* Chandak Classic — Brand plum on cool neutrals. The default for everyday work. */
 [data-theme="chandak-classic"] {
   color-scheme: light;
-  --bg-primary: #f4f5f8;
+  --bg-primary: #ffffff;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
   --bg-sunken: #f0f2f6;
@@ -155,7 +155,7 @@
 /* Chandak Executive — Deep aubergine navigation rail with a bright, quiet workspace. */
 [data-theme="chandak-executive"] {
   color-scheme: light;
-  --bg-primary: #f5f4f6;
+  --bg-primary: #ffffff;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
   --bg-sunken: #f1eff3;
@@ -229,7 +229,7 @@
 /* Corporate Blue — Navy rail, blue actions. Familiar to anyone who lives in ERP and Office. */
 [data-theme="corporate-blue"] {
   color-scheme: light;
-  --bg-primary: #f3f5f9;
+  --bg-primary: #ffffff;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
   --bg-sunken: #eef2f7;
@@ -303,7 +303,7 @@
 /* Teal Ledger — Calm teal for finance, AMC and approval-heavy screens. */
 [data-theme="teal-ledger"] {
   color-scheme: light;
-  --bg-primary: #f3f6f6;
+  --bg-primary: #ffffff;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
   --bg-sunken: #eef3f2;
@@ -377,7 +377,7 @@
 /* Saffron Site — Warm construction-site orange with charcoal rail. Good for Design Tracking. */
 [data-theme="saffron-site"] {
   color-scheme: light;
-  --bg-primary: #f6f5f3;
+  --bg-primary: #ffffff;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
   --bg-sunken: #f2f0ec;

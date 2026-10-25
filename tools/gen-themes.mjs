@@ -36,7 +36,7 @@ const THEMES = [
   {
     id: "chandak-classic", label: "Chandak Classic", mode: "light", group: "Light",
     blurb: "Brand plum on cool neutrals. The default for everyday work.",
-    canvas: "#f4f5f8", surface: "#ffffff", sunken: "#f0f2f6", hover: "#eceef3",
+    canvas: "#ffffff", surface: "#ffffff", sunken: "#f0f2f6", hover: "#eceef3",
     border: "#e2e5eb", strong: "#c3c8d2", input: "#b9bfca",
     text: "#141a26", text2: "#3c4555", muted: "#5d6677", heading: "#0d1220",
     primary: "#702963", primaryHover: "#5a1f4f", primaryFg: "#ffffff",
@@ -46,7 +46,7 @@ const THEMES = [
   {
     id: "chandak-executive", label: "Chandak Executive", mode: "light", group: "Light",
     blurb: "Deep aubergine navigation rail with a bright, quiet workspace.",
-    canvas: "#f5f4f6", surface: "#ffffff", sunken: "#f1eff3", hover: "#ece9ef",
+    canvas: "#ffffff", surface: "#ffffff", sunken: "#f1eff3", hover: "#ece9ef",
     border: "#e4e0e7", strong: "#c6c0cc", input: "#bbb4c2",
     text: "#1a1420", text2: "#43394b", muted: "#665c6e", heading: "#120c17",
     primary: "#702963", primaryHover: "#5a1f4f", primaryFg: "#ffffff",
@@ -56,7 +56,7 @@ const THEMES = [
   {
     id: "corporate-blue", label: "Corporate Blue", mode: "light", group: "Light",
     blurb: "Navy rail, blue actions. Familiar to anyone who lives in ERP and Office.",
-    canvas: "#f3f5f9", surface: "#ffffff", sunken: "#eef2f7", hover: "#e8edf5",
+    canvas: "#ffffff", surface: "#ffffff", sunken: "#eef2f7", hover: "#e8edf5",
     border: "#dde3ec", strong: "#bec8d6", input: "#b3bfd0",
     text: "#0f1a2e", text2: "#36445c", muted: "#57667e", heading: "#0a1324",
     primary: "#1d4ed8", primaryHover: "#1a3fb0", primaryFg: "#ffffff",
@@ -66,7 +66,7 @@ const THEMES = [
   {
     id: "teal-ledger", label: "Teal Ledger", mode: "light", group: "Light",
     blurb: "Calm teal for finance, AMC and approval-heavy screens.",
-    canvas: "#f3f6f6", surface: "#ffffff", sunken: "#eef3f2", hover: "#e7eeed",
+    canvas: "#ffffff", surface: "#ffffff", sunken: "#eef3f2", hover: "#e7eeed",
     border: "#dce5e3", strong: "#bccbc8", input: "#b0c1be",
     text: "#10201e", text2: "#354844", muted: "#566a66", heading: "#0a1715",
     primary: "#0f766e", primaryHover: "#0b5f58", primaryFg: "#ffffff",
@@ -76,7 +76,7 @@ const THEMES = [
   {
     id: "saffron-site", label: "Saffron Site", mode: "light", group: "Light",
     blurb: "Warm construction-site orange with charcoal rail. Good for Design Tracking.",
-    canvas: "#f6f5f3", surface: "#ffffff", sunken: "#f2f0ec", hover: "#ece9e4",
+    canvas: "#ffffff", surface: "#ffffff", sunken: "#f2f0ec", hover: "#ece9e4",
     border: "#e4e0d9", strong: "#c9c2b7", input: "#bdb5a8",
     text: "#1c1814", text2: "#463f37", muted: "#685f55", heading: "#14110d",
     primary: "#b4410b", primaryHover: "#953508", primaryFg: "#ffffff",
