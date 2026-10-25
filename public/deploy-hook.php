@@ -165,6 +165,21 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     $psOutput = [];
     safeExec('ps aux 2>/dev/null || ps -u $(whoami) -f 2>/dev/null', $psOutput);
     
+    // Scan /proc for node processes directly
+    $nodePids = [];
+    $procDirs = @glob('/proc/[0-9]*');
+    if ($procDirs) {
+        foreach ($procDirs as $pDir) {
+            $pid = (int)basename($pDir);
+            if ($pid > 1 && $pid !== getmypid()) {
+                $cmd = @file_get_contents($pDir . '/cmdline');
+                if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false)) {
+                    $nodePids[] = ['pid' => $pid, 'cmd' => substr(str_replace("\0", " ", $cmd), 0, 100)];
+                }
+            }
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'domain_root' => $domainRoot,
@@ -176,6 +191,9 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
         'logs' => $foundLogs,
         'htaccess' => $foundHts,
         'processes' => array_slice($psOutput, 0, 50),
+        'node_pids' => $nodePids,
+        'posix_kill_exists' => function_exists('posix_kill'),
+        'disabled_functions' => ini_get('disable_functions'),
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
@@ -188,6 +206,23 @@ if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     safeExec('killall -9 node 2>&1', $killOut);
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killOut);
     
+    $killedViaPosix = [];
+    if (function_exists('posix_kill')) {
+        $procDirs = @glob('/proc/[0-9]*');
+        if ($procDirs) {
+            foreach ($procDirs as $pDir) {
+                $pid = (int)basename($pDir);
+                if ($pid > 1 && $pid !== getmypid()) {
+                    $cmd = @file_get_contents($pDir . '/cmdline');
+                    if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false)) {
+                        @posix_kill($pid, 9);
+                        $killedViaPosix[] = $pid;
+                    }
+                }
+            }
+        }
+    }
+
     $futureTime = time() + 120;
     foreach ($primaryAppRoots as $target) {
         @mkdir($target . '/tmp', 0755, true);
@@ -200,6 +235,7 @@ if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     echo json_encode([
         'success' => true,
         'action' => 'force_restart',
+        'killed_pids' => $killedViaPosix,
         'kill_output' => $killOut,
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
@@ -326,6 +362,20 @@ if ($zipFile && class_exists('ZipArchive')) {
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
 
     // Force kill old node processes so Passenger is forced to spawn a fresh worker
+    if (function_exists('posix_kill')) {
+        $procDirs = @glob('/proc/[0-9]*');
+        if ($procDirs) {
+            foreach ($procDirs as $pDir) {
+                $pid = (int)basename($pDir);
+                if ($pid > 1 && $pid !== getmypid()) {
+                    $cmd = @file_get_contents($pDir . '/cmdline');
+                    if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false)) {
+                        @posix_kill($pid, 9);
+                    }
+                }
+            }
+        }
+    }
     safeExec('pkill -9 -u $(whoami) -f node 2>&1', $killResults);
     safeExec('killall -9 node 2>&1', $killResults);
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
@@ -335,7 +385,7 @@ if ($zipFile && class_exists('ZipArchive')) {
 $htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\n";
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
-$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxInstances 1\nPassengerMinInstances 1\nPassengerMaxPoolSize 2\nPassengerPoolIdleTime 300\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--max-old-space-size=400 --require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxInstances 1\nPassengerMinInstances 1\nPassengerMaxPoolSize 2\nPassengerPoolIdleTime 300\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--max-old-space-size=400 --require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nSetEnv UV_THREADPOOL_SIZE 2\nRewriteRule ^\\.builds - [F,L]\n";
 
 // 1. Write to public_html/.htaccess
 $pubHtaccess = $htaccessHeader . "PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs\nPassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp\n" . $passengerDirective;
