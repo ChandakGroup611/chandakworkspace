@@ -106,33 +106,37 @@ if (!$domainRoot || !is_dir($domainRoot)) {
 
 $versionedDirs = glob($domainRoot . '/hbuilds/versions/*/nodejs');
 
-// Determine Primary Node Application Roots (ALL versioned Node roots + current + public_html)
-$primaryAppRoots = [
-    $domainRoot . '/hbuilds/current/nodejs',
-    $domainRoot . '/public_html',
-];
-if ($versionedDirs) {
-    foreach ($versionedDirs as $vDir) {
-        $primaryAppRoots[] = $vDir;
+// Canonical application root (Only ONE app root to avoid multiple Passenger process pools)
+$canonicalAppRoot = $domainRoot . '/hbuilds/current/nodejs';
+if (!is_dir($canonicalAppRoot)) {
+    // If current symlink doesn't exist, use the newest version directory
+    if ($versionedDirs) {
+        usort($versionedDirs, fn($a, $b) => filemtime($b) - filemtime($a));
+        $canonicalAppRoot = $versionedDirs[0];
+    } else {
+        $canonicalAppRoot = $domainRoot . '/public_html';
     }
 }
-if (dirname(__DIR__) !== $domainRoot && is_dir(dirname(__DIR__))) {
-    $primaryAppRoots[] = dirname(__DIR__);
-}
 
-$primaryAppRoots = array_values(array_unique(array_filter($primaryAppRoots, 'is_dir')));
+$primaryAppRoots = [$canonicalAppRoot];
+
+// Clean up stale .htaccess and server.js from old version directories so LiteSpeed never spawns ghost processes
+if ($versionedDirs) {
+    foreach ($versionedDirs as $vDir) {
+        if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
+            @unlink($vDir . '/.htaccess');
+            @unlink($vDir . '/public/.htaccess');
+            @unlink($vDir . '/tmp/restart.txt');
+        }
+    }
+}
 
 // Determine all public-facing document roots (where LiteSpeed directly serves static chunks)
 $publicDocRoots = [
     $domainRoot . '/public_html',
-    $domainRoot . '/hbuilds/current/nodejs/public',
+    $canonicalAppRoot . '/public',
     __DIR__,
 ];
-if ($versionedDirs) {
-    foreach ($versionedDirs as $vDir) {
-        $publicDocRoots[] = $vDir . '/public';
-    }
-}
 $publicDocRoots = array_values(array_unique(array_filter($publicDocRoots, 'is_dir')));
 
 // Diagnostic / Info Mode
@@ -385,40 +389,38 @@ if ($zipFile && class_exists('ZipArchive')) {
 $htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\n";
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
-$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxInstances 1\nPassengerMinInstances 1\nPassengerMaxPoolSize 2\nPassengerPoolIdleTime 300\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--max-old-space-size=400 --require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nSetEnv UV_THREADPOOL_SIZE 2\nRewriteRule ^\\.builds - [F,L]\n";
+// STRICT: Exactly 1 single worker instance to prevent process proliferation, port clashes, and uv_thread_create exhaustion
+$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxInstances 1\nPassengerMinInstances 1\nPassengerMaxPoolSize 1\nPassengerPoolIdleTime 0\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 2\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\n";
 
-// 1. Write to public_html/.htaccess
-$pubHtaccess = $htaccessHeader . "PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs\nPassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp\n" . $passengerDirective;
+// 1. Write to public_html/.htaccess pointing exclusively to canonical app root
+$pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
 @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
 @touch($domainRoot . '/public_html/.htaccess');
 
-// 2. Write to all versioned dirs if present
+// 2. Write to canonical app root .htaccess if it's not public_html
+if ($canonicalAppRoot !== $domainRoot . '/public_html') {
+    $cHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
+    @file_put_contents($canonicalAppRoot . '/.htaccess', $cHtaccess);
+    @touch($canonicalAppRoot . '/.htaccess');
+}
+
+// 3. Purge .htaccess from all other versioned directories so LiteSpeed NEVER spawns duplicate Passenger pools
 if ($versionedDirs) {
     foreach ($versionedDirs as $vDir) {
-        $vHtaccess = $htaccessHeader . "PassengerAppRoot " . $vDir . "\nPassengerRestartDir " . $vDir . "/tmp\n" . $passengerDirective;
-        @file_put_contents($vDir . '/.htaccess', $vHtaccess);
-        @touch($vDir . '/.htaccess');
-        if (is_dir($vDir . '/public')) {
-            @file_put_contents($vDir . '/public/.htaccess', $vHtaccess);
-            @touch($vDir . '/public/.htaccess');
+        if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
+            @unlink($vDir . '/.htaccess');
+            @unlink($vDir . '/public/.htaccess');
+            @unlink($vDir . '/tmp/restart.txt');
         }
     }
 }
 
-// 3. Write to current nodejs dir
-$currNode = $domainRoot . '/hbuilds/current/nodejs';
-if (is_dir($currNode)) {
-    $cHtaccess = $htaccessHeader . "PassengerAppRoot " . $currNode . "\nPassengerRestartDir " . $currNode . "/tmp\n" . $passengerDirective;
-    @file_put_contents($currNode . '/.htaccess', $cHtaccess);
-    @touch($currNode . '/.htaccess');
-}
-
-// 4. Touch all restart.txt triggers to force Passenger worker respawn
-foreach ($primaryAppRoots as $root) {
-    @mkdir($root . '/tmp', 0755, true);
-    @touch($root . '/tmp/restart.txt');
-    if (file_exists($root . '/server.js')) @touch($root . '/server.js');
-}
+// 4. Touch restart.txt trigger only on canonical root
+@mkdir($canonicalAppRoot . '/tmp', 0755, true);
+$futureTime = time() + 120;
+@touch($canonicalAppRoot . '/tmp/restart.txt', $futureTime);
+if (file_exists($canonicalAppRoot . '/server.js')) @touch($canonicalAppRoot . '/server.js', $futureTime);
+if (file_exists($canonicalAppRoot . '/package.json')) @touch($canonicalAppRoot . '/package.json', $futureTime);
 
 // 5. Ensure deploy-hook is preserved in public_html and versioned public
 $selfCode = @file_get_contents(__FILE__);

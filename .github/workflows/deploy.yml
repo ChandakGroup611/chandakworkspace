@@ -144,14 +144,15 @@ jobs:
             fi
             
             TARGET_DIRS=(
-              "$DOMAIN_ROOT/public_html"
               "$DOMAIN_ROOT/hbuilds/current/nodejs"
-              "$ROOT_DIR/public_html"
-              "$ROOT_DIR/hbuilds/current/nodejs"
+              "$DOMAIN_ROOT/public_html"
             )
             
-            for found_node in $(find "$DOMAIN_ROOT/hbuilds" "$ROOT_DIR/hbuilds" -type d \( -name "nodejs" -o -name "public" \) 2>/dev/null); do
-              TARGET_DIRS+=("$found_node")
+            # Clean up old version directories so they never run duplicate Node apps
+            for old_ver in $(find "$DOMAIN_ROOT/hbuilds/versions" -maxdepth 2 -type d -name "nodejs" 2>/dev/null); do
+              if [ "$old_ver" != "$DOMAIN_ROOT/hbuilds/current/nodejs" ]; then
+                rm -f "$old_ver/.htaccess" "$old_ver/public/.htaccess" "$old_ver/tmp/restart.txt"
+              fi
             done
 
             echo "Target directories to update: ${TARGET_DIRS[*]}"
