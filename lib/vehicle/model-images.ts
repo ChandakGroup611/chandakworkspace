@@ -229,11 +229,16 @@ export const isCommonsUrl = (src: string) => {
  * A vehicle whose model + colour has no picture yet gets one made automatically, once, and stored
  * in the library like any other picture (so the next vehicle of that model and colour is instant):
  *   - IMAGIN.studio exact studio renders, if IMAGIN_CUSTOMER_KEY is set (paid); otherwise
+ *   - an AI-generated studio photograph from Google Gemini, if GEMINI_API_KEY is set (best likeness,
+ *     ~US$0.04 per picture); otherwise
  *   - an AI-generated studio photograph from Cloudflare Workers AI (free daily allowance), if
  *     CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are set.
  * The result is cut out and placed on the standard canvas, so it matches every other picture.
  */
 const RENDER_KEY = process.env.IMAGIN_CUSTOMER_KEY || process.env.NEXT_PUBLIC_IMAGIN_CUSTOMER_KEY || "";
+// Google Gemini image model: knows real car models best, ~US$0.04 per picture, made once per model + colour
+const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
+const GEMINI_MODEL = process.env.VEHICLE_GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
 const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || "";
 const CF_TOKEN = process.env.CLOUDFLARE_AI_TOKEN || "";
 // FLUX.2 [klein] follows camera directions far better than FLUX.1 schnell and makes wide pictures;
@@ -244,10 +249,10 @@ const CF_FALLBACK = "@cf/black-forest-labs/flux-1-schnell";
  * Style of the AI pictures. Changing it makes every AI picture regenerate in the new style the next
  * time it is shown (pictures set by an admin or from a render service are kept).
  */
-export const AI_STYLE = "ai-v4-side-profile-reference";
+export const AI_STYLE = GEMINI_KEY ? "ai-v5-gemini-side-profile" : "ai-v4-side-profile-reference";
 export const isOutdatedAi = (r: Pick<ModelImageRow, "source" | "source_url">) => r.source === "ai" && r.source_url !== AI_STYLE;
-export const autoFillEnabled = () => !!RENDER_KEY || (!!CF_ACCOUNT && !!CF_TOKEN);
-export const autoFillProvider = () => (RENDER_KEY ? "render" : CF_ACCOUNT && CF_TOKEN ? "ai" : null);
+export const autoFillEnabled = () => !!RENDER_KEY || !!GEMINI_KEY || (!!CF_ACCOUNT && !!CF_TOKEN);
+export const autoFillProvider = () => (RENDER_KEY ? "render" : GEMINI_KEY ? "ai:gemini" : CF_ACCOUNT && CF_TOKEN ? "ai:cloudflare" : null);
 
 const RENDER_MAKE: Record<string, string> = { mercedes: "mercedes-benz", "land rover": "land-rover", maruti: "maruti-suzuki", "rolls royce": "rolls-royce", "aston martin": "aston-martin", "alfa romeo": "alfa-romeo" };
 const BRAND_NAME: Record<string, string> = { maruti: "Maruti Suzuki", mercedes: "Mercedes-Benz", bmw: "BMW", mg: "MG", "land rover": "Land Rover" };
@@ -284,7 +289,10 @@ export function aiPrompt(v: AutoFillInput, attempt = 0, withReference = false): 
   const kind = cat === "BIKE" ? "motorcycle" : cat === "BUS" ? "bus" : cat === "COMMERCIAL" ? "commercial vehicle" : "car";
   const fuel = (v.fuel || "").toLowerCase();
   const ev = /electric|\bev\b|bev/.test(fuel) ? " (electric version)" : "";
-  const name = [year, make, model].filter(Boolean).join(" ");
+  // the variant helps a model that knows the car ("Innova Crysta 2.4 VX"); skip placeholders like "Standard" or "VXi / ZXi"
+  const variant = (v.variant || "").trim();
+  const useVariant = variant && !/[\/|]/.test(variant) && !/^(std|standard|base|na|n\/a|-)$/i.test(variant) && variant.length <= 40;
+  const name = [year, make, model, useVariant ? variant : ""].filter(Boolean).join(" ");
   // later attempts say the angle even more bluntly
   const angle = attempt === 0
     ? "pure side profile view, camera at exactly 90 degrees to the side of the vehicle, the vehicle faces left"
@@ -395,8 +403,62 @@ async function callCloudflare(model: string, prompt: string, reference?: Blob | 
   return b64 ? Buffer.from(b64, "base64") : null;
 }
 
+/* ---------------- hard monthly limit for Gemini (stay inside the free credit) ---------------- */
+/**
+ * Every Gemini request is counted in vehicle_ai_usage. At the limit (default 100 a month, about
+ * US$4, well inside a US$10 monthly credit) Gemini is not called again until next month and the
+ * free Cloudflare model is used instead. If the counter can't be read or written, Gemini is not
+ * used at all, so a fault can never lead to spending.
+ */
+const GEMINI_MONTHLY_LIMIT = Math.max(0, Number(process.env.GEMINI_MONTHLY_LIMIT ?? 100) || 0);
+const monthKey = () => new Date().toISOString().slice(0, 7);
+export const geminiUsage: { month: string; calls: number; limit: number; blocked: string | null } = { month: monthKey(), calls: 0, limit: GEMINI_MONTHLY_LIMIT, blocked: null };
+/** Reserve one Gemini request; false = limit reached or counter unavailable (then don't call Gemini). */
+async function reserveGeminiCall(): Promise<boolean> {
+  const month = monthKey();
+  try {
+    const { data, error } = await supabaseAdmin.from("vehicle_ai_usage").select("gemini_calls").eq("month", month).maybeSingle();
+    if (error) throw new Error(error.message);
+    const used = Number(data?.gemini_calls || 0);
+    Object.assign(geminiUsage, { month, calls: used });
+    if (used >= GEMINI_MONTHLY_LIMIT) { geminiUsage.blocked = `monthly limit of ${GEMINI_MONTHLY_LIMIT} reached`; return false; }
+    const up = await supabaseAdmin.from("vehicle_ai_usage").upsert({ month, gemini_calls: used + 1, updated_at: new Date().toISOString() }, { onConflict: "month" });
+    if (up.error) throw new Error(up.error.message);
+    Object.assign(geminiUsage, { calls: used + 1, blocked: null });
+    return true;
+  } catch (e) {
+    geminiUsage.blocked = `usage counter unavailable (${e instanceof Error ? e.message.slice(0, 120) : e}); apply migration 20261025120000_vehicle_ai_usage_limit.sql`;
+    return false;
+  }
+}
+
+/** Google Gemini image generation (REST, generateContent with an IMAGE response). */
+async function callGemini(prompt: string): Promise<Buffer | null> {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+    method: "POST",
+    headers: { "x-goog-api-key": GEMINI_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ["IMAGE"], imageConfig: { aspectRatio: "16:9" } },
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  if (!res.ok) throw new Error(`Gemini picture service: HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 240)}`);
+  const j: any = await res.json();
+  for (const part of j?.candidates?.[0]?.content?.parts || []) {
+    const data = part.inlineData?.data || part.inline_data?.data;
+    if (data) return Buffer.from(data, "base64");
+  }
+  const why = j?.candidates?.[0]?.finishReason || j?.promptFeedback?.blockReason || "no picture returned";
+  throw new Error(`Gemini picture service: ${why}`);
+}
+
 let useFallbackModel = false;
 async function generateAi(v: AutoFillInput, attempt: number, reference: Blob | null): Promise<Buffer | null> {
+  // Gemini already knows real models well, so it works from the description alone.
+  // Only while inside the monthly limit; otherwise the free Cloudflare model (below) is used.
+  if (GEMINI_KEY && (await reserveGeminiCall())) return callGemini(aiPrompt(v, attempt, false));
+  if (!CF_ACCOUNT || !CF_TOKEN) return null;
   if (!useFallbackModel) {
     try { return await callCloudflare(CF_MODEL, aiPrompt(v, attempt, !!reference), reference); }
     catch (e) {
@@ -417,9 +479,11 @@ async function makeCheckedAiPicture(v: AutoFillInput): Promise<Buffer | null> {
   const sharp = (await import("sharp")).default;
   let best: { cut: Buffer; score: number } | null = null;
   const need = minSideAspect(v.category);
-  const reference = await referenceImage(v.make, v.model);
-  console.info(`[vehicle-ai] ${v.make} ${v.model}: ${reference ? "using a reference photo" : "no reference photo found, text only"}`);
-  for (let attempt = 0; attempt < 4; attempt++) {
+  const reference = CF_ACCOUNT && CF_TOKEN ? await referenceImage(v.make, v.model) : null;
+  console.info(`[vehicle-ai] ${v.make} ${v.model}: ${GEMINI_KEY ? `Gemini (${geminiUsage.calls}/${GEMINI_MONTHLY_LIMIT} this month), Cloudflare as backup` : reference ? "Cloudflare with a reference photo" : "Cloudflare, text only"}`);
+  // Gemini gets the angle right far more often, so it gets fewer tries (each one counts toward the limit)
+  const tries = GEMINI_KEY ? 2 : 4;
+  for (let attempt = 0; attempt < tries; attempt++) {
     const raw = await generateAi(v, attempt, reference);
     if (!raw) continue;
     const meta = await sharp(raw).metadata();
@@ -480,7 +544,7 @@ export function autoFillModel(v: AutoFillInput): Promise<ModelImageRow | null> {
         if (b.length > 5000) picture = b;
       }
     }
-    if (!picture && CF_ACCOUNT && CF_TOKEN) { picture = await makeCheckedAiPicture(v); source = "ai"; }
+    if (!picture && (GEMINI_KEY || (CF_ACCOUNT && CF_TOKEN))) { picture = await makeCheckedAiPicture(v); source = "ai"; }
     if (!picture) { autoMissed.set(key, Date.now()); return null; }
     const { webp } = await standardise(picture, { flip: false });
     const row = await saveModelImage({

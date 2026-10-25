@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedUser } from "@/lib/auth/cached-user";
-import { autoFillEnabled, autoFillModel, autoFillProvider, autoStatus } from "@/lib/vehicle/model-images";
+import { autoFillEnabled, autoFillModel, autoFillProvider, autoStatus, geminiUsage } from "@/lib/vehicle/model-images";
 
 /**
  * POST /api/vehicle/model-image/auto   { make, model, variant?, year?, paint?, fuel?, category? }
@@ -16,7 +16,7 @@ export const maxDuration = 60;
 export async function GET() {
   const { user } = await getCachedUser();
   if (!user) return new NextResponse("Unauthenticated", { status: 401 });
-  return NextResponse.json({ ...autoStatus, enabled: autoFillEnabled(), provider: autoFillProvider() }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ ...autoStatus, enabled: autoFillEnabled(), provider: autoFillProvider(), gemini: geminiUsage }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(request: NextRequest) {
