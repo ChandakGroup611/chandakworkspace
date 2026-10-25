@@ -290,7 +290,7 @@ async function generateAi(v: AutoFillInput): Promise<Buffer | null> {
   const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/run/${CF_MODEL}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${CF_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: aiPrompt(v), steps: 8, seed: seedFor(v) }),
+    body: JSON.stringify({ prompt: aiPrompt(v), steps: 8 }),
     signal: AbortSignal.timeout(45000),
   });
   if (!res.ok) throw new Error(`AI picture service: HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
