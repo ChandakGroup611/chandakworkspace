@@ -82,46 +82,20 @@ jobs:
 
       # Upload the compiled standalone zip file and deploy-hook to Hostinger via Direct FTP (Zero Caching)
       - name: Sync files via Direct FTP
+        timeout-minutes: 4
         run: |
           echo "Syncing deploy.zip and deploy-hook.php to Hostinger via Direct FTP..."
           
-          # Upload to Domain Public HTML
-          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to domain public_html deploy.zip failed"
-          curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
+          # Upload to Domain Public HTML (Primary target for SSH and Webhook extraction)
+          curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to domain public_html deploy.zip failed"
+          curl -sS --connect-timeout 15 --max-time 45 --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
           
-          # Upload to Active Versioned Nodejs (01a1294b-6e33-7230-bb26-79b878f1cbfe)
-          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1294b-6e33-7230-bb26-79b878f1cbfe/nodejs/deploy.zip" || echo "FTP to active versioned nodejs deploy.zip failed"
-          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1294b-6e33-7230-bb26-79b878f1cbfe/nodejs/public/deploy.zip" || echo "FTP to active versioned public deploy.zip failed"
-          curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1294b-6e33-7230-bb26-79b878f1cbfe/nodejs/public/deploy-hook.php" || echo "FTP to active versioned public deploy-hook.php failed"
+          # Upload to Root as fallback
+          curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/deploy.zip" || echo "FTP to root deploy.zip failed"
 
-          # Upload to Secondary Versioned Nodejs (01a1292a-eb3c-70ef-942b-d334fbc31a22)
-          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/deploy.zip" || echo "FTP to active versioned nodejs deploy.zip failed"
-          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/public/deploy.zip" || echo "FTP to active versioned public deploy.zip failed"
-          curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/public/deploy-hook.php" || echo "FTP to active versioned public deploy-hook.php failed"
-
-          # Upload to Legacy Versioned Nodejs (01a0e75f-5f5d-715a-9479-733f79592f9f)
-          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip" || echo "FTP to versioned public deploy.zip failed"
-          curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy-hook.php" || echo "FTP to versioned public deploy-hook.php failed"
-          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip" || echo "FTP to versioned nodejs deploy.zip failed"
-          
-          # Upload to Root
-          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/deploy.zip" || echo "FTP to root deploy.zip failed"
-
-      # Fallback Sync via FTP-Deploy-Action
-      - name: Sync files via FTP (Versioned Nodejs Public)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        continue-on-error: true
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./upload-payload/
-          server-dir: ./domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/
-          protocol: ftp
-          state-name: ''
-          dangerous-clean-slate: false
-
+      # Fallback Sync via FTP-Deploy-Action (Domain Public HTML)
       - name: Sync files via FTP (Domain Public HTML)
+        timeout-minutes: 3
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         continue-on-error: true
         with:
