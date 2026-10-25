@@ -237,6 +237,12 @@ const RENDER_KEY = process.env.IMAGIN_CUSTOMER_KEY || process.env.NEXT_PUBLIC_IM
 const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || "";
 const CF_TOKEN = process.env.CLOUDFLARE_AI_TOKEN || "";
 const CF_MODEL = process.env.VEHICLE_AI_IMAGE_MODEL || "@cf/black-forest-labs/flux-1-schnell";
+/**
+ * Style of the AI pictures. Changing it makes every AI picture regenerate in the new style the next
+ * time it is shown (pictures set by an admin or from a render service are kept).
+ */
+export const AI_STYLE = "ai-v2-side-profile";
+export const isOutdatedAi = (r: Pick<ModelImageRow, "source" | "source_url">) => r.source === "ai" && r.source_url !== AI_STYLE;
 export const autoFillEnabled = () => !!RENDER_KEY || (!!CF_ACCOUNT && !!CF_TOKEN);
 export const autoFillProvider = () => (RENDER_KEY ? "render" : CF_ACCOUNT && CF_TOKEN ? "ai" : null);
 
@@ -279,9 +285,9 @@ export function aiPrompt(v: AutoFillInput): string {
     `Official manufacturer press photo of a ${[year, make, model].filter(Boolean).join(" ")} ${kind}${ev}`,
     paint ? `${paint} paint` : "",
     "accurate real-world design of this exact model as sold in India",
-    "front three-quarter view, the front of the vehicle pointing to the left, whole vehicle in frame with space around it",
+    "exact side profile view, camera perpendicular to the side of the vehicle, the front of the vehicle pointing to the left, both wheels on the near side clearly visible, not a front view, whole vehicle in frame with space around it",
     "seamless pure white studio background, soft even studio lighting, subtle shadow under the tyres",
-    "no number plate, blank plate area, no text, no logos added, no people, no other vehicles",
+    "no number plate, no text, no logos added, no people, no other vehicles",
     "photorealistic, sharp focus, high detail, 4k",
   ].filter(Boolean).join(", ");
 }
@@ -300,14 +306,8 @@ async function generateAi(v: AutoFillInput): Promise<Buffer | null> {
   const b64 = j?.result?.image || j?.image;
   return b64 ? Buffer.from(b64, "base64") : null;
 }
-// same model + colour → same seed, so a re-generation looks the same
-function seedFor(v: AutoFillInput) {
-  const h = crypto.createHash("sha1").update(colourKey(v.make, v.model, v.paint)).digest();
-  return h.readUInt32BE(0) % 2147483647;
-}
-
 const autoInflight = new Map<string, Promise<ModelImageRow | null>>();
-const autoMissed = new Map<string, number>(); // don't hammer a provider that can't make this model: retry after an hour
+const autoMissed = new Map<string, number>(); // don't hammer a provider that failed for this model: retry after 10 minutes
 let autoQueue: Promise<unknown> = Promise.resolve(); // one picture at a time
 export const autoStatus: { provider: string | null; made: number; lastError: string | null; lastErrorAt: string | null } = { provider: null, made: 0, lastError: null, lastErrorAt: null };
 
@@ -315,13 +315,13 @@ export function autoFillModel(v: AutoFillInput): Promise<ModelImageRow | null> {
   const key = colourKey(v.make, v.model, v.paint);
   if (!v.model || !autoFillEnabled()) return Promise.resolve(null);
   const missedAt = autoMissed.get(key);
-  if (missedAt && Date.now() - missedAt < 3600 * 1000) return Promise.resolve(null);
+  if (missedAt && Date.now() - missedAt < 10 * 60 * 1000) return Promise.resolve(null);
   const running = autoInflight.get(key);
   if (running) return running;
   const job = autoQueue.then(async () => {
     autoStatus.provider = autoFillProvider();
     const { data: existing } = await supabaseAdmin.from(TABLE).select("id, model_key, make, model, variant, storage_path, source, source_url, credit, flipped, updated_at").eq("model_key", key).maybeSingle();
-    if (existing) return existing as ModelImageRow;
+    if (existing && !isOutdatedAi(existing as ModelImageRow)) return existing as ModelImageRow;
     let picture: Buffer | null = null;
     let source: "render" | "ai" = "render";
     const url = renderUrl(v);
@@ -337,7 +337,7 @@ export function autoFillModel(v: AutoFillInput): Promise<ModelImageRow | null> {
     const { webp } = await standardise(picture, { flip: false });
     const row = await saveModelImage({
       key, make: String(v.make || ""), model: String(v.model), variant: paintName(v.paint), webp, flip: false, source,
-      sourceUrl: null, credit: source === "ai" ? "AI-generated picture" : "Studio render (IMAGIN.studio)", userId: null,
+      sourceUrl: source === "ai" ? AI_STYLE : null, credit: source === "ai" ? "AI-generated picture" : "Studio render (IMAGIN.studio)", userId: null,
     });
     autoStatus.made++;
     return row;

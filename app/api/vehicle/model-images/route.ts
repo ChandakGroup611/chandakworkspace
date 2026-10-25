@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCachedUser } from "@/lib/auth/cached-user";
-import { autoFillEnabled, canManageModelImages, listModelImages } from "@/lib/vehicle/model-images";
+import { autoFillEnabled, canManageModelImages, isOutdatedAi, listModelImages } from "@/lib/vehicle/model-images";
 
 /**
  * GET /api/vehicle/model-images
@@ -14,7 +14,8 @@ export async function GET() {
   const { user } = await getCachedUser();
   if (!user) return new NextResponse("Unauthenticated", { status: 401 });
   const [rows, canManage] = await Promise.all([listModelImages(), canManageModelImages(user.id)]);
-  const items = rows.map((r) => ({
+  // AI pictures in an older style are left out, so they are made again in the current style
+  const items = rows.filter((r) => !isOutdatedAi(r)).map((r) => ({
     key: r.model_key,
     make: r.make,
     model: r.model,
