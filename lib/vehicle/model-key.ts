@@ -67,18 +67,23 @@ export function cleanMask(mask: Uint8Array | Uint8ClampedArray, width: number, h
   if (!areas.length) return;
   let main = 0;
   for (let k = 1; k < areas.length; k++) if (areas[k] > areas[main]) main = k;
-  const [mx0, my0, mx1, my1] = boxes[main];
+  // keep the main region plus every sizeable part (a car body can split into pieces where it
+  // matches the background); drop only small stray blobs
+  const keep = areas.map((a, k) => k === main || a >= areas[main] * 0.03);
+  let [ux0, uy0, ux1, uy1] = boxes[main];
+  areas.forEach((_, k) => { if (keep[k]) { const [x0, y0, x1, y1] = boxes[k]; ux0 = Math.min(ux0, x0); uy0 = Math.min(uy0, y0); ux1 = Math.max(ux1, x1); uy1 = Math.max(uy1, y1); } });
+  // small pieces inside the vehicle's outline (e.g. a wheel split off by a shadow) stay too
   const padX = Math.max(2, Math.round(width * 0.006)), padY = Math.max(2, Math.round(height * 0.006));
-  const keep = areas.map((a, k) => {
-    if (k === main) return true;
+  areas.forEach((a, k) => {
+    if (keep[k]) return;
     const [x0, y0, x1, y1] = boxes[k];
-    return x0 >= mx0 - padX && x1 <= mx1 + padX && y0 >= my0 - padY && y1 <= my1 + padY && a > areas[main] * 0.002;
+    keep[k] = x0 >= ux0 - padX && x1 <= ux1 + padX && y0 >= uy0 - padY && y1 <= uy1 + padY && a > areas[main] * 0.002;
   });
   for (let i = 0; i < n; i++) {
     const l = label[i];
     if (l >= 0) { if (!keep[l]) mask[i] = 0; continue; }
     const x = i % width, y = (i / width) | 0;
-    if (x < mx0 - padX || x > mx1 + padX || y < my0 - padY || y > my1 + padY) mask[i] = 0;
+    if (x < ux0 - padX || x > ux1 + padX || y < uy0 - padY || y > uy1 + padY) mask[i] = 0;
   }
   for (let i = 0; i < n; i++) {
     const v = mask[i];

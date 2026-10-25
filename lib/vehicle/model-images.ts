@@ -236,12 +236,15 @@ export const isCommonsUrl = (src: string) => {
 const RENDER_KEY = process.env.IMAGIN_CUSTOMER_KEY || process.env.NEXT_PUBLIC_IMAGIN_CUSTOMER_KEY || "";
 const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID || "";
 const CF_TOKEN = process.env.CLOUDFLARE_AI_TOKEN || "";
-const CF_MODEL = process.env.VEHICLE_AI_IMAGE_MODEL || "@cf/black-forest-labs/flux-1-schnell";
+// FLUX.2 [klein] follows camera directions far better than FLUX.1 schnell and makes wide pictures;
+// schnell is kept as a fallback if klein isn't available on the account.
+const CF_MODEL = process.env.VEHICLE_AI_IMAGE_MODEL || "@cf/black-forest-labs/flux-2-klein-4b";
+const CF_FALLBACK = "@cf/black-forest-labs/flux-1-schnell";
 /**
  * Style of the AI pictures. Changing it makes every AI picture regenerate in the new style the next
  * time it is shown (pictures set by an admin or from a render service are kept).
  */
-export const AI_STYLE = "ai-v2-side-profile";
+export const AI_STYLE = "ai-v3-side-profile-checked";
 export const isOutdatedAi = (r: Pick<ModelImageRow, "source" | "source_url">) => r.source === "ai" && r.source_url !== AI_STYLE;
 export const autoFillEnabled = () => !!RENDER_KEY || (!!CF_ACCOUNT && !!CF_TOKEN);
 export const autoFillProvider = () => (RENDER_KEY ? "render" : CF_ACCOUNT && CF_TOKEN ? "ai" : null);
@@ -269,8 +272,8 @@ function renderUrl(v: AutoFillInput): string | null {
   return `https://cdn.imagin.studio/getImage?${q.toString()}`;
 }
 
-/** The prompt that makes every AI picture look like a manufacturer's studio press photo. */
-export function aiPrompt(v: AutoFillInput): string {
+/** The prompt that makes every AI picture look like a manufacturer's side-profile studio photo. */
+export function aiPrompt(v: AutoFillInput, attempt = 0): string {
   const [brand] = modelKey(v.make, v.model).split("|");
   const make = BRAND_NAME[brand] || (v.make || "").trim();
   const makeWord = (v.make || "").trim().toLowerCase();
@@ -280,32 +283,111 @@ export function aiPrompt(v: AutoFillInput): string {
   const cat = (v.category || "").toUpperCase();
   const kind = cat === "BIKE" ? "motorcycle" : cat === "BUS" ? "bus" : cat === "COMMERCIAL" ? "commercial vehicle" : "car";
   const fuel = (v.fuel || "").toLowerCase();
-  const ev = /electric|\bev\b|bev/.test(fuel) ? ", electric version" : "";
+  const ev = /electric|\bev\b|bev/.test(fuel) ? " (electric version)" : "";
+  const name = [year, make, model].filter(Boolean).join(" ");
+  // later attempts say the angle even more bluntly
+  const angle = attempt === 0
+    ? "pure side profile view, camera at exactly 90 degrees to the side of the vehicle, the vehicle faces left"
+    : "flat side elevation like a blueprint: perfectly side-on, only one side of the vehicle visible, front bumper at the left edge of the vehicle and rear bumper at the right, both wheels on this side fully visible and the same size, no front or rear face visible";
   return [
-    `Official manufacturer press photo of a ${[year, make, model].filter(Boolean).join(" ")} ${kind}${ev}`,
-    paint ? `${paint} paint` : "",
-    "accurate real-world design of this exact model as sold in India",
-    "exact side profile view, camera perpendicular to the side of the vehicle, the front of the vehicle pointing to the left, both wheels on the near side clearly visible, not a front view, whole vehicle in frame with space around it",
-    "seamless pure white studio background, soft even studio lighting, subtle shadow under the tyres",
-    "no number plate, no text, no logos added, no people, no other vehicles",
-    "photorealistic, sharp focus, high detail, 4k",
-  ].filter(Boolean).join(", ");
+    `Side profile studio photograph of a ${name} ${kind}${ev}${paint ? `, ${paint} paint` : ""}`,
+    angle,
+    "the entire vehicle is in the frame with clear empty space to its left, right and above, nothing cut off",
+    "plain light grey seamless studio background, soft even lighting, soft shadow under the tyres",
+    "accurate real-world design of this exact model, official manufacturer press photo, photorealistic, sharp, high detail",
+    "no number plate text, no people, no other vehicles, no text or watermark",
+  ].join(". ");
 }
 
-async function generateAi(v: AutoFillInput): Promise<Buffer | null> {
-  const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/run/${CF_MODEL}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${CF_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: aiPrompt(v), steps: 8 }),
-    signal: AbortSignal.timeout(45000),
-  });
-  if (!res.ok) throw new Error(`AI picture service: HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
+/** Width : height of a correct side view (front and corner views are much narrower). */
+function minSideAspect(category?: string | null) {
+  const c = (category || "").toUpperCase();
+  return c === "BIKE" ? 1.35 : c === "BUS" ? 2.0 : c === "COMMERCIAL" ? 1.7 : 1.95;
+}
+
+async function callCloudflare(model: string, prompt: string): Promise<Buffer | null> {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/run/${model}`;
+  let res: Response;
+  if (model.includes("flux-2")) {
+    // FLUX.2 models take multipart form data; a wide frame suits a side view
+    const form = new FormData();
+    form.append("prompt", prompt);
+    form.append("width", "1536");
+    form.append("height", "768");
+    form.append("seed", String(Math.floor(Math.random() * 2_000_000_000)));
+    res = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${CF_TOKEN}` }, body: form, signal: AbortSignal.timeout(60000) });
+  } else {
+    res = await fetch(url, {
+      method: "POST", headers: { Authorization: `Bearer ${CF_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, steps: 8 }), signal: AbortSignal.timeout(45000),
+    });
+  }
+  if (!res.ok) throw new Error(`AI picture service (${model.split("/").pop()}): HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
   const type = res.headers.get("content-type") || "";
   if (type.startsWith("image/")) return Buffer.from(await res.arrayBuffer());
   const j: any = await res.json();
   const b64 = j?.result?.image || j?.image;
   return b64 ? Buffer.from(b64, "base64") : null;
 }
+
+let useFallbackModel = false;
+async function generateAi(v: AutoFillInput, attempt: number): Promise<Buffer | null> {
+  const prompt = aiPrompt(v, attempt);
+  if (!useFallbackModel) {
+    try { return await callCloudflare(CF_MODEL, prompt); }
+    catch (e) {
+      // model not available on this account / plan: use the older one from now on
+      if (/HTTP (400|403|404)/.test(String(e)) && CF_MODEL !== CF_FALLBACK) { useFallbackModel = true; console.warn("[vehicle-ai] falling back to", CF_FALLBACK, String(e).slice(0, 200)); }
+      else throw e;
+    }
+  }
+  return callCloudflare(CF_FALLBACK, prompt);
+}
+
+/**
+ * Make an AI picture and check it really is a whole side view: cut the vehicle out, then require
+ * a side-view shape (wide) and that it doesn't touch the edge of the frame (cut off). Up to four
+ * tries; the best one is kept.
+ */
+async function makeCheckedAiPicture(v: AutoFillInput): Promise<Buffer | null> {
+  const sharp = (await import("sharp")).default;
+  let best: { cut: Buffer; score: number } | null = null;
+  const need = minSideAspect(v.category);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const raw = await generateAi(v, attempt);
+    if (!raw) continue;
+    const meta = await sharp(raw).metadata();
+    const W = meta.width || 1, H = meta.height || 1;
+    const scale = Math.min(1, 1024 / Math.max(W, H));
+    const workW = Math.round(W * scale), workH = Math.round(H * scale);
+    const cut = await removeBackground(raw);
+    const cm = await sharp(cut).metadata();
+    const cw = cm.width || 0, ch = cm.height || 1;
+    const aspect = cw / ch;
+    const cutOff = cw >= workW - 6 || ch >= workH - 6;  // touches the frame on both sides / top and bottom
+    const tooSmall = cw < workW * 0.35;                  // only a fragment survived
+    const score = (cutOff || tooSmall ? 0 : 1) * Math.min(aspect / need, 1.2);
+    console.info(`[vehicle-ai] ${v.make} ${v.model} attempt ${attempt + 1}: ${cw}x${ch} aspect ${aspect.toFixed(2)} (need ${need})${cutOff ? " cut off" : ""}${tooSmall ? " fragment" : ""}`);
+    if (!best || score > best.score) best = { cut, score };
+    if (score >= 1) break; // a proper side view
+  }
+  if (!best || best.score < 0.85) return null;
+  // every car faces left: in a side view the roof sits toward the rear, so if the upper body leans
+  // to the left the front is on the right and the picture is mirrored
+  return (await facesRight(best.cut)) ? await sharp(best.cut).flop().webp({ quality: 88, alphaQuality: 92 }).toBuffer() : best.cut;
+}
+
+async function facesRight(cut: Buffer): Promise<boolean> {
+  const sharp = (await import("sharp")).default;
+  const W = 200, H = 100;
+  const { data } = await sharp(cut).resize(W, H, { fit: "fill" }).ensureAlpha().extractChannel(3).raw().toBuffer({ resolveWithObject: true });
+  let sx = 0, n = 0;
+  for (let y = 0; y < H * 0.4; y++) for (let x = 0; x < W; x++) if (data[y * W + x] > 128) { sx += x; n++; }
+  if (n < 50) return false;
+  const offset = sx / n / W - 0.5; // > 0: upper body toward the right → front on the left (good)
+  return offset < -0.03;
+}
+
 const autoInflight = new Map<string, Promise<ModelImageRow | null>>();
 const autoMissed = new Map<string, number>(); // don't hammer a provider that failed for this model: retry after 10 minutes
 let autoQueue: Promise<unknown> = Promise.resolve(); // one picture at a time
@@ -332,7 +414,7 @@ export function autoFillModel(v: AutoFillInput): Promise<ModelImageRow | null> {
         if (b.length > 5000) picture = b;
       }
     }
-    if (!picture && CF_ACCOUNT && CF_TOKEN) { picture = await generateAi(v); source = "ai"; }
+    if (!picture && CF_ACCOUNT && CF_TOKEN) { picture = await makeCheckedAiPicture(v); source = "ai"; }
     if (!picture) { autoMissed.set(key, Date.now()); return null; }
     const { webp } = await standardise(picture, { flip: false });
     const row = await saveModelImage({
