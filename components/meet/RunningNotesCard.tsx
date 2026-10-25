@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useTransition } from "react";
 import { StickyNote, Send, CheckSquare, AlertCircle, CheckCircle2, Trash2, ArrowRight } from "lucide-react";
 import type { MeetNote, MeetNoteBlock } from "@/types/meet";
-import { getOrCreateSessionNotes, addNoteBlock, updateNoteBlock, deleteNoteBlock, isActionLikeText } from "@/lib/actions/meet/notes";
+import { getOrCreateSessionNotes, addNoteBlock, updateNoteBlock, deleteNoteBlock } from "@/lib/actions/meet/notes";
+import { isActionLikeText } from "@/lib/utils/meet-notes";
 import { toast } from "react-toastify";
 
 interface Props {

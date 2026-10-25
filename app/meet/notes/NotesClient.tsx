@@ -11,8 +11,9 @@ import type { MeetNote, MeetNoteBlock } from "@/types/meet";
 import {
   addNoteBlock, updateNoteBlock, deleteNoteBlock,
   convertBlockToItem, createPersonalNote, generateSessionSummary,
-  useSummaryInMoM, isActionLikeText
+  useSummaryInMoM
 } from "@/lib/actions/meet/notes";
+import { isActionLikeText } from "@/lib/utils/meet-notes";
 import { toast } from "react-toastify";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 
