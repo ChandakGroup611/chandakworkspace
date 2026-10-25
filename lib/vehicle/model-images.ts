@@ -244,7 +244,7 @@ const CF_FALLBACK = "@cf/black-forest-labs/flux-1-schnell";
  * Style of the AI pictures. Changing it makes every AI picture regenerate in the new style the next
  * time it is shown (pictures set by an admin or from a render service are kept).
  */
-export const AI_STYLE = "ai-v3-side-profile-checked";
+export const AI_STYLE = "ai-v4-side-profile-reference";
 export const isOutdatedAi = (r: Pick<ModelImageRow, "source" | "source_url">) => r.source === "ai" && r.source_url !== AI_STYLE;
 export const autoFillEnabled = () => !!RENDER_KEY || (!!CF_ACCOUNT && !!CF_TOKEN);
 export const autoFillProvider = () => (RENDER_KEY ? "render" : CF_ACCOUNT && CF_TOKEN ? "ai" : null);
@@ -273,7 +273,7 @@ function renderUrl(v: AutoFillInput): string | null {
 }
 
 /** The prompt that makes every AI picture look like a manufacturer's side-profile studio photo. */
-export function aiPrompt(v: AutoFillInput, attempt = 0): string {
+export function aiPrompt(v: AutoFillInput, attempt = 0, withReference = false): string {
   const [brand] = modelKey(v.make, v.model).split("|");
   const make = BRAND_NAME[brand] || (v.make || "").trim();
   const makeWord = (v.make || "").trim().toLowerCase();
@@ -289,8 +289,11 @@ export function aiPrompt(v: AutoFillInput, attempt = 0): string {
   const angle = attempt === 0
     ? "pure side profile view, camera at exactly 90 degrees to the side of the vehicle, the vehicle faces left"
     : "flat side elevation like a blueprint: perfectly side-on, only one side of the vehicle visible, front bumper at the left edge of the vehicle and rear bumper at the right, both wheels on this side fully visible and the same size, no front or rear face visible";
+  const subject = withReference
+    ? `The reference image shows a real ${name}. Create a new side profile studio photograph of exactly this ${kind} model${ev}: identical body shape, roofline, grille, headlights, tail lights, windows, wheels and proportions as in the reference${paint ? `, painted ${paint}` : ""}`
+    : `Side profile studio photograph of a ${name} ${kind}${ev}${paint ? `, ${paint} paint` : ""}`;
   return [
-    `Side profile studio photograph of a ${name} ${kind}${ev}${paint ? `, ${paint} paint` : ""}`,
+    subject,
     angle,
     "the entire vehicle is in the frame with clear empty space to its left, right and above, nothing cut off",
     "plain light grey seamless studio background, soft even lighting, soft shadow under the tyres",
@@ -299,13 +302,74 @@ export function aiPrompt(v: AutoFillInput, attempt = 0): string {
   ].join(". ");
 }
 
+/* ---------------- reference photo of the real model ---------------- */
+/**
+ * A real photo of the exact model (the lead photo of its Wikipedia article). It is never shown; it is
+ * given to the AI as a reference so the generated picture copies the real design instead of guessing.
+ */
+const WIKI_BRAND: Record<string, string> = { maruti: "Maruti Suzuki", mercedes: "Mercedes-Benz", vw: "Volkswagen" };
+const TRIM_WORDS = /^(vx|zx|lx|sx|ex|o|at|mt|amt|cvt|dct|ivt|plus|std|standard|base|top|executive|lounge|vip|inscription|awd|4matic|d5|turbo|hybrid|ev|electric|petrol|diesel|\d+(\.\d+)?[a-z]*)$/;
+const refCache = new Map<string, { at: number; url: string | null }>();
+export async function findReferencePhoto(make?: string | null, model?: string | null): Promise<string | null> {
+  const key = modelKey(make, model);
+  const hit = refCache.get(key);
+  if (hit && Date.now() - hit.at < 24 * 3600 * 1000) return hit.url;
+  const [brand, mdl] = key.split("|");
+  const words = mdl.split(" ").filter((w) => w && !TRIM_WORDS.test(w)).slice(0, 3);
+  if (!words.length) return null;
+  const brandName = WIKI_BRAND[brand] || brand;
+  let url: string | null = null;
+  // first the full model name; then without its last word ("Corolla Altis" → the "Toyota Corolla" article)
+  const passes: string[][] = [words];
+  if (words.length > 1) passes.push(words.slice(0, -1));
+  for (const [term, need] of passes.flatMap((ws) => [[`${brandName} ${ws.join(" ")}`, ws], [`${ws.join(" ")} car`, ws]] as [string, string[]][])) {
+    try {
+      const u = new URL("https://en.wikipedia.org/w/api.php");
+      u.search = new URLSearchParams({
+        action: "query", format: "json", formatversion: "2", redirects: "1", generator: "search", gsrsearch: term, gsrlimit: "6",
+        gsrnamespace: "0", prop: "pageimages", piprop: "thumbnail|name", pithumbsize: "800",
+      }).toString();
+      const res = await fetch(u, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const json: any = await res.json();
+      const pages: any[] = (json?.query?.pages || []).slice().sort((a: any, b: any) => (a.index ?? 99) - (b.index ?? 99));
+      for (const p of pages) {
+        const title = norm(p.title);
+        const file = String(p.pageimage || "").toLowerCase();
+        if (!p.thumbnail?.source || file.endsWith(".svg") || /logo|emblem|badge|interior|concept/.test(file)) continue;
+        if (!need.every((w) => title.split(" ").includes(w))) continue; // the model's own article (e.g. not "Urban Cruiser" for "Urban Cruiser Hyryder")
+        if (/concept/.test(title)) continue;
+        url = p.thumbnail.source; break;
+      }
+      if (url) break;
+    } catch { /* try the next search */ }
+  }
+  refCache.set(key, { at: Date.now(), url });
+  return url;
+}
+
+async function referenceImage(make?: string | null, model?: string | null): Promise<Blob | null> {
+  const url = await findReferencePhoto(make, model);
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(15000) });
+    if (!res.ok) return null;
+    const sharp = (await import("sharp")).default;
+    // the model accepts reference images under 512 x 512
+    const jpg = await sharp(Buffer.from(await res.arrayBuffer())).rotate().resize(508, 508, { fit: "inside" }).jpeg({ quality: 90 }).toBuffer();
+    return new Blob([new Uint8Array(jpg)], { type: "image/jpeg" });
+  } catch {
+    return null;
+  }
+}
+
 /** Width : height of a correct side view (front and corner views are much narrower). */
 function minSideAspect(category?: string | null) {
   const c = (category || "").toUpperCase();
   return c === "BIKE" ? 1.35 : c === "BUS" ? 2.0 : c === "COMMERCIAL" ? 1.7 : 1.95;
 }
 
-async function callCloudflare(model: string, prompt: string): Promise<Buffer | null> {
+async function callCloudflare(model: string, prompt: string, reference?: Blob | null): Promise<Buffer | null> {
   const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/run/${model}`;
   let res: Response;
   if (model.includes("flux-2")) {
@@ -315,6 +379,7 @@ async function callCloudflare(model: string, prompt: string): Promise<Buffer | n
     form.append("width", "1536");
     form.append("height", "768");
     form.append("seed", String(Math.floor(Math.random() * 2_000_000_000)));
+    if (reference) form.append("input_image_0", reference, "reference.jpg");
     res = await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${CF_TOKEN}` }, body: form, signal: AbortSignal.timeout(60000) });
   } else {
     res = await fetch(url, {
@@ -331,17 +396,16 @@ async function callCloudflare(model: string, prompt: string): Promise<Buffer | n
 }
 
 let useFallbackModel = false;
-async function generateAi(v: AutoFillInput, attempt: number): Promise<Buffer | null> {
-  const prompt = aiPrompt(v, attempt);
+async function generateAi(v: AutoFillInput, attempt: number, reference: Blob | null): Promise<Buffer | null> {
   if (!useFallbackModel) {
-    try { return await callCloudflare(CF_MODEL, prompt); }
+    try { return await callCloudflare(CF_MODEL, aiPrompt(v, attempt, !!reference), reference); }
     catch (e) {
       // model not available on this account / plan: use the older one from now on
       if (/HTTP (400|403|404)/.test(String(e)) && CF_MODEL !== CF_FALLBACK) { useFallbackModel = true; console.warn("[vehicle-ai] falling back to", CF_FALLBACK, String(e).slice(0, 200)); }
       else throw e;
     }
   }
-  return callCloudflare(CF_FALLBACK, prompt);
+  return callCloudflare(CF_FALLBACK, aiPrompt(v, attempt, false)); // the older model takes no reference
 }
 
 /**
@@ -353,8 +417,10 @@ async function makeCheckedAiPicture(v: AutoFillInput): Promise<Buffer | null> {
   const sharp = (await import("sharp")).default;
   let best: { cut: Buffer; score: number } | null = null;
   const need = minSideAspect(v.category);
+  const reference = await referenceImage(v.make, v.model);
+  console.info(`[vehicle-ai] ${v.make} ${v.model}: ${reference ? "using a reference photo" : "no reference photo found, text only"}`);
   for (let attempt = 0; attempt < 4; attempt++) {
-    const raw = await generateAi(v, attempt);
+    const raw = await generateAi(v, attempt, reference);
     if (!raw) continue;
     const meta = await sharp(raw).metadata();
     const W = meta.width || 1, H = meta.height || 1;
