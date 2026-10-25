@@ -3,6 +3,8 @@ import { MeetHeader } from "@/components/meet/MeetHeader";
 import DecisionsClient from "./DecisionsClient";
 import { getDecisions, getDecisionEligibleSessions } from "@/lib/actions/meet/decisions";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Decisions Register · Chandak Meet",
   description: "Enterprise register of standing decisions and ratified policies across Chandak Group meetings",

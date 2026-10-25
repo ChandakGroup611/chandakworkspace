@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import MeetCalendarClient from "./MeetCalendarClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Meeting Calendar · Chandak Meet",
   description: "Schedule, sessions timeline and room availability calendar",

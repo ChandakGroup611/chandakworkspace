@@ -3,6 +3,8 @@ import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import MyWorkClient from "./MyWorkClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "My Work · Chandak Meet",
   description: "Personal meeting action items, TAT compliance and Kanban board",

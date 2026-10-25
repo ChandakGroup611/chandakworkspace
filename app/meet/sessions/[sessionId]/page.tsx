@@ -6,6 +6,8 @@ import { getSessionInvitations } from "@/lib/actions/meet/invitations";
 import { getAIMinutes } from "@/lib/actions/meet/ai-minutes";
 import SessionWorkspaceClient from "./SessionWorkspaceClient";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = await params;
   const { session } = await getSessionById(sessionId);

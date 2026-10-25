@@ -146,6 +146,9 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
             $foundHts[$tDir . '/.htaccess'] = @file_get_contents($tDir . '/.htaccess');
         }
     }
+
+    $psOutput = [];
+    @exec('ps aux 2>/dev/null || ps -u $(whoami) -f 2>/dev/null', $psOutput);
     
     echo json_encode([
         'success' => true,
@@ -157,6 +160,32 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
         'files' => $foundFiles,
         'logs' => $foundLogs,
         'htaccess' => $foundHts,
+        'processes' => array_slice($psOutput, 0, 50),
+        'timestamp' => date('Y-m-d H:i:s')
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// Dedicated Force Restart Action
+if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
+    $killOut = [];
+    @exec('pkill -9 -u $(whoami) -f node 2>&1', $killOut);
+    @exec('killall -9 node 2>&1', $killOut);
+    @exec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killOut);
+    
+    $futureTime = time() + 120;
+    foreach ($primaryAppRoots as $target) {
+        @mkdir($target . '/tmp', 0755, true);
+        @touch($target . '/tmp/restart.txt', $futureTime);
+        @touch($target . '/server.js', $futureTime);
+        @touch($target . '/package.json', $futureTime);
+    }
+    @touch($domainRoot . '/public_html/.htaccess', $futureTime);
+
+    echo json_encode([
+        'success' => true,
+        'action' => 'force_restart',
+        'kill_output' => $killOut,
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
@@ -179,15 +208,35 @@ if ($versionedDirs) {
     }
 }
 
-$zipFile = null;
+// Collect all candidate zip files that exist and have substantive size (>500KB)
+$existingZips = [];
 foreach (array_unique($candidateZipPaths) as $cand) {
-    if ($cand && file_exists($cand) && filesize($cand) > 1000) {
-        $zipFile = $cand;
-        break;
+    if ($cand && file_exists($cand) && filesize($cand) > 500000) {
+        $existingZips[] = [
+            'path' => $cand,
+            'mtime' => filemtime($cand),
+            'size' => filesize($cand),
+            'date' => date('Y-m-d H:i:s', filemtime($cand)),
+        ];
+    }
+}
+
+// Sort by file modification time DESCENDING so the newest zip is ALWAYS chosen
+usort($existingZips, function($a, $b) {
+    return $b['mtime'] - $a['mtime'];
+});
+
+$zipFile = !empty($existingZips) ? $existingZips[0]['path'] : null;
+
+// Purge any older candidate zips so stale versions never get re-extracted
+if (count($existingZips) > 1) {
+    for ($i = 1; $i < count($existingZips); $i++) {
+        @unlink($existingZips[$i]['path']);
     }
 }
 
 $extractionResults = [];
+$killResults = [];
 
 if ($zipFile && class_exists('ZipArchive')) {
     foreach ($primaryAppRoots as $target) {
@@ -215,11 +264,12 @@ if ($zipFile && class_exists('ZipArchive')) {
             $extracted = true;
         }
         
-        // Signal restart
+        // Signal restart with future timestamp to counter clock skew
+        $futureTime = time() + 120;
         @mkdir($target . '/tmp', 0755, true);
-        @touch($target . '/tmp/restart.txt');
-        if (file_exists($target . '/server.js')) @touch($target . '/server.js');
-        if (file_exists($target . '/package.json')) @touch($target . '/package.json');
+        @touch($target . '/tmp/restart.txt', $futureTime);
+        if (file_exists($target . '/server.js')) @touch($target . '/server.js', $futureTime);
+        if (file_exists($target . '/package.json')) @touch($target . '/package.json', $futureTime);
         
         $extractionResults[$target] = [
             'extracted' => $extracted,
@@ -259,6 +309,11 @@ if ($zipFile && class_exists('ZipArchive')) {
     @unlink($zipFile);
     @unlink(__DIR__ . '/.ftp-deploy-sync-state.json');
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
+
+    // Force kill old node processes so Passenger is forced to spawn a fresh worker
+    @exec('pkill -9 -u $(whoami) -f node 2>&1', $killResults);
+    @exec('killall -9 node 2>&1', $killResults);
+    @exec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
 }
 
 // Base performance caching header for LiteSpeed & Apache

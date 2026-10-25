@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import MeetingDetailTabs from "./MeetingDetailTabs";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const meeting = await getMeetingById(id);

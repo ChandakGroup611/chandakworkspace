@@ -4,6 +4,8 @@ import ReportsClient from "./ReportsClient";
 import { getMeetReports } from "@/lib/actions/meet/analytics";
 import { getMoMVersions } from "@/lib/actions/meet/mom";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Reports & Analytics · Chandak Meet",
   description: "Enterprise meeting reports, carry-forward tracking, TAT compliance, and executive performance scorecards",

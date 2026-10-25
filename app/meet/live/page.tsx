@@ -7,6 +7,8 @@ import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Live Meeting Mode · Chandak Meet",
   description: "Real-time agenda timer, quick point capture and inline carry-forward management",

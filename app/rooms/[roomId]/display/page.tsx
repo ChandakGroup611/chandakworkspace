@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getRoomDisplayData } from "@/lib/actions/meet/rooms";
 import RoomDisplayClient from "./RoomDisplayClient";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ roomId: string }> }) {
   const { roomId } = await params;
   const { room } = await getRoomDisplayData(roomId);

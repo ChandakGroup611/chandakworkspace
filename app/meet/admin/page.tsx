@@ -4,6 +4,8 @@ import MeetAdminClient from "./MeetAdminClient";
 import { getMeetingMasters, getMeetSettings } from "@/lib/actions/meet/masters";
 import { getSLAPolicies, getSLAInstances, getAlertRules, getNotificationTemplates } from "@/lib/actions/meet/sla";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Meet Settings & Administration · Chandak Meet",
   description: "Roles & permissions, meeting policies, alerts & SLA engine, custom templates, rooms, and masters.",

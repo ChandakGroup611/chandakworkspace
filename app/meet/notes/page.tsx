@@ -3,6 +3,8 @@ import NotesClient from "./NotesClient";
 import { getNotes } from "@/lib/actions/meet/notes";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Meeting & Personal Notes | Chandak Meet",
   description: "Fast capture layer for meetings, running notes, open loops, and instant item conversion.",

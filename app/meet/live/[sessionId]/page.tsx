@@ -4,6 +4,8 @@ import { getSessionById } from "@/lib/actions/meet/sessions";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import LiveMeetingClient from "./LiveMeetingClient";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = await params;
   const { session } = await getSessionById(sessionId);

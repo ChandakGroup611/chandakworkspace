@@ -17,6 +17,8 @@ import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Meeting Series · Chandak Meet",
   description: "Recurring review series, standing members and agenda templates",
