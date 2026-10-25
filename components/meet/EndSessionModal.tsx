@@ -27,6 +27,18 @@ export function EndSessionModal({
   const router = useRouter();
   const [summaryNotes, setSummaryNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openLoopsCount, setOpenLoopsCount] = useState(0);
+
+  // Check open loops on open
+  React.useEffect(() => {
+    if (open) {
+      import("@/lib/actions/meet/notes").then(({ getOrCreateSessionNotes }) => {
+        getOrCreateSessionNotes(sessionId).then((n) => {
+          if (n) setOpenLoopsCount(n.open_loops_count || 0);
+        });
+      });
+    }
+  }, [open, sessionId]);
 
   const openPoints = points.filter((p) => p.status !== "closed" && p.status !== "dropped");
   const closedPoints = points.filter((p) => p.status === "closed" || p.status === "dropped");
@@ -95,6 +107,18 @@ export function EndSessionModal({
                   <span className="font-semibold">{escalatedPoints.length} Repeatedly Carried Points:</span>
                   <p className="mt-0.5">
                     Items carried 3+ times will be flagged for management escalation per Chandak Governance SOP.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {openLoopsCount > 0 && (
+              <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[12.5px] text-amber-300">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
+                <div>
+                  <span className="font-semibold">{openLoopsCount} Unconverted Open Loop{openLoopsCount > 1 ? "s" : ""}:</span>
+                  <p className="mt-0.5 text-[12px] text-amber-200/90">
+                    {openLoopsCount} note line{openLoopsCount > 1 ? "s" : ""} look like action items but have not been converted into tasks or points yet.
                   </p>
                 </div>
               </div>

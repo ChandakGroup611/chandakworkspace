@@ -2,6 +2,8 @@ import React from "react";
 import { notFound } from "next/navigation";
 import { getSessionById } from "@/lib/actions/meet/sessions";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
+import { getSessionInvitations } from "@/lib/actions/meet/invitations";
+import { getAIMinutes } from "@/lib/actions/meet/ai-minutes";
 import SessionWorkspaceClient from "./SessionWorkspaceClient";
 
 export async function generateMetadata({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -18,9 +20,11 @@ export default async function SessionWorkspacePage({
   params: Promise<{ sessionId: string }>;
 }) {
   const { sessionId } = await params;
-  const [{ session, points, agenda, attendees }, masters] = await Promise.all([
+  const [{ session, points, agenda, attendees }, masters, invitationsData, aiMinutes] = await Promise.all([
     getSessionById(sessionId),
     getMeetingMasters(),
+    getSessionInvitations(sessionId),
+    getAIMinutes(sessionId),
   ]);
 
   if (!session) {
@@ -35,6 +39,8 @@ export default async function SessionWorkspacePage({
         agenda={agenda}
         attendees={attendees}
         masters={masters}
+        invitationsData={invitationsData}
+        initialAIMinutes={aiMinutes}
       />
     </div>
   );

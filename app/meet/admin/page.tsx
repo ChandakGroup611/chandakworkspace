@@ -2,29 +2,38 @@ import React from "react";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import MeetAdminClient from "./MeetAdminClient";
 import { getMeetingMasters, getMeetSettings } from "@/lib/actions/meet/masters";
+import { getSLAPolicies, getSLAInstances, getAlertRules, getNotificationTemplates } from "@/lib/actions/meet/sla";
 
 export const metadata = {
-  title: "Admin & Settings · Chandak Meet",
-  description: "Configure meeting masters, types, rooms, templates, and statutory TAT working days SLA",
+  title: "Meet Settings & Administration · Chandak Meet",
+  description: "Roles & permissions, meeting policies, alerts & SLA engine, custom templates, rooms, and masters.",
 };
 
 export default async function MeetAdminPage() {
-  const [masters, settings] = await Promise.all([
+  const [masters, settings, slaPolicies, slaInstances, alertRules, templates] = await Promise.all([
     getMeetingMasters(),
     getMeetSettings(),
+    getSLAPolicies(),
+    getSLAInstances(),
+    getAlertRules(),
+    getNotificationTemplates(),
   ]);
 
   return (
     <div className="space-y-6">
       <MeetHeader
-        title="Meet Admin & Master Controls"
-        description="Global governance settings, room allocations, standing cadences, and statutory working day parameters"
-        breadcrumbs={[{ label: "Meet Admin" }]}
+        title="Meet Settings & Governance Hub"
+        description="Module-level roles & access, meeting policies, SLA escalation matrix, custom email templates, and room displays"
+        breadcrumbs={[{ label: "Meet Settings" }]}
       />
 
       <MeetAdminClient
         initialMasters={masters}
         initialSettings={settings}
+        initialSLAPolicies={slaPolicies}
+        initialSLAInstances={slaInstances}
+        initialAlertRules={alertRules}
+        initialTemplates={templates}
       />
     </div>
   );

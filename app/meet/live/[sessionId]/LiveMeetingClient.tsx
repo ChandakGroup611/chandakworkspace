@@ -23,6 +23,7 @@ import { StatusBadge } from "@/components/meet/StatusBadge";
 import { QuickPointCapture } from "@/components/meet/QuickPointCapture";
 import { CreateTaskModal } from "@/components/meet/CreateTaskModal";
 import { EndSessionModal } from "@/components/meet/EndSessionModal";
+import RunningNotesCard from "@/components/meet/RunningNotesCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus, updateSessionPointNotes } from "@/lib/actions/meet/points";
 import { updateSessionAttendance, startSession } from "@/lib/actions/meet/sessions";
@@ -62,6 +63,8 @@ export default function LiveMeetingClient({
   const [endSessionOpen, setEndSessionOpen] = useState(false);
   const [quickDecisionText, setQuickDecisionText] = useState("");
   const [decisions, setDecisions] = useState<any[]>([]);
+  const [focusedPointId, setFocusedPointId] = useState<string | null>(initialPoints[0]?.id || null);
+  const focusedPoint = points.find((p) => p.id === focusedPointId) || points[0] || null;
 
   // Agenda live stopwatch
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -271,6 +274,18 @@ export default function LiveMeetingClient({
                 </h3>
               </div>
             )}
+
+            {/* D2 / D7.2 Live Running Notes Card */}
+            <div>
+              <RunningNotesCard
+                sessionId={session.id}
+                focusedPointId={focusedPoint?.id}
+                focusedPointCode={focusedPoint?.code}
+                onOpenConvert={(block) => {
+                  if (focusedPoint) setTaskModalPoint(focusedPoint);
+                }}
+              />
+            </div>
 
             {/* Backup Points First (Carried Forward) */}
             <div className="space-y-3">

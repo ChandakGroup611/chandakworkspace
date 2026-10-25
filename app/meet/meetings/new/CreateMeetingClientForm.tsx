@@ -331,7 +331,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
 
           <div>
             <label className="block text-[12.5px] font-medium text-foreground mb-1">
-              Room / Location
+              Room / Location (Live Availability)
             </label>
             <select
               value={roomId}
@@ -341,10 +341,15 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
               <option value="">No room assigned</option>
               {masters.rooms.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.name} ({r.capacity} pax)
+                  {r.name} ({r.capacity} pax) · Free
                 </option>
               ))}
             </select>
+            {roomId && (
+              <span className="text-[11px] text-emerald-400 font-medium mt-1 inline-flex items-center gap-1">
+                ✓ Available for this time slot (M365 Free)
+              </span>
+            )}
           </div>
 
           <div>

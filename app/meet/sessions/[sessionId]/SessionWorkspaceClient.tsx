@@ -23,6 +23,10 @@ import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { QuickPointCapture } from "@/components/meet/QuickPointCapture";
 import { CreateTaskModal } from "@/components/meet/CreateTaskModal";
+import InvitationsCard from "@/components/meet/InvitationsCard";
+import AttendanceCard from "@/components/meet/AttendanceCard";
+import MeetingNotesCard from "@/components/meet/MeetingNotesCard";
+import AIMinutesCard from "@/components/meet/AIMinutesCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus } from "@/lib/actions/meet/points";
 import { generateMoMSnapshot, publishMoM } from "@/lib/actions/meet/mom";
@@ -44,6 +48,8 @@ interface SessionWorkspaceClientProps {
     users: any[];
     categories: any[];
   };
+  invitationsData?: any;
+  initialAIMinutes?: any;
 }
 
 export default function SessionWorkspaceClient({
@@ -52,6 +58,8 @@ export default function SessionWorkspaceClient({
   agenda,
   attendees,
   masters,
+  invitationsData,
+  initialAIMinutes,
 }: SessionWorkspaceClientProps) {
   const [points, setPoints] = useState<MeetingPoint[]>(initialPoints);
   const [taskModalPoint, setTaskModalPoint] = useState<MeetingPoint | null>(null);
@@ -192,6 +200,25 @@ export default function SessionWorkspaceClient({
           )}
         </div>
       </div>
+
+      {/* Invitations & RSVP (Section E4) */}
+      {invitationsData && (
+        <InvitationsCard
+          sessionId={session.id}
+          isOrganizer={true}
+          initialData={invitationsData}
+          usersList={masters.users}
+        />
+      )}
+
+      {/* Attendance & QR Check-in (Section E5) */}
+      {session.status !== "scheduled" && (
+        <AttendanceCard
+          sessionId={session.id}
+          initialAttendees={attendees}
+          canManage={true}
+        />
+      )}
 
       {/* Agenda & Time Breakdown */}
       {agenda.length > 0 && (
@@ -431,6 +458,16 @@ export default function SessionWorkspaceClient({
           </div>
         )}
       </div>
+
+      {/* Meeting Notes (Section D7.3) */}
+      <MeetingNotesCard sessionId={session.id} />
+
+      {/* AI Minutes & MoM Distribution Card (Section E6) */}
+      <AIMinutesCard
+        sessionId={session.id}
+        initialAIMinutes={initialAIMinutes}
+        totalAttendeesCount={attendees.length}
+      />
 
       {/* Generated MoM Snapshot Preview */}
       {momSnapshot && (

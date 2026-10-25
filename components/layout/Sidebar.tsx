@@ -24,7 +24,7 @@ import {
   ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
   Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
   FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X, Tag,
-  Video,
+  Video, StickyNote,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
@@ -250,6 +250,7 @@ const meetNavGroups: NavGroup[] = [
       { label: "Live session mode", href: "/meet/live", icon: Video },
       { label: "My work & items", href: "/meet/my-work", icon: CheckCircle2 },
       { label: "Meeting calendar", href: "/meet/calendar", icon: Clock },
+      { label: "Meeting notes", href: "/meet/notes", icon: StickyNote },
       { label: "Decisions register", href: "/meet/decisions", icon: ShieldCheck },
     ]
   },
@@ -257,7 +258,7 @@ const meetNavGroups: NavGroup[] = [
     label: "Review & masters",
     items: [
       { label: "Reports & analytics", href: "/meet/reports", icon: LineChart },
-      { label: "Meet masters & setup", href: "/meet/admin", icon: Settings2 },
+      { label: "Meet settings & setup", href: "/meet/admin", icon: Settings2 },
     ]
   }
 ];

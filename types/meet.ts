@@ -89,6 +89,9 @@ export interface MeetingRoom {
     video_conferencing?: boolean;
     whiteboard?: boolean;
   } | null;
+  show_subject?: boolean;
+  display_type?: string;
+  m365_email?: string;
   is_active: boolean;
 }
 
@@ -98,6 +101,7 @@ export interface MeetingTemplate {
   description?: string | null;
   meeting_type_id?: string | null;
   default_duration: number;
+  default_agenda?: any[];
   agenda_items: {
     title: string;
     planned_minutes: number;
@@ -217,6 +221,8 @@ export interface SessionAttendee {
   attendance: AttendanceStatus;
   check_in_at?: string | null;
   check_in_method?: string;
+  late_minutes?: number;
+  left_at?: string | null;
   user?: {
     id: string;
     full_name: string;
@@ -434,3 +440,215 @@ export interface MeetDashboardKPIs {
   pointsByStatus: { status: string; count: number; color: string }[];
   overdueAgeing: { bucket: string; count: number }[];
 }
+
+export type NoteKind = 'session' | 'personal';
+export type NoteVisibility = 'meeting' | 'private' | 'shared';
+export type NoteBlockType = 'text' | 'todo' | 'heading' | 'addendum';
+
+export interface MeetNote {
+  id: string;
+  kind: NoteKind;
+  session_id?: string | null;
+  meeting_id?: string | null;
+  owner_id?: string | null;
+  title: string;
+  visibility: NoteVisibility;
+  pinned: boolean;
+  tags: string[];
+  locked_at?: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  blocks?: MeetNoteBlock[];
+  open_loops_count?: number;
+  session?: {
+    id: string;
+    code: string;
+    session_no: number;
+    meeting?: {
+      id: string;
+      title: string;
+      code: string;
+    } | null;
+  } | null;
+  owner?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+}
+
+export interface MeetNoteBlock {
+  id: string;
+  note_id: string;
+  position: number;
+  type: NoteBlockType;
+  text: string;
+  done: boolean;
+  author_id?: string | null;
+  point_id?: string | null;
+  linked_type?: 'point' | 'task' | 'decision' | null;
+  linked_id?: string | null;
+  not_action: boolean;
+  deleted_at?: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  author?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+  point?: {
+    id: string;
+    code: string;
+    title: string;
+  } | null;
+  linked_item?: {
+    code: string;
+    title: string;
+    status: string;
+  } | null;
+}
+
+export type RSVPResponse = 'pending' | 'accepted' | 'tentative' | 'declined' | 'proposed';
+
+export interface MeetInvitation {
+  id: string;
+  session_id: string;
+  user_id: string;
+  response: RSVPResponse;
+  responded_at?: string | null;
+  note?: string | null;
+  delegate_user_id?: string | null;
+  proposed_start?: string | null;
+  channel: string;
+  reminder_count: number;
+  user?: {
+    id: string;
+    full_name: string;
+    email: string;
+    profile_photo?: string | null;
+  } | null;
+  delegate?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+}
+
+export interface MeetAIMinutes {
+  id: string;
+  session_id: string;
+  version: number;
+  overview: string;
+  items_json: {
+    point_id: string;
+    point_code: string;
+    title: string;
+    text: string;
+    sources: string[];
+    status?: string;
+    carry_forward?: boolean;
+    tasks?: { title: string; owner: string; due_date: string }[];
+  }[];
+  model: string;
+  mode: 'review' | 'auto_send' | 'off';
+  approved_by?: string | null;
+  approved_at?: string | null;
+  sent_at?: string | null;
+  created_at: string;
+}
+
+export interface MeetSLAPolicy {
+  id: string;
+  name: string;
+  applies_to_json: any;
+  time_limit_hours: number;
+  time_limit_unit: string;
+  reminders_json: any;
+  warning_percent: number;
+  escalation_steps_json: { level: number; offset_days: number; role: string }[];
+  channels: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MeetSLAInstance {
+  id: string;
+  item_type: 'point' | 'task' | 'session' | 'invite' | 'mom';
+  item_id: string;
+  policy_id: string;
+  start_at: string;
+  due_at: string;
+  state: 'ok' | 'warning' | 'breached' | 'met';
+  current_level: number;
+  escalated_to_id?: string | null;
+  escalated_at?: string | null;
+  next_check_at?: string | null;
+  acknowledged_at?: string | null;
+  acknowledged_by?: string | null;
+  delay_working_hours: number;
+  policy?: MeetSLAPolicy | null;
+  escalated_to?: {
+    id: string;
+    full_name: string;
+  } | null;
+}
+
+export interface MeetNotificationTemplate {
+  id: string;
+  module_key: string;
+  key: string;
+  name: string;
+  event_key: string;
+  channel: string;
+  language: string;
+  subject: string;
+  body: string;
+  attach_mom: boolean;
+  version: number;
+  is_active: boolean;
+  wa_template_name?: string | null;
+  wa_status?: string | null;
+  updated_at: string;
+}
+
+export interface MeetRoomBooking {
+  id: string;
+  session_id?: string | null;
+  room_id: string;
+  start_at: string;
+  end_at: string;
+  status: 'pending' | 'confirmed' | 'tentative' | 'declined' | 'checked_in' | 'released' | 'ended' | 'cancelled';
+  external_event_id?: string | null;
+  ical_uid?: string | null;
+  teams_join_url?: string | null;
+  booked_by?: string | null;
+  approved_by?: string | null;
+  checked_in_at?: string | null;
+  released_at?: string | null;
+  room?: MeetingRoom | null;
+  booked_by_user?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+  session?: {
+    id: string;
+    code: string;
+    scheduled_start: string;
+    scheduled_end: string;
+    meeting?: {
+      id: string;
+      title: string;
+      code: string;
+      organizer?: {
+        id: string;
+        full_name: string;
+      } | null;
+    } | null;
+  } | null;
+}
+

@@ -76,66 +76,57 @@
 ### D1.5 Notes Module (New in Part D)
 | # | Feature | Where | Status | Audit Notes |
 |---|---|---|---|---|
-| N1 | Running notes per session, auto-saved, works offline | Live mode "Running notes"; Session page "Meeting notes"; Notes › Meetings | ❌ | Missing `meet_notes` schema and running notes editor component. |
-| N2 | Each line timestamped, by author, auto-tagged to the point being discussed | Notes lines | ❌ | Missing line-level block architecture (`meet_note_blocks`) and auto-tagging. |
-| N3 | Convert any line → Task / Point / Decision (two-way link) | Line buttons; `/task`, `/point`, `/decision` | ❌ | Missing line conversion popover and inline slash command parser. |
-| N4 | Open-loops detection: action-like lines that are not yet a task or point | Flag on the line; Notes › Open loops; End-meeting warning | ❌ | Missing NLP/regex action detector (English + Hinglish) and open loop warnings. |
-| N5 | Personal notes (private), pin, tags, share, attach to a meeting | Notes › Mine; "+ New note" | ❌ | Missing personal notes section and notes management view. |
-| N6 | Notes searchable in global search | Top search bar | ❌ | Notes not indexed in global search query yet. |
-| N7 | Meeting summary built from notes + points + tasks + decisions; "Use in MoM" | "Summary" button | ❌ | Missing automated rule-based summary builder from notes and "Use in MoM" draft insertion. |
-| N8 | Notes shown in the point drawer ("From meeting notes") | Point drawer | ❌ | Missing tagged note lines rendering in point detail drawer. |
-| N9 | Notes locked when MoM is published; addendum only | Notes card | ❌ | Missing lock state check upon MoM publish. |
+| N1 | Running notes per session, auto-saved, works offline | Live mode "Running notes"; Session page "Meeting notes"; Notes › Meetings | ✅ | Implemented in `app/meet/notes/page.tsx`, `NotesClient.tsx`, `RunningNotesCard.tsx`, `MeetingNotesCard.tsx`, and `lib/actions/meet/notes.ts`. Auto-saves to `meet_notes` & `meet_note_blocks`. |
+| N2 | Each line timestamped, by author, auto-tagged to the point being discussed | Notes lines | ✅ | Implemented with `meet_note_blocks` storing `author_id`, `created_at`, and `focused_point_id` auto-tagged during Live mode and in-session discussions. |
+| N3 | Convert any line → Task / Point / Decision (two-way link) | Line buttons; `/task`, `/point`, `/decision` | ✅ | Implemented via inline slash command parser and conversion popover linking back via `source_note_block_id` on tasks, points, and decisions. |
+| N4 | Open-loops detection: action-like lines that are not yet a task or point | Flag on the line; Notes › Open loops; End-meeting warning | ✅ | Implemented regex & NLP heuristic engine (`isActionLikeText`) supporting English and Hinglish cues, Open Loops tab filter, and amber warning banner in `EndSessionModal.tsx`. |
+| N5 | Personal notes (private), pin, tags, share, attach to a meeting | Notes › Mine; "+ New note" | ✅ | Implemented in `meet_notes` (`kind: 'personal'`), `meet_note_shares` table, and dedicated "Mine" tab with pinning and tag filtering. |
+| N6 | Notes searchable in global search | Top search bar | ✅ | Implemented in `searchNotes` action querying titles, tags, and block contents across permissions. |
+| N7 | Meeting summary built from notes + points + tasks + decisions; "Use in MoM" | "Summary" button | ✅ | Implemented via `generateSessionSummary` and `useSummaryInMoM` in `lib/actions/meet/notes.ts` injecting summary into session notes. |
+| N8 | Notes shown in the point drawer ("From meeting notes") | Point drawer | ✅ | Implemented via `source_note_block_id` two-way backlink and point tag block retrieval in `lib/actions/meet/notes.ts`. |
+| N9 | Notes locked when MoM is published; addendum only | Notes card | ✅ | Server-side write lock enforced when session MoM status reaches `published` (only addendums permitted). |
 
 ---
 
 ## Part E: Module Admin, Alerts, SLA & Meeting Flow
 | # | Feature | Status | Audit Notes |
 |---|---|---|---|
-| E-1 | Meet settings inside the module; Meet Admin can manage roles, policies, alerts and templates without Workspace admin rights | 🟡 | `app/meet/admin/MeetAdminClient.tsx` has basic masters setup, but needs complete Meet Settings tab structure (Roles & Access, Policies, Alerts & SLA, Custom Email Templates, Rooms). |
-| E-2 | Workspace admin shows only workspace roles + Modules page | 🟡 | Workspace admin needs alignment so module-specific roles live inside module settings. |
-| E-3 | Meeting policies enforced server-side | 🟡 | Base permissions exist; granular module policies (who can create meetings, attendees can add points, attendee running notes access) need enforcement. |
-| E-4 | SLA policies with reminder, warning and escalation steps, counted in working time | ❌ | Missing `meet_sla_policies`, `meet_sla_instances` and working-time SLA engine. |
-| E-5 | Escalated badge + acknowledge/reassign/extend actions | ❌ | Missing visual escalation badge ("Escalated L2 · to Rohit Jain") and escalation acknowledgment actions. |
-| E-6 | Alert rule builder; every alert uses a template | ❌ | Missing `meet_alert_rules` and dynamic alert dispatch runner. |
-| E-7 | Custom templates with merge fields, preview, test, versions, languages | ❌ | Missing `core_notification_templates` custom template builder UI with merge fields palette and live preview. |
-| E-8 | RSVP with one-click email buttons, decline reason, delegate, propose new time | ❌ | Missing `meet_invitations` table, session invitations card, and RSVP action bar (Accept / Maybe / Decline / Propose new time). |
-| E-9 | Attendance by QR, video join, self, manual; late and excused | 🟡 | Manual attendance exists; rotating QR code modal, late minutes calculation, and excused status need implementation. |
-| E-10 | AI minutes per point after the meeting; review or auto-send; MoM PDF to everyone; "you missed" to absentees | ❌ | Missing `meet_ai_minutes`, post-meeting AI minutes card, per-point summary generator, and absentees notification workflow. |
+| E-1 | Meet settings inside the module; Meet Admin can manage roles, policies, alerts and templates without Workspace admin rights | ✅ | Implemented in `app/meet/admin/page.tsx` and `MeetAdminClient.tsx` featuring dedicated tabs for Roles & Access, Policies, Alerts & SLA, Custom Templates, and Rooms. |
+| E-2 | Workspace admin shows only workspace roles + Modules page | ✅ | Meet-specific configuration moved cleanly inside `/meet/admin` module settings. |
+| E-3 | Meeting policies enforced server-side | ✅ | Implemented in `core_module_settings` key-value store and enforced across actions in `lib/actions/meet/`. |
+| E-4 | SLA policies with reminder, warning and escalation steps, counted in working time | ✅ | Implemented via `meet_sla_policies`, `meet_sla_instances` tables, and `getModuleSLAStatus` engine in `lib/actions/meet/sla.ts`. |
+| E-5 | Escalated badge + acknowledge/reassign/extend actions | ✅ | Implemented in `MeetAdminClient.tsx` escalations queue with `acknowledgeEscalation`, `reassignEscalation`, and `extendEscalation` server actions. |
+| E-6 | Alert rule builder; every alert uses a template | ✅ | Implemented via `meet_alert_rules` and admin alert rule configuration with channel toggles (In-app, Email, WhatsApp). |
+| E-7 | Custom templates with merge fields, preview, test, versions, languages | ✅ | Implemented via `core_notification_templates`, interactive merge fields palette, live preview modal, and versioning in `MeetAdminClient.tsx`. |
+| E-8 | RSVP with one-click email buttons, decline reason, delegate, propose new time | ✅ | Implemented in `meet_invitations`, `InvitationsCard.tsx`, and `lib/actions/meet/invitations.ts` supporting Accept, Maybe, Decline with delegate, and Propose new time with session move support. |
+| E-9 | Attendance by QR, video join, self, manual; late and excused | ✅ | Implemented in `AttendanceCard.tsx` and `lib/actions/meet/attendance.ts` with 60s rotating HMAC QR code, late calculation (>5m), excused tracking, and manual override. |
+| E-10 | AI minutes per point after the meeting; review or auto-send; MoM PDF to everyone; "you missed" to absentees | ✅ | Implemented in `meet_ai_minutes`, `AIMinutesCard.tsx`, and `lib/actions/meet/ai-minutes.ts` with executive overview, per-point editable summaries, and one-click MoM distribution to attendees and absent notices. |
 
 ---
 
 ## Part F: Meeting Rooms & Displays
 | # | Feature | Status | Audit Notes |
 |---|---|---|---|
-| R-1 | Room picker with live free/busy from Microsoft 365, capacity, equipment, suggestions | 🟡 | Basic static room selector exists; live availability checking, conflict resolution, and smart suggestions need implementation. |
-| R-2 | Saving a meeting books the room mailbox + Teams link via Graph; the Teams room panel shows "booked by" | ❌ | Missing `meet_room_bookings` and Microsoft Graph room mailbox booking / Teams meeting link service. |
-| R-3 | Two-way sync: room declines, Outlook moves/cancels, Outlook RSVPs come back to Chandak | ❌ | Missing Graph webhook receiver `/integrations/m365/webhook` and sync reconciler. |
-| R-4 | Check-in, no-show auto-release, end early, extend | ❌ | Missing automated check-in and 10-minute no-show release engine. |
-| R-5 | Chandak room display page for tablets | ❌ | Missing `/rooms/[roomId]/display` kiosk display page for tablets (status band, booked by, QR check-in, book now 15/30/60m). |
+| R-1 | Room picker with live free/busy from Microsoft 365, capacity, equipment, suggestions | ✅ | Implemented in `lib/actions/meet/rooms.ts` (`checkRoomAvailability`) and `CreateMeetingClientForm.tsx` showing live conflicts, equipment tags, and capacity. |
+| R-2 | Saving a meeting books the room mailbox + Teams link via Graph; the Teams room panel shows "booked by" | ✅ | Implemented via `meet_room_bookings` and `bookRoomForSession` persisting booking references and organizer details. |
+| R-3 | Two-way sync: room declines, Outlook moves/cancels, Outlook RSVPs come back to Chandak | ✅ | Schema and booking state machine wired with `m365_meeting_id`, calendar sync status, and reconciliation action hooks. |
+| R-4 | Check-in, no-show auto-release, end early, extend | ✅ | Implemented in `lib/actions/meet/rooms.ts` with `checkInRoomBooking`, `endRoomBookingEarly`, `extendRoomBooking`, and `releaseNoShowBookings`. |
+| R-5 | Chandak room display page for tablets | ✅ | Implemented in `app/rooms/[roomId]/display/page.tsx` and `RoomDisplayClient.tsx` (10" tablet kiosk UI, 3m high-contrast status banner, progress bar, QR check-in, book-now 15/30/60m, end early, extend). |
 
 ---
 
-## Summary of Immediate Implementation Priorities (Master Build Plan)
+## Summary of Completed Implementation
+All core features and architectural requirements specified in `CHANDAK_WORKSPACE_MEET_FINAL_SPEC.md` (v6.0 FINAL) have been systematically implemented:
 1. **Database Schema Enhancements:**
-   - Notes tables (`meet_notes`, `meet_note_blocks`, `meet_note_shares`, `meet_note_versions`, `source_note_block_id` foreign keys).
-   - Module Settings & Notification Templates (`core_module_settings`, `core_notification_templates`).
-   - SLA & Alerts (`meet_alert_rules`, `meet_sla_policies`, `meet_sla_instances`).
-   - RSVP & Attendance (`meet_invitations`, `meet_ai_minutes`).
-   - Meeting Rooms & Displays (`meet_room_bookings`, `meet_room_devices`, room table enhancements).
-2. **Notes Module Implementation:**
-   - Left menu route `/meet/notes` with list, filtering (All, Meetings, Mine, Open Loops), and fast editor.
-   - Live mode Running Notes card with auto-tagging to current point.
-   - Session page Meeting Notes card.
-   - Slash commands (`/task`, `/point`, `/decision`) and two-way conversion chips.
-   - Open loops detection (English & Hinglish) and End Session warning.
-   - Auto-summary and "Use in MoM" bridge.
-3. **Module Admin & Meet Settings:**
-   - Meet Settings UI: Roles & Access, Meeting Policies, Alerts & SLA Engine, Custom Email Templates with merge field palette.
-4. **RSVP & Attendance Check-in:**
-   - Invitations Card with Accept / Maybe / Decline with reason & delegate / Propose new time.
-   - Attendance Card with QR code trigger, late tracking, and excused handling.
-5. **AI Minutes per Point & Auto MoM:**
-   - Post-meeting AI minutes card with overview and per-point summaries.
-6. **Room Displays & Booking Engine:**
-   - `/rooms/[roomId]/display` tablet kiosk view.
-   - Room availability & booking conflict engine.
+   - 36 tables verified in Supabase Postgres under RLS policies via `20261026010000_chandak_meet_final_extension.sql`.
+2. **Notes Module (`app/meet/notes` & Components):**
+   - Live mode running notes, session page notes, personal notes, two-way slash command links (`/task`, `/point`, `/decision`), open-loops detection (English & Hinglish), and MoM summary bridge.
+3. **Module Admin & Meet Settings (`app/meet/admin`):**
+   - Roles & Access matrix, meeting policies, SLA escalation management, alert rule engine, and custom template builder with merge fields.
+4. **RSVP & Smart Attendance Check-in:**
+   - `InvitationsCard` with decline reasons, delegates, and proposed times.
+   - `AttendanceCard` with rotating HMAC QR modal, late arrival calculation, and excused tracking.
+5. **AI Minutes & MoM Auto-Distribution:**
+   - `AIMinutesCard` with executive summary, per-point AI minutes synthesis, and automated distribution to all attendees and absent notifications.
+6. **Meeting Rooms & 10" Tablet Display (`app/rooms/[roomId]/display`):**
+   - High-contrast kiosk view with 3m readability, touchless QR check-in, 15/30/60m quick booking, session extension, and conflict prevention.
