@@ -106,28 +106,36 @@ if (!$domainRoot || !is_dir($domainRoot)) {
 
 $versionedDirs = glob($domainRoot . '/hbuilds/versions/*/nodejs');
 
-// Canonical application root (Only ONE app root to avoid multiple Passenger process pools)
-$canonicalAppRoot = $domainRoot . '/hbuilds/current/nodejs';
-if (!is_dir($canonicalAppRoot)) {
-    // If current symlink doesn't exist, use the newest version directory
-    if ($versionedDirs) {
-        usort($versionedDirs, fn($a, $b) => filemtime($b) - filemtime($a));
-        $canonicalAppRoot = $versionedDirs[0];
-    } else {
-        $canonicalAppRoot = $domainRoot . '/public_html';
+// Active version directory discovery from running script location
+$activeVersionDir = null;
+if (strpos(__DIR__, 'hbuilds/versions') !== false) {
+    $parent = dirname(__DIR__);
+    if (basename($parent) === 'nodejs') {
+        $activeVersionDir = $parent;
     }
 }
+if (!$activeVersionDir && $versionedDirs) {
+    usort($versionedDirs, fn($a, $b) => filemtime($b) - filemtime($a));
+    $activeVersionDir = $versionedDirs[0];
+}
 
-$primaryAppRoots = [$canonicalAppRoot];
+// Canonical application root is the active version directory if it exists, otherwise current/nodejs
+$canonicalAppRoot = $activeVersionDir ?: ($domainRoot . '/hbuilds/current/nodejs');
 
-// Clean up stale .htaccess and server.js from old version directories so LiteSpeed never spawns ghost processes
-if ($versionedDirs) {
-    foreach ($versionedDirs as $vDir) {
-        if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
-            @unlink($vDir . '/.htaccess');
-            @unlink($vDir . '/public/.htaccess');
-            @unlink($vDir . '/tmp/restart.txt');
-        }
+// All app roots that must be kept in sync so LiteSpeed finds the app regardless of vhost mapping
+$primaryAppRoots = array_values(array_unique(array_filter([
+    $canonicalAppRoot,
+    $domainRoot . '/hbuilds/current/nodejs'
+])));
+
+// Keep canonicalAppRoot and current/nodejs synchronized if one is newer
+if ($canonicalAppRoot !== $domainRoot . '/hbuilds/current/nodejs') {
+    $currBuild = $domainRoot . '/hbuilds/current/nodejs/.next/BUILD_ID';
+    $activeBuild = $canonicalAppRoot . '/.next/BUILD_ID';
+    if (file_exists($currBuild) && (!file_exists($activeBuild) || filemtime($currBuild) > filemtime($activeBuild))) {
+        recursiveCopy($domainRoot . '/hbuilds/current/nodejs', $canonicalAppRoot);
+    } else if (file_exists($activeBuild) && !file_exists($currBuild)) {
+        recursiveCopy($canonicalAppRoot, $domainRoot . '/hbuilds/current/nodejs');
     }
 }
 
@@ -135,6 +143,7 @@ if ($versionedDirs) {
 $publicDocRoots = [
     $domainRoot . '/public_html',
     $canonicalAppRoot . '/public',
+    $domainRoot . '/hbuilds/current/nodejs/public',
     __DIR__,
 ];
 $publicDocRoots = array_values(array_unique(array_filter($publicDocRoots, 'is_dir')));
@@ -241,23 +250,15 @@ if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     @unlink($domainRoot . '/public_html/server.js');
     @unlink($domainRoot . '/public_html/package.json');
 
-    // Remove duplicate .htaccess from canonicalAppRoot and old version directories
-    if ($canonicalAppRoot !== $domainRoot . '/public_html') {
-        @unlink($canonicalAppRoot . '/.htaccess');
+    // Write pristine .htaccess with V8 thread pool bound to ALL primaryAppRoots and public_html
+    foreach ($primaryAppRoots as $targetRoot) {
+        $tHtaccess = $htaccessHeader . "PassengerAppRoot " . $targetRoot . "\nPassengerRestartDir " . $targetRoot . "/tmp\n" . $passengerDirective;
+        @file_put_contents($targetRoot . '/.htaccess', $tHtaccess);
+        @touch($targetRoot . '/.htaccess');
     }
-    if ($versionedDirs) {
-        foreach ($versionedDirs as $vDir) {
-            if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
-                @unlink($vDir . '/.htaccess');
-                @unlink($vDir . '/public/.htaccess');
-                @unlink($vDir . '/tmp/restart.txt');
-            }
-        }
-    }
-
-    // Rewrite pristine public_html/.htaccess with V8 thread pool bound
     $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
     @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
+    @touch($domainRoot . '/public_html/.htaccess');
 
     $futureTime = time() + 120;
     foreach ($primaryAppRoots as $target) {
@@ -429,26 +430,16 @@ $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPa
 @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
 @touch($domainRoot . '/public_html/.htaccess');
 
-// 2. Remove .htaccess from canonical app root so LiteSpeed NEVER spawns duplicate Passenger pools!
-// ONLY public_html/.htaccess should declare PassengerAppRoot.
-if ($canonicalAppRoot !== $domainRoot . '/public_html') {
-    @unlink($canonicalAppRoot . '/.htaccess');
+// 2. Write to ALL primary app roots so whichever path LiteSpeed resolves, it finds the proper configuration
+foreach ($primaryAppRoots as $targetRoot) {
+    $tHtaccess = $htaccessHeader . "PassengerAppRoot " . $targetRoot . "\nPassengerRestartDir " . $targetRoot . "/tmp\n" . $passengerDirective;
+    @file_put_contents($targetRoot . '/.htaccess', $tHtaccess);
+    @touch($targetRoot . '/.htaccess');
 }
 
 // 3. Clean up any stray server.js in public_html
 @unlink($domainRoot . '/public_html/server.js');
 @unlink($domainRoot . '/public_html/package.json');
-
-// 3. Purge .htaccess from all other versioned directories so LiteSpeed NEVER spawns duplicate Passenger pools
-if ($versionedDirs) {
-    foreach ($versionedDirs as $vDir) {
-        if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
-            @unlink($vDir . '/.htaccess');
-            @unlink($vDir . '/public/.htaccess');
-            @unlink($vDir . '/tmp/restart.txt');
-        }
-    }
-}
 
 // 4. Touch restart.txt trigger only on canonical root
 @mkdir($canonicalAppRoot . '/tmp', 0755, true);

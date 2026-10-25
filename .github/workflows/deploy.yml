@@ -150,20 +150,16 @@ jobs:
               DOMAIN_ROOT="$ROOT_DIR/domains/chandakgroup.tech"
             fi
             
+            ACTIVE_VERS=($(find "$DOMAIN_ROOT/hbuilds/versions" -maxdepth 2 -type d -name "nodejs" 2>/dev/null))
             TARGET_DIRS=(
               "$DOMAIN_ROOT/hbuilds/current/nodejs"
             )
-            
-            # Clean up old version directories so they never run duplicate Node apps
-            for old_ver in $(find "$DOMAIN_ROOT/hbuilds/versions" -maxdepth 2 -type d -name "nodejs" 2>/dev/null); do
-              if [ "$old_ver" != "$DOMAIN_ROOT/hbuilds/current/nodejs" ]; then
-                rm -f "$old_ver/.htaccess" "$old_ver/public/.htaccess" "$old_ver/tmp/restart.txt"
-              fi
+            for vdir in "${ACTIVE_VERS[@]}"; do
+              TARGET_DIRS+=("$vdir")
             done
 
-            # Prevent dual-app collision by removing stray server.js from public_html and duplicate .htaccess from app root
+            # Prevent dual-app collision by removing stray server.js from public_html
             rm -f "$DOMAIN_ROOT/public_html/server.js" "$DOMAIN_ROOT/public_html/package.json"
-            rm -f "$DOMAIN_ROOT/hbuilds/current/nodejs/.htaccess"
 
             echo "Target directories to update: ${TARGET_DIRS[*]}"
             
