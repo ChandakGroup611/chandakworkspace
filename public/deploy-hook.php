@@ -257,24 +257,39 @@ if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     @unlink($domainRoot . '/public_html/server.js');
     @unlink($domainRoot . '/public_html/package.json');
 
-    // Write pristine .htaccess with V8 thread pool bound to ALL primaryAppRoots and public_html
+    // Remove duplicate .htaccess from canonicalAppRoot and all primaryAppRoots
+    // ONLY public_html/.htaccess should declare PassengerAppRoot to prevent duplicate LiteSpeed worker pools
     foreach ($primaryAppRoots as $targetRoot) {
-        $tHtaccess = $htaccessHeader . "PassengerAppRoot " . $targetRoot . "\nPassengerRestartDir " . $targetRoot . "/tmp\n" . $passengerDirective;
-        @file_put_contents($targetRoot . '/.htaccess', $tHtaccess);
-        @touch($targetRoot . '/.htaccess');
+        if ($targetRoot !== $domainRoot . '/public_html') {
+            @unlink($targetRoot . '/.htaccess');
+        }
     }
+    if ($versionedDirs) {
+        foreach ($versionedDirs as $vDir) {
+            if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
+                @unlink($vDir . '/.htaccess');
+                @unlink($vDir . '/public/.htaccess');
+                @unlink($vDir . '/tmp/restart.txt');
+            }
+        }
+    }
+
+    // Write pristine public_html/.htaccess with V8 and thread bounds
     $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
     @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
     @touch($domainRoot . '/public_html/.htaccess');
 
-    $futureTime = time() + 120;
     foreach ($primaryAppRoots as $target) {
         @mkdir($target . '/tmp', 0755, true);
-        @touch($target . '/tmp/restart.txt', $futureTime);
-        @touch($target . '/server.js', $futureTime);
-        @touch($target . '/package.json', $futureTime);
+        @touch($target . '/tmp/restart.txt');
+        if (file_exists($target . '/server.js')) {
+            @touch($target . '/server.js');
+        }
+        if (file_exists($target . '/package.json')) {
+            @touch($target . '/package.json');
+        }
     }
-    @touch($domainRoot . '/public_html/.htaccess', $futureTime);
+    @touch($domainRoot . '/public_html/.htaccess');
 
     echo json_encode([
         'success' => true,
@@ -430,23 +445,33 @@ $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPa
 @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
 @touch($domainRoot . '/public_html/.htaccess');
 
-// 2. Write to ALL primary app roots so whichever path LiteSpeed resolves, it finds the proper configuration
+// 2. Remove duplicate .htaccess from canonicalAppRoot and all primaryAppRoots
+// ONLY public_html/.htaccess should declare PassengerAppRoot to prevent duplicate LiteSpeed worker pools
 foreach ($primaryAppRoots as $targetRoot) {
-    $tHtaccess = $htaccessHeader . "PassengerAppRoot " . $targetRoot . "\nPassengerRestartDir " . $targetRoot . "/tmp\n" . $passengerDirective;
-    @file_put_contents($targetRoot . '/.htaccess', $tHtaccess);
-    @touch($targetRoot . '/.htaccess');
+    if ($targetRoot !== $domainRoot . '/public_html') {
+        @unlink($targetRoot . '/.htaccess');
+    }
+}
+if ($versionedDirs) {
+    foreach ($versionedDirs as $vDir) {
+        if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
+            @unlink($vDir . '/.htaccess');
+            @unlink($vDir . '/public/.htaccess');
+            @unlink($vDir . '/tmp/restart.txt');
+        }
+    }
 }
 
 // 3. Clean up any stray server.js in public_html
 @unlink($domainRoot . '/public_html/server.js');
 @unlink($domainRoot . '/public_html/package.json');
 
-// 4. Touch restart.txt trigger only on canonical root
+// 4. Touch restart.txt trigger
 @mkdir($canonicalAppRoot . '/tmp', 0755, true);
-$futureTime = time() + 120;
-@touch($canonicalAppRoot . '/tmp/restart.txt', $futureTime);
-if (file_exists($canonicalAppRoot . '/server.js')) @touch($canonicalAppRoot . '/server.js', $futureTime);
-if (file_exists($canonicalAppRoot . '/package.json')) @touch($canonicalAppRoot . '/package.json', $futureTime);
+@touch($canonicalAppRoot . '/tmp/restart.txt');
+if (file_exists($canonicalAppRoot . '/server.js')) @touch($canonicalAppRoot . '/server.js');
+if (file_exists($canonicalAppRoot . '/package.json')) @touch($canonicalAppRoot . '/package.json');
+@touch($domainRoot . '/public_html/.htaccess');
 
 // 5. Ensure deploy-hook is preserved in public_html and versioned public
 $selfCode = @file_get_contents(__FILE__);
