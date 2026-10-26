@@ -20,7 +20,7 @@ export async function generateMoMSnapshot(sessionId: string) {
             organizer:user_master!meet_meetings_organizer_id_fkey(full_name, email),
             chair:user_master!meet_meetings_chair_id_fkey(full_name, email)
           ),
-          minute_taker:user_master(full_name, email)
+          minute_taker:user_master!meet_sessions_minute_taker_id_fkey(full_name, email)
         `)
         .eq("id", sessionId)
         .single(),

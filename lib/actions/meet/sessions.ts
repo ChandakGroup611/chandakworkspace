@@ -11,7 +11,7 @@ export async function getSessionsForMeeting(meetingId: string): Promise<MeetingS
       .from("meet_sessions")
       .select(`
         *,
-        minute_taker:user_master(id, full_name, email),
+        minute_taker:user_master!meet_sessions_minute_taker_id_fkey(id, full_name, email),
         attendees:meet_session_attendees(
           id, role, invite_status, attendance, check_in_at,
           user:user_master(id, full_name, email, profile_photo)
@@ -74,7 +74,7 @@ export async function getSessionById(sessionId: string): Promise<{
           meeting_type:meet_meeting_types(id, name, color, is_board_mode),
           room:meet_rooms(id, name, location)
         ),
-        minute_taker:user_master(id, full_name, email),
+        minute_taker:user_master!meet_sessions_minute_taker_id_fkey(id, full_name, email),
         room:meet_rooms(id, name, location)
       `)
       .eq("id", sessionId)
