@@ -5,12 +5,16 @@ import Link from "next/link";
 import {
   Settings, Layers, Tag, Building2, FileSpreadsheet, Plus, Check, X,
   Edit2, Sliders, Calendar, AlertTriangle, Clock, ShieldAlert, Key,
-  Mail, Bell, ShieldCheck, ExternalLink, Tablet, Send, RefreshCw, Eye
+  Mail, Bell, ShieldCheck, ExternalLink, Tablet, Send, RefreshCw, Eye,
+  CheckSquare, Square, FileText, Download, RotateCcw, Sparkles
 } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import {
   saveMeetingType, savePointCategory, saveMeetingRoom,
   saveMeetingTemplate, saveMeetSettings,
+  saveMeetRoleMatrix,
+  MEET_RESOURCES, MEET_ROLES, DEFAULT_MEET_ROLE_MATRIX,
+  type MeetRoleMatrix, type MeetResourcePermission,
 } from "@/lib/actions/meet/masters";
 import { saveAlertRule, saveNotificationTemplate, acknowledgeEscalation } from "@/lib/actions/meet/sla";
 import { toast } from "react-toastify";
@@ -26,6 +30,7 @@ interface MeetAdminClientProps {
     users?: { id: string; full_name: string; email: string; user_code?: string }[];
   };
   initialSettings: any;
+  initialRoleMatrix?: MeetRoleMatrix;
   initialSLAPolicies?: MeetSLAPolicy[];
   initialSLAInstances?: MeetSLAInstance[];
   initialAlertRules?: any[];
@@ -46,6 +51,7 @@ type AdminTab =
 export default function MeetAdminClient({
   initialMasters,
   initialSettings,
+  initialRoleMatrix,
   initialSLAPolicies = [],
   initialSLAInstances = [],
   initialAlertRules = [],
@@ -63,6 +69,15 @@ export default function MeetAdminClient({
   const [slaInstances, setSlaInstances] = useState<MeetSLAInstance[]>(initialSLAInstances);
   const [alertRules, setAlertRules] = useState<any[]>(initialAlertRules);
   const [emailTemplates, setEmailTemplates] = useState<MeetNotificationTemplate[]>(initialTemplates);
+
+  // RBAC Role Matrix State
+  const [roleMatrix, setRoleMatrix] = useState<MeetRoleMatrix>(
+    initialRoleMatrix && Object.keys(initialRoleMatrix).length > 0
+      ? initialRoleMatrix
+      : DEFAULT_MEET_ROLE_MATRIX
+  );
+  const [selectedRole, setSelectedRole] = useState<string>("meet_admin");
+  const [isSavingMatrix, setIsSavingMatrix] = useState(false);
 
   // Settings State
   const [workingDays, setWorkingDays] = useState<number[]>(initialSettings?.working_days || [1, 2, 3, 4, 5, 6]);
@@ -85,6 +100,174 @@ export default function MeetAdminClient({
   const [templateSubject, setTemplateSubject] = useState(emailTemplates[0]?.subject || "");
   const [templateBody, setTemplateBody] = useState(emailTemplates[0]?.body || "");
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [editorTab, setEditorTab] = useState<"editor" | "preview">("editor");
+
+  // New Template Modal state
+  const [isNewTemplateModalOpen, setIsNewTemplateModalOpen] = useState(false);
+  const [newTplName, setNewTplName] = useState("");
+  const [newTplKey, setNewTplKey] = useState("");
+  const [newTplEvent, setNewTplEvent] = useState("meet.task.assigned");
+  const [newTplChannel, setNewTplChannel] = useState("email");
+  const [newTplSubject, setNewTplSubject] = useState("");
+  const [newTplBody, setNewTplBody] = useState("");
+  const [newTplAttachMom, setNewTplAttachMom] = useState(false);
+
+  // Rendered Mail Body Preview Modal state
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<MeetNotificationTemplate | null>(null);
+  const [previewMode, setPreviewMode] = useState<"rendered" | "raw">("rendered");
+
+  // Dynamic sample replacements for Live Mail Body Preview
+  const renderSampleEmail = (text: string) => {
+    if (!text) return "";
+    return text
+      .replace(/\{\{user\.first_name\}\}/g, "Avinash")
+      .replace(/\{\{meeting\.title\}\}/g, "Executive Operations & Performance Review")
+      .replace(/\{\{session\.date\}\}/g, "29 Oct 2026")
+      .replace(/\{\{session\.time\}\}/g, "10:30 AM IST")
+      .replace(/\{\{item\.code\}\}/g, "ACT-2026-0042")
+      .replace(/\{\{item\.due\}\}/g, "02 Nov 2026")
+      .replace(/\{\{owner\.name\}\}/g, "Avinash Pise")
+      .replace(/\{\{tat_days\}\}/g, "3 working days")
+      .replace(/\{\{summary\}\}/g, "All operational targets, plant compliance checklists, and capital allocation proposals were reviewed and finalized.")
+      .replace(/\{\{agenda\}\}/g, "1. Q3 Capex Allocations · 2. Plant Safety Compliance · 3. Vendor SLA Turnaround");
+  };
+
+  // RBAC Permission Handlers
+  const handleToggleMatrixPerm = (
+    roleKey: string,
+    resKey: string,
+    action: "create" | "read" | "update" | "delete"
+  ) => {
+    setRoleMatrix((prev) => {
+      const currentRole = prev[roleKey] || {};
+      const currentRes = currentRole[resKey] || { create: false, read: false, update: false, delete: false };
+      return {
+        ...prev,
+        [roleKey]: {
+          ...currentRole,
+          [resKey]: {
+            ...currentRes,
+            [action]: !currentRes[action],
+          },
+        },
+      };
+    });
+  };
+
+  const handleToggleRowAll = (roleKey: string, resKey: string) => {
+    setRoleMatrix((prev) => {
+      const currentRole = prev[roleKey] || {};
+      const currentRes = currentRole[resKey] || { create: false, read: false, update: false, delete: false };
+      const allTrue = currentRes.create && currentRes.read && currentRes.update && currentRes.delete;
+      const target = !allTrue;
+      return {
+        ...prev,
+        [roleKey]: {
+          ...currentRole,
+          [resKey]: {
+            create: target,
+            read: target,
+            update: target,
+            delete: target,
+          },
+        },
+      };
+    });
+  };
+
+  const handleToggleRoleAll = (roleKey: string, grant: boolean) => {
+    setRoleMatrix((prev) => {
+      const updatedRole: Record<string, MeetResourcePermission> = {};
+      MEET_RESOURCES.forEach((r) => {
+        updatedRole[r.key] = {
+          create: grant,
+          read: grant,
+          update: grant,
+          delete: grant,
+        };
+      });
+      return {
+        ...prev,
+        [roleKey]: updatedRole,
+      };
+    });
+  };
+
+  const handleResetMatrix = () => {
+    if (confirm("Reset Chandak Meet permissions to recommended enterprise defaults?")) {
+      setRoleMatrix(DEFAULT_MEET_ROLE_MATRIX);
+      toast.info("Permissions reset to defaults. Click 'Save RBAC Matrix' to persist.");
+    }
+  };
+
+  const handleSaveMatrix = async () => {
+    try {
+      setIsSavingMatrix(true);
+      const res = await saveMeetRoleMatrix(roleMatrix);
+      if (res.success) {
+        toast.success("Chandak Meet RBAC Matrix saved successfully");
+      } else {
+        toast.error(res.error || "Failed to save RBAC matrix");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save RBAC matrix");
+    } finally {
+      setIsSavingMatrix(false);
+    }
+  };
+
+  // New Template Handlers
+  const handleOpenNewTemplateModal = () => {
+    setNewTplName("");
+    setNewTplKey(`meet.custom.${Date.now()}`);
+    setNewTplEvent("meet.task.assigned");
+    setNewTplChannel("email");
+    setNewTplSubject("Action Required: {{item.code}} assigned to you");
+    setNewTplBody(
+      "Dear {{user.first_name}},\n\nYou have been assigned action item {{item.code}} from meeting {{meeting.title}}.\n\nDue Date: {{item.due}} (TAT: {{tat_days}})\n\nPlease review and execute within the allotted working days."
+    );
+    setNewTplAttachMom(false);
+    setIsNewTemplateModalOpen(true);
+  };
+
+  const handleCreateNewTemplateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTplName.trim() || !newTplSubject.trim() || !newTplBody.trim()) {
+      toast.warn("Please enter template name, subject, and body");
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await saveNotificationTemplate({
+        key: newTplKey.trim() || `meet.custom.${Date.now()}`,
+        name: newTplName.trim(),
+        event_key: newTplEvent,
+        channel: newTplChannel,
+        subject: newTplSubject.trim(),
+        body: newTplBody.trim(),
+        attach_mom: newTplAttachMom,
+      });
+
+      if (res.success && res.template) {
+        toast.success(`Template "${res.template.name}" created successfully`);
+        setEmailTemplates((prev) => [res.template!, ...prev]);
+        setSelectedTemplate(res.template);
+        setTemplateSubject(res.template.subject);
+        setTemplateBody(res.template.body);
+        setIsNewTemplateModalOpen(false);
+      } else {
+        toast.error(res.error || "Failed to create template");
+      }
+    });
+  };
+
+  const handleOpenPreview = (tmpl?: MeetNotificationTemplate) => {
+    const target = tmpl || selectedTemplate;
+    if (!target) return;
+    setPreviewTemplate(target);
+    setIsPreviewModalOpen(true);
+  };
 
   // Alert Rule Modal state
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
@@ -340,48 +523,259 @@ export default function MeetAdminClient({
         })}
       </div>
 
-      {/* TAB 1: Roles & Access (Section E1) */}
+      {/* TAB 1: Roles & Access (Section E1) - Granular Interactive RBAC Matrix */}
       {activeTab === "roles" && (
         <div className="space-y-6">
-          <div className="p-4 rounded-xl border border-border bg-surface-elevated">
-            <h3 className="text-sm font-bold text-slate-100 mb-1">Chandak Meet Permission Matrix</h3>
-            <p className="text-xs text-muted mb-4">
-              Module-level role delegation. Meet Admins manage roles and permissions inside Meet without Workspace Admin rights.
-            </p>
+          {/* RBAC Header & Actions */}
+          <div className="p-5 rounded-xl border border-border bg-surface-elevated">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Key className="w-5 h-5 text-primary" />
+                  <h3 className="text-base font-bold text-slate-100">
+                    Chandak Meet Granular RBAC Permissions Matrix
+                  </h3>
+                </div>
+                <p className="text-xs text-muted mt-1 max-w-2xl">
+                  Module-scoped role governance. Define granular Create, Read/View, Update/Edit, and Delete permissions across all 10 Meet operational domains for each role.
+                </p>
+              </div>
 
-            <div className="overflow-x-auto">
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={handleResetMatrix}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken text-muted hover:text-foreground flex items-center gap-1.5 transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset Defaults
+                </button>
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveMatrix}
+                  isLoading={isSavingMatrix}
+                  className="font-bold shadow-sm"
+                >
+                  Save RBAC Matrix
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Role Selector Tabs */}
+            <div className="mt-4">
+              <span className="text-[11.5px] font-semibold text-muted uppercase tracking-wider block mb-2">
+                Select Role to Configure Permissions
+              </span>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                {MEET_ROLES.map((r) => {
+                  const isSelected = selectedRole === r.key;
+                  const perms = roleMatrix[r.key] || {};
+                  let activeCount = 0;
+                  Object.values(perms).forEach((p) => {
+                    if (p.create) activeCount++;
+                    if (p.read) activeCount++;
+                    if (p.update) activeCount++;
+                    if (p.delete) activeCount++;
+                  });
+
+                  return (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => setSelectedRole(r.key)}
+                      className={`text-left p-3 rounded-lg border transition-all ${
+                        isSelected
+                          ? "bg-theme-btn-primary/10 border-theme-btn-primary shadow-xs ring-1 ring-theme-btn-primary/30"
+                          : "bg-surface border-border hover:bg-surface-elevated hover:border-border/80"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="text-xs font-bold text-slate-100 truncate">
+                          {r.label}
+                        </span>
+                      </div>
+                      <span className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded bg-sunken text-muted mb-1.5">
+                        {r.badge}
+                      </span>
+                      <div className="flex items-center justify-between text-[10.5px]">
+                        <span className="text-muted">Active CRUD:</span>
+                        <span className={`font-mono font-bold ${activeCount > 0 ? "text-emerald-400" : "text-subtle"}`}>
+                          {activeCount} / 40
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quick Batch Actions for Selected Role */}
+            {(() => {
+              const currentRoleObj = MEET_ROLES.find((r) => r.key === selectedRole);
+              const perms = roleMatrix[selectedRole] || {};
+              let activeCount = 0;
+              Object.values(perms).forEach((p) => {
+                if (p.create) activeCount++;
+                if (p.read) activeCount++;
+                if (p.update) activeCount++;
+                if (p.delete) activeCount++;
+              });
+
+              return (
+                <div className="mt-4 p-3 rounded-lg bg-surface border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-theme-btn-primary" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-100">
+                        {currentRoleObj?.label} ({currentRoleObj?.badge})
+                      </span>
+                      <span className="text-[11px] text-muted ml-2">
+                        {currentRoleObj?.description}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-muted text-[11px] mr-1">
+                      {activeCount} of 40 permissions granted
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleRoleAll(selectedRole, true)}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+                    >
+                      Grant All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleRoleAll(selectedRole, false)}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20"
+                    >
+                      Revoke All
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Granular CRUD Permissions Table */}
+            <div className="mt-4 overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-surface text-muted">
-                    <th className="py-2.5 px-3 font-semibold">Resource</th>
-                    <th className="py-2.5 px-3 font-semibold">Meet User</th>
-                    <th className="py-2.5 px-3 font-semibold">Dept Head</th>
-                    <th className="py-2.5 px-3 font-semibold">Plant Supervisor</th>
-                    <th className="py-2.5 px-3 font-semibold">Meet Admin</th>
-                    <th className="py-2.5 px-3 font-semibold">Workspace Admin (Read-only)</th>
+                    <th className="py-2.5 px-3 font-semibold w-2/5">Meet Resource Domain</th>
+                    <th className="py-2.5 px-3 font-semibold text-center w-28">Create [C]</th>
+                    <th className="py-2.5 px-3 font-semibold text-center w-28">Read/View [R]</th>
+                    <th className="py-2.5 px-3 font-semibold text-center w-28">Update/Edit [U]</th>
+                    <th className="py-2.5 px-3 font-semibold text-center w-28">Delete [D]</th>
+                    <th className="py-2.5 px-3 font-semibold text-center w-24">Row Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {[
-                    { res: "Meetings & Sessions", user: "Own / Member", dept: "Department", plant: "Location", admin: "All", ws: "All" },
-                    { res: "Run Live Session", user: "Member", dept: "Department", plant: "Location", admin: "All", ws: "All" },
-                    { res: "Minutes (MoM)", user: "View / Acknowledge", dept: "View / Approve", plant: "View", admin: "Approve / Publish", ws: "All" },
-                    { res: "Points & Carry-Forward", user: "Own items", dept: "Department", plant: "Location", admin: "All", ws: "All" },
-                    { res: "Tasks & Extensions", user: "Assigned items", dept: "Approve Extensions", plant: "Approve Extensions", admin: "All", ws: "All" },
-                    { res: "Decisions Register", user: "View", dept: "Record", plant: "Record", admin: "Manage", ws: "All" },
-                    { res: "Meeting Notes", user: "Member / Private", dept: "Department", plant: "Location", admin: "All", ws: "No access (Private)" },
-                    { res: "Reports & Analytics", user: "Own metrics", dept: "Department", plant: "Location", admin: "All", ws: "All" },
-                    { res: "Meet Settings & SLA", user: "None", dept: "None", plant: "None", admin: "Manage", ws: "All" },
-                  ].map((row, idx) => (
-                    <tr key={idx} className="hover:bg-surface/50">
-                      <td className="py-2.5 px-3 font-semibold text-slate-100">{row.res}</td>
-                      <td className="py-2.5 px-3 text-muted">{row.user}</td>
-                      <td className="py-2.5 px-3 text-muted">{row.dept}</td>
-                      <td className="py-2.5 px-3 text-muted">{row.plant}</td>
-                      <td className="py-2.5 px-3 font-semibold text-emerald-400">{row.admin}</td>
-                      <td className="py-2.5 px-3 text-muted">{row.ws}</td>
-                    </tr>
-                  ))}
+                  {MEET_RESOURCES.map((resource) => {
+                    const rolePerms = roleMatrix[selectedRole] || {};
+                    const resPerm = rolePerms[resource.key] || {
+                      create: false,
+                      read: false,
+                      update: false,
+                      delete: false,
+                    };
+                    const allChecked =
+                      resPerm.create && resPerm.read && resPerm.update && resPerm.delete;
+
+                    return (
+                      <tr key={resource.key} className="hover:bg-surface/50 transition-colors">
+                        <td className="py-2.5 px-3">
+                          <span className="font-bold text-slate-100 block">
+                            {resource.label}
+                          </span>
+                          <span className="text-[11px] text-muted">
+                            {resource.description}
+                          </span>
+                        </td>
+
+                        {/* Create [C] */}
+                        <td className="py-2.5 px-3 text-center">
+                          <label className="inline-flex items-center justify-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={resPerm.create}
+                              onChange={() =>
+                                handleToggleMatrixPerm(selectedRole, resource.key, "create")
+                              }
+                              className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer accent-theme-btn-primary"
+                            />
+                            <span className={`ml-1.5 text-[11px] font-semibold ${resPerm.create ? "text-emerald-400" : "text-muted"}`}>
+                              Create
+                            </span>
+                          </label>
+                        </td>
+
+                        {/* Read/View [R] */}
+                        <td className="py-2.5 px-3 text-center">
+                          <label className="inline-flex items-center justify-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={resPerm.read}
+                              onChange={() =>
+                                handleToggleMatrixPerm(selectedRole, resource.key, "read")
+                              }
+                              className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer accent-theme-btn-primary"
+                            />
+                            <span className={`ml-1.5 text-[11px] font-semibold ${resPerm.read ? "text-sky-400" : "text-muted"}`}>
+                              View
+                            </span>
+                          </label>
+                        </td>
+
+                        {/* Update/Edit [U] */}
+                        <td className="py-2.5 px-3 text-center">
+                          <label className="inline-flex items-center justify-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={resPerm.update}
+                              onChange={() =>
+                                handleToggleMatrixPerm(selectedRole, resource.key, "update")
+                              }
+                              className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer accent-theme-btn-primary"
+                            />
+                            <span className={`ml-1.5 text-[11px] font-semibold ${resPerm.update ? "text-amber-400" : "text-muted"}`}>
+                              Edit
+                            </span>
+                          </label>
+                        </td>
+
+                        {/* Delete [D] */}
+                        <td className="py-2.5 px-3 text-center">
+                          <label className="inline-flex items-center justify-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={resPerm.delete}
+                              onChange={() =>
+                                handleToggleMatrixPerm(selectedRole, resource.key, "delete")
+                              }
+                              className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer accent-theme-btn-primary"
+                            />
+                            <span className={`ml-1.5 text-[11px] font-semibold ${resPerm.delete ? "text-rose-400" : "text-muted"}`}>
+                              Delete
+                            </span>
+                          </label>
+                        </td>
+
+                        {/* Row Actions */}
+                        <td className="py-2.5 px-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleRowAll(selectedRole, resource.key)}
+                            className="px-2 py-0.5 text-[10.5px] rounded font-medium border border-border hover:bg-sunken text-muted hover:text-foreground"
+                          >
+                            {allChecked ? "Clear" : "All"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -626,92 +1020,264 @@ export default function MeetAdminClient({
 
       {/* TAB 4: Custom Email & WhatsApp Templates (Section E3) */}
       {activeTab === "templates_email" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Templates List */}
-          <div className="p-4 rounded-xl border border-border bg-surface-elevated flex flex-col">
-            <h3 className="text-sm font-bold text-slate-100 mb-3">Notification Templates</h3>
-            <div className="divide-y divide-border overflow-y-auto max-h-96">
-              {emailTemplates.map((tmpl) => (
-                <button
-                  key={tmpl.id}
-                  onClick={() => {
-                    setSelectedTemplate(tmpl);
-                    setTemplateSubject(tmpl.subject);
-                    setTemplateBody(tmpl.body);
-                  }}
-                  className={`w-full text-left p-3 rounded text-xs transition-colors ${
-                    selectedTemplate?.id === tmpl.id ? "bg-theme-btn-primary/10 border-l-2 border-theme-btn-primary" : "hover:bg-surface"
-                  }`}
-                >
-                  <span className="font-bold text-slate-100 block">{tmpl.name}</span>
-                  <div className="flex items-center justify-between text-[11px] text-muted mt-1">
-                    <span className="capitalize">{tmpl.channel}</span>
-                    <span>Version {tmpl.version}</span>
-                  </div>
-                </button>
-              ))}
+        <div className="space-y-4">
+          {/* Header Action Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-surface-elevated">
+            <div>
+              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <Mail className="w-4 h-4 text-primary" />
+                Notification & Mail Templates
+              </h3>
+              <p className="text-xs text-muted mt-0.5">
+                Design custom email and WhatsApp payloads with dynamic merge tags, automatic MoM PDF attachments, and live email body previews.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleOpenPreview(selectedTemplate || undefined)}
+                disabled={!selectedTemplate}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken text-muted hover:text-foreground flex items-center gap-1.5 transition-colors disabled:opacity-50"
+              >
+                <Eye className="w-3.5 h-3.5 text-sky-400" />
+                View Mail Body
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenNewTemplateModal}
+                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 flex items-center gap-1.5 shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                + New Template
+              </button>
             </div>
           </div>
 
-          {/* Template Editor & Merge Fields Palette */}
-          {selectedTemplate && (
-            <div className="lg:col-span-2 p-5 rounded-xl border border-border bg-surface-elevated flex flex-col gap-4">
-              <div className="flex items-center justify-between pb-3 border-b border-border">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-100">{selectedTemplate.name}</h3>
-                  <span className="text-[11px] text-muted">Event: {selectedTemplate.event_key}</span>
-                </div>
-                <button
-                  onClick={handleSaveTemplateChanges}
-                  disabled={isPending}
-                  className="px-4 py-1.5 text-xs font-bold rounded bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110"
-                >
-                  Save as Version {(selectedTemplate.version || 1) + 1}
-                </button>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Templates List */}
+            <div className="p-4 rounded-xl border border-border bg-surface-elevated flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
+                  Available Templates ({emailTemplates.length})
+                </h4>
               </div>
-
-              {/* Merge Fields Palette */}
-              <div>
-                <span className="text-xs font-semibold text-slate-200 block mb-1.5">Clickable Merge Fields:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    "{{user.first_name}}", "{{meeting.title}}", "{{session.date}}",
-                    "{{session.time}}", "{{item.code}}", "{{item.due}}",
-                    "{{owner.name}}", "{{summary}}", "{{agenda}}"
-                  ].map((field) => (
+              <div className="divide-y divide-border overflow-y-auto max-h-[480px]">
+                {emailTemplates.map((tmpl) => (
+                  <div
+                    key={tmpl.id}
+                    className={`w-full p-3 rounded-lg text-xs transition-colors flex items-start justify-between gap-2 ${
+                      selectedTemplate?.id === tmpl.id
+                        ? "bg-theme-btn-primary/10 border-l-2 border-theme-btn-primary shadow-xs"
+                        : "hover:bg-surface"
+                    }`}
+                  >
                     <button
-                      key={field}
                       type="button"
-                      onClick={() => setTemplateBody((b) => `${b} ${field}`)}
-                      className="px-2 py-0.5 rounded bg-surface border border-border hover:bg-surface-elevated text-[11px] font-mono text-theme-btn-primary"
+                      onClick={() => {
+                        setSelectedTemplate(tmpl);
+                        setTemplateSubject(tmpl.subject);
+                        setTemplateBody(tmpl.body);
+                      }}
+                      className="flex-1 text-left"
                     >
-                      {field}
+                      <span className="font-bold text-slate-100 block">{tmpl.name}</span>
+                      <div className="flex items-center gap-2 text-[11px] text-muted mt-1">
+                        <span className="capitalize px-1.5 py-0.2 rounded bg-sunken font-mono text-[10px]">
+                          {tmpl.channel}
+                        </span>
+                        <span>Ver {tmpl.version || 1}</span>
+                        {tmpl.attach_mom && (
+                          <span className="text-emerald-400 font-medium">📎 MoM PDF</span>
+                        )}
+                      </div>
                     </button>
-                  ))}
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-medium text-muted mb-1">Subject Line</label>
-                <input
-                  type="text"
-                  value={templateSubject}
-                  onChange={(e) => setTemplateSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-xs text-slate-100 focus:outline-none focus:border-theme-btn-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-muted mb-1">Body Text</label>
-                <textarea
-                  rows={8}
-                  value={templateBody}
-                  onChange={(e) => setTemplateBody(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-xs text-slate-100 focus:outline-none focus:border-theme-btn-primary font-sans"
-                />
+                    <button
+                      type="button"
+                      title="View Rendered Mail Body"
+                      onClick={() => handleOpenPreview(tmpl)}
+                      className="p-1.5 rounded hover:bg-surface text-muted hover:text-sky-400 transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
+
+            {/* Template Editor & Live Preview Panel */}
+            {selectedTemplate && (
+              <div className="lg:col-span-2 p-5 rounded-xl border border-border bg-surface-elevated flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-border gap-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-100">{selectedTemplate.name}</h3>
+                    <span className="text-[11px] text-muted font-mono">Event: {selectedTemplate.event_key}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Editor vs Inline Preview Tabs */}
+                    <div className="flex items-center bg-surface p-0.5 rounded-lg border border-border">
+                      <button
+                        type="button"
+                        onClick={() => setEditorTab("editor")}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
+                          editorTab === "editor"
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                            : "text-muted hover:text-foreground"
+                        }`}
+                      >
+                        Editor
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditorTab("preview")}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors flex items-center gap-1 ${
+                          editorTab === "preview"
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                            : "text-muted hover:text-foreground"
+                        }`}
+                      >
+                        <Eye className="w-3 h-3" />
+                        Live Mail Preview
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveTemplateChanges}
+                      disabled={isPending}
+                      className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-sm"
+                    >
+                      Save Version {(selectedTemplate.version || 1) + 1}
+                    </button>
+                  </div>
+                </div>
+
+                {editorTab === "editor" ? (
+                  <div className="space-y-4">
+                    {/* Clickable Merge Fields Palette */}
+                    <div>
+                      <span className="text-xs font-semibold text-slate-200 block mb-1.5">
+                        Clickable Dynamic Merge Fields:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          "{{user.first_name}}", "{{meeting.title}}", "{{session.date}}",
+                          "{{session.time}}", "{{item.code}}", "{{item.due}}",
+                          "{{owner.name}}", "{{tat_days}}", "{{summary}}", "{{agenda}}"
+                        ].map((field) => (
+                          <button
+                            key={field}
+                            type="button"
+                            onClick={() => setTemplateBody((b) => `${b} ${field}`)}
+                            className="px-2 py-0.5 rounded bg-surface border border-border hover:bg-surface-elevated text-[11px] font-mono text-theme-btn-primary transition-colors cursor-pointer"
+                          >
+                            {field}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-muted mb-1">Subject Line</label>
+                      <input
+                        type="text"
+                        value={templateSubject}
+                        onChange={(e) => setTemplateSubject(e.target.value)}
+                        className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-slate-100 focus:outline-none focus:border-theme-btn-primary font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-medium text-muted">Mail Body (Supports Dynamic Merge Tags)</label>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenPreview(selectedTemplate)}
+                          className="text-xs text-primary hover:underline flex items-center gap-1 font-medium"
+                        >
+                          <Eye className="w-3 h-3" /> Preview Rendered Output
+                        </button>
+                      </div>
+                      <textarea
+                        rows={9}
+                        value={templateBody}
+                        onChange={(e) => setTemplateBody(e.target.value)}
+                        className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-slate-100 focus:outline-none focus:border-theme-btn-primary font-sans leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Attach MoM PDF Toggle */}
+                    <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-surface border border-border">
+                      <input
+                        type="checkbox"
+                        checked={selectedTemplate.attach_mom}
+                        onChange={(e) =>
+                          setSelectedTemplate({
+                            ...selectedTemplate,
+                            attach_mom: e.target.checked,
+                          })
+                        }
+                        className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary"
+                      />
+                      <span className="text-xs text-foreground font-medium">
+                        Automatically attach signed Minutes of Meeting (MoM) PDF when published
+                      </span>
+                    </label>
+                  </div>
+                ) : (
+                  /* Inline Live Rendered Mail Envelope View */
+                  <div className="rounded-xl border border-border bg-surface p-4 space-y-4">
+                    <div className="border-b border-border pb-3 text-xs space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-muted w-14">From:</span>
+                        <span className="text-slate-200 font-mono">Chandak Meet &lt;notifications@chandakgroup.tech&gt;</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-muted w-14">To:</span>
+                        <span className="text-slate-200 font-mono">avinash.pise@chandakgroup.com</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-muted w-14">Subject:</span>
+                        <span className="text-slate-100 font-bold">{renderSampleEmail(templateSubject)}</span>
+                      </div>
+                    </div>
+
+                    {/* Rendered Email Body Box */}
+                    <div className="rounded-lg border border-border/80 bg-background p-5 text-xs text-slate-200 whitespace-pre-line leading-relaxed font-sans shadow-inner">
+                      {renderSampleEmail(templateBody)}
+                    </div>
+
+                    {selectedTemplate.attach_mom && (
+                      <div className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+                          <FileText className="w-4 h-4" />
+                          <span>Minutes_of_Meeting_Approved.pdf</span>
+                          <span className="text-muted text-[11px]">(142 KB · Signed by Chair)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toast.info("Opening MoM PDF in secure viewer...")}
+                            className="px-2.5 py-1 text-[11px] font-medium rounded border border-border bg-surface hover:bg-sunken text-foreground"
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toast.success("Downloading MoM PDF...")}
+                            className="px-2.5 py-1 text-[11px] font-medium rounded bg-primary text-primary-foreground hover:brightness-110 flex items-center gap-1"
+                          >
+                            <Download className="w-3 h-3" /> Download
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -955,6 +1521,354 @@ export default function MeetAdminClient({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create New Notification Template Modal */}
+      {isNewTemplateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in-0">
+          <div className="bg-surface-elevated border border-border rounded-xl max-w-xl w-full p-5 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div>
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-primary" />
+                  Create Notification Template
+                </h3>
+                <p className="text-[11.5px] text-muted mt-0.5">
+                  Configure custom notification content and trigger rules for Chandak Meet.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewTemplateModalOpen(false)}
+                className="text-muted hover:text-slate-100 p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewTemplateSubmit} className="space-y-3.5 py-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-muted font-medium mb-1">Template Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTplName}
+                    onChange={(e) => setNewTplName(e.target.value)}
+                    placeholder="e.g. Action Item Due Soon Alert"
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-muted font-medium mb-1">Unique Key</label>
+                  <input
+                    type="text"
+                    value={newTplKey}
+                    onChange={(e) => setNewTplKey(e.target.value)}
+                    placeholder="e.g. meet.task.due_soon"
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 font-mono text-[11px] focus:outline-none focus:border-theme-btn-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-muted font-medium mb-1">Trigger Event</label>
+                  <select
+                    value={newTplEvent}
+                    onChange={(e) => setNewTplEvent(e.target.value)}
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  >
+                    <option value="meet.task.assigned">Task Assigned</option>
+                    <option value="meet.task.due_soon">Task Due Soon (TAT approaching)</option>
+                    <option value="meet.task.escalated">Task Escalated (TAT breached)</option>
+                    <option value="meet.meeting.scheduled">Meeting Scheduled / Notice</option>
+                    <option value="meet.session.started">Live Session Started</option>
+                    <option value="meet.mom.published">Minutes of Meeting (MoM) Published</option>
+                    <option value="meet.extension.requested">TAT Extension Requested</option>
+                    <option value="meet.extension.approved">TAT Extension Approved</option>
+                    <option value="meet.decision.recorded">Policy Decision Recorded</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-muted font-medium mb-1">Delivery Channel</label>
+                  <select
+                    value={newTplChannel}
+                    onChange={(e) => setNewTplChannel(e.target.value)}
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  >
+                    <option value="email">Email (HTML)</option>
+                    <option value="whatsapp">WhatsApp Business</option>
+                    <option value="in_app">In-App Notification</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-muted font-medium mb-1">Email Subject Line *</label>
+                <input
+                  type="text"
+                  required
+                  value={newTplSubject}
+                  onChange={(e) => setNewTplSubject(e.target.value)}
+                  placeholder="e.g. Action Required: {{item.code}} from {{meeting.title}}"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary font-medium"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-muted font-medium">Mail Body *</label>
+                  <span className="text-[11px] text-muted">Supports dynamic tags</span>
+                </div>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {[
+                    "{{user.first_name}}", "{{meeting.title}}", "{{session.date}}",
+                    "{{item.code}}", "{{item.due}}", "{{tat_days}}", "{{summary}}"
+                  ].map((field) => (
+                    <button
+                      key={field}
+                      type="button"
+                      onClick={() => setNewTplBody((b) => `${b} ${field}`)}
+                      className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10.5px] font-mono text-theme-btn-primary hover:bg-surface-elevated"
+                    >
+                      {field}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  rows={5}
+                  required
+                  value={newTplBody}
+                  onChange={(e) => setNewTplBody(e.target.value)}
+                  placeholder="Enter email content with merge fields..."
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary font-sans leading-relaxed"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-surface border border-border">
+                <input
+                  type="checkbox"
+                  checked={newTplAttachMom}
+                  onChange={(e) => setNewTplAttachMom(e.target.checked)}
+                  className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary"
+                />
+                <span className="text-xs text-foreground font-medium">
+                  Attach signed Minutes of Meeting (MoM) PDF when published
+                </span>
+              </label>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsNewTemplateModalOpen(false)}
+                  className="px-3.5 py-1.5 text-xs rounded-lg border border-border bg-surface text-slate-300 hover:text-foreground"
+                >
+                  Cancel
+                </button>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isPending}
+                  className="font-bold shadow-sm"
+                >
+                  Create Template
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Rendered Mail Body Preview Modal (View Mail Body After Create & Anytime) */}
+      {isPreviewModalOpen && previewTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in-0">
+          <div className="bg-surface-elevated border border-border rounded-xl max-w-2xl w-full p-6 shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div>
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-sky-400" />
+                  Rendered Mail Body Preview
+                </h3>
+                <p className="text-[11.5px] text-muted mt-0.5">
+                  Template: <span className="font-semibold text-slate-200">{previewTemplate.name}</span> · Event: <span className="font-mono">{previewTemplate.event_key}</span>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Rendered vs Raw Toggle */}
+                <div className="flex items-center bg-surface p-0.5 rounded-lg border border-border text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode("rendered")}
+                    className={`px-2.5 py-1 font-semibold rounded-md transition-colors ${
+                      previewMode === "rendered"
+                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    Rendered Email
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode("raw")}
+                    className={`px-2.5 py-1 font-semibold rounded-md transition-colors ${
+                      previewMode === "raw"
+                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    Raw Template
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewModalOpen(false)}
+                  className="text-muted hover:text-slate-100 p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Envelope */}
+            <div className="py-4 space-y-4 overflow-y-auto flex-1">
+              {previewMode === "rendered" ? (
+                <div className="rounded-xl border border-border bg-surface p-5 space-y-4 shadow-sm">
+                  {/* Simulated Email Envelope Header */}
+                  <div className="border-b border-border pb-3.5 text-xs space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-muted w-16">From:</span>
+                      <span className="text-slate-100 font-mono text-[11.5px]">
+                        Chandak Meet Notifications &lt;notifications@chandakgroup.tech&gt;
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-muted w-16">To:</span>
+                      <span className="text-slate-100 font-mono text-[11.5px]">
+                        avinash.pise@chandakgroup.com (Assigned Member)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-muted w-16">Date:</span>
+                      <span className="text-muted text-[11.5px]">
+                        {new Date().toLocaleDateString("en-IN", {
+                          weekday: "short",
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })} · 10:30 AM IST
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+                      <span className="font-semibold text-muted w-16">Subject:</span>
+                      <span className="text-slate-100 font-bold text-[13px]">
+                        {renderSampleEmail(previewTemplate.subject)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Brand Header Inside Email */}
+                  <div className="p-3 rounded-lg bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-theme-btn-primary tracking-wide">
+                        CHANDAK MEET
+                      </span>
+                      <span className="text-[11px] text-muted">| Enterprise Governance Notice</span>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface border border-border text-muted">
+                      Confidential
+                    </span>
+                  </div>
+
+                  {/* Rendered Email Content */}
+                  <div className="rounded-lg border border-border/80 bg-background p-5 text-[12.5px] text-slate-100 whitespace-pre-line leading-relaxed font-sans shadow-inner">
+                    {renderSampleEmail(previewTemplate.body)}
+                  </div>
+
+                  {/* Attachment Pill if applicable */}
+                  {previewTemplate.attach_mom && (
+                    <div className="p-3.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2.5 text-emerald-400 font-semibold">
+                        <FileText className="w-4 h-4" />
+                        <div>
+                          <span className="block">Minutes_of_Meeting_Approved.pdf</span>
+                          <span className="text-muted text-[10.5px] font-normal">
+                            142 KB · Approved & digitally signed by Chair
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toast.info("Opening signed MoM PDF...")}
+                          className="px-2.5 py-1 text-[11px] font-semibold rounded border border-border bg-surface hover:bg-sunken text-foreground"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toast.success("Downloading signed MoM PDF...")}
+                          className="px-2.5 py-1 text-[11px] font-semibold rounded bg-primary text-primary-foreground hover:brightness-110 flex items-center gap-1"
+                        >
+                          <Download className="w-3 h-3" /> Download
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Corporate Email Footer */}
+                  <div className="pt-3 border-t border-border text-[11px] text-muted space-y-1">
+                    <p>
+                      This is an automated system dispatch from Chandak Meet Platform. Please do not reply directly to this email.
+                    </p>
+                    <p className="text-[10px] text-subtle">
+                      Chandak Group · Enterprise Infrastructure & Manufacturing Governance
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* Raw Template Mode */
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-muted mb-1">
+                      Raw Subject Template
+                    </label>
+                    <pre className="p-3 rounded-lg bg-background border border-border text-xs text-amber-300 font-mono overflow-x-auto">
+                      {previewTemplate.subject}
+                    </pre>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-muted mb-1">
+                      Raw Body Template
+                    </label>
+                    <pre className="p-3 rounded-lg bg-background border border-border text-xs text-slate-200 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                      {previewTemplate.body}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-3 border-t border-border flex items-center justify-between">
+              <span className="text-[11px] text-muted">
+                Sample merge tags substituted dynamically with simulated production payload.
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsPreviewModalOpen(false)}
+                className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-sm"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}

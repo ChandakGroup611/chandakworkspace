@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Plus, X, Trash2, Calendar, Clock, CheckSquare } from "lucide-react";
+import { Plus, X, Trash2, Calendar, Clock, CheckSquare, ShieldCheck, Info } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { createTask } from "@/lib/actions/meet/tasks";
+import { calculateDueDateFromTAT, calculateTATFromDates, formatPrettyDate } from "@/lib/utils/meet-working-days";
 import { toast } from "react-toastify";
 import type { PointPriority } from "@/types/meet";
 
@@ -27,14 +28,45 @@ export function CreateTaskModal({
   users = [],
   onTaskCreated,
 }: CreateTaskModalProps) {
+  const todayStr = new Date().toISOString().split("T")[0];
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [ownerId, setOwnerId] = useState("");
   const [priority, setPriority] = useState<PointPriority>("medium");
+  const [startDate, setStartDate] = useState(todayStr);
   const [tatDays, setTatDays] = useState(3);
+  const [dueDate, setDueDate] = useState(() => calculateDueDateFromTAT(todayStr, 3).dueDate);
+  const [skippedDays, setSkippedDays] = useState(() => calculateDueDateFromTAT(todayStr, 3).nonWorkingDaysSkipped);
+  const [requiresVerification, setRequiresVerification] = useState(false);
   const [checklist, setChecklist] = useState<string[]>([]);
   const [checklistInput, setChecklistInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleTatChange = (val: number) => {
+    const safe = Math.max(1, Math.min(60, val || 1));
+    setTatDays(safe);
+    const res = calculateDueDateFromTAT(startDate, safe);
+    setDueDate(res.dueDate);
+    setSkippedDays(res.nonWorkingDaysSkipped);
+  };
+
+  const handleDueDateChange = (newDue: string) => {
+    setDueDate(newDue);
+    if (newDue && startDate) {
+      const res = calculateTATFromDates(startDate, newDue);
+      setTatDays(res.tatDays);
+      setSkippedDays(res.nonWorkingDaysSkipped);
+    }
+  };
+
+  const handleStartDateChange = (newStart: string) => {
+    setStartDate(newStart);
+    if (newStart) {
+      const res = calculateDueDateFromTAT(newStart, tatDays);
+      setDueDate(res.dueDate);
+      setSkippedDays(res.nonWorkingDaysSkipped);
+    }
+  };
 
   const handleAddChecklistItem = () => {
     if (!checklistInput.trim()) return;
@@ -63,6 +95,9 @@ export function CreateTaskModal({
         owner_id: ownerId || undefined,
         priority,
         tat_days: tatDays,
+        start_date: startDate,
+        due_date: dueDate,
+        requires_verification: requiresVerification,
         checklist,
       });
 
@@ -71,6 +106,7 @@ export function CreateTaskModal({
         setTitle("");
         setDescription("");
         setChecklist([]);
+        setRequiresVerification(false);
         onTaskCreated?.(res.task);
         onOpenChange(false);
       } else {
@@ -155,33 +191,96 @@ export function CreateTaskModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Start Date, TAT, and Due Date Fields with Working-Days Engine */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[12.5px] font-medium text-foreground mb-1">
+                  Start Date
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-[12.5px] text-foreground focus:border-primary focus:outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[12.5px] font-medium text-foreground mb-1">
                   TAT (Working Days)
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <input
                     type="number"
                     min={1}
                     max={60}
                     value={tatDays}
-                    onChange={(e) => setTatDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none"
+                    onChange={(e) => handleTatChange(parseInt(e.target.value, 10))}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-[12.5px] text-foreground focus:border-primary focus:outline-none font-semibold"
                   />
-                  <span className="text-[12px] text-muted">days</span>
+                  <span className="text-[11.5px] text-muted whitespace-nowrap">days</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[12.5px] font-medium text-muted mb-1">
-                  Working Calendar Rule
+                <label className="block text-[12.5px] font-medium text-foreground mb-1">
+                  Due Date
                 </label>
-                <p className="rounded-md bg-sunken px-2.5 py-2 text-[11.5px] text-subtle">
-                  Mon-Sat (Excl. Sun & statutory holidays)
-                </p>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={dueDate}
+                    min={startDate}
+                    onChange={(e) => handleDueDateChange(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-[12.5px] text-foreground focus:border-primary focus:outline-none font-medium"
+                  />
+                </div>
               </div>
             </div>
+
+            {/* Live TAT & Working Days Calculation Helper Banner */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-[12px] space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-primary" />
+                  Due on {formatPrettyDate(dueDate)}
+                </span>
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-surface border border-border text-muted">
+                  {tatDays} working {tatDays === 1 ? "day" : "days"}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted">
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-muted" /> Mon–Sat calendar
+                </span>
+                {skippedDays > 0 && (
+                  <span className="inline-flex items-center gap-1 text-amber-500 font-medium bg-amber-500/10 px-1.5 py-0.5 rounded">
+                    ⚡ {skippedDays} non-working {skippedDays === 1 ? "day" : "days"} skipped (Sundays / statutory holidays)
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Verification Checkbox Toggle */}
+            <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-border bg-sunken/40 cursor-pointer hover:bg-sunken/70 transition-colors">
+              <input
+                type="checkbox"
+                checked={requiresVerification}
+                onChange={(e) => setRequiresVerification(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <div className="text-[12px]">
+                <span className="font-semibold text-foreground flex items-center gap-1">
+                  <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                  Requires Verification Sign-off
+                </span>
+                <p className="text-[11px] text-muted mt-0.5">
+                  Task cannot be closed out until verified and signed off by the meeting chair or assigner.
+                </p>
+              </div>
+            </label>
 
             <div>
               <label className="block text-[12.5px] font-medium text-foreground mb-1">

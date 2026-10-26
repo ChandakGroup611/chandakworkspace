@@ -1,7 +1,7 @@
 import React from "react";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import MeetAdminClient from "./MeetAdminClient";
-import { getMeetingMasters, getMeetSettings } from "@/lib/actions/meet/masters";
+import { getMeetingMasters, getMeetSettings, getMeetRoleMatrix } from "@/lib/actions/meet/masters";
 import { getSLAPolicies, getSLAInstances, getAlertRules, getNotificationTemplates } from "@/lib/actions/meet/sla";
 
 export const dynamic = "force-dynamic";
@@ -12,9 +12,10 @@ export const metadata = {
 };
 
 export default async function MeetAdminPage() {
-  const [masters, settings, slaPolicies, slaInstances, alertRules, templates] = await Promise.all([
+  const [masters, settings, roleMatrix, slaPolicies, slaInstances, alertRules, templates] = await Promise.all([
     getMeetingMasters(),
     getMeetSettings(),
+    getMeetRoleMatrix(),
     getSLAPolicies(),
     getSLAInstances(),
     getAlertRules(),
@@ -32,6 +33,7 @@ export default async function MeetAdminPage() {
       <MeetAdminClient
         initialMasters={masters}
         initialSettings={settings}
+        initialRoleMatrix={roleMatrix}
         initialSLAPolicies={slaPolicies}
         initialSLAInstances={slaInstances}
         initialAlertRules={alertRules}

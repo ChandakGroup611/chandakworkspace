@@ -14,6 +14,8 @@ export interface CreateTaskInput {
   priority?: PointPriority;
   tat_days?: number;
   start_date?: string;
+  due_date?: string;
+  requires_verification?: boolean;
   checklist?: string[];
 }
 
@@ -94,13 +96,15 @@ export async function createTask(input: CreateTaskInput) {
     const tatDays = input.tat_days || 3;
     const startDate = input.start_date || new Date().toISOString().split("T")[0];
 
-    // Calculate statutory working days due date
-    const { data: dateRes } = await supabaseAdmin.rpc("fn_meet_calculate_due_date", {
-      p_start_date: startDate,
-      p_tat_days: tatDays,
-    });
-
-    const dueDate = dateRes || new Date(Date.now() + tatDays * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    let dueDate = input.due_date;
+    if (!dueDate) {
+      // Calculate statutory working days due date
+      const { data: dateRes } = await supabaseAdmin.rpc("fn_meet_calculate_due_date", {
+        p_start_date: startDate,
+        p_tat_days: tatDays,
+      });
+      dueDate = dateRes || new Date(Date.now() + tatDays * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    }
 
     const { data: task, error: tErr } = await supabaseAdmin
       .from("meet_tasks")
@@ -114,6 +118,7 @@ export async function createTask(input: CreateTaskInput) {
         tat_days: tatDays,
         start_date: startDate,
         due_date: dueDate,
+        requires_verification: input.requires_verification ?? false,
         status: "not_started",
         progress_percent: 0,
         created_by: userId,

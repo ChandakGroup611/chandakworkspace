@@ -14,6 +14,9 @@ import {
   Plus,
   Trash2,
   X,
+  Calendar,
+  ShieldCheck,
+  Info,
 } from "lucide-react";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -24,6 +27,7 @@ import {
   createTask,
   deleteTask,
 } from "@/lib/actions/meet/tasks";
+import { calculateDueDateFromTAT, calculateTATFromDates, formatPrettyDate } from "@/lib/utils/meet-working-days";
 import { toast } from "react-toastify";
 import type { MeetingTask, TaskStatus, PointPriority } from "@/types/meet";
 
@@ -43,20 +47,50 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
   const [isSubmittingExt, setIsSubmittingExt] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const todayStr = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
   // Create Task Modal State
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDesc, setNewTaskDesc] = useState("");
   const [newTaskOwnerId, setNewTaskOwnerId] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<PointPriority>("medium");
+  const [newTaskStartDate, setNewTaskStartDate] = useState(todayStr);
   const [newTaskTat, setNewTaskTat] = useState(3);
+  const [newTaskDueDate, setNewTaskDueDate] = useState(() => calculateDueDateFromTAT(todayStr, 3).dueDate);
+  const [newTaskSkippedDays, setNewTaskSkippedDays] = useState(() => calculateDueDateFromTAT(todayStr, 3).nonWorkingDaysSkipped);
+  const [newTaskRequiresVerification, setNewTaskRequiresVerification] = useState(false);
   const [newTaskChecklist, setNewTaskChecklist] = useState<string[]>([]);
   const [checklistInput, setChecklistInput] = useState("");
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split("T")[0];
+  const handleNewTaskTatChange = (val: number) => {
+    const safe = Math.max(1, Math.min(60, val || 1));
+    setNewTaskTat(safe);
+    const res = calculateDueDateFromTAT(newTaskStartDate, safe);
+    setNewTaskDueDate(res.dueDate);
+    setNewTaskSkippedDays(res.nonWorkingDaysSkipped);
+  };
+
+  const handleNewTaskDueDateChange = (newDue: string) => {
+    setNewTaskDueDate(newDue);
+    if (newDue && newTaskStartDate) {
+      const res = calculateTATFromDates(newTaskStartDate, newDue);
+      setNewTaskTat(res.tatDays);
+      setNewTaskSkippedDays(res.nonWorkingDaysSkipped);
+    }
+  };
+
+  const handleNewTaskStartDateChange = (newStart: string) => {
+    setNewTaskStartDate(newStart);
+    if (newStart) {
+      const res = calculateDueDateFromTAT(newStart, newTaskTat);
+      setNewTaskDueDate(res.dueDate);
+      setNewTaskSkippedDays(res.nonWorkingDaysSkipped);
+    }
+  };
 
   // Filtering
   const filteredTasks = tasks.filter((t) => {
@@ -148,6 +182,9 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
           owner_id: newTaskOwnerId || undefined,
           priority: newTaskPriority,
           tat_days: Number(newTaskTat),
+          start_date: newTaskStartDate,
+          due_date: newTaskDueDate,
+          requires_verification: newTaskRequiresVerification,
           checklist: newTaskChecklist.length > 0 ? newTaskChecklist : undefined,
         });
 
@@ -158,6 +195,7 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
           setNewTaskTitle("");
           setNewTaskDesc("");
           setNewTaskChecklist([]);
+          setNewTaskRequiresVerification(false);
         } else {
           toast.error(res.error || "Failed to create task");
         }
@@ -584,19 +622,92 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[12px] font-medium text-foreground mb-1">
-                  TAT Working Days (calculates due date)
-                </label>
-                <input
-                  type="number"
-                  value={newTaskTat}
-                  onChange={(e) => setNewTaskTat(Number(e.target.value))}
-                  min={1}
-                  max={30}
-                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
-                />
+              {/* Start Date, TAT, Due Date with Working Days Engine */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newTaskStartDate}
+                    onChange={(e) => handleNewTaskStartDateChange(e.target.value)}
+                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-[12px] text-foreground focus:border-primary focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    TAT (Working Days)
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={newTaskTat}
+                      onChange={(e) => handleNewTaskTatChange(Number(e.target.value))}
+                      min={1}
+                      max={60}
+                      className="w-full rounded border border-border bg-background px-3 py-1.5 text-[12px] text-foreground focus:border-primary focus:outline-none font-semibold"
+                    />
+                    <span className="text-[11px] text-muted">days</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-medium text-foreground mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newTaskDueDate}
+                    min={newTaskStartDate}
+                    onChange={(e) => handleNewTaskDueDateChange(e.target.value)}
+                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-[12px] text-foreground focus:border-primary focus:outline-none font-medium"
+                  />
+                </div>
               </div>
+
+              {/* Live TAT & Working Days Helper Banner */}
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-2.5 text-[11.5px] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-primary" />
+                    Due: {formatPrettyDate(newTaskDueDate)}
+                  </span>
+                  <span className="text-[10.5px] font-medium px-2 py-0.5 rounded bg-surface border border-border text-muted">
+                    {newTaskTat} working {newTaskTat === 1 ? "day" : "days"}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-[10.5px] text-muted">
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-muted" /> Mon–Sat calendar
+                  </span>
+                  {newTaskSkippedDays > 0 && (
+                    <span className="inline-flex items-center gap-1 text-amber-500 font-medium bg-amber-500/10 px-1.5 py-0.5 rounded">
+                      ⚡ {newTaskSkippedDays} non-working {newTaskSkippedDays === 1 ? "day" : "days"} skipped (Sundays / statutory holidays)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Verification Checkbox Toggle */}
+              <label className="flex items-start gap-2 p-2 rounded-lg border border-border bg-sunken/40 cursor-pointer hover:bg-sunken/70 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={newTaskRequiresVerification}
+                  onChange={(e) => setNewTaskRequiresVerification(e.target.checked)}
+                  className="mt-0.5 h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
+                />
+                <div className="text-[11.5px]">
+                  <span className="font-semibold text-foreground flex items-center gap-1">
+                    <ShieldCheck className="h-3 w-3 text-primary" />
+                    Requires Verification Sign-off
+                  </span>
+                  <p className="text-[10.5px] text-muted">
+                    Sign-off needed from assigner / chair before task completion is finalized.
+                  </p>
+                </div>
+              </label>
 
               <div>
                 <label className="block text-[12px] font-medium text-foreground mb-1">

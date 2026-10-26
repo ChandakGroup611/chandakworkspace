@@ -165,7 +165,7 @@ export async function saveNotificationTemplate(payload: {
   subject: string;
   body: string;
   attach_mom?: boolean;
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{ success: boolean; template?: MeetNotificationTemplate; error?: string }> {
   try {
     const { user } = await getCachedUser();
     const userId = user?.id || null;
@@ -181,7 +181,7 @@ export async function saveNotificationTemplate(payload: {
 
       const newVer = (current?.version || 1) + 1;
 
-      const { error } = await supabaseAdmin
+      const { data, error } = await supabaseAdmin
         .from("core_notification_templates")
         .update({
           name: payload.name,
@@ -192,11 +192,15 @@ export async function saveNotificationTemplate(payload: {
           updated_by: userId,
           updated_at: now,
         })
-        .eq("id", payload.id);
+        .eq("id", payload.id)
+        .select()
+        .single();
 
       if (error) throw error;
+      revalidatePath("/meet/admin");
+      return { success: true, template: data as MeetNotificationTemplate };
     } else {
-      const { error } = await supabaseAdmin
+      const { data, error } = await supabaseAdmin
         .from("core_notification_templates")
         .insert({
           module_key: "meet",
@@ -211,13 +215,14 @@ export async function saveNotificationTemplate(payload: {
           version: 1,
           is_active: true,
           updated_by: userId,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+      revalidatePath("/meet/admin");
+      return { success: true, template: data as MeetNotificationTemplate };
     }
-
-    revalidatePath("/meet/admin");
-    return { success: true };
   } catch (err: any) {
     console.error("Error saving notification template:", err);
     return { success: false, error: err.message };
