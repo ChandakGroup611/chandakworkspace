@@ -652,3 +652,110 @@ export interface MeetRoomBooking {
   } | null;
 }
 
+export interface MeetResourcePermission {
+  create: boolean;
+  read: boolean;
+  update: boolean;
+  delete: boolean;
+}
+
+export type MeetRoleMatrix = Record<string, Record<string, MeetResourcePermission>>;
+
+export const MEET_RESOURCES = [
+  { key: "meetings", label: "Meetings & Schedules", description: "Schedule meetings, invite participants, update series" },
+  { key: "sessions", label: "Live Sessions & Clocks", description: "Start live session, run agenda timer, conclude meetings" },
+  { key: "agenda_points", label: "Discussion Points & Agendas", description: "Create discussion points, reorder agenda, carry-over items" },
+  { key: "mom", label: "Minutes of Meeting (MoM)", description: "Draft minutes, publish signed MoM, distribute executive summary" },
+  { key: "tasks", label: "Action Items & Tasks", description: "Assign tasks with statutory working-days TAT, track checklist" },
+  { key: "extensions", label: "TAT Extensions & Approvals", description: "Request due date extension, approve or reject revisions" },
+  { key: "decisions", label: "Decisions Register", description: "Record official business decisions, ratify policy resolutions" },
+  { key: "notes", label: "Meeting Notes & Scratchpad", description: "Private and shared scratchpads, meeting takeaways" },
+  { key: "rooms", label: "Meeting Rooms & Kiosk Displays", description: "Configure conference rooms, tablet displays, VC equipment" },
+  { key: "governance", label: "SLA Rules & Notification Templates", description: "Design mail templates, SLA breach alerts, working calendar" },
+];
+
+export const MEET_ROLES = [
+  { key: "meet_admin", label: "Meet Administrator", badge: "Super Admin", description: "Full control over module configuration, masters, and governance" },
+  { key: "dept_head", label: "Department Head", badge: "Executive", description: "Oversees department meetings, approves MoMs, verifies tasks" },
+  { key: "chair", label: "Meeting Organizer / Chair", badge: "Organizer", description: "Coordinates sessions, manages attendees, drives agenda" },
+  { key: "minute_taker", label: "Minute Taker / Secretary", badge: "Secretary", description: "Records discussions, timestamps decisions, logs action items" },
+  { key: "meet_user", label: "Meet User (Standard)", badge: "Participant", description: "Attends meetings, executes assigned action items, takes notes" },
+  { key: "guest", label: "External Guest / Auditor", badge: "Restricted", description: "Read-only access to published MoM and assigned action items" },
+];
+
+export const DEFAULT_MEET_ROLE_MATRIX: MeetRoleMatrix = {
+  meet_admin: {
+    meetings: { create: true, read: true, update: true, delete: true },
+    sessions: { create: true, read: true, update: true, delete: true },
+    agenda_points: { create: true, read: true, update: true, delete: true },
+    mom: { create: true, read: true, update: true, delete: true },
+    tasks: { create: true, read: true, update: true, delete: true },
+    extensions: { create: true, read: true, update: true, delete: true },
+    decisions: { create: true, read: true, update: true, delete: true },
+    notes: { create: true, read: true, update: true, delete: true },
+    rooms: { create: true, read: true, update: true, delete: true },
+    governance: { create: true, read: true, update: true, delete: true },
+  },
+  dept_head: {
+    meetings: { create: true, read: true, update: true, delete: false },
+    sessions: { create: true, read: true, update: true, delete: false },
+    agenda_points: { create: true, read: true, update: true, delete: false },
+    mom: { create: true, read: true, update: true, delete: false },
+    tasks: { create: true, read: true, update: true, delete: false },
+    extensions: { create: true, read: true, update: true, delete: false },
+    decisions: { create: true, read: true, update: true, delete: false },
+    notes: { create: true, read: true, update: true, delete: true },
+    rooms: { create: false, read: true, update: false, delete: false },
+    governance: { create: false, read: true, update: false, delete: false },
+  },
+  chair: {
+    meetings: { create: true, read: true, update: true, delete: true },
+    sessions: { create: true, read: true, update: true, delete: false },
+    agenda_points: { create: true, read: true, update: true, delete: true },
+    mom: { create: true, read: true, update: true, delete: false },
+    tasks: { create: true, read: true, update: true, delete: true },
+    extensions: { create: true, read: true, update: true, delete: false },
+    decisions: { create: true, read: true, update: true, delete: false },
+    notes: { create: true, read: true, update: true, delete: true },
+    rooms: { create: false, read: true, update: false, delete: false },
+    governance: { create: false, read: true, update: false, delete: false },
+  },
+  minute_taker: {
+    meetings: { create: false, read: true, update: false, delete: false },
+    sessions: { create: false, read: true, update: true, delete: false },
+    agenda_points: { create: true, read: true, update: true, delete: false },
+    mom: { create: true, read: true, update: true, delete: false },
+    tasks: { create: true, read: true, update: true, delete: false },
+    extensions: { create: false, read: true, update: false, delete: false },
+    decisions: { create: true, read: true, update: true, delete: false },
+    notes: { create: true, read: true, update: true, delete: true },
+    rooms: { create: false, read: true, update: false, delete: false },
+    governance: { create: false, read: false, update: false, delete: false },
+  },
+  meet_user: {
+    meetings: { create: true, read: true, update: false, delete: false },
+    sessions: { create: false, read: true, update: false, delete: false },
+    agenda_points: { create: true, read: true, update: false, delete: false },
+    mom: { create: false, read: true, update: false, delete: false },
+    tasks: { create: true, read: true, update: true, delete: false },
+    extensions: { create: true, read: true, update: false, delete: false },
+    decisions: { create: false, read: true, update: false, delete: false },
+    notes: { create: true, read: true, update: true, delete: true },
+    rooms: { create: false, read: true, update: false, delete: false },
+    governance: { create: false, read: false, update: false, delete: false },
+  },
+  guest: {
+    meetings: { create: false, read: true, update: false, delete: false },
+    sessions: { create: false, read: true, update: false, delete: false },
+    agenda_points: { create: false, read: true, update: false, delete: false },
+    mom: { create: false, read: true, update: false, delete: false },
+    tasks: { create: false, read: true, update: false, delete: false },
+    extensions: { create: false, read: false, update: false, delete: false },
+    decisions: { create: false, read: true, update: false, delete: false },
+    notes: { create: false, read: false, update: false, delete: false },
+    rooms: { create: false, read: false, update: false, delete: false },
+    governance: { create: false, read: false, update: false, delete: false },
+  },
+};
+
+
