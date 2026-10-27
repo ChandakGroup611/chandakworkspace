@@ -5,6 +5,33 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetNote, MeetNoteBlock, NoteKind, NoteBlockType } from "@/types/meet";
 import { isActionLikeText } from "@/lib/utils/meet-notes";
+import { requireMeet } from "@/lib/permissions/meet";
+
+/**
+ * Check if the note belongs to a session whose MoM is already published (Spec N9)
+ */
+async function isNoteSessionPublished(noteId: string): Promise<boolean> {
+  const { data: note } = await supabaseAdmin
+    .from("meet_notes")
+    .select("session_id, session:meet_sessions(status)")
+    .eq("id", noteId)
+    .single();
+
+  if (!note?.session_id) return false;
+  const status = (note.session as any)?.status;
+  return status === "published" || status === "mom_published";
+}
+
+async function isBlockSessionPublished(blockId: string): Promise<boolean> {
+  const { data: block } = await supabaseAdmin
+    .from("meet_note_blocks")
+    .select("note_id")
+    .eq("id", blockId)
+    .single();
+
+  if (!block?.note_id) return false;
+  return isNoteSessionPublished(block.note_id);
+}
 
 export async function getNotes(filters?: {
   kind?: string;
@@ -12,6 +39,9 @@ export async function getNotes(filters?: {
   openLoopsOnly?: boolean;
 }): Promise<MeetNote[]> {
   try {
+    const auth = await requireMeet("MEET_NOTE_MANAGE");
+    if (!auth.allowed) return [];
+
     const { user } = await getCachedUser();
     const userId = user?.id;
 
@@ -81,6 +111,9 @@ export async function getNotes(filters?: {
 
 export async function getOrCreateSessionNotes(sessionId: string): Promise<MeetNote | null> {
   try {
+    const auth = await requireMeet("MEET_VIEW", { sessionId });
+    if (!auth.allowed) return null;
+
     const { user } = await getCachedUser();
     const userId = user?.id;
 
@@ -193,6 +226,20 @@ export async function addNoteBlock(input: {
   position?: number;
 }): Promise<{ success: boolean; block?: MeetNoteBlock; error?: string }> {
   try {
+    const auth = await requireMeet("MEET_NOTE_MANAGE");
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
+    // N9 Lock check: If session is published, only allow addendum blocks
+    const isLocked = await isNoteSessionPublished(input.note_id);
+    if (isLocked && input.type !== "addendum") {
+      return {
+        success: false,
+        error: "Session notes are permanently locked after MoM publication (Spec N9). Only official addendums can be appended.",
+      };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
 
@@ -215,7 +262,7 @@ export async function addNoteBlock(input: {
       .insert({
         note_id: input.note_id,
         position: pos,
-        type: input.type || "text",
+        type: input.type || (isLocked ? "addendum" : "text"),
         text: input.text,
         author_id: userId,
         point_id: input.point_id || null,
@@ -255,6 +302,20 @@ export async function updateNoteBlock(
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const auth = await requireMeet("MEET_NOTE_MANAGE");
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
+    // N9 Lock check: If session is published, existing blocks cannot be modified
+    const isLocked = await isBlockSessionPublished(blockId);
+    if (isLocked) {
+      return {
+        success: false,
+        error: "Notes are permanently locked after MoM publication (Spec N9). Modifications are strictly forbidden.",
+      };
+    }
+
     const { error } = await supabaseAdmin
       .from("meet_note_blocks")
       .update({
@@ -273,6 +334,20 @@ export async function updateNoteBlock(
 
 export async function deleteNoteBlock(blockId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    const auth = await requireMeet("MEET_NOTE_MANAGE");
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
+    // N9 Lock check: If session is published, deletion is forbidden
+    const isLocked = await isBlockSessionPublished(blockId);
+    if (isLocked) {
+      return {
+        success: false,
+        error: "Notes are permanently locked after MoM publication (Spec N9). Deletion is strictly forbidden.",
+      };
+    }
+
     const { error } = await supabaseAdmin
       .from("meet_note_blocks")
       .update({ deleted_at: new Date().toISOString() })
@@ -301,6 +376,11 @@ export async function convertBlockToItem(
   }
 ): Promise<{ success: boolean; linked_item?: { code: string; title: string; status: string }; error?: string }> {
   try {
+    const auth = await requireMeet("MEET_POINT_MANAGE", { sessionId: payload.session_id });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
 
@@ -553,6 +633,11 @@ export async function generateSessionSummary(sessionId: string): Promise<{
 
 export async function useSummaryInMoM(sessionId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    const auth = await requireMeet("MEET_MOM_EDIT", { sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const summary = await generateSessionSummary(sessionId);
     await supabaseAdmin
       .from("meet_sessions")

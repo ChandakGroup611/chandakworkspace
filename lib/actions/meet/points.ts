@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingPoint, PointPriority, PointType, PointStatus } from "@/types/meet";
+import { requireMeet } from "@/lib/permissions/meet";
 
 export interface CreatePointInput {
   meeting_id: string;
@@ -22,6 +23,14 @@ export interface CreatePointInput {
 
 export async function createPoint(input: CreatePointInput) {
   try {
+    const auth = await requireMeet("MEET_POINT_MANAGE", {
+      meetingId: input.meeting_id,
+      sessionId: input.session_id,
+    });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
     const tatDays = input.tat_days || 3;
@@ -84,7 +93,8 @@ export async function createPoint(input: CreatePointInput) {
       await supabaseAdmin.from("meet_decisions").insert({
         session_id: input.session_id,
         point_id: point.id,
-        text: input.title + (input.description ? `: ${input.description}` : ""),
+        title: input.title,
+        decision_type: "operational",
         decided_by: "Meeting Committee",
         status: "active",
         created_by: userId,
@@ -121,6 +131,31 @@ export async function createPoint(input: CreatePointInput) {
       channel: "web",
     });
 
+    // 7. Queue assignment notification to owner if specified
+    if (point.owner?.email) {
+      try {
+        await supabaseAdmin.from("email_queue").insert({
+          to_email: point.owner.email,
+          subject: `[Point Assigned] Point ${point.code}: ${point.title}`,
+          body_text: `Dear ${point.owner.full_name},
+
+You have been assigned as the owner of Meeting Point ${point.code}: "${point.title}".
+
+Priority: ${point.priority}
+Due Date: ${dueDate} (TAT: ${tatDays} working days)
+
+Please review the point details and take necessary action:
+${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/my-work
+
+Chandak Workspace Meet Committee`,
+          status: "pending",
+          retry_count: 0,
+        });
+      } catch (qErr) {
+        console.warn("Could not queue point assignment email:", qErr);
+      }
+    }
+
     revalidatePath(`/meet/sessions/${input.session_id}`);
     revalidatePath(`/meet/live/${input.session_id}`);
     return { success: true, point };
@@ -137,6 +172,11 @@ export async function updatePointStatus(input: {
   closureRemarks?: string;
 }) {
   try {
+    const auth = await requireMeet("MEET_POINT_MANAGE", { sessionId: input.sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
     const now = new Date().toISOString();
@@ -222,6 +262,11 @@ export async function updateSessionPointNotes(input: {
   discussionNotes: string;
 }) {
   try {
+    const auth = await requireMeet("MEET_SESSION_RUN", { sessionId: input.sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { error } = await supabaseAdmin
       .from("meet_session_points")
       .update({ discussion_notes: input.discussionNotes })
@@ -249,6 +294,11 @@ export async function updatePoint(input: {
   tatDays?: number;
 }) {
   try {
+    const auth = await requireMeet("MEET_POINT_MANAGE", { sessionId: input.sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const updatePayload: any = {
       updated_at: new Date().toISOString(),
@@ -279,6 +329,7 @@ export async function updatePoint(input: {
       entity_id: input.pointId,
       action: "updated",
       field: "details",
+      new_value: input.title || "updated",
       user_id: user?.id || null,
       channel: "web",
     });
@@ -295,10 +346,117 @@ export async function updatePoint(input: {
 }
 
 /**
+ * Reassign point owner and notify the new owner (P7 fix)
+ */
+export async function reassignPointOwner(input: {
+  pointId: string;
+  newOwnerId: string;
+  sessionId?: string;
+  reason?: string;
+}): Promise<{ success: boolean; error?: string; point?: MeetingPoint }> {
+  try {
+    const auth = await requireMeet("MEET_POINT_MANAGE", { sessionId: input.sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
+    const { user } = await getCachedUser();
+    const now = new Date().toISOString();
+
+    // 1. Fetch current point and new owner details
+    const [pointRes, newOwnerRes] = await Promise.all([
+      supabaseAdmin
+        .from("meet_points")
+        .select("id, code, title, owner_id, owner:user_master!meet_points_owner_id_fkey(full_name)")
+        .eq("id", input.pointId)
+        .single(),
+      supabaseAdmin
+        .from("user_master")
+        .select("id, full_name, email")
+        .eq("id", input.newOwnerId)
+        .single(),
+    ]);
+
+    const point = pointRes.data;
+    const newOwner = newOwnerRes.data;
+    if (!point) return { success: false, error: "Point not found" };
+    if (!newOwner) return { success: false, error: "New owner not found" };
+
+    const oldOwnerId = point.owner_id;
+
+    // 2. Update point owner
+    const { data: updatedPoint, error: updErr } = await supabaseAdmin
+      .from("meet_points")
+      .update({
+        owner_id: input.newOwnerId,
+        updated_at: now,
+      })
+      .eq("id", input.pointId)
+      .select(`
+        *,
+        owner:user_master!meet_points_owner_id_fkey(id, full_name, email, profile_photo),
+        category:meet_point_categories(id, name, default_tat_days)
+      `)
+      .single();
+
+    if (updErr) return { success: false, error: updErr.message };
+
+    // 3. Log activity
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "point",
+      entity_id: input.pointId,
+      action: "reassigned",
+      field: "owner_id",
+      old_value: oldOwnerId || "Unassigned",
+      new_value: input.newOwnerId,
+      user_id: user?.id || null,
+      channel: "web",
+    });
+
+    // 4. Send notification email to the new owner
+    if (newOwner.email) {
+      try {
+        await supabaseAdmin.from("email_queue").insert({
+          to_email: newOwner.email,
+          subject: `[Point Reassigned] Point ${point.code}: ${point.title}`,
+          body_text: `Dear ${newOwner.full_name},
+
+You have been reassigned as the primary owner for Meeting Point ${point.code}: "${point.title}".
+Previous Owner: ${(point.owner as any)?.full_name || "Unassigned"}
+${input.reason ? `Reason: ${input.reason}\n` : ""}
+Please access your workspace to review action items and deadlines:
+${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/my-work
+
+Chandak Workspace Meet Committee`,
+          status: "pending",
+          retry_count: 0,
+        });
+      } catch (emailErr) {
+        console.warn("Could not queue reassignment email:", emailErr);
+      }
+    }
+
+    if (input.sessionId) {
+      revalidatePath(`/meet/sessions/${input.sessionId}`);
+      revalidatePath(`/meet/live/${input.sessionId}`);
+    }
+    revalidatePath("/meet/my-work");
+    return { success: true, point: updatedPoint as any };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Delete a point (Soft delete)
  */
 export async function deletePoint(pointId: string, sessionId?: string) {
   try {
+    const auth = await requireMeet("MEET_POINT_MANAGE", { sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const { error } = await supabaseAdmin
       .from("meet_points")
@@ -314,6 +472,9 @@ export async function deletePoint(pointId: string, sessionId?: string) {
       entity_type: "point",
       entity_id: pointId,
       action: "deleted",
+      field: "is_deleted",
+      old_value: "false",
+      new_value: "true",
       user_id: user?.id || null,
       channel: "web",
     });

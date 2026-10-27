@@ -4,9 +4,14 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetAIMinutes } from "@/types/meet";
+import { requireMeet } from "@/lib/permissions/meet";
+import { streamLLMResponse } from "@/lib/copilot/llm-provider";
 
 export async function getAIMinutes(sessionId: string): Promise<MeetAIMinutes | null> {
   try {
+    const auth = await requireMeet("MEET_VIEW", { sessionId });
+    if (!auth.allowed) return null;
+
     const { data, error } = await supabaseAdmin
       .from("meet_ai_minutes")
       .select("*")
@@ -28,6 +33,11 @@ export async function getAIMinutes(sessionId: string): Promise<MeetAIMinutes | n
 
 export async function generateAIMinutes(sessionId: string): Promise<{ success: boolean; aiMinutes?: MeetAIMinutes; error?: string }> {
   try {
+    const auth = await requireMeet("MEET_SESSION_RUN", { sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
 
@@ -83,9 +93,6 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
     const presentCount = attendees.filter((a: any) => a.attendance === "present" || a.attendance === "late").length;
     const allBlocks = (notesRes.data?.blocks || []).filter((b: any) => !b.deleted_at);
 
-    // Build Overview paragraph
-    const overview = `Official executive minutes for ${session.meeting?.title} (Session ${session.code}). Attendance quorum recorded ${presentCount} of ${attendees.length} active delegates. System finalized review of ${pointsRes.data?.length || 0} agenda items with immediate creation of ${tasksRes.data?.length || 0} trackable action items and ${decisionsRes.data?.length || 0} governing decisions.`;
-
     // Build per-point summaries (max 80 words, verified sources)
     const items = (pointsRes.data || []).map((sp: any) => {
       const pt = sp.point;
@@ -138,21 +145,76 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
       };
     });
 
-    // Insert or update meet_ai_minutes
+    let overview = `Official executive minutes for ${session.meeting?.title} (Session ${session.code}). Attendance quorum recorded ${presentCount} of ${attendees.length} active delegates. System finalized review of ${pointsRes.data?.length || 0} agenda items with immediate creation of ${tasksRes.data?.length || 0} trackable action items and ${decisionsRes.data?.length || 0} governing decisions.`;
+    let modelName = "offline-synthesis";
+
+    // If an LLM API key exists, request high-quality executive synthesis
+    if (process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) {
+      try {
+        const prompt = `Synthesize an authoritative, professional 2-3 sentence executive overview for the minutes of meeting.
+Meeting: ${session.meeting?.title} (Session: ${session.code})
+Quorum: ${presentCount} present out of ${attendees.length} members.
+Agenda Points: ${(pointsRes.data || []).map((p: any) => p.point?.title).join(", ") || "None"}
+Key Decisions: ${(decisionsRes.data || []).map((d: any) => d.title).join(", ") || "None"}
+Action Items: ${(tasksRes.data || []).map((t: any) => t.title).join(", ") || "None"}
+Please respond with ONLY the executive overview paragraph without formatting or preamble.`;
+
+        let streamedText = "";
+        const result = await streamLLMResponse({
+          prompt,
+          history: [],
+          systemInstruction: "You are an executive corporate secretary writing official minutes of meeting for Chandak Group.",
+          onToken: (tok) => {
+            streamedText += tok;
+          },
+        });
+
+        if (result.provider !== "fallback" && streamedText.trim().length > 20) {
+          overview = streamedText.trim();
+          modelName = result.provider === "gemini" ? (process.env.GEMINI_MODEL || "gemini-2.5-flash") : (process.env.OPENAI_MODEL || "gpt-4o-mini");
+        }
+      } catch (llmErr) {
+        console.warn("LLM generation fallback used:", llmErr);
+      }
+    }
+
+    // Determine next version
+    const { data: latestAi } = await supabaseAdmin
+      .from("meet_ai_minutes")
+      .select("version")
+      .eq("session_id", sessionId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextVersion = (latestAi?.version || 0) + 1;
+
+    // Insert meet_ai_minutes
     const { data: aiMin, error: insErr } = await supabaseAdmin
       .from("meet_ai_minutes")
       .insert({
         session_id: sessionId,
-        version: 1,
+        version: nextVersion,
         overview,
         items_json: items,
-        model: "gemini-1.5-pro",
+        model: modelName,
         mode: "review",
       })
       .select()
       .single();
 
     if (insErr) throw insErr;
+
+    // Log activity
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "meet_ai_minutes",
+      entity_id: aiMin.id,
+      action: "ai_minutes_generated",
+      field: "version",
+      new_value: String(nextVersion),
+      user_id: userId,
+      channel: "web",
+    });
 
     revalidatePath(`/meet/sessions/${sessionId}`);
     return { success: true, aiMinutes: aiMin as MeetAIMinutes };
@@ -170,6 +232,17 @@ export async function updateAIMinutes(
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const { data: aiMin } = await supabaseAdmin
+      .from("meet_ai_minutes")
+      .select("session_id")
+      .eq("id", id)
+      .single();
+
+    const auth = await requireMeet("MEET_MOM_EDIT", { sessionId: aiMin?.session_id });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { error } = await supabaseAdmin
       .from("meet_ai_minutes")
       .update(updates)
@@ -189,6 +262,11 @@ export async function approveAndSendMoM(
   customOverview?: string
 ): Promise<{ success: boolean; sentCount: number; error?: string }> {
   try {
+    const auth = await requireMeet("MEET_MOM_PUBLISH", { sessionId, requireOrganizerOrChair: true });
+    if (!auth.allowed) {
+      return { success: false, sentCount: 0, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
     const now = new Date().toISOString();
@@ -236,10 +314,21 @@ export async function approveAndSendMoM(
       })
       .eq("id", sessionId);
 
-    // 5. Create official published MoM version
-    await supabaseAdmin.from("meet_mom_versions").insert({
+    // 5. Determine next MoM version to prevent collisions
+    const { data: latestMom } = await supabaseAdmin
+      .from("meet_mom_versions")
+      .select("version")
+      .eq("session_id", sessionId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextVersion = (latestMom?.version || 0) + 1;
+
+    // Create official published MoM version
+    const { error: momInsErr } = await supabaseAdmin.from("meet_mom_versions").insert({
       session_id: sessionId,
-      version: 1,
+      version: nextVersion,
       snapshot: {
         overview: customOverview || aiMin.overview,
         items,
@@ -251,29 +340,101 @@ export async function approveAndSendMoM(
       approved_at: now,
     });
 
+    if (momInsErr) {
+      console.error("Error creating meet_mom_version:", momInsErr);
+    }
+
     // 6. Gather all recipients (attendees + item owners)
-    const { data: attendees } = await supabaseAdmin
-      .from("meet_session_attendees")
-      .select("user_id, attendance, user:user_master(id, full_name, email)")
-      .eq("session_id", sessionId);
+    const [attendeesRes, sessionRes] = await Promise.all([
+      supabaseAdmin
+        .from("meet_session_attendees")
+        .select("user_id, attendance, user:user_master(id, full_name, email)")
+        .eq("session_id", sessionId),
+      supabaseAdmin
+        .from("meet_sessions")
+        .select("id, code, meeting:meet_meetings(id, title, code)")
+        .eq("id", sessionId)
+        .single(),
+    ]);
+
+    const attendees = attendeesRes.data || [];
+    const meetingTitle = (sessionRes.data?.meeting as any)?.title || "Meeting";
+    const sessionCode = sessionRes.data?.code || "Session";
 
     const recipientSet = new Set<string>();
-    (attendees || []).forEach((a: any) => {
-      if (a.user_id) recipientSet.add(a.user_id);
-    });
+    const emailQueueBatch: any[] = [];
 
-    // Seed MoM acknowledgements for all attendees
+    for (const a of attendees) {
+      if (a.user_id) recipientSet.add(a.user_id);
+
+      const targetEmail = (a.user as any)?.email;
+      const targetName = (a.user as any)?.full_name || "Team Member";
+      if (targetEmail) {
+        const isAbsent = a.attendance === "absent" || a.attendance === "excused";
+        const subject = isAbsent
+          ? `[MoM - You Missed] Minutes of Meeting: ${meetingTitle} - Session ${sessionCode}`
+          : `[MoM Published] Minutes of Meeting: ${meetingTitle} - Session ${sessionCode}`;
+
+        const body = `Dear ${targetName},
+
+The official Minutes of Meeting (v${nextVersion}) for "${meetingTitle}" (Session ${sessionCode}) have been reviewed, approved and published.
+${isAbsent ? "\nYou were recorded as absent/excused for this session. Please review the minutes and action items assigned." : ""}
+
+Executive Overview:
+${customOverview || aiMin.overview}
+
+You can access the full session minutes, action points, and decisions directly on Chandak Meet:
+${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/sessions/${sessionId}
+
+Please log in and submit your formal acknowledgement.
+
+Best regards,
+Chandak Workspace Meet Committee`;
+
+        emailQueueBatch.push({
+          to_email: targetEmail,
+          subject,
+          body_text: body,
+          status: "pending",
+          retry_count: 0,
+        });
+      }
+    }
+
+    // Queue emails
+    if (emailQueueBatch.length > 0) {
+      try {
+        await supabaseAdmin.from("email_queue").insert(emailQueueBatch);
+      } catch (qErr) {
+        console.warn("Could not queue MoM notification emails:", qErr);
+      }
+    }
+
+    // Seed MoM acknowledgements for all attendees with composite key (session_id, mom_version, user_id)
     for (const recId of recipientSet) {
       try {
         await supabaseAdmin.from("meet_mom_acknowledgements").upsert({
           session_id: sessionId,
+          mom_version: nextVersion,
           user_id: recId,
           acknowledged: false,
-        }, { onConflict: "session_id,user_id" });
-      } catch {
-        // Ignore duplicate or constraint conflicts
+        }, { onConflict: "session_id,mom_version,user_id" });
+      } catch (ackErr) {
+        console.warn("MoM ack seed warning:", ackErr);
       }
     }
+
+    // Activity log
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "meet_mom",
+      entity_id: sessionId,
+      action: "mom_published",
+      field: "status",
+      old_value: "completed",
+      new_value: "published",
+      user_id: userId,
+      channel: "web",
+    });
 
     revalidatePath(`/meet/sessions/${sessionId}`);
     return { success: true, sentCount: recipientSet.size };

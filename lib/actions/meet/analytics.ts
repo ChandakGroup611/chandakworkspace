@@ -2,9 +2,11 @@
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
+import { requireMeet } from "@/lib/permissions/meet";
 import type { MeetDashboardKPIs, MeetingSession, MeetingPoint, MeetingTask } from "@/types/meet";
 
 export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
+  await requireMeet("MEET_VIEW");
   try {
     const { user } = await getCachedUser();
     const userId = user?.id || null;
@@ -86,7 +88,7 @@ export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
         .in("status", ["mom_draft", "mom_pending_approval"])
         .eq("is_deleted", false),
 
-      // 8. Upcoming sessions (next 6 active or scheduled)
+      // 8. Upcoming sessions (next 6 active or scheduled starting from current window)
       supabaseAdmin
         .from("meet_sessions")
         .select(`
@@ -95,6 +97,7 @@ export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
           room:meet_rooms(id, name, location)
         `)
         .in("status", ["scheduled", "in_progress"])
+        .gte("scheduled_start", new Date(Date.now() - 2 * 3600000).toISOString())
         .eq("is_deleted", false)
         .order("scheduled_start", { ascending: true })
         .limit(6),
@@ -225,6 +228,7 @@ export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
 }
 
 export async function getMeetReports(reportKey: string, filters?: any) {
+  await requireMeet("MEET_REPORT_VIEW");
   try {
     switch (reportKey) {
       case "R2": // Meeting summary

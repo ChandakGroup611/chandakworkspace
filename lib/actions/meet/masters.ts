@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
+import { requireMeet } from "@/lib/permissions/meet";
 import {
   DEFAULT_MEET_ROLE_MATRIX,
   type MeetingType,
@@ -13,6 +14,7 @@ import {
 } from "@/types/meet";
 
 export async function getMeetingMasters() {
+  await requireMeet("MEET_VIEW");
   try {
     const [typesRes, catsRes, roomsRes, templatesRes, deptsRes, usersRes] = await Promise.all([
       supabaseAdmin.from("meet_meeting_types").select("*").eq("is_active", true).order("sort_order"),
@@ -69,6 +71,7 @@ export async function saveMeetingType(data: {
   is_active?: boolean;
 }) {
   try {
+    await requireMeet("MEET_ADMIN", { requireAdmin: true });
     if (data.id) {
       const { error } = await supabaseAdmin
         .from("meet_meeting_types")
@@ -106,6 +109,7 @@ export async function savePointCategory(data: {
   is_active?: boolean;
 }) {
   try {
+    await requireMeet("MEET_ADMIN", { requireAdmin: true });
     if (data.id) {
       const { error } = await supabaseAdmin
         .from("meet_point_categories")
@@ -142,6 +146,7 @@ export async function saveMeetingRoom(data: {
   is_active?: boolean;
 }) {
   try {
+    await requireMeet("MEET_ADMIN", { requireAdmin: true });
     if (data.id) {
       const { error } = await supabaseAdmin
         .from("meet_rooms")
@@ -181,6 +186,7 @@ export async function saveMeetingTemplate(data: {
   is_active?: boolean;
 }) {
   try {
+    await requireMeet("MEET_ADMIN", { requireAdmin: true });
     if (data.id) {
       const { error } = await supabaseAdmin
         .from("meet_templates")
@@ -222,6 +228,7 @@ export async function saveMeetSettings(settings: {
   mom_ack_required: boolean;
 }) {
   try {
+    await requireMeet("MEET_ADMIN", { requireAdmin: true });
     const { data: existing } = await supabaseAdmin
       .from("meet_settings")
       .select("id")
@@ -272,8 +279,7 @@ export async function getMeetRoleMatrix(): Promise<MeetRoleMatrix> {
 
 export async function saveMeetRoleMatrix(matrix: MeetRoleMatrix) {
   try {
-    const { user } = await getCachedUser();
-    const userId = user?.id || null;
+    const { userId } = await requireMeet("MEET_ADMIN", { requireAdmin: true });
 
     const { error } = await supabaseAdmin
       .from("core_module_settings")

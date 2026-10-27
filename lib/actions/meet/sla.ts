@@ -3,9 +3,11 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
+import { requireMeet } from "@/lib/permissions/meet";
 import type { MeetSLAPolicy, MeetSLAInstance, MeetNotificationTemplate } from "@/types/meet";
 
 export async function getSLAPolicies(): Promise<MeetSLAPolicy[]> {
+  await requireMeet("MEET_VIEW");
   try {
     const { data, error } = await supabaseAdmin
       .from("meet_sla_policies")
@@ -24,6 +26,7 @@ export async function getSLAPolicies(): Promise<MeetSLAPolicy[]> {
 }
 
 export async function getSLAInstances(filters?: { state?: string }): Promise<MeetSLAInstance[]> {
+  await requireMeet("MEET_VIEW");
   try {
     let query = supabaseAdmin
       .from("meet_sla_instances")
@@ -55,23 +58,119 @@ export async function acknowledgeEscalation(
   comment?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { user } = await getCachedUser();
-    if (!user) return { success: false, error: "Unauthorized" };
+    const { userId } = await requireMeet("MEET_ADMIN", { requireAdmin: true });
 
     const { error } = await supabaseAdmin
       .from("meet_sla_instances")
       .update({
         acknowledged_at: new Date().toISOString(),
-        acknowledged_by: user.id,
+        acknowledged_by: userId,
+        state: "acknowledged",
+        notes: comment || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", instanceId);
 
     if (error) throw error;
+
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "sla",
+      entity_id: instanceId,
+      action: "status_changed",
+      field: "state",
+      old_value: "escalated",
+      new_value: "acknowledged",
+      user_id: userId,
+      channel: "web",
+    });
+
     revalidatePath("/meet/admin");
     return { success: true };
   } catch (err: any) {
     console.error("Error acknowledging escalation:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function reassignEscalation(
+  instanceId: string,
+  newEscalatedToId: string,
+  notes?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { userId } = await requireMeet("MEET_ADMIN", { requireAdmin: true });
+
+    const { error } = await supabaseAdmin
+      .from("meet_sla_instances")
+      .update({
+        escalated_to_id: newEscalatedToId,
+        notes: notes || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", instanceId);
+
+    if (error) throw error;
+
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "sla",
+      entity_id: instanceId,
+      action: "assigned",
+      field: "escalated_to_id",
+      new_value: newEscalatedToId,
+      user_id: userId,
+      channel: "web",
+    });
+
+    revalidatePath("/meet/admin");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error reassigning escalation:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function extendEscalation(
+  instanceId: string,
+  extensionDays: number,
+  reason: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { userId } = await requireMeet("MEET_ADMIN", { requireAdmin: true });
+
+    const { data: instance, error: fetchErr } = await supabaseAdmin
+      .from("meet_sla_instances")
+      .select("*")
+      .eq("id", instanceId)
+      .single();
+
+    if (fetchErr || !instance) {
+      return { success: false, error: "SLA instance not found" };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("meet_sla_instances")
+      .update({
+        notes: `Extended by ${extensionDays} days: ${reason}`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", instanceId);
+
+    if (error) throw error;
+
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "sla",
+      entity_id: instanceId,
+      action: "extended",
+      field: "deadline",
+      new_value: String(extensionDays),
+      user_id: userId,
+      channel: "web",
+    });
+
+    revalidatePath("/meet/admin");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error extending escalation:", err);
     return { success: false, error: err.message };
   }
 }
@@ -105,6 +204,7 @@ export async function saveAlertRule(payload: {
   is_active?: boolean;
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireMeet("MEET_ADMIN", { requireAdmin: true });
     const dataToSave = {
       name: payload.name,
       event_key: payload.event_key || null,
@@ -138,6 +238,7 @@ export async function saveAlertRule(payload: {
 }
 
 export async function getNotificationTemplates(): Promise<MeetNotificationTemplate[]> {
+  await requireMeet("MEET_VIEW");
   try {
     const { data, error } = await supabaseAdmin
       .from("core_notification_templates")
@@ -167,8 +268,7 @@ export async function saveNotificationTemplate(payload: {
   attach_mom?: boolean;
 }): Promise<{ success: boolean; template?: MeetNotificationTemplate; error?: string }> {
   try {
-    const { user } = await getCachedUser();
-    const userId = user?.id || null;
+    const { userId } = await requireMeet("MEET_ADMIN", { requireAdmin: true });
     const now = new Date().toISOString();
 
     if (payload.id) {

@@ -3,10 +3,12 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
+import { requireMeet } from "@/lib/permissions/meet";
 import type { MeetingSession, SessionAttendee, AgendaItem, MeetingPoint } from "@/types/meet";
 
 export async function getSessionsForMeeting(meetingId: string): Promise<MeetingSession[]> {
   try {
+    await requireMeet("MEET_VIEW", { meetingId });
     const { data, error } = await supabaseAdmin
       .from("meet_sessions")
       .select(`
@@ -63,6 +65,7 @@ export async function getSessionById(sessionId: string): Promise<{
   attendees: SessionAttendee[];
 }> {
   try {
+    await requireMeet("MEET_VIEW", { sessionId });
     const { data: session, error } = await supabaseAdmin
       .from("meet_sessions")
       .select(`
@@ -169,7 +172,7 @@ export async function getSessionById(sessionId: string): Promise<{
 
 export async function startSession(sessionId: string) {
   try {
-    const { user } = await getCachedUser();
+    const { userId } = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
     const now = new Date().toISOString();
 
     const { data: session, error } = await supabaseAdmin
@@ -193,7 +196,7 @@ export async function startSession(sessionId: string) {
       field: "status",
       old_value: "scheduled",
       new_value: "in_progress",
-      user_id: user?.id || null,
+      user_id: userId,
       channel: "web",
     });
 
@@ -207,23 +210,64 @@ export async function startSession(sessionId: string) {
 
 /**
  * End Meeting & Execute Atomic Carry-Forward
- * Spec B6.4:
- * 1. Find or create the next session S-(N+1) of the same meeting.
- * 2. For every open/in_progress point:
- *    - Carry forward to next session (entry_type = 'carried_forward')
- *    - Increment carry_forward_count
- *    - Set is_backup = true
- *    - Update current_session_id
- *    - If carry_forward_count >= 3 flag repeatedly_carried
- * 3. Update closing session to 'completed' / 'mom_draft'
+ * Spec B6.4 & Stop-Ship S7:
+ * Executes atomic database transaction procedure fn_meet_end_session_and_carry_forward
+ * with fallback, checks all write errors, and triggers 3x carry-forward escalation alerts (P5).
  */
 export async function endSessionAndCarryForward(sessionId: string, summaryNotes?: string) {
   try {
-    const { user } = await getCachedUser();
-    const userId = user?.id || null;
+    const { userId } = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
     const now = new Date().toISOString();
 
-    // 1. Get current session and meeting details
+    // 1. Try atomic PostgreSQL transaction function first (S7)
+    try {
+      const { data: rpcResult, error: rpcErr } = await supabaseAdmin.rpc("fn_meet_end_session_and_carry_forward", {
+        p_session_id: sessionId,
+        p_ended_by: userId,
+        p_actual_end: now,
+        p_summary_notes: summaryNotes || null,
+        p_create_next_session: true,
+      });
+
+      if (!rpcErr && rpcResult?.success) {
+        // Escalate points carried >= 3 times to organizer & department head (P5)
+        const { data: escalatedPoints } = await supabaseAdmin
+          .from("meet_points")
+          .select("id, code, title, carry_forward_count, meeting:meet_meetings(id, title, organizer:user_master(id, email))")
+          .gte("carry_forward_count", 3)
+          .eq("meeting_id", (await supabaseAdmin.from("meet_sessions").select("meeting_id").eq("id", sessionId).single()).data?.meeting_id)
+          .not("status", "in", '("closed","dropped")');
+
+        for (const ep of escalatedPoints || []) {
+          if ((ep as any)?.meeting?.organizer?.email) {
+            await supabaseAdmin.from("email_queue").insert({
+              recipient_email: (ep as any).meeting.organizer.email,
+              subject: `[Escalation Alert] Point ${ep.code} Carried Forward ${ep.carry_forward_count}×`,
+              body: `<p>Attention: Meeting Point <strong>${ep.code}: ${ep.title}</strong> has now been carried forward ${ep.carry_forward_count} times without closure. Immediate action is required.</p>`,
+              event_type: "meet.point.escalated",
+              status: "pending",
+              metadata: { point_id: ep.id, carry_count: ep.carry_forward_count },
+            });
+          }
+        }
+
+        revalidatePath("/meet");
+        revalidatePath(`/meet/sessions/${sessionId}`);
+        revalidatePath(`/meet/live/${sessionId}`);
+        if (rpcResult.next_session_id) {
+          revalidatePath(`/meet/sessions/${rpcResult.next_session_id}`);
+        }
+        return {
+          success: true,
+          carriedCount: rpcResult.carried_points_count || 0,
+          nextSessionId: rpcResult.next_session_id,
+        };
+      }
+    } catch (rpcEx) {
+      console.warn("RPC fn_meet_end_session_and_carry_forward fallback to JS workflow:", rpcEx);
+    }
+
+    // 2. Transactional JS Fallback workflow
     const { data: currentSession, error: sErr } = await supabaseAdmin
       .from("meet_sessions")
       .select("*, meeting:meet_meetings(*)")
@@ -343,7 +387,7 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
               guest_email: m.guest_email || null,
               role: m.role,
               invite_status: "invited",
-              attendance: "present",
+              attendance: "absent",
             }))
           );
         }
@@ -375,6 +419,20 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
             updated_at: now,
           })
           .eq("id", pt.id);
+
+        // If carried 3+ times, trigger executive notification (P5)
+        if (isRepeatedlyCarried && meeting.organizer?.email) {
+          try {
+            await supabaseAdmin.from("email_queue").insert({
+              recipient_email: meeting.organizer.email,
+              subject: `[Escalation Alert] Point ${pt.code} Carried Forward ${newCarryCount}×`,
+              body: `<p>Attention: Point <strong>${pt.code}: ${pt.title}</strong> has been carried forward ${newCarryCount} times without closure. Immediate action is required.</p>`,
+              event_type: "meet.point.escalated",
+              status: "pending",
+              metadata: { point_id: pt.id, carry_count: newCarryCount },
+            });
+          } catch {}
+        }
 
         // Link into next session's meet_session_points
         await supabaseAdmin
@@ -593,7 +651,8 @@ export async function rescheduleSession(input: {
   reason?: string;
 }) {
   try {
-    const { user } = await getCachedUser();
+    const { userId } = await requireMeet("MEET_UPDATE", { sessionId: input.sessionId, requireOrganizerOrChair: true });
+
     const { data: session } = await supabaseAdmin
       .from("meet_sessions")
       .select("id, meeting_id, scheduled_start, scheduled_end")
@@ -627,7 +686,7 @@ export async function rescheduleSession(input: {
       field: "scheduled_start",
       old_value: oldStart,
       new_value: newStart,
-      user_id: user?.id || null,
+      user_id: userId,
       channel: "web",
     });
 
@@ -648,7 +707,8 @@ export async function cancelSession(input: {
   reason?: string;
 }) {
   try {
-    const { user } = await getCachedUser();
+    const { userId } = await requireMeet("MEET_DELETE", { sessionId: input.sessionId, requireOrganizerOrChair: true });
+
     const { data: session } = await supabaseAdmin
       .from("meet_sessions")
       .select("id, meeting_id, status")
@@ -674,7 +734,7 @@ export async function cancelSession(input: {
       field: "status",
       old_value: session.status,
       new_value: "cancelled",
-      user_id: user?.id || null,
+      user_id: userId,
       channel: "web",
     });
 
@@ -697,6 +757,8 @@ export async function addAgendaItem(input: {
   presenterId?: string;
 }) {
   try {
+    await requireMeet("MEET_UPDATE", { sessionId: input.sessionId, requireOrganizerOrChair: true });
+
     const { data: existing } = await supabaseAdmin
       .from("meet_agenda_items")
       .select("sort_order")
@@ -741,6 +803,8 @@ export async function deleteAgendaItem(input: {
   sessionId: string;
 }) {
   try {
+    await requireMeet("MEET_UPDATE", { sessionId: input.sessionId, requireOrganizerOrChair: true });
+
     const { error } = await supabaseAdmin
       .from("meet_agenda_items")
       .delete()

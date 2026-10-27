@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingTask, TaskStatus, PointPriority } from "@/types/meet";
+import { requireMeet } from "@/lib/permissions/meet";
 
 export interface CreateTaskInput {
   point_id?: string | null;
@@ -25,6 +26,13 @@ export async function getTasks(filters?: {
   search?: string;
 }): Promise<MeetingTask[]> {
   try {
+    const { user } = await getCachedUser();
+    if (!user) return [];
+
+    // Check if user has global task management authority
+    const auth = await requireMeet("MEET_TASK_MANAGE");
+    const isManager = auth.allowed;
+
     let query = supabaseAdmin
       .from("meet_tasks")
       .select(`
@@ -39,9 +47,13 @@ export async function getTasks(filters?: {
       .eq("is_deleted", false)
       .order("created_at", { ascending: false });
 
+    // Enforce data scoping: if not manager, user sees only their assigned tasks
     if (filters?.ownerId) {
       query = query.eq("owner_id", filters.ownerId);
+    } else if (!isManager) {
+      query = query.eq("owner_id", user.id);
     }
+
     if (filters?.search) {
       query = query.ilike("title", `%${filters.search}%`);
     }
@@ -91,6 +103,11 @@ export async function getTasks(filters?: {
 
 export async function createTask(input: CreateTaskInput) {
   try {
+    const auth = await requireMeet("MEET_TASK_MANAGE", { sessionId: input.session_id });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
     const tatDays = input.tat_days || 3;
@@ -166,6 +183,31 @@ export async function createTask(input: CreateTaskInput) {
       channel: "web",
     });
 
+    // Notify task owner if assigned
+    if (fullTask?.owner?.email) {
+      try {
+        await supabaseAdmin.from("email_queue").insert({
+          to_email: fullTask.owner.email,
+          subject: `[Task Assigned] Task ${fullTask.code}: ${fullTask.title}`,
+          body_text: `Dear ${fullTask.owner.full_name},
+
+You have been assigned a new task: "${fullTask.title}" (${fullTask.code}).
+
+Priority: ${fullTask.priority}
+Due Date: ${dueDate}
+${input.description ? `Details: ${input.description}\n` : ""}
+Please access your work console:
+${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/my-work
+
+Chandak Workspace Meet Committee`,
+          status: "pending",
+          retry_count: 0,
+        });
+      } catch (emailErr) {
+        console.warn("Could not queue task assignment email:", emailErr);
+      }
+    }
+
     revalidatePath("/meet/my-work");
     if (input.session_id) {
       revalidatePath(`/meet/sessions/${input.session_id}`);
@@ -185,7 +227,8 @@ export async function updateTaskStatus(input: {
 }) {
   try {
     const { user } = await getCachedUser();
-    const userId = user?.id || null;
+    if (!user) return { success: false, error: "Authentication required" };
+    const userId = user.id;
     const now = new Date().toISOString();
 
     const { data: currentTask } = await supabaseAdmin
@@ -195,6 +238,14 @@ export async function updateTaskStatus(input: {
       .single();
 
     if (!currentTask) return { success: false, error: "Task not found" };
+
+    // RBAC check: Must be task owner OR have MEET_TASK_MANAGE
+    if (currentTask.owner_id !== userId) {
+      const auth = await requireMeet("MEET_TASK_MANAGE");
+      if (!auth.allowed) {
+        return { success: false, error: "Only the task owner or meeting managers can update task status" };
+      }
+    }
 
     const updatePayload: any = {
       status: input.status,
@@ -254,13 +305,30 @@ export async function updateTaskStatus(input: {
 export async function toggleTaskChecklist(checklistId: string, isDone: boolean) {
   try {
     const { user } = await getCachedUser();
+    if (!user) return { success: false, error: "Authentication required" };
     const now = new Date().toISOString();
+
+    const { data: cl } = await supabaseAdmin
+      .from("meet_task_checklist")
+      .select("task_id, task:meet_tasks(owner_id)")
+      .eq("id", checklistId)
+      .single();
+
+    if (!cl) return { success: false, error: "Checklist item not found" };
+
+    const taskOwnerId = (cl.task as any)?.owner_id;
+    if (taskOwnerId !== user.id) {
+      const auth = await requireMeet("MEET_TASK_MANAGE");
+      if (!auth.allowed) {
+        return { success: false, error: "Only the task owner or manager can complete checklist items" };
+      }
+    }
 
     const { error } = await supabaseAdmin
       .from("meet_task_checklist")
       .update({
         is_done: isDone,
-        done_by: isDone ? user?.id : null,
+        done_by: isDone ? user.id : null,
         done_at: isDone ? now : null,
       })
       .eq("id", checklistId);
@@ -284,7 +352,7 @@ export async function requestTaskExtension(input: {
 
     const { data: task } = await supabaseAdmin
       .from("meet_tasks")
-      .select("due_date, revised_due_date")
+      .select("due_date, revised_due_date, owner_id")
       .eq("id", input.taskId)
       .single();
 
@@ -308,6 +376,18 @@ export async function requestTaskExtension(input: {
 
     if (error) return { success: false, error: error.message };
 
+    // Activity log
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "task",
+      entity_id: input.taskId,
+      action: "extension_requested",
+      field: "requested_due_date",
+      old_value: oldDue,
+      new_value: input.requestedDueDate,
+      user_id: user.id,
+      channel: "web",
+    });
+
     revalidatePath("/meet/my-work");
     return { success: true, extension: ext };
   } catch (err: any) {
@@ -321,7 +401,13 @@ export async function decideTaskExtension(input: {
   remarks?: string;
 }) {
   try {
+    const auth = await requireMeet("MEET_EXTENSION_APPROVE");
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied. Only authorized managers or chairs can decide extensions." };
+    }
+
     const { user } = await getCachedUser();
+    if (!user) return { success: false, error: "Authentication required" };
     const now = new Date().toISOString();
 
     const { data: ext } = await supabaseAdmin
@@ -332,13 +418,18 @@ export async function decideTaskExtension(input: {
 
     if (!ext) return { success: false, error: "Extension request not found" };
 
+    // Prevent approving one's own extension request (S2 stop-ship requirement)
+    if (ext.requested_by === user.id) {
+      return { success: false, error: "Conflict of interest: You cannot approve your own extension request." };
+    }
+
     const newStatus = input.approved ? "approved" : "rejected";
 
     await supabaseAdmin
       .from("meet_tat_extensions")
       .update({
         status: newStatus,
-        decided_by: user?.id,
+        decided_by: user.id,
         decided_at: now,
         remarks: input.remarks || null,
       })
@@ -354,6 +445,18 @@ export async function decideTaskExtension(input: {
         .eq("id", ext.entity_id);
     }
 
+    // Activity log
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "task",
+      entity_id: ext.entity_id,
+      action: input.approved ? "extension_approved" : "extension_rejected",
+      field: "revised_due_date",
+      old_value: ext.old_due_date,
+      new_value: input.approved ? ext.requested_due_date : ext.old_due_date,
+      user_id: user.id,
+      channel: "web",
+    });
+
     revalidatePath("/meet/my-work");
     return { success: true };
   } catch (err: any) {
@@ -366,6 +469,11 @@ export async function decideTaskExtension(input: {
  */
 export async function deleteTask(taskId: string) {
   try {
+    const auth = await requireMeet("MEET_TASK_MANAGE");
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const { error } = await supabaseAdmin
       .from("meet_tasks")
@@ -381,6 +489,9 @@ export async function deleteTask(taskId: string) {
       entity_type: "task",
       entity_id: taskId,
       action: "deleted",
+      field: "is_deleted",
+      old_value: "false",
+      new_value: "true",
       user_id: user?.id || null,
       channel: "web",
     });

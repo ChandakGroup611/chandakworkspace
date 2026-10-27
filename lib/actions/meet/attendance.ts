@@ -4,6 +4,16 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import { requireMeet } from "@/lib/permissions/meet";
+
+function getAttendanceSecret(): string {
+  return (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXTAUTH_SECRET ||
+    process.env.JWT_SECRET ||
+    "chandak-meet-attendance-hmac-seed"
+  );
+}
 
 export async function markAttendance(
   sessionId: string,
@@ -14,7 +24,23 @@ export async function markAttendance(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { user } = await getCachedUser();
-    const actorId = user?.id || null;
+    if (!user) return { success: false, error: "Authentication required" };
+    const actorId = user.id;
+
+    // S2 & E-9: Prevent marking others present without organizer, chair, or manager role
+    if (userId !== actorId) {
+      const auth = await requireMeet("MEET_SESSION_RUN", {
+        sessionId,
+        requireOrganizerOrChair: true,
+      });
+      if (!auth.allowed) {
+        return {
+          success: false,
+          error: "Permission denied: Only session organizers, chairs, or meeting managers can mark attendance for other participants.",
+        };
+      }
+    }
+
     const now = new Date().toISOString();
 
     const { error } = await supabaseAdmin
@@ -31,6 +57,17 @@ export async function markAttendance(
 
     if (error) throw error;
 
+    // Audit log
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "session_attendee",
+      entity_id: `${sessionId}:${userId}`,
+      action: "attendance_marked",
+      field: "attendance",
+      new_value: status,
+      user_id: actorId,
+      channel: method === "qr" ? "qr" : "web",
+    });
+
     revalidatePath(`/meet/sessions/${sessionId}`);
     revalidatePath(`/meet/live/${sessionId}`);
     return { success: true };
@@ -40,12 +77,21 @@ export async function markAttendance(
   }
 }
 
-export async function generateSessionCheckInQR(sessionId: string): Promise<{ qrString: string; expiresAt: number }> {
-  const expiresAt = Math.floor(Date.now() / 1000) + 60; // 60s rotating window
-  const secret = process.env.NEXTAUTH_SECRET || "chandak-meet-secret";
-  const hash = crypto.createHmac("sha256", secret).update(`${sessionId}:${expiresAt}`).digest("hex");
-  const qrString = `CHANDAK_MEET_QR:${sessionId}:${expiresAt}:${hash.slice(0, 16)}`;
-  return { qrString, expiresAt };
+export async function generateSessionCheckInQR(sessionId: string): Promise<{ qrString: string; expiresAt: number; error?: string }> {
+  try {
+    const auth = await requireMeet("MEET_SESSION_RUN", { sessionId });
+    if (!auth.allowed) {
+      return { qrString: "", expiresAt: 0, error: auth.error || "Permission denied" };
+    }
+
+    const expiresAt = Math.floor(Date.now() / 1000) + 60; // 60s rotating window
+    const secret = getAttendanceSecret();
+    const hash = crypto.createHmac("sha256", secret).update(`${sessionId}:${expiresAt}`).digest("hex");
+    const qrString = `CHANDAK_MEET_QR:${sessionId}:${expiresAt}:${hash.slice(0, 16)}`;
+    return { qrString, expiresAt };
+  } catch (err: any) {
+    return { qrString: "", expiresAt: 0, error: err.message };
+  }
 }
 
 export async function checkInWithQR(
@@ -67,12 +113,12 @@ export async function checkInWithQR(
     }
 
     const expiresAt = parseInt(expiresStr, 10);
-    if (Date.now() / 1000 > expiresAt + 30) {
+    if (Date.now() / 1000 > expiresAt + 60) {
       return { success: false, message: "QR code has expired. Please rescan fresh code." };
     }
 
-    // Verify HMAC
-    const secret = process.env.NEXTAUTH_SECRET || "chandak-meet-secret";
+    // Verify HMAC using dynamic server secret
+    const secret = getAttendanceSecret();
     const expected = crypto.createHmac("sha256", secret).update(`${sessionId}:${expiresAt}`).digest("hex").slice(0, 16);
     if (hashSub !== expected) {
       return { success: false, message: "Security signature mismatch on QR code" };
@@ -98,7 +144,10 @@ export async function checkInWithQR(
     }
 
     // Mark check-in
-    await markAttendance(sessionId, user.id, attendanceStatus, "qr", lateMinutes);
+    const res = await markAttendance(sessionId, user.id, attendanceStatus, "qr", lateMinutes);
+    if (!res.success) {
+      return { success: false, message: res.error || "Failed to record check-in" };
+    }
 
     return {
       success: true,

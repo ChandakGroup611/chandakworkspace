@@ -16,17 +16,19 @@ try {
   }
 } catch {}
 
-const DEFAULT_SUPABASE_URL = 'https://tkovzymkubxtpcgynkgd.supabase.co';
-const DEFAULT_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrb3Z6eW1rdWJ4dHBjZ3lua2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDk4MDYyMiwiZXhwIjoyMDk2NTU2NjIyfQ.UsBMx2jpsI5cJavw2cFqYQJZO8tN7YHWwzvb2LYJ5wY';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+if (!supabaseUrl) {
+  throw new Error("NEXT_PUBLIC_SUPABASE_URL environment variable is missing.");
+}
 
 const rawKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const serviceKey = (rawKey && !rawKey.includes('your_supabase_service_role_key_here') && rawKey !== 'dummy_key' && rawKey.trim() !== '')
-  ? rawKey
-  : (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SERVICE_ROLE_KEY);
+if (!rawKey || rawKey.includes('your_supabase_service_role_key_here') || rawKey === 'dummy_key' || rawKey.trim() === '') {
+  throw new Error("SUPABASE_SERVICE_ROLE_KEY environment variable is missing or invalid. Backend admin client cannot initialize.");
+}
 
 export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL,
-  serviceKey,
+  supabaseUrl,
+  rawKey.trim(),
   {
     auth: {
       persistSession: false

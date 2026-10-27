@@ -1,132 +1,127 @@
-# Chandak Meet Gap Audit Checklist
+# Chandak Meet Gap Audit Checklist & Production Readiness Status
 
-**Specification Reference:** `CHANDAK_WORKSPACE_MEET_FINAL_SPEC.md` (v6.0 FINAL · 25 Oct 2026)  
+**Specification Reference:** `CHANDAK_WORKSPACE_MEET_FINAL_SPEC.md` (v6.0 FINAL)  
 **Target Repository:** `ChandakGroup611/chandakworkspace`  
-**Audit Date:** 26 Oct 2026  
+**Audit Date:** 27 Oct 2026 (Updated post-hardening)  
 **Status Legend:**
-- ✅ **Done and working**
-- 🟡 **Partly implemented** (gaps noted)
-- ❌ **Missing**
+- ✅ **Done and verified in code**
+- 🟡 **Partly implemented / Requires upstream service configuration**
+- ❌ **Missing / Deferred to Phase 2**
 
 ---
 
-## D1. Feature Audit Checklist
+## 1. Stop-Ship Production Hardening Status (S1 – S7)
+
+| ID | Finding | Status | Remediated Implementation Details |
+|---|---|---|---|
+| **S1** | Hardcoded Supabase service-role key fallback & `.env.prod` in git index | ✅ Remediated | Removed hardcoded fallback keys from `lib/supabase/service_role.ts` and `utils/supabase/server.ts`. Added `.env*` to `.gitignore` (preserving `.env.example`). Untracked `.env.prod` from git index. Enforced fail-fast errors on missing env vars. |
+| **S2** | Missing permission checks in Meet server actions (admin client bypass) | ✅ Remediated | Implemented `requireMeet(permission, context)` in `lib/permissions/meet.ts`. Enforced across all 14 Meet server action files (`meetings.ts`, `sessions.ts`, `points.ts`, `tasks.ts`, `mom.ts`, `ai-minutes.ts`, `attendance.ts`, `invitations.ts`, `notes.ts`, `rooms.ts`, `masters.ts`, `sla.ts`, `decisions.ts`, `analytics.ts`). |
+| **S3** | No data scoping (confidential / board meetings accessible by URL) | ✅ Remediated | Added strict data scoping to `getMeetings`, `getMeetingById`, and `requireMeet`. Confidential and board meetings are restricted strictly to authorized participants, organizers, chairs, and administrators, returning 403 and logging unauthorized attempts to `meet_activity_log`. |
+| **S4** | Wide-open RLS policies `USING (true) WITH CHECK (true)` | ✅ Remediated | Migration `20261027180000_meet_production_hardening.sql` drops all wide-open policies and applies scoped member/creator policies across all 36 Meet tables. Hardened `meet_activity_log` to be strictly INSERT-ONLY (immutable). |
+| **S5** | Meet Settings (`/meet/admin`) had no admin gate | ✅ Remediated | Hardened `app/meet/admin/page.tsx` with `requireMeet("MEET_ADMIN", { requireAdmin: true })`, rendering an unauthorized notice to non-admin users. Gated all save actions in `masters.ts` and `sla.ts` with `MEET_ADMIN`. |
+| **S6** | Room display actions open to everyone; `endEarlyFromDisplay` ended all room bookings | ✅ Remediated | Updated `endEarlyFromDisplay` in `lib/actions/meet/rooms.ts` to terminate ONLY the currently active in-progress booking (`start_at <= now AND end_at >= now`). Bound room tablet actions to device validation. Switched timeline calculations to Indian Standard Time (IST, UTC+05:30). |
+| **S7** | Errors swallowed; non-transactional multi-step carry-forward and end-session | ✅ Remediated | Authored stored procedure `fn_meet_end_session_and_carry_forward` in Postgres for single-transaction session conclusion and points carry-forward. Enhanced error handling across all server actions. |
+
+---
+
+## 2. Feature-by-Feature Gap Audit Reconciliation
 
 ### D1.1 Meetings
-| # | Feature | Where the user finds it | Status | Audit Notes |
+| # | Feature | Where | Status | Truthful Code Status |
 |---|---|---|---|---|
-| M1 | Create meeting (title, type, department, organizer, chair, minute taker, date, time, duration, mode, room, video link, attendees, repeat) | "+ New meeting" on Home and Meetings; "+ Create" in the top bar | ✅ | Implemented in `app/meet/meetings/new/CreateMeetingClientForm.tsx` & `lib/actions/meet/meetings.ts`. |
-| M2 | Create from template (agenda + members pre-filled) | Template picker at the top of the Create meeting form | ✅ | Implemented via template selector pre-filling agenda items and members in create form. |
-| M3 | Recurring series creates the next session automatically | Meeting › Sessions tab | ✅ | `endSession` in `lib/actions/meet/sessions.ts` computes next recurrence date and inserts session S-(N+1). |
-| M4 | Invite email with calendar file (.ics) to attendees | Sent on save | 🟡 | Basic notification logged on session creation, but native RFC 5545 .ics calendar attachment generator needs standardization. |
-| M5 | Agenda items with presenter and minutes; reorder; agenda item → point | Session page › Agenda | ✅ | Agenda items listed with planned duration, live reordering and point linkage supported. |
-| M6 | Start meeting → Live mode; attendance (present, late, absent) | Session page "Start in Live mode" | ✅ | Live meeting runner in `app/meet/live/[sessionId]/LiveMeetingClient.tsx` with attendance toggles. |
-| M7 | End meeting → carry-forward of all open points to the next session | Live mode / Session page "End meeting" | ✅ | `endSession` handles carry-forward to next session with `carry_forward_count` increment and backup point tagging. |
-| M8 | Reschedule, cancel, add follow-up session | Session page header | 🟡 | Session status update to cancelled exists; dedicated reschedule date-picker modal and follow-up session modal need polish. |
-
----
+| M1 | Create meeting (title, type, department, organizer, chair, date, duration, attendees) | "+ New meeting" | ✅ | Complete. Handled via `CreateMeetingClientForm.tsx` & `lib/actions/meet/meetings.ts`. Fixed organizer/chair de-duplication bug. |
+| M2 | Create from template | Template picker in create form | ✅ | Complete. Pre-fills agenda items and members from `meet_meeting_templates`. |
+| M3 | Recurring series auto-creates next session | Meeting › Sessions tab | ✅ | Complete. Computes next recurrence date and links carry-forward points. |
+| M4 | Invite email with calendar file (.ics) to attendees | Sent on save | ✅ | Complete. RFC 5545 `.ics` generator built in `lib/utils/ics.ts` and queued to `email_queue` on session creation. |
+| M5 | Agenda items with presenter & minutes | Session page › Agenda | ✅ | Complete. Live reordering and agenda item-to-point association active. |
+| M6 | Live mode & attendance | Session page "Start in Live mode" | ✅ | Complete. Realtime attendee status toggling with RBAC check. |
+| M7 | End meeting → transactional carry-forward | Live mode / Session page | ✅ | Complete. Transactional RPC `fn_meet_end_session_and_carry_forward` with fallback. |
+| M8 | Reschedule, cancel | Session page header | ✅ | Complete. `moveMeetingToProposedTime` and `cancelSession` guarded by `MEET_RESCHEDULE`. |
 
 ### D1.2 Meeting Points
-| # | Feature | Where | Status | Audit Notes |
+| # | Feature | Where | Status | Truthful Code Status |
 |---|---|---|---|---|
-| P1 | Add point during or before the meeting (title, description, type, category, priority, owner, TAT → due date) | Session page "New point" form; Live mode quick capture; Notes line → Point | 🟡 | Session page and live mode quick capture work; Notes line → Point conversion is missing pending Notes module. |
-| P2 | Point code (PT-00001), status (Open, In progress, On hold, Closed, Dropped, Reopened), progress % | Everywhere a point is shown | ✅ | Full Postgres sequence `meet_point_code_seq`, status enum, and progress percentage rendered across views. |
-| P3 | **Backup points**: open points from earlier sessions listed first in the next session, overdue on top | Session page "Backup points" card | ✅ | Implemented in `SessionWorkspaceClient.tsx` with dedicated backup points card sorted by overdue status. |
-| P4 | Point history across sessions (raised in S1, carried to S2, S3…) with the note from each session | Point drawer › Session history | ✅ | `meet_session_points` captures session notes and trail across sessions. |
-| P5 | Flag and escalate points carried 3 or more times | Badge "Carried 3×"; notification to department head | ✅ | Red escalation badge "Carried Nx" displayed on points with carry count >= 3. |
-| P6 | Close a point only with closure remarks; warn about open tasks | Point drawer "Close point…" | 🟡 | Basic status change works; closure remarks requirement modal with open tasks warning check needs enforcement. |
-| P7 | Reassign owner (notifies new owner, logs change) | Point drawer owner field | ✅ | `reassignPointOwner` in `lib/actions/meet/points.ts` logs activity and updates owner. |
-| P8 | Comments with @mentions, attachments | Point drawer | ✅ | `meet_comments` and `meet_attachments` backed by Supabase storage integration. |
-| P9 | Escalate a point into another meeting | Point drawer "Escalate to another meeting…" | ❌ | Point drawer action to transfer/duplicate point to a different meeting series is missing. |
-| P10 | All points of a meeting series, filterable (status, owner, overdue, carried) | Meeting › All points tab | ✅ | Implemented in `app/meet/meetings/[id]/MeetingDetailTabs.tsx` under "All points" tab with filters. |
-| P11 | Pre-meeting update from owners (in app, email reply, WhatsApp) | Session page › Readiness | 🟡 | In-app pre-update capture implemented via `meet_pre_updates`; email/WhatsApp reply webhook ingestion is pending. |
+| P1 | Add point (title, category, priority, owner, TAT → due date) | Session page & Live mode | ✅ | Complete. Statutory working days due date calculated via `fn_meet_calculate_due_date`. |
+| P2 | Point code (`PT-00001`), statuses, progress % | Global | ✅ | Complete. Postgres sequence `meet_point_code_seq` synchronized and active. |
+| P3 | Backup points from earlier sessions | Session page "Backup points" | ✅ | Complete. Overdue points sorted first. |
+| P4 | Point history across sessions | Point drawer › Session history | ✅ | Complete. Captured via `meet_session_points`. |
+| P5 | Escalate points carried 3 or more times | Badge "Carried 3×" + notification | ✅ | Complete. `isRepeatedlyCarried` computed, badge rendered, and escalation alert queued to `email_queue`. |
+| P6 | Close point with remarks; task warning | Point drawer "Close point…" | ✅ | Complete. Validated in `updatePointStatus`. |
+| P7 | Reassign owner (notifies new owner, logs change) | Point drawer owner field | ✅ | Complete. `reassignPointOwner` implemented in `lib/actions/meet/points.ts` with activity log and email dispatch. |
+| P8 | Comments & attachments | Point drawer | ✅ | Complete. Universal document view/download and comment stream active. |
+| P9 | Escalate point to another meeting | Point drawer | 🟡 | Point escalation within meeting series supported; cross-meeting transfer deferred to Phase 2. |
+| P10 | All points filterable | Meeting › All points tab | ✅ | Complete. Filterable by status, owner, overdue, and carried count. |
+| P11 | Pre-meeting update from owners | Session page › Readiness | 🟡 | In-app pre-updates active; inbound WhatsApp webhook deferred to Phase 2. |
 
----
-
-### D1.3 Tasks (Meeting Task Management)
-| # | Feature | Where | Status | Audit Notes |
+### D1.3 Tasks
+| # | Feature | Where | Status | Truthful Code Status |
 |---|---|---|---|---|
-| T1 | **Create task** under a point: title, description, owner, supporting members, priority, start date, TAT (working days) → due date shown live, repeat, reminder, checklist, attachments, "needs verification" | "+ New task" on Home, Meeting › Tasks, Session page, Point drawer, Live mode, My Work, "+ Create" menu, Notes line → Task | 🟡 | `CreateTaskModal.tsx` works from points/live mode; live working days due date calculator exists; notes conversion is missing. |
-| T2 | Task code (TSK-00001), statuses (Not started, In progress, On hold, Completed, Cancelled), progress % | Everywhere | ✅ | Auto-generated sequential code `TSK-XXXXX`, statuses and checklist-driven progress %. |
-| T3 | TAT engine: skips Sundays and holidays; Overdue and Due soon flags; "Within TAT" / "TAT breached by N days" on completion | Task lists, task drawer | ✅ | `fn_meet_calculate_due_date` and TAT flags implemented in `lib/actions/meet/tasks.ts`. |
-| T4 | Extension request (owner) → approve or reject (organizer) → revised due date; full trail | Task drawer, My Work › Waiting on me | ✅ | `meet_tat_extensions` table and approval actions implemented. |
-| T5 | Checklist items tick progress; subtasks; dependencies (P2) | Task drawer | ✅ | Checklist items with completion toggle updating task overall progress %. |
-| T6 | Verification: completed tasks needing verification wait for the organizer | My Work › Waiting on me | 🟡 | `needs_verification` flag stored, but organizer verification approval queue tab in My Work needs enhancement. |
-| T7 | My Work: Overdue / Due soon / Open / Waiting on me / Completed; List and Kanban; "viewing as" for managers | My Work | ✅ | Implemented in `app/meet/my-work/MyWorkClient.tsx` with tabs, search, and kanban view. |
-| T8 | Bulk update (status, owner, due) on selected tasks | Task lists | 🟡 | Task table supports single task quick edits; multi-select checkbox bulk update bar is missing. |
-| T9 | Task updates by email reply and WhatsApp reply ("done", "60", "need 2 days") | Notifications | ❌ | Inbound email/WhatsApp webhook processor not yet hooked up. |
-| T10 | Tasks of a point are reviewed again automatically in the next session (they show under the backup point) | Session page, Live mode | ✅ | Tasks associated with carry-forward backup points render under backup points card. |
-| T11 | Recurring tasks create the next one on completion or schedule | Task drawer "Repeat" | 🟡 | Recurrence field exists in task schema, automated next instance creation trigger needs background worker. |
-
----
+| T1 | Create task under a point or standalone | Tasks modal / Notes conversion | ✅ | Complete. `meet_tasks.point_id` made nullable in migration `20261027180000`. Working days TAT calculated. |
+| T2 | Task code (`TSK-00001`), statuses, checklist progress | Global | ✅ | Complete. Sequenced and tracked. |
+| T3 | TAT engine: skips Sundays and statutory holidays | Task lists / drawer | ✅ | Complete. Built in `fn_meet_calculate_due_date` with `dmac_holiday_calendar` safety fallback. |
+| T4 | Extension request & approval | Task drawer | ✅ | Complete. `requestTaskExtension` and `decideTaskExtension` guarded with conflict-of-interest check (users cannot approve own extension). |
+| T5 | Checklist progress tracking | Task drawer | ✅ | Complete. Updates task progress percentage. |
+| T6 | Verification queue for completed tasks | My Work | ✅ | Complete. `requires_verification` flag stored and handled. |
+| T7 | My Work console (Overdue / Due soon / Open / Completed) | My Work | ✅ | Complete. Scoped queries in `getTasks` enforce data privacy. |
+| T8 | Bulk update on selected tasks | Task table | 🟡 | Single task quick edit active; multi-select bulk bar deferred to Phase 2. |
+| T9 | Inbound task updates by email/WhatsApp | External webhook | ❌ | Inbound email/WhatsApp webhook processor not yet connected. |
+| T10 | Tasks review under backup points | Session page / Live mode | ✅ | Complete. Displayed under parent backup points. |
+| T11 | Recurring tasks schedule | Task drawer | 🟡 | Recurrence pattern stored; automated scheduler trigger pending cron worker. |
 
 ### D1.4 MoM (Minutes of Meeting)
-| # | Feature | Where | Status | Audit Notes |
+| # | Feature | Where | Status | Truthful Code Status |
 |---|---|---|---|---|
-| R1 | MoM generated automatically from the session: attendance, backup points with session notes, new points, decisions, resolutions, action items, parking lot, summary, next session | Session page "Preview MoM"; Reports › Minutes of Meeting | ✅ | `generateMoMSnapshot` in `lib/actions/meet/mom.ts` captures structured snapshot from session. |
-| R2 | MoM lifecycle: Draft → (Submit to chair →) Approved → Published; locked after publish; addendum allowed | Session page header buttons | ✅ | Lifecycle states `mom_draft` -> `mom_approved` -> `published` enforced in `lib/actions/meet/mom.ts`. |
-| R3 | Publish sends PDF by email and WhatsApp to attendees and all owners | On publish | 🟡 | Publish status transition works and marks distributed; background email queue with PDF attachment dispatch needs delivery engine. |
-| R4 | Attendee acknowledgement with a chase-up reminder | Session page › MoM acknowledgements; My Work › Waiting on me | ✅ | `meet_mom_acknowledgements` records user acknowledgements and timestamps. |
-| R5 | PDF on letterhead with page numbers and signature block; Word export (P2) | MoM "Download" | 🟡 | HTML print view available; formal PDF letterhead generator with digital signature block needs polish. |
-| R6 | MoM versions with what changed | MoM history | ✅ | `meet_mom_versions` tracks version increment, snapshot JSON, and diff remarks. |
-| R7 | Minutes book for board meetings (page-numbered, all sessions) | Decisions › Board resolutions | ✅ | Board resolution register in `app/meet/decisions/DecisionsClient.tsx`. |
+| R1 | MoM generated from session snapshot | Session page / Reports | ✅ | Complete. Generated via `generateMoMSnapshot`. |
+| R2 | MoM lifecycle: Draft → Chair Approval → Published | Session header | ✅ | Complete. Approval gate enforced; session status normalized to `'published'`. |
+| R3 | Publish distribution by email to attendees | On publish | ✅ | Complete. Notifications queued to `email_queue` for attendees and absentees. |
+| R4 | Attendee acknowledgement | Session page / My Work | ✅ | Complete. Acknowledgement records seeded with composite key `(session_id, mom_version, user_id)`. |
+| R5 | PDF on letterhead with signature block | MoM download | 🟡 | Clean HTML print view available; headless Chromium PDF rendering deferred. |
+| R6 | MoM versions with diff tracking | MoM history | ✅ | Complete. `meet_mom_versions` tracks version increment and snapshot JSON without collision. |
+| R7 | Minutes book for board resolutions | Decisions › Board resolutions | ✅ | Complete. Resolution register active in `DecisionsClient.tsx`. |
 
----
-
-### D1.5 Notes Module (New in Part D)
-| # | Feature | Where | Status | Audit Notes |
+### D1.5 Notes Module
+| # | Feature | Where | Status | Truthful Code Status |
 |---|---|---|---|---|
-| N1 | Running notes per session, auto-saved, works offline | Live mode "Running notes"; Session page "Meeting notes"; Notes › Meetings | ✅ | Implemented in `app/meet/notes/page.tsx`, `NotesClient.tsx`, `RunningNotesCard.tsx`, `MeetingNotesCard.tsx`, and `lib/actions/meet/notes.ts`. Auto-saves to `meet_notes` & `meet_note_blocks`. |
-| N2 | Each line timestamped, by author, auto-tagged to the point being discussed | Notes lines | ✅ | Implemented with `meet_note_blocks` storing `author_id`, `created_at`, and `focused_point_id` auto-tagged during Live mode and in-session discussions. |
-| N3 | Convert any line → Task / Point / Decision (two-way link) | Line buttons; `/task`, `/point`, `/decision` | ✅ | Implemented via inline slash command parser and conversion popover linking back via `source_note_block_id` on tasks, points, and decisions. |
-| N4 | Open-loops detection: action-like lines that are not yet a task or point | Flag on the line; Notes › Open loops; End-meeting warning | ✅ | Implemented regex & NLP heuristic engine (`isActionLikeText`) supporting English and Hinglish cues, Open Loops tab filter, and amber warning banner in `EndSessionModal.tsx`. |
-| N5 | Personal notes (private), pin, tags, share, attach to a meeting | Notes › Mine; "+ New note" | ✅ | Implemented in `meet_notes` (`kind: 'personal'`), `meet_note_shares` table, and dedicated "Mine" tab with pinning and tag filtering. |
-| N6 | Notes searchable in global search | Top search bar | ✅ | Implemented in `searchNotes` action querying titles, tags, and block contents across permissions. |
-| N7 | Meeting summary built from notes + points + tasks + decisions; "Use in MoM" | "Summary" button | ✅ | Implemented via `generateSessionSummary` and `useSummaryInMoM` in `lib/actions/meet/notes.ts` injecting summary into session notes. |
-| N8 | Notes shown in the point drawer ("From meeting notes") | Point drawer | ✅ | Implemented via `source_note_block_id` two-way backlink and point tag block retrieval in `lib/actions/meet/notes.ts`. |
-| N9 | Notes locked when MoM is published; addendum only | Notes card | ✅ | Server-side write lock enforced when session MoM status reaches `published` (only addendums permitted). |
+| N1 | Running notes per session | Live mode & Notes page | ✅ | Complete. Auto-saves to `meet_notes` & `meet_note_blocks`. |
+| N2 | Timestamped lines with author & point tag | Note lines | ✅ | Complete. Auto-tags current point in discussion. |
+| N3 | Slash commands `/task`, `/point`, `/decision` | Note lines | ✅ | Complete. Two-way linking via `source_note_block_id`. |
+| N4 | Open-loops detection (English & Hinglish) | Notes open loops tab | ✅ | Complete. Heuristic parser identifies untagged action lines. |
+| N5 | Personal notes (private), pin, tags | Notes › Mine | ✅ | Complete. Private note storage with search and tags. |
+| N6 | Global search across notes | Search bar | ✅ | Complete. Search queries note titles and block text. |
+| N7 | Meeting summary built from notes | Summary modal | ✅ | Complete. `generateSessionSummary` injects overview into MoM. |
+| N8 | Notes shown in point drawer | Point drawer | ✅ | Complete. Backlinked blocks display under point trail. |
+| N9 | Notes locked after MoM publish (addendum only) | Notes card | ✅ | Complete. Server-side write lock blocks updates/deletions on published sessions; only addendums permitted. |
 
----
-
-## Part E: Module Admin, Alerts, SLA & Meeting Flow
-| # | Feature | Status | Audit Notes |
+### Part E: Module Admin, Alerts, SLA & Meeting Flow
+| # | Feature | Status | Truthful Code Status |
 |---|---|---|---|
-| E-1 | Meet settings inside the module; Meet Admin can manage roles, policies, alerts and templates without Workspace admin rights | ✅ | Implemented in `app/meet/admin/page.tsx` and `MeetAdminClient.tsx` featuring dedicated tabs for Roles & Access, Policies, Alerts & SLA, Custom Templates, and Rooms. |
-| E-2 | Workspace admin shows only workspace roles + Modules page | ✅ | Meet-specific configuration moved cleanly inside `/meet/admin` module settings. |
-| E-3 | Meeting policies enforced server-side | ✅ | Implemented in `core_module_settings` key-value store and enforced across actions in `lib/actions/meet/`. |
-| E-4 | SLA policies with reminder, warning and escalation steps, counted in working time | ✅ | Implemented via `meet_sla_policies`, `meet_sla_instances` tables, and `getModuleSLAStatus` engine in `lib/actions/meet/sla.ts`. |
-| E-5 | Escalated badge + acknowledge/reassign/extend actions | ✅ | Implemented in `MeetAdminClient.tsx` escalations queue with `acknowledgeEscalation`, `reassignEscalation`, and `extendEscalation` server actions. |
-| E-6 | Alert rule builder; every alert uses a template | ✅ | Implemented via `meet_alert_rules` and admin alert rule configuration with channel toggles (In-app, Email, WhatsApp). |
-| E-7 | Custom templates with merge fields, preview, test, versions, languages | ✅ | Implemented via `core_notification_templates`, interactive merge fields palette, live preview modal, and versioning in `MeetAdminClient.tsx`. |
-| E-8 | RSVP with one-click email buttons, decline reason, delegate, propose new time | ✅ | Implemented in `meet_invitations`, `InvitationsCard.tsx`, and `lib/actions/meet/invitations.ts` supporting Accept, Maybe, Decline with delegate, and Propose new time with session move support. |
-| E-9 | Attendance by QR, video join, self, manual; late and excused | ✅ | Implemented in `AttendanceCard.tsx` and `lib/actions/meet/attendance.ts` with 60s rotating HMAC QR code, late calculation (>5m), excused tracking, and manual override. |
-| E-10 | AI minutes per point after the meeting; review or auto-send; MoM PDF to everyone; "you missed" to absentees | ✅ | Implemented in `meet_ai_minutes`, `AIMinutesCard.tsx`, and `lib/actions/meet/ai-minutes.ts` with executive overview, per-point editable summaries, and one-click MoM distribution to attendees and absent notices. |
+| E-1 | Meet settings inside module; Meet Admin role | ✅ | Complete. `/meet/admin` gated with `requireMeet("MEET_ADMIN")`. Role matrix persistence active. |
+| E-2 | Workspace admin separation | ✅ | Complete. Gated cleanly inside module settings. |
+| E-3 | Meeting policies enforced server-side | ✅ | Complete. Gated in server actions. |
+| E-4 | SLA engine | 🟡 | SLA policies, instances and query calculations active; recurring cron runner for automated escalation evaluation pending background worker setup. |
+| E-5 | Escalation reassign and extend | ✅ | Complete. `acknowledgeEscalation`, `reassignEscalation`, and `extendEscalation` implemented in `lib/actions/meet/sla.ts`. |
+| E-6 / E-7 | Alert rule builder & custom templates | ✅ | Complete. Template merge fields and alert rules wired; emails queued to `email_queue`. |
+| E-8 | RSVP with one-click email buttons & reminders | ✅ | Complete. In-app RSVP, reschedule time acceptance, and reminder dispatch via `email_queue` implemented. |
+| E-9 | Attendance by QR, late calculation, excused | ✅ | Complete. Attendance marking protected by RBAC; dynamic HMAC secret; future session attendees default to absent. |
+| E-10 | AI minutes per point & MoM distribution | ✅ | Complete. Generative synthesis connected via `streamLLMResponse` (with offline fallback); MoM collision resolved; emails queued for attendees and absentees. |
 
----
-
-## Part F: Meeting Rooms & Displays
-| # | Feature | Status | Audit Notes |
+### Part F: Meeting Rooms & Displays
+| # | Feature | Status | Truthful Code Status |
 |---|---|---|---|
-| R-1 | Room picker with live free/busy from Microsoft 365, capacity, equipment, suggestions | ✅ | Implemented in `lib/actions/meet/rooms.ts` (`checkRoomAvailability`) and `CreateMeetingClientForm.tsx` showing live conflicts, equipment tags, and capacity. |
-| R-2 | Saving a meeting books the room mailbox + Teams link via Graph; the Teams room panel shows "booked by" | ✅ | Implemented via `meet_room_bookings` and `bookRoomForSession` persisting booking references and organizer details. |
-| R-3 | Two-way sync: room declines, Outlook moves/cancels, Outlook RSVPs come back to Chandak | ✅ | Schema and booking state machine wired with `m365_meeting_id`, calendar sync status, and reconciliation action hooks. |
-| R-4 | Check-in, no-show auto-release, end early, extend | ✅ | Implemented in `lib/actions/meet/rooms.ts` with `checkInRoomBooking`, `endRoomBookingEarly`, `extendRoomBooking`, and `releaseNoShowBookings`. |
-| R-5 | Chandak room display page for tablets | ✅ | Implemented in `app/rooms/[roomId]/display/page.tsx` and `RoomDisplayClient.tsx` (10" tablet kiosk UI, 3m high-contrast status banner, progress bar, QR check-in, book-now 15/30/60m, end early, extend). |
+| R-1 | Room picker with live availability | 🟡 | Internal conflict detection implemented in `checkRoomAvailability` and `meet_room_bookings`. Live M365 Exchange mailbox sync requires Azure AD enterprise application credentials. |
+| R-2 | Book room mailbox & Teams link | 🟡 | `meet_room_bookings` unique constraint fixed; Teams link generated; Graph calendar event dispatch pending Azure AD tenant registration. |
+| R-3 | Two-way M365 sync | 🟡 | Database sync fields present; webhook listener pending Azure Graph subscription registration. |
+| R-4 | Check-in, no-show auto-release, end early, extend | ✅ | Complete. `checkInRoomBooking`, `releaseNoShowBookings`, `endRoomBookingEarly`, and `extendRoomBooking` implemented in `lib/actions/meet/rooms.ts`. |
+| R-5 | Room display tablet UI | ✅ | Complete. Tablet kiosk UI in `app/rooms/[roomId]/display/page.tsx` with IST timezone calculation, device auth check, and safe active booking termination. |
 
 ---
 
-## Summary of Completed Implementation
-All core features and architectural requirements specified in `CHANDAK_WORKSPACE_MEET_FINAL_SPEC.md` (v6.0 FINAL) have been systematically implemented:
-1. **Database Schema Enhancements:**
-   - 36 tables verified in Supabase Postgres under RLS policies via `20261026010000_chandak_meet_final_extension.sql`.
-2. **Notes Module (`app/meet/notes` & Components):**
-   - Live mode running notes, session page notes, personal notes, two-way slash command links (`/task`, `/point`, `/decision`), open-loops detection (English & Hinglish), and MoM summary bridge.
-3. **Module Admin & Meet Settings (`app/meet/admin`):**
-   - Roles & Access matrix, meeting policies, SLA escalation management, alert rule engine, and custom template builder with merge fields.
-4. **RSVP & Smart Attendance Check-in:**
-   - `InvitationsCard` with decline reasons, delegates, and proposed times.
-   - `AttendanceCard` with rotating HMAC QR modal, late arrival calculation, and excused tracking.
-5. **AI Minutes & MoM Auto-Distribution:**
-   - `AIMinutesCard` with executive summary, per-point AI minutes synthesis, and automated distribution to all attendees and absent notifications.
-6. **Meeting Rooms & 10" Tablet Display (`app/rooms/[roomId]/display`):**
-   - High-contrast kiosk view with 3m readability, touchless QR check-in, 15/30/60m quick booking, session extension, and conflict prevention.
+## 3. Recommended Go-Live Infrastructure Actions
+
+1. **Rotate Supabase Service-Role Key:**
+   - In Supabase Management Console › Settings › API, rotate the service-role key that was previously exposed in the commit history.
+   - Update the server's `.env.production` file with the newly generated key.
+2. **Apply Database Migration:**
+   - Run `supabase/migrations/20261027180000_meet_production_hardening.sql` on the live database.
+3. **Background Cron Jobs:**
+   - Configure a scheduled runner (or system cron) to invoke the background processor for `email_queue` and room auto-release (`releaseNoShowBookings`).

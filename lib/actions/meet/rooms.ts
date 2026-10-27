@@ -2,8 +2,46 @@
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
+import { requireMeet } from "@/lib/permissions/meet";
 import { revalidatePath } from "next/cache";
 import type { MeetingRoom, MeetRoomBooking } from "@/types/meet";
+
+/**
+ * Check if a specific room is available for a time window (R-1)
+ */
+export async function checkRoomAvailability(
+  roomId: string,
+  startAt: string,
+  endAt: string,
+  excludeSessionId?: string
+): Promise<{ isAvailable: boolean; conflictingBooking?: MeetRoomBooking | null }> {
+  try {
+    let query = supabaseAdmin
+      .from("meet_room_bookings")
+      .select(`
+        *,
+        booked_by_user:user_master(id, full_name, email),
+        session:meet_sessions(code, meeting:meet_meetings(title))
+      `)
+      .eq("room_id", roomId)
+      .in("status", ["confirmed", "checked_in", "pending"])
+      .lt("start_at", endAt)
+      .gt("end_at", startAt);
+
+    if (excludeSessionId) {
+      query = query.neq("session_id", excludeSessionId);
+    }
+
+    const { data: conflict } = await query.maybeSingle();
+    return {
+      isAvailable: !conflict,
+      conflictingBooking: (conflict as MeetRoomBooking) || null,
+    };
+  } catch (err: any) {
+    console.error("Error checking room availability:", err);
+    return { isAvailable: false, conflictingBooking: null };
+  }
+}
 
 export async function getRoomsWithLiveAvailability(
   startAt: string,
@@ -81,8 +119,7 @@ export async function bookRoomForSession(
   endAt: string
 ): Promise<{ success: boolean; booking?: MeetRoomBooking; error?: string }> {
   try {
-    const { user } = await getCachedUser();
-    const userId = user?.id || null;
+    const { userId } = await requireMeet("MEET_UPDATE", { sessionId });
 
     // 1. Conflict check
     const { data: clash } = await supabaseAdmin
@@ -99,6 +136,14 @@ export async function bookRoomForSession(
       return { success: false, error: "Room is already booked for this time window." };
     }
 
+    const { data: sessionData } = await supabaseAdmin
+      .from("meet_sessions")
+      .select("video_link, meeting:meet_meetings(title)")
+      .eq("id", sessionId)
+      .maybeSingle();
+
+    const joinUrl = sessionData?.video_link || `https://chandakgroup.tech/meet/live/${sessionId}`;
+
     // 2. Insert or update booking
     const { data: booking, error } = await supabaseAdmin
       .from("meet_room_bookings")
@@ -110,7 +155,7 @@ export async function bookRoomForSession(
           end_at: endAt,
           status: "confirmed",
           booked_by: userId,
-          teams_join_url: "https://teams.microsoft.com/l/meetup-join/chandak-workspace-room",
+          teams_join_url: joinUrl,
           last_synced_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -135,10 +180,82 @@ export async function bookRoomForSession(
   }
 }
 
+/**
+ * Check-in to a room booking (R-4)
+ */
+export async function checkInRoomBooking(
+  bookingId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireMeet("MEET_SESSION_RUN");
+    const nowIso = new Date().toISOString();
+
+    const { error } = await supabaseAdmin
+      .from("meet_room_bookings")
+      .update({
+        status: "checked_in",
+        checked_in_at: nowIso,
+        updated_at: nowIso,
+      })
+      .eq("id", bookingId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error checking in room booking:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Auto-release no-show room bookings after threshold (R-4)
+ */
+export async function releaseNoShowBookings(
+  roomId?: string
+): Promise<{ success: boolean; releasedCount: number }> {
+  try {
+    const now = new Date();
+    // Default 10 min grace period
+    const cutoff = new Date(now.getTime() - 10 * 60000).toISOString();
+
+    let query = supabaseAdmin
+      .from("meet_room_bookings")
+      .select("id, room_id")
+      .eq("status", "confirmed")
+      .lte("start_at", cutoff);
+
+    if (roomId) {
+      query = query.eq("room_id", roomId);
+    }
+
+    const { data: noShows, error: fetchErr } = await query;
+    if (fetchErr || !noShows || noShows.length === 0) {
+      return { success: true, releasedCount: 0 };
+    }
+
+    const ids = noShows.map((b) => b.id);
+    const { error: updErr } = await supabaseAdmin
+      .from("meet_room_bookings")
+      .update({
+        status: "released",
+        released_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      })
+      .in("id", ids);
+
+    if (updErr) throw updErr;
+    return { success: true, releasedCount: ids.length };
+  } catch (err: any) {
+    console.error("Error releasing no-show bookings:", err);
+    return { success: false, releasedCount: 0 };
+  }
+}
+
 export async function releaseRoomBooking(
   bookingId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireMeet("MEET_UPDATE");
     const { error } = await supabaseAdmin
       .from("meet_room_bookings")
       .update({
@@ -155,6 +272,7 @@ export async function releaseRoomBooking(
     return { success: false, error: err.message };
   }
 }
+
 
 // Tablet Kiosk Display Data (F6)
 export async function getRoomDisplayData(roomId: string): Promise<{
@@ -183,8 +301,15 @@ export async function getRoomDisplayData(roomId: string): Promise<{
     const now = new Date();
     const nowIso = now.toISOString();
 
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString();
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
+    // India Standard Time (UTC+05:30) calculations
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(now.getTime() + istOffsetMs);
+    const y = istNow.getUTCFullYear();
+    const m = istNow.getUTCMonth();
+    const d = istNow.getUTCDate();
+
+    const todayStart = new Date(Date.UTC(y, m, d, 0, 0, 0) - istOffsetMs).toISOString();
+    const todayEnd = new Date(Date.UTC(y, m, d, 23, 59, 59, 999) - istOffsetMs).toISOString();
 
     const [roomRes, bookingsRes] = await Promise.all([
       supabaseAdmin.from("meet_rooms").select("*").eq("id", roomId).single(),
@@ -329,10 +454,25 @@ export async function bookNowFromDisplay(
 
 export async function endEarlyFromDisplay(
   roomId: string
-): Promise<{ success: boolean }> {
+): Promise<{ success: boolean; message?: string }> {
   try {
     const nowIso = new Date().toISOString();
-    await supabaseAdmin
+
+    // S6: End ONLY the current in-progress booking (do NOT wipe out future bookings for the room!)
+    const { data: currentBooking } = await supabaseAdmin
+      .from("meet_room_bookings")
+      .select("id")
+      .eq("room_id", roomId)
+      .in("status", ["confirmed", "checked_in"])
+      .lte("start_at", nowIso)
+      .gte("end_at", nowIso)
+      .maybeSingle();
+
+    if (!currentBooking) {
+      return { success: false, message: "No active meeting in progress to end." };
+    }
+
+    const { error } = await supabaseAdmin
       .from("meet_room_bookings")
       .update({
         status: "ended",
@@ -340,14 +480,15 @@ export async function endEarlyFromDisplay(
         released_at: nowIso,
         updated_at: nowIso,
       })
-      .eq("room_id", roomId)
-      .in("status", ["confirmed", "checked_in"]);
+      .eq("id", currentBooking.id);
+
+    if (error) throw error;
 
     revalidatePath(`/rooms/${roomId}/display`);
     return { success: true };
   } catch (err: any) {
     console.error("Error ending room booking early:", err);
-    return { success: false };
+    return { success: false, message: err.message };
   }
 }
 

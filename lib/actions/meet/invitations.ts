@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetInvitation, RSVPResponse } from "@/types/meet";
+import { requireMeet } from "@/lib/permissions/meet";
 
 export async function getSessionInvitations(sessionId: string): Promise<{
   invitations: MeetInvitation[];
@@ -18,6 +19,14 @@ export async function getSessionInvitations(sessionId: string): Promise<{
   currentUserInvite?: MeetInvitation | null;
 }> {
   try {
+    const auth = await requireMeet("MEET_VIEW", { sessionId });
+    if (!auth.allowed) {
+      return {
+        invitations: [],
+        counts: { accepted: 0, maybe: 0, declined: 0, proposed: 0, pending: 0, total: 0 },
+      };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id;
 
@@ -135,6 +144,17 @@ export async function respondToInvitation(
         .eq("user_id", user.id);
     }
 
+    // Audit log
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "session_invitation",
+      entity_id: `${sessionId}:${user.id}`,
+      action: "rsvp_responded",
+      field: "response",
+      new_value: response,
+      user_id: user.id,
+      channel: "web",
+    });
+
     revalidatePath(`/meet/sessions/${sessionId}`);
     return { success: true };
   } catch (err: any) {
@@ -148,6 +168,11 @@ export async function moveMeetingToProposedTime(
   newStartIso: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const auth = await requireMeet("MEET_RESCHEDULE", { sessionId, requireOrganizerOrChair: true });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied. Only organizers, chairs, or meeting admins can reschedule sessions." };
+    }
+
     const { user } = await getCachedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
@@ -185,19 +210,16 @@ export async function moveMeetingToProposedTime(
       .eq("session_id", sessionId)
       .neq("response", "declined");
 
-    // Log activity
+    // Correctly structured audit log without nonexistent columns
     await supabaseAdmin.from("meet_activity_log").insert({
-      meeting_id: session.meeting_id,
-      session_id: sessionId,
-      actor_id: user.id,
-      action: "RESCHEDULED",
       entity_type: "session",
       entity_id: sessionId,
-      details: {
-        new_start: newStart.toISOString(),
-        new_end: newEnd.toISOString(),
-        reason: "Accepted proposed time",
-      },
+      action: "rescheduled",
+      field: "scheduled_start",
+      old_value: session.scheduled_start,
+      new_value: newStart.toISOString(),
+      user_id: user.id,
+      channel: "web",
     });
 
     revalidatePath(`/meet/sessions/${sessionId}`);
@@ -210,26 +232,73 @@ export async function moveMeetingToProposedTime(
 
 export async function sendRSVPReminders(sessionId: string): Promise<{ success: boolean; remindedCount: number; error?: string }> {
   try {
-    const { data: nonResponders } = await supabaseAdmin
-      .from("meet_invitations")
-      .select("id, user_id, reminder_count")
-      .eq("session_id", sessionId)
-      .eq("response", "pending");
+    const auth = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
+    if (!auth.allowed) {
+      return { success: false, remindedCount: 0, error: auth.error || "Permission denied" };
+    }
 
-    const count = nonResponders?.length || 0;
-    if (count > 0) {
-      for (const nr of nonResponders!) {
-        await supabaseAdmin
-          .from("meet_invitations")
-          .update({
-            reminder_count: (nr.reminder_count || 0) + 1,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", nr.id);
+    // Fetch non-responders and session context
+    const [nonRespondersRes, sessionRes] = await Promise.all([
+      supabaseAdmin
+        .from("meet_invitations")
+        .select("id, user_id, reminder_count, user:user_master!meet_invitations_user_id_fkey(full_name, email)")
+        .eq("session_id", sessionId)
+        .eq("response", "pending"),
+      supabaseAdmin
+        .from("meet_sessions")
+        .select("id, code, scheduled_start, meeting:meet_meetings(title)")
+        .eq("id", sessionId)
+        .single(),
+    ]);
+
+    const nonResponders = nonRespondersRes.data || [];
+    const session = sessionRes.data;
+    const meetingTitle = (session?.meeting as any)?.title || "Meeting";
+
+    const emailQueueBatch: any[] = [];
+
+    for (const nr of nonResponders) {
+      await supabaseAdmin
+        .from("meet_invitations")
+        .update({
+          reminder_count: (nr.reminder_count || 0) + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", nr.id);
+
+      const targetEmail = (nr.user as any)?.email;
+      const targetName = (nr.user as any)?.full_name || "Colleague";
+
+      if (targetEmail) {
+        emailQueueBatch.push({
+          to_email: targetEmail,
+          subject: `[RSVP Reminder] Invitation to ${meetingTitle} - Session ${session?.code}`,
+          body_text: `Dear ${targetName},
+
+This is a reminder to submit your RSVP for the upcoming meeting session:
+Meeting: ${meetingTitle}
+Session: ${session?.code}
+Scheduled Time: ${session?.scheduled_start ? new Date(session.scheduled_start).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "Scheduled"}
+
+Please confirm your attendance or propose a delegate directly:
+${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/sessions/${sessionId}
+
+Chandak Workspace Meet Committee`,
+          status: "pending",
+          retry_count: 0,
+        });
       }
     }
 
-    return { success: true, remindedCount: count };
+    if (emailQueueBatch.length > 0) {
+      try {
+        await supabaseAdmin.from("email_queue").insert(emailQueueBatch);
+      } catch (qErr) {
+        console.warn("Could not batch insert RSVP reminder emails:", qErr);
+      }
+    }
+
+    return { success: true, remindedCount: nonResponders.length };
   } catch (err: any) {
     console.error("Error sending RSVP reminders:", err);
     return { success: false, remindedCount: 0, error: err.message };

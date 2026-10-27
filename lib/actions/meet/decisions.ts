@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingDecision, DecisionStatus } from "@/types/meet";
+import { requireMeet } from "@/lib/permissions/meet";
 
 export async function getDecisions(filters?: {
   search?: string;
@@ -11,6 +12,9 @@ export async function getDecisions(filters?: {
   meetingId?: string;
 }): Promise<MeetingDecision[]> {
   try {
+    const auth = await requireMeet("MEET_VIEW", { meetingId: filters?.meetingId });
+    if (!auth.allowed) return [];
+
     let query = supabaseAdmin
       .from("meet_decisions")
       .select(`
@@ -27,7 +31,7 @@ export async function getDecisions(filters?: {
       query = query.eq("status", filters.status);
     }
     if (filters?.search) {
-      query = query.ilike("text", `%${filters.search}%`);
+      query = query.ilike("title", `%${filters.search}%`);
     }
 
     const { data, error } = await query;
@@ -53,6 +57,11 @@ export async function recordDecision(input: {
   tags?: string[];
 }) {
   try {
+    const auth = await requireMeet("MEET_DECISION_MANAGE", { sessionId: input.sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
 
@@ -61,7 +70,8 @@ export async function recordDecision(input: {
       .insert({
         session_id: input.sessionId,
         point_id: input.pointId || null,
-        text: input.text,
+        title: input.text,
+        decision_type: "operational",
         decided_by: input.decidedBy || "Meeting Committee",
         effective_from: input.effectiveFrom || new Date().toISOString().split("T")[0],
         review_date: input.reviewDate || null,
@@ -100,6 +110,11 @@ export async function supersedeDecision(input: {
   decidedBy?: string;
 }) {
   try {
+    const auth = await requireMeet("MEET_DECISION_MANAGE", { sessionId: input.sessionId });
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
 
@@ -108,7 +123,8 @@ export async function supersedeDecision(input: {
       .from("meet_decisions")
       .insert({
         session_id: input.sessionId,
-        text: input.text,
+        title: input.text,
+        decision_type: "operational",
         decided_by: input.decidedBy || "Meeting Committee",
         status: "active",
         created_by: userId,
@@ -128,6 +144,18 @@ export async function supersedeDecision(input: {
       })
       .eq("id", input.oldDecisionId);
 
+    // Activity log
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "decision",
+      entity_id: input.oldDecisionId,
+      action: "superseded",
+      field: "status",
+      old_value: "active",
+      new_value: "superseded",
+      user_id: userId,
+      channel: "web",
+    });
+
     revalidatePath("/meet/decisions");
     return { success: true, decision: newDec };
   } catch (err: any) {
@@ -137,6 +165,11 @@ export async function supersedeDecision(input: {
 
 export async function updateDecisionStatus(decisionId: string, status: DecisionStatus, remarks?: string) {
   try {
+    const auth = await requireMeet("MEET_DECISION_MANAGE");
+    if (!auth.allowed) {
+      return { success: false, error: auth.error || "Permission denied" };
+    }
+
     const { user } = await getCachedUser();
     const userId = user?.id || null;
 
@@ -150,13 +183,13 @@ export async function updateDecisionStatus(decisionId: string, status: DecisionS
 
     if (error) return { success: false, error: error.message };
 
+    // Valid schema activity log without non-existent remarks column
     await supabaseAdmin.from("meet_activity_log").insert({
       entity_type: "decision",
       entity_id: decisionId,
       action: "status_changed",
       field: "status",
-      new_value: status,
-      remarks: remarks || null,
+      new_value: remarks ? `${status} (${remarks})` : status,
       user_id: userId,
       channel: "web",
     });
@@ -170,6 +203,9 @@ export async function updateDecisionStatus(decisionId: string, status: DecisionS
 
 export async function getDecisionEligibleSessions() {
   try {
+    const auth = await requireMeet("MEET_VIEW");
+    if (!auth.allowed) return [];
+
     const { data, error } = await supabaseAdmin
       .from("meet_sessions")
       .select(`

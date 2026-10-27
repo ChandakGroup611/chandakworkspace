@@ -3,11 +3,11 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
+import { requireMeet } from "@/lib/permissions/meet";
 
 export async function generateMoMSnapshot(sessionId: string) {
   try {
-    const { user } = await getCachedUser();
-    const userId = user?.id || null;
+    const { userId } = await requireMeet("MEET_VIEW", { sessionId });
 
     // Fetch session details, meeting, attendees, points, tasks, decisions
     const [sessionRes, attendeesRes, pointsRes, decisionsRes] = await Promise.all([
@@ -138,11 +138,31 @@ export async function generateMoMSnapshot(sessionId: string) {
 
 export async function publishMoM(sessionId: string, version: number = 1) {
   try {
-    const { user } = await getCachedUser();
-    const userId = user?.id || null;
+    const { userId, roleInMeeting, isSuperAdmin, isMeetAdmin } = await requireMeet("MEET_MOM_PUBLISH", { sessionId });
     const now = new Date().toISOString();
 
-    // 1. Update version status to published
+    // 1. Enforce chair approval gate (M3 / R2)
+    const { data: session } = await supabaseAdmin
+      .from("meet_sessions")
+      .select("meeting:meet_meetings(requires_mom_approval, chair_id, title)")
+      .eq("id", sessionId)
+      .single();
+
+    const requiresApproval = (session as any)?.meeting?.requires_mom_approval ?? false;
+    if (requiresApproval && !isSuperAdmin && !isMeetAdmin) {
+      const { data: vRecord } = await supabaseAdmin
+        .from("meet_mom_versions")
+        .select("status")
+        .eq("session_id", sessionId)
+        .eq("version", version)
+        .maybeSingle();
+
+      if (vRecord?.status !== "approved" && roleInMeeting !== "chair") {
+        return { success: false, error: "Chair approval is required before publishing Minutes of Meeting." };
+      }
+    }
+
+    // 2. Update version status to published
     await supabaseAdmin
       .from("meet_mom_versions")
       .update({
@@ -153,11 +173,11 @@ export async function publishMoM(sessionId: string, version: number = 1) {
       .eq("session_id", sessionId)
       .eq("version", version);
 
-    // 2. Update session status
+    // 3. Update session status (using standard 'published' consistent with ai-minutes.ts and spec)
     await supabaseAdmin
       .from("meet_sessions")
       .update({
-        status: "mom_published",
+        status: "published",
         mom_version: version,
         mom_published_at: now,
         mom_published_by: userId,
@@ -165,16 +185,44 @@ export async function publishMoM(sessionId: string, version: number = 1) {
       })
       .eq("id", sessionId);
 
-    // 3. Activity log
+    // 4. Activity log
     await supabaseAdmin.from("meet_activity_log").insert({
       entity_type: "mom",
       entity_id: sessionId,
       action: "published",
       field: "version",
+      old_value: "draft",
       new_value: String(version),
       user_id: userId,
       channel: "web",
     });
+
+    // 5. Queue MoM distribution emails to all attendees (A7 / E8)
+    const { data: attendees } = await supabaseAdmin
+      .from("meet_session_attendees")
+      .select("user_id, guest_email, user:user_master(id, full_name, email)")
+      .eq("session_id", sessionId);
+
+    const emailRows: any[] = [];
+    for (const att of attendees || []) {
+      const u = att.user as any;
+      const email = (Array.isArray(u) ? u[0]?.email : u?.email) || att.guest_email;
+      if (email) {
+        emailRows.push({
+          recipient_email: email,
+          subject: `Minutes of Meeting Published: ${(session as any)?.meeting?.title || "Meeting"}`,
+          html_body: `<p>The official Minutes of Meeting have been published.</p><p><a href="https://chandakgroup.tech/meet/sessions/${sessionId}">Click here to view MoM and acknowledge receipt</a>.</p>`,
+          body_template: `The official Minutes of Meeting have been published. View MoM: https://chandakgroup.tech/meet/sessions/${sessionId}`,
+          module: "meet",
+          event: "meet.mom.published",
+          status: "PENDING",
+        });
+      }
+    }
+
+    if (emailRows.length > 0) {
+      await supabaseAdmin.from("email_queue").insert(emailRows);
+    }
 
     revalidatePath(`/meet/sessions/${sessionId}`);
     return { success: true };

@@ -3,6 +3,8 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
+import { requireMeet } from "@/lib/permissions/meet";
+import { generateICS } from "@/lib/utils/ics";
 import type { MeetingSeries, MeetingMember } from "@/types/meet";
 
 export interface CreateMeetingInput {
@@ -43,6 +45,8 @@ export async function getMeetings(filters?: {
   status?: string;
 }): Promise<MeetingSeries[]> {
   try {
+    const { userId, isSuperAdmin, isMeetAdmin } = await requireMeet("MEET_VIEW");
+
     let query = supabaseAdmin
       .from("meet_meetings")
       .select(`
@@ -72,10 +76,20 @@ export async function getMeetings(filters?: {
       query = query.ilike("title", `%${filters.search}%`);
     }
 
-    const { data, error } = await query;
+    const { data: rawData, error } = await query;
     if (error) {
       console.error("Error fetching meetings:", error);
       return [];
+    }
+
+    // Scoping check (Spec A14.5, S3): filter out confidential meetings if user is not a participant
+    let data = rawData || [];
+    if (!isSuperAdmin && !isMeetAdmin) {
+      data = data.filter((m: any) => {
+        if (!m.is_confidential) return true;
+        if (m.organizer_id === userId || m.chair_id === userId || m.default_minute_taker_id === userId) return true;
+        return m.members?.some((mem: any) => mem.user_id === userId);
+      });
     }
 
     // Enhance with session counts and open points count
@@ -119,6 +133,8 @@ export async function getMeetings(filters?: {
 
 export async function getMeetingById(id: string): Promise<MeetingSeries | null> {
   try {
+    await requireMeet("MEET_VIEW", { meetingId: id });
+
     const { data, error } = await supabaseAdmin
       .from("meet_meetings")
       .select(`
@@ -150,8 +166,7 @@ export async function getMeetingById(id: string): Promise<MeetingSeries | null> 
 
 export async function createMeeting(input: CreateMeetingInput) {
   try {
-    const { user } = await getCachedUser();
-    const userId = user?.id || null;
+    const { userId } = await requireMeet("MEET_CREATE");
 
     // 1. Insert Meeting Series
     const { data: meeting, error: meetingError } = await supabaseAdmin
@@ -189,7 +204,7 @@ export async function createMeeting(input: CreateMeetingInput) {
       return { success: false, error: meetingError?.message || "Failed to create meeting series" };
     }
 
-    // 2. Insert Members (Ensure Organizer, Chair and Minute Taker roles are explicitly mapped without duplicates)
+    // 2. Insert Members (Ensure Organizer, Chair and Minute Taker roles are explicitly mapped without dropping organizer)
     const membersMap = new Map<string, { user_id?: string; role: string; guest_name?: string; guest_email?: string }>();
     for (const m of input.members) {
       if (m.user_id) {
@@ -199,10 +214,10 @@ export async function createMeeting(input: CreateMeetingInput) {
     if (input.organizer_id) {
       membersMap.set(input.organizer_id, { user_id: input.organizer_id, role: "organizer" });
     }
-    if (input.chair_id) {
+    if (input.chair_id && !membersMap.has(input.chair_id)) {
       membersMap.set(input.chair_id, { user_id: input.chair_id, role: "chair" });
     }
-    if (input.default_minute_taker_id) {
+    if (input.default_minute_taker_id && !membersMap.has(input.default_minute_taker_id)) {
       membersMap.set(input.default_minute_taker_id, { user_id: input.default_minute_taker_id, role: "minute_taker" });
     }
 
@@ -228,7 +243,7 @@ export async function createMeeting(input: CreateMeetingInput) {
     const durationMs = (input.default_duration_minutes || 60) * 60 * 1000;
     const scheduledEnd = new Date(new Date(scheduledStart).getTime() + durationMs).toISOString();
 
-    const { data: session, error: sessionError } = await supabaseAdmin
+    const { data: session } = await supabaseAdmin
       .from("meet_sessions")
       .insert({
         meeting_id: meeting.id,
@@ -246,7 +261,7 @@ export async function createMeeting(input: CreateMeetingInput) {
       .single();
 
     if (session) {
-      // 4. Populate Attendees for Session 1
+      // 4. Populate Attendees for Session 1 (Default to absent until verified)
       if (membersToInsert.length > 0) {
         await supabaseAdmin.from("meet_session_attendees").insert(
           membersToInsert.map((m) => ({
@@ -256,7 +271,7 @@ export async function createMeeting(input: CreateMeetingInput) {
             guest_email: m.guest_email || null,
             role: m.role || "required",
             invite_status: "invited",
-            attendance: "present",
+            attendance: "absent",
           }))
         );
       }
@@ -290,9 +305,51 @@ export async function createMeeting(input: CreateMeetingInput) {
           { session_id: session.id, title: "Decisions & Action Items Confirmation", planned_minutes: 15, sort_order: 3 }
         ]);
       }
+
+      // 6. Generate RFC 5545 .ics Calendar Invite & Queue Notification Emails (A7 / E8)
+      try {
+        const icsString = generateICS({
+          uid: `${session.id}@chandakgroup.tech`,
+          title: meeting.title,
+          description: meeting.description || `Meeting Session 1: ${meeting.title}`,
+          location: input.venue_text || "Chandak Corporate Office",
+          start: scheduledStart,
+          end: scheduledEnd,
+          url: input.video_link || undefined,
+        });
+
+        const userIds = membersToInsert.filter((m) => m.user_id).map((m) => m.user_id as string);
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabaseAdmin
+            .from("user_master")
+            .select("id, full_name, email")
+            .in("id", userIds);
+
+          const emailRows = (profiles || [])
+            .filter((p) => p.email)
+            .map((p) => ({
+              recipient_email: p.email,
+              subject: `Invitation: ${meeting.title} - Session 1`,
+              body: `<p>Dear ${p.full_name},</p><p>You are invited to attend <strong>${meeting.title}</strong>.</p><p><strong>Date & Time:</strong> ${input.start_date} from ${input.default_start_time}</p><p>Please find the calendar invite attached.</p>`,
+              event_type: "meet.session.invited",
+              status: "pending",
+              metadata: {
+                meeting_id: meeting.id,
+                session_id: session.id,
+                ics_data: icsString,
+              },
+            }));
+
+          if (emailRows.length > 0) {
+            await supabaseAdmin.from("email_queue").insert(emailRows);
+          }
+        }
+      } catch (calErr) {
+        console.warn("Failed to generate .ics or queue email invite:", calErr);
+      }
     }
 
-    // 6. Audit Log
+    // 7. Audit Log
     await supabaseAdmin.from("meet_activity_log").insert({
       entity_type: "meeting",
       entity_id: meeting.id,
@@ -315,7 +372,8 @@ export async function createMeeting(input: CreateMeetingInput) {
 
 export async function archiveMeeting(meetingId: string) {
   try {
-    const { user } = await getCachedUser();
+    const { userId } = await requireMeet("MEET_DELETE", { meetingId, requireOrganizerOrChair: true });
+
     const { error } = await supabaseAdmin
       .from("meet_meetings")
       .update({ status: "archived", updated_at: new Date().toISOString() })
@@ -330,7 +388,7 @@ export async function archiveMeeting(meetingId: string) {
       field: "status",
       old_value: "active",
       new_value: "archived",
-      user_id: user?.id || null,
+      user_id: userId,
       channel: "web",
     });
 
@@ -357,7 +415,8 @@ export async function updateMeeting(input: {
   videoLink?: string;
 }) {
   try {
-    const { user } = await getCachedUser();
+    const { userId } = await requireMeet("MEET_UPDATE", { meetingId: input.meetingId, requireOrganizerOrChair: true });
+
     const updatePayload: any = {
       updated_at: new Date().toISOString(),
     };
@@ -385,7 +444,7 @@ export async function updateMeeting(input: {
       entity_id: input.meetingId,
       action: "updated",
       field: "details",
-      user_id: user?.id || null,
+      user_id: userId,
       channel: "web",
     });
 
@@ -408,6 +467,8 @@ export async function addMeetingMember(input: {
   guestEmail?: string;
 }) {
   try {
+    await requireMeet("MEET_UPDATE", { meetingId: input.meetingId, requireOrganizerOrChair: true });
+
     const { data: member, error } = await supabaseAdmin
       .from("meet_meeting_members")
       .insert({
@@ -437,6 +498,8 @@ export async function addMeetingMember(input: {
  */
 export async function removeMeetingMember(memberId: string, meetingId: string) {
   try {
+    await requireMeet("MEET_UPDATE", { meetingId, requireOrganizerOrChair: true });
+
     const { error } = await supabaseAdmin
       .from("meet_meeting_members")
       .delete()
@@ -456,6 +519,8 @@ export async function removeMeetingMember(memberId: string, meetingId: string) {
  */
 export async function getMeetingAllPoints(meetingId: string) {
   try {
+    await requireMeet("MEET_VIEW", { meetingId });
+
     const { data, error } = await supabaseAdmin
       .from("meet_points")
       .select(`
