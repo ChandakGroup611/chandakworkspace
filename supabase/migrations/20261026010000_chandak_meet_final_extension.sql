@@ -306,3 +306,18 @@ VALUES
     }'::jsonb)
 ON CONFLICT (module_key, key) DO UPDATE SET
     value_json = EXCLUDED.value_json;
+
+-- 6. Part G: Schema Hardening & Compatibility
+-- Allow standalone tasks (e.g. from My Work / Quick Add without mandatory point linkage)
+ALTER TABLE public.meet_tasks ALTER COLUMN point_id DROP NOT NULL;
+
+-- Virtual generated date column for fast date-only lookups & backward compatibility
+ALTER TABLE public.meet_sessions 
+ADD COLUMN IF NOT EXISTS scheduled_date DATE GENERATED ALWAYS AS ((scheduled_start AT TIME ZONE 'Asia/Kolkata')::date) STORED;
+
+-- Ensure sequences are synchronized above any pre-seeded demo codes
+SELECT setval('meet_meeting_code_seq', GREATEST(COALESCE((SELECT MAX(NULLIF(regexp_replace(code, '\D', '', 'g'), '')::bigint) FROM public.meet_meetings), 0), 1));
+SELECT setval('meet_point_code_seq', GREATEST(COALESCE((SELECT MAX(NULLIF(regexp_replace(code, '\D', '', 'g'), '')::bigint) FROM public.meet_points), 0), 1));
+SELECT setval('meet_task_code_seq', GREATEST(COALESCE((SELECT MAX(NULLIF(regexp_replace(code, '\D', '', 'g'), '')::bigint) FROM public.meet_tasks), 0), 1));
+SELECT setval('meet_decision_code_seq', GREATEST(COALESCE((SELECT MAX(NULLIF(regexp_replace(code, '\D', '', 'g'), '')::bigint) FROM public.meet_decisions), 0), 1));
+

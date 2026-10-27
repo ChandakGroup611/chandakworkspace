@@ -140,6 +140,21 @@ export async function createTask(input: CreateTaskInput) {
       await supabaseAdmin.from("meet_task_checklist").insert(checklistRows);
     }
 
+    // Fetch fully hydrated task with owner, checklist and point
+    const { data: fullTask } = await supabaseAdmin
+      .from("meet_tasks")
+      .select(`
+        *,
+        owner:user_master(id, full_name, email, profile_photo),
+        checklist:meet_task_checklist(*),
+        point:meet_points(
+          id, code, title, meeting_id,
+          meeting:meet_meetings(id, code, title)
+        )
+      `)
+      .eq("id", task.id)
+      .single();
+
     // Audit log
     await supabaseAdmin.from("meet_activity_log").insert({
       entity_type: "task",
@@ -154,8 +169,9 @@ export async function createTask(input: CreateTaskInput) {
     revalidatePath("/meet/my-work");
     if (input.session_id) {
       revalidatePath(`/meet/sessions/${input.session_id}`);
+      revalidatePath(`/meet/live/${input.session_id}`);
     }
-    return { success: true, task };
+    return { success: true, task: fullTask || task };
   } catch (err: any) {
     return { success: false, error: err.message };
   }

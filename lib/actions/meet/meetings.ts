@@ -189,17 +189,26 @@ export async function createMeeting(input: CreateMeetingInput) {
       return { success: false, error: meetingError?.message || "Failed to create meeting series" };
     }
 
-    // 2. Insert Members (Ensure Organizer is in members roster)
-    const membersToInsert = [...input.members];
-    if (!membersToInsert.some((m) => m.user_id === input.organizer_id)) {
-      membersToInsert.push({ user_id: input.organizer_id, role: "organizer" });
+    // 2. Insert Members (Ensure Organizer, Chair and Minute Taker roles are explicitly mapped without duplicates)
+    const membersMap = new Map<string, { user_id?: string; role: string; guest_name?: string; guest_email?: string }>();
+    for (const m of input.members) {
+      if (m.user_id) {
+        membersMap.set(m.user_id, { ...m, role: m.role || "required" });
+      }
     }
-    if (input.chair_id && !membersToInsert.some((m) => m.user_id === input.chair_id)) {
-      membersToInsert.push({ user_id: input.chair_id, role: "chair" });
+    if (input.organizer_id) {
+      membersMap.set(input.organizer_id, { user_id: input.organizer_id, role: "organizer" });
     }
-    if (input.default_minute_taker_id && !membersToInsert.some((m) => m.user_id === input.default_minute_taker_id)) {
-      membersToInsert.push({ user_id: input.default_minute_taker_id, role: "minute_taker" });
+    if (input.chair_id) {
+      membersMap.set(input.chair_id, { user_id: input.chair_id, role: "chair" });
     }
+    if (input.default_minute_taker_id) {
+      membersMap.set(input.default_minute_taker_id, { user_id: input.default_minute_taker_id, role: "minute_taker" });
+    }
+
+    // Include guest members (without user_id)
+    const guestMembers = input.members.filter((m) => !m.user_id);
+    const membersToInsert = [...Array.from(membersMap.values()), ...guestMembers];
 
     if (membersToInsert.length > 0) {
       await supabaseAdmin.from("meet_meeting_members").insert(
