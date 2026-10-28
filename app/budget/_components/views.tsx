@@ -280,7 +280,7 @@ export async function Entry(c: Ctx & { version: Version }) {
         initial: raw.initial_paise, ctc: raw.ctc_paise, initialCalc: f.initial_calculated, ctcCalc: f.ctc_calculated,
         incurredAuto: f.is_tax && f.incurred_source === "tax rule", remark: f.remark, source: f.source, editable,
         needsRemark: flag.has(f.line_id), removable: editable && (perHead.get(f.cost_head_id) ?? 0) > 1, overBudget: f.over_budget,
-        custom: custom.lines.cells.get(f.line_id), rule: ruleOf(f),
+        custom: custom.lines.cells.get(f.line_id), rule: ruleOf(f), href: `/budget/${project.id}/line?v=${v.number}&id=${f.line_id}`,
       },
     };
   };
@@ -422,11 +422,76 @@ export async function Schedules(c: Ctx & { version: Version }) {
         Schedules are kept per version and go into the Summary Excel as working sheets.</Notice>
       {schedules.map((s) => { const f = line.get(s.line_id); return (
         <section className="panel" id={`s${s.id}`} key={s.id}>
-          <div className="panel-head"><h2>{s.title}</h2><span className="sub">{f ? `${f.department} · ${f.sub_category || f.category}${f.subproject ? ` · ${f.subproject}` : ""} → Summary: ${f.summary_category} · ${f.summary_subcategory}` : ""}</span></div>
+          <div className="panel-head"><h2>{s.title}</h2>{editable(s.line_id) && <F.ScheduleTitle key={`${s.title}-${s.note}`} s={s} />}<span className="sub">{f ? `${f.department} · ${f.sub_category || f.category}${f.subproject ? ` · ${f.subproject}` : ""} → Summary: ${f.summary_category} · ${f.summary_subcategory}` : ""}</span></div>
+          {s.note && <p className="note">{s.note}</p>}
           <F.ScheduleEditor s={s} editable={editable(s.line_id)} />
         </section>
       ); })}
       {schedules.length === 0 && <section className="panel"><p className="sub">No schedules in R{v.number} yet.</p></section>}
+    </>
+  );
+}
+
+// ---------- one budget line ----------
+const CHANGE_FIELDS: [string, string, (v: unknown) => string][] = [
+  ["initial_paise", "Initial", (x) => (x == null ? "blank" : `${fmt(Number(x) / 1e9)} Cr`)], ["ctc_paise", "Estimated CTC", (x) => (x == null ? "blank" : `${fmt(Number(x) / 1e9)} Cr`)],
+  ["remark", "Remark", (x) => (x == null || x === "" ? "blank" : String(x))], ["ctc_rate", "Rate (₹/sft)", (x) => (x == null ? "none" : String(x))],
+  ["balance_of_paise", "Balance of", (x) => (x == null ? "none" : `${fmt(Number(x) / 1e9)} Cr`)], ["is_memo", "Memo item", (x) => (x ? "yes" : "no")],
+  ["certified_paise", "Certified", (x) => (x == null ? "blank" : `${fmt(Number(x) / 1e9)} Cr`)], ["incurred_override_paise", "Incurred override", (x) => (x == null ? "none" : `${fmt(Number(x) / 1e9)} Cr`)],
+];
+export async function LineView(c: Ctx & { version: Version }) {
+  const { sb, me, project, versions, search } = c;
+  const view = search.id ? await D.getLineView(sb, Number(search.id), D.can(me, "audit.view", project.id)) : null;
+  if (!view || !versions.some((x) => x.id === view.line.version_id)) return <section className="panel"><p className="sub">This budget line was not found.</p></section>;
+  const { line: f, across, comments, changes } = view;
+  const v = versions.find((x) => x.id === f.version_id)!;
+  const byVersion = new Map(versions.map((x) => [x.id, x]));
+  const schedule = (await D.getSchedules(sb, v.id)).find((s) => s.line_id === f.line_id);
+  const name = [f.department, f.category, f.sub_category, f.subproject].filter(Boolean).join(" · ");
+  const rule = f.is_memo ? "Memo item, outside every total" : f.ctc_rule === "rate" ? `Rate ₹${f.ctc_rate}/sft × ${RATE_BASES.find(([k]) => k === f.ctc_basis)?.[1] ?? f.ctc_basis}`
+    : f.ctc_rule === "balance" ? `Balance of ${fmt(Number(f.balance_of_paise) / 1e9)} Cr less the other lines of its ${f.balance_scope}` : schedule ? `Worked out in the schedule "${schedule.title}"` : f.is_tax ? "GST rule" : "Typed";
+  const incurredHref = `/budget/${project.id}/incurred?v=${v.number}&head=${f.cost_head_id}&tower=${f.subproject_id ?? 0}&upto=${v.as_on.slice(0, 7)}`;
+  return (
+    <>
+      <section className="panel">
+        <div className="panel-head"><h2>{name}</h2><span className="sub">R{v.number} as on {dmy(v.as_on)} · {v.status.replace("_", " ")}</span>
+          <div className="row"><Link className="btn" href={`/budget/${project.id}/entry?v=${v.number}`}>Budget entry</Link><Link className="btn" href={`/budget/${project.id}/detail?v=${v.number}`}>Detail report</Link></div></div>
+        <div className="scroll"><table><tbody>
+          <tr><td>Initial budget (a)</td><td className="n">{fmt(f.initial_cr)} Cr</td></tr>
+          <tr><td>Estimated CTC (b)</td><td className="n">{fmt(f.ctc_cr)} Cr</td></tr>
+          <tr><td>Cost incurred (c)</td><td className="n">{f.is_tax || f.incurred_source === "override" ? fmt(f.incurred_cr) : <Link href={incurredHref}>{fmt(f.incurred_cr)}</Link>} Cr <span className="note">({f.incurred_source})</span></td></tr>
+          <tr><td>Balance CTC (b − c)</td><td className="n"><Neg v={f.balance_cr} /> Cr</td></tr>
+          <tr><td>Variance (a − b)</td><td className="n"><Neg v={f.variance_cr} /> Cr</td></tr>
+          <tr><td>Utilised</td><td className="n">{fmtPct(f.util_pct)}</td></tr>
+          <tr><td>PSF on CTC</td><td className="n">{fmt(f.psf_ctc)}</td></tr>
+          <tr><td>How the CTC is set</td><td>{rule}{schedule && <> · <Link href={`/budget/${project.id}/schedules?v=${v.number}#s${schedule.id}`}>Open schedule</Link></>}</td></tr>
+          <tr><td>Summary row</td><td>{f.summary_category} · {f.summary_subcategory}</td></tr>
+          <tr><td>Remark</td><td>{f.remark}</td></tr>
+        </tbody></table></div>
+      </section>
+      <section className="panel"><h3>This line in every version</h3>
+        <div className="scroll"><table><thead><tr><th>Version</th><th>As on</th><th>Status</th><th className="n">Initial (Cr)</th><th className="n">CTC (Cr)</th><th className="n">Incurred (Cr)</th><th>Remark</th></tr></thead><tbody>
+          {across.map((x) => ({ x, vv: byVersion.get(x.version_id) })).filter((r) => r.vv).sort((a, b) => b.vv!.number - a.vv!.number).map(({ x, vv }) => (
+            <tr key={x.line_id} className={x.line_id === f.line_id ? "flag" : ""}><td><Link href={`/budget/${project.id}/line?v=${vv!.number}&id=${x.line_id}`}>R{vv!.number}</Link></td><td>{dmy(vv!.as_on)}</td>
+              <td>{vv!.status.replace("_", " ")}</td><td className="n">{fmt(x.initial_cr)}</td><td className="n">{fmt(x.ctc_cr)}</td><td className="n">{fmt(x.incurred_cr)}</td><td>{x.remark}</td></tr>))}
+        </tbody></table></div>
+      </section>
+      <section className="panel"><h3>Comments</h3>
+        {comments.length ? <div className="scroll"><table><tbody>
+          {comments.map((m) => <tr key={m.id}><td style={{ whiteSpace: "nowrap" }}>{dmy(m.created_at)}</td><td>{(m.user_id && c.names[m.user_id]) || "Member"}</td><td>{m.body}</td>
+            <td className="actions">{m.user_id === me.user_id && <F.DeleteComment id={m.id} />}</td></tr>)}
+        </tbody></table></div> : <p className="sub">No comments yet.</p>}
+        {D.can(me, "project.view", project.id) && <F.CommentForm versionId={v.id} lineId={f.line_id} />}
+      </section>
+      {D.can(me, "audit.view", project.id) && <section className="panel"><h3>Change history</h3>
+        {changes.length ? <div className="scroll"><table><thead><tr><th>Date</th><th>By</th><th>Change</th></tr></thead><tbody>
+          {changes.map((ch) => {
+            const what = ch.action === "insert" ? "Line added" : ch.action === "delete" ? "Line removed"
+              : CHANGE_FIELDS.filter(([k]) => JSON.stringify(ch.old_row?.[k] ?? null) !== JSON.stringify(ch.new_row?.[k] ?? null)).map(([k, label, show]) => `${label}: ${show(ch.old_row?.[k])} → ${show(ch.new_row?.[k])}`).join("; ");
+            return what ? <tr key={ch.id}><td style={{ whiteSpace: "nowrap" }}>{dmy(ch.at)}</td><td>{(ch.user_id && c.names[ch.user_id]) || ""}</td><td>{what}</td></tr> : null;
+          })}
+        </tbody></table></div> : <p className="sub">No changes recorded.</p>}
+      </section>}
     </>
   );
 }
@@ -588,6 +653,7 @@ export async function Detail(c: Ctx & { version: Version }) {
         <div className="scroll"><table><thead><tr><th>Sr</th><th>Department</th><th>Category</th><th>Sub-category</th><th className="n">PSF on initial</th><th className="n">PSF on CTC</th><th className="n">Initial budget (a)</th><th className="n">Estimated CTC (b)</th><th className="n">Cost incurred (c)</th><th className="n">Balance CTC (d = b − c)</th><th className="n">Variance (a − b)</th><th>Remark</th><th className="n">Utilised</th>{lf.map((f) => <th key={f.id} className={isNum(f) ? "n" : ""} title={fieldTitle(f)}>{f.label}</th>)}</tr></thead><tbody>
           {g.departments.filter((d) => !search.dept || d.department === search.dept).map((d) => (
             <DeptRows key={d.department_id} d={d} tower={search.tower} Cells={Cells} fields={lf} cells={custom.lines.cells} remark={remarks[String(d.department_id)]}
+              lineHref={(f) => `/budget/${project.id}/line?v=${v.number}&id=${f.line_id}`}
               entriesOf={(f) => f.is_tax || f.incurred_source === "override" ? undefined : `/budget/${project.id}/incurred?v=${v.number}&head=${f.cost_head_id}&tower=${f.subproject_id ?? 0}&upto=${v.as_on.slice(0, 7)}`} />
           ))}
           <tr className="total"><td></td><td>Total</td><td></td><td></td><Cells x={t} /><td></td><td className="n">{fmtPct(t.util_pct)}</td>{lf.map((f) => <td key={f.id}></td>)}</tr>
@@ -611,16 +677,16 @@ export async function Detail(c: Ctx & { version: Version }) {
 }
 
 type CellFigures = { psf_initial: number | null; psf_ctc: number | null; initial_cr: number; ctc_cr: number; incurred_cr: number; balance_cr: number; variance_cr: number };
-function DeptRows({ d, tower, Cells, fields, cells, remark, entriesOf }: {
+function DeptRows({ d, tower, Cells, fields, cells, remark, entriesOf, lineHref }: {
   d: ReturnType<typeof groupDetail>["departments"][number]; tower?: string; Cells: React.ComponentType<{ x: CellFigures; href?: string }>; fields: D.CustomField[]; cells: Map<number, Cells>;
-  remark?: string; entriesOf?: (f: D.LineFigure) => string | undefined;
+  remark?: string; entriesOf?: (f: D.LineFigure) => string | undefined; lineHref?: (f: D.LineFigure) => string;
 }) {
   const extra = (id: number) => fields.map((f) => { const x = cells.get(id)?.[f.key]; return <td key={f.id} className={isNum(f) ? "n" : ""}>{x?.error ? <span className="chip bad" title={x.error}>Error</span> : x?.text}</td>; });
   return (
     <>
       <tr className="group"><td>{d.sr}</td><td>{d.department}</td><td></td><td></td><Cells x={d.totals} /><td>{remark}</td><td className="n">{fmtPct(d.totals.util_pct)}</td>{fields.map((f) => <td key={f.id}></td>)}</tr>
       {d.categories.flatMap((cat) => cat.lines.filter((f) => towerMatch(f, tower)).map((f) => (
-        <tr key={f.line_id}><td></td><td></td><td>{f.category}{f.subproject && <span className="chip">{f.subproject}</span>}</td><td>{f.sub_category || (f.note ? `* ${f.note}` : "")}</td>
+        <tr key={f.line_id}><td></td><td></td><td>{lineHref ? <Link href={lineHref(f)} title="View this line">{f.category}</Link> : f.category}{f.subproject && <span className="chip">{f.subproject}</span>}</td><td>{f.sub_category || (f.note ? `* ${f.note}` : "")}</td>
           <Cells x={f} href={entriesOf?.(f)} /><td>{f.remark}</td><td className="n">{fmtPct(f.util_pct)}</td>{extra(f.line_id)}</tr>
       )))}
     </>
@@ -683,6 +749,7 @@ export async function Incurred(c: Ctx) {
     billHeads.set(e.bill_id, [...(billHeads.get(e.bill_id) ?? []), `${h.sub_category || h.category}${e.subproject_id ? ` · ${tower.get(e.subproject_id)}` : ""}`]);
   }
   const lineHead = line && head.get(line.head);
+  const headOptions = allowed.map((h) => ({ id: h.id, label: `${dept.get(h.department_id)!.name} · ${h.sub_category || h.category}` }));
   const total = shown.reduce((s, e) => s + Number(e.amount_paise), 0);
   const cf = await loadCustom(sb, "cost_entry", project.id, new Map(shown.map((e) => [e.id, { amount: rupeesFromPaise(e.amount_paise), month: day(e.month) }])), await lookupNames(sb, project.id, c.names));
   const listed = cf.fields.filter((f) => f.show_in_reports);
@@ -701,10 +768,13 @@ export async function Incurred(c: Ctx) {
       <section className="panel"><div className="panel-head"><h2>Bills · {project.name}</h2><span className="sub">{bills.length} bills · basic {fmt(toCr(bills.reduce((s, b) => s + Number(b.basic_paise), 0)))} crores</span>
         {v && D.can(me, "report.export", project.id) && <a className="btn" href={`/budget/${project.id}/export/bills?v=${v.number}`} download title={`Bills dated up to ${monthName(v.as_on)}, the ones R${v.number} counts`}>Download Excel</a>}</div>
         <div className="scroll"><table><thead><tr><th>Bill date</th><th>Vendor</th><th>Bill no.</th><th>Work order</th><th>Split over</th><th className="n">Basic (₹)</th><th className="n">GST (₹)</th><th className="n">Total (₹)</th><th>Entered by</th><th></th></tr></thead><tbody>
-          {bills.map((b) => <tr key={b.bill_id}><td>{dmy(b.bill_date)}</td><td>{b.vendor}</td><td>{b.bill_no}</td><td>{b.work_order}</td>
+          {bills.map((b) => <F.BillRow key={`${b.bill_id}-${b.basic_paise}-${b.bill_date}-${b.vendor}-${b.bill_no}-${b.gst_paise}`} b={b} heads={headOptions} towers={towers} editable={D.can(me, "cost.enter", project.id)}
+            splits={entries.filter((e) => e.bill_id === b.bill_id).map((e) => { const h = head.get(e.cost_head_id)!; return { head: e.cost_head_id, headLabel: `${dept.get(h.department_id)?.name} · ${h.sub_category || h.category}`,
+              tower: e.subproject_id, towerName: e.subproject_id ? tower.get(e.subproject_id) ?? null : null, amount_paise: e.amount_paise, month: monthName(e.month) }; })}>
+            <td>{dmy(b.bill_date)}</td><td>{b.vendor}</td><td>{b.bill_no}</td><td>{b.work_order}</td>
             <td><div className="trunc" title={(billHeads.get(b.bill_id) ?? []).join(", ")}>{(billHeads.get(b.bill_id) ?? []).join(", ")}</div></td>
             <td className="n">{fmtRupees(b.basic_paise)}</td><td className="n">{fmtRupees(b.gst_paise)}</td><td className="n">{fmtRupees(b.total_paise)}</td>
-            <td>{(b.entered_by && c.names[b.entered_by]) || ""}</td><td>{D.can(me, "cost.enter", project.id) && <F.DeleteBill id={b.bill_id} />}</td></tr>)}
+            <td>{(b.entered_by && c.names[b.entered_by]) || ""}</td></F.BillRow>)}
           {bills.length === 0 && <tr><td colSpan={10} className="sub">No bills yet. Typed and imported entries below still count.</td></tr>}
         </tbody></table></div>
       </section>
@@ -717,7 +787,7 @@ export async function Incurred(c: Ctx) {
             <td className="n"><span className={e.amount_paise < 0 ? "neg" : ""}>{fmtRupees(e.amount_paise)}</span></td><td><div className="trunc" title={e.reference ?? ""}>{e.reference}</div></td>
             {listed.map((f) => <td key={f.id} className={isNum(f) ? "n" : ""}><CustomInput field={f} entity="cost_entry" entityId={e.id} cell={cf.cells.get(e.id)?.[f.key]} editable={D.can(me, "cost.enter", project.id, h.department_id)} picks={picks} compact /></td>)}
             <td>{e.bill_id ? <span className="chip">Bill</span> : e.source === "excel" ? <span className="chip xl">Excel</span> : <span className="chip typed">Typed</span>}</td><td>{(e.entered_by && c.names[e.entered_by]) || ""}</td>
-            <td>{D.can(me, "cost.enter", project.id, h.department_id) && <F.DeleteEntry id={e.id} />}</td></tr>; })}
+            <td>{D.can(me, "cost.enter", project.id, h.department_id) && (e.bill_id ? <span className="note">Change it on the bill</span> : <F.EntryActions e={e} heads={headOptions} towers={towers} />)}</td></tr>; })}
         </tbody></table></div>
       </section>
     </>
@@ -773,10 +843,12 @@ export async function Setup(c: Ctx) {
   const editAreas = !!v && v.status === "draft" && can;
   return (
     <>
+      {can && <section className="panel"><div className="panel-head"><h2>Project</h2><span className="sub">Name, code and location</span></div>
+        <F.ProjectForm key={project.id} p={project} /></section>}
       <section className="panel"><div className="panel-head"><h2>Towers · {project.name}</h2><span className="sub">{can ? "Typed only: name each tower and set its building type; the Summary groups construction by type." : "Read only for you."}</span></div>
-        <div className="scroll"><table><thead><tr><th>Tower</th><th>Building type</th><th className="n">Carpet area (sft)</th><th className="n">Engg. construction area (sft)</th><th>OC date</th>{tf.map((f) => <th key={f.id} title={fieldTitle(f)}>{f.label}{f.required && " *"}</th>)}</tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>Tower</th><th>Building type</th><th className="n">Carpet area (sft)</th><th className="n">Engg. construction area (sft)</th><th>OC date</th>{tf.map((f) => <th key={f.id} title={fieldTitle(f)}>{f.label}{f.required && " *"}</th>)}{can && <th></th>}</tr></thead><tbody>
           {towers.map((t) => <F.TowerRow key={`${t.id}-${t.name}-${t.type}-${t.carpet_area}-${t.eng_area}-${t.oc_date}`} t={t} editable={can} customFields={tf} cells={tc.cells.get(t.id)} picks={picks} />)}
-          {towers.length === 0 && <tr><td colSpan={5 + tf.length}>No towers yet.</td></tr>}
+          {towers.length === 0 && <tr><td colSpan={6 + tf.length}>No towers yet.</td></tr>}
         </tbody></table></div>
         {can && <F.AddTowerButton projectId={project.id} />}
       </section>
@@ -785,14 +857,15 @@ export async function Setup(c: Ctx) {
       </section>}
       <section className="panel"><div className="panel-head"><h2>Cost heads · {project.name}</h2><span className="sub">{heads.length} heads; one list, so names never drift between files</span></div>
         {can && <F.AddHeadForm projectId={project.id} departments={depts} baseOptions={baseOptions} summaryOptions={options} />}
-        <div className="scroll"><table><thead><tr><th>Department</th><th>Category</th><th>Sub-category</th><th>Summary row</th><th>GST rule</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>Department</th><th>Category</th><th>Sub-category</th><th>Summary row</th><th>GST rule</th>{can && <th></th>}</tr></thead><tbody>
           {sorted.map((h) => {
             const d = dept.get(h.department_id)!;
             const byTower = d.summary_category === "Construction" && !h.is_tax;
             return <tr key={h.id}><td>{d.name}</td><td>{h.category}</td><td>{h.sub_category}</td>
               <td>{byTower ? "By tower building type" : can ? <F.HeadSummarySelect headId={h.id} value={h.summary_subcategory} options={options[d.summary_category] ?? []} /> : h.summary_subcategory}</td>
               <td>{h.is_tax && (can ? <F.TaxRuleInputs key={`${h.tax_rate_pct}-${h.tax_share_pct}`} headId={h.id} rate={Number(h.tax_rate_pct)} share={Number(h.tax_share_pct ?? 100)} baseCount={h.tax_base.length} />
-                : `GST ${Number(h.tax_rate_pct)}% × ${Number(h.tax_share_pct ?? 100)}% of ${h.tax_base.length} head(s)`)}</td></tr>;
+                : `GST ${Number(h.tax_rate_pct)}% × ${Number(h.tax_share_pct ?? 100)}% of ${h.tax_base.length} head(s)`)}</td>
+              {can && <td className="actions"><F.HeadActions key={`${h.category}-${h.sub_category}`} h={h} /></td>}</tr>;
           })}
         </tbody></table></div>
       </section>

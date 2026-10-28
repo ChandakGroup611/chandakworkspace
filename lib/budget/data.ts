@@ -140,6 +140,24 @@ export async function getEntries(sb: Db, projectId: number) {
     { id: number; cost_head_id: number; subproject_id: number | null; month: string; amount_paise: number; reference: string | null; entered_by: string | null; source: string; bill_id: number | null }[];
 }
 
+/** One budget line in full: its figures, the same line in every version, its comments and its change history. */
+export interface LineComment { id: number; user_id: string | null; body: string; created_at: string }
+export interface LineChange { id: number; at: string; user_id: string | null; action: string; old_row: Record<string, unknown> | null; new_row: Record<string, unknown> | null }
+export async function getLineView(sb: Db, lineId: number, canAudit: boolean) {
+  const { data: f } = await sb.from("budget_line_figures").select("*").eq("line_id", lineId).maybeSingle();
+  if (!f) return null;
+  const line = f as LineFigure;
+  let q = sb.from("budget_line_figures").select("*").eq("cost_head_id", line.cost_head_id);
+  q = line.subproject_id == null ? q.is("subproject_id", null) : q.eq("subproject_id", line.subproject_id);
+  const [across, comments, changes] = await Promise.all([
+    q.then((r) => (r.data ?? []) as LineFigure[]),
+    sb.from("budget_comments").select("id, user_id, body, created_at").eq("line_id", lineId).order("created_at").then((r) => (r.data ?? []) as LineComment[]),
+    canAudit ? sb.from("budget_audit_log").select("id, at, user_id, action, old_row, new_row").eq("table_name", "budget_lines").eq("row_id", lineId).order("at", { ascending: false }).limit(50)
+      .then((r) => (r.data ?? []) as LineChange[]) : Promise.resolve([] as LineChange[]),
+  ]);
+  return { line, across, comments, changes };
+}
+
 /** A bill and its basic amount (the sum of its splits over cost heads), GST and total. */
 export interface Bill {
   bill_id: number; vendor: string; bill_no: string; bill_date: string; work_order: string | null; gst_paise: number; note: string | null;

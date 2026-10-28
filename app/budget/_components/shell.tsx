@@ -6,7 +6,7 @@ import { Selectors, SignoffActions } from "./forms";
 export const TABS: [string, string][] = [
   ["overview", "Overview"], ["entry", "Budget entry"], ["import", "Import from Excel"], ["summary", "Summary report"],
   ["detail", "Detail report"], ["compare", "Compare versions"], ["incurred", "Cost incurred"], ["periods", "Month / quarter / year"],
-  ["setup", "Towers & set-up"], ["workings", "Tower workings"], ["schedules", "Schedules"],
+  ["setup", "Towers & set-up"], ["workings", "Tower workings"], ["schedules", "Schedules"], ["line", "Budget line"],
 ];
 
 export interface TabDef {

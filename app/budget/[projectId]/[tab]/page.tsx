@@ -30,7 +30,7 @@ export default async function BudgetScreen({ params, searchParams }: {
   else if (!version) body = V.NoVersion(ctx);
   else {
     const c = { ...ctx, version };
-    body = await ({ overview: V.Overview, entry: V.Entry, workings: V.Workings, schedules: V.Schedules, summary: V.Summary, detail: V.Detail, compare: V.Compare } as Record<string, (c: V.Ctx & { version: D.Version }) => Promise<React.ReactNode>>)[tab](c);
+    body = await ({ overview: V.Overview, entry: V.Entry, workings: V.Workings, schedules: V.Schedules, line: V.LineView, summary: V.Summary, detail: V.Detail, compare: V.Compare } as Record<string, (c: V.Ctx & { version: D.Version }) => Promise<React.ReactNode>>)[tab](c);
   }
   return <Shell me={me} projects={projects} project={project} versions={versions} version={version} tab={tab}>{body}</Shell>;
 }

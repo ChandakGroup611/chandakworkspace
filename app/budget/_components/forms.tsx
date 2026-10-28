@@ -253,7 +253,7 @@ export interface EntryRow {
   initial_cr: number; ctc_cr: number; incurred_cr: number; balance_cr: number; variance_cr: number; util_pct: number | null; psf_ctc: number | null;
   line?: {
     id: number; isTax: boolean; taxRule: string | null; initial: number | null; ctc: number | null; initialCalc: boolean; ctcCalc: boolean;
-    incurredAuto: boolean; remark: string | null; source: string; editable: boolean; needsRemark: boolean; removable: boolean; overBudget: boolean;
+    incurredAuto: boolean; remark: string | null; source: string; editable: boolean; needsRemark: boolean; removable: boolean; overBudget: boolean; href?: string;
     custom?: Record<string, Cell>;
     /** How CTC is set (typed, rate × area, balance of a total, GST rule) and whether the line is a memo item. */
     rule: RuleState;
@@ -349,7 +349,8 @@ export function EntryTable({ rows, total, customFields = [], picks }: { rows: En
                 <td>{l && (l.isTax && l.initialCalc && l.ctcCalc ? <span className="chip" title="Calculated by the GST rule">Calc</span>
                   : l.source === "excel" ? <span className="chip xl" title="Last set by an Excel import">Excel</span> : <span className="chip typed" title="Last typed on screen">Typed</span>)}
                   {l && !l.isTax && <LineRuleCell lineId={l.id} rule={l.rule} editable={l.editable} />}</td>
-                <td>{l?.removable && <button className="link" onClick={() => run(() => A.removeLine(l.id))}>Remove</button>}</td>
+                <td className="actions">{l?.href && <Link href={l.href} title="Figures, versions, comments and history of this line">View</Link>}
+                  {l?.removable && <button className="link" onClick={() => run(() => A.removeLine(l.id))}>Remove</button>}</td>
               </tr>
             );
           })}
@@ -553,46 +554,86 @@ export function EntryForm({ projectId, heads, towers, month, customFields = [], 
   );
 }
 
-/** A bill: vendor, number, date, work order and GST, split over one or more cost heads and towers. */
-export function BillForm({ projectId, heads, towers, date }: { projectId: number; heads: { id: number; label: string }[]; towers: { id: number; name: string }[]; date: string }) {
+export interface BillValue { id: number; vendor: string; billNo: string; date: string; workOrder: string; gst: string; note: string; splits: { head: number; tower: number | null; amount: string }[] }
+
+/** A bill: vendor, number, date, work order and GST, split over one or more cost heads and towers.
+ *  Records a new bill, or with `bill` changes that bill and replaces its splits. */
+export function BillForm({ projectId, heads, towers, date, bill, onDone }: {
+  projectId: number; heads: { id: number; label: string }[]; towers: { id: number; name: string }[]; date: string; bill?: BillValue; onDone?: () => void;
+}) {
   const { pending, run, banner, setNotice } = useAction();
-  const [rows, setRows] = useState([0]);
-  const [amounts, setAmounts] = useState<Record<number, string>>({});
+  const start = bill?.splits.length ? bill.splits : [{ head: heads[0]?.id ?? 0, tower: null, amount: "" }];
+  const [rows, setRows] = useState(start.map((_, i) => i));
+  const [amounts, setAmounts] = useState<Record<number, string>>(Object.fromEntries(start.map((x, i) => [i, x.amount])));
   const [form, setForm] = useState(0);
+  const p = `bill-${bill?.id ?? "new"}`;
+  const id = (k: string) => (bill ? `${p}-${k}` : k === "vendor" ? "bill-vendor" : k === "no" ? "bill-no" : k === "date" ? "bill-date" : k === "wo" ? "bill-wo" : k === "gst" ? "bill-gst" : k === "note" ? "bill-note" : `bill-${k}`);
   const basic = rows.reduce((t, k) => t + (Number((amounts[k] ?? "").replace(/,/g, "")) || 0), 0);
   const inr = (n: number) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(n);
   const save = () => {
-    const bill = { vendor: value("bill-vendor"), billNo: value("bill-no"), date: value("bill-date"), workOrder: value("bill-wo"), gst: value("bill-gst"), note: value("bill-note") };
-    const splits = rows.map((k) => ({ head: Number(value(`bill-head-${k}`)), tower: value(`bill-tower-${k}`) ? Number(value(`bill-tower-${k}`)) : null, amount: amounts[k] ?? "" }));
-    run(() => A.addBill(projectId, bill, splits), () => {
-      setNotice(`Bill ${bill.billNo} of ${bill.vendor} recorded: ₹${inr(basic)} over ${splits.filter((s) => s.amount.trim()).length} cost head(s)`);
+    const b = { vendor: value(id("vendor")), billNo: value(id("no")), date: value(id("date")), workOrder: value(id("wo")), gst: value(id("gst")), note: value(id("note")) };
+    const splits = rows.map((k) => ({ head: Number(value(id(`head-${k}`))), tower: value(id(`tower-${k}`)) ? Number(value(id(`tower-${k}`))) : null, amount: amounts[k] ?? "" }));
+    if (bill) return run(() => A.updateBill(bill.id, b, splits), () => onDone?.());
+    run(() => A.addBill(projectId, b, splits), () => {
+      setNotice(`Bill ${b.billNo} of ${b.vendor} recorded: ₹${inr(basic)} over ${splits.filter((s) => s.amount.trim()).length} cost head(s)`);
       setRows([0]); setAmounts({}); setForm(form + 1);
     });
   };
   return (
     <div key={form}>
       <div className="row">
-        <label style={{ flex: 1, minWidth: 200 }}>Vendor<input type="text" id="bill-vendor" /></label>
-        <label>Bill number<input type="text" id="bill-no" /></label>
-        <label>Bill date<input type="date" id="bill-date" defaultValue={date} /></label>
-        <label>Work order / PO<input type="text" id="bill-wo" /></label>
-        <label>GST on the bill (₹)<input type="text" inputMode="decimal" id="bill-gst" placeholder="0" /></label>
+        <label style={{ flex: 1, minWidth: 200 }}>Vendor<input type="text" id={id("vendor")} defaultValue={bill?.vendor} /></label>
+        <label>Bill number<input type="text" id={id("no")} defaultValue={bill?.billNo} /></label>
+        <label>Bill date<input type="date" id={id("date")} defaultValue={bill?.date ?? date} /></label>
+        <label>Work order / PO<input type="text" id={id("wo")} defaultValue={bill?.workOrder} /></label>
+        <label>GST on the bill (₹)<input type="text" inputMode="decimal" id={id("gst")} placeholder="0" defaultValue={bill?.gst} /></label>
       </div>
       <div className="scroll"><table><thead><tr><th>Cost head</th><th>Tower</th><th className="n">Basic amount (₹)</th><th></th></tr></thead><tbody>
         {rows.map((k) => <tr key={k}>
-          <td><select id={`bill-head-${k}`} aria-label="Split cost head">{heads.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}</select></td>
-          <td><select id={`bill-tower-${k}`} aria-label="Split tower"><option value="">Not split by tower</option>{towers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></td>
+          <td><select id={id(`head-${k}`)} aria-label="Split cost head" defaultValue={start[k]?.head}>{heads.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}</select></td>
+          <td><select id={id(`tower-${k}`)} aria-label="Split tower" defaultValue={start[k]?.tower ?? ""}><option value="">Not split by tower</option>{towers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></td>
           <td className="n"><input type="text" inputMode="decimal" className="amt" aria-label="Split amount" value={amounts[k] ?? ""} onChange={(e) => setAmounts({ ...amounts, [k]: e.target.value })} /></td>
           <td>{rows.length > 1 && <button className="link" onClick={() => setRows(rows.filter((x) => x !== k))}>Remove</button>}</td>
         </tr>)}
         <tr className="total"><td colSpan={2}>Basic amount of the bill <button className="link" onClick={() => setRows([...rows, Math.max(...rows) + 1])}>Add a split</button></td><td className="n">{inr(basic)}</td><td></td></tr>
       </tbody></table></div>
       <div className="row">
-        <label style={{ flex: 1, minWidth: 240 }}>Note<input type="text" id="bill-note" /></label>
-        <button className="primary" disabled={pending} onClick={save}>Record bill</button>
+        <label style={{ flex: 1, minWidth: 240 }}>Note<input type="text" id={id("note")} defaultValue={bill?.note} /></label>
+        <button className="primary" disabled={pending} onClick={save}>{bill ? "Save bill" : "Record bill"}</button>
+        {bill && <button disabled={pending} onClick={onDone}>Cancel</button>}
       </div>
       {banner}
     </div>
+  );
+}
+
+/** One bill in the Bills list: View shows its splits, Edit opens it in the bill form, Delete removes it. */
+export function BillRow({ b, splits, heads, towers, editable, children }: {
+  b: { bill_id: number; vendor: string; bill_no: string; bill_date: string; work_order: string | null; gst_paise: number; note: string | null };
+  splits: { head: number; headLabel: string; tower: number | null; towerName: string | null; amount_paise: number; month: string }[];
+  heads: { id: number; label: string }[]; towers: { id: number; name: string }[]; editable: boolean; children: React.ReactNode;
+}) {
+  const [mode, setMode] = useState<"" | "view" | "edit">("");
+  const rupees = (p: number) => new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(p) / 100);
+  return (
+    <>
+      <tr className={`clickable ${mode ? "open" : ""}`} onClick={(e) => { if (!(e.target as HTMLElement).closest("button,a,input,select")) setMode(mode === "view" ? "" : "view"); }}>
+        {children}
+        <td className="actions"><button className="link" onClick={() => setMode(mode === "view" ? "" : "view")}>{mode === "view" ? "Hide" : "View"}</button>
+          {editable && <><button className="link" onClick={() => setMode(mode === "edit" ? "" : "edit")}>Edit</button><DeleteBill id={b.bill_id} /></>}</td>
+      </tr>
+      {mode === "view" && <tr className="detail"><td colSpan={10}>
+        <div className="scroll"><table><thead><tr><th>Cost head</th><th>Tower</th><th>Counts in</th><th className="n">Basic (₹)</th></tr></thead><tbody>
+          {splits.map((s, i) => <tr key={i}><td>{s.headLabel}</td><td>{s.towerName ?? "Not split by tower"}</td><td>{s.month}</td><td className="n">{rupees(s.amount_paise)}</td></tr>)}
+        </tbody></table></div>
+        {b.note && <p className="note">Note: {b.note}</p>}
+      </td></tr>}
+      {mode === "edit" && <tr className="detail"><td colSpan={10}>
+        <BillForm projectId={0} heads={heads} towers={towers} date={b.bill_date} onDone={() => setMode("")}
+          bill={{ id: b.bill_id, vendor: b.vendor, billNo: b.bill_no, date: b.bill_date.slice(0, 10), workOrder: b.work_order ?? "", gst: String(Number(b.gst_paise) / 100), note: b.note ?? "",
+            splits: splits.map((s) => ({ head: s.head, tower: s.tower, amount: String(Number(s.amount_paise) / 100) })) }} />
+      </td></tr>}
+    </>
   );
 }
 
@@ -600,6 +641,104 @@ export function DeleteBill({ id }: { id: number }) {
   const { pending, run, banner } = useAction();
   const [confirm, setConfirm] = useState(false);
   return <>{banner}<button className="link" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(() => A.deleteBill(id)); }}>{confirm ? "Click again to delete" : "Delete"}</button></>;
+}
+
+/** Edit and Delete for a typed or imported cost entry. */
+export function EntryActions({ e, heads, towers }: {
+  e: { id: number; cost_head_id: number; subproject_id: number | null; month: string; amount_paise: number; reference: string | null };
+  heads: { id: number; label: string }[]; towers: { id: number; name: string }[];
+}) {
+  const { pending, run, banner } = useAction();
+  const [open, setOpen] = useState(false);
+  const id = (k: string) => `ee-${e.id}-${k}`;
+  return (
+    <>
+      <button className="link" onClick={() => setOpen(!open)}>{open ? "Close" : "Edit"}</button> <DeleteEntry id={e.id} />
+      {open && <div className="rule-form">
+        <label>Cost head<select id={id("head")} defaultValue={e.cost_head_id}>{heads.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}</select></label>
+        <label>Tower<select id={id("tower")} defaultValue={e.subproject_id ?? ""}><option value="">Not split by tower</option>{towers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
+        <label>Month<input type="month" id={id("month")} defaultValue={e.month.slice(0, 7)} /></label>
+        <label>Amount (₹)<input type="text" inputMode="decimal" className="amt" id={id("amount")} defaultValue={String(Number(e.amount_paise) / 100)} /></label>
+        <label>Reference<input type="text" id={id("ref")} defaultValue={e.reference ?? ""} /></label>
+        <button className="primary" disabled={pending} onClick={() => run(() => A.updateEntry(e.id, Number(value(id("head"))), value(id("tower")) ? Number(value(id("tower"))) : null, value(id("month")), value(id("amount")), value(id("ref"))), () => setOpen(false))}>Save</button>
+      </div>}
+      {banner}
+    </>
+  );
+}
+
+/** Delete with a second click to confirm, for set-up rows. */
+export function ConfirmDelete({ label = "Delete", onConfirm }: { label?: string; onConfirm: () => Promise<A.Result> }) {
+  const { pending, run, banner } = useAction();
+  const [confirm, setConfirm] = useState(false);
+  return <>{banner}<button className="link" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(onConfirm, () => setConfirm(false)); }}>{confirm ? "Click again to delete" : label}</button></>;
+}
+
+/** Rename or delete a cost head (Towers & set-up). */
+export function HeadActions({ h }: { h: { id: number; category: string; sub_category: string | null } }) {
+  const { pending, run, banner } = useAction();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button className="link" onClick={() => setOpen(!open)}>{open ? "Close" : "Rename"}</button> <ConfirmDelete onConfirm={() => A.deleteHead(h.id)} />
+      {open && <div className="rule-form">
+        <label>Category<input type="text" id={`hn-${h.id}-c`} defaultValue={h.category} /></label>
+        <label>Sub-category<input type="text" id={`hn-${h.id}-s`} defaultValue={h.sub_category ?? ""} /></label>
+        <button className="primary" disabled={pending} onClick={() => run(() => A.renameHead(h.id, value(`hn-${h.id}-c`), value(`hn-${h.id}-s`)), () => setOpen(false))}>Save</button>
+      </div>}
+      {banner}
+    </>
+  );
+}
+
+/** Project name, code and location (Towers & set-up). */
+export function ProjectForm({ p }: { p: { id: number; name: string; code: string; location: string | null } }) {
+  const { pending, run, banner, setNotice } = useAction();
+  return (
+    <>
+      <div className="row">
+        <label style={{ flex: 1, minWidth: 200 }}>Project name<input type="text" id="pj-name" defaultValue={p.name} /></label>
+        <label>Code<input type="text" id="pj-code" defaultValue={p.code} /></label>
+        <label style={{ flex: 1, minWidth: 160 }}>Location<input type="text" id="pj-loc" defaultValue={p.location ?? ""} /></label>
+        <button disabled={pending} onClick={() => run(() => A.updateProject(p.id, { name: value("pj-name"), code: value("pj-code"), location: value("pj-loc") }), () => setNotice("Project saved"))}>Save project</button>
+      </div>
+      {banner}
+    </>
+  );
+}
+
+/** Title and note of a schedule. */
+export function ScheduleTitle({ s }: { s: { id: number; title: string; note: string | null } }) {
+  const { pending, run, banner } = useAction();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button className="link" onClick={() => setOpen(!open)}>{open ? "Close" : "Rename"}</button>
+      {open && <div className="rule-form">
+        <label>Title<input type="text" id={`st-${s.id}-t`} defaultValue={s.title} /></label>
+        <label style={{ flex: 1, minWidth: 240 }}>Note<input type="text" id={`st-${s.id}-n`} defaultValue={s.note ?? ""} /></label>
+        <button className="primary" disabled={pending} onClick={() => run(() => A.updateSchedule(s.id, { title: value(`st-${s.id}-t`), note: value(`st-${s.id}-n`).trim() || null }), () => setOpen(false))}>Save</button>
+      </div>}
+      {banner}
+    </>
+  );
+}
+
+export function DeleteComment({ id }: { id: number }) {
+  return <ConfirmDelete onConfirm={() => A.deleteComment(id)} />;
+}
+
+/** Comments on a budget line. */
+export function CommentForm({ versionId, lineId }: { versionId: number; lineId: number }) {
+  const { pending, run, banner } = useAction();
+  const [text, setText] = useState("");
+  return (
+    <>
+      <div className="row"><label style={{ flex: 1 }}>Add a comment<input type="text" value={text} onChange={(e) => setText(e.target.value)} aria-label="Comment" /></label>
+        <button disabled={pending} onClick={() => run(() => A.addComment(versionId, lineId, text), () => setText(""))}>Post</button></div>
+      {banner}
+    </>
+  );
 }
 
 export function DeleteEntry({ id }: { id: number }) {
@@ -627,6 +766,7 @@ export function TowerRow({ t, editable, customFields = [], cells = {}, picks }: 
       <td className="n"><input type="number" className="amt" aria-label="Engineering construction area" defaultValue={t.eng_area ?? ""} onBlur={save("eng_area", t.eng_area)} /></td>
       <td><input type="date" aria-label="OC date" defaultValue={t.oc_date ?? ""} onBlur={save("oc_date", t.oc_date)} /></td>
       {custom}
+      <td className="actions"><ConfirmDelete onConfirm={() => A.deleteTower(t.id)} /></td>
     </tr>
   );
 }

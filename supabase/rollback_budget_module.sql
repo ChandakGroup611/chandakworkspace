@@ -1,4 +1,4 @@
--- Rollback for the Organization Budget module (migrations 20261028120000 .. 20261028120900).
+-- Rollback for the Organization Budget module (migrations 20261028120000 .. 20261028121000).
 -- Removes only what those migrations added. Run it in the Supabase SQL editor only if you need to undo the go-live.
 -- WARNING: it also deletes any budget data entered after go-live.
 begin;

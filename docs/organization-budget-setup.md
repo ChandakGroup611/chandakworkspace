@@ -10,7 +10,7 @@ npm install
 
 `package.json` now lists `xlsx` (SheetJS 0.20.3 from cdn.sheetjs.com). The budget import uses it to read workbooks in the browser.
 
-## 2. Run the ten database migrations, in order
+## 2. Run the eleven database migrations, in order
 
 ```
 supabase/migrations/20261028120000_budget_module.sql          tables, calculation views, roles and rights, RLS
@@ -23,6 +23,7 @@ supabase/migrations/20261028120600_budget_signoff_drivers.sql      remarks, OC r
 supabase/migrations/20261028120700_budget_tower_workings.sql      tower workings: tower BUA per version, certified amounts, allocation check
 supabase/migrations/20261028120800_budget_schedules.sql           supporting schedules behind Summary lines
 supabase/migrations/20261028120900_budget_bills.sql               cost incurred built up from bills
+supabase/migrations/20261028121000_budget_edit_delete.sql         edit bills, delete towers and cost heads
 ```
 
 You can run them with `supabase db push` or paste them into the Supabase SQL editor one by one. Every object they create is prefixed `budget_`, so nothing existing is changed. The only exception is the last file, which adds rows to existing tables:
@@ -89,4 +90,11 @@ Then sign in as an administrator:
 - **Record a bill** (Reports & actuals → Cost incurred): vendor, bill number, bill date, work order / PO and GST, split over one or more cost heads and towers with the basic amount of each. Each split counts as cost incurred in the bill's month, exactly like a typed or imported entry, so every report, period view and version picks it up. GST on the bill is kept for reference; GST cost is still worked out by the GST heads.
 - The same bill number of the same vendor cannot be recorded twice in a project. Whoever has "Record cost incurred" for a department records bills on its heads; a bill split over several departments can be deleted only by someone who records cost for all of them. To correct a bill, delete it and record it again.
 - **Bills** list: date, vendor, bill number, work order, the heads it is split over, basic, GST and total. **Download Excel** gives the bills dated up to the version's as-on month: a Bills sheet (basic summed from the splits by formula, GST, total) and a Splits sheet.
+- **View, Edit, Delete**: click a bill (or View) to see its splits; Edit changes its details and splits together. Typed and imported entries have Edit and Delete; a bill's splits are changed on the bill.
 - **Drill-down**: in the Detail report, the Cost incurred figure of a line links to the entries and bills behind it, up to the version's as-on month.
+
+## Viewing and changing records
+
+- **Budget line view**: View on any Budget entry line, or the category name in the Detail report, opens the line: its figures, how its CTC is set, the line in every version, comments (anyone who can see the project can comment and delete their own), and the change history for users with the audit right.
+- **Towers & set-up**: edit the project's name, code and location; delete a tower or cost head added by mistake (refused once it has cost incurred, figures in an approved version, amounts in the open version, or, for a head, a GST head worked out on it); rename a cost head.
+- **Schedules**: Rename changes a schedule's title and note.

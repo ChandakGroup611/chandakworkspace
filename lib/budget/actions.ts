@@ -9,7 +9,7 @@ import BudgetImporter, { type CostRow, type ImportPayload } from "./importer";
 // Writes from the budget screens. Each runs as the signed-in user, so Row Level Security and the
 // workflow functions decide what is allowed; a refusal comes back as { error } for the screen to show.
 
-type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
+export type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 const fail = (e: { message: string } | string): { ok: false; error: string } => ({ ok: false, error: typeof e === "string" ? e : e.message });
 const refresh = () => revalidatePath("/budget", "layout");
 const AMOUNT = /^\d*\.?\d+$/;
@@ -351,6 +351,39 @@ export async function addBill(projectId: number, bill: BillInput, splits: BillSp
   return { ok: true };
 }
 
+/** Changes a bill's details and replaces its splits. */
+export async function updateBill(billId: number, bill: BillInput, splits: BillSplitInput[]): Promise<Result> {
+  if (!bill.vendor.trim() || !bill.billNo.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(bill.date)) return fail("Enter the vendor, bill number and bill date");
+  const gst = bill.gst.replace(/,/g, "").trim();
+  if (gst && (!RUPEES.test(gst) || gst.startsWith("-"))) return fail("Enter GST in rupees");
+  const used = splits.filter((s) => s.amount.replace(/,/g, "").trim());
+  if (!used.length) return fail("Split the bill over at least one cost head");
+  if (used.some((s) => !RUPEES.test(s.amount.replace(/,/g, "").trim()))) return fail("Enter each split's amount in rupees");
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_update_bill", {
+    p_bill_id: billId,
+    p_bill: { vendor: bill.vendor, bill_no: bill.billNo, bill_date: bill.date, work_order: bill.workOrder, note: bill.note, gst_paise: gst ? BudgetImporter.paiseFromInr(gst) : 0 },
+    p_splits: used.map((s) => ({ head: s.head, tower: s.tower, amount_paise: BudgetImporter.paiseFromInr(s.amount.replace(/,/g, "").trim()) })),
+  });
+  if (error) return fail(error.message.includes("row-level security") ? "You cannot record cost for one of these departments" : error.message);
+  refresh();
+  return { ok: true };
+}
+
+/** Changes a typed or imported cost entry (a bill's splits are changed on the bill). */
+export async function updateEntry(entryId: number, headId: number, towerId: number | null, month: string, amount: string, reference: string): Promise<Result> {
+  const text = amount.replace(/,/g, "").trim();
+  if (!RUPEES.test(text) || !/^\d{4}-\d{2}$/.test(month)) return fail("Enter the month and an amount in rupees");
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_incurred_entries").update({
+    cost_head_id: headId, subproject_id: towerId, month: month + "-01", amount_paise: BudgetImporter.paiseFromInr(text), reference: reference.trim() || null,
+  }).eq("id", entryId).is("bill_id", null).select("id");
+  if (error) return fail(error.message.includes("row-level security") ? "You cannot record cost for this department" : error.message);
+  if (!data?.length) return fail("You cannot change this entry");
+  refresh();
+  return { ok: true };
+}
+
 /** Deletes a bill and its splits. */
 export async function deleteBill(billId: number): Promise<Result> {
   const sb = await createClient();
@@ -376,6 +409,64 @@ export async function createProject(name: string, code: string, towers: number, 
   if (error) return fail(error);
   refresh();
   return { ok: true, projectId: data as number };
+}
+
+/** Removes a tower added by mistake; refused once it carries any figure. */
+export async function deleteTower(towerId: number): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_delete_tower", { p_tower: towerId });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+/** Removes a cost head added by mistake; refused once it carries any figure. */
+export async function deleteHead(headId: number): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_delete_head", { p_head: headId });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+/** Renames a cost head (category / sub-category). */
+export async function renameHead(headId: number, category: string, subCategory: string): Promise<Result> {
+  if (!category.trim()) return fail("Give the cost head a category name");
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_cost_heads").update({ category: category.trim(), sub_category: subCategory.trim() || null }).eq("id", headId).select("id");
+  if (error) return fail(error.code === "23505" ? "Another cost head of this department has that name" : error.message);
+  if (!data?.length) return fail("You do not have the set-up right for this project");
+  refresh();
+  return { ok: true };
+}
+
+/** Project name, code and location. */
+export async function updateProject(projectId: number, p: { name: string; code: string; location: string }): Promise<Result> {
+  if (!p.name.trim() || !p.code.trim()) return fail("Give the project a name and a code");
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_projects").update({ name: p.name.trim(), code: p.code.trim(), location: p.location.trim() || null }).eq("id", projectId).select("id");
+  if (error) return fail(error.code === "23505" ? "Another project has that code" : error.message);
+  if (!data?.length) return fail("You do not have the set-up right for this project");
+  refresh();
+  return { ok: true };
+}
+
+/** Comments on a budget line. */
+export async function addComment(versionId: number, lineId: number, body: string): Promise<Result> {
+  if (!body.trim()) return fail("Write the comment first");
+  const sb = await createClient();
+  const { error } = await sb.from("budget_comments").insert({ version_id: versionId, line_id: lineId, body: body.trim() });
+  if (error) return fail(error.message.includes("row-level security") ? "You cannot comment on this project" : error.message);
+  refresh();
+  return { ok: true };
+}
+export async function deleteComment(id: number): Promise<Result> {
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_comments").delete().eq("id", id).select("id");
+  if (error) return fail(error);
+  if (!data?.length) return fail("You can delete only your own comments");
+  refresh();
+  return { ok: true };
 }
 
 export async function addTower(projectId: number, name: string): Promise<Result> {
