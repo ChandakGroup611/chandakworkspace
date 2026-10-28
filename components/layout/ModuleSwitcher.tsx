@@ -14,7 +14,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import * as Popover from "@radix-ui/react-popover";
-import { FolderKanban, Car, Compass, Layers, LineChart, Video, ChevronsUpDown, Check, Star, Loader2, ExternalLink } from "lucide-react";
+import { FolderKanban, Car, Compass, Layers, LineChart, Video, Wallet, ChevronsUpDown, Check, Star, Loader2, ExternalLink } from "lucide-react";
 import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ const ICONS: Record<string, React.ElementType> = {
   DESIGN_TRACKING: Compass,
   DASHBOARDS: LineChart,
   CHANDAK_MEET: Video,
+  ORG_BUDGET: Wallet,
 };
 const FALLBACK_NAMES: Record<string, string> = {
   TASK_WORKFLOW: "Task Workflow",
@@ -31,6 +32,7 @@ const FALLBACK_NAMES: Record<string, string> = {
   DESIGN_TRACKING: "Design Tracking",
   DASHBOARDS: "Dashboards",
   CHANDAK_MEET: "Chandak Meet",
+  ORG_BUDGET: "Organization Budget",
 };
 const FALLBACK_ROUTES: Record<string, string> = {
   TASK_WORKFLOW: "/",
@@ -38,6 +40,7 @@ const FALLBACK_ROUTES: Record<string, string> = {
   DESIGN_TRACKING: "/design/matrix",
   DASHBOARDS: "/dashboards",
   CHANDAK_MEET: "/meet",
+  ORG_BUDGET: "/budget",
 };
 const CORE = new Set(Object.keys(ICONS));
 
@@ -56,6 +59,7 @@ function moduleFromPath(pathname: string) {
   if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
   if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
   if (pathname.startsWith("/meet")) return "CHANDAK_MEET";
+  if (pathname.startsWith("/budget")) return "ORG_BUDGET";
   if (pathname.startsWith("/settings") || pathname === "/profile") {
     if (typeof document !== "undefined") {
       const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);

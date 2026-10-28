@@ -16,7 +16,8 @@ import {
   Star,
   Loader2,
   ShieldCheck,
-  Video
+  Video,
+  Wallet
 } from "lucide-react";
 import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
@@ -133,12 +134,13 @@ export default function SelectModulePage() {
           DESIGN_TRACKING: "/design/matrix",
           DASHBOARDS: "/dashboards",
           CHANDAK_MEET: "/meet",
+          ORG_BUDGET: "/budget",
         };
         destination = fallbackRoutes[targetCode] || "/";
       }
 
       if (nextParam && nextParam !== "/" && !nextParam.includes("/login")) {
-        if (targetCode === "TASK_WORKFLOW" && !nextParam.startsWith("/vehicle") && !nextParam.startsWith("/design") && !nextParam.startsWith("/dashboards") && !nextParam.startsWith("/meet")) {
+        if (targetCode === "TASK_WORKFLOW" && !nextParam.startsWith("/vehicle") && !nextParam.startsWith("/design") && !nextParam.startsWith("/dashboards") && !nextParam.startsWith("/meet") && !nextParam.startsWith("/budget")) {
           destination = nextParam;
         } else if (targetCode === "VEHICLE_DESK" && nextParam.startsWith("/vehicle")) {
           destination = nextParam;
@@ -147,6 +149,8 @@ export default function SelectModulePage() {
         } else if (targetCode === "DASHBOARDS" && nextParam.startsWith("/dashboards")) {
           destination = nextParam;
         } else if (targetCode === "CHANDAK_MEET" && nextParam.startsWith("/meet")) {
+          destination = nextParam;
+        } else if (targetCode === "ORG_BUDGET" && nextParam.startsWith("/budget")) {
           destination = nextParam;
         }
       }
@@ -170,6 +174,13 @@ export default function SelectModulePage() {
 
   const getModuleMeta = (code: string) => {
     switch (code) {
+      case "ORG_BUDGET":
+        return {
+          icon: Wallet,
+          badge: "Budgets and cost control",
+          launchLabel: "Open Organization Budget",
+          features: ["Project, tower and department budgets with versions", "Excel import or typed entry, cost incurred", "Summary and Detail reports, custom fields"],
+        };
       case "CHANDAK_MEET":
         return {
           icon: Video,

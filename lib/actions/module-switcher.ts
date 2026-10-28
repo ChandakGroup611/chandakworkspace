@@ -31,7 +31,7 @@ export interface UserModulesResult {
   userEmail?: string;
 }
 
-const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET"]);
+const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET"]);
 
 const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
   {
@@ -86,6 +86,17 @@ const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
     icon: "Video",
     route_path: "/meet",
     display_order: 5,
+    is_active: true,
+    is_default: false
+  },
+  {
+    id: "mod-budget",
+    code: "ORG_BUDGET",
+    name: "Organization Budget",
+    description: "Project, tower and department budgets, versions, cost incurred, Summary and Detail reports",
+    icon: "Wallet",
+    route_path: "/budget",
+    display_order: 6,
     is_active: true,
     is_default: false
   }
@@ -183,6 +194,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
         if (m.code === "DESIGN_TRACKING" && (!route || route === "/design/dashboard")) route = "/design/matrix";
         if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
         if (m.code === "CHANDAK_MEET" && !route) route = "/meet";
+        if (m.code === "ORG_BUDGET" && !route) route = "/budget";
         return {
           ...m,
           route_path: route,

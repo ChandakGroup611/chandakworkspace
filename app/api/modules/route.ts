@@ -65,6 +65,17 @@ const DEFAULT_MODULES = [
     is_active: true,
     is_default: false,
   },
+  {
+    id: "mod-budget",
+    code: "ORG_BUDGET",
+    name: "Organization Budget",
+    description: "Project, tower and department budgets, versions, cost incurred, Summary and Detail reports",
+    icon: "Wallet",
+    route_path: "/budget",
+    display_order: 6,
+    is_active: true,
+    is_default: false,
+  }
 ];
 
 export async function GET(request: NextRequest) {
@@ -141,7 +152,7 @@ export async function GET(request: NextRequest) {
     const assignedModuleIds = new Set(userAssignments.map(a => a.module_id));
     const defaultAssignment = userAssignments.find(a => a.is_default);
 
-    const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET"]);
+    const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET"]);
 
     // Strict Authorization: Non-admins only see modules they are explicitly assigned
     const allowedModules = allActive
@@ -160,6 +171,7 @@ export async function GET(request: NextRequest) {
         if (m.code === "DESIGN_TRACKING" && (!route || route === "/design/dashboard")) route = "/design/matrix";
         if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
         if (m.code === "CHANDAK_MEET" && !route) route = "/meet";
+        if (m.code === "ORG_BUDGET" && !route) route = "/budget";
         
         const isThisDefault = defaultAssignment 
           ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code || (defaultAssignment.module && (defaultAssignment.module as any).code === m.code))
@@ -207,6 +219,7 @@ const MODULE_ROUTE_MAP: Record<string, string> = {
   DESIGN_TRACKING: "/design/matrix",
   DASHBOARDS: "/dashboards",
   CHANDAK_MEET: "/meet",
+  ORG_BUDGET: "/budget",
 };
 
 export async function POST(request: NextRequest) {

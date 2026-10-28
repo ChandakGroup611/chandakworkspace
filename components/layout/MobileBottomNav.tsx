@@ -9,7 +9,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = { label: string; href: string; icon: React.ElementType; match: (p: string) => boolean };
@@ -44,16 +44,22 @@ const TABS: Record<string, Tab[]> = {
     { label: "My Work", href: "/meet/my-work", icon: CheckCircle2, match: (p) => p.startsWith("/meet/my-work") },
     { label: "Calendar", href: "/meet/calendar", icon: Calendar, match: (p) => p.startsWith("/meet/calendar") },
   ],
+  budget: [
+    { label: "Projects", href: "/budget", icon: Wallet, match: (p) => p === "/budget" || /^\/budget\/\d+/.test(p) },
+    { label: "Access", href: "/budget/admin/access", icon: Settings2, match: (p) => p.startsWith("/budget/admin/access") },
+    { label: "Fields", href: "/budget/admin/fields", icon: Layers, match: (p) => p.startsWith("/budget/admin/fields") },
+  ],
 };
 
 export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
   const pathname = usePathname() || "/";
-  let key = pathname.startsWith("/meet") ? "meet" : pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
+  let key = pathname.startsWith("/budget") ? "budget" : pathname.startsWith("/meet") ? "meet" : pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
   if (pathname.startsWith("/settings") || pathname === "/profile") {
     if (typeof document !== "undefined") {
       const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
       const mod = m ? decodeURIComponent(m[1]) : "";
       if (mod === "CHANDAK_MEET") key = "meet";
+      else if (mod === "ORG_BUDGET") key = "budget";
       else if (mod === "VEHICLE_DESK") key = "vehicle";
       else if (mod === "DESIGN_TRACKING") key = "design";
       else if (mod === "DASHBOARDS") key = "dashboards";

@@ -24,7 +24,7 @@ import {
   ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
   Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
   FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X, Tag,
-  Video, StickyNote,
+  Video, StickyNote, Wallet,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
@@ -263,12 +263,29 @@ const meetNavGroups: NavGroup[] = [
   }
 ];
 
+const budgetNavGroups: NavGroup[] = [
+  {
+    label: "Organization budget",
+    items: [
+      { label: "Projects and budgets", href: "/budget", icon: Wallet },
+    ]
+  },
+  {
+    label: "Budget settings",
+    items: [
+      { label: "Access, roles and rights", href: "/budget/admin/access", icon: Key },
+      { label: "Custom fields and forms", href: "/budget/admin/fields", icon: Settings2 },
+    ]
+  }
+];
+
 /* ---------- active-route rules (same behaviour as v1, pulled out of the render loop) ---------- */
 function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchParams | null) {
   if (item.href === "/requirements" && searchParams?.get("from") === "approvals") return false;
   switch (item.href) {
     case "/": return pathname === "/";
     case "/meet": return pathname === "/meet";
+    case "/budget": return pathname === "/budget" || /^\/budget\/\d+/.test(pathname);
     case "/design/matrix": return ["/design", "/design/matrix", "/design/dashboard"].includes(pathname);
     case "/vehicle": return pathname === "/vehicle" || pathname === "/vehicle/dashboard";
     case "/design/masters":
@@ -299,6 +316,7 @@ function getActiveModuleCookie(): string | null {
 
 function useModuleContext(pathname: string) {
   return useMemo(() => {
+    if (pathname.startsWith("/budget")) return { code: "ORG_BUDGET", groups: budgetNavGroups, home: "/budget" };
     if (pathname.startsWith("/meet")) return { code: "CHANDAK_MEET", groups: meetNavGroups, home: "/meet" };
     if (pathname.startsWith("/vehicle")) return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
     if (pathname.startsWith("/design")) return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
@@ -308,6 +326,7 @@ function useModuleContext(pathname: string) {
     if (pathname.startsWith("/settings") || pathname === "/profile") {
       const activeCookie = getActiveModuleCookie();
       if (activeCookie === "CHANDAK_MEET") return { code: "CHANDAK_MEET", groups: meetNavGroups, home: "/meet" };
+      if (activeCookie === "ORG_BUDGET") return { code: "ORG_BUDGET", groups: budgetNavGroups, home: "/budget" };
       if (activeCookie === "VEHICLE_DESK") return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
       if (activeCookie === "DESIGN_TRACKING") return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
       if (activeCookie === "DASHBOARDS") return { code: "DASHBOARDS", groups: dashboardsNavGroups, home: "/dashboards" };

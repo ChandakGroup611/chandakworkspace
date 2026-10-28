@@ -1,0 +1,142 @@
+/* Budget module styles, scoped under .budget-app so they do not touch the rest of the application. */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+/* Layout: a ledger workspace. Sticky control bar, tab strip, then one wide working surface per tab. */
+.budget-app {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #1c2330;
+  --muted: #5b6678;
+  --line: #dde1e8;
+  --line-strong: #c5cbd6;
+  --accent: #2c4a7a;        /* ledger ink blue */
+  --accent-soft: #e6ecf6;
+  --good: #2f7d4f;
+  --warn: #a86a05;
+  --bad: #b23a3a;
+  --good-soft: #e5f2ea;
+  --warn-soft: #fbf0dc;
+  --bad-soft: #f8e5e5;
+  --row-group: #eef1f6;
+  --row-sub: #f7f8fb;
+  --input: #ffffff;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
+/* Follows the workspace theme (ThemeScript sets data-mode on <html>). */
+html[data-mode="dark"] .budget-app {
+  --bg: #12161d; --surface: #1a2029; --ink: #e4e8ef; --muted: #9aa5b6; --line: #2b3340; --line-strong: #3a4454;
+  --accent: #8fb0e6; --accent-soft: #24324a; --good: #6cc391; --warn: #e0ad4f; --bad: #ee8585;
+  --good-soft: #1d3326; --warn-soft: #3a2f19; --bad-soft: #3d2222; --row-group: #212938; --row-sub: #1d232e; --input: #11151b;
+  color-scheme: dark;
+}
+.budget-app * { box-sizing: border-box; }
+.budget-app { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--app-font-family, var(--font-body)); border-radius: 10px; }
+.budget-app h1, .budget-app h2, .budget-app h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; }
+.budget-app h2 { font-size: 20px; }
+.budget-app h3 { font-size: 15px; }
+.budget-app .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1440px; margin: 0 auto; }
+.budget-app .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.budget-app .top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 10px; }
+.budget-app .brand { display: flex; flex-direction: column; margin-right: auto; }
+.budget-app .brand b { font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: .01em; }
+.budget-app .brand span { font-size: 12px; color: var(--muted); }
+.budget-app .ctl { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.budget-app select, .budget-app input, .budget-app textarea, .budget-app button { font: inherit; color: var(--ink); }
+.budget-app select, .budget-app input[type=text], .budget-app input[type=number], .budget-app input[type=date], .budget-app input[type=month], .budget-app textarea {
+  background: var(--input); border: 1px solid var(--line-strong); border-radius: 6px; padding: 5px 8px; min-width: 0;
+}
+.budget-app .ctl select { min-width: 150px; text-transform: none; letter-spacing: 0; font-size: 14px; }
+.budget-app input:focus-visible, .budget-app select:focus-visible, .budget-app textarea:focus-visible, .budget-app button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.budget-app button { cursor: pointer; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--surface); padding: 6px 12px; font-weight: 500; }
+.budget-app button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.budget-app button.danger { color: var(--bad); }
+.budget-app button.link { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; font-weight: 500; }
+.budget-app button:disabled { opacity: .5; cursor: not-allowed; }
+.budget-app .tabs { display: flex; gap: 2px; overflow-x: auto; border-top: 1px solid var(--line); }
+.budget-app .tabs button { border: 0; border-radius: 0; background: none; padding: 10px 14px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+.budget-app .tabs button[aria-selected=true] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.budget-app main { padding-block: 20px 60px; display: flex; flex-direction: column; gap: 20px; }
+.budget-app .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.budget-app .panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.budget-app .sub { color: var(--muted); font-size: 13px; }
+.budget-app .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.budget-app .row label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.budget-app .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+.budget-app .banner { border-radius: 8px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; border: 1px solid var(--line); background: var(--surface); }
+.budget-app .banner.locked { background: var(--accent-soft); border-color: transparent; }
+.budget-app .banner.draft { background: var(--warn-soft); border-color: transparent; }
+.budget-app .banner.error { background: var(--bad-soft); border-color: transparent; color: var(--ink); }
+.budget-app .banner.ok { background: var(--good-soft); border-color: transparent; }
+.budget-app .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+.budget-app .pill.approved { background: var(--good-soft); color: var(--good); }
+.budget-app .pill.draft { background: var(--warn-soft); color: var(--warn); }
+.budget-app .chip { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 1px; }
+.budget-app .chip.warn { color: var(--warn); background: var(--warn-soft); }
+.budget-app .chip.bad { color: var(--bad); background: var(--bad-soft); }
+.budget-app .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.budget-app .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.budget-app .kpi > span { font-size: 12px; color: var(--muted); }
+.budget-app .kpi b { font-family: var(--font-display); font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.budget-app .kpi small { font-size: 12px; color: var(--muted); }
+.budget-app .scroll { overflow-x: auto; min-width: 0; border: 1px solid var(--line); border-radius: 6px; }
+.budget-app table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.budget-app th, .budget-app td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.budget-app th { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: var(--row-sub); position: sticky; top: 0; z-index: 1; }
+.budget-app td.n, .budget-app th.n { text-align: right; white-space: nowrap; }
+.budget-app tr.group td { background: var(--row-group); font-weight: 600; }
+.budget-app tr.cat td { background: var(--row-sub); font-weight: 600; }
+.budget-app tr.total td { font-weight: 700; border-top: 2px solid var(--line-strong); background: var(--row-group); }
+.budget-app tr.flag td { background: var(--warn-soft); }
+.budget-app td.indent { padding-left: 22px; }
+.budget-app td.indent2 { padding-left: 36px; }
+.budget-app .neg { color: var(--bad); }
+.budget-app .bar { display: inline-block; width: 64px; height: 6px; border-radius: 3px; background: var(--line); vertical-align: middle; margin-right: 6px; overflow: hidden; }
+.budget-app .bar i { display: block; height: 100%; background: var(--accent); }
+.budget-app .bar i.over { background: var(--bad); }
+.budget-app td input.amt { width: 96px; text-align: right; font-variant-numeric: tabular-nums; }
+.budget-app td input.rem { width: 100%; min-width: 140px; }
+.budget-app td input.auto::placeholder { color: var(--accent); font-style: italic; opacity: .9; }
+.budget-app .note { font-size: 12px; color: var(--muted); }
+.budget-app ul.plain { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.budget-app .toast { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--surface); padding: 10px 14px; border-radius: 8px; z-index: 20; max-width: 360px; }
+.budget-app .sumhead { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; }
+.budget-app .sumhead dt { color: var(--muted); }
+.budget-app .sumhead dd { margin: 0; font-weight: 600; }
+.budget-app .trunc { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) { .budget-app .ctl select { min-width: 120px; } .budget-app .kpi b { font-size: 20px; } }
+@media (prefers-reduced-motion: reduce) { .budget-app * { transition: none !important; } }
+.budget-app .chip.ok { color: var(--good); background: var(--good-soft); }
+.budget-app .chip.xl { color: var(--good); background: var(--good-soft); }
+.budget-app .chip.typed { color: var(--muted); background: var(--row-sub); }
+.budget-app input[type=file] { font-size: 13px; }
+
+.budget-app .chip.ok { color: var(--good); background: var(--good-soft); }
+.budget-app .chip.xl { color: var(--good); background: var(--good-soft); }
+.budget-app .chip.typed { color: var(--muted); background: var(--row-sub); }
+.budget-app input[type=file] { font-size: 13px; }
+.budget-app a { color: var(--accent); }
+.budget-app .tabs a { display: inline-block; padding: 10px 14px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; text-decoration: none; }
+.budget-app .tabs a[aria-current=page] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.budget-app .busy { opacity: .6; }
+
+/* custom fields */
+.budget-app th.cf { white-space: nowrap; }
+.budget-app .cf-section h4 { margin: 12px 0 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.budget-app .cf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; }
+.budget-app .cf-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.budget-app .cf-label { font-size: 12.5px; color: var(--muted); }
+.budget-app .req { color: var(--bad); }
+.budget-app details.multi { position: relative; }
+.budget-app details.multi summary { cursor: pointer; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; background: var(--surface, transparent); list-style: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.budget-app details.multi[open] > label { display: flex; gap: 6px; align-items: center; padding: 2px 4px; }
+.budget-app .matrix td, .budget-app .matrix th { text-align: center; }
+.budget-app .matrix td:first-child, .budget-app .matrix th:first-child { text-align: left; }
+.budget-app .formula { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; width: 100%; }
+.budget-app .ok-text { color: var(--good); }
+.budget-app .bad-text { color: var(--bad); }
+.budget-app .pickers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.budget-app .pickers button { font-size: 12px; padding: 1px 6px; }
+.budget-app .admin-nav { display: flex; gap: 12px; margin-bottom: 12px; }
+.budget-app .brand .settings { margin-left: 10px; font-size: 13px; }
+.budget-app tr.muted td { opacity: .6; }
+.budget-app .nowrap { white-space: nowrap; }
