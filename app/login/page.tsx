@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { LoginScene3D, sceneInk } from "@/components/auth/LoginScene3D";
+import { LoginScreensaver } from "@/components/auth/LoginScreensaver";
+import { LoginFormBackdrop, formMotion } from "@/components/auth/LoginFormBackdrop";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -305,6 +307,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
+      {/* idle "live screen" after 5 minutes without input */}
+      <LoginScreensaver disabled={loading || ssoLoading} />
+
       {/* LEFT PANEL - 3D brand scene (large screens) */}
       <div className="relative hidden h-full w-1/2 flex-col overflow-hidden border-r border-border lg:flex">
         <LoginScene3D />
@@ -333,8 +338,9 @@ export default function LoginPage() {
 
       {/* RIGHT PANEL - Authentication Form */}
       <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-background relative text-foreground">
+        <LoginFormBackdrop />
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-24 relative z-10 min-h-full">
-          <div className="w-full max-w-[400px] animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+          <div className={`w-full max-w-[440px] ${formMotion.card}`}>
             
             {/* phones and tablets: compact animated header */}
             <div className="relative mb-8 lg:hidden">
@@ -351,8 +357,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mb-8">
-              <h2 className="mb-1 text-[22px] font-semibold text-heading">
+            <div className={`mb-8 ${formMotion.item}`} style={{ "--d": 0 } as React.CSSProperties}>
+              <h2 className={`mb-3 text-[22px] font-semibold text-heading ${formMotion.underline}`}>
                 Sign in
               </h2>
               <p className="text-[13.5px] text-subtle">
@@ -390,6 +396,7 @@ export default function LoginPage() {
 
             {/* Form */}
             <form onSubmit={handleStandardAuthSubmit} className="space-y-4">
+              <div className={formMotion.item} style={{ "--d": 1 } as React.CSSProperties}>
               <AppInput 
                 label="Email address"
                 name="email"
@@ -401,8 +408,9 @@ export default function LoginPage() {
                 leftIcon={<Mail className="h-4 w-4 text-muted" />}
                 required
               />
+              </div>
 
-              <div className="space-y-1">
+              <div className={`space-y-1 ${formMotion.item}`} style={{ "--d": 2 } as React.CSSProperties}>
                 <div className="flex items-center justify-between">
                   <label htmlFor="login-password" className="text-[13px] font-medium text-subtle">Password</label>
                   <button
@@ -426,30 +434,29 @@ export default function LoginPage() {
                 />
               </div>
 
+              <div className={formMotion.item} style={{ "--d": 3 } as React.CSSProperties}>
               <AppButton 
                 type="submit" 
                 variant="primary"
                 disabled={loading || !!successMsg}
                 isLoading={loading}
                 size="lg"
-                className="mt-2 w-full"
+                className={`mt-2 w-full ${formMotion.sheen}`}
                 rightIcon={loading ? undefined : <ArrowRight className="h-4 w-4" />}
               >
                 {loading ? "Signing in…" : "Sign in"}
               </AppButton>
+              </div>
             </form>
 
-            <div className="relative py-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border"></span>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-background px-3 text-[12.5px] text-muted">
-                  or
-                </span>
-              </div>
+            {/* lines on either side of "or" (no background patch, so the animated backdrop shows through) */}
+            <div className={`flex items-center gap-3 py-6 ${formMotion.item}`} style={{ "--d": 4 } as React.CSSProperties}>
+              <span className="flex-1 border-t border-border"></span>
+              <span className="text-[12.5px] text-muted">or</span>
+              <span className="flex-1 border-t border-border"></span>
             </div>
 
+            <div className={formMotion.item} style={{ "--d": 5 } as React.CSSProperties}>
             <AppButton
               type="button"
               variant="secondary"
@@ -478,6 +485,7 @@ export default function LoginPage() {
                 </div>
               )}
             </AppButton>
+            </div>
 
           </div>
         </div>
