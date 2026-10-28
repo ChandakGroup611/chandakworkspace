@@ -31,5 +31,5 @@ var b=parseInt(ls.getItem(K.baseSize)||"",10);if(b>=12&&b<=20)d.style.setPropert
 }catch(e){document.documentElement.setAttribute("data-theme","${DEFAULT_THEME}");document.documentElement.setAttribute("data-mode","light");}})();`;
 
 export function ThemeScript() {
-  return <script id="chandak-theme-init" dangerouslySetInnerHTML={{ __html: script }} />;
+  return <script id="chandak-theme-init" dangerouslySetInnerHTML={{ __html: script }} suppressHydrationWarning />;
 }

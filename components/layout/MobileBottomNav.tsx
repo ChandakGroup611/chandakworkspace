@@ -52,7 +52,14 @@ const TABS: Record<string, Tab[]> = {
 };
 
 export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
+  const [mounted, setMounted] = React.useState(false);
   const pathname = usePathname() || "/";
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
   let key = pathname.startsWith("/budget") ? "budget" : pathname.startsWith("/meet") ? "meet" : pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
   if (pathname.startsWith("/settings") || pathname === "/profile") {
     if (typeof document !== "undefined") {
