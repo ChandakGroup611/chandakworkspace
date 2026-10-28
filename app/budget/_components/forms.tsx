@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import * as A from "@/lib/budget/actions";
+import { writeBudgetSummary } from "@/lib/budget/insights-actions";
 import type { CustomField } from "@/lib/budget/data";
-import { BUILDING_TYPES, fmt, fmtPct, inputCr, isNeg } from "@/lib/budget/format";
+import { BUILDING_TYPES, RATE_BASES, fmt, fmtPct, inputCr, isNeg } from "@/lib/budget/format";
 import { fieldTitle } from "@/lib/budget/fields";
 import { type Cell, CustomInput, NewRecordFields, type Picks, clearNewRecordFields, readNewRecordFields } from "./custom-fields";
 
@@ -42,10 +43,27 @@ export function Selectors(props: {
   versions: { number: number; as_on: string; status: string }[]; versionNumber: number | null; tab: string;
 }) {
   const router = useRouter();
+
+  useEffect(() => {
+    if (props.projectId != null && typeof document !== "undefined") {
+      document.cookie = `active_budget_project=${props.projectId}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+  }, [props.projectId]);
+
   return (
     <>
       <label className="ctl">Project
-        <select value={props.projectId ?? ""} onChange={(e) => router.push(`/budget/${e.target.value}/${props.tab === "home" ? "overview" : props.tab}`)}>
+        <select
+          value={props.projectId ?? ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val && typeof document !== "undefined") {
+              document.cookie = `active_budget_project=${val}; path=/; max-age=31536000; SameSite=Lax`;
+            }
+            const nextTab = props.tab === "home" || props.tab === "access" || props.tab === "fields" ? "overview" : props.tab;
+            router.push(`/budget/${val}/${nextTab}`);
+          }}
+        >
           {props.projectId == null && <option value="">Choose a project</option>}
           {props.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
@@ -55,7 +73,7 @@ export function Selectors(props: {
           <select value={props.versionNumber ?? ""} onChange={(e) => router.push(`/budget/${props.projectId}/${props.tab}?v=${e.target.value}`)}>
             {props.versions.length === 0 && <option value="">No version yet</option>}
             {props.versions.slice().reverse().map((v) => (
-              <option key={v.number} value={v.number}>R{v.number} · {v.as_on.split("-").reverse().join("/")} · {v.status}</option>
+              <option key={v.number} value={v.number}>R{v.number} · {v.as_on.split("-").reverse().join("/")} · {v.status.replace("_", " ")}</option>
             ))}
           </select>
         </label>
@@ -102,6 +120,112 @@ export function VersionActions({ versionId, number, projectId }: { versionId: nu
   );
 }
 
+/** Sign-off of a version: submit the draft, sign or send it back at your level, or take it back. */
+export function SignoffActions({ versionId, number, projectId, status, chain, mayApprove, mayRecall, next }: {
+  versionId: number; number: number; projectId: number; status: string; chain: boolean; mayApprove: boolean; mayRecall: boolean;
+  next: { title: string; mine: boolean } | null;
+}) {
+  const { pending, run, banner, setNotice } = useAction();
+  const router = useRouter();
+  const [confirm, setConfirm] = useState(false);
+  const cid = `so-comment-${versionId}`;
+  const comment = () => (document.getElementById(cid) as HTMLInputElement | null)?.value ?? "";
+  const box = <input type="text" id={cid} className="rem" style={{ minWidth: 220 }} aria-label="Sign-off comment" placeholder={status === "draft" ? "Note for the approvers (optional)" : "Comment (needed to send back)"} />;
+  if (status === "draft" && mayApprove) {
+    return (
+      <>
+        <div className="row">
+          {chain ? <>{box}<button className="primary" disabled={pending} onClick={() => run(() => A.submitVersion(versionId, comment()),
+            () => setNotice(`R${number} is submitted and locked while it is signed.`))}>Submit R{number} for sign-off</button></>
+            : <button className="primary" disabled={pending} onClick={() => run(() => A.approveVersion(versionId), () => setNotice(`R${number} is approved and locked. Reports now show it as the current budget.`))}>
+              Approve R{number}</button>}
+          <button className="danger" disabled={pending} onClick={() => {
+            if (!confirm) return setConfirm(true);
+            run(() => A.deleteDraft(versionId), () => router.push(`/budget/${projectId}/overview`));
+          }}>{confirm ? "Click again to delete" : "Delete draft"}</button>
+        </div>
+        {banner}
+      </>
+    );
+  }
+  if (status !== "in_review" || (!next?.mine && !mayRecall)) return null;
+  return (
+    <>
+      <div className="row">
+        {next?.mine && <>{box}
+          <button className="primary" disabled={pending} onClick={() => run(() => A.signVersion(versionId, "signed", comment()),
+            (r) => setNotice(r.outcome === "approved" ? `Signed. R${number} is approved and locked.` : "Signed. It goes to the next level."))}>Sign as {next.title}</button>
+          <button disabled={pending} onClick={() => run(() => A.signVersion(versionId, "returned", comment()), () => setNotice(`R${number} is back with the preparer.`))}>Send back</button></>}
+        {mayRecall && <button disabled={pending} onClick={() => run(() => A.recallVersion(versionId), () => setNotice(`R${number} is a draft again; it needs submitting again after the changes.`))}>Take back to draft</button>}
+      </div>
+      {banner}
+    </>
+  );
+}
+
+/** A tower's OC date in this version and the reason it moved. */
+export function TowerNoteRow({ versionId, t, editable }: {
+  versionId: number; editable: boolean;
+  t: { tower_id: number; name: string; planned: string | null; previous: string | null; oc_date: string | null; moved: boolean; reason: string | null };
+}) {
+  const { run, banner } = useAction();
+  const d = (iso: string | null) => (iso ? iso.split("-").reverse().join("/") : "");
+  const save = (date: string, reason: string) => run(() => A.setTowerNote(versionId, t.tower_id, date, reason));
+  const ids = { date: `oc-${t.tower_id}`, reason: `ocr-${t.tower_id}` };
+  return (
+    <tr className={t.moved && !t.reason ? "flag" : ""}>
+      <td>{t.name}</td><td>{d(t.planned)}</td><td>{d(t.previous)}</td>
+      <td>{editable ? <input type="date" id={ids.date} aria-label={`OC date ${t.name}`} defaultValue={t.oc_date ?? ""} key={`${t.oc_date}`}
+        onBlur={(e) => { if (e.currentTarget.value !== (t.oc_date ?? "")) save(e.currentTarget.value, value(ids.reason)); }} /> : d(t.oc_date)}
+        {t.moved && <span className="chip warn">moved</span>}</td>
+      <td>{editable ? <input type="text" id={ids.reason} className="rem" aria-label={`Reason OC date ${t.name}`} defaultValue={t.reason ?? ""} key={`${t.reason}`}
+        placeholder={t.moved ? "Reason needed before approval" : ""}
+        onBlur={(e) => { if (e.currentTarget.value.trim() !== (t.reason ?? "")) save(value(ids.date), e.currentTarget.value); }} /> : t.reason}{banner}</td>
+    </tr>
+  );
+}
+
+/** Sign-off levels of one chain (a project's own, or the one for every project). */
+export function SignoffLevelsEditor({ projectId, levels, members, editable }: {
+  projectId: number | null; editable: boolean;
+  levels: { id: number; sort: number; title: string; approver_ids: string[] }[]; members: [string, string][];
+}) {
+  const { pending, run, banner } = useAction();
+  const name = new Map(members);
+  const [edits, setPicked] = useState<Record<number, string[]>>({});
+  const picked = Object.fromEntries(levels.map((l) => [l.id, edits[l.id] ?? l.approver_ids])) as Record<number, string[]>;
+  const [newPick, setNewPick] = useState<string[]>([]);
+  const k = projectId ?? "all";
+  const Pick = ({ ids, set }: { ids: string[]; set: (v: string[]) => void }) => (
+    <details><summary>{ids.length ? ids.map((i) => name.get(i) ?? "Member").join(", ") : "Choose approvers"}</summary>
+      <div className="pick-list">{members.map(([id, n]) => <label key={id}><input type="checkbox" checked={ids.includes(id)}
+        onChange={(e) => set(e.currentTarget.checked ? [...ids, id] : ids.filter((x) => x !== id))} /> {n}</label>)}</div></details>
+  );
+  return (
+    <>
+      {banner}
+      <div className="scroll"><table><thead><tr><th className="n">Order</th><th>Level</th><th>Approvers (any one signs)</th><th></th></tr></thead><tbody>
+        {levels.map((l) => editable ? (
+          <tr key={l.id}>
+            <td className="n"><input type="number" id={`sl-sort-${l.id}`} className="amt" style={{ width: 60 }} defaultValue={l.sort} aria-label="Order" /></td>
+            <td><input type="text" id={`sl-title-${l.id}`} defaultValue={l.title} aria-label="Level title" /></td>
+            <td><Pick ids={picked[l.id]} set={(v) => setPicked({ ...edits, [l.id]: v })} /></td>
+            <td><button disabled={pending} onClick={() => run(() => A.saveSignoffLevel({ id: l.id, project_id: projectId, sort: Number(value(`sl-sort-${l.id}`)) || 0, title: value(`sl-title-${l.id}`), approver_ids: picked[l.id] ?? [] }))}>Save</button>
+              <button className="link" disabled={pending} onClick={() => run(() => A.deleteSignoffLevel(l.id))}>Remove</button></td>
+          </tr>
+        ) : <tr key={l.id}><td className="n">{l.sort}</td><td>{l.title}</td><td>{l.approver_ids.map((i) => name.get(i) ?? "Member").join(", ")}</td><td></td></tr>)}
+        {levels.length === 0 && <tr><td colSpan={4} className="sub">No levels.</td></tr>}
+        {editable && <tr>
+          <td className="n"><input type="number" id={`sl-sort-new-${k}`} className="amt" style={{ width: 60 }} defaultValue={(levels[levels.length - 1]?.sort ?? 0) + 1} aria-label="New level order" /></td>
+          <td><input type="text" id={`sl-title-new-${k}`} placeholder="For example: Checked by" aria-label="New level title" /></td>
+          <td><Pick ids={newPick} set={setNewPick} /></td>
+          <td><button disabled={pending} onClick={() => run(() => A.saveSignoffLevel({ project_id: projectId, sort: Number(value(`sl-sort-new-${k}`)) || 0, title: value(`sl-title-new-${k}`), approver_ids: newPick }), () => setNewPick([]))}>Add level</button></td>
+        </tr>}
+      </tbody></table></div>
+    </>
+  );
+}
+
 export function OpenVersionForm({ projectId, defaultDate, first }: { projectId: number; defaultDate: string; first?: boolean }) {
   const { pending, run, banner } = useAction();
   const router = useRouter();
@@ -123,14 +247,25 @@ export function OpenVersionForm({ projectId, defaultDate, first }: { projectId: 
 
 // ---------- budget entry ----------
 export interface EntryRow {
-  kind: "dept" | "cat" | "line"; key: string; label: string; note?: string | null; tower?: string | null; indent?: number;
+  kind: "dept" | "cat" | "line" | "memo"; key: string; label: string; note?: string | null; tower?: string | null; indent?: number;
+  /** Department rows: the department's remark for this version. */
+  deptRemark?: { versionId: number; departmentId: number; text: string; editable: boolean };
   initial_cr: number; ctc_cr: number; incurred_cr: number; balance_cr: number; variance_cr: number; util_pct: number | null; psf_ctc: number | null;
   line?: {
     id: number; isTax: boolean; taxRule: string | null; initial: number | null; ctc: number | null; initialCalc: boolean; ctcCalc: boolean;
     incurredAuto: boolean; remark: string | null; source: string; editable: boolean; needsRemark: boolean; removable: boolean; overBudget: boolean;
     custom?: Record<string, Cell>;
+    /** How CTC is set (typed, rate × area, balance of a total, GST rule) and whether the line is a memo item. */
+    rule: RuleState;
   };
 }
+export interface RuleState {
+  kind: "typed" | "rate" | "balance" | "tax" | "memo" | "schedule"; rate: number | null; basis: string | null; totalCr: number | null;
+  scope: "category" | "department" | null; label: string;
+  /** For giving the line a schedule: its version and a default title. */
+  versionId: number; title: string; scheduleHref?: string;
+}
+
 
 function Bar({ v }: { v: number | null }) {
   if (v == null) return null;
@@ -191,7 +326,8 @@ export function EntryTable({ rows, total, customFields = [], picks }: { rows: En
         <tbody>
           {rows.map((r) => {
             const l = r.line;
-            const cls = r.kind === "dept" ? "group" : r.kind === "cat" ? "cat" : l?.needsRemark ? "flag" : "";
+            if (r.kind === "memo" && !l) return <tr key={r.key} className="cat"><td colSpan={11 + customFields.length}>{r.label}</td></tr>;
+            const cls = r.kind === "dept" ? "group" : r.kind === "cat" || (r.kind === "memo" && !l) ? "cat" : l?.needsRemark ? "flag" : "";
             return (
               <tr key={r.key} className={cls} data-head={r.kind === "line" ? r.label : undefined}>
                 <td className={r.indent === 2 ? "indent2" : r.indent === 1 ? "indent" : ""}>
@@ -200,17 +336,19 @@ export function EntryTable({ rows, total, customFields = [], picks }: { rows: En
                   {r.note && <div className="note">{r.note}</div>}
                 </td>
                 <td className="n">{l?.editable ? <AmountInput line={l} field="initial" shown={r.initial_cr} /> : <>{fmt(r.initial_cr)}{l?.isTax && l.initialCalc && <span className="chip">auto</span>}</>}</td>
-                <td className="n">{l?.editable ? <AmountInput line={l} field="ctc" shown={r.ctc_cr} /> : <>{fmt(r.ctc_cr)}{l?.isTax && l.ctcCalc && <span className="chip">auto</span>}</>}</td>
+                <td className="n">{l?.editable && (l.rule.kind === "typed" || l.rule.kind === "tax" || l.rule.kind === "memo") ? <AmountInput line={l} field="ctc" shown={r.ctc_cr} />
+                  : <>{r.kind === "memo" || r.kind === "line" ? <span className={isNeg(r.ctc_cr) ? "neg" : ""}>{fmt(r.ctc_cr)}</span> : fmt(r.ctc_cr)}{l?.isTax && l.ctcCalc && <span className="chip">auto</span>}{l && (l.rule.kind === "rate" || l.rule.kind === "balance" || l.rule.kind === "schedule") && <span className="chip" title={l.rule.label}>{l.rule.kind}</span>}</>}</td>
                 <td className="n">{fmt(r.incurred_cr)}{l?.incurredAuto && <span className="chip">auto</span>}{l?.overBudget && <span className="chip bad" title="Cost incurred is above the Estimated CTC">over</span>}</td>
                 <td className="n"><Neg v={r.balance_cr} /></td>
                 <td className="n"><Neg v={r.variance_cr} /></td>
                 <td className="n"><Bar v={r.util_pct} /></td>
                 <td className="n">{fmt(r.psf_ctc)}</td>
-                <td>{l?.editable ? <RemarkInput line={l} /> : l?.remark}{l?.needsRemark && <span className="chip warn">remark needed</span>}</td>
+                <td>{r.deptRemark ? <DeptRemarkInput d={r.deptRemark} /> : l?.editable ? <RemarkInput line={l} /> : l?.remark}{l?.needsRemark && <span className="chip warn">remark needed</span>}</td>
                 {customFields.map((f) => <td key={f.id} className={f.field_type === "formula" || ["number", "integer", "amount_cr", "amount_inr", "percent"].includes(f.field_type) ? "n" : ""}>
                   {l && <CustomInput field={f} entity="line" entityId={l.id} cell={l.custom?.[f.key]} editable={l.editable} picks={picks} compact />}</td>)}
                 <td>{l && (l.isTax && l.initialCalc && l.ctcCalc ? <span className="chip" title="Calculated by the GST rule">Calc</span>
-                  : l.source === "excel" ? <span className="chip xl" title="Last set by an Excel import">Excel</span> : <span className="chip typed" title="Last typed on screen">Typed</span>)}</td>
+                  : l.source === "excel" ? <span className="chip xl" title="Last set by an Excel import">Excel</span> : <span className="chip typed" title="Last typed on screen">Typed</span>)}
+                  {l && !l.isTax && <LineRuleCell lineId={l.id} rule={l.rule} editable={l.editable} />}</td>
                 <td>{l?.removable && <button className="link" onClick={() => run(() => A.removeLine(l.id))}>Remove</button>}</td>
               </tr>
             );
@@ -219,6 +357,136 @@ export function EntryTable({ rows, total, customFields = [], picks }: { rows: En
             <td className="n"><Neg v={total.balance_cr} /></td><td className="n"><Neg v={total.variance_cr} /></td><td className="n"><Bar v={total.util_pct} /></td><td className="n">{fmt(total.psf_ctc)}</td><td></td>{customFields.map((f) => <td key={f.id}></td>)}<td></td><td></td></tr>
         </tbody>
       </table></div>
+    </>
+  );
+}
+
+function DeptRemarkInput({ d }: { d: NonNullable<EntryRow["deptRemark"]> }) {
+  const { run, banner } = useAction();
+  if (!d.editable) return <>{d.text}</>;
+  return (
+    <>
+      <input key={`dr-${d.departmentId}-${d.text}`} className="rem" type="text" aria-label="Department remark" defaultValue={d.text} placeholder="Department remark"
+        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+        onBlur={(e) => { if (e.currentTarget.value.trim() !== d.text) run(() => A.setDepartmentRemark(d.versionId, d.departmentId, e.currentTarget.value)); }} />
+      {banner}
+    </>
+  );
+}
+
+/** The CTC rule of a line: shown as a chip; on a draft, opens a small form to change it. */
+function LineRuleCell({ lineId, rule, editable }: { lineId: number; rule: RuleState; editable: boolean }) {
+  const { pending, run, banner } = useAction();
+  const [kind, setKind] = useState<"typed" | "rate" | "balance" | "memo" | "schedule">(rule.kind === "tax" ? "typed" : rule.kind);
+  const [open, setOpen] = useState(false);
+  const chip = rule.kind === "typed" ? null : <span className={`chip ${rule.kind === "memo" ? "warn" : ""}`} title={rule.label}>
+    {rule.kind === "memo" ? "Memo" : rule.kind === "rate" ? "Rate × area" : rule.kind === "schedule" ? "Schedule" : "Balance"}</span>;
+  if (!editable) return chip;
+  // a scheduled line is changed on the Schedules screen
+  if (rule.kind === "schedule") return <>{chip} <Link href={rule.scheduleHref ?? "#"}>Open</Link></>;
+  const id = (k: string) => `rule-${lineId}-${k}`;
+  return (
+    <>
+      {chip}
+      <button className="link" aria-label="CTC rule" onClick={() => setOpen(!open)}>{open ? "Close" : "Rule"}</button>
+      {open && <div className="rule-form">
+        <label>CTC is<select value={kind} aria-label="Rule" onChange={(e) => setKind(e.target.value as typeof kind)}>
+          <option value="typed">Typed</option><option value="rate">Rate × area</option><option value="balance">Balance of a total</option><option value="memo">Memo item (outside totals)</option>
+          <option value="schedule">Worked out in a schedule</option>
+        </select></label>
+        {kind === "schedule" && <label>Schedule title<input id={id("title")} type="text" defaultValue={rule.title} /></label>}
+        {kind === "rate" && <>
+          <label>₹ per sq ft<input id={id("rate")} type="text" inputMode="decimal" className="amt" defaultValue={rule.rate ?? ""} /></label>
+          <label>× area<select id={id("basis")} defaultValue={rule.basis ?? "eng_area"}>{RATE_BASES.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></label>
+        </>}
+        {kind === "balance" && <>
+          <label>Total (Cr)<input id={id("total")} type="text" inputMode="decimal" className="amt" defaultValue={rule.totalCr ?? ""} /></label>
+          <label>less the other lines of its<select id={id("scope")} defaultValue={rule.scope ?? "category"}><option value="category">category</option><option value="department">department</option></select></label>
+        </>}
+        <button className="primary" disabled={pending} onClick={() => run(() => kind === "schedule" ? A.addSchedule(rule.versionId, lineId, value(id("title"))) : A.setLineRule(lineId,
+          kind === "rate" ? { kind, rate: value(id("rate")), basis: value(id("basis")) }
+            : kind === "balance" ? { kind, total: value(id("total")), scope: value(id("scope")) as "category" | "department" } : { kind }), () => setOpen(false))}>Save rule</button>
+      </div>}
+      {banner}
+    </>
+  );
+}
+
+/** Certified amount of a line (crores), on the tower workings. */
+export function CertifiedInput({ lineId, paise, editable }: { lineId: number; paise: number | null; editable: boolean }) {
+  const { pending, run, banner } = useAction();
+  const shown = paise == null ? "" : inputCr(paise);
+  if (!editable) return <>{paise == null ? "" : fmt(Number(paise) / 1e9)}</>;
+  return (
+    <>
+      <input key={`${lineId}-cert-${paise}`} className={`amt ${pending ? "busy" : ""}`} inputMode="decimal" aria-label="Certified" defaultValue={shown}
+        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+        onBlur={(e) => { if (e.currentTarget.value.trim() !== shown) run(() => A.setCertified(lineId, e.currentTarget.value)); }} />
+      {banner}
+    </>
+  );
+}
+
+/** A tower's construction BUA and design area for this version. */
+export function TowerAreasForm({ versionId, towerId, bua, design, planned }: { versionId: number; towerId: number; bua: number | null; design: number | null; planned: { bua: number | null; design: number | null } }) {
+  const { pending, run, banner } = useAction();
+  const ids = { b: `ta-bua-${towerId}`, d: `ta-design-${towerId}` };
+  return (
+    <>
+      <div className="row">
+        <label>Construction BUA (sft)<input type="number" id={ids.b} defaultValue={bua ?? ""} key={`b${bua}`} placeholder={planned.bua == null ? "" : String(planned.bua)} /></label>
+        <label>Design area (sft)<input type="number" id={ids.d} defaultValue={design ?? ""} key={`d${design}`} placeholder={planned.design == null ? "" : String(planned.design)} /></label>
+        <button disabled={pending} onClick={() => run(() => A.setTowerAreas(versionId, towerId, value(ids.b), value(ids.d)))}>Save areas</button>
+      </div>
+      {banner}
+    </>
+  );
+}
+
+/** One supporting schedule: rows of quantity × rate × % × periods (or a typed amount); its total is the line's CTC. */
+export function ScheduleEditor({ s, editable }: {
+  s: { id: number; title: string; note: string | null; rows: { row_id: number; sort: number; label: string; qty: number | null; rate: number | null; pct: number; periods: number; typed_paise: number | null; amount_paise: number; remark: string | null }[] };
+  editable: boolean;
+}) {
+  const { pending, run, banner } = useAction();
+  const [confirm, setConfirm] = useState(false);
+  const rupees = (p: number) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(Number(p) / 100);
+  const total = s.rows.reduce((t, r) => t + Number(r.amount_paise), 0);
+  const f = (k: string, rid: number | "new") => `sr-${s.id}-${rid}-${k}`;
+  const read = (rid: number | "new"): A.ScheduleRowInput => ({
+    label: value(f("label", rid)), qty: value(f("qty", rid)), rate: value(f("rate", rid)), pct: value(f("pct", rid)),
+    periods: value(f("periods", rid)), amount: value(f("amount", rid)), remark: value(f("remark", rid)),
+  });
+  const n = (v: number | null | undefined) => (v == null ? "" : String(Number(v)));
+  const cells = (rid: number | "new", r?: (typeof s.rows)[number]) => <>
+    <td><input type="text" id={f("label", rid)} defaultValue={r?.label ?? ""} aria-label="Item" placeholder={rid === "new" ? "New row" : ""} /></td>
+    <td className="n"><input type="text" className="amt" id={f("qty", rid)} defaultValue={n(r?.qty)} aria-label="Quantity" /></td>
+    <td className="n"><input type="text" className="amt" id={f("rate", rid)} defaultValue={n(r?.rate)} aria-label="Rate" /></td>
+    <td className="n"><input type="text" className="amt" style={{ width: 60 }} id={f("pct", rid)} defaultValue={r ? n(r.pct) : "100"} aria-label="Percent" /></td>
+    <td className="n"><input type="text" className="amt" style={{ width: 60 }} id={f("periods", rid)} defaultValue={r ? n(r.periods) : "1"} aria-label="Periods" /></td>
+    <td className="n"><input type="text" className="amt" id={f("amount", rid)} defaultValue={r?.typed_paise == null ? "" : String(Number(r.typed_paise) / 100)} aria-label="Typed amount" placeholder="calculate" /></td>
+  </>;
+  return (
+    <>
+      {banner}
+      <div className="scroll"><table><thead><tr><th>Item</th><th className="n">Quantity</th><th className="n">Rate (₹)</th><th className="n">%</th><th className="n">Periods</th>
+        {editable && <th className="n">Typed amount (₹)</th>}<th className="n">Amount (₹)</th><th>Remark</th>{editable && <th></th>}</tr></thead><tbody>
+        {s.rows.map((r) => editable ? (
+          <tr key={`${r.row_id}-${r.amount_paise}-${r.label}`}>{cells(r.row_id, r)}<td className="n">{rupees(r.amount_paise)}</td>
+            <td><input type="text" className="rem" id={f("remark", r.row_id)} defaultValue={r.remark ?? ""} aria-label="Row remark" /></td>
+            <td><button disabled={pending} onClick={() => run(() => A.saveScheduleRow(s.id, r.row_id, r.sort, read(r.row_id)))}>Save</button>
+              <button className="link" disabled={pending} onClick={() => run(() => A.deleteScheduleRow(r.row_id))}>Remove</button></td></tr>
+        ) : (
+          <tr key={r.row_id}><td>{r.label}</td><td className="n">{n(r.qty)}</td><td className="n">{n(r.rate)}</td><td className="n">{n(r.pct)}</td><td className="n">{n(r.periods)}</td>
+            <td className="n">{rupees(r.amount_paise)}</td><td>{r.remark}</td></tr>
+        ))}
+        {editable && <tr key={`new-${s.rows.length}`}>{cells("new")}<td></td><td><input type="text" className="rem" id={f("remark", "new")} aria-label="Row remark" /></td>
+          <td><button disabled={pending} onClick={() => run(() => A.saveScheduleRow(s.id, null, (s.rows[s.rows.length - 1]?.sort ?? 0) + 1, read("new")))}>Add row</button></td></tr>}
+        <tr className="total"><td colSpan={editable ? 6 : 5}>Total = CTC of the line</td><td className="n">{rupees(total)}</td><td>{fmt(total / 1e9)} Cr</td>{editable && <td></td>}</tr>
+      </tbody></table></div>
+      {editable && <div className="row">
+        <button className="danger" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(() => A.deleteSchedule(s.id)); }}>{confirm ? "Click again to remove the schedule" : "Remove schedule"}</button>
+        <span className="note">Removing it keeps the line&apos;s last CTC, which can then be typed again.</span></div>}
     </>
   );
 }
@@ -283,6 +551,55 @@ export function EntryForm({ projectId, heads, towers, month, customFields = [], 
       {banner}
     </>
   );
+}
+
+/** A bill: vendor, number, date, work order and GST, split over one or more cost heads and towers. */
+export function BillForm({ projectId, heads, towers, date }: { projectId: number; heads: { id: number; label: string }[]; towers: { id: number; name: string }[]; date: string }) {
+  const { pending, run, banner, setNotice } = useAction();
+  const [rows, setRows] = useState([0]);
+  const [amounts, setAmounts] = useState<Record<number, string>>({});
+  const [form, setForm] = useState(0);
+  const basic = rows.reduce((t, k) => t + (Number((amounts[k] ?? "").replace(/,/g, "")) || 0), 0);
+  const inr = (n: number) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(n);
+  const save = () => {
+    const bill = { vendor: value("bill-vendor"), billNo: value("bill-no"), date: value("bill-date"), workOrder: value("bill-wo"), gst: value("bill-gst"), note: value("bill-note") };
+    const splits = rows.map((k) => ({ head: Number(value(`bill-head-${k}`)), tower: value(`bill-tower-${k}`) ? Number(value(`bill-tower-${k}`)) : null, amount: amounts[k] ?? "" }));
+    run(() => A.addBill(projectId, bill, splits), () => {
+      setNotice(`Bill ${bill.billNo} of ${bill.vendor} recorded: ₹${inr(basic)} over ${splits.filter((s) => s.amount.trim()).length} cost head(s)`);
+      setRows([0]); setAmounts({}); setForm(form + 1);
+    });
+  };
+  return (
+    <div key={form}>
+      <div className="row">
+        <label style={{ flex: 1, minWidth: 200 }}>Vendor<input type="text" id="bill-vendor" /></label>
+        <label>Bill number<input type="text" id="bill-no" /></label>
+        <label>Bill date<input type="date" id="bill-date" defaultValue={date} /></label>
+        <label>Work order / PO<input type="text" id="bill-wo" /></label>
+        <label>GST on the bill (₹)<input type="text" inputMode="decimal" id="bill-gst" placeholder="0" /></label>
+      </div>
+      <div className="scroll"><table><thead><tr><th>Cost head</th><th>Tower</th><th className="n">Basic amount (₹)</th><th></th></tr></thead><tbody>
+        {rows.map((k) => <tr key={k}>
+          <td><select id={`bill-head-${k}`} aria-label="Split cost head">{heads.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}</select></td>
+          <td><select id={`bill-tower-${k}`} aria-label="Split tower"><option value="">Not split by tower</option>{towers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></td>
+          <td className="n"><input type="text" inputMode="decimal" className="amt" aria-label="Split amount" value={amounts[k] ?? ""} onChange={(e) => setAmounts({ ...amounts, [k]: e.target.value })} /></td>
+          <td>{rows.length > 1 && <button className="link" onClick={() => setRows(rows.filter((x) => x !== k))}>Remove</button>}</td>
+        </tr>)}
+        <tr className="total"><td colSpan={2}>Basic amount of the bill <button className="link" onClick={() => setRows([...rows, Math.max(...rows) + 1])}>Add a split</button></td><td className="n">{inr(basic)}</td><td></td></tr>
+      </tbody></table></div>
+      <div className="row">
+        <label style={{ flex: 1, minWidth: 240 }}>Note<input type="text" id="bill-note" /></label>
+        <button className="primary" disabled={pending} onClick={save}>Record bill</button>
+      </div>
+      {banner}
+    </div>
+  );
+}
+
+export function DeleteBill({ id }: { id: number }) {
+  const { pending, run, banner } = useAction();
+  const [confirm, setConfirm] = useState(false);
+  return <>{banner}<button className="link" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(() => A.deleteBill(id)); }}>{confirm ? "Click again to delete" : "Delete"}</button></>;
 }
 
 export function DeleteEntry({ id }: { id: number }) {
@@ -423,5 +740,19 @@ export function NewProjectForm({ projects }: { projects: { id: number; name: str
       </div>
       {banner}
     </>
+  );
+}
+
+// ---------- budget summary ----------
+export function WriteSummaryButton({ projectId, versionNumber, again }: { projectId: number; versionNumber: number; again: boolean }) {
+  const { pending, run, banner, setNotice } = useAction();
+  return (
+    <div className="row">
+      <button className="primary" disabled={pending} onClick={() => run(() => writeBudgetSummary(projectId, versionNumber),
+        (r) => setNotice(r.provider === "rules" ? "Summary written by rule: no AI is set up, or the AI's text used a figure that is not in the budget." : "Summary written."))}>
+        {pending ? "Writing…" : again ? "Write it again" : "Write the summary"}
+      </button>
+      {banner}
+    </div>
   );
 }

@@ -44,12 +44,18 @@ const TABS: Record<string, Tab[]> = {
     { label: "My Work", href: "/meet/my-work", icon: CheckCircle2, match: (p) => p.startsWith("/meet/my-work") },
     { label: "Calendar", href: "/meet/calendar", icon: Calendar, match: (p) => p.startsWith("/meet/calendar") },
   ],
-  budget: [
-    { label: "Projects", href: "/budget", icon: Wallet, match: (p) => p === "/budget" || /^\/budget\/\d+/.test(p) },
-    { label: "Access", href: "/budget/admin/access", icon: Settings2, match: (p) => p.startsWith("/budget/admin/access") },
-    { label: "Fields", href: "/budget/admin/fields", icon: Layers, match: (p) => p.startsWith("/budget/admin/fields") },
-  ],
 };
+
+function getBudgetTabs(projectId?: string | null): Tab[] {
+  const p = projectId ? `/budget/${projectId}` : "/budget";
+  return [
+    { label: "Projects", href: "/budget", icon: FolderKanban, match: (path) => path === "/budget" },
+    { label: "Overview", href: `${p}/overview`, icon: LayoutDashboard, match: (path) => path.endsWith("/overview") },
+    { label: "Entry", href: `${p}/entry`, icon: Layers, match: (path) => path.endsWith("/entry") || path.endsWith("/import") || path.endsWith("/compare") },
+    { label: "Reports", href: `${p}/summary`, icon: LineChart, match: (path) => path.endsWith("/summary") || path.endsWith("/detail") || path.endsWith("/periods") || path.endsWith("/incurred") },
+    { label: "Setup", href: `${p}/setup`, icon: Settings2, match: (path) => path.endsWith("/setup") || path.startsWith("/budget/admin") },
+  ];
+}
 
 export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
   const [mounted, setMounted] = React.useState(false);
@@ -73,7 +79,18 @@ export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu
       else key = "task";
     }
   }
-  const tabs = TABS[key];
+
+  let budgetPid: string | null = null;
+  if (key === "budget") {
+    const bm = pathname.match(/^\/budget\/(\d+)/);
+    if (bm) budgetPid = bm[1];
+    else if (typeof document !== "undefined") {
+      const cm = document.cookie.match(/(?:^|; )active_budget_project=([^;]*)/);
+      if (cm) budgetPid = decodeURIComponent(cm[1]);
+    }
+  }
+
+  const tabs = key === "budget" ? getBudgetTabs(budgetPid) : TABS[key];
 
   const item = "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-[11px] transition-colors";
 

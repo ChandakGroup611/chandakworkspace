@@ -263,21 +263,55 @@ const meetNavGroups: NavGroup[] = [
   }
 ];
 
-const budgetNavGroups: NavGroup[] = [
-  {
-    label: "Organization budget",
-    items: [
-      { label: "Projects and budgets", href: "/budget", icon: Wallet },
-    ]
-  },
-  {
-    label: "Budget settings",
-    items: [
-      { label: "Access, roles and rights", href: "/budget/admin/access", icon: Key },
-      { label: "Custom fields and forms", href: "/budget/admin/fields", icon: Settings2 },
-    ]
+function getActiveBudgetProject(pathname: string): string | null {
+  const m = pathname.match(/^\/budget\/(\d+)/);
+  if (m) return m[1];
+  if (typeof document !== "undefined") {
+    const cookieMatch = document.cookie.match(/(?:^|; )active_budget_project=([^;]*)/);
+    if (cookieMatch) return decodeURIComponent(cookieMatch[1]);
   }
-];
+  return null;
+}
+
+function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
+  const p = projectId ? `/budget/${projectId}` : "/budget";
+  return [
+    {
+      label: "Budget planning",
+      items: [
+        { label: "All projects", href: "/budget", icon: FolderKanban },
+        { label: "Overview", href: `${p}/overview`, icon: LayoutDashboard },
+        { label: "Budget entry", href: `${p}/entry`, icon: Layers },
+        { label: "Import from Excel", href: `${p}/import`, icon: Package },
+        { label: "Compare versions", href: `${p}/compare`, icon: RotateCcw },
+      ]
+    },
+    {
+      label: "Reports and actuals",
+      items: [
+        { label: "Summary report", href: `${p}/summary`, icon: LineChart },
+        { label: "Detail report", href: `${p}/detail`, icon: FileText },
+        { label: "Periodic breakdown", href: `${p}/periods`, icon: Clock },
+        { label: "Cost incurred", href: `${p}/incurred`, icon: CheckCircle2 },
+      ]
+    },
+    {
+      label: "Masters and setup",
+      items: [
+        {
+          label: "Masters setup",
+          href: `${p}/setup`,
+          icon: Settings2,
+          subItems: [
+            { label: "Towers & set-up", href: `${p}/setup` },
+            { label: "Access, roles & rights", href: "/budget/admin/access" },
+            { label: "Custom fields & forms", href: "/budget/admin/fields" },
+          ]
+        }
+      ]
+    }
+  ];
+}
 
 /* ---------- active-route rules (same behaviour as v1, pulled out of the render loop) ---------- */
 function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchParams | null) {
@@ -285,12 +319,18 @@ function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchPa
   switch (item.href) {
     case "/": return pathname === "/";
     case "/meet": return pathname === "/meet";
-    case "/budget": return pathname === "/budget" || /^\/budget\/\d+/.test(pathname);
+    case "/budget": return pathname === "/budget";
     case "/design/matrix": return ["/design", "/design/matrix", "/design/dashboard"].includes(pathname);
     case "/vehicle": return pathname === "/vehicle" || pathname === "/vehicle/dashboard";
     case "/design/masters":
       return ["/design/masters", "/design/projects", "/design/sub-projects", "/design/categories", "/design/packages", "/design/sub-packages", "/design/authorities", "/design/templates"].includes(pathname);
-    default: return pathname === item.href || pathname.startsWith(item.href + "/");
+    default:
+      if (/^\/budget\/\d+\//.test(pathname) && /^\/budget\/\d+\//.test(item.href)) {
+        const pathAction = pathname.replace(/^\/budget\/\d+\//, "");
+        const itemAction = item.href.replace(/^\/budget\/\d+\//, "");
+        return pathAction === itemAction;
+      }
+      return pathname === item.href || pathname.startsWith(item.href + "/");
   }
 }
 
@@ -305,6 +345,11 @@ function isSubActive(href: string, pathname: string, sp: URLSearchParams | null)
   if (href === "/workspaces/tasks") return pathname === href && !ws;
   if (href === "/workspaces") return pathname === href || (pathname === "/workspaces/tasks" && !!ws);
   if (href === "/design/projects") return pathname === href || pathname === "/design/masters";
+  if (/^\/budget\/\d+\//.test(pathname) && /^\/budget\/\d+\//.test(href)) {
+    const pathAction = pathname.replace(/^\/budget\/\d+\//, "");
+    const hrefAction = href.replace(/^\/budget\/\d+\//, "");
+    return pathAction === hrefAction;
+  }
   return pathname === href;
 }
 
@@ -316,7 +361,10 @@ function getActiveModuleCookie(): string | null {
 
 function useModuleContext(pathname: string) {
   return useMemo(() => {
-    if (pathname.startsWith("/budget")) return { code: "ORG_BUDGET", groups: budgetNavGroups, home: "/budget" };
+    if (pathname.startsWith("/budget")) {
+      const pId = getActiveBudgetProject(pathname);
+      return { code: "ORG_BUDGET", groups: getBudgetNavGroups(pId), home: "/budget" };
+    }
     if (pathname.startsWith("/meet")) return { code: "CHANDAK_MEET", groups: meetNavGroups, home: "/meet" };
     if (pathname.startsWith("/vehicle")) return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
     if (pathname.startsWith("/design")) return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
@@ -326,7 +374,10 @@ function useModuleContext(pathname: string) {
     if (pathname.startsWith("/settings") || pathname === "/profile") {
       const activeCookie = getActiveModuleCookie();
       if (activeCookie === "CHANDAK_MEET") return { code: "CHANDAK_MEET", groups: meetNavGroups, home: "/meet" };
-      if (activeCookie === "ORG_BUDGET") return { code: "ORG_BUDGET", groups: budgetNavGroups, home: "/budget" };
+      if (activeCookie === "ORG_BUDGET") {
+        const pId = getActiveBudgetProject(pathname);
+        return { code: "ORG_BUDGET", groups: getBudgetNavGroups(pId), home: "/budget" };
+      }
       if (activeCookie === "VEHICLE_DESK") return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
       if (activeCookie === "DESIGN_TRACKING") return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
       if (activeCookie === "DASHBOARDS") return { code: "DASHBOARDS", groups: dashboardsNavGroups, home: "/dashboards" };
@@ -407,6 +458,14 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
     setHoverOpen(false);
     onCloseMobile?.();
   }, [pathname, navGroups]);
+
+  // synchronize active budget project cookie
+  useEffect(() => {
+    const m = pathname.match(/^\/budget\/(\d+)/);
+    if (m && typeof document !== "undefined") {
+      document.cookie = `active_budget_project=${m[1]}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+  }, [pathname]);
 
   /* ---------- permissions (unchanged from v1) ---------- */
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();

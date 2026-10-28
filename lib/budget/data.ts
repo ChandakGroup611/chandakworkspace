@@ -12,9 +12,13 @@ export interface Me {
 }
 export interface Project { id: number; code: string; name: string; location: string | null; fy_start_month: number }
 export interface Version {
-  id: number; project_id: number; number: number; as_on: string; status: "draft" | "approved"; reason: string | null;
+  id: number; project_id: number; number: number; as_on: string; status: "draft" | "in_review" | "approved"; reason: string | null;
   parent_id: number | null; areas: Areas; category_reasons: Record<string, string>; prepared_by: string | null;
   approved_by: string | null; approved_at: string | null;
+  /** Remark per department id, kept per version. */
+  department_remarks: Record<string, string>;
+  /** Per tower id: the OC date as revised in this version and why it moved; construction BUA and design area for the version. */
+  tower_notes: Record<string, { oc_date?: string; reason?: string; bua?: number; design_area?: number }>;
 }
 export interface Areas {
   total_carpet?: number | null; sold_area?: number | null; eng_area?: number | null; design_area?: number | null;
@@ -34,6 +38,11 @@ export interface LineFigure {
   balance_cr: number; variance_cr: number; util_pct: number | null; psf_initial: number | null; psf_ctc: number | null;
   initial_calculated: boolean; ctc_calculated: boolean; incurred_source: string; over_budget: boolean; remark: string | null;
   source: "excel" | "manual"; import_id: number | null;
+  /** Memo item: shown for reference, outside every total. */
+  is_memo: boolean;
+  /** How CTC is set: typed, rate × area, balance of a total, or the GST rule. */
+  ctc_rule: "typed" | "rate" | "balance" | "tax";
+  ctc_rate: number | null; ctc_basis: string | null; balance_of_paise: number | null; balance_scope: "category" | "department" | null;
 }
 export interface Line {
   id: number; cost_head_id: number; subproject_id: number | null; initial_paise: number | null; ctc_paise: number | null;
@@ -68,7 +77,7 @@ export async function getProjects(sb: Db) {
   return must(await sb.from("budget_projects").select("id, code, name, location, fy_start_month").order("name")) as Project[];
 }
 export async function getVersions(sb: Db, projectId?: number) {
-  let q = sb.from("budget_versions").select("id, project_id, number, as_on, status, reason, parent_id, areas, category_reasons, prepared_by, approved_by, approved_at");
+  let q = sb.from("budget_versions").select("id, project_id, number, as_on, status, reason, parent_id, areas, category_reasons, prepared_by, approved_by, approved_at, department_remarks, tower_notes");
   if (projectId != null) q = q.eq("project_id", projectId);
   return must(await q.order("number")) as Version[];
 }
@@ -126,9 +135,19 @@ export async function getVersionAreas(sb: Db, versionId: number) {
     { total_carpet: number | null; commitments: number; net_sale_carpet: number | null; sold_area: number | null; eng_area: number | null; design_area: number | null; sale_value_cr: number | null } | null;
 }
 export async function getEntries(sb: Db, projectId: number) {
-  return must(await sb.from("budget_incurred_entries").select("id, cost_head_id, subproject_id, month, amount_paise, reference, entered_by, source")
+  return must(await sb.from("budget_incurred_entries").select("id, cost_head_id, subproject_id, month, amount_paise, reference, entered_by, source, bill_id")
     .eq("project_id", projectId).order("month", { ascending: false }).order("id", { ascending: false })) as
-    { id: number; cost_head_id: number; subproject_id: number | null; month: string; amount_paise: number; reference: string | null; entered_by: string | null; source: string }[];
+    { id: number; cost_head_id: number; subproject_id: number | null; month: string; amount_paise: number; reference: string | null; entered_by: string | null; source: string; bill_id: number | null }[];
+}
+
+/** A bill and its basic amount (the sum of its splits over cost heads), GST and total. */
+export interface Bill {
+  bill_id: number; vendor: string; bill_no: string; bill_date: string; work_order: string | null; gst_paise: number; note: string | null;
+  entered_by: string | null; basic_paise: number; total_paise: number; splits: number;
+}
+export async function getBills(sb: Db, projectId: number) {
+  return must(await sb.from("budget_bill_figures").select("bill_id, vendor, bill_no, bill_date, work_order, gst_paise, note, entered_by, basic_paise, total_paise, splits")
+    .eq("project_id", projectId).order("bill_date", { ascending: false }).order("bill_id", { ascending: false })) as Bill[];
 }
 export async function getChangesNeedingRemark(sb: Db, versionId: number) {
   return must(await sb.rpc("budget_changes_needing_remark", { p_version: versionId })) as
@@ -141,6 +160,70 @@ export async function getCompare(sb: Db, from: number, to: number) {
     to_remark: string | null; change: "added" | "removed" | "changed" | "same";
   }[];
 }
+// ---------- sign-off ----------
+export interface SignoffLevel { id: number; project_id: number | null; sort: number; title: string; approver_ids: string[]; active: boolean }
+export interface SignoffStep { level_id: number; sort: number; title: string; approver_ids: string[]; signed_by: string | null; signed_at: string | null; is_next: boolean }
+export interface SignoffEvent { id: number; level_title: string | null; action: "submitted" | "signed" | "returned" | "recalled"; comment: string | null; user_id: string | null; at: string }
+
+/** Levels this member may see: those for every project and each project's own. */
+export async function getSignoffLevels(sb: Db) {
+  return must(await sb.from("budget_signoff_levels").select("id, project_id, sort, title, approver_ids, active").order("sort").order("id")) as SignoffLevel[];
+}
+/** The levels a project uses: its own when it has any, otherwise those for every project. */
+export const chainOf = (levels: SignoffLevel[], projectId: number) => {
+  const own = levels.filter((l) => l.active && l.project_id === projectId);
+  return own.length ? own : levels.filter((l) => l.active && l.project_id == null);
+};
+export async function getSignoffStatus(sb: Db, versionId: number) {
+  return must(await sb.rpc("budget_signoff_status", { p_version: versionId })) as SignoffStep[];
+}
+export async function getSignoffLog(sb: Db, versionId: number) {
+  return must(await sb.from("budget_signoffs").select("id, level_title, action, comment, user_id, at").eq("version_id", versionId).order("id")) as SignoffEvent[];
+}
+export async function getMySignoffs(sb: Db) {
+  return must(await sb.rpc("budget_my_signoffs")) as { project_id: number; project: string; version_id: number; number: number; as_on: string; level: string }[];
+}
+/** Each tower's OC date in a version against the previous version, with the reason it moved. */
+export async function getOcMoves(sb: Db, versionId: number) {
+  return must(await sb.rpc("budget_oc_moves", { p_version: versionId })) as
+    { tower_id: number; name: string; planned: string | null; oc_date: string | null; previous: string | null; moved: boolean; reason: string | null }[];
+}
+
+// ---------- tower workings ----------
+export interface TowerArea { version_id: number; tower_id: number; name: string; type: string | null; sort: number; bua: number | null; design_area: number | null; planned_bua: number | null; planned_design_area: number | null }
+export interface TowerWorking {
+  version_id: number; tower_id: number; line_id: number; cost_head_id: number; department: string; department_sort: number; category: string; sub_category: string | null;
+  cost_head_sort: number; is_tax: boolean; is_memo: boolean; ctc_paise: number; incurred_paise: number; certified_paise: number | null; to_certify_paise: number;
+  rate_psf: number | null; remark: string | null;
+}
+export interface AllocationCheck {
+  version_id: number; cost_head_id: number; department: string; department_sort: number; category: string; sub_category: string | null; cost_head_sort: number;
+  total_paise: number; allocated_paise: number; unallocated_paise: number; towers: number;
+}
+export async function getTowerAreas(sb: Db, versionId: number) {
+  return must(await sb.from("budget_tower_areas").select("*").eq("version_id", versionId).order("sort").order("tower_id")) as TowerArea[];
+}
+export async function getTowerWorkings(sb: Db, versionId: number) {
+  return must(await sb.from("budget_tower_workings").select("*").eq("version_id", versionId)
+    .order("department_sort").order("cost_head_sort").order("line_id")) as TowerWorking[];
+}
+export async function getAllocationCheck(sb: Db, versionId: number) {
+  return must(await sb.from("budget_allocation_check").select("*").eq("version_id", versionId).order("department_sort").order("cost_head_sort")) as AllocationCheck[];
+}
+
+// ---------- supporting schedules ----------
+export interface ScheduleRow { row_id: number; schedule_id: number; sort: number; label: string; qty: number | null; rate: number | null; pct: number; periods: number; typed_paise: number | null; amount_paise: number; remark: string | null }
+export interface Schedule { id: number; version_id: number; line_id: number; title: string; note: string | null; rows: ScheduleRow[] }
+/** Schedules of a version with their rows (amounts worked out by budget_schedule_figures). */
+export async function getSchedules(sb: Db, versionId: number) {
+  const [s, r] = await Promise.all([
+    sb.from("budget_schedules").select("id, version_id, line_id, title, note").eq("version_id", versionId).order("id"),
+    sb.from("budget_schedule_figures").select("*").eq("version_id", versionId).order("sort").order("row_id"),
+  ]);
+  const rows = must(r) as ScheduleRow[];
+  return (must(s) as Omit<Schedule, "rows">[]).map((x) => ({ ...x, rows: rows.filter((y) => y.schedule_id === x.id) })) as Schedule[];
+}
+
 export async function getIncurredByPeriod(sb: Db, projectId: number, grain: string) {
   return must(await sb.rpc("budget_incurred_by_period", { p_project: projectId, p_grain: grain })) as
     { category: string; period: string; period_start: string; amount_cr: number }[];
@@ -158,6 +241,7 @@ export function can(me: Me | null, permission: Permission, projectId?: number | 
   if (departmentId != null && me.department_ids && !me.department_ids.includes(departmentId)) return false;
   return true;
 }
+/** May approve the draft directly, or submit it for sign-off when the project has a chain. */
 export const canApprove = (me: Me | null, v: Version) =>
   !!me && v.status === "draft" && ((v.prepared_by === me.user_id && can(me, "version.approve", v.project_id)) || can(me, "version.override", v.project_id));
 export const canChangeDraft = (me: Me | null, v: Version) =>

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import * as D from "@/lib/budget/data";
 import { AccessSettings, FieldSettings } from "../../_components/admin";
@@ -14,12 +14,10 @@ export default async function Settings({ params }: { params: Promise<{ section: 
   const { sb, me, block } = await loadSession();
   if (block || !me) return block;
   const projects = await D.getProjects(sb);
-  const nav = (
-    <nav className="admin-nav" aria-label="Settings">
-      {D.can(me, "access.manage") && <Link href="/budget/admin/access" aria-current={section === "access" ? "page" : undefined}>Access: roles, rights and members</Link>}
-      {D.can(me, "fields.manage") && <Link href="/budget/admin/fields" aria-current={section === "fields" ? "page" : undefined}>Custom fields and forms</Link>}
-    </nav>
-  );
+  const cookieStore = await cookies();
+  const activeProjectId = cookieStore.get("active_budget_project")?.value;
+  const currentProject = projects.find((p) => String(p.id) === activeProjectId) ?? projects[0] ?? null;
+
   let body: React.ReactNode;
   if (section === "access") {
     if (!D.can(me, "access.manage")) body = <Notice>You do not have the right to manage access.</Notice>;
@@ -36,5 +34,5 @@ export default async function Settings({ params }: { params: Promise<{ section: 
     const [fields, access] = await Promise.all([D.getAllCustomFields(sb), D.getAccess(sb)]);
     body = <FieldSettings fields={fields} projects={projects.map((p) => ({ id: p.id, name: p.name }))} permissions={access.permissions} />;
   }
-  return <Shell me={me} projects={projects} project={null} versions={[]} version={null} tab="home">{nav}{body}</Shell>;
+  return <Shell me={me} projects={projects} project={currentProject} versions={[]} version={null} tab={section}>{body}</Shell>;
 }

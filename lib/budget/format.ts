@@ -39,3 +39,10 @@ export const BUILDING_TYPES = [
   "Sales Building", "Society Building", "Rehab Building", "Common Infra", "MHADA Building",
   "Reservation Building", "Open Space Area / MCGM", "School / Other Building",
 ];
+
+/** Areas a line's rate (₹ per sq ft) can apply to: keys of the version's areas, plus the net sale carpet area. */
+export const RATE_BASES: [string, string][] = [
+  ["eng_area", "Construction area (Engg)"], ["design_area", "Construction area (Design)"], ["total_carpet", "Total carpet area"],
+  ["net_sale_carpet", "Net sale carpet area"], ["sold_area", "Sold area"], ["residential_area", "Residential area"],
+  ["commercial_area", "Commercial area"], ["retail_area", "Retail area"], ["society_sale_area", "Society sale area"],
+];

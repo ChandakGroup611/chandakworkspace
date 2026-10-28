@@ -1,7 +1,8 @@
 import type { LineFigure } from "./data";
 
 // Groups the database's line figures into Department > Category > line, as on the detail format.
-// Group totals add up figures already calculated per line by budget_line_figures.
+// Group totals add up figures already calculated per line by budget_line_figures. Memo items are kept
+// apart: they are listed for reference and stay out of every total.
 
 export interface Figures {
   initial_cr: number; ctc_cr: number; incurred_cr: number; balance_cr: number; variance_cr: number;
@@ -13,6 +14,7 @@ export interface DepartmentGroup { sr: number; department: string; department_id
 export function addUp(lines: LineFigure[], engArea: number | null | undefined): Figures {
   let initial = 0, ctc = 0, incurred = 0;
   for (const l of lines) {
+    if (l.is_memo) continue;
     initial += Number(l.initial_paise);
     ctc += Number(l.ctc_paise);
     incurred += Number(l.incurred_paise);
@@ -30,6 +32,7 @@ export function addUp(lines: LineFigure[], engArea: number | null | undefined): 
 export function groupDetail(figs: LineFigure[], engArea: number | null | undefined) {
   const depts = new Map<number, LineFigure[]>();
   for (const f of figs) {
+    if (f.is_memo) continue;
     if (!depts.has(f.department_id)) depts.set(f.department_id, []);
     depts.get(f.department_id)!.push(f);
   }
@@ -48,5 +51,5 @@ export function groupDetail(figs: LineFigure[], engArea: number | null | undefin
       })),
     });
   }
-  return { departments: out, total: addUp(figs, engArea) };
+  return { departments: out, total: addUp(figs, engArea), memo: figs.filter((f) => f.is_memo) };
 }

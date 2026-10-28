@@ -31,6 +31,142 @@ export async function updateLine(lineId: number, field: "initial" | "ctc" | "rem
   return { ok: true };
 }
 
+// How a line's CTC is set: typed, rate (₹ per sq ft) × an area of the version, the balance of a total
+// (total less the other lines of its category or department), or a memo item outside every total.
+export type LineRule =
+  | { kind: "typed" } | { kind: "memo" }
+  | { kind: "rate"; rate: string; basis: string }
+  | { kind: "balance"; total: string; scope: "category" | "department" };
+
+export async function setLineRule(lineId: number, rule: LineRule): Promise<Result> {
+  const patch: Record<string, unknown> = { ctc_rate: null, ctc_basis: null, balance_of_paise: null, balance_scope: null, is_memo: rule.kind === "memo" };
+  if (rule.kind === "rate") {
+    const rate = rule.rate.replace(/,/g, "").trim();
+    if (!AMOUNT.test(rate)) return fail("Type the rate in rupees per sq ft, for example 250");
+    if (!/^[a-z_]{1,40}$/.test(rule.basis)) return fail("Choose the area the rate applies to");
+    Object.assign(patch, { ctc_rate: Number(rate), ctc_basis: rule.basis });
+  } else if (rule.kind === "balance") {
+    const total = rule.total.replace(/,/g, "").trim();
+    if (!AMOUNT.test(total)) return fail("Type the total in crores, for example 45");
+    Object.assign(patch, { balance_of_paise: BudgetImporter.paiseFromCr(total), balance_scope: rule.scope });
+  }
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_lines").update(patch).eq("id", lineId).select("id");
+  if (error) return fail(error);
+  if (!data?.length) return fail("You cannot change this line");
+  refresh();
+  return { ok: true };
+}
+
+export async function setDepartmentRemark(versionId: number, departmentId: number, text: string): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_set_department_remark", { p_version: versionId, p_department: departmentId, p_text: text });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+export async function setTowerNote(versionId: number, towerId: number, ocDate: string, reason: string): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_set_tower_note", { p_version: versionId, p_tower: towerId, p_oc_date: ocDate || null, p_reason: reason });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+/** Amount certified by billing on a line, in crores (blank clears it). */
+export async function setCertified(lineId: number, raw: string): Promise<Result> {
+  const text = raw.replace(/,/g, "").trim();
+  if (text !== "" && !AMOUNT.test(text)) return fail("Type the certified amount in crores, for example 12.5");
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_lines").update({ certified_paise: text === "" ? null : BudgetImporter.paiseFromCr(text) }).eq("id", lineId).select("id");
+  if (error) return fail(error);
+  if (!data?.length) return fail("You cannot change this line");
+  refresh();
+  return { ok: true };
+}
+
+/** A tower's construction BUA and design area for this version (sq ft; blank uses the tower's own). */
+export async function setTowerAreas(versionId: number, towerId: number, bua: string, design: string): Promise<Result> {
+  const n = (s: string) => (s.trim() === "" ? null : Number(s.replace(/,/g, "")));
+  if ([bua, design].some((s) => s.trim() !== "" && !(Number(s.replace(/,/g, "")) >= 0))) return fail("Type the areas in sq ft");
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_set_tower_areas", { p_version: versionId, p_tower: towerId, p_bua: n(bua), p_design: n(design) });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+// ---------- supporting schedules ----------
+/** Gives a line a schedule: from now on its CTC is the schedule's total. */
+export async function addSchedule(versionId: number, lineId: number, title: string): Promise<Result> {
+  const sb = await createClient();
+  const { error: e1 } = await sb.from("budget_lines").update({ ctc_rate: null, ctc_basis: null, balance_of_paise: null, balance_scope: null, is_memo: false }).eq("id", lineId);
+  if (e1) return fail(e1);
+  const { data, error } = await sb.from("budget_schedules").insert({ version_id: versionId, line_id: lineId, title: title.trim() || "Working" }).select("id");
+  if (error) return fail(error.code === "23505" ? "This line already has a schedule" : error.message.includes("row-level security") ? "You cannot change this line" : error.message);
+  if (!data?.length) return fail("You cannot change this line");
+  refresh();
+  return { ok: true };
+}
+
+export async function updateSchedule(id: number, patch: { title?: string; note?: string | null }): Promise<Result> {
+  if (patch.title !== undefined && !patch.title.trim()) return fail("Give the schedule a title");
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_schedules").update(patch).eq("id", id).select("id");
+  if (error) return fail(error);
+  if (!data?.length) return fail("You cannot change this schedule");
+  refresh();
+  return { ok: true };
+}
+
+/** Removes the schedule; the line keeps its last CTC and can be typed again. */
+export async function deleteSchedule(id: number): Promise<Result> {
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_schedules").delete().eq("id", id).select("id");
+  if (error) return fail(error);
+  if (!data?.length) return fail("You cannot change this schedule");
+  refresh();
+  return { ok: true };
+}
+
+export interface ScheduleRowInput { label: string; qty: string; rate: string; pct: string; periods: string; amount: string; remark: string }
+/** Adds or changes a schedule row. Numbers as typed (₹ for rate and amount); blank amount = calculate. */
+export async function saveScheduleRow(scheduleId: number, rowId: number | null, sort: number, r: ScheduleRowInput): Promise<Result> {
+  const num = (s: string, name: string, dflt: number | null) => {
+    const t = s.replace(/,/g, "").trim();
+    if (t === "") return dflt;
+    if (!/^-?\d*\.?\d+$/.test(t)) throw new Error(`${name}: type a number`);
+    return Number(t);
+  };
+  let row: Record<string, unknown>;
+  try {
+    const amount = num(r.amount, "Amount", null);
+    row = {
+      schedule_id: scheduleId, sort, label: r.label.trim(), qty: num(r.qty, "Quantity", null), rate: num(r.rate, "Rate", null),
+      pct: num(r.pct, "Percent", 100), periods: num(r.periods, "Periods", 1),
+      amount_paise: amount == null ? null : BudgetImporter.paiseFromInr(String(amount)), remark: r.remark.trim() || null,
+    };
+  } catch (e) {
+    return fail((e as Error).message);
+  }
+  const sb = await createClient();
+  const res = rowId ? await sb.from("budget_schedule_rows").update(row).eq("id", rowId).select("id") : await sb.from("budget_schedule_rows").insert(row).select("id");
+  if (res.error) return fail(res.error.message.includes("row-level security") ? "You cannot change this schedule" : res.error.message);
+  if (!res.data?.length) return fail("You cannot change this schedule");
+  refresh();
+  return { ok: true };
+}
+
+export async function deleteScheduleRow(rowId: number): Promise<Result> {
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_schedule_rows").delete().eq("id", rowId).select("id");
+  if (error) return fail(error);
+  if (!data?.length) return fail("You cannot change this schedule");
+  refresh();
+  return { ok: true };
+}
+
 export async function addTowerLine(versionId: number, headId: number, towerId: number): Promise<Result> {
   const sb = await createClient();
   const { error } = await sb.from("budget_lines").insert({ version_id: versionId, cost_head_id: headId, subproject_id: towerId, initial_paise: 0, ctc_paise: 0 });
@@ -60,6 +196,53 @@ export async function approveVersion(versionId: number): Promise<Result> {
   const sb = await createClient();
   const { error } = await sb.rpc("budget_approve_version", { p_version: versionId });
   if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+// ---------- sign-off ----------
+export async function submitVersion(versionId: number, comment: string): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_submit_version", { p_version: versionId, p_comment: comment });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+export async function signVersion(versionId: number, action: "signed" | "returned", comment: string): Promise<Result<{ outcome: string }>> {
+  const sb = await createClient();
+  const { data, error } = await sb.rpc("budget_sign_version", { p_version: versionId, p_action: action, p_comment: comment });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true, outcome: data as string };
+}
+
+export async function recallVersion(versionId: number): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_recall_version", { p_version: versionId });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+/** A sign-off level: a project's own (project.setup) or for every project (access.manage). */
+export async function saveSignoffLevel(l: { id?: number; project_id: number | null; sort: number; title: string; approver_ids: string[] }): Promise<Result> {
+  if (!l.title.trim()) return fail("Give the level a title, for example Checked by");
+  if (!l.approver_ids.length) return fail("Choose at least one approver for the level");
+  const sb = await createClient();
+  const row = { project_id: l.project_id, sort: l.sort, title: l.title.trim(), approver_ids: l.approver_ids };
+  const res = l.id ? await sb.from("budget_signoff_levels").update(row).eq("id", l.id).select("id") : await sb.from("budget_signoff_levels").insert(row).select("id");
+  if (res.error) return fail(res.error.message.includes("row-level security") ? "You cannot change this sign-off chain" : res.error.message);
+  if (!res.data?.length) return fail("You cannot change this sign-off chain");
+  refresh();
+  return { ok: true };
+}
+
+export async function deleteSignoffLevel(id: number): Promise<Result> {
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_signoff_levels").delete().eq("id", id).select("id");
+  if (error) return fail(error);
+  if (!data?.length) return fail("You cannot change this sign-off chain");
   refresh();
   return { ok: true };
 }
@@ -141,6 +324,39 @@ export async function addEntry(projectId: number, headId: number, towerId: numbe
       return fail(e2);
     }
   }
+  refresh();
+  return { ok: true };
+}
+
+export interface BillInput { vendor: string; billNo: string; date: string; workOrder: string; gst: string; note: string }
+export interface BillSplitInput { head: number; tower: number | null; amount: string }
+const RUPEES = /^-?\d*\.?\d+$/;
+
+/** Records a bill split over one or more cost heads; each split counts as cost incurred in the bill's month. */
+export async function addBill(projectId: number, bill: BillInput, splits: BillSplitInput[]): Promise<Result> {
+  if (!bill.vendor.trim() || !bill.billNo.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(bill.date)) return fail("Enter the vendor, bill number and bill date");
+  const gst = bill.gst.replace(/,/g, "").trim();
+  if (gst && (!RUPEES.test(gst) || gst.startsWith("-"))) return fail("Enter GST in rupees");
+  const used = splits.filter((s) => s.amount.replace(/,/g, "").trim());
+  if (!used.length) return fail("Split the bill over at least one cost head");
+  if (used.some((s) => !RUPEES.test(s.amount.replace(/,/g, "").trim()))) return fail("Enter each split's amount in rupees");
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_add_bill", {
+    p_project: projectId,
+    p_bill: { vendor: bill.vendor, bill_no: bill.billNo, bill_date: bill.date, work_order: bill.workOrder, note: bill.note, gst_paise: gst ? BudgetImporter.paiseFromInr(gst) : 0 },
+    p_splits: used.map((s) => ({ head: s.head, tower: s.tower, amount_paise: BudgetImporter.paiseFromInr(s.amount.replace(/,/g, "").trim()) })),
+  });
+  if (error) return fail(error.message.includes("row-level security") ? "You cannot record cost for one of these departments" : error.message);
+  refresh();
+  return { ok: true };
+}
+
+/** Deletes a bill and its splits. */
+export async function deleteBill(billId: number): Promise<Result> {
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_bills").delete().eq("id", billId).select("id");
+  if (error) return fail(error);
+  if (!data?.length) return fail("You cannot delete this bill: it is split over a department you do not record cost for");
   refresh();
   return { ok: true };
 }
