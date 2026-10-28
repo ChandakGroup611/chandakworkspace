@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import * as D from "@/lib/budget/data";
 import { loadSession } from "../../_components/page-data";
 import { Shell, TABS } from "../../_components/shell";
@@ -16,7 +16,10 @@ export default async function BudgetScreen({ params, searchParams }: {
   const { sb, me, block } = await loadSession();
   if (block || !me) return block;
   const [projects, names] = await Promise.all([D.getProjects(sb), D.getMemberNames(sb)]);
-  const project = projects.find((p) => String(p.id) === projectId);
+  let project = projects.find((p) => String(p.id) === projectId);
+  if (!project && projects.length > 0) {
+    redirect(`/budget/${projects[0].id}/${tab}${search.v ? `?v=${search.v}` : ""}`);
+  }
   if (!project) notFound();
   const versions = await D.getVersions(sb, project.id);
   const version = versions.find((v) => String(v.number) === search.v) ?? versions[versions.length - 1] ?? null;

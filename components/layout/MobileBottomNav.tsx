@@ -47,7 +47,7 @@ const TABS: Record<string, Tab[]> = {
 };
 
 function getBudgetTabs(projectId?: string | null): Tab[] {
-  const p = projectId ? `/budget/${projectId}` : "/budget";
+  const p = `/budget/${projectId && /^\d+$/.test(projectId) ? projectId : "1"}`;
   return [
     { label: "Projects", href: "/budget", icon: FolderKanban, match: (path) => path === "/budget" },
     { label: "Overview", href: `${p}/overview`, icon: LayoutDashboard, match: (path) => path.endsWith("/overview") },

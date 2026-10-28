@@ -3,7 +3,6 @@ import { MODULE_HOME, moduleOfPath, isDeepLink, markModuleChosen, clearModuleCho
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { AppInput } from "@/components/ui/AppInput";
@@ -18,6 +17,7 @@ import {
   Zap
 } from "lucide-react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { LoginScene3D, sceneInk } from "@/components/auth/LoginScene3D";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -305,37 +305,27 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
-      {/* LEFT PANEL - Branding / Image Split */}
-      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-sunken border-r border-border text-foreground">
-        <Image 
-          src="/login-bg.png"
-          alt="Abstract background"
-          fill
-          priority
-          className="object-cover opacity-10 dark:opacity-25 mix-blend-luminosity"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-sunken via-sunken/80 to-sunken/30"></div>
-
-        <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
-          {/* Logo - Pushed to Absolute Top */}
-          <div className="absolute top-8 lg:top-12 left-0 right-0 flex flex-col items-center px-6">
-            <div className="relative w-fit inline-flex py-3.5 px-6 rounded-xl bg-surface border border-border shadow-sm items-center justify-center">
-              <img 
-                src="/Chandak_Group_Official_Logo.png" 
-                alt="Chandak Group official logo" 
-                className="h-14 lg:h-16 w-auto object-contain dark:brightness-0 dark:invert"
-                style={{ imageRendering: "-webkit-optimize-contrast" }}
-              />
-            </div>
+      {/* LEFT PANEL - 3D brand scene (large screens) */}
+      <div className="relative hidden h-full w-1/2 flex-col overflow-hidden border-r border-border lg:flex">
+        <LoginScene3D />
+        <div className="pointer-events-none relative z-10 flex h-full flex-col items-center justify-between p-10 text-center xl:p-14">
+          <div className="inline-flex w-fit items-center justify-center rounded-xl bg-surface px-6 py-3.5 shadow-lg animate-in fade-in-0 slide-in-from-top-3 duration-700">
+            <img
+              src="/Chandak_Group_Official_Logo.png"
+              alt="Chandak Group official logo"
+              className="h-14 w-auto object-contain lg:h-16 dark:brightness-0 dark:invert"
+              style={{ imageRendering: "-webkit-optimize-contrast" }}
+            />
           </div>
-
-          {/* Main Text - Perfectly Centered */}
-          <div className="mt-28 max-w-xl">
-            <h1 className="mb-3 text-[30px] font-semibold leading-tight tracking-[-0.01em] text-heading">
+          <div className="max-w-xl animate-in fade-in-0 slide-in-from-bottom-3 duration-700">
+            <h1 className={`mb-3 text-[32px] font-semibold leading-tight tracking-[-0.01em] ${sceneInk.title}`}>
               Chandak Workspace
             </h1>
-            <p className="mx-auto max-w-md text-[15px] leading-relaxed text-subtle">
+            <p className={`mx-auto max-w-md text-[15px] leading-relaxed ${sceneInk.subtitle}`}>
               Tasks, tickets, requirements, AMC, fleet and design approvals for every Chandak Group team, in one place.
+            </p>
+            <p className={`mt-5 text-[11.5px] font-semibold ${sceneInk.motto}`}>
+              Promises made · Promises kept
             </p>
           </div>
         </div>
@@ -344,16 +334,20 @@ export default function LoginPage() {
       {/* RIGHT PANEL - Authentication Form */}
       <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-background relative text-foreground">
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-24 relative z-10 min-h-full">
-          <div className="w-full max-w-[400px]">
+          <div className="w-full max-w-[400px] animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
             
-            <div className="lg:hidden flex flex-col items-center justify-center mb-8">
-              <div className="relative w-fit inline-flex py-2 px-4 items-center justify-center bg-surface rounded-xl shadow-sm border border-border">
-                <img 
-                  src="/Chandak_Group_Official_Logo.png" 
-                  alt="Chandak Group official logo" 
-                  className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
-                  style={{ imageRendering: "-webkit-optimize-contrast" }}
-                />
+            {/* phones and tablets: compact animated header */}
+            <div className="relative mb-8 lg:hidden">
+              <LoginScene3D variant="compact" />
+              <div className="absolute inset-x-0 top-3 flex justify-center">
+                <div className="inline-flex w-fit items-center justify-center rounded-xl bg-surface px-4 py-2 shadow-md">
+                  <img
+                    src="/Chandak_Group_Official_Logo.png"
+                    alt="Chandak Group official logo"
+                    className="h-9 w-auto object-contain dark:brightness-0 dark:invert"
+                    style={{ imageRendering: "-webkit-optimize-contrast" }}
+                  />
+                </div>
               </div>
             </div>
 

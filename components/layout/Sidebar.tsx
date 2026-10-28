@@ -268,13 +268,15 @@ function getActiveBudgetProject(pathname: string): string | null {
   if (m) return m[1];
   if (typeof document !== "undefined") {
     const cookieMatch = document.cookie.match(/(?:^|; )active_budget_project=([^;]*)/);
-    if (cookieMatch) return decodeURIComponent(cookieMatch[1]);
+    if (cookieMatch && /^\d+$/.test(decodeURIComponent(cookieMatch[1]))) {
+      return decodeURIComponent(cookieMatch[1]);
+    }
   }
-  return null;
+  return "1";
 }
 
 function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
-  const p = projectId ? `/budget/${projectId}` : "/budget";
+  const p = `/budget/${projectId && /^\d+$/.test(projectId) ? projectId : "1"}`;
   return [
     {
       label: "Budget planning",
