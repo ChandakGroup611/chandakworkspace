@@ -1,3 +1,4 @@
+import BudgetLearningGuide from "@/components/budget/BudgetLearningGuide";
 import { notFound, redirect } from "next/navigation";
 import * as D from "@/lib/budget/data";
 import { loadSession } from "../../_components/page-data";
@@ -28,6 +29,7 @@ export default async function BudgetScreen({ params, searchParams }: {
   let body: React.ReactNode;
   if (tab === "import") body = await V.ImportTab(ctx);
   else if (tab === "setup") body = await V.Setup(ctx);
+  else if (tab === "guide") body = <BudgetLearningGuide projectId={project.id} version={version} />;
   else if (tab === "incurred") body = await V.Incurred(ctx);
   else if (tab === "periods") body = await V.Periods(ctx);
   else if (!version) body = V.NoVersion(ctx);

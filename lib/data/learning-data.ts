@@ -20,7 +20,8 @@ import {
   FileText, 
   CheckCircle2, 
   AlertTriangle,
-  Boxes
+  Boxes,
+  LineChart
 } from "lucide-react";
 
 // ==============================================================================
@@ -101,6 +102,46 @@ export type LearningModule = {
 // ==============================================================================
 
 export const ecosystemDependencies: ModuleDependency[] = [
+  {
+    sourceModuleId: "iam_rbac",
+    sourceModuleName: "IAM & Security Governance",
+    targetModuleId: "organization_budget",
+    targetModuleName: "Organization Budget & Cost Control",
+    relationshipType: "ENFORCES_GOVERNANCE_ON",
+    dataTransferred: "User Credentials, Budget Roles (Admin, Editor, Reviewer, Viewer), Department Permissions (Civil, MEP, Sales, etc.)",
+    impactOnSourceChange: "Deactivating a user or modifying their department role instantly blocks them from submitting drafts, recording bills, or modifying department line items.",
+    impactOnTargetChange: "Budget module strictly enforces department-scoped RLS and locks down approval triggers to designated sign-off levels."
+  },
+  {
+    sourceModuleId: "workspaces_masters",
+    sourceModuleName: "Workspaces & Master Entities",
+    targetModuleId: "organization_budget",
+    targetModuleName: "Organization Budget & Cost Control",
+    relationshipType: "PROVIDES_DATA_TO",
+    dataTransferred: "Corporate Entity, Project Container, Department Master, Vendor Directory",
+    impactOnSourceChange: "Creating or updating a vendor syncs immediately to the bill recording register; project renaming updates budget version headers.",
+    impactOnTargetChange: "Budget lines and vendor bills require valid foreign keys to workspace entities."
+  },
+  {
+    sourceModuleId: "design_tracking",
+    sourceModuleName: "Design & Tracking (CAD / Matrix)",
+    targetModuleId: "organization_budget",
+    targetModuleName: "Organization Budget & Cost Control",
+    relationshipType: "SYNCS_METRICS_TO",
+    dataTransferred: "Tower Configurations, Floor Counts, Engineering & Design Built-Up Areas (BUA)",
+    impactOnSourceChange: "Revisions in architectural BUA update rate-per-sqft cost drivers and certified construction balance metrics.",
+    impactOnTargetChange: "Rate × Area formulas (ctc_rate * area) recalculate line CTCs upon BUA sync."
+  },
+  {
+    sourceModuleId: "organization_budget",
+    sourceModuleName: "Organization Budget & Cost Control",
+    targetModuleId: "task_workflow",
+    targetModuleName: "Task & Ticket Management",
+    relationshipType: "TRIGGERS_ACTION_IN",
+    dataTransferred: "Cost Overrun Alerts (>90% CTC, >10% initial baseline delta), Sign-off Escalations",
+    impactOnSourceChange: "Exceeding CTC or delaying sign-offs triggers executive notification tasks for Commercial and Project Directors.",
+    impactOnTargetChange: "Task tickets maintain a back-link foreign key to the budget line ID for rapid variance review."
+  },
   {
     sourceModuleId: "iam_rbac",
     sourceModuleName: "IAM & Security Governance",
@@ -1122,5 +1163,148 @@ export const learningModules: LearningModule[] = [
       { action: "Creation", outcome: "Workspace generated with recursive tree node.", technicalDetail: "Inserts into workspaces table and sets workspace_members." },
       { action: "Member Enrollment", outcome: "Users gain immediate access to workspace tasks.", technicalDetail: "Inserts records into workspace_members linking user UUIDs." }
     ]
-  }
+  },
+  // ----------------------------------------------------------------------------
+  // MODULE: ORGANIZATION BUDGET & COST CONTROL
+  // ----------------------------------------------------------------------------
+  {
+    id: "organization_budget",
+    code: "ORG_BUDGET",
+    title: "Organization Budget & Cost Control",
+    category: "GOVERNANCE",
+    description: "End-to-end capital expenditure tracking, baseline revisions (R1/R2), multi-tier sign-off chains, dynamic line rules, per-tower cost workings, and vendor bill registers.",
+    icon: LineChart,
+    businessPurpose: "Delivers strict capital governance and real-time cost control across real estate developments. Ensures all project commitments (Estimated CTC) are anchored to physical built-up areas (BUA), enforces separation of duties through digital sign-off hierarchies, provides verifiable cost schedules, and prevents contractor over-billing through cumulative certified progress tracking and unique vendor bill ledgers.",
+    databaseTables: [
+      "budget_projects",
+      "budget_versions",
+      "budget_cost_heads",
+      "budget_lines",
+      "budget_towers",
+      "budget_tower_areas",
+      "budget_signoff_levels",
+      "budget_signoffs",
+      "budget_schedules",
+      "budget_schedule_rows",
+      "budget_bills",
+      "budget_incurred_entries",
+      "budget_department_remarks",
+      "budget_summary_notes"
+    ],
+    inflowFromModules: [
+      "IAM & Security Governance (User credentials, Department RBAC, Sign-off level assignments)",
+      "Workspaces & Master Entities (Corporate entities, Department hierarchies, Vendor directory)",
+      "Design & Tracking (Tower configurations, Engineering & Design Built-Up Areas, Floor counts)"
+    ],
+    outflowToModules: [
+      "Task & Ticket Management (Cost overrun escalation tickets, Pending approval reviews)",
+      "Executive Dashboards (Committed CTC vs Incurred variance, Portfolio cash burn)",
+      "Institutional Reporting (Official Chandak Budget Summary & Detail Excel exports, RERA escrow disclosures)"
+    ],
+    rippleImpactSummary: "Modifying physical areas or tower allocations recalculates live ₹/sqft rates across all budget lines. Submitting a version for approval immediately freezes mutations. Modifying a vendor bill updates incurred cost ledgers, period actuals, and variance metrics in real time.",
+    startInfo: {
+      overview: "The Organization Budget module is structured into three primary domains: (1) Budget Planning (Overview, Budget Entry, Tower Workings, Supporting Schedules, Compare Versions), (2) Reports & Actuals (Summary Report, Detail Report, Periodic Breakdown, Cost Incurred / Vendor Bills), and (3) Administration & Setup (Towers & Set-up, Sign-off Chains, Roles & Custom Fields).",
+      navigation: "Main Navigation > Organization Budget (/budget)",
+      prerequisites: [
+        "Budget Module Access in user_modules or SUPER_ADMIN role.",
+        "Pre-configured Project and Tower masters with verified Built-Up Areas.",
+        "Assigned Departmental Permissions (Civil, MEP, Facade, Approvals, Sales, Finance)."
+      ]
+    },
+    crudOperations: [
+      {
+        operation: "CREATE",
+        code: "C",
+        title: "Project, Version, Line & Bill Creation",
+        overview: "Create new Project containers, spawn revision drafts (R1/R2), configure budget lines, construct supporting schedules, or record vendor bills.",
+        navigationPath: "Budget Home > '+ New Project' OR Budget Entry > 'Add Line' OR Cost Incurred > 'Record a Bill'",
+        whoCanPerform: ["SUPER_ADMIN", "BUDGET_ADMIN", "BUDGET_EDITOR (Department-Scoped)", "PREPARER"],
+        requiredInputs: ["Project metadata (Name, Code, Location)", "Version number and as-on date", "Cost Head and Category", "Estimated CTC or Formula Rule", "Vendor Bill details and splits"],
+        systemMutations: [
+          "Inserts rows into budget_projects, budget_versions, budget_lines, budget_bills, etc.",
+          "Initializes budget_version_totals and allocation check views.",
+          "Applies project-level uniqueness on vendor invoices (vendor_name + bill_number).",
+          "Initializes change audit trail."
+        ],
+        safetyAndCascadeRules: "Duplicate project codes or duplicate vendor bill numbers for the same vendor are strictly rejected. Budget lines cannot be added to an approved version."
+      },
+      {
+        operation: "READ",
+        code: "R",
+        title: "Portfolio Overview, Reports & Drill-Downs",
+        overview: "Analyze portfolio-wide budget totals, inspect Summary and Detail reports, review tower construction cost sheets, and drill down from cost incurred figures to vendor bills.",
+        navigationPath: "Budget Navigation > Overview / Summary Report / Detail Report / Tower Workings",
+        whoCanPerform: ["ALL Authenticated Users with Budget Read Scope (Admin, Editor, Reviewer, Viewer)"],
+        requiredInputs: ["Filter: Project ID", "Filter: Revision Number (defaults to latest approved / open draft)"],
+        systemMutations: [
+          "Executes real-time SQL calculation views (budget_version_totals, budget_tower_workings, budget_allocation_check).",
+          "Evaluates dynamic formula rules (Rate × Area, Schedule sums, Balances).",
+          "Populates live ₹/sqft rates based on tower BUA."
+        ],
+        safetyAndCascadeRules: "Department-restricted users only view expenditure lines and remarks belonging to their authorized departments."
+      },
+      {
+        operation: "UPDATE",
+        code: "U",
+        title: "Line Drivers, Schedules, Remarks & Sign-offs",
+        overview: "Update Estimated CTC, configure dynamic line rules (Rate × Area, Schedule), edit supporting schedule rows, provide OC reasons, and advance sequential sign-off tiers.",
+        navigationPath: "Budget Entry > Line Edits OR Schedules > Row Updates OR Setup > Sign-off Actions",
+        whoCanPerform: ["BUDGET_ADMIN", "ASSIGNED_SIGNER (for active level)", "DEPARTMENT_EDITOR (Draft only)"],
+        requiredInputs: ["Revised CTC or rule inputs", "Sign-off Decision (Approve / Reject)", "Mandatory Rejection or OC Movement Reason"],
+        systemMutations: [
+          "Updates line ctc_paise and triggers live total recalculation.",
+          "Submitting draft transitions status to 'submitted' and locks mutations.",
+          "If rejected, records rejection reason and resets draft state.",
+          "If final tier approves, sets status to 'approved' and stamps digital signature block."
+        ],
+        safetyAndCascadeRules: "Approved versions cannot be mutated under any circumstance. To make changes, a new revision draft (R2) must be spawned."
+      },
+      {
+        operation: "DELETE",
+        code: "D",
+        title: "Bill Deletion, Tower & Head Cleanups",
+        overview: "Delete erroneous vendor bills, remove accidental schedule rows, or delete unallocated towers and cost heads.",
+        navigationPath: "Towers & Set-up > Delete Tower/Head OR Cost Incurred > Bill Actions > Delete",
+        whoCanPerform: ["SUPER_ADMIN", "BUDGET_ADMIN", "DEPARTMENT_EDITOR (only if scoped to ALL split departments)"],
+        requiredInputs: ["Entity ID", "Confirmation Challenge"],
+        systemMutations: [
+          "Calls safe PostgreSQL functions: budget_delete_tower, budget_delete_head, or budget_delete_bill.",
+          "Cascade removes child splits in budget_incurred_entries.",
+          "Recalculates version totals and periodic actuals."
+        ],
+        safetyAndCascadeRules: "DELETION REFUSED IF: (1) Tower carries figures in an approved version, (2) Cost head has recorded cost incurred, (3) Cost head has tax heads calculating on it."
+      }
+    ],
+    fields: [
+      { name: "Project ID", dbColumn: "project_id", type: "UUID / FK", isRequired: true, description: "Foreign key anchoring the entity to its project container.", purpose: "Multi-tenant project boundary.", foreignKeyRelation: "budget_projects.id" },
+      { name: "Revision Number", dbColumn: "number", type: "Number", isRequired: true, description: "Sequential revision tag (1 for R1, 2 for R2, etc.).", purpose: "Version control and baseline comparison.", foreignKeyRelation: "budget_versions.number" },
+      { name: "Estimated CTC (Paise)", dbColumn: "ctc_paise", type: "Number", isRequired: true, description: "Total Cost to Complete in Indian Paise (divide by 10^7 for Crores).", purpose: "Primary budgetary commitment figure." },
+      { name: "Cost Basis Rule", dbColumn: "ctc_basis", type: "Dropdown", isRequired: true, description: "'fixed' (manual), 'rate' (rate × area), 'schedule' (multi-row), 'balance'.", purpose: "Determines how the line CTC is calculated." },
+      { name: "CTC Rate (₹/sqft)", dbColumn: "ctc_rate", type: "Number", isRequired: false, description: "Per-square-foot construction rate.", purpose: "Multiplier for physical area drivers." },
+      { name: "Balance of Paise", dbColumn: "balance_of_paise", type: "Number", isRequired: false, description: "Category budget cap from which sibling lines are subtracted.", purpose: "Balancing line calculation." },
+      { name: "Memo Item Flag", dbColumn: "is_memo", type: "Boolean", isRequired: true, description: "Flag indicating whether line is informational only.", purpose: "Excludes line from totals while preserving visibility." },
+      { name: "Certified (Paise)", dbColumn: "certified_paise", type: "Number", isRequired: false, description: "Cumulative billing certified by site billing engineers.", purpose: "Computes balance to certify." },
+      { name: "Bill ID", dbColumn: "bill_id", type: "UUID / FK", isRequired: false, description: "Link to vendor bill from which incurred cost originates.", purpose: "1-click drill-down from Detail report to vendor invoice.", foreignKeyRelation: "budget_bills.id" },
+      { name: "Construction BUA (sqft)", dbColumn: "construction_bua_sqft", type: "Number", isRequired: true, description: "Physical Built-Up Area of the tower.", purpose: "Denominator for ₹/sqft rates." },
+      { name: "Sign-off Level ID", dbColumn: "level_id", type: "UUID / FK", isRequired: true, description: "Current tier in the sequential sign-off approval chain.", purpose: "Governance tracking and signature stamping.", foreignKeyRelation: "budget_signoff_levels.id" },
+      { name: "Department ID", dbColumn: "department_id", type: "UUID / FK", isRequired: true, description: "Department owning this cost head (Civil, MEP, Sales, etc.).", purpose: "Strict departmental RBAC enforcement.", foreignKeyRelation: "departments.id" }
+    ],
+    steps: [
+      { title: "Step 1: Physical Setup & Tower Areas", instruction: "Create project, add physical towers, and enter Construction BUA and Design areas.", technicalNote: "Establishes ₹/sqft denominators and rate drivers." },
+      { title: "Step 2: Sign-off Governance Hierarchy", instruction: "Define sequential approval tiers (QS -> VP Commercial -> CFO) and assign authorized members.", technicalNote: "Enforces separation of duties and digital signature stamping." },
+      { title: "Step 3: Baseline Budget Formulation", instruction: "Enter Estimated CTC, assign line rules (Rate × Area, Schedule), set department remarks and OC move reasons.", technicalNote: "Evaluates live formula totals; blocks submission if OC moved without reason." },
+      { title: "Step 4: Supporting Cost Schedules", instruction: "Unpack non-linear lines into itemized quantity × rate × % × periods schedules.", technicalNote: "Permanently syncs line CTC to schedule sum and adds formula sheets to Summary Excel." },
+      { title: "Step 5: Tower Workings & Certifications", instruction: "Inspect per-tower cost sheets, input certified billing amounts, and verify tower allocation reconciliation.", technicalNote: "Generates balance to certify and guarantees zero unallocated cost discrepancy." },
+      { title: "Step 6: Actual Cost & Vendor Bills", instruction: "Record vendor bills split across heads and towers; manage petty cash and SAP voucher imports.", technicalNote: "Enforces unique vendor bill constraint; enables 1-click drill-down from Detail report." },
+      { title: "Step 7: Revisions & Executive Reporting", instruction: "Create revision drafts (R1 -> R2), analyze variance deltas, generate AI-verified briefs, and export signed Excel workbooks.", technicalNote: "Exports official Chandak Summary and Detail formats with live formulas." }
+    ],
+    results: [
+      { action: "Setup & Drivers", outcome: "Physical areas, cost heads, and rate drivers established.", technicalDetail: "Rows inserted in budget_projects, budget_towers, budget_cost_heads." },
+      { action: "Sign-off Approval", outcome: "Version locked into immutable approved baseline with digital signatures.", technicalDetail: "Stamps budget_signoffs, updates status='approved', populates Excel signature block." },
+      { action: "Schedule Working", outcome: "Line CTC locked to calculated sum of schedule rows.", technicalDetail: "Updates budget_schedules and budget_schedule_rows; syncs budget_lines.ctc_paise." },
+      { action: "Bill Recording", outcome: "Incurred cost ledger updated with PO and vendor linkage.", technicalDetail: "Inserts into budget_bills and budget_incurred_entries with unique vendor bill check." },
+      { action: "Excel Export", outcome: "Official Chandak formatted workbook generated with live formulas.", technicalDetail: "Generates Chandak Budget Summary Format.xlsx and Detail Format.xlsx with live formulas." }
+    ]
+  },
+
 ];

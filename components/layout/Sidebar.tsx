@@ -283,6 +283,7 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
       items: [
         { label: "All projects", href: "/budget", icon: FolderKanban },
         { label: "Overview", href: `${p}/overview`, icon: LayoutDashboard },
+        { label: "Workflow guide", href: `${p}/guide`, icon: BookOpen },
         { label: "Budget entry", href: `${p}/entry`, icon: Layers },
         { label: "Import from Excel", href: `${p}/import`, icon: Package },
         { label: "Compare versions", href: `${p}/compare`, icon: RotateCcw },
@@ -306,6 +307,7 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
           icon: Settings2,
           subItems: [
             { label: "Towers & set-up", href: `${p}/setup` },
+            { label: "Workflow guide & learning", href: `${p}/guide` },
             { label: "Access, roles & rights", href: "/budget/admin/access" },
             { label: "Custom fields & forms", href: "/budget/admin/fields" },
           ]

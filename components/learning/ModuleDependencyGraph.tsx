@@ -21,7 +21,8 @@ import {
   UserCheck,
   ShieldAlert,
   FolderKanban,
-  Search
+  Search,
+  LineChart
 } from "lucide-react";
 import { ecosystemDependencies, learningModules, ModuleDependency } from "@/lib/data/learning-data";
 import { AppButton } from "@/components/ui/AppButton";
@@ -65,6 +66,7 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
       case "iam_rbac": return UserCheck;
       case "sla_monitoring": return ShieldAlert;
       case "workspaces_masters": return FolderKanban;
+      case "organization_budget": return LineChart;
       default: return Layers;
     }
   };
