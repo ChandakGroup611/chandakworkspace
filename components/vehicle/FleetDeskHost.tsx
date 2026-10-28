@@ -5211,10 +5211,24 @@ export default function FleetDeskHost({
     }
   };
 
-  const handleUniversalDeleteDocument = async (doc: AggregatedVehicleDoc) => {
-    const curVeh = viewingVehicle;
-    if (!curVeh) return;
-    const isVaultDoc = doc.isDirectVaultDoc || doc.id.startsWith("vdoc-");
+  const handleUniversalDeleteDocument = async (doc: AggregatedVehicleDoc & { vehicleObj?: VehicleRecord; vehicleId?: string }) => {
+    const curVeh = viewingVehicle || doc.vehicleObj || vehicles.find((v) => v.id === doc.vehicle_id || v.id === (doc as any).vehicleId);
+    if (!curVeh) {
+      triggerToast("Associated vehicle not found.", true);
+      return;
+    }
+    const isVaultDoc =
+      doc.isDirectVaultDoc ||
+      doc.sourceModule === "VAULT" ||
+      doc.id.startsWith("vdoc-") ||
+      (!doc.id.startsWith("master-doc-") &&
+        !doc.id.startsWith("ins-pol-") &&
+        !doc.id.startsWith("puc-test-") &&
+        !doc.id.startsWith("svc-") &&
+        !doc.id.startsWith("part-") &&
+        !doc.id.startsWith("trip-") &&
+        !doc.id.startsWith("drv-"));
+
     setGenericConfirm({
       open: true,
       title: "Delete document",
@@ -5228,7 +5242,7 @@ export default function FleetDeskHost({
             const res = await deleteVehicleDocumentViaRestOrAction(doc.id);
             if (res.success) {
               setViewingVehicle((prev) => {
-                if (!prev) return null;
+                if (!prev || prev.id !== curVeh.id) return prev;
                 return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== doc.id) };
               });
               setVehicles((prev) =>
@@ -5239,6 +5253,7 @@ export default function FleetDeskHost({
                 )
               );
               triggerToast("Document deleted successfully from vehicle vault.");
+              loadAllData(true);
             } else {
               triggerToast(res.error || "Failed to delete document.", true);
             }
@@ -5254,9 +5269,10 @@ export default function FleetDeskHost({
 
             const res = await updateVehicleAction(curVeh.id, updates);
             if (res.success) {
-              setViewingVehicle((prev) => prev ? { ...prev, ...updates } : null);
-              setVehicles((prev) => prev.map((v) => v.id === curVeh.id ? { ...v, ...updates } : v));
+              setViewingVehicle((prev) => (prev && prev.id === curVeh.id ? { ...prev, ...updates } : prev));
+              setVehicles((prev) => prev.map((v) => (v.id === curVeh.id ? { ...v, ...updates } : v)));
               triggerToast("Document removed successfully.");
+              loadAllData(true);
             } else {
               triggerToast(res.error || "Failed to remove document.", true);
             }
@@ -5279,11 +5295,24 @@ export default function FleetDeskHost({
               triggerToast(res.error || "Failed to delete certificate.", true);
             }
           } else {
-            setViewingVehicle((prev) => {
-              if (!prev) return null;
-              return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== doc.id) };
-            });
-            triggerToast("Document removed.");
+            const res = await deleteVehicleDocumentViaRestOrAction(doc.id);
+            if (res.success) {
+              setViewingVehicle((prev) => {
+                if (!prev || prev.id !== curVeh.id) return prev;
+                return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== doc.id) };
+              });
+              setVehicles((prev) =>
+                prev.map((v) =>
+                  v.id === curVeh.id
+                    ? { ...v, documents: (v.documents || []).filter((d) => d.id !== doc.id) }
+                    : v
+                )
+              );
+              triggerToast("Document removed.");
+              loadAllData(true);
+            } else {
+              triggerToast(res.error || "Failed to remove document.", true);
+            }
           }
         } catch (err: any) {
           triggerToast(err.message || "Failed to delete document.", true);
@@ -16261,6 +16290,18 @@ export default function FleetDeskHost({
                             <Edit2 className="h-3 w-3 text-muted-foreground" />
                             <span>Edit</span>
                           </AppButton>
+                          {(canDeleteVehicle || canEditVehicle) && (
+                            <AppButton aria-label="Delete document"
+                              type="button"
+                              variant="outline"
+                              size="icon-sm"
+                              onClick={() => handleUniversalDeleteDocument(doc)}
+                              className="h-7 w-7 text-danger-text hover:bg-danger-soft border-danger/30"
+                              title="Delete document"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </AppButton>
+                          )}
                           <AppButton aria-label="Open vehicle dossier"
                             type="button"
                             variant="ghost"
@@ -30757,7 +30798,7 @@ export default function FleetDeskHost({
                                           <Edit2 className="h-3 w-3" />
                                         </AppButton>
                                       )}
-                                      {canEditVehicle && (
+                                      {(canDeleteVehicle || canEditVehicle) && (
                                         <AppButton aria-label="Delete document"
                                           type="button"
                                           variant="outline"
@@ -32410,6 +32451,19 @@ export default function FleetDeskHost({
       )}
 
       {/* ---------------------------------------------------------------------- */}
+      {/* GENERIC CONFIRMATION DIALOG (FOR VEHICLE DOCS, POLICIES, PUC & VOUCHERS) */}
+      {/* ---------------------------------------------------------------------- */}
+      <ConfirmDialog
+        open={genericConfirm.open}
+        onClose={() => setGenericConfirm((prev) => ({ ...prev, open: false }))}
+        title={genericConfirm.title}
+        description={genericConfirm.description}
+        confirmLabel={genericConfirm.confirmLabel || "Confirm"}
+        tone={genericConfirm.tone === "danger" ? "danger" : "default"}
+        onConfirm={genericConfirm.onConfirm}
+      />
+
+      {/* ---------------------------------------------------------------------- */}
       {/* INTERACTIVE ATTACHMENT PREVIEW LIGHTBOX MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {previewAttachment && (
@@ -32979,31 +33033,52 @@ export default function FleetDeskHost({
               </div>
 
               {/* Modal Actions */}
-              <div className="pt-4 border-t border-border flex items-center justify-end gap-2.5">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCloseEditDocument}
-                  disabled={isEditModalDocSubmitting}
-                  className="text-xs h-9 px-4"
-                >
-                  Cancel
-                </AppButton>
-                <AppButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={isEditModalDocSubmitting}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 px-5 font-semibold gap-1.5 shadow-xs"
-                >
-                  {isEditModalDocSubmitting ? (
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5" />
+              <div className="pt-4 border-t border-border flex items-center justify-between">
+                <div>
+                  {(canDeleteVehicle || canEditVehicle) && (
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const docToDelete = editModalDoc;
+                        handleCloseEditDocument();
+                        handleUniversalDeleteDocument(docToDelete);
+                      }}
+                      disabled={isEditModalDocSubmitting}
+                      className="text-xs h-9 px-3 text-danger-text border-danger/30 hover:bg-danger-soft gap-1.5 font-medium"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Delete</span>
+                    </AppButton>
                   )}
-                  <span>Save changes</span>
-                </AppButton>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCloseEditDocument}
+                    disabled={isEditModalDocSubmitting}
+                    className="text-xs h-9 px-4"
+                  >
+                    Cancel
+                  </AppButton>
+                  <AppButton
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={isEditModalDocSubmitting}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 px-5 font-semibold gap-1.5 shadow-xs"
+                  >
+                    {isEditModalDocSubmitting ? (
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Save className="h-3.5 w-3.5" />
+                    )}
+                    <span>Save changes</span>
+                  </AppButton>
+                </div>
               </div>
             </form>
           </div>

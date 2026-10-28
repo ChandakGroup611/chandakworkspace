@@ -3506,6 +3506,29 @@ export async function deleteVehicleDocumentAction(documentId: string): Promise<{
       return { success: false, error: "Document ID is required" };
     }
 
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) {
+      return { success: false, error: "Access Denied: You lack permissions to delete vehicle documents." };
+    }
+
+    // Attempt to remove file from Supabase storage bucket if applicable
+    try {
+      const { data: docData } = await supabaseAdmin
+        .from("vehicle_documents")
+        .select("file_url")
+        .eq("id", documentId)
+        .maybeSingle();
+
+      if (docData?.file_url?.startsWith("storage:")) {
+        const parts = docData.file_url.replace("storage:", "").split(":");
+        const bucket = parts[0];
+        const storagePath = parts.slice(1).join(":");
+        await supabaseAdmin.storage.from(bucket).remove([storagePath]);
+      }
+    } catch (storageDelErr) {
+      console.warn("[vehicle-actions] Warning deleting file from storage bucket:", storageDelErr);
+    }
+
     const { error } = await supabaseAdmin
       .from("vehicle_documents")
       .delete()
