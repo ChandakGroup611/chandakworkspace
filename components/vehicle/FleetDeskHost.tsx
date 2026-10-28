@@ -944,12 +944,12 @@ export default function FleetDeskHost({
 
   // Vehicle Master Dossier Multi-Column / Tab View States
   const [vehicleDossierTab, setVehicleDossierTab] = useState<
-    "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS"
-  >("OVERVIEW");
+    "VEHICLE" | "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS"
+  >("VEHICLE");
   const [dossierOriginVehicle, setDossierOriginVehicle] = useState<VehicleRecord | null>(null);
   const [dossierOriginTab, setDossierOriginTab] = useState<
-    "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS"
-  >("OVERVIEW");
+    "VEHICLE" | "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS"
+  >("VEHICLE");
   const [isDossierAddDocOpen, setIsDossierAddDocOpen] = useState(false);
   const [dossierNewDocType, setDossierNewDocType] = useState("PUC");
   const [dossierNewDocTitle, setDossierNewDocTitle] = useState("");
@@ -5583,6 +5583,8 @@ export default function FleetDeskHost({
         triggerToast(`Vehicle ${newVehiclePlate.toUpperCase()} registered successfully!`);
         if (res.vehicle) {
           setVehicles((prev) => [res.vehicle, ...prev]);
+          setViewingVehicle(res.vehicle);
+          setVehicleDossierTab("VEHICLE");
         }
         if (newVehicleDriverId && res.vehicle?.id) {
           const registeredId = res.vehicle.id;
@@ -14472,7 +14474,20 @@ export default function FleetDeskHost({
                               )}
                             </div>
                             {showInventoryRelations && (
-                              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground flex-wrap">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingVehicle(veh);
+                                    setVehicleDossierTab("VEHICLE");
+                                  }}
+                                  className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-theme-btn-primary/10 border border-theme-btn-primary/30 text-theme-btn-primary hover:bg-theme-btn-primary/20 transition-colors cursor-pointer"
+                                  title="Open full vehicle creation details, specifications and financial breakdown"
+                                >
+                                  <Car className="h-3 w-3 text-theme-btn-primary" />
+                                  <span>Vehicle</span>
+                                </button>
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -14807,7 +14822,7 @@ export default function FleetDeskHost({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setViewingVehicle(veh);
-                                  setVehicleDossierTab("OVERVIEW");
+                                  setVehicleDossierTab("VEHICLE");
                                 }}
                                 className="h-7 px-2.5 text-xs gap-1 font-semibold bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text shadow-2xs"
                               >
@@ -26168,10 +26183,30 @@ export default function FleetDeskHost({
       {/* ---------------------------------------------------------------------- */}
       {isRecordSaleModalOpen && (() => {
         const selectedVehicleForSale = vehicles.find((v) => v.id === saleVehicleId);
+        const norm = (s?: string | null) => (s || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+        const targetId = selectedVehicleForSale?.id;
+        const targetPlate = norm(selectedVehicleForSale?.registration_number);
+
+        const vServices = selectedVehicleForSale ? maintenance.filter(
+          (m) => (m.vehicle_id && m.vehicle_id === targetId) || (m.vehicle_reg && norm(m.vehicle_reg) === targetPlate)
+        ) : [];
+        const vParts = selectedVehicleForSale ? parts.filter(
+          (p) => (p.vehicle_id && p.vehicle_id === targetId) || (p.assigned_vehicle_reg && norm(p.assigned_vehicle_reg) === targetPlate)
+        ) : [];
+        const vTrips = selectedVehicleForSale ? trips.filter(
+          (t) => (t.vehicle_id && t.vehicle_id === targetId) || (t.vehicle_reg && norm(t.vehicle_reg) === targetPlate)
+        ) : [];
+
+        const totalServiceSpend = vServices.reduce((acc, m) => acc + Number(m.cost || 0), 0);
+        const totalPartsValue = vParts.reduce((acc, p) => acc + Number(p.purchase_amount || (p.unit_price ? p.unit_price * (p.quantity || 1) : 0) || 0), 0);
         const origCost = Number(selectedVehicleForSale?.purchase_cost || selectedVehicleForSale?.purchase_price || selectedVehicleForSale?.on_road_price || 0);
+        const totalInvestedCapital = origCost + totalServiceSpend + totalPartsValue;
+
         const numSalePrice = Number(salePrice) || 0;
-        const netDiff = numSalePrice - origCost;
-        const recoveryPercent = origCost > 0 ? Math.round((numSalePrice / origCost) * 100) : 0;
+        const netDiffFromOrig = numSalePrice - origCost;
+        const netDiffFromInvested = numSalePrice - totalInvestedCapital;
+        const recoveryOrigPercent = origCost > 0 ? Math.round((numSalePrice / origCost) * 100) : 0;
+        const recoveryInvestedPercent = totalInvestedCapital > 0 ? Math.round((numSalePrice / totalInvestedCapital) * 100) : 0;
 
         return (
           <TransactionFormLayout
@@ -26205,7 +26240,7 @@ export default function FleetDeskHost({
                 <AppCardContent className="p-4 space-y-4">
                   <div>
                     <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Vehicle Plate & Designation <span className="text-danger-text">*</span>
+                      Vehicle Plate &amp; Designation <span className="text-danger-text">*</span>
                     </label>
                     <select
                       value={saleVehicleId}
@@ -26222,28 +26257,158 @@ export default function FleetDeskHost({
                   </div>
 
                   {selectedVehicleForSale && (
-                    <div className="p-3.5 rounded-lg bg-sunken/40 border border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="shrink-0">{renderHsrpPlate(selectedVehicleForSale.registration_number)}</div>
-                        <div className="text-xs font-semibold text-foreground">
-                          {selectedVehicleForSale.make} {selectedVehicleForSale.model} {selectedVehicleForSale.variant && `• ${selectedVehicleForSale.variant}`}
+                    <div className="space-y-4">
+                      {/* Vehicle Identity & Creation Specifications */}
+                      <div className="p-4 rounded-xl bg-sunken/40 border border-border/60 space-y-3">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border/50 pb-3">
+                          <div className="space-y-1">
+                            <div className="shrink-0">{renderHsrpPlate(selectedVehicleForSale.registration_number)}</div>
+                            <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                              <VehicleBrandLogo brand={selectedVehicleForSale.make} size={16} />
+                              <span>{selectedVehicleForSale.make} {selectedVehicleForSale.model}</span>
+                              {selectedVehicleForSale.variant && <span className="text-xs font-normal text-muted-foreground">({selectedVehicleForSale.variant})</span>}
+                              {selectedVehicleForSale.year && <span className="text-xs font-normal text-muted-foreground">• {selectedVehicleForSale.year}</span>}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                              <span>Category: {selectedVehicleForSale.category || "Standard"}</span>
+                              <span>•</span>
+                              <span>Fuel: {selectedVehicleForSale.fuel_type || "Petrol"}</span>
+                              <span>•</span>
+                              <span>Status: {selectedVehicleForSale.status}</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right sm:border-l sm:border-border sm:pl-4 space-y-0.5">
+                            <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold block">Original Capital Cost</span>
+                            <span className="text-base font-mono font-bold text-foreground">
+                              {origCost > 0 ? `₹${origCost.toLocaleString("en-IN")}` : "Unrecorded"}
+                            </span>
+                            <div className="text-[11px] text-muted-foreground font-mono">
+                              Odo: {Number(selectedVehicleForSale.odometer_km || 0).toLocaleString("en-IN")} km
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-2xs text-muted-foreground font-mono flex items-center gap-2">
-                          <span>Category: {selectedVehicleForSale.category || "Standard"}</span>
-                          <span>•</span>
-                          <span>Odo: {Number(selectedVehicleForSale.odometer_km || 0).toLocaleString("en-IN")} km</span>
-                          <span>•</span>
-                          <span>Status: {selectedVehicleForSale.status}</span>
+
+                        {/* All Creation Details Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 text-xs">
+                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
+                            <span className="text-[10.5px] font-bold text-muted-foreground">Registered Owner</span>
+                            <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.registered_owner || "—"}>
+                              {selectedVehicleForSale.registered_owner || "—"}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
+                            <span className="text-[10.5px] font-bold text-muted-foreground">RTO Transport Office</span>
+                            <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.rto_office || "—"}>
+                              {selectedVehicleForSale.rto_office || "—"}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
+                            <span className="text-[10.5px] font-bold text-muted-foreground">VIN / Chassis Number</span>
+                            <div className="font-mono font-semibold text-foreground truncate" title={selectedVehicleForSale.vin_chassis_number || "—"}>
+                              {selectedVehicleForSale.vin_chassis_number || "—"}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
+                            <span className="text-[10.5px] font-bold text-muted-foreground">Engine Number</span>
+                            <div className="font-mono font-semibold text-foreground truncate" title={selectedVehicleForSale.engine_number || "—"}>
+                              {selectedVehicleForSale.engine_number || "—"}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
+                            <span className="text-[10.5px] font-bold text-muted-foreground">Registration Date</span>
+                            <div className="font-mono font-semibold text-foreground">
+                              {selectedVehicleForSale.registration_date ? String(selectedVehicleForSale.registration_date).split("T")[0] : "—"}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
+                            <span className="text-[10.5px] font-bold text-muted-foreground">Purchase / Invoice Date</span>
+                            <div className="font-mono font-semibold text-foreground">
+                              {selectedVehicleForSale.purchase_date ? String(selectedVehicleForSale.purchase_date).split("T")[0] : (selectedVehicleForSale.registration_date ? String(selectedVehicleForSale.registration_date).split("T")[0] : "—")}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
+                            <span className="text-[10.5px] font-bold text-muted-foreground">Showroom / Purchase Vendor</span>
+                            <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.purchase_vendor || "—"}>
+                              {selectedVehicleForSale.purchase_vendor || "—"}
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
+                            <span className="text-[10.5px] font-bold text-muted-foreground">Ex-Showroom Base</span>
+                            <div className="font-mono font-semibold text-theme-btn-primary">
+                              ₹{Number(selectedVehicleForSale.ex_showroom_price || selectedVehicleForSale.purchase_price || 0).toLocaleString("en-IN")}
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="text-right sm:border-l sm:border-border sm:pl-4 space-y-0.5">
-                        <span className="text-2xs uppercase tracking-wider text-muted-foreground block">Original Landed Cost</span>
-                        <span className="text-sm font-mono font-bold text-foreground">
-                          {origCost > 0 ? `₹${origCost.toLocaleString("en-IN")}` : "Unrecorded"}
-                        </span>
-                        <div className="text-2xs text-muted-foreground">
-                          Current Status: <span className="font-semibold text-foreground">{selectedVehicleForSale.status}</span>
+                      {/* Related Historical Expenses & Total Capital Incurred Ledger */}
+                      <div className="p-4 rounded-xl border border-border bg-gradient-to-r from-surface via-surface to-surface shadow-xs space-y-3">
+                        <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                          <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                            <Calculator className="h-4 w-4 text-theme-btn-primary" />
+                            <span>Cumulative Operating Expenses &amp; Total Invested Capital</span>
+                          </span>
+                          <span className="text-xs font-mono font-bold text-foreground">
+                            All-in Investment: ₹{totalInvestedCapital.toLocaleString("en-IN")}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                          <div className="p-3 rounded-lg border border-border bg-surface space-y-1">
+                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+                              <IndianRupee className="h-3 w-3 text-muted-foreground" />
+                              <span>Acquisition Landed Cost</span>
+                            </span>
+                            <div className="font-mono font-bold text-foreground text-sm">
+                              ₹{origCost.toLocaleString("en-IN")}
+                            </div>
+                            <span className="text-[10.5px] text-muted-foreground block">Original CapEx</span>
+                          </div>
+
+                          <div className="p-3 rounded-lg border border-border bg-surface space-y-1">
+                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+                              <Wrench className="h-3 w-3 text-muted-foreground" />
+                              <span>Workshop Maintenance</span>
+                            </span>
+                            <div className="font-mono font-bold text-foreground text-sm">
+                              ₹{totalServiceSpend.toLocaleString("en-IN")}
+                            </div>
+                            <span className="text-[10.5px] text-muted-foreground block">
+                              {vServices.length} Job card services logged
+                            </span>
+                          </div>
+
+                          <div className="p-3 rounded-lg border border-border bg-surface space-y-1">
+                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+                              <Package className="h-3 w-3 text-muted-foreground" />
+                              <span>Spare Parts Fitted</span>
+                            </span>
+                            <div className="font-mono font-bold text-foreground text-sm">
+                              ₹{totalPartsValue.toLocaleString("en-IN")}
+                            </div>
+                            <span className="text-[10.5px] text-muted-foreground block">
+                              {vParts.length} Parts &amp; accessories mounted
+                            </span>
+                          </div>
+
+                          <div className="p-3 rounded-lg border border-theme-btn-primary/40 bg-accent-soft/30 space-y-1">
+                            <span className="text-[11px] font-bold text-theme-btn-primary flex items-center gap-1">
+                              <DollarSign className="h-3 w-3 text-theme-btn-primary" />
+                              <span>Total Invested Capital</span>
+                            </span>
+                            <div className="font-mono font-extrabold text-foreground text-sm">
+                              ₹{totalInvestedCapital.toLocaleString("en-IN")}
+                            </div>
+                            <span className="text-[10.5px] text-theme-btn-primary font-medium block">
+                              Purchase + Services + Parts
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                          <span>Usage Mileage: <strong className="text-foreground">{Number(selectedVehicleForSale.odometer_km || 0).toLocaleString("en-IN")} km</strong></span>
+                          <span>Journeys Completed: <strong className="text-foreground">{vTrips.length} Trips</strong></span>
                         </div>
                       </div>
                     </div>
@@ -26256,7 +26421,7 @@ export default function FleetDeskHost({
                 <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
                   <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-theme-btn-primary" />
-                    <span>Transaction Particulars & Realized Price</span>
+                    <span>Transaction Particulars, Realized Price &amp; Pricing Guidance</span>
                   </AppCardTitle>
                 </AppCardHeader>
                 <AppCardContent className="p-4 space-y-4">
@@ -26306,28 +26471,80 @@ export default function FleetDeskHost({
                     </div>
                   </div>
 
-                  {/* Financial Recovery Telemetry */}
-                  {numSalePrice > 0 && origCost > 0 && (
-                    <div className="p-3.5 rounded-lg bg-surface border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div className="space-y-0.5">
-                        <span className="text-2xs uppercase tracking-wider text-muted-foreground font-semibold">Net Capital Recovery Ledger</span>
-                        <div className="text-xs text-foreground">
-                          Acquisition: <span className="font-mono font-medium">₹{origCost.toLocaleString("en-IN")}</span> ➔ Realized: <span className="font-mono font-bold text-foreground">₹{numSalePrice.toLocaleString("en-IN")}</span>
+                  {/* Dual Financial Recovery & Pricing Telemetry */}
+                  {numSalePrice > 0 && selectedVehicleForSale && (
+                    <div className="p-4 rounded-xl bg-surface border border-border space-y-3.5">
+                      <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                        <span className="text-xs font-bold text-foreground">
+                          Pricing Valuation &amp; Capital Recovery Intelligence
+                        </span>
+                        <span className="text-[11px] font-mono text-muted-foreground">
+                          Sale Price: ₹{numSalePrice.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Metric 1: Recovery vs. Original Landed Cost */}
+                        <div className="p-3 rounded-lg border border-border bg-sunken/30 space-y-1.5">
+                          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                            1. vs. Original Acquisition (₹{origCost.toLocaleString("en-IN")})
+                          </span>
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                                netDiffFromOrig >= 0
+                                  ? "bg-success-soft text-success-text border-success/30"
+                                  : "bg-danger-soft text-danger-text border-danger/30"
+                              }`}
+                            >
+                              {netDiffFromOrig >= 0 ? `+₹${netDiffFromOrig.toLocaleString("en-IN")} (Gain)` : `-₹${Math.abs(netDiffFromOrig).toLocaleString("en-IN")} (Depreciation)`}
+                            </span>
+                            <span className="text-xs font-mono font-semibold text-foreground">
+                              {recoveryOrigPercent}% capital recovered
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Metric 2: Recovery vs. Total Invested Capital (Including All Upkeep & Parts) */}
+                        <div className="p-3 rounded-lg border border-border bg-sunken/30 space-y-1.5">
+                          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                            2. vs. Total Incurred Investment (₹{totalInvestedCapital.toLocaleString("en-IN")})
+                          </span>
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                                netDiffFromInvested >= 0
+                                  ? "bg-success-soft text-success-text border-success/30"
+                                  : "bg-danger-soft text-danger-text border-danger/30"
+                              }`}
+                            >
+                              {netDiffFromInvested >= 0 ? `+₹${netDiffFromInvested.toLocaleString("en-IN")} (Surplus)` : `-₹${Math.abs(netDiffFromInvested).toLocaleString("en-IN")} (Operating Deficit)`}
+                            </span>
+                            <span className="text-xs font-mono font-semibold text-foreground">
+                              {recoveryInvestedPercent}% all-in recovered
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xs font-mono font-bold px-2.5 py-1 rounded border ${
-                            netDiff >= 0
-                              ? "bg-success-soft text-success-text border-success/30"
-                              : "bg-danger-soft text-danger-text border-danger/30"
-                          }`}
-                        >
-                          {netDiff >= 0 ? `+₹${netDiff.toLocaleString("en-IN")} (Gain)` : `-₹${Math.abs(netDiff).toLocaleString("en-IN")} (Depreciation / Loss)`}
-                        </span>
-                        <span className="text-xs font-mono text-muted-foreground">
-                          ({recoveryPercent}% capital value recovered)
-                        </span>
+
+                      {/* Pricing Guidance Advisory Note */}
+                      <div className={`p-2.5 rounded-lg border text-xs flex items-center gap-2 ${
+                        netDiffFromInvested >= 0
+                          ? "bg-success-soft/30 text-success-text border-success/30"
+                          : "bg-warning-soft/40 text-warning-text border-warning/30"
+                      }`}>
+                        <Sparkles className="h-4 w-4 shrink-0" />
+                        <div>
+                          {netDiffFromInvested >= 0 ? (
+                            <span>
+                              <strong>Positive Lifecycle Recovery:</strong> Realized price recovers all acquisition CapEx and all historical workshop maintenance &amp; parts expenses with an overall surplus of ₹{netDiffFromInvested.toLocaleString("en-IN")}.
+                            </span>
+                          ) : (
+                            <span>
+                              <strong>Pricing Advisory:</strong> Realized price is ₹{Math.abs(netDiffFromInvested).toLocaleString("en-IN")} below total cumulative capital incurred (acquisition ₹{origCost.toLocaleString("en-IN")} + service repairs ₹{totalServiceSpend.toLocaleString("en-IN")} + parts ₹{totalPartsValue.toLocaleString("en-IN")}). Full lifecycle break-even valuation target: <strong>₹{totalInvestedCapital.toLocaleString("en-IN")}</strong>.
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -27027,27 +27244,27 @@ export default function FleetDeskHost({
 
           {/* 2. TELEMETRY & SPEND SUMMARY HUD (6-CARD FINANCIAL & OPERATIONAL HUD) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
-            {/* 1. Vehicle Purchase Price */}
+            {/* 1. Vehicle Creation Profile */}
             <button
               type="button"
-              onClick={() => setVehicleDossierTab("OVERVIEW")}
+              onClick={() => setVehicleDossierTab("VEHICLE")}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
-                vehicleDossierTab === "OVERVIEW"
+                vehicleDossierTab === "VEHICLE"
                   ? "border-theme-btn-primary bg-accent-soft ring-1 ring-theme-btn-primary/30"
                   : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                  <IndianRupee className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>Purchase price</span>
+                  <Car className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Vehicle profile</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
-                  CapEx
+                  Master
                 </span>
               </div>
               <div className="text-sm sm:text-base font-bold text-foreground mt-1 font-mono truncate" title={`Vehicle Purchase / On-Road Price: ₹${dossierData.purchasePrice.toLocaleString("en-IN")}`}>
-                ₹{dossierData.purchasePrice.toLocaleString("en-IN")} <span className="text-xs font-normal text-muted-foreground font-sans">Price</span>
+                ₹{dossierData.purchasePrice.toLocaleString("en-IN")} <span className="text-xs font-normal text-muted-foreground font-sans">CapEx</span>
               </div>
             </button>
 
@@ -27181,6 +27398,19 @@ export default function FleetDeskHost({
           <div className="bg-surface/95  p-1.5 rounded-xl border border-border shadow-2xs flex items-center gap-1.5 overflow-x-auto no-scrollbar sticky top-0 z-20">
             <button
               type="button"
+              onClick={() => setVehicleDossierTab("VEHICLE")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                vehicleDossierTab === "VEHICLE"
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent"
+              }`}
+            >
+              <Car className="h-3.5 w-3.5" />
+              <span>Vehicle details</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setVehicleDossierTab("OVERVIEW")}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "OVERVIEW"
@@ -27189,7 +27419,7 @@ export default function FleetDeskHost({
               }`}
             >
               <Gauge className="h-3.5 w-3.5" />
-              <span>Overview &amp; specs</span>
+              <span>Specs &amp; telemetry</span>
             </button>
 
             <button
@@ -27257,6 +27487,449 @@ export default function FleetDeskHost({
               <span>Trips ({dossierData.trips.length})</span>
             </button>
           </div>
+
+          {/* ========================================================================= */}
+          {/* TAB: VEHICLE PROFILE & FULL CREATION DETAILS */}
+          {/* ========================================================================= */}
+          {vehicleDossierTab === "VEHICLE" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Studio picture */}
+              <VehicleDossierStage vehicle={viewingVehicle} />
+
+              {/* 1. Basic Information, Make, Model & Category */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <Car className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Basic Information, Make, Model &amp; Category</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-muted-foreground">
+                    Registered: {viewingVehicle.registration_date ? String(viewingVehicle.registration_date).split("T")[0] : "—"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Registration No (Plate)</span>
+                    <div className="pt-0.5">{renderHsrpPlate(viewingVehicle.registration_number)}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Vehicle Make (Manufacturer)</span>
+                    <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                      <VehicleBrandLogo brand={viewingVehicle.make} size={16} />
+                      <span>{viewingVehicle.make}</span>
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Vehicle Model &amp; Year</span>
+                    <div className="font-semibold text-foreground text-xs">
+                      {viewingVehicle.model} {viewingVehicle.year ? `(${viewingVehicle.year})` : ""}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Variant / Trim</span>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.variant || "Standard"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Body Category</span>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.category || "Car / Sedan"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Vehicle Nickname</span>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.nickname || "—"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Fuel / Powertrain</span>
+                    <div className="font-semibold text-foreground text-xs flex items-center gap-1">
+                      <Fuel className="h-3.5 w-3.5 text-warning-text" />
+                      <span>{viewingVehicle.fuel_type || "Petrol"}</span>
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Exterior Paint Colour</span>
+                    <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                      <span className="h-3.5 w-3.5 rounded-full border border-border shrink-0 shadow-2xs" style={{ backgroundColor: viewingVehicle.paint_color || "#334155" }} />
+                      <span className="truncate">{viewingVehicle.paint_color || "Standard"}</span>
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Seating Capacity</span>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.seating_capacity ? `${viewingVehicle.seating_capacity} Seater` : "5 Seater"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Transmission</span>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.transmission || "Manual"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Operational Status</span>
+                    <div>
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border inline-block ${
+                        viewingVehicle.status === "IN_STOCK"
+                          ? "bg-info-soft text-info-text border-info/30"
+                          : viewingVehicle.status === "IN_SERVICE"
+                          ? "bg-success-soft text-success-text border-success/30"
+                          : "bg-warning-soft text-warning-text border-warning/30"
+                      }`}>
+                        {viewingVehicle.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Odometer Reading</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      {viewingVehicle.odometer_km ? `${Number(viewingVehicle.odometer_km).toLocaleString("en-IN")} km` : "0 km"}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1 sm:col-span-2">
+                    <span className="text-xs font-bold text-muted-foreground">Assigned Chauffeur / Driver</span>
+                    <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-theme-btn-primary" />
+                      <span>{viewingVehicle.assignedDriver?.full_name || "Unassigned Fleet Pool"}</span>
+                      {viewingVehicle.assignedDriver?.phone && (
+                        <span className="text-[11px] font-mono text-muted-foreground">({viewingVehicle.assignedDriver.phone})</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Statutory Registration & Parivahan Transport Details */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Statutory Registration &amp; Parivahan Transport Details</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Registered Owner</span>
+                    <div className="font-semibold text-foreground text-xs truncate" title={viewingVehicle.registered_owner || "Corporate Fleet"}>
+                      {viewingVehicle.registered_owner || "Corporate Fleet"}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">RTO Transport Office</span>
+                    <div className="font-semibold text-foreground text-xs truncate" title={viewingVehicle.rto_office || "State Transport Authority"}>
+                      {viewingVehicle.rto_office || "State Transport Authority"}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">RTO RMN (Mobile)</span>
+                    <div className="font-mono font-semibold text-foreground text-xs flex items-center gap-1">
+                      <Phone className="h-3 w-3 text-muted-foreground" />
+                      <span>{viewingVehicle.rto_rmn || "—"}</span>
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Registration Date</span>
+                    <div className="font-mono font-semibold text-foreground text-xs">
+                      {viewingVehicle.registration_date ? String(viewingVehicle.registration_date).split("T")[0] : "—"}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Chassis Number (VIN)</span>
+                    <div className="font-mono font-bold text-foreground text-xs truncate" title={viewingVehicle.vin_chassis_number || "—"}>
+                      {viewingVehicle.vin_chassis_number || "—"}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Engine Number</span>
+                    <div className="font-mono font-bold text-foreground text-xs truncate" title={viewingVehicle.engine_number || "—"}>
+                      {viewingVehicle.engine_number || "—"}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">HSRP &amp; RSA Fitment</span>
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                        viewingVehicle.has_hsrp_plate !== false
+                          ? "bg-success-soft text-success-text border-success/30"
+                          : "bg-sunken text-muted border-border"
+                      }`}>
+                        HSRP: {viewingVehicle.has_hsrp_plate !== false ? "Verified" : "Pending"}
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                        viewingVehicle.has_roadside_assistance !== false
+                          ? "bg-info-soft text-info-text border-info/30"
+                          : "bg-sunken text-muted border-border"
+                      }`}>
+                        24x7 RSA: {viewingVehicle.has_roadside_assistance !== false ? "Active" : "No"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground">Custom Extended Expiry</span>
+                    <div className="font-mono font-semibold text-foreground text-xs">
+                      {viewingVehicle.custom_extended_expiry_date ? String(viewingVehicle.custom_extended_expiry_date).split("T")[0] : "—"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Financial Breakdown, Showroom Pricing & Invoice Particulars */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <IndianRupee className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Financial Breakdown, Showroom Pricing &amp; Invoice Particulars</span>
+                  </div>
+                  <span className="text-xs font-bold font-mono text-success-text">
+                    Net On-Road: ₹{Number(viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost || 0).toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Basic Ex-Factory Price</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.basic_price || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">GST ({viewingVehicle.gst_percentage || 0}%)</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.gst_amount || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Compensation Cess ({viewingVehicle.cess_percentage || 0}%)</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.cess_amount || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Ex-Showroom Price</span>
+                    <div className="font-mono font-bold text-theme-btn-primary text-xs">
+                      ₹{Number(viewingVehicle.ex_showroom_price || viewingVehicle.purchase_price || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Statutory RTO Road Tax</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.rto_road_tax || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Statutory TCS 1%</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.tcs_amount || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Insurance Cost</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.insurance_cost || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">HSRP &amp; Smart Card Fee</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.hsrp_smart_card_fee || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">FASTag Charges</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.fastag_charges || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Accessories Cost</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.accessories_cost || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Extended Warranty Cost</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.extended_warranty_cost || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Other / Incidental Charges</span>
+                    <div className="font-mono font-bold text-foreground text-xs">
+                      ₹{Number(viewingVehicle.other_charges || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-surface space-y-0.5">
+                    <span className="text-[11px] font-bold text-muted-foreground">Special Discount Received</span>
+                    <div className="font-mono font-bold text-success-text text-xs">
+                      -₹{Number(viewingVehicle.discount_amount || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl border border-success/30 bg-success-soft/30 dark:bg-success-soft space-y-0.5 col-span-2">
+                    <span className="text-[11px] font-bold text-success-text">Net Capitalized On-Road Cost</span>
+                    <div className="font-mono font-extrabold text-success-text text-sm sm:text-base">
+                      ₹{Number(viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost || 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-muted-foreground">Showroom / Purchase Vendor:</span>
+                    <div className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                      <span>{viewingVehicle.purchase_vendor || "Showroom Not Specified"}</span>
+                      {viewingVehicle.purchase_vendor_id && (
+                        <span className="font-mono text-muted-foreground text-[11px]">({viewingVehicle.purchase_vendor_id})</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-0.5 sm:text-right">
+                    <span className="font-bold text-muted-foreground">Purchase / Invoice Date:</span>
+                    <div className="font-mono font-semibold text-foreground">
+                      {viewingVehicle.purchase_date ? String(viewingVehicle.purchase_date).split("T")[0] : (viewingVehicle.registration_date ? String(viewingVehicle.registration_date).split("T")[0] : "—")}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Statutory Compliance & Insurance Policies Snapshot */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Statutory Compliance &amp; Active Insurance Policies</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-muted-foreground">Own Damage Insurance</span>
+                      {viewingVehicle.insurance_expiry_date && (
+                        <div>{renderExpiryBadge(viewingVehicle.insurance_expire_days ?? calculateDaysRemaining(viewingVehicle.insurance_expiry_date))}</div>
+                      )}
+                    </div>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.insurance_vendor || "Vendor unassigned"}</div>
+                    <div className="font-mono text-[11px] text-muted-foreground">Policy: {viewingVehicle.insurance_policy_number || "—"}</div>
+                    <div className="font-mono text-[11px] text-foreground">Expires: {viewingVehicle.insurance_expiry_date ? String(viewingVehicle.insurance_expiry_date).split("T")[0] : "—"}</div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-muted-foreground">Third Party Insurance</span>
+                      {viewingVehicle.tp_insurance_expiry_date && (
+                        <div>{renderExpiryBadge(calculateDaysRemaining(viewingVehicle.tp_insurance_expiry_date))}</div>
+                      )}
+                    </div>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.tp_insurance_vendor || viewingVehicle.insurance_vendor || "Vendor unassigned"}</div>
+                    <div className="font-mono text-[11px] text-muted-foreground">Policy: {viewingVehicle.tp_insurance_policy_number || viewingVehicle.insurance_policy_number || "—"}</div>
+                    <div className="font-mono text-[11px] text-foreground">Expires: {viewingVehicle.tp_insurance_expiry_date ? String(viewingVehicle.tp_insurance_expiry_date).split("T")[0] : "—"}</div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-muted-foreground">Pollution Under Control (PUC)</span>
+                      {isElectricFuel(viewingVehicle.fuel_type) ? (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-success-soft text-success-text border border-success/30">Exempt (EV)</span>
+                      ) : viewingVehicle.puc_expiry_date ? (
+                        <div>{renderExpiryBadge(viewingVehicle.puc_expire_days ?? calculateDaysRemaining(viewingVehicle.puc_expiry_date))}</div>
+                      ) : null}
+                    </div>
+                    <div className="font-semibold text-foreground text-xs">{isElectricFuel(viewingVehicle.fuel_type) ? "Zero Tailpipe Emissions" : "Parivahan PUC Certified"}</div>
+                    <div className="font-mono text-[11px] text-muted-foreground">Cert: {viewingVehicle.puc_certificate_number || "—"}</div>
+                    <div className="font-mono text-[11px] text-foreground">
+                      {isElectricFuel(viewingVehicle.fuel_type) ? "Statutory Exemption" : `Expires: ${viewingVehicle.puc_expiry_date ? String(viewingVehicle.puc_expiry_date).split("T")[0] : "—"}`}
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-muted-foreground">Fitness Certificate</span>
+                      {viewingVehicle.fitness_expiry_date && (
+                        <div>{renderExpiryBadge(calculateDaysRemaining(viewingVehicle.fitness_expiry_date))}</div>
+                      )}
+                    </div>
+                    <div className="font-semibold text-foreground text-xs">Statutory Transport Fitness</div>
+                    <div className="font-mono text-[11px] text-foreground mt-2">
+                      Expires: {viewingVehicle.fitness_expiry_date ? String(viewingVehicle.fitness_expiry_date).split("T")[0] : "—"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Attached Creation Documents & Physical Scans Vault */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <FileCheck className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Attached Creation Documents &amp; Physical Scans ({dossierData.docs.length})</span>
+                  </div>
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setVehicleDossierTab("DOCS");
+                      setIsDossierAddDocOpen(true);
+                    }}
+                    className="h-7 px-2.5 text-xs font-semibold gap-1"
+                  >
+                    <UploadCloud className="h-3 w-3" />
+                    <span>Upload Document</span>
+                  </AppButton>
+                </div>
+
+                {dossierData.docs.length === 0 ? (
+                  <div className="p-8 rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
+                    No physical documents or scans attached to this vehicle record yet. Click "+ Upload Document" to attach RC, Invoice, Insurance or PUC scans.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {dossierData.docs.map((doc: any, idx: number) => (
+                      <div
+                        key={doc.id || idx}
+                        className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors shadow-2xs space-y-2"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="h-8 w-8 rounded-lg bg-accent-soft text-theme-btn-primary flex items-center justify-center shrink-0 border border-theme-btn-primary/20">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <h5 className="text-xs font-bold text-foreground truncate" title={doc.title || doc.file_name}>
+                                {doc.title || doc.file_name}
+                              </h5>
+                              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-sunken bg-surface border border-border text-muted-foreground">
+                                {doc.doc_type || "DOCUMENT"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleViewAttachment({ ...doc, vehicleReg: viewingVehicle.registration_number })}
+                              className="p-1 rounded hover:bg-sunken dark:hover:bg-surface text-muted-foreground hover:text-foreground transition-colors"
+                              title="View Document"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => downloadAttachment(doc)}
+                              className="p-1 rounded hover:bg-sunken dark:hover:bg-surface text-muted-foreground hover:text-foreground transition-colors"
+                              title="Download Document"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        {doc.document_number && (
+                          <div className="text-[11px] font-mono text-muted-foreground">
+                            Doc Ref: {doc.document_number}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ========================================================================= */}
           {/* TAB 1: OVERVIEW & TECHNICAL SPECIFICATIONS */}
