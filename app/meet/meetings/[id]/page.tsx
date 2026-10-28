@@ -18,6 +18,7 @@ import {
   Plus,
   ArrowRight,
   FileText,
+  Building2,
 } from "lucide-react";
 import MeetingDetailTabs from "./MeetingDetailTabs";
 
@@ -60,9 +61,17 @@ export default async function MeetingDetailPage({
           { label: meeting.code },
         ]}
         badge={
-          <span className="font-mono text-[12px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
-            {meeting.code}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-mono text-[12px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
+              {meeting.code}
+            </span>
+            {meeting.project && (
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                <Building2 className="h-3 w-3" />
+                {meeting.project.name}
+              </span>
+            )}
+          </div>
         }
         actions={
           <div className="flex items-center gap-2">
@@ -86,7 +95,20 @@ export default async function MeetingDetailPage({
 
       {/* Series Metadata Card */}
       <div className="theme-card-structural p-5">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 text-[12.5px]">
+        <div className={`grid grid-cols-2 gap-4 ${meeting.project ? "sm:grid-cols-5" : "sm:grid-cols-4"} text-[12.5px]`}>
+          {meeting.project && (
+            <div>
+              <span className="text-muted block text-[11px] uppercase tracking-wider font-medium">Project / Site</span>
+              <p className="mt-1 font-semibold text-foreground flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="truncate">{meeting.project.name}</span>
+                {meeting.project.code && (
+                  <span className="text-[10px] text-muted font-mono shrink-0">({meeting.project.code})</span>
+                )}
+              </p>
+            </div>
+          )}
+
           <div>
             <span className="text-muted block text-[11px] uppercase tracking-wider font-medium">Recurrence</span>
             <p className="mt-1 font-semibold text-foreground capitalize">

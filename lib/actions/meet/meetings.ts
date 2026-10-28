@@ -10,6 +10,7 @@ import type { MeetingSeries, MeetingMember } from "@/types/meet";
 export interface CreateMeetingInput {
   title: string;
   description?: string;
+  project_id?: string;
   company_id?: string;
   department_id?: string;
   meeting_type_id: string;
@@ -51,6 +52,7 @@ export async function getMeetings(filters?: {
       .from("meet_meetings")
       .select(`
         *,
+        project:workspaces!meet_meetings_project_id_fkey(id, name:workspace_name, code:workspace_code),
         organizer:user_master!meet_meetings_organizer_id_fkey(id, full_name, email),
         meeting_type:meet_meeting_types(id, name, color, is_board_mode),
         room:meet_rooms(id, name, location),
@@ -139,6 +141,7 @@ export async function getMeetingById(id: string): Promise<MeetingSeries | null> 
       .from("meet_meetings")
       .select(`
         *,
+        project:workspaces!meet_meetings_project_id_fkey(id, name:workspace_name, code:workspace_code),
         organizer:user_master!meet_meetings_organizer_id_fkey(id, full_name, email),
         meeting_type:meet_meeting_types(id, name, color, is_board_mode),
         room:meet_rooms(id, name, location),
@@ -174,6 +177,7 @@ export async function createMeeting(input: CreateMeetingInput) {
       .insert({
         title: input.title,
         description: input.description,
+        project_id: input.project_id || null,
         company_id: input.company_id || null,
         department_id: input.department_id || null,
         meeting_type_id: input.meeting_type_id,

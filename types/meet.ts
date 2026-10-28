@@ -152,6 +152,12 @@ export interface MeetingSeries {
   is_confidential: boolean;
   requires_mom_approval: boolean;
   pre_update_enabled: boolean;
+  project_id?: string | null;
+  project?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
   status: MeetingStatus;
   created_at: string;
   organizer?: {
@@ -274,6 +280,13 @@ export interface MeetingPoint {
   is_confidential: boolean;
   escalation_level: number;
   sort_order: number;
+  project_id?: string | null;
+  milestone_name?: string | null;
+  project?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
   created_at: string;
   owner?: {
     id: string;
@@ -302,9 +315,16 @@ export interface MeetingPoint {
 export interface MeetingTask {
   id: string;
   code: string;
-  point_id: string;
+  point_id?: string | null;
   session_id?: string | null;
   parent_task_id?: string | null;
+  project_id?: string | null;
+  milestone_name?: string | null;
+  project?: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
   title: string;
   description?: string | null;
   owner_id?: string | null;

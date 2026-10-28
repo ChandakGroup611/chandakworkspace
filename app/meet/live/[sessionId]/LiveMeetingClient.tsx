@@ -30,6 +30,7 @@ import { updatePointStatus, updateSessionPointNotes } from "@/lib/actions/meet/p
 import { updateSessionAttendance, startSession } from "@/lib/actions/meet/sessions";
 import { recordDecision } from "@/lib/actions/meet/decisions";
 import { toast } from "react-toastify";
+import { createClient } from "@/utils/supabase/client";
 import type {
   MeetingSession,
   MeetingPoint,
@@ -65,7 +66,113 @@ export default function LiveMeetingClient({
   const [quickDecisionText, setQuickDecisionText] = useState("");
   const [decisions, setDecisions] = useState<any[]>([]);
   const [focusedPointId, setFocusedPointId] = useState<string | null>(initialPoints[0]?.id || null);
+  const [onlinePresence, setOnlinePresence] = useState<{ user_id: string; full_name?: string }[]>([]);
   const focusedPoint = points.find((p) => p.id === focusedPointId) || points[0] || null;
+
+  const supabaseRef = useRef(createClient());
+
+  // Supabase Realtime Live Collaboration & Presence
+  useEffect(() => {
+    const supabase = supabaseRef.current;
+    const channelName = `meet-live-${session.id}`;
+
+    const channel = supabase.channel(channelName, {
+      config: { presence: { key: session.id } },
+    });
+
+    // 1. Presence tracking
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        const users: any[] = [];
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((p: any) => {
+            if (p.user_id) users.push(p);
+          });
+        });
+        setOnlinePresence(users);
+      })
+      .on("presence", { event: "join" }, ({ newPresences }) => {
+        const names = newPresences.map((p: any) => p.full_name || "Delegate").join(", ");
+        toast.info(`${names} joined the Live Session`, { autoClose: 2000 });
+      });
+
+    // 2. Broadcast events for synchronized slide/agenda changes & quick alerts
+    channel.on("broadcast", { event: "agenda_change" }, ({ payload }) => {
+      if (typeof payload?.activeIdx === "number") {
+        setActiveAgendaIdx(payload.activeIdx);
+        setElapsedSeconds(0);
+      }
+    });
+
+    channel.on("broadcast", { event: "decision_added" }, ({ payload }) => {
+      if (payload?.decision) {
+        setDecisions((prev) => [payload.decision, ...prev.filter((d) => d.id !== payload.decision.id)]);
+      }
+    });
+
+    // 3. Postgres changes: Point updates
+    channel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "meet_points",
+      },
+      (payload) => {
+        if (payload.eventType === "UPDATE") {
+          setPoints((prev) =>
+            prev.map((pt) => (pt.id === payload.new.id ? { ...pt, ...payload.new } : pt))
+          );
+        } else if (payload.eventType === "INSERT") {
+          if (payload.new.origin_session_id === session.id || payload.new.current_session_id === session.id) {
+            setPoints((prev) => {
+              if (prev.some((p) => p.id === payload.new.id)) return prev;
+              return [...prev, payload.new as MeetingPoint];
+            });
+          }
+        }
+      }
+    );
+
+    // 4. Postgres changes: Attendance updates
+    channel.on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "meet_session_attendees",
+        filter: `session_id=eq.${session.id}`,
+      },
+      (payload) => {
+        setAttendees((prev) =>
+          prev.map((att) =>
+            att.id === payload.new.id || att.user_id === payload.new.user_id
+              ? { ...att, ...payload.new }
+              : att
+          )
+        );
+      }
+    );
+
+    // Track self in presence
+    channel.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+        if (user) {
+          await channel.track({
+            user_id: user.id,
+            full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Delegate",
+            online_at: new Date().toISOString(),
+          });
+        }
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session.id]);
 
   // Agenda live stopwatch
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -96,8 +203,14 @@ export default function LiveMeetingClient({
 
   const handleNextAgenda = () => {
     if (activeAgendaIdx < agenda.length - 1) {
-      setActiveAgendaIdx((i) => i + 1);
+      const nextIdx = activeAgendaIdx + 1;
+      setActiveAgendaIdx(nextIdx);
       setElapsedSeconds(0);
+      supabaseRef.current.channel(`meet-live-${session.id}`).send({
+        type: "broadcast",
+        event: "agenda_change",
+        payload: { activeIdx: nextIdx },
+      });
     }
   };
 
@@ -145,6 +258,11 @@ export default function LiveMeetingClient({
       setDecisions((prev) => [res.decision, ...prev]);
       setQuickDecisionText("");
       toast.success("Decision recorded");
+      supabaseRef.current.channel(`meet-live-${session.id}`).send({
+        type: "broadcast",
+        event: "decision_added",
+        payload: { decision: res.decision },
+      });
     }
   };
 
@@ -164,9 +282,13 @@ export default function LiveMeetingClient({
           <h1 className="text-[14px] font-semibold text-heading line-clamp-1">
             {session.meeting?.title}
           </h1>
-          <div className="hidden sm:flex items-center gap-1.5">
+          <div className="hidden sm:flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
             <span className="text-[11.5px] font-medium text-success-text">Live Mode Active</span>
+            <div className="flex items-center gap-1.5 ml-2 bg-sunken border border-border px-2.5 py-0.5 rounded-full text-[11px] text-muted font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+              <span>{Math.max(1, onlinePresence.length)} in War Room</span>
+            </div>
           </div>
         </div>
 

@@ -9,6 +9,8 @@ import { requireMeet } from "@/lib/permissions/meet";
 export interface CreateTaskInput {
   point_id?: string | null;
   session_id?: string;
+  project_id?: string;
+  milestone_name?: string;
   title: string;
   description?: string;
   owner_id?: string;
@@ -128,6 +130,8 @@ export async function createTask(input: CreateTaskInput) {
       .insert({
         point_id: input.point_id || null,
         session_id: input.session_id || null,
+        project_id: input.project_id || null,
+        milestone_name: input.milestone_name || null,
         title: input.title,
         description: input.description || null,
         owner_id: input.owner_id || null,

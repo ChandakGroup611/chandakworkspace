@@ -16,13 +16,14 @@ import {
 export async function getMeetingMasters() {
   await requireMeet("MEET_VIEW");
   try {
-    const [typesRes, catsRes, roomsRes, templatesRes, deptsRes, usersRes] = await Promise.all([
+    const [typesRes, catsRes, roomsRes, templatesRes, deptsRes, usersRes, projectsRes] = await Promise.all([
       supabaseAdmin.from("meet_meeting_types").select("*").eq("is_active", true).order("sort_order"),
       supabaseAdmin.from("meet_point_categories").select("*").eq("is_active", true).order("name"),
       supabaseAdmin.from("meet_rooms").select("*").eq("is_active", true).order("name"),
       supabaseAdmin.from("meet_templates").select("*").eq("is_active", true).order("name"),
       supabaseAdmin.from("departments").select("id, name, code").eq("is_deleted", false).order("name"),
-      supabaseAdmin.from("user_master").select("id, full_name, email, user_code, profile_photo, department_id").eq("is_deleted", false).eq("is_active", true).order("full_name")
+      supabaseAdmin.from("user_master").select("id, full_name, email, user_code, profile_photo, department_id").eq("is_deleted", false).eq("is_active", true).order("full_name"),
+      supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").eq("is_deleted", false).order("workspace_name")
     ]);
 
     return {
@@ -32,6 +33,11 @@ export async function getMeetingMasters() {
       templates: (templatesRes.data || []) as MeetingTemplate[],
       departments: deptsRes.data || [],
       users: usersRes.data || [],
+      projects: (projectsRes.data || []).map((p: any) => ({
+        id: p.id,
+        name: p.name || p.workspace_name,
+        code: p.code || p.workspace_code,
+      })),
     };
   } catch (err: any) {
     console.error("Error fetching meet masters:", err);
@@ -42,6 +48,7 @@ export async function getMeetingMasters() {
       templates: [],
       departments: [],
       users: [],
+      projects: [],
     };
   }
 }

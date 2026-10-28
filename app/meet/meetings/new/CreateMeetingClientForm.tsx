@@ -27,6 +27,7 @@ interface CreateMeetingClientFormProps {
     templates: MeetingTemplate[];
     departments: any[];
     users: any[];
+    projects?: any[];
   };
 }
 
@@ -38,6 +39,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [projectId, setProjectId] = useState("");
   const [meetingTypeId, setMeetingTypeId] = useState(masters.types[0]?.id || "");
   const [departmentId, setDepartmentId] = useState("");
   const [organizerId, setOrganizerId] = useState(masters.users[0]?.id || "");
@@ -100,6 +102,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
       const res = await createMeeting({
         title: title.trim(),
         description: description.trim() || undefined,
+        project_id: projectId || undefined,
         meeting_type_id: meetingTypeId,
         department_id: departmentId || undefined,
         template_id: selectedTemplateId || undefined,
@@ -194,7 +197,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-[12.5px] font-medium text-foreground mb-1">
               Meeting Type *
@@ -207,6 +210,24 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
               {masters.types.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[12.5px] font-medium text-foreground mb-1">
+              Project / Site (Optional)
+            </label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none"
+            >
+              <option value="">None / Corporate Portfolio</option>
+              {(masters.projects || []).map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.code ? `[${p.code}] ` : ""}{p.name}
                 </option>
               ))}
             </select>

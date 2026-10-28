@@ -23,6 +23,7 @@ import {
   X,
   CalendarDays,
   Ban,
+  Download,
 } from "lucide-react";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
@@ -34,6 +35,7 @@ import MeetingNotesCard from "@/components/meet/MeetingNotesCard";
 import AIMinutesCard from "@/components/meet/AIMinutesCard";
 import DraggableLiveNotesWidget from "@/components/meet/DraggableLiveNotesWidget";
 import { AppButton } from "@/components/ui/AppButton";
+import { generateMoMPDF } from "@/lib/utils/mom-pdf";
 import { updatePointStatus, updatePoint, deletePoint } from "@/lib/actions/meet/points";
 import {
   rescheduleSession,
@@ -369,6 +371,60 @@ export default function SessionWorkspaceClient({
     }
   };
 
+  const handleExportPDF = () => {
+    try {
+      const allTasks = points.flatMap((p) => p.tasks || []);
+      const meeting = session.meeting as any;
+      generateMoMPDF({
+        meetingTitle: meeting?.title || "Meeting Minutes",
+        meetingCode: meeting?.code || "MTG",
+        sessionCode: session.code,
+        sessionNo: session.session_no,
+        scheduledStart: session.scheduled_start,
+        scheduledEnd: session.scheduled_end || undefined,
+        meetingType: meeting?.meeting_type?.name,
+        departmentName: meeting?.department?.name,
+        projectName: meeting?.project?.name,
+        projectCode: meeting?.project?.code,
+        roomName: session.room?.name,
+        chairName: (meeting?.chair as any)?.full_name,
+        organizerName: meeting?.organizer?.full_name,
+        minuteTakerName: (session.minute_taker as any)?.full_name,
+        overview: session.summary_notes || initialAIMinutes?.overview || undefined,
+        status: session.status,
+        momVersion: session.mom_version,
+        attendees: attendees.map((a) => ({
+          name: (a.user as any)?.full_name || a.guest_name || "Delegate",
+          role: a.role,
+          attendance: a.attendance,
+          time: a.check_in_at ? new Date(a.check_in_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : undefined,
+        })),
+        points: points.map((p) => ({
+          code: p.code,
+          title: p.title,
+          priority: p.priority,
+          owner: (p.owner as any)?.full_name || "Unassigned",
+          dueDate: p.due_date,
+          status: p.status,
+          notes: (p as any).discussion_notes,
+        })),
+        tasks: allTasks.map((t) => ({
+          code: t.code,
+          title: t.title,
+          owner: (t.owner as any)?.full_name || "Unassigned",
+          priority: t.priority,
+          dueDate: t.revised_due_date || t.due_date,
+          status: t.status,
+        })),
+        decisions: [],
+      });
+      toast.success("Executive MoM PDF generated successfully!");
+    } catch (err: any) {
+      console.error("Error generating MoM PDF:", err);
+      toast.error("Failed to generate PDF: " + (err.message || err));
+    }
+  };
+
   const dateFormatted = new Date(session.scheduled_start).toLocaleString("en-IN", {
     weekday: "short",
     day: "numeric",
@@ -412,6 +468,14 @@ export default function SessionWorkspaceClient({
               </>
             )}
 
+            <AppButton
+              variant="outline"
+              size="md"
+              leftIcon={<Download className="h-4 w-4" />}
+              onClick={handleExportPDF}
+            >
+              Export PDF
+            </AppButton>
             <AppButton
               variant="outline"
               size="md"

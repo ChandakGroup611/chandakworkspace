@@ -15,6 +15,8 @@ export interface CreatePointInput {
   point_type?: PointType;
   category_id?: string;
   department_id?: string;
+  project_id?: string;
+  milestone_name?: string;
   priority?: PointPriority;
   owner_id?: string;
   tat_days?: number;
@@ -51,6 +53,8 @@ export async function createPoint(input: CreatePointInput) {
         origin_session_id: input.session_id,
         current_session_id: input.session_id,
         agenda_item_id: input.agenda_item_id || null,
+        project_id: input.project_id || null,
+        milestone_name: input.milestone_name || null,
         title: input.title,
         description: input.description || null,
         point_type: input.point_type || "action",
