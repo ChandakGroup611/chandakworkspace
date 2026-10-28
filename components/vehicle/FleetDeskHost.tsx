@@ -198,7 +198,9 @@ import {
   runFleetComplianceExpiryAuditAction,
   VehicleSaleRecord,
   fetchVehicleSalesListAction,
-  recordVehicleSaleAction
+  recordVehicleSaleAction,
+  updateVehicleSaleAction,
+  deleteVehicleSaleAction
 } from "@/lib/actions/vehicle";
 import { formatDate, formatDateTime } from "@/components/ui/data";
 
@@ -811,12 +813,48 @@ export default function FleetDeskHost({
     return roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN" || hasPermission("SUPER_ADMIN");
   }, [roleCode, hasPermission]);
 
+  // Granular RBAC Permissions for UI Button Visibility & Authorization
+  // Vehicles
   const canCreateVehicle = canCreateModule("VEHICLES") || canCreateModule("REGISTER");
   const canEditVehicle = canUpdateModule("VEHICLES");
   const canDeleteVehicle = canDeleteModule("VEHICLES");
-  const canManageDrivers = canCreateModule("DRIVERS") || canUpdateModule("DRIVERS");
-  const canDispatchTrips = canCreateModule("TRIPS") || canUpdateModule("TRIPS");
-  const canManageMaintenance = canCreateModule("MAINTENANCE") || canUpdateModule("MAINTENANCE");
+  const canExportVehicles = canExportModule("VEHICLES");
+
+  // Drivers
+  const canCreateDriver = canCreateModule("DRIVERS");
+  const canEditDriver = canUpdateModule("DRIVERS");
+  const canDeleteDriver = canDeleteModule("DRIVERS");
+  const canExportDrivers = canExportModule("DRIVERS");
+
+  // Trips
+  const canCreateTrip = canCreateModule("TRIPS");
+  const canEditTrip = canUpdateModule("TRIPS");
+  const canDeleteTrip = canDeleteModule("TRIPS");
+  const canExportTrips = canExportModule("TRIPS");
+
+  // Maintenance
+  const canCreateMaintenance = canCreateModule("MAINTENANCE");
+  const canEditMaintenance = canUpdateModule("MAINTENANCE");
+  const canDeleteMaintenance = canDeleteModule("MAINTENANCE");
+  const canExportMaintenance = canExportModule("MAINTENANCE");
+
+  // Parts
+  const canCreatePart = canCreateModule("PARTS");
+  const canEditPart = canUpdateModule("PARTS");
+  const canDeletePart = canDeleteModule("PARTS");
+  const canExportParts = canExportModule("PARTS");
+
+  // Vendors
+  const canCreateVendor = canCreateModule("VENDORS");
+  const canEditVendor = canUpdateModule("VENDORS");
+  const canDeleteVendor = canDeleteModule("VENDORS");
+
+  // Sales & Disposals
+  const canCreateSale = canCreateModule("SALES") || canEditVehicle;
+  const canEditSale = canUpdateModule("SALES") || canEditVehicle;
+  const canDeleteSale = canDeleteModule("SALES") || canDeleteVehicle;
+  const canExportSales = canExportModule("SALES") || canExportVehicles;
+
   const canViewReports = canReadModule("REPORTS");
 
   // Active sub-navigation tab based on URL
@@ -910,6 +948,9 @@ export default function FleetDeskHost({
   const [salesSearchQuery, setSalesSearchQuery] = useState("");
   const [salesTypeFilter, setSalesTypeFilter] = useState("ALL");
   const [viewingSale, setViewingSale] = useState<VehicleSaleRecord | null>(null);
+  const [editingSale, setEditingSale] = useState<VehicleSaleRecord | null>(null);
+  const [saleVehicleDocs, setSaleVehicleDocs] = useState<VehicleDocumentRecord[]>([]);
+  const [saleReviewTab, setSaleReviewTab] = useState<"SPECS" | "FINANCIALS" | "COMPLIANCE" | "LEDGER" | "DOCS">("SPECS");
 
   // Filtering and search
   const [searchQuery, setSearchQuery] = useState("");
@@ -1384,7 +1425,7 @@ export default function FleetDeskHost({
 
   // Generic Delete Confirmation Dialog State
   const [deleteTarget, setDeleteTarget] = useState<{
-    type: "vehicle" | "driver" | "trip" | "maintenance" | "vendor" | "part";
+    type: "vehicle" | "driver" | "trip" | "maintenance" | "vendor" | "part" | "sale";
     id: string;
     label: string;
   } | null>(null);
@@ -2689,6 +2730,108 @@ export default function FleetDeskHost({
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     triggerToast("Drivers directory roster exported successfully!");
+  };
+
+  const exportTripsCSV = () => {
+    if (!trips || trips.length === 0) {
+      triggerToast("No trip dispatch records available to export");
+      return;
+    }
+    const headers = [
+      "Plan Date",
+      "Vehicle Plate",
+      "Assigned Driver",
+      "Traveler / Passenger",
+      "Purpose",
+      "Origin",
+      "Destination",
+      "Scheduled Window",
+      "Status"
+    ];
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+    const rows = trips.map((t) => [
+      escapeCSV(t.plan_date || ""),
+      escapeCSV(t.vehicle_reg || ""),
+      escapeCSV(t.driver_name || "Unassigned"),
+      escapeCSV(t.traveler_name || ""),
+      escapeCSV(t.purpose || ""),
+      escapeCSV(t.origin || ""),
+      escapeCSV(t.destination || ""),
+      escapeCSV(`${t.planned_start_time || "00:00"} - ${t.planned_end_time || "00:00"}`),
+      escapeCSV(t.status || "PLANNED")
+    ].join(","));
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Fleet_Trip_Dispatches_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    triggerToast("Trip dispatches exported successfully!");
+  };
+
+  const exportPartsCSV = () => {
+    if (!parts || parts.length === 0) {
+      triggerToast("No spare part records available to export");
+      return;
+    }
+    const headers = [
+      "Part Name",
+      "Category",
+      "Brand",
+      "SKU / Part Number",
+      "Serial Number",
+      "Quantity",
+      "Unit Price (INR)",
+      "Total Cost (INR)",
+      "Vendor / Supplier",
+      "Purchase Date",
+      "Shelf Expiry Date",
+      "Warranty Expiry Date",
+      "Assigned Vehicle",
+      "Status"
+    ];
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+    const rows = parts.map((p) => [
+      escapeCSV(p.name || ""),
+      escapeCSV(p.category || ""),
+      escapeCSV(p.brand || ""),
+      escapeCSV(p.part_number || ""),
+      escapeCSV(p.serial_number || ""),
+      escapeCSV(p.quantity || 1),
+      escapeCSV(Number(p.unit_price || 0)),
+      escapeCSV(Number(p.quantity || 1) * Number(p.unit_price || 0)),
+      escapeCSV(p.vendor_name || ""),
+      escapeCSV(p.purchase_date || ""),
+      escapeCSV(p.expiry_date || ""),
+      escapeCSV(p.warranty_expiry_date || ""),
+      escapeCSV(p.assigned_vehicle_reg || "Depot Stock"),
+      escapeCSV(p.status || "IN_STOCK")
+    ].join(","));
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Fleet_Spare_Parts_Inventory_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    triggerToast("Spare parts inventory exported successfully!");
   };
 
   // Global Keyboard Shortcuts (Ctrl+K / Cmd+K, Escape)
@@ -6201,8 +6344,10 @@ export default function FleetDeskHost({
   // ----------------------------------------------------------------------------
 
   const openRecordSaleModal = (targetVehicle?: VehicleRecord) => {
+    setEditingSale(null);
     const defaultVeh = targetVehicle || vehicles.find((v) => v.status !== "SOLD" && v.status !== "DISPOSED") || vehicles[0];
-    setSaleVehicleId(defaultVeh?.id || "");
+    const vId = defaultVeh?.id || "";
+    setSaleVehicleId(vId);
     setSaleDate(new Date().toISOString().split("T")[0]);
     setSalePrice("");
     setSaleBuyerName("");
@@ -6217,7 +6362,53 @@ export default function FleetDeskHost({
     setSaleNotes("");
     setSaleStagedFile(null);
     setSaleDocUrl("");
+    setSaleReviewTab("SPECS");
+    setSaleVehicleDocs(defaultVeh?.documents || []);
+    if (vId) {
+      fetchVehicleDocumentsAction(vId).then((r) => {
+        if (r.success && r.documents) setSaleVehicleDocs(r.documents);
+      }).catch(() => {});
+    }
     setIsRecordSaleModalOpen(true);
+  };
+
+  const openEditSaleModal = (sale: VehicleSaleRecord) => {
+    setEditingSale(sale);
+    setSaleVehicleId(sale.vehicle_id);
+    setSaleDate(sale.sale_date ? sale.sale_date.split("T")[0] : new Date().toISOString().split("T")[0]);
+    setSalePrice(sale.sale_price !== undefined ? sale.sale_price : "");
+    setSaleBuyerName(sale.buyer_name || "");
+    setSaleBuyerPhone(sale.buyer_phone || "");
+    setSaleBuyerEmail(sale.buyer_email || "");
+    setSaleType(sale.sale_type || "Full Sale");
+    setSalePaymentMode(sale.payment_mode || "Bank Transfer");
+    setSaleFinanced(Boolean(sale.financed || sale.is_financed));
+    setSaleFinancierName(sale.financier_name || "");
+    setSaleLoanAmount(sale.loan_amount !== undefined && sale.loan_amount !== 0 ? sale.loan_amount : "");
+    setSaleLoanTenure(sale.loan_tenure_months !== undefined && sale.loan_tenure_months !== null ? sale.loan_tenure_months : "");
+    setSaleNotes(sale.notes || "");
+    setSaleStagedFile(null);
+    setSaleDocUrl(sale.sale_document_url || "");
+    setSaleReviewTab("SPECS");
+    const veh = vehicles.find((v) => v.id === sale.vehicle_id);
+    setSaleVehicleDocs(veh?.documents || []);
+    if (sale.vehicle_id) {
+      fetchVehicleDocumentsAction(sale.vehicle_id).then((r) => {
+        if (r.success && r.documents) setSaleVehicleDocs(r.documents);
+      }).catch(() => {});
+    }
+    setIsRecordSaleModalOpen(true);
+  };
+
+  const handleSelectSaleVehicle = (vId: string) => {
+    setSaleVehicleId(vId);
+    const target = vehicles.find((v) => v.id === vId);
+    setSaleVehicleDocs(target?.documents || []);
+    if (vId) {
+      fetchVehicleDocumentsAction(vId).then((r) => {
+        if (r.success && r.documents) setSaleVehicleDocs(r.documents);
+      }).catch(() => {});
+    }
   };
 
   const handleSaleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -6260,46 +6451,93 @@ export default function FleetDeskHost({
 
     setModalSubmitting(true);
     try {
-      const payload = {
-        vehicle_id: saleVehicleId,
-        sale_date: saleDate,
-        sale_price: numPrice,
-        buyer_name: saleBuyerName.trim(),
-        buyer_phone: saleBuyerPhone.trim() || undefined,
-        buyer_email: saleBuyerEmail.trim() || undefined,
-        sale_type: saleType,
-        payment_mode: salePaymentMode,
-        is_financed: saleFinanced,
-        financier_name: saleFinancierName.trim() || undefined,
-        loan_amount: saleLoanAmount !== "" ? Number(saleLoanAmount) : undefined,
-        loan_tenure_months: saleLoanTenure !== "" ? Number(saleLoanTenure) : undefined,
-        notes: saleNotes.trim() || undefined,
-        document_url: saleStagedFile?.base64Url || saleDocUrl || undefined
-      };
+      const docPayloadUrl = saleStagedFile?.base64Url || saleDocUrl || undefined;
+      if (editingSale) {
+        const payload = {
+          id: editingSale.id,
+          vehicle_id: saleVehicleId,
+          sale_date: saleDate,
+          sale_price: numPrice,
+          buyer_name: saleBuyerName.trim(),
+          buyer_phone: saleBuyerPhone.trim() || undefined,
+          buyer_email: saleBuyerEmail.trim() || undefined,
+          sale_type: saleType,
+          payment_mode: salePaymentMode,
+          financed: saleFinanced,
+          financier_name: saleFinancierName.trim() || undefined,
+          loan_amount: saleLoanAmount !== "" ? Number(saleLoanAmount) : undefined,
+          loan_tenure_months: saleLoanTenure !== "" ? Number(saleLoanTenure) : undefined,
+          notes: saleNotes.trim() || undefined,
+          sale_document_url: docPayloadUrl
+        };
 
-      const res = await recordVehicleSaleAction(payload);
-      if (res.success && res.sale) {
-        setSales((prev) => [res.sale!, ...prev]);
-        const newStatus = saleType === "Scrap / Salvage" ? "DISPOSED" : "SOLD";
-        setVehicles((prev) =>
-          prev.map((v) =>
-            v.id === saleVehicleId
-              ? { ...v, status: newStatus, sale_price: numPrice }
-              : v
-          )
-        );
-        if (viewingVehicle && viewingVehicle.id === saleVehicleId) {
-          setViewingVehicle((prev) =>
-            prev ? { ...prev, status: newStatus, sale_price: numPrice } : null
+        const res = await updateVehicleSaleAction(payload);
+        if (res.success && res.sale) {
+          setSales((prev) => prev.map((s) => (s.id === editingSale.id ? res.sale! : s)));
+          const newStatus = saleType === "Scrap / Salvage" ? "DISPOSED" : "SOLD";
+          setVehicles((prev) =>
+            prev.map((v) =>
+              v.id === saleVehicleId
+                ? { ...v, status: newStatus, sale_price: numPrice }
+                : v
+            )
           );
+          if (viewingVehicle && viewingVehicle.id === saleVehicleId) {
+            setViewingVehicle((prev) =>
+              prev ? { ...prev, status: newStatus, sale_price: numPrice } : null
+            );
+          }
+          if (viewingSale && viewingSale.id === editingSale.id) {
+            setViewingSale(res.sale);
+          }
+          triggerToast(`Vehicle sale record updated successfully!`);
+          setIsRecordSaleModalOpen(false);
+          setEditingSale(null);
+        } else {
+          triggerToast(res.error || "Failed to update vehicle sale.", true);
         }
-        triggerToast(`Vehicle sale of ₹${numPrice.toLocaleString("en-IN")} recorded successfully!`);
-        setIsRecordSaleModalOpen(false);
       } else {
-        triggerToast(res.error || "Failed to record vehicle sale.", true);
+        const payload = {
+          vehicle_id: saleVehicleId,
+          sale_date: saleDate,
+          sale_price: numPrice,
+          buyer_name: saleBuyerName.trim(),
+          buyer_phone: saleBuyerPhone.trim() || undefined,
+          buyer_email: saleBuyerEmail.trim() || undefined,
+          sale_type: saleType,
+          payment_mode: salePaymentMode,
+          financed: saleFinanced,
+          financier_name: saleFinancierName.trim() || undefined,
+          loan_amount: saleLoanAmount !== "" ? Number(saleLoanAmount) : undefined,
+          loan_tenure_months: saleLoanTenure !== "" ? Number(saleLoanTenure) : undefined,
+          notes: saleNotes.trim() || undefined,
+          sale_document_url: docPayloadUrl
+        };
+
+        const res = await recordVehicleSaleAction(payload);
+        if (res.success && res.sale) {
+          setSales((prev) => [res.sale!, ...prev]);
+          const newStatus = saleType === "Scrap / Salvage" ? "DISPOSED" : "SOLD";
+          setVehicles((prev) =>
+            prev.map((v) =>
+              v.id === saleVehicleId
+                ? { ...v, status: newStatus, sale_price: numPrice }
+                : v
+            )
+          );
+          if (viewingVehicle && viewingVehicle.id === saleVehicleId) {
+            setViewingVehicle((prev) =>
+              prev ? { ...prev, status: newStatus, sale_price: numPrice } : null
+            );
+          }
+          triggerToast(`Vehicle sale of ₹${numPrice.toLocaleString("en-IN")} recorded successfully!`);
+          setIsRecordSaleModalOpen(false);
+        } else {
+          triggerToast(res.error || "Failed to record vehicle sale.", true);
+        }
       }
     } catch (err: any) {
-      triggerToast(err.message || "Failed to record vehicle sale.", true);
+      triggerToast(err.message || "Failed to save vehicle sale.", true);
     } finally {
       setModalSubmitting(false);
     }
@@ -8309,18 +8547,60 @@ export default function FleetDeskHost({
         res = await deleteInsuranceVendorAction(deleteTarget.id);
       } else if (deleteTarget.type === "part") {
         res = await deleteVehiclePartAction(deleteTarget.id);
+      } else if (deleteTarget.type === "sale") {
+        const saleDelRes = await deleteVehicleSaleAction(deleteTarget.id);
+        res = saleDelRes;
+        if (saleDelRes.success) {
+          const deletedSale = sales.find((s) => s.id === deleteTarget.id);
+          setSales((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+          if (deletedSale) {
+            const restoredStatus = saleDelRes.restoredStatus || "IN_STOCK";
+            setVehicles((prev) =>
+              prev.map((v) =>
+                v.id === deletedSale.vehicle_id
+                  ? { ...v, status: restoredStatus, sale_price: null }
+                  : v
+              )
+            );
+            if (viewingVehicle && viewingVehicle.id === deletedSale.vehicle_id) {
+              setViewingVehicle((prev) =>
+                prev ? { ...prev, status: restoredStatus, sale_price: null } : null
+              );
+            }
+          }
+          if (viewingSale && viewingSale.id === deleteTarget.id) {
+            setViewingSale(null);
+          }
+        }
       } else {
         res = await deleteServiceRecordAction(deleteTarget.id);
       }
 
       if (res.success) {
-        triggerToast(`${deleteTarget.label} deleted successfully!`);
-        if (deleteTarget.type === "vehicle") setVehicles(prev => prev.filter(v => v.id !== deleteTarget.id));
-        else if (deleteTarget.type === "driver") setDrivers(prev => prev.filter(d => d.id !== deleteTarget.id));
-        else if (deleteTarget.type === "trip") setTrips(prev => prev.filter(t => t.id !== deleteTarget.id));
-        else if (deleteTarget.type === "vendor") setInsuranceVendors(prev => prev.filter(vn => vn.id !== deleteTarget.id));
-        else if (deleteTarget.type === "part") setParts(prev => prev.filter(p => p.id !== deleteTarget.id));
-        else setMaintenance(prev => prev.filter(m => m.id !== deleteTarget.id));
+        if (deleteTarget.type === "sale") {
+          triggerToast(`${deleteTarget.label} reverted and vehicle restored to fleet inventory.`);
+        } else {
+          triggerToast(`${deleteTarget.label} deleted successfully!`);
+        }
+        if (deleteTarget.type === "vehicle") {
+          setVehicles(prev => prev.filter(v => v.id !== deleteTarget.id));
+          if (viewingVehicle && viewingVehicle.id === deleteTarget.id) setViewingVehicle(null);
+        } else if (deleteTarget.type === "driver") {
+          setDrivers(prev => prev.filter(d => d.id !== deleteTarget.id));
+          if (viewingDriver && viewingDriver.id === deleteTarget.id) setViewingDriver(null);
+        } else if (deleteTarget.type === "trip") {
+          setTrips(prev => prev.filter(t => t.id !== deleteTarget.id));
+          if (viewingTrip && viewingTrip.id === deleteTarget.id) setViewingTrip(null);
+        } else if (deleteTarget.type === "vendor") {
+          setInsuranceVendors(prev => prev.filter(vn => vn.id !== deleteTarget.id));
+        } else if (deleteTarget.type === "part") {
+          setParts(prev => prev.filter(p => p.id !== deleteTarget.id));
+          if (viewingPart && viewingPart.id === deleteTarget.id) setViewingPart(null);
+        } else if (deleteTarget.type !== "sale") {
+          setMaintenance(prev => prev.filter(m => m.id !== deleteTarget.id));
+          if (selectedMaintenanceForView && selectedMaintenanceForView.id === deleteTarget.id) setSelectedMaintenanceForView(null);
+        }
+        if (viewingSale && viewingSale.id === deleteTarget.id) setViewingSale(null);
         setDeleteTarget(null);
         fleetDataCache = null;
         loadAllData(true, true);
@@ -9089,7 +9369,7 @@ export default function FleetDeskHost({
           iconBg: "bg-warning-soft text-warning-text border-warning/30",
           title: "Workshop job cards & service bills",
           description: "Dedicated workshop billing, invoice records, labor & tax accounting, and scheduled service tracking",
-          actionBtn: canManageMaintenance ? (
+          actionBtn: canCreateMaintenance ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -9148,7 +9428,7 @@ export default function FleetDeskHost({
           iconBg: "bg-info-soft text-info-text border-info/30",
           title: "Parts, accessories & consumables master",
           description: "Spare parts inventory, OEM part numbers, shelf-life, warranty tracking & asset valuation",
-          actionBtn: (
+          actionBtn: canCreatePart ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -9158,7 +9438,7 @@ export default function FleetDeskHost({
               <Plus className="h-4 w-4" />
               <span>Register part / accessory</span>
             </AppButton>
-          ),
+          ) : null,
           kpis: [
             {
               title: "Total catalogue items",
@@ -9204,7 +9484,7 @@ export default function FleetDeskHost({
           iconBg: "bg-surface text-theme-icon border-border",
           title: "Daily trip dispatch & log sheets",
           description: "Vehicle route dispatching, passenger manifests, odometer tracking & trip completion logs",
-          actionBtn: canDispatchTrips ? (
+          actionBtn: canCreateTrip ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -9260,7 +9540,7 @@ export default function FleetDeskHost({
           iconBg: "bg-surface text-theme-icon border-border",
           title: "Driver roster & commercial licensing",
           description: "Driver profiles, commercial license validity, assigned vehicles & duty status tracking",
-          actionBtn: canManageDrivers ? (
+          actionBtn: canCreateDriver ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -9316,7 +9596,7 @@ export default function FleetDeskHost({
           iconBg: "bg-surface text-theme-icon border-border",
           title: "Insurance & workshop vendor master",
           description: "Authorised service centers, cashless garage networks & insurance policy providers",
-          actionBtn: (
+          actionBtn: canCreateVendor ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -9326,7 +9606,7 @@ export default function FleetDeskHost({
               <Plus className="h-4 w-4" />
               <span>Add insurance vendor</span>
             </AppButton>
-          ),
+          ) : null,
           kpis: [
             {
               title: "Total vendors",
@@ -9372,7 +9652,7 @@ export default function FleetDeskHost({
           iconBg: "bg-success-soft text-success-text border-success/30",
           title: "Enterprise Fleet Document Vault",
           description: "Centralized archive of verified statutory certificates, registration cards, insurance policies & service attachments",
-          actionBtn: canCreateVehicle ? (
+          actionBtn: canEditVehicle ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -9534,7 +9814,7 @@ export default function FleetDeskHost({
           iconBg: "bg-surface text-theme-icon border-border",
           title: "Traveller & commute allocations",
           description: "Employee commute assignments, regular traveller directories & route allocations",
-          actionBtn: canDispatchTrips ? (
+          actionBtn: canCreateTrip ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -9646,7 +9926,7 @@ export default function FleetDeskHost({
           iconBg: "bg-surface text-theme-icon border-border",
           title: "Vehicle sales & asset disposals",
           description: "Record asset sales, scrap decommissions, buyer invoices & realized revenue ledgers",
-          actionBtn: canCreateVehicle ? (
+          actionBtn: canCreateSale ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -9767,10 +10047,14 @@ export default function FleetDeskHost({
     insuranceVendors, 
     expiringInsuranceCount, 
     complianceAlerts, 
-    canManageMaintenance, 
-    canDispatchTrips, 
-    canManageDrivers, 
-    canCreateVehicle
+    canCreateMaintenance, 
+    canCreatePart, 
+    canCreateTrip, 
+    canCreateDriver, 
+    canCreateVendor, 
+    canCreateSale, 
+    canCreateVehicle, 
+    canEditVehicle
   ]);
 
   // Transaction Form & Full-Page Working View State
@@ -12954,7 +13238,7 @@ export default function FleetDeskHost({
                               >
                                 Timeline
                               </AppButton>
-                              {canManageMaintenance && (
+                              {canCreateMaintenance && (
                                 <AppButton aria-label="Log service job card"
                                   variant="primary"
                                   size="icon-sm"
@@ -13446,7 +13730,7 @@ export default function FleetDeskHost({
                       ))}
                     </div>
 
-                    {canDispatchTrips && (
+                    {canCreateTrip && (
                       <AppButton
                         variant="primary"
                         size="sm"
@@ -13473,7 +13757,7 @@ export default function FleetDeskHost({
                       <div className="flex flex-col items-center gap-2.5">
                         <MapPin className="h-6 w-6 text-muted-foreground/60" />
                         <span>No active dispatches.</span>
-                        {canDispatchTrips && (
+                        {canCreateTrip && (
                           <AppButton
                             variant="primary"
                             size="sm"
@@ -13521,7 +13805,7 @@ export default function FleetDeskHost({
                             }`}>
                               {trp.status === "IN_PROGRESS" ? "In Transit" : trp.status}
                             </span>
-                            {trp.status === "IN_PROGRESS" && canDispatchTrips && (
+                            {trp.status === "IN_PROGRESS" && canEditTrip && (
                               <AppButton aria-label="Complete trip"
                                 variant="outline"
                                 size="icon-sm"
@@ -13705,7 +13989,7 @@ export default function FleetDeskHost({
                     <span>Recent services</span>
                   </AppCardTitle>
                   <div className="flex items-center gap-2">
-                    {canManageMaintenance && (
+                    {canCreateMaintenance && (
                       <AppButton
                         variant="ghost"
                         size="sm"
@@ -13735,7 +14019,7 @@ export default function FleetDeskHost({
                       <div className="flex flex-col items-center gap-2.5">
                         <Wrench className="h-6 w-6 text-muted-foreground/60" />
                         <span>No maintenance records.</span>
-                        {canManageMaintenance && (
+                        {canCreateMaintenance && (
                           <AppButton
                             variant="primary"
                             size="sm"
@@ -13797,7 +14081,7 @@ export default function FleetDeskHost({
                     <span>Drivers roster</span>
                   </AppCardTitle>
                   <div className="flex items-center gap-2">
-                    {canManageDrivers && (
+                    {canCreateDriver && (
                       <AppButton
                         variant="ghost"
                         size="sm"
@@ -13824,7 +14108,7 @@ export default function FleetDeskHost({
                       <div className="flex flex-col items-center gap-2.5">
                         <Users className="h-6 w-6 text-muted-foreground/60" />
                         <span>No drivers registered.</span>
-                        {canManageDrivers && (
+                        {canCreateDriver && (
                           <AppButton
                             variant="primary"
                             size="sm"
@@ -13913,7 +14197,7 @@ export default function FleetDeskHost({
                   </button>
                 )}
 
-                {canManageMaintenance && (
+                {canCreateMaintenance && (
                   <button
                     type="button"
                     onClick={() => {
@@ -13932,7 +14216,7 @@ export default function FleetDeskHost({
                   </button>
                 )}
 
-                {canManageDrivers && (
+                {canCreateDriver && (
                   <button
                     type="button"
                     onClick={() => setIsAddDriverOpen(true)}
@@ -13948,7 +14232,7 @@ export default function FleetDeskHost({
                   </button>
                 )}
 
-                {canDispatchTrips && (
+                {canCreateTrip && (
                   <button
                     type="button"
                     onClick={() => setIsDispatchTripOpen(true)}
@@ -14217,17 +14501,19 @@ export default function FleetDeskHost({
               {/* Standard picture per vehicle model (admins / fleet managers only) */}
               <ModelPicturesButton vehicles={vehicles} />
 
-              <AppButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={exportVehiclesCSV}
-                className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
-                title="Export fleet register as CSV spreadsheet"
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Export CSV</span>
-              </AppButton>
+              {canExportVehicles && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={exportVehiclesCSV}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
+                  title="Export fleet register as CSV spreadsheet"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Export CSV</span>
+                </AppButton>
+              )}
 
               {canCreateVehicle && (
                 <AppButton
@@ -14814,79 +15100,56 @@ export default function FleetDeskHost({
 
                           {/* 10. Actions Column */}
                           <AppTableCell className="p-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                            <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">
+                              {/* Inspect */}
                               <AppButton
-                                variant="primary"
+                                type="button"
+                                variant="outline"
                                 size="sm"
                                 title="Open complete vehicle master dossier & details"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                onClick={() => {
                                   setViewingVehicle(veh);
                                   setVehicleDossierTab("VEHICLE");
                                 }}
-                                className="h-7 px-2.5 text-xs gap-1 font-semibold bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text shadow-2xs"
+                                className="h-7 px-2 text-xs font-semibold"
                               >
-                                <Eye className="h-3 w-3" />
-                                <span>View details</span>
+                                <Eye className="h-3 w-3 mr-1 text-muted-foreground" />
+                                <span>Inspect</span>
                               </AppButton>
-                              <AppButton
-                                variant="outline"
-                                size="sm"
-                                title="Open detailed vehicle documents vault"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setViewingVehicle(veh);
-                                  setVehicleDossierTab("DOCS");
-                                }}
-                                className="h-7 px-2 text-xs gap-1 font-semibold text-success-text border-success/30 hover:border-success hover:bg-success-soft dark:hover:bg-success-soft shadow-2xs"
-                              >
-                                <FileCheck className="h-3 w-3" />
-                                <span>Docs ({vDocs.length})</span>
-                              </AppButton>
-                              <AppButton
-                                variant="outline"
-                                size="sm"
-                                title="Renew insurance policy"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenVehiclePolicyRenewModal(veh);
-                                }}
-                                className="h-7 px-2 text-xs gap-1 font-semibold text-theme-icon dark:text-muted-foreground border-border hover:border-theme-btn-primary hover:bg-elevated shadow-2xs"
-                              >
-                                <RotateCcw className="h-3 w-3" />
-                                <span>Renew</span>
-                              </AppButton>
+
+
+                              {/* Edit */}
                               {canEditVehicle && (
                                 <AppButton
+                                  type="button"
                                   variant="outline"
                                   size="sm"
-                                  title="Edit vehicle"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openEditVehicleModal(veh);
-                                  }}
-                                  className="h-7 px-2.5 text-xs gap-1 font-semibold hover:border-theme-btn-primary hover:text-theme-btn-primary shadow-2xs"
+                                  title="Edit vehicle specifications and records"
+                                  onClick={() => openEditVehicleModal(veh)}
+                                  className="h-7 px-2 text-xs font-semibold text-foreground hover:bg-sunken"
                                 >
-                                  <Edit2 className="h-3 w-3 text-muted-foreground" />
+                                  <Edit2 className="h-3 w-3 mr-1 text-theme-btn-primary" />
                                   <span>Edit</span>
                                 </AppButton>
                               )}
+
+                              {/* Delete */}
                               {canDeleteVehicle && (
                                 <AppButton
+                                  type="button"
                                   variant="outline"
                                   size="sm"
-                                  title="Delete vehicle"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                  title="Delete vehicle record"
+                                  onClick={() => {
                                     setDeleteTarget({
                                       type: "vehicle",
                                       id: veh.id,
                                       label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
                                     });
                                   }}
-                                  className="h-7 px-2.5 text-xs gap-1 font-semibold text-danger-text hover:bg-danger-soft dark:hover:bg-danger-soft border-danger/30 dark:border-danger/40 shadow-2xs"
+                                  className="h-7 px-2 text-xs font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
                                 >
-                                  <Trash2 className="h-3 w-3" />
+                                  <Trash2 className="h-3 w-3 mr-1" />
                                   <span>Delete</span>
                                 </AppButton>
                               )}
@@ -14927,18 +15190,20 @@ export default function FleetDeskHost({
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                 />
               </div>
-              <AppButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={exportDriversCSV}
-                className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
-                title="Export drivers directory as CSV spreadsheet"
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Export roster</span>
-              </AppButton>
-              {canManageDrivers && (
+              {canExportDrivers && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={exportDriversCSV}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
+                  title="Export drivers directory as CSV spreadsheet"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Export roster</span>
+                </AppButton>
+              )}
+              {canCreateDriver && (
                 <AppButton
                   variant="primary"
                   size="sm"
@@ -15025,42 +15290,55 @@ export default function FleetDeskHost({
                               {drv.is_active ? "Active" : "Inactive"}
                             </span>
                           </AppTableCell>
-                          <AppTableCell className="p-3.5 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {canManageDrivers && (
-                                <>
-                                  <AppButton aria-label="Edit driver"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    title="Edit driver"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openEditDriverModal(drv);
-                                    }}
-                                    className="h-7 w-7"
-                                  >
-                                    <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                                  </AppButton>
-                                  <AppButton aria-label="Delete driver"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    title="Delete driver"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeleteTarget({
-                                        type: "driver",
-                                        id: drv.id,
-                                        label: `Driver ${drv.full_name}`
-                                      });
-                                    }}
-                                    className="h-7 w-7 text-danger-text hover:bg-danger-soft dark:hover:bg-danger-soft border-danger/30 dark:border-danger/40"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                </>
+                          <AppTableCell className="p-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              {/* Inspect */}
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                title="Inspect driver personnel credentials"
+                                onClick={() => setViewingDriver(drv)}
+                                className="h-7 px-2 text-xs font-semibold"
+                              >
+                                <Eye className="h-3 w-3 mr-1 text-muted-foreground" />
+                                <span>Inspect</span>
+                              </AppButton>
+
+                              {/* Edit */}
+                              {canEditDriver && (
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  title="Edit driver personnel credentials"
+                                  onClick={() => openEditDriverModal(drv)}
+                                  className="h-7 px-2 text-xs font-semibold text-foreground hover:bg-sunken"
+                                >
+                                  <Edit2 className="h-3 w-3 mr-1 text-theme-btn-primary" />
+                                  <span>Edit</span>
+                                </AppButton>
                               )}
-                              {!canManageDrivers && (
-                                <span className="text-xs text-muted-foreground italic">Read-only</span>
+
+                              {/* Delete */}
+                              {canDeleteDriver && (
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  title="Delete driver from directory"
+                                  onClick={() => {
+                                    setDeleteTarget({
+                                      type: "driver",
+                                      id: drv.id,
+                                      label: `Driver ${drv.full_name}`
+                                    });
+                                  }}
+                                  className="h-7 px-2 text-xs font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  <span>Delete</span>
+                                </AppButton>
                               )}
                             </div>
                           </AppTableCell>
@@ -15087,7 +15365,7 @@ export default function FleetDeskHost({
               <AppCardTitle className="text-lg">Daily trip dispatch sheets</AppCardTitle>
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
               <div className="relative flex-1 sm:w-64">
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
                 <input
@@ -15097,6 +15375,30 @@ export default function FleetDeskHost({
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                 />
               </div>
+              {canExportTrips && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={exportTripsCSV}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
+                  title="Export trip dispatches as CSV spreadsheet"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Export trips</span>
+                </AppButton>
+              )}
+              {canCreateTrip && (
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setIsDispatchTripOpen(true)}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Dispatch trip</span>
+                </AppButton>
+              )}
             </div>
           </AppCardHeader>
 
@@ -15171,69 +15473,68 @@ export default function FleetDeskHost({
                             {trp.status}
                           </span>
                         </AppTableCell>
-                        <AppTableCell className="p-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {canDispatchTrips && trp.status === "PLANNED" && (
-                              <>
-                                <AppButton
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUpdateTripStatus(trp.id, "IN_PROGRESS");
-                                  }}
-                                  className="h-7 text-xs px-2 text-success-text border-success/30 dark:border-success/40 hover:bg-success-soft dark:hover:bg-success-soft"
-                                >
-                                  <Play className="h-3 w-3 mr-1" />
-                                  Start
-                                </AppButton>
-                                <AppButton
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUpdateTripStatus(trp.id, "CANCELLED");
-                                  }}
-                                  className="h-7 text-xs px-2 text-muted-foreground hover:text-danger-text"
-                                >
-                                  Cancel
-                                </AppButton>
-                              </>
-                            )}
-                            {canDispatchTrips && trp.status === "IN_PROGRESS" && (
+                        <AppTableCell className="p-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">
+                            {/* Inspect */}
+                            <AppButton
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              title="Inspect trip route & manifest"
+                              onClick={() => setViewingTrip(trp)}
+                              className="h-7 px-2 text-xs font-semibold"
+                            >
+                              <Eye className="h-3 w-3 mr-1 text-muted-foreground" />
+                              <span>Inspect</span>
+                            </AppButton>
+
+                            {/* Start movement */}
+                            {canEditTrip && trp.status === "PLANNED" && (
                               <AppButton
+                                type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleUpdateTripStatus(trp.id, "COMPLETED");
-                                }}
-                                className="h-7 text-xs px-2 text-info-text border-info/30 dark:border-info/40 hover:bg-info-soft dark:hover:bg-info-soft"
+                                onClick={() => handleUpdateTripStatus(trp.id, "IN_PROGRESS")}
+                                className="h-7 text-xs px-2 text-success-text border-success/30 hover:bg-success-soft font-semibold"
                               >
-                                <Check className="h-3 w-3 mr-1" />
-                                Complete
+                                <Play className="h-3 w-3 mr-1" />
+                                <span>Start</span>
                               </AppButton>
                             )}
-                            {canDispatchTrips && (
-                              <AppButton aria-label="Delete trip"
+
+                            {/* Complete movement */}
+                            {canEditTrip && trp.status === "IN_PROGRESS" && (
+                              <AppButton
+                                type="button"
                                 variant="outline"
-                                size="icon-sm"
-                                title="Delete trip"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                size="sm"
+                                onClick={() => handleUpdateTripStatus(trp.id, "COMPLETED")}
+                                className="h-7 text-xs px-2 text-info-text border-info/30 hover:bg-info-soft font-semibold"
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                <span>Complete</span>
+                              </AppButton>
+                            )}
+
+                            {/* Delete / Cancel */}
+                            {canDeleteTrip && (
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                title="Delete trip dispatch"
+                                onClick={() => {
                                   setDeleteTarget({
                                     type: "trip",
                                     id: trp.id,
-                                    label: `Trip for ${trp.traveler_name}`
+                                    label: `Trip for ${trp.traveler_name || trp.destination}`
                                   });
                                 }}
-                                className="h-7 w-7 text-danger-text hover:bg-danger-soft dark:hover:bg-danger-soft border-danger/30 dark:border-danger/40"
+                                className="h-7 px-2 text-xs font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                <span>Delete</span>
                               </AppButton>
-                            )}
-                            {!canDispatchTrips && (
-                              <span className="text-xs text-muted-foreground italic">Read-only</span>
                             )}
                           </div>
                         </AppTableCell>
@@ -15269,18 +15570,20 @@ export default function FleetDeskHost({
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                 />
               </div>
-              <AppButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={exportMaintenanceCSV}
-                className="text-xs h-9 px-3 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
-                title="Export maintenance ledger as CSV spreadsheet"
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Export ledger</span>
-              </AppButton>
-              {canManageMaintenance && (
+              {canExportMaintenance && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={exportMaintenanceCSV}
+                  className="text-xs h-9 px-3 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
+                  title="Export maintenance ledger as CSV spreadsheet"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Export ledger</span>
+                </AppButton>
+              )}
+              {canCreateMaintenance && (
                 <AppButton
                   variant="primary"
                   size="sm"
@@ -15412,52 +15715,54 @@ export default function FleetDeskHost({
                               </div>
                             ) : null}
                           </AppTableCell>
-                          <AppTableCell className="p-3.5 text-right">
-                            <div className="inline-flex items-center justify-end gap-1.5">
+                          <AppTableCell className="p-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">
+                              {/* Inspect */}
                               <AppButton
+                                type="button"
                                 variant="outline"
                                 size="sm"
-                                title="View detailed job card & invoice"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedMaintenanceForView(m);
-                                }}
-                                className="h-7 px-2 text-xs text-primary border-primary/30 hover:bg-primary/10 gap-1 font-medium"
+                                title="Inspect service work order & job card"
+                                onClick={() => setSelectedMaintenanceForView(m)}
+                                className="h-7 px-2 text-xs font-semibold"
                               >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span className="hidden sm:inline">Job card</span>
+                                <Eye className="h-3 w-3 mr-1 text-muted-foreground" />
+                                <span>Inspect</span>
                               </AppButton>
-                              {canManageMaintenance && (
+
+                              {/* Edit */}
+                              {canEditMaintenance && (
                                 <AppButton
+                                  type="button"
                                   variant="outline"
                                   size="sm"
                                   title="Edit service record & bill"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openEditMaintenanceModal(m);
-                                  }}
-                                  className="h-7 px-2 text-xs text-warning-text border-warning/30 hover:bg-warning-soft gap-1 font-semibold"
+                                  onClick={() => openEditMaintenanceModal(m)}
+                                  className="h-7 px-2 text-xs font-semibold text-foreground hover:bg-sunken"
                                 >
-                                  <Edit2 className="h-3.5 w-3.5" />
-                                  <span className="hidden sm:inline">Edit</span>
+                                  <Edit2 className="h-3 w-3 mr-1 text-theme-btn-primary" />
+                                  <span>Edit</span>
                                 </AppButton>
                               )}
-                              {canManageMaintenance && (
-                                <AppButton aria-label="Delete record"
+
+                              {/* Delete */}
+                              {canDeleteMaintenance && (
+                                <AppButton
+                                  type="button"
                                   variant="outline"
-                                  size="icon-sm"
-                                  title="Delete record"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                  size="sm"
+                                  title="Delete service record"
+                                  onClick={() => {
                                     setDeleteTarget({
                                       type: "maintenance",
                                       id: m.id,
                                       label: `Service record for ${m.vehicle_reg}`
                                     });
                                   }}
-                                  className="h-7 w-7 text-danger-text hover:bg-danger-soft dark:hover:bg-danger-soft border-danger/30 dark:border-danger/40"
+                                  className="h-7 px-2 text-xs font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  <span>Delete</span>
                                 </AppButton>
                               )}
                             </div>
@@ -15499,15 +15804,17 @@ export default function FleetDeskHost({
                     className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                   />
                 </div>
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setIsDispatchTripOpen(true)}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs shrink-0"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Dispatch trip</span>
-                </AppButton>
+                {canCreateTrip && (
+                  <AppButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setIsDispatchTripOpen(true)}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs shrink-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Dispatch trip</span>
+                  </AppButton>
+                )}
               </div>
             </AppCardHeader>
 
@@ -15574,7 +15881,7 @@ export default function FleetDeskHost({
                           </AppTableCell>
                           <AppTableCell className="p-3.5 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              {canDispatchTrips && trp.status === "PLANNED" && (
+                              {canEditTrip && trp.status === "PLANNED" && (
                                 <>
                                   <AppButton
                                     variant="outline"
@@ -15601,7 +15908,7 @@ export default function FleetDeskHost({
                                   </AppButton>
                                 </>
                               )}
-                              {canDispatchTrips && trp.status === "IN_PROGRESS" && (
+                              {canEditTrip && trp.status === "IN_PROGRESS" && (
                                 <AppButton
                                   variant="outline"
                                   size="sm"
@@ -15615,7 +15922,7 @@ export default function FleetDeskHost({
                                   Complete
                                 </AppButton>
                               )}
-                              {canDispatchTrips && (
+                              {canDeleteTrip && (
                                 <AppButton aria-label="Delete trip"
                                   variant="outline"
                                   size="icon-sm"
@@ -15633,7 +15940,7 @@ export default function FleetDeskHost({
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </AppButton>
                               )}
-                              {!canDispatchTrips && (
+                              {!canEditTrip && !canDeleteTrip && (
                                 <span className="text-xs text-muted-foreground italic">Read-only</span>
                               )}
                             </div>
@@ -16454,28 +16761,56 @@ export default function FleetDeskHost({
                 </select>
               </div>
 
-              {/* Expiry / Lifecycle Filter Pills */}
-              <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-                {[
-                  { id: "ALL", label: `All (${parts.length})` },
-                  { id: "ACTIVE_WARRANTY", label: `Active Warranty (${partsKpis.activeWarranties})` },
-                  { id: "EXPIRING_SOON", label: `Expiring Soon (${partsKpis.expiringSoon})` },
-                  { id: "RENEWAL_DUE", label: `Renewal Due (${partsKpis.renewalsDue})` },
-                  { id: "IN_STOCK", label: `In Stock (${partsKpis.inStock})` },
-                  { id: "INSTALLED", label: `Installed (${partsKpis.installed})` }
-                ].map((tab) => (
-                  <button type="button"
-                    key={tab.id}
-                    onClick={() => setPartsExpiryFilter(tab.id)}
-                    className={`px-2.5 py-1 text-xs font-semibold rounded-lg shrink-0 transition-colors ${
-                      partsExpiryFilter === tab.id
-                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
-                        : "text-muted-foreground hover:text-foreground hover:bg-sunken dark:hover:bg-surface"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+              {/* Expiry / Lifecycle Filter Pills & Action Buttons */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none flex-wrap sm:flex-nowrap">
+                <div className="flex items-center gap-1 shrink-0">
+                  {[
+                    { id: "ALL", label: `All (${parts.length})` },
+                    { id: "ACTIVE_WARRANTY", label: `Active Warranty (${partsKpis.activeWarranties})` },
+                    { id: "EXPIRING_SOON", label: `Expiring Soon (${partsKpis.expiringSoon})` },
+                    { id: "RENEWAL_DUE", label: `Renewal Due (${partsKpis.renewalsDue})` },
+                    { id: "IN_STOCK", label: `In Stock (${partsKpis.inStock})` },
+                    { id: "INSTALLED", label: `Installed (${partsKpis.installed})` }
+                  ].map((tab) => (
+                    <button type="button"
+                      key={tab.id}
+                      onClick={() => setPartsExpiryFilter(tab.id)}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg shrink-0 transition-colors ${
+                        partsExpiryFilter === tab.id
+                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-sunken"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {canExportParts && (
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={exportPartsCSV}
+                      className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
+                      title="Export spare parts inventory as CSV spreadsheet"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Export parts</span>
+                    </AppButton>
+                  )}
+                  {canCreatePart && (
+                    <AppButton
+                      variant="primary"
+                      size="sm"
+                      onClick={() => openCreatePartModal()}
+                      className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Add spare part</span>
+                    </AppButton>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -16828,47 +17163,67 @@ export default function FleetDeskHost({
                             </AppTableCell>
 
                             {/* Actions */}
-                            <AppTableCell className="p-3.5 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                {part.has_renewal_policy && (
+                            <AppTableCell className="p-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">
+                                {/* Inspect */}
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  title="Inspect spare part specification & warranty"
+                                  onClick={() => setViewingPart(part)}
+                                  className="h-7 px-2 text-xs font-semibold"
+                                >
+                                  <Eye className="h-3 w-3 mr-1 text-muted-foreground" />
+                                  <span>Inspect</span>
+                                </AppButton>
+
+                                {/* Renew if policy exists */}
+                                {canEditPart && part.has_renewal_policy && (
                                   <AppButton
+                                    type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openRenewPartModal(part);
-                                    }}
-                                    title="Quick renew policy"
-                                    className="h-7 text-xs px-2 text-theme-icon dark:text-muted-foreground hover:bg-surface dark:hover:bg-info-soft border-border"
+                                    onClick={() => openRenewPartModal(part)}
+                                    title="Quick renew warranty / policy"
+                                    className="h-7 text-xs px-2 text-theme-icon border-border hover:bg-sunken font-semibold"
                                   >
                                     <RotateCcw className="h-3 w-3 mr-1" />
                                     <span>Renew</span>
                                   </AppButton>
                                 )}
-                                <AppButton aria-label="Edit part details"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openEditPartModal(part);
-                                  }}
-                                  title="Edit part details"
-                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                >
-                                  <Edit2 className="h-3.5 w-3.5" />
-                                </AppButton>
-                                <AppButton aria-label="Delete part"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteTarget({ type: "part", id: part.id, label: `Part '${part.name}'` });
-                                  }}
-                                  title="Delete part"
-                                  className="h-7 w-7 text-danger-text hover:text-danger-text hover:bg-danger-soft dark:hover:bg-danger-soft"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </AppButton>
+
+                                {/* Edit */}
+                                {canEditPart && (
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openEditPartModal(part)}
+                                    title="Edit part details"
+                                    className="h-7 px-2 text-xs font-semibold text-foreground hover:bg-sunken"
+                                  >
+                                    <Edit2 className="h-3 w-3 mr-1 text-theme-btn-primary" />
+                                    <span>Edit</span>
+                                  </AppButton>
+                                )}
+
+                                {/* Delete */}
+                                {canDeletePart && (
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setDeleteTarget({ type: "part", id: part.id, label: `Part '${part.name}'` });
+                                    }}
+                                    title="Delete part"
+                                    className="h-7 px-2 text-xs font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    <span>Delete</span>
+                                  </AppButton>
+                                )}
                               </div>
                             </AppTableCell>
                           </AppTableRow>
@@ -16918,6 +17273,18 @@ export default function FleetDeskHost({
                   <option value="ACTIVE">Active only ({insuranceVendors.filter(v => v.is_active !== false).length})</option>
                   <option value="DISABLED">Disabled ({insuranceVendors.filter(v => v.is_active === false).length})</option>
                 </select>
+                {canCreateVendor && (
+                  <AppButton
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={openCreateVendorModal}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs shrink-0"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Register underwriter</span>
+                  </AppButton>
+                )}
               </div>
             </div>
 
@@ -17094,36 +17461,40 @@ export default function FleetDeskHost({
                               {/* Actions */}
                               <AppTableCell className="p-3.5 text-right">
                                 <div className="flex items-center justify-end gap-1.5">
-                                  <AppButton
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openEditVendorModal(vendor);
-                                    }}
-                                    className="h-7 px-2 text-xs gap-1 font-semibold hover:border-theme-btn-primary"
-                                  >
-                                    <Edit2 className="h-3 w-3" />
-                                    <span>Edit</span>
-                                  </AppButton>
-                                  <AppButton
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeleteTarget({
-                                        type: "vendor",
-                                        id: vendor.id,
-                                        label: `Insurance Vendor '${vendor.name}'`
-                                      });
-                                    }}
-                                    className="h-7 px-2 text-xs gap-1 font-semibold text-danger-text hover:bg-danger-soft dark:hover:bg-danger-soft border-danger/30 dark:border-danger/40"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                    <span>Delete</span>
-                                  </AppButton>
+                                  {canEditVendor && (
+                                    <AppButton
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openEditVendorModal(vendor);
+                                      }}
+                                      className="h-7 px-2 text-xs gap-1 font-semibold hover:border-theme-btn-primary"
+                                    >
+                                      <Edit2 className="h-3 w-3" />
+                                      <span>Edit</span>
+                                    </AppButton>
+                                  )}
+                                  {canDeleteVendor && (
+                                    <AppButton
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteTarget({
+                                          type: "vendor",
+                                          id: vendor.id,
+                                          label: `Insurance Vendor '${vendor.name}'`
+                                        });
+                                      }}
+                                      className="h-7 px-2 text-xs gap-1 font-semibold text-danger-text hover:bg-danger-soft dark:hover:bg-danger-soft border-danger/30 dark:border-danger/40"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                      <span>Delete</span>
+                                    </AppButton>
+                                  )}
                                 </div>
                               </AppTableCell>
                             </AppTableRow>
@@ -17182,20 +17553,22 @@ export default function FleetDeskHost({
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={exportSalesCSV}
-                  disabled={sales.length === 0}
-                  className="h-9 px-3 text-xs gap-1.5 font-semibold"
-                  title="Export vehicle sales register as CSV"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Export CSV</span>
-                </AppButton>
+                {canExportSales && (
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={exportSalesCSV}
+                    disabled={sales.length === 0}
+                    className="h-9 px-3 text-xs gap-1.5 font-semibold"
+                    title="Export vehicle sales register as CSV"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Export CSV</span>
+                  </AppButton>
+                )}
 
-                {canCreateVehicle && (
+                {canCreateSale && (
                   <AppButton
                     type="button"
                     variant="primary"
@@ -17459,29 +17832,55 @@ export default function FleetDeskHost({
 
                               {/* Actions */}
                               <AppTableCell className="p-3.5 text-right">
-                                <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                  {targetVeh && (
-                                    <AppButton
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setViewingVehicle(targetVeh)}
-                                      className="h-7 px-2 text-xs font-semibold text-theme-btn-primary hover:bg-accent-soft"
-                                      title="Open vehicle asset dossier"
-                                    >
-                                      <FileText className="h-3 w-3 mr-1" />
-                                      <span>Dossier</span>
-                                    </AppButton>
-                                  )}
+                                <div className="inline-flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                  {/* Inspect Action */}
                                   <AppButton
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setViewingSale(sale)}
                                     className="h-7 px-2 text-xs font-semibold"
+                                    title="Inspect complete sale details"
                                   >
+                                    <Eye className="h-3 w-3 mr-1 text-muted-foreground" />
                                     <span>Inspect</span>
                                   </AppButton>
+
+                                  {/* Edit Sale Action */}
+                                  {canEditSale && (
+                                    <AppButton
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openEditSaleModal(sale)}
+                                      className="h-7 px-2 text-xs font-semibold text-foreground hover:bg-sunken"
+                                      title="Edit sale details and buyer information"
+                                    >
+                                      <Edit2 className="h-3 w-3 mr-1 text-theme-btn-primary" />
+                                      <span>Edit</span>
+                                    </AppButton>
+                                  )}
+
+                                  {/* Revert / Cancel Sale Action */}
+                                  {canDeleteSale && (
+                                    <AppButton
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        setDeleteTarget({
+                                          type: "sale",
+                                          id: sale.id,
+                                          label: `Sale record of ${regPlate} (${sale.buyer_name || "Buyer"} - ₹${sPrice.toLocaleString("en-IN")})`
+                                        })
+                                      }
+                                      className="h-7 px-2 text-xs font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                                      title="Revert sale and restore vehicle back to fleet inventory"
+                                    >
+                                      <Trash2 className="h-3 w-3 mr-1" />
+                                      <span>Revert</span>
+                                    </AppButton>
+                                  )}
                                 </div>
                               </AppTableCell>
                             </AppTableRow>
@@ -22057,7 +22456,7 @@ export default function FleetDeskHost({
           backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Maintenance"}
           headerActions={
             <div className="flex items-center gap-2">
-              {canManageMaintenance && (
+              {canEditMaintenance && (
                 <AppButton
                   type="button"
                   variant="primary"
@@ -22083,6 +22482,24 @@ export default function FleetDeskHost({
                 <Printer className="h-3.5 w-3.5" />
                 <span>Print job card</span>
               </AppButton>
+              {canDeleteMaintenance && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteTarget({
+                      type: "maintenance",
+                      id: selectedMaintenanceForView.id,
+                      label: `Service work order #${selectedMaintenanceForView.id.slice(0, 8)} (${selectedMaintenanceForView.vehicle_reg})`
+                    });
+                  }}
+                  className="text-xs h-9 px-3 gap-1.5 font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete job card</span>
+                </AppButton>
+              )}
             </div>
           }
         >
@@ -26210,207 +26627,805 @@ export default function FleetDeskHost({
 
         return (
           <TransactionFormLayout
-            title="Record vehicle sale & asset disposal"
-            badge="Asset Decommission Form"
+            title={editingSale ? "Edit vehicle sale & asset disposal" : "Record vehicle sale & asset disposal"}
+            badge={editingSale ? "Edit Disposal Record" : "Asset Decommission Form"}
             category="Fleet Liquidation & Salvage"
             icon={Tag}
             iconBg="bg-accent-soft text-theme-btn-primary border-theme-btn-primary/25"
-            description="Decommission vehicle from active fleet, record transaction proceeds, buyer details & upload bill of sale / transfer deed."
+            description={
+              editingSale
+                ? "Update sale proceeds, purchaser identity, payment settlement, or transfer documents for this decommissioned vehicle."
+                : "Select fleet asset, review its complete specifications, compliance status and lifetime ledger, then record disposal proceeds."
+            }
             breadcrumbs={[
-              { label: "Vehicle Sales & Disposals", onClick: () => setIsRecordSaleModalOpen(false) },
-              { label: "Record Vehicle Sale" }
+              { label: "Vehicle Sales & Disposals", onClick: () => { setIsRecordSaleModalOpen(false); setEditingSale(null); } },
+              { label: editingSale ? `Edit Sale (${selectedVehicleForSale?.registration_number || ""})` : "Record Vehicle Sale" }
             ]}
-            onBack={() => setIsRecordSaleModalOpen(false)}
+            onBack={() => { setIsRecordSaleModalOpen(false); setEditingSale(null); }}
             backLabel="Back to Sales Register"
-            onReset={() => openRecordSaleModal(selectedVehicleForSale)}
+            onReset={() => editingSale ? openEditSaleModal(editingSale) : openRecordSaleModal(selectedVehicleForSale)}
             onSave={handleSaveRecordSale}
-            saveLabel="Confirm & Decommission Asset"
+            saveLabel={editingSale ? "Update Sale Record" : "Confirm & Decommission Asset"}
             saveIcon={Save}
             isSubmitting={modalSubmitting}
           >
             <div className="space-y-6">
-              {/* 1. Target Vehicle Selection */}
-              <AppCard className="border-border shadow-xs">
+              {/* 1. Target Vehicle Selection & Complete Review Dossier */}
+              <AppCard className="border-border shadow-xs overflow-hidden">
                 <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50">
-                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Car className="h-4 w-4 text-theme-btn-primary" />
-                    <span>Select Fleet Asset to Decommission</span>
-                  </AppCardTitle>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <AppCardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <Car className="h-4 w-4 text-theme-btn-primary" />
+                      <span>1. Select &amp; Review Vehicle Asset Details</span>
+                    </AppCardTitle>
+                    {selectedVehicleForSale && (
+                      <span className="text-2xs font-mono font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/25">
+                        Asset ID: {selectedVehicleForSale.id}
+                      </span>
+                    )}
+                  </div>
                 </AppCardHeader>
                 <AppCardContent className="p-4 space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Vehicle Plate &amp; Designation <span className="text-danger-text">*</span>
+                    <label className="text-xs font-semibold text-foreground mb-1.5 flex items-center justify-between">
+                      <span>Vehicle Plate &amp; Designation <span className="text-danger-text">*</span></span>
+                      {selectedVehicleForSale && (
+                        <span className="text-2xs text-muted-foreground font-mono">
+                          Review all details below before proceeding with sale terms
+                        </span>
+                      )}
                     </label>
                     <select
                       value={saleVehicleId}
-                      onChange={(e) => setSaleVehicleId(e.target.value)}
+                      onChange={(e) => handleSelectSaleVehicle(e.target.value)}
                       className="w-full h-10 px-3 text-xs rounded-lg border border-border bg-surface text-foreground font-medium focus:outline-none focus:border-theme-btn-primary"
                     >
                       <option value="" disabled>Select vehicle to liquidate / scrap...</option>
-                      {vehicles.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.registration_number} — {v.make} {v.model} {v.variant ? `(${v.variant})` : ""} [{v.status}]
-                        </option>
-                      ))}
+                      <optgroup label="Available Active Fleet Assets">
+                        {vehicles
+                          .filter((v) => v.status !== "SOLD" && v.status !== "DISPOSED")
+                          .map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.registration_number} — {v.make} {v.model} {v.variant ? `(${v.variant})` : ""} [{v.status}]
+                            </option>
+                          ))}
+                      </optgroup>
+                      {vehicles.some((v) => v.status === "SOLD" || v.status === "DISPOSED") && (
+                        <optgroup label="Liquidated / Sold Assets">
+                          {vehicles
+                            .filter((v) => v.status === "SOLD" || v.status === "DISPOSED")
+                            .map((v) => (
+                              <option key={v.id} value={v.id} disabled={!editingSale || editingSale.vehicle_id !== v.id}>
+                                {v.registration_number} — {v.make} {v.model} [{v.status}] {editingSale?.vehicle_id === v.id ? "(Current Edit)" : "(Already Liquidated)"}
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
                     </select>
                   </div>
 
-                  {selectedVehicleForSale && (
-                    <div className="space-y-4">
-                      {/* Vehicle Identity & Creation Specifications */}
-                      <div className="p-4 rounded-xl bg-sunken/40 border border-border/60 space-y-3">
+                  {/* Comprehensive Vehicle Details Review Area */}
+                  {selectedVehicleForSale ? (
+                    <div className="space-y-4 pt-2">
+                      {/* A. Top Asset Identity & Quick Specs HUD */}
+                      <div className="p-4 rounded-xl bg-sunken/40 border border-border/60 space-y-3.5">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border/50 pb-3">
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             <div className="shrink-0">{renderHsrpPlate(selectedVehicleForSale.registration_number)}</div>
-                            <div className="text-sm font-bold text-foreground flex items-center gap-2">
-                              <VehicleBrandLogo brand={selectedVehicleForSale.make} size={16} />
+                            <div className="text-base font-bold text-foreground flex items-center gap-2 flex-wrap">
+                              <VehicleBrandLogo brand={selectedVehicleForSale.make} size={18} />
                               <span>{selectedVehicleForSale.make} {selectedVehicleForSale.model}</span>
                               {selectedVehicleForSale.variant && <span className="text-xs font-normal text-muted-foreground">({selectedVehicleForSale.variant})</span>}
                               {selectedVehicleForSale.year && <span className="text-xs font-normal text-muted-foreground">• {selectedVehicleForSale.year}</span>}
+                              {selectedVehicleForSale.nickname && selectedVehicleForSale.nickname.trim().toLowerCase() !== `${selectedVehicleForSale.make} ${selectedVehicleForSale.model}`.trim().toLowerCase() && (
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-surface border border-border text-foreground">
+                                  "{selectedVehicleForSale.nickname}"
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                              <span>Category: {selectedVehicleForSale.category || "Standard"}</span>
+                              <span className="font-semibold text-foreground">{selectedVehicleForSale.category || "Standard Car"}</span>
                               <span>•</span>
-                              <span>Fuel: {selectedVehicleForSale.fuel_type || "Petrol"}</span>
+                              <span className="flex items-center gap-1">
+                                <Fuel className="h-3 w-3 text-muted-foreground" />
+                                <span>{selectedVehicleForSale.fuel_type || "Petrol"}</span>
+                              </span>
                               <span>•</span>
-                              <span>Status: {selectedVehicleForSale.status}</span>
+                              <span>{selectedVehicleForSale.transmission || "Manual"}</span>
+                              {selectedVehicleForSale.seating_capacity && (
+                                <>
+                                  <span>•</span>
+                                  <span>{selectedVehicleForSale.seating_capacity} Seats</span>
+                                </>
+                              )}
+                              <span>•</span>
+                              <span className={`inline-flex items-center font-semibold px-2 py-0.5 rounded-full text-2xs border ${
+                                selectedVehicleForSale.status === "SOLD" || selectedVehicleForSale.status === "DISPOSED"
+                                  ? "bg-danger-soft text-danger-text border-danger/30"
+                                  : "bg-success-soft text-success-text border-success/30"
+                              }`}>
+                                Status: {selectedVehicleForSale.status}
+                              </span>
                             </div>
                           </div>
 
-                          <div className="text-right sm:border-l sm:border-border sm:pl-4 space-y-0.5">
-                            <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold block">Original Capital Cost</span>
-                            <span className="text-base font-mono font-bold text-foreground">
+                          <div className="text-right sm:border-l sm:border-border sm:pl-4 space-y-1">
+                            <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold block">Original Landed Cost</span>
+                            <div className="text-lg font-mono font-bold text-foreground">
                               {origCost > 0 ? `₹${origCost.toLocaleString("en-IN")}` : "Unrecorded"}
-                            </span>
-                            <div className="text-[11px] text-muted-foreground font-mono">
-                              Odo: {Number(selectedVehicleForSale.odometer_km || 0).toLocaleString("en-IN")} km
+                            </div>
+                            <div className="text-2xs text-muted-foreground font-mono">
+                              Invested: ₹{totalInvestedCapital.toLocaleString("en-IN")}
                             </div>
                           </div>
                         </div>
 
-                        {/* All Creation Details Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 text-xs">
+                        {/* Quick KPI Strip */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                           <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground">Registered Owner</span>
-                            <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.registered_owner || "—"}>
-                              {selectedVehicleForSale.registered_owner || "—"}
+                            <span className="text-[10.5px] font-bold text-muted-foreground flex items-center gap-1">
+                              <Gauge className="h-3 w-3 text-theme-btn-primary" />
+                              <span>Current Odometer</span>
+                            </span>
+                            <div className="font-mono font-bold text-foreground text-sm">
+                              {Number(selectedVehicleForSale.odometer_km || 0).toLocaleString("en-IN")} km
                             </div>
                           </div>
+
                           <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground">RTO Transport Office</span>
-                            <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.rto_office || "—"}>
-                              {selectedVehicleForSale.rto_office || "—"}
+                            <span className="text-[10.5px] font-bold text-muted-foreground flex items-center gap-1">
+                              <User className="h-3 w-3 text-theme-btn-primary" />
+                              <span>Assigned Driver</span>
+                            </span>
+                            <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.assignedDriver?.full_name || "Unassigned"}>
+                              {selectedVehicleForSale.assignedDriver?.full_name || "Unassigned"}
                             </div>
                           </div>
+
                           <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground">VIN / Chassis Number</span>
-                            <div className="font-mono font-semibold text-foreground truncate" title={selectedVehicleForSale.vin_chassis_number || "—"}>
-                              {selectedVehicleForSale.vin_chassis_number || "—"}
+                            <span className="text-[10.5px] font-bold text-muted-foreground flex items-center gap-1">
+                              <ShieldCheck className="h-3 w-3 text-theme-btn-primary" />
+                              <span>Comprehensive Ins.</span>
+                            </span>
+                            <div className="font-mono text-xs font-semibold truncate text-foreground">
+                              {selectedVehicleForSale.insurance_expiry_date || selectedVehicleForSale.own_insurance_expiry_date
+                                ? String(selectedVehicleForSale.insurance_expiry_date || selectedVehicleForSale.own_insurance_expiry_date).split("T")[0]
+                                : "Unrecorded"}
                             </div>
                           </div>
+
                           <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground">Engine Number</span>
-                            <div className="font-mono font-semibold text-foreground truncate" title={selectedVehicleForSale.engine_number || "—"}>
-                              {selectedVehicleForSale.engine_number || "—"}
-                            </div>
-                          </div>
-                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground">Registration Date</span>
-                            <div className="font-mono font-semibold text-foreground">
-                              {selectedVehicleForSale.registration_date ? String(selectedVehicleForSale.registration_date).split("T")[0] : "—"}
-                            </div>
-                          </div>
-                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground">Purchase / Invoice Date</span>
-                            <div className="font-mono font-semibold text-foreground">
-                              {selectedVehicleForSale.purchase_date ? String(selectedVehicleForSale.purchase_date).split("T")[0] : (selectedVehicleForSale.registration_date ? String(selectedVehicleForSale.registration_date).split("T")[0] : "—")}
-                            </div>
-                          </div>
-                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground">Showroom / Purchase Vendor</span>
-                            <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.purchase_vendor || "—"}>
-                              {selectedVehicleForSale.purchase_vendor || "—"}
-                            </div>
-                          </div>
-                          <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground">Ex-Showroom Base</span>
-                            <div className="font-mono font-semibold text-theme-btn-primary">
-                              ₹{Number(selectedVehicleForSale.ex_showroom_price || selectedVehicleForSale.purchase_price || 0).toLocaleString("en-IN")}
+                            <span className="text-[10.5px] font-bold text-muted-foreground flex items-center gap-1">
+                              <Wind className="h-3 w-3 text-theme-btn-primary" />
+                              <span>PUC Certificate</span>
+                            </span>
+                            <div className="font-mono text-xs font-semibold truncate text-foreground">
+                              {selectedVehicleForSale.puc_expiry_date
+                                ? String(selectedVehicleForSale.puc_expiry_date).split("T")[0]
+                                : "Unrecorded"}
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Related Historical Expenses & Total Capital Incurred Ledger */}
-                      <div className="p-4 rounded-xl border border-border bg-gradient-to-r from-surface via-surface to-surface shadow-xs space-y-3">
-                        <div className="flex items-center justify-between border-b border-border/50 pb-2">
-                          <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                            <Calculator className="h-4 w-4 text-theme-btn-primary" />
-                            <span>Cumulative Operating Expenses &amp; Total Invested Capital</span>
-                          </span>
-                          <span className="text-xs font-mono font-bold text-foreground">
-                            All-in Investment: ₹{totalInvestedCapital.toLocaleString("en-IN")}
-                          </span>
+                      {/* B. Review Navigation Tabs */}
+                      <div className="flex items-center gap-1.5 border-b border-border/70 pb-1.5 overflow-x-auto text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setSaleReviewTab("SPECS")}
+                          className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
+                            saleReviewTab === "SPECS"
+                              ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                              : "text-muted-foreground hover:bg-sunken hover:text-foreground"
+                          }`}
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          <span>Specs &amp; Registration</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSaleReviewTab("FINANCIALS")}
+                          className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
+                            saleReviewTab === "FINANCIALS"
+                              ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                              : "text-muted-foreground hover:bg-sunken hover:text-foreground"
+                          }`}
+                        >
+                          <IndianRupee className="h-3.5 w-3.5" />
+                          <span>Acquisition CapEx</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSaleReviewTab("COMPLIANCE")}
+                          className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
+                            saleReviewTab === "COMPLIANCE"
+                              ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                              : "text-muted-foreground hover:bg-sunken hover:text-foreground"
+                          }`}
+                        >
+                          <Shield className="h-3.5 w-3.5" />
+                          <span>Compliance &amp; Insurance</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSaleReviewTab("LEDGER")}
+                          className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
+                            saleReviewTab === "LEDGER"
+                              ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                              : "text-muted-foreground hover:bg-sunken hover:text-foreground"
+                          }`}
+                        >
+                          <Calculator className="h-3.5 w-3.5" />
+                          <span>Lifetime Ledger ({vServices.length + vParts.length})</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSaleReviewTab("DOCS")}
+                          className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
+                            saleReviewTab === "DOCS"
+                              ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                              : "text-muted-foreground hover:bg-sunken hover:text-foreground"
+                          }`}
+                        >
+                          <Paperclip className="h-3.5 w-3.5" />
+                          <span>Vault Documents ({saleVehicleDocs.length})</span>
+                        </button>
+                      </div>
+
+                      {/* C. Tab Content Panels */}
+                      {/* Tab 1: SPECS & REGISTRATION */}
+                      {saleReviewTab === "SPECS" && (
+                        <div className="p-3.5 rounded-xl bg-surface border border-border/70 space-y-3">
+                          <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5 text-theme-btn-primary" />
+                            <span>RTO Registration, Ownership &amp; Identification</span>
+                          </h4>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 text-xs">
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Registered Owner</span>
+                              <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.registered_owner || "—"}>
+                                {selectedVehicleForSale.registered_owner || "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">RTO Transport Office</span>
+                              <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.rto_office || "—"}>
+                                {selectedVehicleForSale.rto_office || "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">RTO Registered Mobile (RMN)</span>
+                              <div className="font-mono font-semibold text-foreground truncate">
+                                {selectedVehicleForSale.rto_rmn || "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">VIN / Chassis Number</span>
+                              <div className="font-mono font-semibold text-foreground truncate" title={selectedVehicleForSale.vin_chassis_number || "—"}>
+                                {selectedVehicleForSale.vin_chassis_number || "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Engine Number</span>
+                              <div className="font-mono font-semibold text-foreground truncate" title={selectedVehicleForSale.engine_number || "—"}>
+                                {selectedVehicleForSale.engine_number || "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Registration Date</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                {selectedVehicleForSale.registration_date ? String(selectedVehicleForSale.registration_date).split("T")[0] : "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Purchase / Invoice Date</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                {selectedVehicleForSale.purchase_date
+                                  ? String(selectedVehicleForSale.purchase_date).split("T")[0]
+                                  : selectedVehicleForSale.registration_date
+                                  ? String(selectedVehicleForSale.registration_date).split("T")[0]
+                                  : "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Purchase Vendor / Dealer</span>
+                              <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.purchase_vendor || "—"}>
+                                {selectedVehicleForSale.purchase_vendor || "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Transmission &amp; Fuel</span>
+                              <div className="font-semibold text-foreground">
+                                {selectedVehicleForSale.transmission || "Manual"} • {selectedVehicleForSale.fuel_type || "Petrol"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Seating Capacity</span>
+                              <div className="font-semibold text-foreground">
+                                {selectedVehicleForSale.seating_capacity ? `${selectedVehicleForSale.seating_capacity} Persons` : "—"}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Paint Finish</span>
+                              <div className="font-semibold text-foreground flex items-center gap-1.5 truncate">
+                                {selectedVehicleForSale.paint_color && (
+                                  <span
+                                    className="h-3 w-3 rounded-full border border-border shrink-0"
+                                    style={{ backgroundColor: selectedVehicleForSale.paint_color }}
+                                  />
+                                )}
+                                <span>{selectedVehicleForSale.paint_color || "Standard"}</span>
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">HSRP Security Plate</span>
+                              <div className="font-semibold text-foreground">
+                                {selectedVehicleForSale.has_hsrp_plate ? "Affixed & Valid" : "Standard"}
+                              </div>
+                            </div>
+                          </div>
                         </div>
+                      )}
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                          <div className="p-3 rounded-lg border border-border bg-surface space-y-1">
-                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
-                              <IndianRupee className="h-3 w-3 text-muted-foreground" />
-                              <span>Acquisition Landed Cost</span>
-                            </span>
-                            <div className="font-mono font-bold text-foreground text-sm">
-                              ₹{origCost.toLocaleString("en-IN")}
-                            </div>
-                            <span className="text-[10.5px] text-muted-foreground block">Original CapEx</span>
-                          </div>
-
-                          <div className="p-3 rounded-lg border border-border bg-surface space-y-1">
-                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
-                              <Wrench className="h-3 w-3 text-muted-foreground" />
-                              <span>Workshop Maintenance</span>
-                            </span>
-                            <div className="font-mono font-bold text-foreground text-sm">
-                              ₹{totalServiceSpend.toLocaleString("en-IN")}
-                            </div>
-                            <span className="text-[10.5px] text-muted-foreground block">
-                              {vServices.length} Job card services logged
+                      {/* Tab 2: FINANCIALS */}
+                      {saleReviewTab === "FINANCIALS" && (
+                        <div className="p-3.5 rounded-xl bg-surface border border-border/70 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                              <IndianRupee className="h-3.5 w-3.5 text-theme-btn-primary" />
+                              <span>Original Acquisition Capital (CapEx Breakdown)</span>
+                            </h4>
+                            <span className="text-xs font-mono font-bold text-theme-btn-primary">
+                              Total On-Road Landed: ₹{origCost.toLocaleString("en-IN")}
                             </span>
                           </div>
 
-                          <div className="p-3 rounded-lg border border-border bg-surface space-y-1">
-                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
-                              <Package className="h-3 w-3 text-muted-foreground" />
-                              <span>Spare Parts Fitted</span>
-                            </span>
-                            <div className="font-mono font-bold text-foreground text-sm">
-                              ₹{totalPartsValue.toLocaleString("en-IN")}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 text-xs">
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Basic / Ex-Factory Price</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.basic_price || selectedVehicleForSale.purchase_price || 0).toLocaleString("en-IN")}
+                              </div>
                             </div>
-                            <span className="text-[10.5px] text-muted-foreground block">
-                              {vParts.length} Parts &amp; accessories mounted
-                            </span>
-                          </div>
 
-                          <div className="p-3 rounded-lg border border-theme-btn-primary/40 bg-accent-soft/30 space-y-1">
-                            <span className="text-[11px] font-bold text-theme-btn-primary flex items-center gap-1">
-                              <DollarSign className="h-3 w-3 text-theme-btn-primary" />
-                              <span>Total Invested Capital</span>
-                            </span>
-                            <div className="font-mono font-extrabold text-foreground text-sm">
-                              ₹{totalInvestedCapital.toLocaleString("en-IN")}
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">
+                                GST {selectedVehicleForSale.gst_percentage ? `(${selectedVehicleForSale.gst_percentage}%)` : ""}
+                              </span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.gst_amount || 0).toLocaleString("en-IN")}
+                              </div>
                             </div>
-                            <span className="text-[10.5px] text-theme-btn-primary font-medium block">
-                              Purchase + Services + Parts
-                            </span>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">
+                                Cess {selectedVehicleForSale.cess_percentage ? `(${selectedVehicleForSale.cess_percentage}%)` : ""}
+                              </span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.cess_amount || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Ex-Showroom Price</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.ex_showroom_price || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">RTO Road Tax</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.rto_road_tax || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">TCS (Tax Collected at Source)</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.tcs_amount || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Initial Insurance Premium</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.insurance_cost || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">HSRP Smart Card Fee</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.hsrp_smart_card_fee || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Fastag Charges</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.fastag_charges || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Fitted Accessories</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.accessories_cost || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-muted-foreground">Extended Warranty</span>
+                              <div className="font-mono font-semibold text-foreground">
+                                ₹{Number(selectedVehicleForSale.extended_warranty_cost || 0).toLocaleString("en-IN")}
+                              </div>
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-theme-btn-primary/10 border border-theme-btn-primary/30 space-y-0.5">
+                              <span className="text-[10.5px] font-bold text-theme-btn-primary">Total Landed On-Road CapEx</span>
+                              <div className="font-mono font-bold text-theme-btn-primary text-sm">
+                                ₹{origCost.toLocaleString("en-IN")}
+                              </div>
+                            </div>
                           </div>
                         </div>
+                      )}
 
-                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
-                          <span>Usage Mileage: <strong className="text-foreground">{Number(selectedVehicleForSale.odometer_km || 0).toLocaleString("en-IN")} km</strong></span>
-                          <span>Journeys Completed: <strong className="text-foreground">{vTrips.length} Trips</strong></span>
+                      {/* Tab 3: COMPLIANCE & INSURANCE */}
+                      {saleReviewTab === "COMPLIANCE" && (() => {
+                        const insDays = calculateDaysRemaining(selectedVehicleForSale.insurance_expiry_date || selectedVehicleForSale.own_insurance_expiry_date);
+                        const pucDays = calculateDaysRemaining(selectedVehicleForSale.puc_expiry_date);
+                        const tpDays = calculateDaysRemaining(selectedVehicleForSale.tp_insurance_expiry_date);
+
+                        return (
+                          <div className="p-3.5 rounded-xl bg-surface border border-border/70 space-y-3">
+                            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                              <ShieldCheck className="h-3.5 w-3.5 text-theme-btn-primary" />
+                              <span>Active Insurance Policies &amp; Compliance Certificates</span>
+                            </h4>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                              {/* Comprehensive Insurance */}
+                              <div className="p-3 rounded-lg bg-sunken/40 border border-border/60 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-foreground flex items-center gap-1.5">
+                                    <Shield className="h-3.5 w-3.5 text-theme-btn-primary" />
+                                    <span>Own Damage / Comprehensive Insurance</span>
+                                  </span>
+                                  <span className={`text-2xs font-semibold px-2 py-0.5 rounded-full border ${
+                                    insDays === null
+                                      ? "bg-surface text-muted-foreground border-border"
+                                      : insDays < 0
+                                      ? "bg-danger-soft text-danger-text border-danger/30"
+                                      : insDays <= 30
+                                      ? "bg-warning-soft text-warning-text border-warning/30"
+                                      : "bg-success-soft text-success-text border-success/30"
+                                  }`}>
+                                    {insDays === null ? "Unrecorded" : insDays < 0 ? "Expired" : `${insDays}d remaining`}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 text-2xs text-muted-foreground">
+                                  <div className="flex justify-between">
+                                    <span>Policy Number:</span>
+                                    <span className="font-mono text-foreground font-medium">
+                                      {selectedVehicleForSale.own_insurance_policy_number || selectedVehicleForSale.insurance_policy_number || "Not Recorded"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Insurer / Vendor:</span>
+                                    <span className="text-foreground font-medium">
+                                      {selectedVehicleForSale.own_insurance_vendor || selectedVehicleForSale.insurance_vendor || "Direct"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Expiry Date:</span>
+                                    <span className="font-mono text-foreground font-medium">
+                                      {selectedVehicleForSale.own_insurance_expiry_date || selectedVehicleForSale.insurance_expiry_date || "—"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Third Party Insurance */}
+                              <div className="p-3 rounded-lg bg-sunken/40 border border-border/60 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-foreground flex items-center gap-1.5">
+                                    <Shield className="h-3.5 w-3.5 text-theme-btn-primary" />
+                                    <span>Third-Party (TP) Insurance</span>
+                                  </span>
+                                  <span className={`text-2xs font-semibold px-2 py-0.5 rounded-full border ${
+                                    tpDays === null
+                                      ? "bg-surface text-muted-foreground border-border"
+                                      : tpDays < 0
+                                      ? "bg-danger-soft text-danger-text border-danger/30"
+                                      : tpDays <= 30
+                                      ? "bg-warning-soft text-warning-text border-warning/30"
+                                      : "bg-success-soft text-success-text border-success/30"
+                                  }`}>
+                                    {tpDays === null ? "Unrecorded" : tpDays < 0 ? "Expired" : `${tpDays}d remaining`}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 text-2xs text-muted-foreground">
+                                  <div className="flex justify-between">
+                                    <span>TP Policy Number:</span>
+                                    <span className="font-mono text-foreground font-medium">
+                                      {selectedVehicleForSale.tp_insurance_policy_number || selectedVehicleForSale.insurance_policy_number || "Same as OD"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Insurer:</span>
+                                    <span className="text-foreground font-medium">
+                                      {selectedVehicleForSale.tp_insurance_vendor || selectedVehicleForSale.insurance_vendor || "Direct"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Expiry Date:</span>
+                                    <span className="font-mono text-foreground font-medium">
+                                      {selectedVehicleForSale.tp_insurance_expiry_date || "—"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* PUC Certificate */}
+                              <div className="p-3 rounded-lg bg-sunken/40 border border-border/60 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-foreground flex items-center gap-1.5">
+                                    <Wind className="h-3.5 w-3.5 text-theme-btn-primary" />
+                                    <span>PUC (Pollution Under Control)</span>
+                                  </span>
+                                  <span className={`text-2xs font-semibold px-2 py-0.5 rounded-full border ${
+                                    pucDays === null
+                                      ? "bg-surface text-muted-foreground border-border"
+                                      : pucDays < 0
+                                      ? "bg-danger-soft text-danger-text border-danger/30"
+                                      : pucDays <= 15
+                                      ? "bg-warning-soft text-warning-text border-warning/30"
+                                      : "bg-success-soft text-success-text border-success/30"
+                                  }`}>
+                                    {pucDays === null ? "Unrecorded" : pucDays < 0 ? "Expired" : `${pucDays}d remaining`}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 text-2xs text-muted-foreground">
+                                  <div className="flex justify-between">
+                                    <span>Certificate Serial:</span>
+                                    <span className="font-mono text-foreground font-medium">
+                                      {selectedVehicleForSale.puc_certificate_number || "Not Recorded"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Expiry Date:</span>
+                                    <span className="font-mono text-foreground font-medium">
+                                      {selectedVehicleForSale.puc_expiry_date || "—"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Fitness & Protections */}
+                              <div className="p-3 rounded-lg bg-sunken/40 border border-border/60 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-foreground flex items-center gap-1.5">
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                                    <span>Fitness &amp; Roadside Assistance</span>
+                                  </span>
+                                  <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-surface border border-border text-foreground">
+                                    {selectedVehicleForSale.has_roadside_assistance ? "24x7 RSA Covered" : "Standard"}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 text-2xs text-muted-foreground">
+                                  <div className="flex justify-between">
+                                    <span>Fitness Expiry:</span>
+                                    <span className="font-mono text-foreground font-medium">
+                                      {selectedVehicleForSale.fitness_expiry_date || "15-Year Standard"}
+                                    </span>
+                                  </div>
+                                  {selectedVehicleForSale.battery_capacity_kwh && (
+                                    <div className="flex justify-between">
+                                      <span>EV Battery:</span>
+                                      <span className="font-mono text-foreground font-medium">
+                                        {selectedVehicleForSale.battery_capacity_kwh} kWh ({selectedVehicleForSale.battery_warranty_years || 8} Yrs warranty)
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Tab 4: LIFETIME LEDGER */}
+                      {saleReviewTab === "LEDGER" && (
+                        <div className="p-3.5 rounded-xl bg-surface border border-border/70 space-y-3.5">
+                          <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                              <Calculator className="h-3.5 w-3.5 text-theme-btn-primary" />
+                              <span>Lifetime Operating Expenses &amp; Invested Capital</span>
+                            </h4>
+                            <span className="text-xs font-mono font-bold text-foreground">
+                              All-In Capital: ₹{totalInvestedCapital.toLocaleString("en-IN")}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                            <div className="p-3 rounded-lg border border-border bg-sunken/40 space-y-1">
+                              <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+                                <IndianRupee className="h-3 w-3 text-muted-foreground" />
+                                <span>Acquisition Landed Cost</span>
+                              </span>
+                              <div className="font-mono font-bold text-foreground text-sm">
+                                ₹{origCost.toLocaleString("en-IN")}
+                              </div>
+                              <span className="text-[10.5px] text-muted-foreground block">Original CapEx</span>
+                            </div>
+
+                            <div className="p-3 rounded-lg border border-border bg-sunken/40 space-y-1">
+                              <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+                                <Wrench className="h-3 w-3 text-muted-foreground" />
+                                <span>Workshop Maintenance</span>
+                              </span>
+                              <div className="font-mono font-bold text-foreground text-sm">
+                                ₹{totalServiceSpend.toLocaleString("en-IN")}
+                              </div>
+                              <span className="text-[10.5px] text-muted-foreground block">
+                                {vServices.length} Job card services logged
+                              </span>
+                            </div>
+
+                            <div className="p-3 rounded-lg border border-border bg-sunken/40 space-y-1">
+                              <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+                                <Package className="h-3 w-3 text-muted-foreground" />
+                                <span>Spare Parts Fitted</span>
+                              </span>
+                              <div className="font-mono font-bold text-foreground text-sm">
+                                ₹{totalPartsValue.toLocaleString("en-IN")}
+                              </div>
+                              <span className="text-[10.5px] text-muted-foreground block">
+                                {vParts.length} Parts &amp; accessories mounted
+                              </span>
+                            </div>
+
+                            <div className="p-3 rounded-lg border border-theme-btn-primary/40 bg-accent-soft/30 space-y-1">
+                              <span className="text-[11px] font-bold text-theme-btn-primary flex items-center gap-1">
+                                <DollarSign className="h-3 w-3 text-theme-btn-primary" />
+                                <span>Total Invested Capital</span>
+                              </span>
+                              <div className="font-mono font-extrabold text-foreground text-sm">
+                                ₹{totalInvestedCapital.toLocaleString("en-IN")}
+                              </div>
+                              <span className="text-[10.5px] text-theme-btn-primary font-medium block">
+                                Purchase + Services + Parts
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/40">
+                            <span>Usage Mileage: <strong className="text-foreground">{Number(selectedVehicleForSale.odometer_km || 0).toLocaleString("en-IN")} km</strong></span>
+                            <span>Journeys Logged: <strong className="text-foreground">{vTrips.length} Trips</strong></span>
+                            <span>Next Service: <strong className="text-foreground">{selectedVehicleForSale.next_service_due_date ? String(selectedVehicleForSale.next_service_due_date).split("T")[0] : "None scheduled"}</strong></span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tab 5: VAULT DOCUMENTS */}
+                      {saleReviewTab === "DOCS" && (
+                        <div className="p-3.5 rounded-xl bg-surface border border-border/70 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                              <Paperclip className="h-3.5 w-3.5 text-theme-btn-primary" />
+                              <span>Attached Documents in Secure Vault ({saleVehicleDocs.length})</span>
+                            </h4>
+                            <span className="text-2xs text-muted-foreground font-mono">
+                              Universal View &amp; Download Enabled
+                            </span>
+                          </div>
+
+                          {saleVehicleDocs.length === 0 ? (
+                            <div className="py-6 text-center text-xs text-muted-foreground font-mono">
+                              No vehicle documents currently stored in the vault for this asset.
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              {saleVehicleDocs.map((doc) => (
+                                <div
+                                  key={doc.id}
+                                  className="p-3 rounded-lg bg-sunken/40 border border-border/60 flex items-center justify-between gap-3"
+                                >
+                                  <div className="space-y-0.5 min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-2xs font-semibold px-1.5 py-0.5 rounded bg-surface border border-border text-foreground">
+                                        {doc.doc_type || "DOCUMENT"}
+                                      </span>
+                                      <p className="text-xs font-bold text-foreground truncate" title={doc.title || doc.file_name}>
+                                        {doc.title || doc.file_name}
+                                      </p>
+                                    </div>
+                                    <p className="text-2xs text-muted-foreground font-mono truncate">
+                                      {doc.document_number ? `#${doc.document_number}` : doc.file_name}
+                                      {doc.expiry_date && ` • Exp: ${String(doc.expiry_date).split("T")[0]}`}
+                                    </p>
+                                  </div>
+
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {doc.file_url && (
+                                      <>
+                                        <AppButton
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setPreviewAttachment({
+                                              file_name: doc.file_name || doc.title,
+                                              file_url: doc.file_url,
+                                              file_type: doc.file_name?.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg"
+                                            });
+                                            setPreviewZoom(1);
+                                            setPreviewRotation(0);
+                                          }}
+                                          className="h-7 px-2 text-xs font-semibold"
+                                          title="View document"
+                                        >
+                                          <Eye className="h-3 w-3 mr-1" />
+                                          <span>View</span>
+                                        </AppButton>
+                                        <AppButton
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            downloadAttachment({
+                                              file_name: doc.file_name || doc.title,
+                                              file_url: doc.file_url
+                                            });
+                                          }}
+                                          className="h-7 px-2 text-xs font-semibold"
+                                          title="Download document"
+                                        >
+                                          <Download className="h-3 w-3" />
+                                        </AppButton>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* D. Audit Review Affirmation Banner */}
+                      <div className="p-3 rounded-lg bg-success-soft/30 border border-success/30 text-xs text-success-text flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-success-text shrink-0" />
+                          <span>
+                            <strong>Asset Review Completed:</strong> Vehicle specifications, registration identity, active compliance, and lifecycle costs for <strong>{selectedVehicleForSale.registration_number}</strong> are reviewed. Complete the transaction terms below to finalize disposal.
+                          </span>
                         </div>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="p-6 rounded-xl border border-dashed border-border text-center space-y-1.5">
+                      <Car className="h-8 w-8 text-muted-foreground mx-auto" />
+                      <p className="text-xs font-semibold text-foreground">Select a vehicle from the dropdown above</p>
+                      <p className="text-2xs text-muted-foreground">The vehicle's complete specifications, registration, compliance status, and lifetime investment ledger will appear here for review before entering sale terms.</p>
                     </div>
                   )}
                 </AppCardContent>
@@ -26836,6 +27851,20 @@ export default function FleetDeskHost({
             backLabel="Back to Sales Register"
             headerActions={
               <div className="flex items-center gap-2">
+                {canEditSale && (
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      openEditSaleModal(viewingSale);
+                    }}
+                    className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:bg-sunken"
+                  >
+                    <Edit2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                    <span>Edit sale</span>
+                  </AppButton>
+                )}
                 {targetVeh && (
                   <AppButton
                     type="button"
@@ -26861,6 +27890,24 @@ export default function FleetDeskHost({
                   <Printer className="h-3.5 w-3.5" />
                   <span>Print deed</span>
                 </AppButton>
+                {canDeleteSale && (
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setDeleteTarget({
+                        type: "sale",
+                        id: viewingSale.id,
+                        label: `Sale record of ${regPlate} (${viewingSale.buyer_name || "Purchaser"} - ₹${sPrice.toLocaleString("en-IN")})`
+                      })
+                    }
+                    className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Revert sale</span>
+                  </AppButton>
+                )}
               </div>
             }
           >
@@ -27091,7 +28138,7 @@ export default function FleetDeskHost({
                   <span>Edit vehicle</span>
                 </AppButton>
               )}
-              {canManageMaintenance && (
+              {canCreateMaintenance && (
                 <AppButton
                   type="button"
                   variant="primary"
@@ -27163,6 +28210,24 @@ export default function FleetDeskHost({
                 <Printer className="h-3.5 w-3.5" />
                 <span>Print</span>
               </AppButton>
+              {canDeleteVehicle && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteTarget({
+                      type: "vehicle",
+                      id: viewingVehicle.id,
+                      label: `Vehicle ${viewingVehicle.registration_number} (${viewingVehicle.make} ${viewingVehicle.model})`
+                    });
+                  }}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete vehicle</span>
+                </AppButton>
+              )}
             </div>
           }
         >
@@ -28511,7 +29576,7 @@ export default function FleetDeskHost({
                   </h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  {canManageMaintenance && (
+                  {canCreateMaintenance && (
                     <AppButton
                       type="button"
                       variant="primary"
@@ -28589,7 +29654,7 @@ export default function FleetDeskHost({
                       <Wrench className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
                       <p className="text-xs font-semibold text-foreground">No service records logged for this vehicle</p>
                       
-                      {canManageMaintenance && (
+                      {canCreateMaintenance && (
                         <div className="pt-2">
                           <AppButton
                             type="button"
@@ -28858,7 +29923,7 @@ export default function FleetDeskHost({
                                             <Eye className="h-3.5 w-3.5" />
                                             <span>Job sheet</span>
                                           </AppButton>
-                                          {canManageMaintenance && (
+                                          {canEditMaintenance && (
                                             <AppButton aria-label="Edit service record"
                                               type="button"
                                               variant="outline"
@@ -30497,6 +31562,51 @@ export default function FleetDeskHost({
             }
           }}
           backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Drivers"}
+          headerActions={
+            <div className="flex items-center gap-2">
+              {canEditDriver && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEditDriverModal(viewingDriver)}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:bg-sunken"
+                >
+                  <Edit2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                  <span>Edit driver</span>
+                </AppButton>
+              )}
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold"
+                title="Print driver dossier"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>Print</span>
+              </AppButton>
+              {canDeleteDriver && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteTarget({
+                      type: "driver",
+                      id: viewingDriver.id,
+                      label: `Driver ${viewingDriver.full_name}`
+                    });
+                  }}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete driver</span>
+                </AppButton>
+              )}
+            </div>
+          }
         >
               {/* Contact & Profile */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -30614,7 +31724,7 @@ export default function FleetDeskHost({
           backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Dispatches"}
           headerActions={
             <div className="flex items-center gap-1.5">
-              {canDispatchTrips && viewingTrip.status === "PLANNED" && (
+              {canEditTrip && viewingTrip.status === "PLANNED" && (
                 <AppButton
                   variant="outline"
                   size="sm"
@@ -30629,7 +31739,7 @@ export default function FleetDeskHost({
                   <span>Start movement</span>
                 </AppButton>
               )}
-              {canDispatchTrips && viewingTrip.status === "IN_PROGRESS" && (
+              {canEditTrip && viewingTrip.status === "IN_PROGRESS" && (
                 <AppButton
                   variant="outline"
                   size="sm"
@@ -30642,6 +31752,35 @@ export default function FleetDeskHost({
                 >
                   <Check className="h-3.5 w-3.5" />
                   <span>Complete movement</span>
+                </AppButton>
+              )}
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold"
+                title="Print trip sheet"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>Print sheet</span>
+              </AppButton>
+              {canDeleteTrip && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteTarget({
+                      type: "trip",
+                      id: viewingTrip.id,
+                      label: `Trip for ${viewingTrip.traveler_name || viewingTrip.destination}`
+                    });
+                  }}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete trip</span>
                 </AppButton>
               )}
             </div>
@@ -30720,20 +31859,53 @@ export default function FleetDeskHost({
           }}
           backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Parts"}
           headerActions={
-            <AppButton
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                const p = viewingPart;
-                setViewingPart(null);
-                openEditPartModal(p);
-              }}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 px-3 gap-1.5 font-semibold"
-            >
-              <Edit2 className="h-3.5 w-3.5" />
-              <span>Edit part</span>
-            </AppButton>
+            <div className="flex items-center gap-2">
+              {canEditPart && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const p = viewingPart;
+                    setViewingPart(null);
+                    openEditPartModal(p);
+                  }}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:bg-sunken"
+                >
+                  <Edit2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                  <span>Edit part</span>
+                </AppButton>
+              )}
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold"
+                title="Print part specification"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>Print</span>
+              </AppButton>
+              {canDeletePart && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteTarget({
+                      type: "part",
+                      id: viewingPart.id,
+                      label: `Part '${viewingPart.name}' (${viewingPart.brand || "OEM"})`
+                    });
+                  }}
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-danger-text hover:bg-danger-soft border-danger/30"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete part</span>
+                </AppButton>
+              )}
+            </div>
           }
         >
               {/* Procurement & Valuation */}
@@ -31191,14 +32363,27 @@ export default function FleetDeskHost({
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-foreground">Confirm deletion</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">This action cannot be undone.</p>
+                <h3 className="text-base font-bold text-foreground">
+                  {deleteTarget.type === "sale" ? "Confirm sale cancellation" : "Confirm deletion"}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {deleteTarget.type === "sale" ? "This will remove the transaction record and restore the vehicle." : "This action cannot be undone."}
+                </p>
               </div>
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Are you sure you want to permanently delete <strong className="text-foreground">{deleteTarget.label}</strong>?
+              Are you sure you want to {deleteTarget.type === "sale" ? "cancel and revert the sale of" : "permanently delete"} <strong className="text-foreground">{deleteTarget.label}</strong>?
             </p>
+
+            {deleteTarget.type === "sale" && (
+              <div className="p-3 rounded-lg bg-warning-soft/40 border border-warning/30 text-xs text-warning-text flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Inventory Reversion:</strong> The vehicle will be restored to active fleet inventory and its status reset from SOLD to its previous active status.
+                </span>
+              </div>
+            )}
 
             <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
               <AppButton 
@@ -31217,7 +32402,7 @@ export default function FleetDeskHost({
                 className="bg-danger hover:bg-danger/90 text-white font-semibold"
               >
                 {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
-                <span>Delete permanently</span>
+                <span>{deleteTarget.type === "sale" ? "Revert sale & restore asset" : "Delete permanently"}</span>
               </AppButton>
             </div>
           </div>

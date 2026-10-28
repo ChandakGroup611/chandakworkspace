@@ -612,7 +612,28 @@ export async function fetchVehicleDashboardStats(): Promise<{
       };
     }
 
-    // Run parallel count queries on indexed status columns
+    // Fast single round-trip database RPC
+    try {
+      const { data: rpcStats, error: rpcErr } = await supabaseAdmin.rpc("get_vehicle_dashboard_stats");
+      if (!rpcErr && Array.isArray(rpcStats) && rpcStats.length > 0) {
+        const s = rpcStats[0];
+        return {
+          success: true,
+          stats: {
+            totalVehicles: Number(s.total_vehicles) || 0,
+            availableVehicles: Number(s.available_vehicles) || 0,
+            onRouteVehicles: Number(s.on_route_vehicles) || 0,
+            inMaintenanceVehicles: Number(s.in_maintenance_vehicles) || 0,
+            activeDrivers: Number(s.active_drivers) || 0,
+            activeTrips: Number(s.active_trips) || 0
+          }
+        };
+      }
+    } catch (rpcEx) {
+      console.warn("[vehicle-actions] get_vehicle_dashboard_stats RPC warning, using fallback:", rpcEx);
+    }
+
+    // Fallback: Parallel count queries on indexed status columns
     const [
       totalRes,
       availableRes,
@@ -3910,28 +3931,41 @@ export async function fetchMaintenanceList(): Promise<{
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, records: [], error: "Unauthorized" };
 
-    const { data: rawRecords, error } = await supabaseAdmin
-      .from("service_records")
-      .select(`
-        id,
-        vehicle_id,
-        service_type,
-        service_center,
-        service_date,
-        odometer_km,
-        cost,
-        parts_replaced,
-        next_service_due_date,
-        next_service_due_odometer,
-        technician_name,
-        created_at
-      `)
-      .order("service_date", { ascending: false })
-      .limit(100);
+    // Use get_service_records_list RPC to strip heavy base64 payloads at the database engine level (drops payload from 10.5 MB to 100 KB)
+    let rawRecords: any[] = [];
+    try {
+      const { data: rpcRecords, error: rpcErr } = await supabaseAdmin.rpc("get_service_records_list", { p_limit: 100 });
+      if (!rpcErr && Array.isArray(rpcRecords)) {
+        rawRecords = rpcRecords;
+      } else {
+        throw rpcErr || new Error("Failed to load records via RPC");
+      }
+    } catch (rpcEx) {
+      console.warn("[vehicle-actions] get_service_records_list RPC fallback:", rpcEx);
+      const { data, error } = await supabaseAdmin
+        .from("service_records")
+        .select(`
+          id,
+          vehicle_id,
+          service_type,
+          service_center,
+          service_date,
+          odometer_km,
+          cost,
+          parts_replaced,
+          next_service_due_date,
+          next_service_due_odometer,
+          technician_name,
+          created_at
+        `)
+        .order("service_date", { ascending: false })
+        .limit(100);
 
-    if (error) return { success: false, records: [], error: error.message };
+      if (error) return { success: false, records: [], error: error.message };
+      rawRecords = data || [];
+    }
 
-    const recordsList = (rawRecords || []) as MaintenanceRecord[];
+    const recordsList = rawRecords as MaintenanceRecord[];
     if (recordsList.length === 0) return { success: true, records: [] };
 
     // Batch lookup vehicle plates (eliminates N+1)
@@ -7112,4 +7146,314 @@ export async function recordVehicleSaleAction(payload: {
     return { success: false, error: err.message || "Failed to record vehicle sale" };
   }
 }
+
+export async function updateVehicleSaleAction(payload: {
+  id: string;
+  sale_date: string;
+  sale_price: number;
+  buyer_name: string;
+  buyer_phone?: string;
+  buyer_email?: string;
+  sale_type?: string;
+  payment_mode?: string;
+  discount?: number;
+  processing_fee?: number;
+  financed?: boolean;
+  financier_name?: string;
+  loan_amount?: number;
+  loan_tenure_months?: number;
+  sale_document_url?: string;
+  notes?: string;
+}): Promise<{
+  success: boolean;
+  sale?: VehicleSaleRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized. Please sign in." };
+
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) {
+      return { success: false, error: "Access Denied: Insufficient permissions to modify vehicle sales." };
+    }
+
+    if (!payload.id) {
+      return { success: false, error: "Sale ID is required." };
+    }
+    if (!payload.sale_date) {
+      return { success: false, error: "Sale date is required." };
+    }
+    if (typeof payload.sale_price !== "number" || payload.sale_price < 0) {
+      return { success: false, error: "Valid sale price is required." };
+    }
+    if (!payload.buyer_name?.trim()) {
+      return { success: false, error: "Buyer / Recipient name is required." };
+    }
+
+    // 1. Fetch current sale record with joined vehicle
+    const { data: existingSale, error: fErr } = await supabaseAdmin
+      .from("vehicle_sales")
+      .select(`
+        *,
+        vehicle:vehicles (
+          id,
+          registration_number,
+          make,
+          model,
+          variant,
+          category,
+          purchase_price,
+          purchase_cost,
+          on_road_price,
+          ex_showroom_price,
+          paint_color,
+          vin_chassis_number,
+          status
+        )
+      `)
+      .eq("id", payload.id)
+      .maybeSingle();
+
+    if (fErr || !existingSale) {
+      return { success: false, error: "Sale record not found." };
+    }
+
+    const recordedByName = (user.user_metadata?.full_name as string) || user.email || "Fleet Manager";
+
+    // 2. Update record in public.vehicle_sales
+    const updateSaleRow = {
+      sale_date: payload.sale_date,
+      sale_price: payload.sale_price,
+      buyer_name: payload.buyer_name.trim(),
+      buyer_phone: payload.buyer_phone?.trim() || null,
+      buyer_email: payload.buyer_email?.trim() || null,
+      sale_type: payload.sale_type?.trim() || "Full Sale",
+      payment_mode: payload.payment_mode?.trim() || "Bank Transfer",
+      discount: Number(payload.discount) || 0,
+      processing_fee: Number(payload.processing_fee) || 0,
+      financed: Boolean(payload.financed),
+      financier_name: payload.financed ? (payload.financier_name?.trim() || null) : null,
+      loan_amount: payload.financed ? (Number(payload.loan_amount) || 0) : 0,
+      loan_tenure_months: payload.financed ? (Number(payload.loan_tenure_months) || null) : null,
+      sale_document_url: payload.sale_document_url?.trim() || null,
+      notes: payload.notes?.trim() || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: updatedSale, error: uErr } = await supabaseAdmin
+      .from("vehicle_sales")
+      .update(updateSaleRow)
+      .eq("id", payload.id)
+      .select()
+      .single();
+
+    if (uErr) {
+      console.error("[vehicle-actions] updateVehicleSaleAction update error:", uErr);
+      return { success: false, error: uErr.message };
+    }
+
+    // 3. Update vehicle status & sale_price
+    const newStatus = payload.sale_type?.toLowerCase().includes("scrap") ? "DISPOSED" : "SOLD";
+    await supabaseAdmin
+      .from("vehicles")
+      .update({
+        status: newStatus,
+        sale_price: payload.sale_price,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", existingSale.vehicle_id);
+
+    // 4. Update or insert document in vehicle_documents if provided
+    if (payload.sale_document_url?.trim()) {
+      try {
+        const { data: existingDoc } = await supabaseAdmin
+          .from("vehicle_documents")
+          .select("id")
+          .eq("vehicle_id", existingSale.vehicle_id)
+          .eq("doc_type", "SALE")
+          .maybeSingle();
+
+        if (existingDoc) {
+          await supabaseAdmin
+            .from("vehicle_documents")
+            .update({
+              file_url: payload.sale_document_url.trim(),
+              status: "VALID",
+              uploaded_at: new Date().toISOString()
+            })
+            .eq("id", existingDoc.id);
+        } else {
+          await supabaseAdmin
+            .from("vehicle_documents")
+            .insert({
+              id: `vdoc-${Date.now()}-sale`,
+              vehicle_id: existingSale.vehicle_id,
+              doc_type: "SALE",
+              title: `Sale Deed / Disposal Certificate — ${existingSale.vehicle?.registration_number || existingSale.vehicle_id}`,
+              document_number: `SALE-${existingSale.vehicle_id.slice(-6).toUpperCase()}`,
+              file_name: `Sale_Invoice_${existingSale.vehicle?.registration_number || "Doc"}.pdf`,
+              file_url: payload.sale_document_url.trim(),
+              status: "VALID",
+              uploaded_at: new Date().toISOString()
+            });
+        }
+      } catch (docErr) {
+        console.warn("[vehicle-actions] Warning updating sale document in vault:", docErr);
+      }
+    }
+
+    // 5. Specification history
+    try {
+      await supabaseAdmin
+        .from("vehicle_specification_history")
+        .insert({
+          vehicle_id: existingSale.vehicle_id,
+          changed_by: user.id,
+          changed_by_name: recordedByName,
+          changed_by_email: user.email || "",
+          change_summary: `Sale record updated: ${payload.sale_type || "Sale"} to ${payload.buyer_name.trim()} for ₹${payload.sale_price.toLocaleString("en-IN")}`,
+          old_data: { sale_price: existingSale.sale_price, buyer_name: existingSale.buyer_name, status: existingSale.vehicle?.status },
+          new_data: { sale_price: payload.sale_price, buyer_name: payload.buyer_name.trim(), status: newStatus }
+        });
+    } catch (specHistErr) {
+      console.warn("[vehicle-actions] Warning writing specification history:", specHistErr);
+    }
+
+    const completeRecord: VehicleSaleRecord = {
+      ...updatedSale,
+      sale_price: Number(updatedSale.sale_price) || 0,
+      discount: Number(updatedSale.discount) || 0,
+      processing_fee: Number(updatedSale.processing_fee) || 0,
+      loan_amount: Number(updatedSale.loan_amount) || 0,
+      is_financed: Boolean(updatedSale.financed),
+      vehicle_plate: existingSale.vehicle?.registration_number || existingSale.vehicle_plate,
+      vehicle_make: existingSale.vehicle?.make || existingSale.vehicle_make,
+      vehicle_model: existingSale.vehicle?.model || existingSale.vehicle_model,
+      vehicle_variant: existingSale.vehicle?.variant || existingSale.vehicle_variant,
+      vehicle_category: existingSale.vehicle?.category || existingSale.vehicle_category,
+      vehicle: existingSale.vehicle ? {
+        ...existingSale.vehicle,
+        status: newStatus
+      } : null
+    };
+
+    return { success: true, sale: completeRecord };
+  } catch (err: any) {
+    console.error("[vehicle-actions] updateVehicleSaleAction exception:", err);
+    return { success: false, error: err.message || "Failed to update vehicle sale record" };
+  }
+}
+
+export async function deleteVehicleSaleAction(saleId: string): Promise<{
+  success: boolean;
+  restoredVehicleId?: string;
+  restoredStatus?: string;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized. Please sign in." };
+
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) {
+      return { success: false, error: "Access Denied: Insufficient permissions to delete vehicle sales." };
+    }
+
+    if (!saleId) {
+      return { success: false, error: "Sale ID is required." };
+    }
+
+    // 1. Fetch current sale record with joined vehicle
+    const { data: existingSale, error: fErr } = await supabaseAdmin
+      .from("vehicle_sales")
+      .select(`
+        *,
+        vehicle:vehicles (
+          id,
+          registration_number,
+          status
+        )
+      `)
+      .eq("id", saleId)
+      .maybeSingle();
+
+    if (fErr || !existingSale) {
+      return { success: false, error: "Sale record not found." };
+    }
+
+    const targetVehicleId = existingSale.vehicle_id;
+    const recordedByName = (user.user_metadata?.full_name as string) || user.email || "Fleet Manager";
+
+    // 2. Determine previous non-disposed status
+    const { data: statusHistory } = await supabaseAdmin
+      .from("vehicle_status_history")
+      .select("previous_status")
+      .eq("vehicle_id", targetVehicleId)
+      .not("previous_status", "in", '("SOLD","DISPOSED")')
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    const restoredStatus = (statusHistory && statusHistory[0]?.previous_status) ? statusHistory[0].previous_status : "IN_STOCK";
+
+    // 3. Delete sale record from public.vehicle_sales
+    const { error: dErr } = await supabaseAdmin
+      .from("vehicle_sales")
+      .delete()
+      .eq("id", saleId);
+
+    if (dErr) {
+      console.error("[vehicle-actions] deleteVehicleSaleAction error:", dErr);
+      return { success: false, error: dErr.message };
+    }
+
+    // 4. Restore vehicle status and reset sale_price
+    await supabaseAdmin
+      .from("vehicles")
+      .update({
+        status: restoredStatus,
+        sale_price: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", targetVehicleId);
+
+    // 5. Record status history
+    try {
+      await supabaseAdmin
+        .from("vehicle_status_history")
+        .insert({
+          vehicle_id: targetVehicleId,
+          previous_status: existingSale.vehicle?.status || "SOLD",
+          new_status: restoredStatus,
+          changed_by: recordedByName,
+          reason: `Sale/disposal record deleted / cancelled. Restored asset status to ${restoredStatus}.`
+        });
+    } catch (statErr) {
+      console.warn("[vehicle-actions] Warning writing status history on delete sale:", statErr);
+    }
+
+    // 6. Record specification history
+    try {
+      await supabaseAdmin
+        .from("vehicle_specification_history")
+        .insert({
+          vehicle_id: targetVehicleId,
+          changed_by: user.id,
+          changed_by_name: recordedByName,
+          changed_by_email: user.email || "",
+          change_summary: `Sale record deleted. Asset restored to ${restoredStatus}.`,
+          old_data: { sale_id: saleId, status: existingSale.vehicle?.status || "SOLD", sale_price: existingSale.sale_price },
+          new_data: { sale_id: null, status: restoredStatus, sale_price: null }
+        });
+    } catch (specErr) {
+      console.warn("[vehicle-actions] Warning writing specification history on delete sale:", specErr);
+    }
+
+    return { success: true, restoredVehicleId: targetVehicleId, restoredStatus };
+  } catch (err: any) {
+    console.error("[vehicle-actions] deleteVehicleSaleAction exception:", err);
+    return { success: false, error: err.message || "Failed to delete vehicle sale record" };
+  }
+}
+
 

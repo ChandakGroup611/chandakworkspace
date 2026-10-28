@@ -197,6 +197,7 @@ export function useFleetPermissions(initialAccess?: FleetUserAccessRecord | null
     if (moduleCode === "MAINTENANCE" && (hasPermission("FLEET_MAINTENANCE_UPDATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
     if (moduleCode === "PARTS" && (hasPermission("FLEET_MAINTENANCE_UPDATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
     if (moduleCode === "VENDORS" && (hasPermission("FLEET_VENDORS_UPDATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "SALES" && (hasPermission("VEHICLES_UPDATE") || hasPermission("VEHICLES_EDIT") || hasPermission("VEHICLES_MANAGE") || userAccessRecord?.canManageVehicles || effectiveFleetRole === "FLEET_ADMIN")) return true;
 
     const pol = policies.find(p => p.roleCode === effectiveFleetRole && (p.module === moduleCode || p.module === "ALL"));
     if (pol) return pol.canUpdate;
@@ -213,6 +214,7 @@ export function useFleetPermissions(initialAccess?: FleetUserAccessRecord | null
     if (moduleCode === "MAINTENANCE" && (hasPermission("FLEET_MAINTENANCE_DELETE") || hasPermission("FLEET_MAINTENANCE_MANAGE"))) return true;
     if (moduleCode === "PARTS" && (hasPermission("FLEET_MAINTENANCE_DELETE") || hasPermission("FLEET_MAINTENANCE_MANAGE"))) return true;
     if (moduleCode === "VENDORS" && (hasPermission("FLEET_VENDORS_DELETE") || hasPermission("FLEET_MAINTENANCE_MANAGE"))) return true;
+    if (moduleCode === "SALES" && (hasPermission("VEHICLES_DELETE") || hasPermission("VEHICLES_MANAGE") || effectiveFleetRole === "FLEET_ADMIN")) return true;
 
     const pol = policies.find(p => p.roleCode === effectiveFleetRole && (p.module === moduleCode || p.module === "ALL"));
     if (pol) return pol.canDelete;
@@ -232,10 +234,17 @@ export function useFleetPermissions(initialAccess?: FleetUserAccessRecord | null
     if (userAccessRecord && (userAccessRecord.fleetRole as any) === "NONE") return false;
     if (isGlobalSuperAdmin) return true;
 
+    if (moduleCode === "VEHICLES" && (hasPermission("VEHICLES_EXPORT") || hasPermission("VEHICLES_MANAGE") || userAccessRecord?.canManageVehicles || effectiveFleetRole === "FLEET_ADMIN")) return true;
+    if (moduleCode === "DRIVERS" && (hasPermission("DRIVERS_EXPORT") || hasPermission("DRIVERS_MANAGE") || userAccessRecord?.canManageDrivers || effectiveFleetRole === "FLEET_ADMIN")) return true;
+    if (moduleCode === "TRIPS" && (hasPermission("TRIPS_EXPORT") || hasPermission("TRIPS_MANAGE") || userAccessRecord?.canDispatchTrips || effectiveFleetRole === "FLEET_ADMIN")) return true;
+    if (moduleCode === "MAINTENANCE" && (hasPermission("FLEET_MAINTENANCE_EXPORT") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance || effectiveFleetRole === "FLEET_ADMIN")) return true;
+    if (moduleCode === "PARTS" && (hasPermission("FLEET_PARTS_EXPORT") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance || effectiveFleetRole === "FLEET_ADMIN")) return true;
+    if (moduleCode === "SALES" && (hasPermission("VEHICLES_EXPORT") || hasPermission("VEHICLES_MANAGE") || userAccessRecord?.canManageVehicles || effectiveFleetRole === "FLEET_ADMIN")) return true;
+
     const pol = policies.find(p => p.roleCode === effectiveFleetRole && (p.module === moduleCode || p.module === "ALL"));
     if (pol) return pol.canExport;
     return effectiveFleetRole === "FLEET_ADMIN";
-  }, [policies, effectiveFleetRole, userAccessRecord, isGlobalSuperAdmin]);
+  }, [policies, effectiveFleetRole, userAccessRecord, isGlobalSuperAdmin, hasPermission]);
 
   const getMovementScope = useCallback((moduleCode: FleetFunctionalModule): FleetMovementAccessScope => {
     const pol = policies.find(p => p.roleCode === effectiveFleetRole && (p.module === moduleCode || p.module === "ALL"));

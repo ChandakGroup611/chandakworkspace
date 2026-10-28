@@ -4,7 +4,9 @@
  * 2. Checks RLS policies on vehicle_sales.
  * 3. Verifies joined query between vehicle_sales and vehicles.
  * 4. Verifies test vehicle sale insertion and vehicle status update.
- * 5. Cleans up test record to maintain zero regression.
+ * 5. Verifies test vehicle sale update (editing price, buyer, payment mode).
+ * 6. Verifies sale deletion / reversion and restoration of vehicle status.
+ * 7. Ensures zero regression across database state.
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -70,11 +72,12 @@ async function runTests() {
   const { data: existingVehicles, error: evErr } = await supabaseAdmin
     .from('vehicles')
     .select('id, registration_number, status, purchase_cost')
+    .eq('status', 'IN_STOCK')
     .limit(1);
 
-  assert(!evErr && existingVehicles && existingVehicles.length > 0, "Retrieved existing vehicle from database");
-  const testVeh = existingVehicles[0];
-  console.log(`Using existing vehicle ${testVeh.registration_number} (${testVeh.id}) for sale test...`);
+  const testVeh = (existingVehicles && existingVehicles.length > 0) ? existingVehicles[0] : (await supabaseAdmin.from('vehicles').select('id, registration_number, status, purchase_cost').limit(1)).data[0];
+  assert(Boolean(testVeh), `Retrieved test vehicle: ${testVeh?.registration_number} (${testVeh?.status})`);
+  const initialVehStatus = testVeh.status;
 
   // 3. Insert sale record
   const { data: insertedSale, error: insSaleErr } = await supabaseAdmin
@@ -95,6 +98,12 @@ async function runTests() {
     .single();
 
   assert(!insSaleErr && insertedSale, `Recorded sale for test vehicle: realized ₹${insertedSale ? insertedSale.sale_price : 0}`);
+
+  // Update vehicle status to SOLD
+  await supabaseAdmin
+    .from('vehicles')
+    .update({ status: 'SOLD', sale_price: 450000 })
+    .eq('id', testVeh.id);
 
   // 4. Query back via the joined query
   const { data: queriedSale, error: qErr } = await supabaseAdmin
@@ -121,13 +130,49 @@ async function runTests() {
   assert(queriedSale && queriedSale.buyer_name === "Apex Auto Salvage & Sales Pvt Ltd", "Buyer name correctly persisted");
   assert(queriedSale && queriedSale.sale_price === 450000, "Sale price correctly persisted as 450000");
 
-  // 5. Clean up test sale record
+  // 5. Test UPDATE of vehicle sale (Edit Action Functionality)
+  console.log("\n--- Testing Sale Update / Edit Action Lifecycle ---");
+  const { data: updatedSale, error: upErr } = await supabaseAdmin
+    .from('vehicle_sales')
+    .update({
+      sale_price: 520000,
+      buyer_name: "Premier Motor Fleet Disposals Ltd",
+      buyer_phone: "+91 98765 43210",
+      notes: "Updated terms during negotiation audit"
+    })
+    .eq('id', insertedSale.id)
+    .select()
+    .single();
+
+  assert(!upErr && updatedSale, "Updated vehicle sale record in database");
+  assert(updatedSale && updatedSale.sale_price === 520000, "Updated sale price correctly verified as 520000");
+  assert(updatedSale && updatedSale.buyer_name === "Premier Motor Fleet Disposals Ltd", "Updated buyer name correctly verified");
+
+  // 6. Test DELETE / REVERT of vehicle sale (Revert Action Functionality)
+  console.log("\n--- Testing Sale Delete / Revert Action Lifecycle ---");
   const { error: delErr } = await supabaseAdmin
     .from('vehicle_sales')
     .delete()
     .eq('id', insertedSale.id);
 
-  assert(!delErr, "Cleaned up temporary test vehicle sale record safely");
+  assert(!delErr, "Deleted test sale record from vehicle_sales");
+
+  // Revert vehicle status back to initial status
+  const { error: revVehErr } = await supabaseAdmin
+    .from('vehicles')
+    .update({ status: initialVehStatus, sale_price: null })
+    .eq('id', testVeh.id);
+
+  assert(!revVehErr, `Restored test vehicle status back to ${initialVehStatus}`);
+
+  // Confirm vehicle record state restored
+  const { data: restoredVeh } = await supabaseAdmin
+    .from('vehicles')
+    .select('id, status, sale_price')
+    .eq('id', testVeh.id)
+    .single();
+
+  assert(restoredVeh && restoredVeh.status === initialVehStatus && restoredVeh.sale_price === null, "Vehicle inventory and sale_price properly reverted to null");
 
   console.log(`\n=== TEST RESULTS: ${passed} PASSED, ${failed} FAILED ===`);
   if (failed > 0) {

@@ -66,8 +66,8 @@ export default async function VehicleModulePage({ params }: PageProps) {
     fetchDriversList().catch(() => ({ success: false, drivers: [] })),
     (primaryTab === "trips" || primaryTab === "dashboard") ? fetchTripsList().catch(() => ({ success: false, trips: [] })) : Promise.resolve(undefined),
     (primaryTab === "maintenance" || primaryTab === "dashboard") ? fetchMaintenanceList().catch(() => ({ success: false, records: [] })) : Promise.resolve(undefined),
-    fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })),
-    fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })),
+    (primaryTab === "vendors" || primaryTab === "register") ? fetchInsuranceVendorsListAction().catch(() => ({ success: false, vendors: [] })) : Promise.resolve(undefined),
+    primaryTab === "register" ? fetchPurchaseVendorsListAction().catch(() => ({ success: false, vendors: [] })) : Promise.resolve(undefined),
     (primaryTab === "parts" || primaryTab === "dashboard") ? fetchVehiclePartsList().catch(() => ({ success: false, parts: [] })) : Promise.resolve(undefined),
     primaryTab === "sales" ? fetchVehicleSalesListAction().catch(() => ({ success: false, sales: [] })) : Promise.resolve(undefined),
     fetchMyFleetAccessAction().catch(() => ({ success: false, fleetAccess: null }))
