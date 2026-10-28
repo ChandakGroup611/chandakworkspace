@@ -47,3 +47,4 @@ next-env.d.ts
 /ui-audit-report.json
 # vehicle photo cut-outs and model (regenerated on demand)
 /.cache/
+/supabase/backups/
