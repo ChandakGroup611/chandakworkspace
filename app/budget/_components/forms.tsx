@@ -204,14 +204,18 @@ export function SignoffLevelsEditor({ projectId, levels, members, editable }: {
   return (
     <>
       {banner}
-      <div className="scroll"><table><thead><tr><th className="n">Order</th><th>Level</th><th>Approvers (any one signs)</th><th></th></tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th className="n">Order</th><th>Level</th><th>Approvers (any one signs)</th><th className="actions-col">Actions</th></tr></thead><tbody>
         {levels.map((l) => editable ? (
           <tr key={l.id}>
             <td className="n"><input type="number" id={`sl-sort-${l.id}`} className="amt" style={{ width: 60 }} defaultValue={l.sort} aria-label="Order" /></td>
             <td><input type="text" id={`sl-title-${l.id}`} defaultValue={l.title} aria-label="Level title" /></td>
             <td><Pick ids={picked[l.id]} set={(v) => setPicked({ ...edits, [l.id]: v })} /></td>
-            <td><button disabled={pending} onClick={() => run(() => A.saveSignoffLevel({ id: l.id, project_id: projectId, sort: Number(value(`sl-sort-${l.id}`)) || 0, title: value(`sl-title-${l.id}`), approver_ids: picked[l.id] ?? [] }))}>Save</button>
-              <button className="link" disabled={pending} onClick={() => run(() => A.deleteSignoffLevel(l.id))}>Remove</button></td>
+            <td className="actions">
+              <div className="actions-group">
+                <button className="btn-action primary" disabled={pending} onClick={() => run(() => A.saveSignoffLevel({ id: l.id, project_id: projectId, sort: Number(value(`sl-sort-${l.id}`)) || 0, title: value(`sl-title-${l.id}`), approver_ids: picked[l.id] ?? [] }))}>Save</button>
+                <button className="btn-action danger" disabled={pending} onClick={() => run(() => A.deleteSignoffLevel(l.id))}>Remove</button>
+              </div>
+            </td>
           </tr>
         ) : <tr key={l.id}><td className="n">{l.sort}</td><td>{l.title}</td><td>{l.approver_ids.map((i) => name.get(i) ?? "Member").join(", ")}</td><td></td></tr>)}
         {levels.length === 0 && <tr><td colSpan={4} className="sub">No levels.</td></tr>}
@@ -219,7 +223,7 @@ export function SignoffLevelsEditor({ projectId, levels, members, editable }: {
           <td className="n"><input type="number" id={`sl-sort-new-${k}`} className="amt" style={{ width: 60 }} defaultValue={(levels[levels.length - 1]?.sort ?? 0) + 1} aria-label="New level order" /></td>
           <td><input type="text" id={`sl-title-new-${k}`} placeholder="For example: Checked by" aria-label="New level title" /></td>
           <td><Pick ids={newPick} set={setNewPick} /></td>
-          <td><button disabled={pending} onClick={() => run(() => A.saveSignoffLevel({ project_id: projectId, sort: Number(value(`sl-sort-new-${k}`)) || 0, title: value(`sl-title-new-${k}`), approver_ids: newPick }), () => setNewPick([]))}>Add level</button></td>
+          <td className="actions"><button className="btn-action primary" disabled={pending} onClick={() => run(() => A.saveSignoffLevel({ project_id: projectId, sort: Number(value(`sl-sort-new-${k}`)) || 0, title: value(`sl-title-new-${k}`), approver_ids: newPick }), () => setNewPick([]))}>+ Add level</button></td>
         </tr>}
       </tbody></table></div>
     </>
@@ -322,7 +326,7 @@ export function EntryTable({ rows, total, customFields = [], picks }: { rows: En
         <thead><tr><th>Cost head</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th>
           <th className="n">Variance (a−b)</th><th className="n">Utilised</th><th className="n">PSF on CTC</th><th>Remark</th>
           {customFields.map((f) => <th key={f.id} className={f.field_type === "formula" || ["number", "integer", "amount_cr", "amount_inr", "percent"].includes(f.field_type) ? "n cf" : "cf"} title={fieldTitle(f)}>{f.label}{f.required && " *"}</th>)}
-          <th>Source</th><th></th></tr></thead>
+          <th>Source</th><th className="actions-col">Actions</th></tr></thead>
         <tbody>
           {rows.map((r) => {
             const l = r.line;
@@ -349,8 +353,12 @@ export function EntryTable({ rows, total, customFields = [], picks }: { rows: En
                 <td>{l && (l.isTax && l.initialCalc && l.ctcCalc ? <span className="chip" title="Calculated by the GST rule">Calc</span>
                   : l.source === "excel" ? <span className="chip xl" title="Last set by an Excel import">Excel</span> : <span className="chip typed" title="Last typed on screen">Typed</span>)}
                   {l && !l.isTax && <LineRuleCell lineId={l.id} rule={l.rule} editable={l.editable} />}</td>
-                <td className="actions">{l?.href && <Link href={l.href} title="Figures, versions, comments and history of this line">View</Link>}
-                  {l?.removable && <button className="link" onClick={() => run(() => A.removeLine(l.id))}>Remove</button>}</td>
+                <td className="actions">
+                  <div className="actions-group">
+                    {l?.href && <Link href={l.href} className="btn-action" title="Figures, versions, comments and history of this line">View</Link>}
+                    {l?.removable && <button className="btn-action danger" onClick={() => run(() => A.removeLine(l.id))}>Remove</button>}
+                  </div>
+                </td>
               </tr>
             );
           })}
@@ -384,12 +392,14 @@ function LineRuleCell({ lineId, rule, editable }: { lineId: number; rule: RuleSt
     {rule.kind === "memo" ? "Memo" : rule.kind === "rate" ? "Rate × area" : rule.kind === "schedule" ? "Schedule" : "Balance"}</span>;
   if (!editable) return chip;
   // a scheduled line is changed on the Schedules screen
-  if (rule.kind === "schedule") return <>{chip} <Link href={rule.scheduleHref ?? "#"}>Open</Link></>;
+  if (rule.kind === "schedule") return <div className="actions-group">{chip} <Link href={rule.scheduleHref ?? "#"} className="btn-action">Open</Link></div>;
   const id = (k: string) => `rule-${lineId}-${k}`;
   return (
     <>
-      {chip}
-      <button className="link" aria-label="CTC rule" onClick={() => setOpen(!open)}>{open ? "Close" : "Rule"}</button>
+      <div className="actions-group">
+        {chip}
+        <button className="btn-action" aria-label="CTC rule" onClick={() => setOpen(!open)}>{open ? "Close" : "Rule"}</button>
+      </div>
       {open && <div className="rule-form">
         <label>CTC is<select value={kind} aria-label="Rule" onChange={(e) => setKind(e.target.value as typeof kind)}>
           <option value="typed">Typed</option><option value="rate">Rate × area</option><option value="balance">Balance of a total</option><option value="memo">Memo item (outside totals)</option>
@@ -471,25 +481,29 @@ export function ScheduleEditor({ s, editable }: {
     <>
       {banner}
       <div className="scroll"><table><thead><tr><th>Item</th><th className="n">Quantity</th><th className="n">Rate (₹)</th><th className="n">%</th><th className="n">Periods</th>
-        {editable && <th className="n">Typed amount (₹)</th>}<th className="n">Amount (₹)</th><th>Remark</th>{editable && <th></th>}</tr></thead><tbody>
+        {editable && <th className="n">Typed amount (₹)</th>}<th className="n">Amount (₹)</th><th>Remark</th>{editable && <th className="actions-col">Actions</th>}</tr></thead><tbody>
         {s.rows.map((r) => editable ? (
           <tr key={`${r.row_id}-${r.amount_paise}-${r.label}`}>{cells(r.row_id, r)}<td className="n">{rupees(r.amount_paise)}</td>
             <td><input type="text" className="rem" id={f("remark", r.row_id)} defaultValue={r.remark ?? ""} aria-label="Row remark" /></td>
-            <td><button disabled={pending} onClick={() => run(() => A.saveScheduleRow(s.id, r.row_id, r.sort, read(r.row_id)))}>Save</button>
-              <button className="link" disabled={pending} onClick={() => run(() => A.deleteScheduleRow(r.row_id))}>Remove</button></td></tr>
+            <td className="actions">
+              <div className="actions-group">
+                <button className="btn-action primary" disabled={pending} onClick={() => run(() => A.saveScheduleRow(s.id, r.row_id, r.sort, read(r.row_id)))}>Save</button>
+                <button className="btn-action danger" disabled={pending} onClick={() => run(() => A.deleteScheduleRow(r.row_id))}>Remove</button>
+              </div>
+            </td></tr>
         ) : (
           <tr key={r.row_id}><td>{r.label}</td><td className="n">{n(r.qty)}</td><td className="n">{n(r.rate)}</td><td className="n">{n(r.pct)}</td><td className="n">{n(r.periods)}</td>
             <td className="n">{rupees(r.amount_paise)}</td><td>{r.remark}</td></tr>
         ))}
         {editable && <tr key="new">{cells("new")}<td></td><td><input type="text" className="rem" id={f("remark", "new")} aria-label="Row remark" /></td>
-          <td><button disabled={pending} onClick={() => run(() => A.saveScheduleRow(s.id, null, (s.rows[s.rows.length - 1]?.sort ?? 0) + 1, read("new")), () => {
+          <td className="actions"><button className="btn-action primary" disabled={pending} onClick={() => run(() => A.saveScheduleRow(s.id, null, (s.rows[s.rows.length - 1]?.sort ?? 0) + 1, read("new")), () => {
             // the new row stays in place (so typing is never lost to a refresh); clear it for the next one
             for (const [k, d] of [["label", ""], ["qty", ""], ["rate", ""], ["pct", "100"], ["periods", "1"], ["amount", ""], ["remark", ""]]) (document.getElementById(f(k, "new")) as HTMLInputElement).value = d;
-          })}>Add row</button></td></tr>}
+          })}>+ Add row</button></td></tr>}
         <tr className="total"><td colSpan={editable ? 6 : 5}>Total = CTC of the line</td><td className="n">{rupees(total)}</td><td>{fmt(total / 1e9)} Cr</td>{editable && <td></td>}</tr>
       </tbody></table></div>
       {editable && <div className="row">
-        <button className="danger" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(() => A.deleteSchedule(s.id)); }}>{confirm ? "Click again to remove the schedule" : "Remove schedule"}</button>
+        <button className="btn-action danger" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(() => A.deleteSchedule(s.id)); }}>{confirm ? "Confirm Delete Schedule" : "Delete schedule"}</button>
         <span className="note">Removing it keeps the line&apos;s last CTC, which can then be typed again.</span></div>}
     </>
   );
@@ -591,14 +605,14 @@ export function BillForm({ projectId, heads, towers, date, bill, onDone }: {
         <label>Work order / PO<input type="text" id={id("wo")} defaultValue={bill?.workOrder} /></label>
         <label>GST on the bill (₹)<input type="text" inputMode="decimal" id={id("gst")} placeholder="0" defaultValue={bill?.gst} /></label>
       </div>
-      <div className="scroll"><table><thead><tr><th>Cost head</th><th>Tower</th><th className="n">Basic amount (₹)</th><th></th></tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th>Cost head</th><th>Tower</th><th className="n">Basic amount (₹)</th><th className="actions-col">Actions</th></tr></thead><tbody>
         {rows.map((k) => <tr key={k}>
           <td><select id={id(`head-${k}`)} aria-label="Split cost head" defaultValue={start[k]?.head}>{heads.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}</select></td>
           <td><select id={id(`tower-${k}`)} aria-label="Split tower" defaultValue={start[k]?.tower ?? ""}><option value="">Not split by tower</option>{towers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></td>
           <td className="n"><input type="text" inputMode="decimal" className="amt" aria-label="Split amount" value={amounts[k] ?? ""} onChange={(e) => setAmounts({ ...amounts, [k]: e.target.value })} /></td>
-          <td>{rows.length > 1 && <button className="link" onClick={() => setRows(rows.filter((x) => x !== k))}>Remove</button>}</td>
+          <td className="actions">{rows.length > 1 && <button className="btn-action danger" onClick={() => setRows(rows.filter((x) => x !== k))}>Remove</button>}</td>
         </tr>)}
-        <tr className="total"><td colSpan={2}>Basic amount of the bill <button className="link" onClick={() => setRows([...rows, Math.max(...rows) + 1])}>Add a split</button></td><td className="n">{inr(basic)}</td><td></td></tr>
+        <tr className="total"><td colSpan={2}>Basic amount of the bill <button className="btn-action primary" style={{ marginLeft: 8 }} onClick={() => setRows([...rows, Math.max(...rows) + 1])}>+ Add a split</button></td><td className="n">{inr(basic)}</td><td></td></tr>
       </tbody></table></div>
       <div className="row">
         <label style={{ flex: 1, minWidth: 240 }}>Note<input type="text" id={id("note")} defaultValue={bill?.note} /></label>
@@ -622,8 +636,12 @@ export function BillRow({ b, splits, heads, towers, editable, children }: {
     <>
       <tr className={`clickable ${mode ? "open" : ""}`} onClick={(e) => { if (!(e.target as HTMLElement).closest("button,a,input,select")) setMode(mode === "view" ? "" : "view"); }}>
         {children}
-        <td className="actions"><button className="link" onClick={() => setMode(mode === "view" ? "" : "view")}>{mode === "view" ? "Hide" : "View"}</button>
-          {editable && <><button className="link" onClick={() => setMode(mode === "edit" ? "" : "edit")}>Edit</button><DeleteBill id={b.bill_id} /></>}</td>
+        <td className="actions">
+          <div className="actions-group">
+            <button className="btn-action" onClick={() => setMode(mode === "view" ? "" : "view")}>{mode === "view" ? "Hide Splits" : "View Splits"}</button>
+            {editable && <><button className="btn-action" onClick={() => setMode(mode === "edit" ? "" : "edit")}>Edit Bill</button><DeleteBill id={b.bill_id} /></>}
+          </div>
+        </td>
       </tr>
       {mode === "view" && <tr className="detail"><td colSpan={10}>
         <div className="scroll"><table><thead><tr><th>Cost head</th><th>Tower</th><th>Counts in</th><th className="n">Basic (₹)</th></tr></thead><tbody>
@@ -643,7 +661,7 @@ export function BillRow({ b, splits, heads, towers, editable, children }: {
 export function DeleteBill({ id }: { id: number }) {
   const { pending, run, banner } = useAction();
   const [confirm, setConfirm] = useState(false);
-  return <>{banner}<button className="link" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(() => A.deleteBill(id)); }}>{confirm ? "Click again to delete" : "Delete"}</button></>;
+  return <>{banner}<button className="btn-action danger" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(() => A.deleteBill(id)); }}>{confirm ? "Confirm Delete" : "Delete"}</button></>;
 }
 
 /** Edit and Delete for a typed or imported cost entry. */
@@ -656,15 +674,78 @@ export function EntryActions({ e, heads, towers }: {
   const id = (k: string) => `ee-${e.id}-${k}`;
   return (
     <>
-      <button className="link" onClick={() => setOpen(!open)}>{open ? "Close" : "Edit"}</button> <DeleteEntry id={e.id} />
+      <div className="actions-group">
+        <button className="btn-action" onClick={() => setOpen(!open)}>{open ? "Close" : "Edit"}</button>
+        <DeleteEntry id={e.id} />
+      </div>
       {open && <div className="rule-form">
         <label>Cost head<select id={id("head")} defaultValue={e.cost_head_id}>{heads.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}</select></label>
         <label>Tower<select id={id("tower")} defaultValue={e.subproject_id ?? ""}><option value="">Not split by tower</option>{towers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
         <label>Month<input type="month" id={id("month")} defaultValue={e.month.slice(0, 7)} /></label>
         <label>Amount (₹)<input type="text" inputMode="decimal" className="amt" id={id("amount")} defaultValue={String(Number(e.amount_paise) / 100)} /></label>
         <label>Reference<input type="text" id={id("ref")} defaultValue={e.reference ?? ""} /></label>
-        <button className="primary" disabled={pending} onClick={() => run(() => A.updateEntry(e.id, Number(value(id("head"))), value(id("tower")) ? Number(value(id("tower"))) : null, value(id("month")), value(id("amount")), value(id("ref"))), () => setOpen(false))}>Save</button>
+        <button className="btn-action primary" disabled={pending} onClick={() => run(() => A.updateEntry(e.id, Number(value(id("head"))), value(id("tower")) ? Number(value(id("tower"))) : null, value(id("month")), value(id("amount")), value(id("ref"))), () => setOpen(false))}>Save</button>
       </div>}
+      {banner}
+    </>
+  );
+}
+
+/** Actions (View, Edit, Delete) for Portfolio project rows. */
+export function ProjectActions({ p, canManage = true }: { p: { id: number; name: string; code: string; location: string | null }; canManage?: boolean }) {
+  const { pending, run, banner, setNotice } = useAction();
+  const [editing, setEditing] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+
+  return (
+    <>
+      <div className="actions-group">
+        <Link href={`/budget/${p.id}/overview`} className="btn-action" title="View budget overview & details">
+          View
+        </Link>
+        {canManage && (
+          <>
+            <button className="btn-action" onClick={() => setEditing(!editing)} title="Edit project details">
+              {editing ? "Close" : "Edit"}
+            </button>
+            <button
+              className="btn-action danger"
+              disabled={pending}
+              onClick={() => {
+                if (!confirm) return setConfirm(true);
+                run(() => A.deleteProject(p.id), () => { setConfirm(false); setNotice("Project deleted"); });
+              }}
+              title="Delete project"
+            >
+              {confirm ? "Confirm Delete" : "Delete"}
+            </button>
+          </>
+        )}
+      </div>
+      {editing && (
+        <div className="rule-form" style={{ marginTop: 6, textAlign: "left" }}>
+          <label>Name<input type="text" id={`pj-edit-${p.id}-name`} defaultValue={p.name} /></label>
+          <label>Code<input type="text" id={`pj-edit-${p.id}-code`} defaultValue={p.code} /></label>
+          <label>Location<input type="text" id={`pj-edit-${p.id}-loc`} defaultValue={p.location ?? ""} /></label>
+          <button
+            className="btn-action primary"
+            disabled={pending}
+            onClick={() =>
+              run(
+                () =>
+                  A.updateProject(p.id, {
+                    name: value(`pj-edit-${p.id}-name`),
+                    code: value(`pj-edit-${p.id}-code`),
+                    location: value(`pj-edit-${p.id}-loc`),
+                  }),
+                () => { setEditing(false); setNotice("Project saved"); }
+              )
+            }
+          >
+            Save
+          </button>
+        </div>
+      )}
       {banner}
     </>
   );
@@ -674,7 +755,7 @@ export function EntryActions({ e, heads, towers }: {
 export function ConfirmDelete({ label = "Delete", onConfirm }: { label?: string; onConfirm: () => Promise<A.Result> }) {
   const { pending, run, banner } = useAction();
   const [confirm, setConfirm] = useState(false);
-  return <>{banner}<button className="link" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(onConfirm, () => setConfirm(false)); }}>{confirm ? "Click again to delete" : label}</button></>;
+  return <>{banner}<button className="btn-action danger" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(onConfirm, () => setConfirm(false)); }}>{confirm ? "Confirm Delete" : label}</button></>;
 }
 
 /** Rename or delete a cost head (Towers & set-up). */
@@ -683,11 +764,14 @@ export function HeadActions({ h }: { h: { id: number; category: string; sub_cate
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="link" onClick={() => setOpen(!open)}>{open ? "Close" : "Rename"}</button> <ConfirmDelete onConfirm={() => A.deleteHead(h.id)} />
+      <div className="actions-group">
+        <button className="btn-action" onClick={() => setOpen(!open)}>{open ? "Close" : "Edit / Rename"}</button>
+        <ConfirmDelete onConfirm={() => A.deleteHead(h.id)} />
+      </div>
       {open && <div className="rule-form">
         <label>Category<input type="text" id={`hn-${h.id}-c`} defaultValue={h.category} /></label>
         <label>Sub-category<input type="text" id={`hn-${h.id}-s`} defaultValue={h.sub_category ?? ""} /></label>
-        <button className="primary" disabled={pending} onClick={() => run(() => A.renameHead(h.id, value(`hn-${h.id}-c`), value(`hn-${h.id}-s`)), () => setOpen(false))}>Save</button>
+        <button className="btn-action primary" disabled={pending} onClick={() => run(() => A.renameHead(h.id, value(`hn-${h.id}-c`), value(`hn-${h.id}-s`)), () => setOpen(false))}>Save</button>
       </div>}
       {banner}
     </>
@@ -716,7 +800,7 @@ export function ScheduleTitle({ s }: { s: { id: number; title: string; note: str
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="link" onClick={() => setOpen(!open)}>{open ? "Close" : "Rename"}</button>
+      <button className="btn-action" onClick={() => setOpen(!open)}>{open ? "Close" : "Edit Title"}</button>
       {open && <div className="rule-form">
         <label>Title<input type="text" id={`st-${s.id}-t`} defaultValue={s.title} /></label>
         <label style={{ flex: 1, minWidth: 240 }}>Note<input type="text" id={`st-${s.id}-n`} defaultValue={s.note ?? ""} /></label>
@@ -746,7 +830,22 @@ export function CommentForm({ versionId, lineId }: { versionId: number; lineId: 
 
 export function DeleteEntry({ id }: { id: number }) {
   const { pending, run, banner } = useAction();
-  return <>{banner}<button className="link" disabled={pending} onClick={() => run(() => A.deleteEntry(id))}>Delete</button></>;
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <>
+      {banner}
+      <button
+        className="btn-action danger"
+        disabled={pending}
+        onClick={() => {
+          if (!confirm) return setConfirm(true);
+          run(() => A.deleteEntry(id));
+        }}
+      >
+        {confirm ? "Confirm Delete" : "Delete"}
+      </button>
+    </>
+  );
 }
 
 // ---------- set-up ----------
@@ -769,14 +868,18 @@ export function TowerRow({ t, editable, customFields = [], cells = {}, picks }: 
       <td className="n"><input type="number" className="amt" aria-label="Engineering construction area" defaultValue={t.eng_area ?? ""} onBlur={save("eng_area", t.eng_area)} /></td>
       <td><input type="date" aria-label="OC date" defaultValue={t.oc_date ?? ""} onBlur={save("oc_date", t.oc_date)} /></td>
       {custom}
-      <td className="actions"><ConfirmDelete onConfirm={() => A.deleteTower(t.id)} /></td>
+      <td className="actions">
+        <div className="actions-group">
+          <ConfirmDelete onConfirm={() => A.deleteTower(t.id)} />
+        </div>
+      </td>
     </tr>
   );
 }
 
 export function AddTowerButton({ projectId }: { projectId: number }) {
   const { pending, run, banner } = useAction();
-  return <><div className="row"><input type="text" id="new-tower" placeholder="Tower name" /><button disabled={pending} onClick={() => run(() => A.addTower(projectId, value("new-tower")))}>Add tower</button></div>{banner}</>;
+  return <><div className="row" id="add-tower"><input type="text" id="new-tower" placeholder="Tower name" /><button className="btn-action primary" disabled={pending} onClick={() => run(() => A.addTower(projectId, value("new-tower")))}>+ Add tower</button></div>{banner}</>;
 }
 
 const AREA_FIELDS: [string, string][] = [
@@ -799,16 +902,16 @@ export function AreasForm({ versionId, areas, editable, net }: { versionId: numb
         ))}
       </div>
       <h3>Commitments deducted from sale area</h3>
-      <div className="scroll"><table><thead><tr><th></th><th>Commitment</th><th className="n">Area (sft)</th><th></th></tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th></th><th>Commitment</th><th className="n">Area (sft)</th>{editable && <th className="actions-col">Actions</th>}</tr></thead><tbody>
         {commitments.map((c, i) => (
           <tr key={`${i}-${commitments.length}`}><td>{String.fromCharCode(66 + i)}</td>
             <td><input type="text" disabled={!editable} defaultValue={c.name} aria-label="Commitment" onBlur={(e) => e.currentTarget.value !== c.name && saveCommitments(commitments.map((x, j) => (j === i ? { ...x, name: e.currentTarget.value } : x)))} /></td>
             <td className="n"><input type="number" className="amt" disabled={!editable} defaultValue={c.area} aria-label="Area" onBlur={(e) => Number(e.currentTarget.value) !== c.area && saveCommitments(commitments.map((x, j) => (j === i ? { ...x, area: Number(e.currentTarget.value) || 0 } : x)))} /></td>
-            <td>{editable && <button className="link" onClick={() => saveCommitments(commitments.filter((_, j) => j !== i))}>Remove</button>}</td></tr>
+            {editable && <td className="actions"><button className="btn-action danger" onClick={() => saveCommitments(commitments.filter((_, j) => j !== i))}>Remove</button></td>}</tr>
         ))}
-        <tr className="total"><td></td><td>Net sale carpet area (E)</td><td className="n">{net == null ? "" : new Intl.NumberFormat("en-IN").format(net)}</td><td></td></tr>
+        <tr className="total"><td></td><td>Net sale carpet area (E)</td><td className="n">{net == null ? "" : new Intl.NumberFormat("en-IN").format(net)}</td>{editable && <td></td>}</tr>
       </tbody></table></div>
-      {editable && <div className="row"><button onClick={() => saveCommitments([...commitments, { name: "New commitment", area: 0 }])}>Add commitment</button></div>}
+      {editable && <div className="row"><button className="btn-action primary" onClick={() => saveCommitments([...commitments, { name: "New commitment", area: 0 }])}>+ Add commitment</button></div>}
     </>
   );
 }

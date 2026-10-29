@@ -42,9 +42,11 @@ function MemberRow({ m, roles, projects, departments, me }: { m: Member; roles: 
       <td><MultiPick label="projects" all={projects} chosen={row.project_ids} onChange={(v) => setRow({ ...row, project_ids: v })} /></td>
       <td><MultiPick label="departments" all={departments} chosen={row.department_ids} onChange={(v) => setRow({ ...row, department_ids: v })} /></td>
       <td><input type="checkbox" aria-label="Active" checked={row.active} onChange={(e) => setRow({ ...row, active: e.currentTarget.checked })} /></td>
-      <td className="nowrap">
-        <button className="primary" disabled={!changed || pending} onClick={() => run(() => A.saveMember(row, false), () => setNotice("Saved"))}>Save</button>{" "}
-        <button className="link" disabled={pending} onClick={() => { if (confirm(`Remove ${m.name} from the budget module?`)) run(() => A.removeMember(m.user_id)); }}>Remove</button>
+      <td className="actions nowrap">
+        <div className="actions-group">
+          <button className="btn-action primary" disabled={!changed || pending} onClick={() => run(() => A.saveMember(row, false), () => setNotice("Saved"))}>Save</button>
+          <button className="btn-action danger" disabled={pending} onClick={() => { if (confirm(`Remove ${m.name} from the budget module?`)) run(() => A.removeMember(m.user_id)); }}>Remove</button>
+        </div>
       </td>
     </tr>
   );
@@ -63,7 +65,7 @@ export function AccessSettings({ permissions, roles, members, directory, project
       {banner}
       <section className="panel">
         <div className="panel-head"><h2>Members</h2><span className="sub">People come from Chandak Workspace users; their role and limits are set here</span></div>
-        <div className="scroll"><table><thead><tr><th>Person</th><th>Role</th><th>Projects</th><th>Departments</th><th>Active</th><th></th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>Person</th><th>Role</th><th>Projects</th><th>Departments</th><th>Active</th><th className="actions-col">Actions</th></tr></thead><tbody>
           {members.map((m) => <MemberRow key={`${m.user_id}-${m.role_id}-${m.active}-${m.project_ids}-${m.department_ids}`} m={m} roles={roles} projects={projects} departments={departments} me={me} />)}
         </tbody></table></div>
         <h3>Add a Chandak Workspace user</h3>
@@ -121,7 +123,7 @@ function RoleName({ role }: { role: RoleRow }) {
   return (
     <span title={role.description ?? ""}>
       <input type="text" aria-label="Role name" defaultValue={role.name} style={{ width: 120 }} onBlur={(e) => e.currentTarget.value !== role.name && run(() => A.saveRole(role.id, e.currentTarget.value, role.description ?? ""))} />
-      <br /><button className="link" onClick={() => { if (confirm(`Delete the role ${role.name}?`)) run(() => A.deleteRole(role.id)); }}>Delete</button>{banner}
+      <br /><button className="btn-action danger" style={{ marginTop: 4 }} onClick={() => { if (confirm(`Delete the role ${role.name}?`)) run(() => A.deleteRole(role.id)); }}>Delete</button>{banner}
     </span>
   );
 }
@@ -151,7 +153,7 @@ export function FieldSettings({ fields, projects, permissions }: { fields: Custo
             {e.label} ({fields.filter((f) => f.entity === e.entity).length})</a>)}
         </nav>
         <p className="note">{ENTITIES.find((e) => e.entity === entity)!.where}.</p>
-        <div className="scroll"><table><thead><tr><th>#</th><th>Field</th><th>Key</th><th>Type</th><th>Projects</th><th>Filled by</th><th>Required</th><th>Shown</th><th>Status</th><th></th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>#</th><th>Field</th><th>Key</th><th>Type</th><th>Projects</th><th>Filled by</th><th>Required</th><th>Shown</th><th>Status</th><th className="actions-col">Actions</th></tr></thead><tbody>
           {list.map((f) => (
             <tr key={f.id} className={f.active ? "" : "muted"}>
               <td>{f.sort}</td><td>{f.label}{f.section && <div className="note">{f.section}</div>}</td><td><code>{f.key}</code></td>
@@ -160,10 +162,12 @@ export function FieldSettings({ fields, projects, permissions }: { fields: Custo
               <td>{f.field_type === "formula" ? "Calculated" : f.input_source === "typed" ? "Typed" : f.input_source === "excel" ? `Excel "${f.excel_header}"` : `Typed or Excel${f.excel_header ? ` "${f.excel_header}"` : ""}`}</td>
               <td>{f.required ? "Yes" : ""}</td><td>{[f.show_in_entry && "entry", f.show_in_reports && "reports"].filter(Boolean).join(", ")}</td>
               <td>{f.active ? <span className="chip ok">active</span> : <span className="chip">off</span>}</td>
-              <td className="nowrap">
-                <button className="link" onClick={() => setEditing({ ...f })}>Edit</button>{" "}
-                <button className="link" disabled={pending} onClick={() => run(() => A.setFieldActive(f.id, !f.active), () => setNotice(f.active ? `${f.label} is switched off; its values are kept.` : `${f.label} is back on.`))}>{f.active ? "Switch off" : "Switch on"}</button>{" "}
-                <button className="link" disabled={pending} onClick={() => { if (confirm(`Delete ${f.label} and all its values? Switch it off instead to keep the values.`)) run(() => A.deleteField(f.id), () => setNotice(`${f.label} deleted.`)); }}>Delete</button>
+              <td className="actions nowrap">
+                <div className="actions-group">
+                  <button className="btn-action" onClick={() => setEditing({ ...f })}>Edit</button>
+                  <button className="btn-action" disabled={pending} onClick={() => run(() => A.setFieldActive(f.id, !f.active), () => setNotice(f.active ? `${f.label} is switched off; its values are kept.` : `${f.label} is back on.`))}>{f.active ? "Switch off" : "Switch on"}</button>
+                  <button className="btn-action danger" disabled={pending} onClick={() => { if (confirm(`Delete ${f.label} and all its values? Switch it off instead to keep the values.`)) run(() => A.deleteField(f.id), () => setNotice(`${f.label} deleted.`)); }}>Delete</button>
+                </div>
               </td>
             </tr>
           ))}

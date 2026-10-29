@@ -159,6 +159,52 @@ html[data-mode="dark"] .budget-app {
 .budget-app tr.detail > td { background: var(--surface); padding: 10px 12px; }
 .budget-app td.actions { white-space: nowrap; }
 .budget-app td.actions > * + * { margin-left: 8px; }
+.budget-app th.actions-col, .budget-app td.actions { white-space: nowrap; text-align: right; }
+.budget-app .actions-group { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.budget-app .btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  border-radius: 5px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.budget-app .btn-action:hover {
+  background: var(--row-sub);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.budget-app .btn-action.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.budget-app .btn-action.primary:hover {
+  opacity: .9;
+}
+.budget-app .btn-action.danger {
+  color: var(--bad);
+  border-color: var(--line-strong);
+}
+.budget-app .btn-action.danger:hover {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  color: var(--bad);
+}
+.budget-app .btn-action:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
 .budget-app .rule-form label { display: flex; flex-direction: column; font-size: 12px; gap: 2px; }
 .budget-app .rule-form .amt { width: 90px; }
 .budget-app .pick-list { display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow: auto; padding: 4px 0; }

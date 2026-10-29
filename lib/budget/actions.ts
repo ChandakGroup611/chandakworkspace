@@ -460,6 +460,16 @@ export async function updateProject(projectId: number, p: { name: string; code: 
   return { ok: true };
 }
 
+/** Delete a project; refused if it carries approved figures or active versions. */
+export async function deleteProject(projectId: number): Promise<Result> {
+  const sb = await createClient();
+  const { data, error } = await sb.from("budget_projects").delete().eq("id", projectId).select("id");
+  if (error) return fail(error.message.includes("violates") || error.message.includes("locked") ? "Cannot delete project: it has active budget versions or figures" : error.message);
+  if (!data?.length) return fail("You do not have permission to delete this project");
+  refresh();
+  return { ok: true };
+}
+
 /** Comments on a budget line. */
 export async function addComment(versionId: number, lineId: number, body: string): Promise<Result> {
   if (!body.trim()) return fail("Write the comment first");
