@@ -178,11 +178,11 @@ $primaryAppRoots = array_values(array_unique(array_filter([
 ])));
 
 // Base performance caching header for LiteSpeed & Apache
-$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
+$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine On\n    RewriteRule .* - [E=verifycaptcha:bypass]\n    RewriteRule .* - [E=noconntimeout:1]\n    RewriteRule .* - [E=noabort:1]\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
-// STRICT: Bound V8 and libuv thread pools so total threads per process <= 3, staying far below CloudLinux NPROC ceiling
-$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
+// STRICT: Explicit PassengerEnabled on, bound V8 and libuv thread pools so total threads per process <= 3
+$passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
 
 // Keep canonicalAppRoot and current/nodejs synchronized if one is newer
 if ($canonicalAppRoot !== $domainRoot . '/hbuilds/current/nodejs') {
@@ -284,21 +284,25 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     exit;
 }
 
-// Dedicated Warmup Action: pre-warm Passenger worker so human users never encounter cold-start 503
+// Dedicated Warmup Action: pre-warm Passenger worker so human users never encounter cold-start 503 or 403
 if (isset($_GET['warmup'])) {
     ensurePreviewProps($primaryAppRoots);
     $ctx = stream_context_create([
         'http' => [
-            'timeout' => 5,
+            'timeout' => 15,
             'ignore_errors' => true,
-            'header' => "User-Agent: DeployHook-Warmup\r\n"
+            'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) DeployHook-Warmup\r\n"
         ]
     ]);
     @file_get_contents('http://127.0.0.1:3000/api/version', false, $ctx);
     @file_get_contents('https://chandakgroup.tech/api/version', false, $ctx);
+    @file_get_contents('http://127.0.0.1:3000/login', false, $ctx);
+    @file_get_contents('https://chandakgroup.tech/login', false, $ctx);
+    @file_get_contents('https://chandakgroup.tech/', false, $ctx);
     echo json_encode([
         'success' => true,
         'action' => 'warmup',
+        'routes' => ['/api/version', '/login', '/'],
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
@@ -307,6 +311,7 @@ if (isset($_GET['warmup'])) {
 // Dedicated Force Restart Action
 if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     $killOut = [];
+    safeExec('pkill -9 -u $(whoami) -f lsnode 2>&1', $killOut);
     safeExec('pkill -9 -u $(whoami) -f node 2>&1', $killOut);
     safeExec('killall -9 node 2>&1', $killOut);
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killOut);
@@ -319,7 +324,7 @@ if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
                 $pid = (int)basename($pDir);
                 if ($pid > 1 && $pid !== getmypid()) {
                     $cmd = @file_get_contents($pDir . '/cmdline');
-                    if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false)) {
+                    if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false || strpos($cmd, 'lsnode') !== false)) {
                         @posix_kill($pid, 9);
                         $killedViaPosix[] = $pid;
                     }
@@ -486,13 +491,14 @@ if ($zipFile && class_exists('ZipArchive')) {
                 $pid = (int)basename($pDir);
                 if ($pid > 1 && $pid !== getmypid()) {
                     $cmd = @file_get_contents($pDir . '/cmdline');
-                    if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false)) {
+                    if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false || strpos($cmd, 'lsnode') !== false)) {
                         @posix_kill($pid, 9);
                     }
                 }
             }
         }
     }
+    safeExec('pkill -9 -u $(whoami) -f lsnode 2>&1', $killResults);
     safeExec('pkill -9 -u $(whoami) -f node 2>&1', $killResults);
     safeExec('killall -9 node 2>&1', $killResults);
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);

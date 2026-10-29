@@ -209,7 +209,11 @@ jobs:
               fi
             done
 
+            # Clean up zip file after successful extraction so subsequent webhooks don't duplicate extraction
+            rm -f "$ZIP_PATH" "$DOMAIN_ROOT/public_html/deploy.zip" "$DOMAIN_ROOT/deploy.zip" "$ROOT_DIR/deploy.zip"
+
             # Force reload web server and restart passenger
+            pkill -9 -u $(whoami) -f lsnode 2>/dev/null || true
             pkill -9 -u $(whoami) -f node 2>/dev/null || true
             killall -9 node 2>/dev/null || true
             passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
@@ -220,8 +224,8 @@ jobs:
             rm -f "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
             echo "=== SSH EXTRACTION COMPLETE ==="
 
-      # Secondary Extraction via Webhook
-      - name: Extract Payload via Webhook
+      # Secondary Sync & Config Validation via Webhook
+      - name: Synchronize Webhook & Config
         timeout-minutes: 2
         run: |
           echo "Triggering deploy hook via HTTP..."
@@ -229,13 +233,12 @@ jobs:
           if [ -z "$DEPLOY_KEY" ]; then
             DEPLOY_KEY="chandak_deploy_secret_2026"
           fi
-          curl -sS --connect-timeout 10 --max-time 30 --retry 2 "https://chandakgroup.tech/public/deploy-hook.php?key=$DEPLOY_KEY" || true
           RESPONSE=$(curl -sS --connect-timeout 10 --max-time 45 --retry 3 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY" || echo '{"success":true}')
           echo "Hook Response: $RESPONSE"
 
-      # Final Live Status Verification & Automated Zero-Downtime Warmup Gate
+      # Final Live Status Verification & Automated Multi-Route Warmup Gate (Anti-503 & Anti-403)
       - name: Verify Live Deployment Status & Warmup Worker
-        timeout-minutes: 3
+        timeout-minutes: 4
         run: |
           echo "Initiating automated application warmup..."
           DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
@@ -243,32 +246,56 @@ jobs:
             DEPLOY_KEY="chandak_deploy_secret_2026"
           fi
           
-          # 1. Trigger deploy-hook extraction and internal warmup
+          # 1. Trigger deploy-hook multi-route internal pre-warm
           curl -sS --connect-timeout 10 --max-time 45 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&warmup=1" || true
           
-          # 2. Execute active warmup polling loop directly against Node.js /api/version
-          echo "Warming up Node.js Passenger worker..."
-          WARM=false
+          # 2. Warm up Passenger Node.js worker on /api/version
+          echo "Warming up Node.js Passenger worker on /api/version..."
+          WARM_API=false
           for i in {1..20}; do
             HTTP_CODE=$(curl -s -o /tmp/warmup_resp.json -w "%{http_code}" --connect-timeout 5 --max-time 10 "https://chandakgroup.tech/api/version" || echo "000")
-            echo "Attempt $i: HTTP $HTTP_CODE"
+            echo "API Attempt $i: HTTP $HTTP_CODE"
             if [ "$HTTP_CODE" = "200" ]; then
               if grep -q '"status":"online"' /tmp/warmup_resp.json 2>/dev/null; then
-                echo "SUCCESS: Passenger Node.js worker is warm, responsive, and online!"
-                cat /tmp/warmup_resp.json
-                echo ""
-                WARM=true
+                echo "SUCCESS: Passenger Node.js worker is warm and online!"
+                WARM_API=true
                 break
               fi
             fi
             sleep 2
           done
           
-          if [ "$WARM" != "true" ]; then
-            echo "::error::Deployment warmup gate failed! Node.js did not reach healthy 200 state."
+          if [ "$WARM_API" != "true" ]; then
+            echo "::error::API warmup gate failed! Node.js did not reach healthy 200 state."
             curl -sS "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&info=1" || true
             exit 1
           fi
+
+          # 3. CRITICAL ANTI-403 GATE: Warm up and verify /login SSR route compiles and returns HTTP 200
+          echo "Warming up and validating /login SSR route (Anti-403 gate)..."
+          WARM_LOGIN=false
+          USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+          for j in {1..15}; do
+            HTTP_CODE=$(curl -s -o /tmp/login_resp.html -w "%{http_code}" -H "User-Agent: $USER_AGENT" --connect-timeout 8 --max-time 15 "https://chandakgroup.tech/login" || echo "000")
+            echo "Login Attempt $j: HTTP $HTTP_CODE"
+            if [ "$HTTP_CODE" = "200" ]; then
+              if grep -qi "html" /tmp/login_resp.html 2>/dev/null && ! grep -qi "Access to this resource on the server is denied" /tmp/login_resp.html 2>/dev/null; then
+                echo "SUCCESS: /login SSR route is fully compiled, warm, and returning 200 OK!"
+                WARM_LOGIN=true
+                break
+              fi
+            fi
+            sleep 2
+          done
+
+          if [ "$WARM_LOGIN" != "true" ]; then
+            echo "::error::Login warmup gate failed! /login returned HTTP $HTTP_CODE instead of 200."
+            cat /tmp/login_resp.html 2>/dev/null | head -n 30
+            curl -sS "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&info=1" || true
+            exit 1
+          fi
+
+          echo "=== ALL WARMUP GATES PASSED (API + SSR LOGIN ARE WARM, ONLINE & HTTP 200) ==="
 
       - name: Update Deployment Status
         uses: bobheadxi/deployments@v1

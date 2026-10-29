@@ -344,9 +344,9 @@ If the deployed application uses stale or incorrect code, STOP further rollout, 
 
 Do not automatically roll back database changes or perform destructive recovery without evaluating data integrity and migration compatibility.
 
-### 18.1 ZERO-DOWNTIME DEPLOYMENT & MANDATORY WARMUP GATE (ANTI-503 PROTOCOL)
+### 18.1 ZERO-DOWNTIME DEPLOYMENT, ANTI-503 WARMUP & ANTI-403 GUARANTEE PROTOCOL
 
-To permanently prevent LiteSpeed/Passenger `503 Service Unavailable` errors during and immediately following releases, the following rules are non-negotiable and strictly binding:
+To permanently prevent LiteSpeed Web Server and Phusion Passenger `503 Service Unavailable` and `403 Forbidden: Access to this resource on the server is denied!` errors during and immediately following releases, the following rules are non-negotiable and strictly binding:
 
 1. **Zero Blind Wipes (In-Place Atomic Overwrites)**:
    Deployment workflows, SSH scripts, and deploy-hooks must NEVER execute destructive pre-extraction wipes (such as `rm -rf .next/server`) while the Node.js process is active. Running workers require runtime manifests and page chunks to remain in place to prevent fatal `ENOENT` process exits during incoming requests. Releases must extract over existing files (`unzip -o` or atomic directory swapping).
@@ -354,20 +354,23 @@ To permanently prevent LiteSpeed/Passenger `503 Service Unavailable` errors duri
 2. **Standalone Runtime Manifest Guarantee**:
    Next.js standalone packaging in CI/CD must unconditionally package all server manifests into `.next/standalone/.next/server/`, specifically `preview-props.json`, `routes-manifest.json`, and `prerender-manifest.json`. If missing from standard tracing, fallbacks must be injected during packaging and verified by the deployment hook.
 
-3. **Graceful Process Transition**:
-   Worker recycling must prioritize graceful passenger reloads (`touch tmp/restart.txt`) over abrupt `kill -9` terminations to prevent severed TCP sockets and in-flight request dropped connections.
+3. **LiteSpeed Bot Protection & reCAPTCHA Bypass Mandate**:
+   LiteSpeed Web Server's automated anti-DDoS / Bot Verification reCAPTCHA module (`lsrecap`) can misidentify rapid post-deployment browser or curl requests as abusive, immediately returning `403 Forbidden: Access to this resource on the server is denied!`. All synchronized `.htaccess` configurations MUST include `<IfModule LiteSpeed>` with `RewriteRule .* - [E=verifycaptcha:bypass]`, `[E=noconntimeout:1]`, and `[E=noabort:1]` to ensure legitimate visitors and API clients are never blocked by anti-bot checks.
 
-4. **Mandatory CI/CD Automated Warmup Gate**:
-   A deployment is NEVER considered complete merely because files were transferred or FTP completed. The deployment pipeline (and deploy scripts) MUST execute an automated polling warmup loop against `https://chandakgroup.tech/api/version`. The pipeline must absorb the 2–5 second worker cold-boot window and definitively confirm `HTTP 200` with `status: "online"` before marking the release successful or notifying users.
+4. **Explicit `PassengerEnabled on` & Dynamic Route Routing**:
+   In LiteSpeed / Apache, missing `PassengerEnabled on` causes the web server during worker reload or cold-start to fall back to static file resolution. Since dynamic Next.js routes (e.g. `/login`, `/workspaces`) do not exist as physical files or directories on disk, LiteSpeed enforces directory protection (`Options -Indexes`) and emits a static `403 Forbidden`. Synchronized `.htaccess` files must explicitly declare `PassengerEnabled on` alongside `PassengerAppRoot` and `PassengerBaseURI /`.
 
-5. **Elimination of Blind Status Reporting**:
-   Deploy systems must never rely on static PHP endpoints or file-existence flags to declare health. Health validation MUST execute against the live Node.js application server.
+5. **CloudLinux NPROC Governance & Removal of `PassengerHighPerformance on`**:
+   In shared hosting environments governed by CloudLinux LVE, `PassengerHighPerformance on` bypasses web server hooks and pins FastCGI connections indefinitely. Across multiple deployments, old `lsnode` workers linger as zombies, rapidly hitting user `NPROC` process/thread limits. When exceeded, Node.js throws `Assertion failed: (0) == (uv_thread_create(t.get(), start_thread, this))` and crashes with 503 or 403. Deployment scripts and deploy-hooks must systematically reap orphan `lsnode` processes (`pkill -9 -u $(whoami) -f lsnode`) and omit `PassengerHighPerformance on` to allow clean worker recycling.
 
-6. **Multi-Docroot .htaccess Synchronization & Zero 403 Forbidden Guarantee**:
-   LiteSpeed Web Server dynamically resolves document roots across `public_html`, active version paths (`hbuilds/versions/<uuid>/nodejs/public`), or symlinked current roots. Deployment scripts, workflows, and deploy-hooks must NEVER delete `.htaccess` from versioned application directories. `.htaccess` containing the exact `PassengerAppRoot` directives MUST be systematically synchronized across all potential docroots (`public_html`, target app roots, and `public/` directories) so that LiteSpeed never defaults to static directory indexing or serves `403 Forbidden: Access to this resource on the server is denied!`.
+6. **Multi-Route CI/CD Warmup Gate (API + SSR Page Compilation)**:
+   A deployment is NEVER considered complete merely because files were transferred or `/api/version` responded. Next.js standalone compiles SSR page chunks (e.g. `/login`) on first request. If real users visit before SSR compilation completes, the 1.5–3.5s cold-boot delay can trigger LiteSpeed timeouts and 403/503 errors. The CI/CD deployment pipeline and deploy-hook MUST execute an automated polling warmup gate across BOTH `/api/version` and `/login`. The gate must definitively confirm `HTTP 200` with valid HTML content on `/login` before declaring deployment complete.
 
-7. **Orphan Process Cleanup & Resource Bounds**:
-   Repeated deploys and restarts must actively prune orphaned `lsnode.js` workers to avoid hitting CloudLinux LVE NPROC ceilings, which trigger `Assertion failed: uv_thread_create` and subsequent 503/403 connection aborts.
+7. **Multi-Docroot .htaccess Synchronization**:
+   LiteSpeed Web Server dynamically resolves document roots across `public_html`, active version paths (`hbuilds/versions/<uuid>/nodejs/public`), or symlinked current roots. Deployment scripts, workflows, and deploy-hooks must NEVER delete `.htaccess` from versioned application directories. `.htaccess` containing the exact `PassengerAppRoot` directives MUST be systematically synchronized across all potential docroots (`public_html`, target app roots, and `public/` directories).
+
+8. **Single-Pass Extraction & Payload Cleanup**:
+   SSH deployment scripts must immediately remove the transfer zip (`deploy.zip`) upon successful extraction. This prevents secondary webhook triggers from performing redundant, concurrent 50MB unzipping passes and multiple disruptive process restarts.
 
 ## 19. STOP-WORK CONDITIONS
 

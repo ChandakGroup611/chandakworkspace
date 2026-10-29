@@ -327,6 +327,28 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
               hydrated.remark = latestComment.content;
             }
           } catch (cErr) {}
+
+          // Also check task_activity_logs for any recent comment or status change message
+          if (!hydrated.remarks && !hydrated.remark) {
+            try {
+              const { data: recentLogs } = await supabaseAdmin
+                .from('task_activity_logs')
+                .select('new_state')
+                .eq('task_id', payload.entity_id)
+                .order('created_at', { ascending: false })
+                .limit(5);
+              if (recentLogs && recentLogs.length > 0) {
+                for (const log of recentLogs) {
+                  const msg = log.new_state?.message || log.new_state?.remark || log.new_state?.remarks;
+                  if (msg && typeof msg === 'string' && msg.trim()) {
+                    hydrated.remarks = msg.trim();
+                    hydrated.remark = msg.trim();
+                    break;
+                  }
+                }
+              }
+            } catch (lErr) {}
+          }
         }
       }
     } catch (e) {
@@ -588,6 +610,10 @@ function hydrateTemplate(text: string, data: any): string {
       hydrated = hydrated.replace(match, value !== undefined && value !== null ? String(value) : "");
     });
   }
+
+  // Clean up any empty HTML lines where a field was omitted/empty (e.g. <p>...<strong>Remark:</strong></p>)
+  hydrated = hydrated.replace(/<p[^>]*>\s*(?:<span[^>]*>)?\s*<strong[^>]*>[^<]*:?\s*<\/strong>\s*(?:<\/span>)?\s*<\/p>/gi, "");
+
   return hydrated;
 }
 

@@ -90,17 +90,18 @@ export async function saveTemplateAndRules(payload: any, editId?: string) {
 
   // 1. Save email_template
   let tplRes;
+  const nowIso = new Date().toISOString();
   if (editId) {
     tplRes = await supabaseAdmin
       .from("email_templates")
-      .update({ ...templatePayload, updated_at: new Date().toISOString() })
+      .update({ ...templatePayload, updated_at: nowIso })
       .eq("id", editId)
       .select()
       .single();
   } else {
     tplRes = await supabaseAdmin
       .from("email_templates")
-      .insert([templatePayload])
+      .insert([{ ...templatePayload, created_at: nowIso, updated_at: nowIso }])
       .select()
       .single();
   }
