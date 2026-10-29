@@ -4,8 +4,8 @@
 /* ---------- scene ---------- */
 .scene {
   --B: 280px;          /* pyramid base width */
-  --h: 15px;           /* slab height */
-  --gap: 9px;          /* stripe gap between slabs (the logo's white bands) */
+  --h: calc(var(--B) * 0.055);   /* block height (the formations in LoginScene3D.tsx use the same ratio) */
+  --gap: calc(var(--B) * 0.031); /* stripe gap between pyramid steps (the logo's white bands) */
   --R: 230px;          /* module orbit radius */
   --accent: var(--accent-primary, #702963);
   --glow: color-mix(in srgb, var(--accent) 55%, #ffffff);
@@ -21,7 +21,7 @@
 }
 .hero { --B: clamp(190px, 20vw, 280px); --R: clamp(165px, 17vw, 240px); }
 .backdrop { --B: clamp(220px, 24vw, 340px); --R: clamp(200px, 22vw, 320px); position: fixed; }
-.compact { --B: 96px; --h: 7px; --gap: 4px; position: relative; height: 190px; border-radius: 16px; perspective: 700px; }
+.compact { --B: 96px; position: relative; height: 190px; border-radius: 16px; perspective: 700px; }
 
 /* soft accent glow behind the pyramid */
 .glow {
@@ -82,15 +82,21 @@
 .pyramid { position: absolute; transform-style: preserve-3d; transform: rotateY(calc(var(--spin, -28) * 1deg)); }
 /* the step wave: after the pyramid assembles, each step lifts and lights in turn, every 2 seconds */
 .lift { position: absolute; transform-style: preserve-3d; animation: wave 2s ease-in-out infinite; animation-delay: calc(1.9s + var(--i) * 160ms); }
+/* every block is the same base box; its position, turn and size come from the current design
+   (--fx … --sz, set per block), and changing design moves it there smoothly */
 .slab {
-  --W: calc(var(--B) * var(--w) / 100);
-  --y: calc(var(--i) * -1 * (var(--h) + var(--gap)));
+  --W: var(--B);
   position: absolute; width: 0; height: 0;
   transform-style: preserve-3d;
-  transform: translateY(var(--y));
-  animation: drop .9s cubic-bezier(.2,.8,.2,1) both;
-  animation-delay: calc(var(--i) * 140ms + 150ms);
+  transform:
+    translate3d(calc(var(--B) * var(--fx, 0)), calc(var(--B) * var(--fy, 0)), calc(var(--B) * var(--fz, 0)))
+    rotateY(calc(var(--ry, 0) * 1deg))
+    scale3d(var(--sx, 1), var(--sy, 1), var(--sz, 1));
+  transition: transform 1.25s cubic-bezier(.65,0,.25,1);
+  transition-delay: calc(var(--i) * 45ms);
 }
+/* first appearance: the blocks drop in one by one */
+.drop { position: absolute; transform-style: preserve-3d; animation: drop .9s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 140ms + 150ms); }
 /* fade on the faces, not the slab: opacity on a 3D container would flatten it */
 .face { position: absolute; display: block; backface-visibility: hidden; animation: faceIn .5s ease both; animation-delay: calc(var(--i) * 140ms + 150ms); }
 .top { animation: faceIn .5s ease both, topGlow 2s ease-in-out infinite; animation-delay: calc(var(--i) * 140ms + 150ms), calc(1.9s + var(--i) * 160ms); }
@@ -114,7 +120,9 @@
 .left  { transform: rotateY(-90deg) translateZ(calc(var(--W) / 2)); background: linear-gradient(to bottom, #222a3a, #0b0f17); }
 .right { transform: rotateY(90deg) translateZ(calc(var(--W) / 2)); background: linear-gradient(to bottom, #364156, #141a26); }
 
-/* light beacon on the summit */
+/* light beacon on the summit (pyramid design only) */
+.beaconWrap { position: absolute; transition: opacity .6s ease; }
+.beaconOff { opacity: 0; }
 .beacon {
   position: absolute; width: 4px; height: calc(var(--B) * 0.45);
   margin-left: -2px;
@@ -177,7 +185,7 @@
 .tickerLine { text-align: center; font: 500 13px/1.3 var(--font-sans, system-ui, sans-serif); color: #a9b5cb; }
 
 /* ---------- motion ---------- */
-@keyframes drop { from { transform: translateY(calc(var(--y) - 160px)); } to { transform: translateY(var(--y)); } }
+@keyframes drop { from { transform: translateY(-160px); } to { transform: translateY(0); } }
 @keyframes faceIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes wave { 0%, 45%, 100% { transform: translateY(0); } 18% { transform: translateY(-9px); } }
@@ -192,7 +200,8 @@
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage, .slab, .lift, .face, .top, .glow, .stars, .floor, .beacon, .ring, .chip { animation: none !important; }
+  .stage, .drop, .lift, .face, .top, .glow, .stars, .floor, .beacon, .ring, .chip { animation: none !important; }
+  .slab { transition: none !important; }
   .chip, .tickerTrack { transition: none !important; }
 }
 
@@ -200,3 +209,12 @@
 .title { color: #f4f6fb; }
 .subtitle { color: #b8c2d6; }
 .motto { color: #8a97b0; text-transform: uppercase; letter-spacing: .28em; }
+
+/* short screens: lift the pyramid and caption so the caption clears the "Chandak Workspace" title */
+@media (max-height: 760px) {
+  .hero .stage { top: 45%; }
+  .hero .ticker { --tick-h: 50px; top: 60%; }
+}
+@media (max-height: 600px) {
+  .hero .ticker { display: none; }
+}

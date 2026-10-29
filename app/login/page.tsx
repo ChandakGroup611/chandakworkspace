@@ -19,7 +19,7 @@ import {
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { LoginScene3D, sceneInk } from "@/components/auth/LoginScene3D";
 import { LoginScreensaver } from "@/components/auth/LoginScreensaver";
-import { LoginFormBackdrop, formMotion } from "@/components/auth/LoginFormBackdrop";
+import { LoginFormBackdrop, formMotion, loginBlend } from "@/components/auth/LoginFormBackdrop";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -306,13 +306,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
+    <div className="relative flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
       {/* idle "live screen" after 5 minutes without input */}
       <LoginScreensaver disabled={loading || ssoLoading} />
+      <div className={loginBlend.seam} aria-hidden />
 
-      {/* LEFT PANEL - 3D brand scene (large screens) */}
-      <div className="relative hidden h-full w-1/2 flex-col overflow-hidden border-r border-border lg:flex">
-        <LoginScene3D />
+      {/* LEFT PANEL - 3D brand scene (large screens). The scene runs on under the form side and
+          fades out there, so the two halves blend into one page instead of meeting at a hard edge. */}
+      <div className="relative hidden h-full w-1/2 flex-col lg:flex">
+        <div className={loginBlend.sceneBleed}>
+          <LoginScene3D />
+        </div>
         <div className="pointer-events-none relative z-10 flex h-full flex-col items-center justify-between p-10 text-center xl:p-14">
           <div className="inline-flex w-fit items-center justify-center rounded-xl bg-surface px-6 py-3.5 shadow-lg animate-in fade-in-0 slide-in-from-top-3 duration-700">
             <img
@@ -337,7 +341,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT PANEL - Authentication Form */}
-      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-background relative text-foreground">
+      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-background lg:bg-transparent relative text-foreground">
         <LoginFormBackdrop />
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-24 relative z-10 min-h-full">
           <div className={`w-full max-w-[440px] ${formMotion.card}`}>

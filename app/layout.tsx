@@ -3,6 +3,7 @@ import { Inter, Outfit, Roboto } from 'next/font/google'
 import WorkspaceShell from '@/components/layout/WorkspaceShell'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import ClientSessionManager from '@/components/auth/ClientSessionManager'
+import AppScreensaver from '@/components/auth/AppScreensaver'
 import QueryProvider from '@/components/providers/QueryProvider'
 import GlobalAutoRefresh from '@/components/layout/GlobalAutoRefresh'
 import { PermissionsProvider } from '@/components/providers/PermissionsProvider'
@@ -70,6 +71,7 @@ export default function RootLayout({
           <PermissionsProvider>
             <ThemeProvider>
               <ClientSessionManager />
+              <AppScreensaver />
               <GlobalAutoRefresh />
               <WorkspaceShell>{children}</WorkspaceShell>
               <ToastContainer position="bottom-right" theme="light" hideProgressBar newestOnTop closeOnClick pauseOnFocusLoss={false} autoClose={4000} />

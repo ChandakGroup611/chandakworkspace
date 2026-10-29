@@ -7,7 +7,7 @@
   inherits: false;
 }
 
-.backdrop, .card {
+.backdrop, .card, .seam {
   --a1: var(--accent-primary, #702963);
   --a2: var(--accent-secondary, #5a1f4f);
   /* a lighter, warmer partner tone derived from the accent, for depth */
@@ -26,7 +26,38 @@
     radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--a2) 9%, transparent), transparent 60%);
 }
 
-/* ---------- aurora ---------- */
+/* ---------- the 3D scene bleeding under the form side (page-level blend) ---------- */
+.sceneBleed {
+  position: absolute; top: 0; bottom: 0; left: -12%; right: -12%;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 66%, rgba(0,0,0,.55) 82%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 66%, rgba(0,0,0,.55) 82%, transparent 100%);
+}
+/* the seam between the halves: colours the dark-to-light fade with the theme accent (blend mode
+   "color" keeps the brightness underneath and takes only the hue), so it melts instead of turning grey */
+.seam {
+  position: absolute; top: 0; bottom: 0; left: 34%; width: 34%;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--a1);
+  mix-blend-mode: color;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 35%, #000 65%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 35%, #000 65%, transparent);
+  animation: seamBreathe 6s ease-in-out infinite;
+}
+@media (max-width: 1023px) { .seam { display: none; } }
+
+/* ---------- four designs that take turns, 3 s each (12 s cycle), crossfading ---------- */
+.design {
+  position: absolute; inset: 0;
+  opacity: 0;
+  animation: designCycle 12s linear infinite;
+  animation-delay: calc(var(--s) * 3s);
+  /* fade in from the left edge, where the 3D scene blends in */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 22%);
+}
+
+/* design 1: aurora */
 .blob { position: absolute; border-radius: 50%; filter: blur(70px); will-change: transform; }
 .blobA {
   width: 520px; height: 520px; top: -160px; right: -140px;
@@ -53,6 +84,62 @@
   mask-image: radial-gradient(ellipse 58% 52% at 50% 50%, transparent 40%, #000 90%);
   opacity: .9;
   animation: gridMove 16s linear infinite;
+}
+
+/* design 2: rings pulsing out from behind the card */
+.ringGlow {
+  position: absolute; left: 50%; top: 50%; width: 760px; height: 760px; margin: -380px 0 0 -380px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--a1) 22%, transparent), transparent 75%);
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+.ring {
+  position: absolute; left: 50%; top: 50%; width: 320px; height: 320px; margin: -160px 0 0 -160px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--a1) 75%, transparent);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--a1) 40%, transparent), inset 0 0 30px color-mix(in srgb, var(--a1) 25%, transparent);
+  opacity: 0;
+  animation: ringOut 3s cubic-bezier(.2,.6,.3,1) infinite;
+  animation-delay: calc(var(--r) * .75s);
+}
+.ring:nth-child(odd) { border-color: color-mix(in srgb, var(--a3) 60%, transparent); }
+
+/* design 3: diagonal beams of light */
+.beams {
+  position: absolute; inset: -40%;
+  background: repeating-linear-gradient(115deg,
+    transparent 0 70px,
+    color-mix(in srgb, var(--a1) 13%, transparent) 70px 120px,
+    transparent 120px 190px,
+    color-mix(in srgb, var(--a3) 16%, transparent) 190px 206px,
+    transparent 206px 240px);
+  animation: beamMove 4s linear infinite;
+}
+.beamGlow {
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--a1) 26%, transparent) 50%, transparent 70%);
+  background-size: 260% 100%;
+  animation: sweep 3s ease-in-out infinite;
+}
+
+/* design 4: flowing contour waves */
+.waves {
+  position: absolute; left: 0; bottom: 0; width: 200%; height: 90%;
+  overflow: visible;
+  animation: waveSlide 9s linear infinite;
+}
+.wave {
+  fill: none;
+  stroke: var(--a1);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  opacity: calc(.75 - var(--w) * .12);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--a1) 45%, transparent));
+}
+.wave:nth-child(even) { stroke: var(--a3); }
+.waveGlow {
+  position: absolute; left: -10%; right: -10%; bottom: -30%; height: 70%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--a1) 24%, transparent), transparent 80%);
 }
 
 /* ---------- rising specks of light ---------- */
@@ -164,6 +251,13 @@
 .sheen:disabled::after { animation: none; opacity: 0; }
 
 /* ---------- keyframes ---------- */
+@keyframes designCycle { 0% { opacity: 0; } 8%, 25% { opacity: 1; } 33%, 100% { opacity: 0; } }
+@keyframes ringOut { 0% { transform: scale(.6); opacity: 0; } 12% { opacity: 1; } 70% { opacity: .55; } 100% { transform: scale(2.8); opacity: 0; } }
+@keyframes seamBreathe { 0%, 100% { opacity: .38; } 50% { opacity: .55; } }
+@keyframes pulseGlow { 0%, 100% { transform: scale(.92); opacity: .7; } 50% { transform: scale(1.06); opacity: 1; } }
+@keyframes beamMove { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(217.5px, 101.4px, 0); } }
+@keyframes sweep { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+@keyframes waveSlide { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-25%, 0, 0); } }
 @keyframes driftA { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(-90px, 110px, 0) scale(1.12); } }
 @keyframes driftB { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(120px, -90px, 0) scale(1.1); } }
 @keyframes driftC { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 33% { transform: translate3d(-140px, -120px, 0) scale(.9); } 66% { transform: translate3d(-260px, 60px, 0) scale(1.1); } }
@@ -192,7 +286,8 @@
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .blob, .grid, .speck, .tile, .steps, .step, .card, .card::before, .item, .underline::after, .sheen::after { animation: none !important; }
+  .design, .seam, .blob, .grid, .ring, .ringGlow, .beams, .beamGlow, .waves, .speck, .tile, .steps, .step, .card, .card::before, .item, .underline::after, .sheen::after { animation: none !important; }
+  .design:first-child { opacity: 1; }
   .speck { display: none; }
 }
 
