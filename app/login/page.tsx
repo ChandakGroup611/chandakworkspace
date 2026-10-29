@@ -336,26 +336,28 @@ export default function LoginPage() {
       <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-background lg:bg-transparent relative text-foreground">
         <LoginFormBackdrop />
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-24 relative z-10 min-h-full">
-          <div className={`w-full max-w-[440px] ${formMotion.card}`}>
+          <div className={`w-full max-w-[440px] relative mt-6 lg:mt-0 ${formMotion.card}`}>
             
+            {/* Crest logo badge straddling the top border */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+              <div className={formMotion.logoBadge}>
+                <div className={formMotion.logoBadgeInner}>
+                  <img
+                    src="/Chandak_Group_Official_Logo.png"
+                    alt="Chandak Group official logo"
+                    className="h-9 lg:h-10 w-auto object-contain dark:brightness-0 dark:invert"
+                    style={{ imageRendering: "-webkit-optimize-contrast" }}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* phones and tablets: compact animated header */}
-            <div className="relative mb-6 overflow-hidden rounded-xl lg:hidden">
+            <div className="relative mb-6 mt-4 overflow-hidden rounded-xl lg:hidden">
               <LoginScene3D variant="compact" />
             </div>
 
-            <div className={`mb-8 ${formMotion.item}`} style={{ "--d": 0 } as React.CSSProperties}>
-              <div className="mb-6 flex items-center justify-center">
-                <div className={formMotion.logoBadge}>
-                  <div className={formMotion.logoBadgeInner}>
-                    <img
-                      src="/Chandak_Group_Official_Logo.png"
-                      alt="Chandak Group official logo"
-                      className="h-10 lg:h-11 w-auto object-contain dark:brightness-0 dark:invert"
-                      style={{ imageRendering: "-webkit-optimize-contrast" }}
-                    />
-                  </div>
-                </div>
-              </div>
+            <div className={`mb-8 pt-2 lg:pt-3 ${formMotion.item}`} style={{ "--d": 0 } as React.CSSProperties}>
               <h2 className={`mb-3 text-[22px] font-semibold text-heading ${formMotion.underline}`}>
                 Sign in
               </h2>
