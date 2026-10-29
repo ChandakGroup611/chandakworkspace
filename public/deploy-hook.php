@@ -88,6 +88,26 @@ function recursiveRemove($dir) {
     @rmdir($dir);
 }
 
+// Helper: Ensure Next.js required runtime manifests exist to prevent ENOENT crash
+function ensurePreviewProps($appRoots) {
+    $fallbackJson = json_encode([
+        'previewModeId' => 'none',
+        'previewModeSigningKey' => 'none',
+        'previewModeEncryptionKey' => 'none'
+    ]);
+    foreach ((array)$appRoots as $target) {
+        if (!$target || !is_dir($target)) continue;
+        $serverDir = $target . '/.next/server';
+        if (!is_dir($serverDir)) {
+            @mkdir($serverDir, 0755, true);
+        }
+        $previewFile = $serverDir . '/preview-props.json';
+        if (!file_exists($previewFile) || filesize($previewFile) === 0) {
+            @file_put_contents($previewFile, $fallbackJson);
+        }
+    }
+}
+
 // Domain root discovery
 $domainRoot = '/home/u859582759/domains/chandakgroup.tech';
 if (!is_dir($domainRoot)) {
@@ -154,6 +174,9 @@ $publicDocRoots = [
     __DIR__,
 ];
 $publicDocRoots = array_values(array_unique(array_filter($publicDocRoots, 'is_dir')));
+
+// Ensure preview-props.json is present in .next/server so Next.js never crashes with ENOENT
+ensurePreviewProps($primaryAppRoots);
 
 // Diagnostic / Info Mode
 if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isset($_GET['logs'])) {
@@ -279,6 +302,8 @@ if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
     @touch($domainRoot . '/public_html/.htaccess');
 
+    ensurePreviewProps($primaryAppRoots);
+
     foreach ($primaryAppRoots as $target) {
         @mkdir($target . '/tmp', 0755, true);
         @touch($target . '/tmp/restart.txt');
@@ -387,6 +412,8 @@ if ($zipFile && class_exists('ZipArchive')) {
         ];
     }
 
+    ensurePreviewProps($primaryAppRoots);
+
     // Locate freshly extracted static chunk assets
     $sourceStatic = null;
     foreach ($primaryAppRoots as $root) {
@@ -467,6 +494,7 @@ if ($versionedDirs) {
 @unlink($domainRoot . '/public_html/package.json');
 
 // 4. Touch restart.txt trigger
+ensurePreviewProps($primaryAppRoots);
 @mkdir($canonicalAppRoot . '/tmp', 0755, true);
 @touch($canonicalAppRoot . '/tmp/restart.txt');
 if (file_exists($canonicalAppRoot . '/server.js')) @touch($canonicalAppRoot . '/server.js');

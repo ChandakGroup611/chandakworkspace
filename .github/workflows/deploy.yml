@@ -57,6 +57,11 @@ jobs:
         run: |
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
+          mkdir -p .next/standalone/.next/server
+          cp -f .next/server/preview-props.json .next/standalone/.next/server/ 2>/dev/null || true
+          if [ ! -f .next/standalone/.next/server/preview-props.json ]; then
+            echo '{"previewModeId":"none","previewModeSigningKey":"none","previewModeEncryptionKey":"none"}' > .next/standalone/.next/server/preview-props.json
+          fi
           cp public/deploy-hook.php .next/standalone/public/deploy-hook.php
 
           # Inject production runtime environment variables into standalone package
@@ -170,7 +175,10 @@ jobs:
                 if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
                   unzip -o -q "$ZIP_PATH" -d "$target" 2>/dev/null || php -r '$z = new ZipArchive(); if ($z->open("'"$ZIP_PATH"'") === TRUE) { $z->extractTo("'"$target"'"); $z->close(); echo "Extracted via PHP ZipArchive to '"$target"'\n"; } else { echo "Failed to extract via PHP\n"; }'
                 fi
-                mkdir -p "$target/tmp" "$target/_next" "$target/public/_next"
+                mkdir -p "$target/tmp" "$target/_next" "$target/public/_next" "$target/.next/server"
+                if [ ! -f "$target/.next/server/preview-props.json" ]; then
+                  echo '{"previewModeId":"none","previewModeSigningKey":"none","previewModeEncryptionKey":"none"}' > "$target/.next/server/preview-props.json"
+                fi
                 touch "$target/tmp/restart.txt"
                 if [ -f "$target/server.js" ]; then
                   touch "$target/server.js"
