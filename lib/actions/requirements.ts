@@ -904,6 +904,8 @@ export async function processApprovalAction(reqId: string, action: string, remar
       triggering_user_id: user.id,
       req_code: req.code,
       req_title: req.title,
+      remarks: remarks || "",
+      remark: remarks || "",
       assigned_to: req.requester_id,
       creator_name: user.email,
       link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/requirements/${finalReqId}`

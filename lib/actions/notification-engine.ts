@@ -45,13 +45,14 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
 
     if (matchedRules.length === 0) return;
 
-    // 2. Fetch the active template for this event (with fallback between Created and Assigned)
+    // 2. Fetch the active template for this event (prioritizing recently updated/customized templates)
     let { data: templates } = await supabaseAdmin
       .from("email_templates")
       .select("*")
       .ilike("module", moduleName)
       .ilike("event", eventName)
       .eq("is_active", true)
+      .order("updated_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(1);
 
@@ -70,6 +71,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
           .ilike("module", moduleName)
           .ilike("event", fallbackEvent)
           .eq("is_active", true)
+          .order("updated_at", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false })
           .limit(1);
         if (fbTemplates && fbTemplates.length > 0) {
@@ -228,22 +230,41 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // Task-specific auto-enrichment
-  if (moduleName === 'Task' && payload.entity_id && (!hydrated.task_name || !hydrated.ticket_no)) {
+  if (moduleName === 'Task' && payload.entity_id) {
     try {
       const { data: task } = await supabaseAdmin
         .from('tasks')
-        .select('subject, priority_id, status_id, end_date, assigned_to, created_by, workspace_id, parent_task_id')
+        .select('id, subject, description, priority_id, status_id, start_date, end_date, assigned_to, created_by, workspace_id, parent_task_id')
         .eq('id', payload.entity_id)
         .maybeSingle();
 
       if (task) {
         if (!hydrated.task_name) hydrated.task_name = task.subject;
+        if (!hydrated.subject) hydrated.subject = task.subject;
+        if (!hydrated.description && task.description) hydrated.description = task.description;
         if (!hydrated.priority && task.priority_id) hydrated.priority = task.priority_id;
         if (!hydrated.status && task.status_id) hydrated.status = task.status_id;
+        if (!hydrated.start_date && task.start_date) hydrated.start_date = task.start_date;
+        if (!hydrated.end_date && task.end_date) hydrated.end_date = task.end_date;
         if (!hydrated.due_date && task.end_date) hydrated.due_date = task.end_date;
         if (!hydrated.assigned_to && task.assigned_to) hydrated.assigned_to = task.assigned_to;
         if (!hydrated.created_by && task.created_by) hydrated.created_by = task.created_by;
         if (!hydrated.workspace_id && task.workspace_id) hydrated.workspace_id = task.workspace_id;
+
+        // Auto-fetch workspace details
+        if (task.workspace_id && (!hydrated.workspace_name || !hydrated.workspace_code)) {
+          try {
+            const { data: ws } = await supabaseAdmin
+              .from('workspaces')
+              .select('workspace_name, workspace_code')
+              .eq('id', task.workspace_id)
+              .maybeSingle();
+            if (ws) {
+              if (!hydrated.workspace_name) hydrated.workspace_name = ws.workspace_name;
+              if (!hydrated.workspace_code) hydrated.workspace_code = ws.workspace_code;
+            }
+          } catch (wErr) {}
+        }
 
         // Subtask enrichment
         if (task.parent_task_id) {
@@ -267,24 +288,45 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
         }
 
         // Try to find if this task is linked to a requirement or ticket
-        const { data: reqTask } = await supabaseAdmin
-          .from('requirement_tasks')
-          .select('requirement_id, requirements(id, code, title, source_ticket_id)')
-          .eq('task_id', payload.entity_id)
-          .maybeSingle();
-
-        if (reqTask?.requirements) {
-          const req = reqTask.requirements as any;
-          if (req.source_ticket_id) {
-            const { data: ticket } = await supabaseAdmin
-              .from('tickets')
-              .select('code')
-              .eq('id', req.source_ticket_id)
+        if (!hydrated.ticket_no) {
+          try {
+            const { data: reqTask } = await supabaseAdmin
+              .from('requirement_tasks')
+              .select('requirement_id, requirements(id, code, title, source_ticket_id)')
+              .eq('task_id', payload.entity_id)
               .maybeSingle();
-            if (ticket?.code) hydrated.ticket_no = ticket.code;
-          } else if (req.code) {
-            hydrated.ticket_no = req.code;
-          }
+
+            if (reqTask?.requirements) {
+              const req = reqTask.requirements as any;
+              if (req.source_ticket_id) {
+                const { data: ticket } = await supabaseAdmin
+                  .from('tickets')
+                  .select('code')
+                  .eq('id', req.source_ticket_id)
+                  .maybeSingle();
+                if (ticket?.code) hydrated.ticket_no = ticket.code;
+              } else if (req.code) {
+                hydrated.ticket_no = req.code;
+              }
+            }
+          } catch (rErr) {}
+        }
+
+        // Auto-fetch latest remark/comment for this task if not passed directly in payload
+        if (!hydrated.remarks && !hydrated.remark) {
+          try {
+            const { data: latestComment } = await supabaseAdmin
+              .from('task_comments')
+              .select('content')
+              .eq('task_id', payload.entity_id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (latestComment?.content) {
+              hydrated.remarks = latestComment.content;
+              hydrated.remark = latestComment.content;
+            }
+          } catch (cErr) {}
         }
       }
     } catch (e) {
@@ -351,21 +393,39 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
   }
 
   // Ticket-specific auto-enrichment
-  if (moduleName === 'Ticket' && payload.entity_id && (!hydrated.ticket_no || !hydrated.ticket_title)) {
+  if (moduleName === 'Ticket' && payload.entity_id) {
     try {
       const { data: ticket } = await supabaseAdmin
         .from('tickets')
-        .select('code, title, priority_id, status_id, category_id, assignee_id, creator_id')
+        .select('code, title, description, priority_id, status_id, category_id, assignee_id, creator_id')
         .eq('id', payload.entity_id)
         .maybeSingle();
       if (ticket) {
         if (!hydrated.ticket_no) hydrated.ticket_no = ticket.code;
         if (!hydrated.ticket_title) hydrated.ticket_title = ticket.title;
-        if (!hydrated.priority) hydrated.priority = ticket.priority_id;
-        if (!hydrated.status) hydrated.status = ticket.status_id;
-        if (!hydrated.category) hydrated.category = ticket.category_id;
+        if (!hydrated.description && ticket.description) hydrated.description = ticket.description;
+        if (!hydrated.priority && ticket.priority_id) hydrated.priority = ticket.priority_id;
+        if (!hydrated.status && ticket.status_id) hydrated.status = ticket.status_id;
+        if (!hydrated.category && ticket.category_id) hydrated.category = ticket.category_id;
         if (!hydrated.assigned_to && ticket.assignee_id) hydrated.assigned_to = ticket.assignee_id;
         if (!hydrated.created_by && ticket.creator_id) hydrated.created_by = ticket.creator_id;
+
+        // Auto-fetch latest ticket comment if remark not passed
+        if (!hydrated.remarks && !hydrated.remark) {
+          try {
+            const { data: latestComment } = await supabaseAdmin
+              .from('ticket_comments')
+              .select('comment')
+              .eq('ticket_id', payload.entity_id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (latestComment?.comment) {
+              hydrated.remarks = latestComment.comment;
+              hydrated.remark = latestComment.comment;
+            }
+          } catch (tErr) {}
+        }
       }
     } catch (e) {
       console.error('[NotificationEngine] Ticket auto-enrichment failed', e);
@@ -373,16 +433,17 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
   }
 
   // Requirement-specific auto-enrichment
-  if (moduleName === 'Requirement' && payload.entity_id && (!hydrated.req_code || !hydrated.req_name)) {
+  if (moduleName === 'Requirement' && payload.entity_id) {
     try {
       const { data: req } = await supabaseAdmin
         .from('requirements')
-        .select('code, title, approval_status, owner_id, requester_id, due_date')
+        .select('code, title, description, approval_status, owner_id, requester_id, due_date')
         .eq('id', payload.entity_id)
         .maybeSingle();
       if (req) {
         if (!hydrated.req_code) hydrated.req_code = req.code;
         if (!hydrated.req_name) hydrated.req_name = req.title;
+        if (!hydrated.description && req.description) hydrated.description = req.description;
         if (!hydrated.approval_status) hydrated.approval_status = req.approval_status;
         if (!hydrated.assigned_to && req.owner_id) hydrated.assigned_to = req.owner_id;
         if (!hydrated.requester_id && req.requester_id) hydrated.requester_id = req.requester_id;
@@ -499,19 +560,30 @@ function hydrateTemplate(text: string, data: any): string {
   const matches = hydrated.match(/{{(.*?)}}/g);
   if (matches) {
     matches.forEach(match => {
-      const key = match.replace(/[{}]/g, "").trim();
-      let value = data[key];
-      // Fallback aliases if key has alternative representation
+      const rawKey = match.replace(/[{}]/g, "").trim();
+      const key = rawKey.toLowerCase();
+      let value = data[rawKey] !== undefined ? data[rawKey] : data[key];
+
+      // Robust fallback aliases if key has alternative representation
       if (value === undefined || value === null || value === "") {
-        if (key === 'workspace_owner') value = data['owner_name'] || data['creator_name'];
-        else if (key === 'owner_name') value = data['workspace_owner'] || data['creator_name'];
-        else if (key === 'assigned_user') value = data['assigned_to'] || data['recipient_name'];
-        else if (key === 'due_date') value = data['end_date'];
-        else if (key === 'end_date') value = data['due_date'];
-        else if (key === 'parent_workspace') value = data['parent_workspace_name'];
-        else if (key === 'parent_workspace_name') value = data['parent_workspace'];
-        else if (key === 'task_name') value = data['subject'] || data['ticket_title'];
-        else if (key === 'ticket_title') value = data['title'] || data['task_name'];
+        if (key === 'remark' || key === 'remarks' || key === 'comment' || key === 'comments') {
+          value = data['remarks'] || data['remark'] || data['comment'] || data['comments'] || data['message'] || data['description'];
+        }
+        else if (key === 'workspace_owner' || key === 'owner_name') value = data['workspace_owner'] || data['owner_name'] || data['creator_name'];
+        else if (key === 'assigned_user' || key === 'assigned_to') value = data['assigned_user'] || data['assigned_to'] || data['recipient_name'];
+        else if (key === 'due_date' || key === 'end_date') value = data['due_date'] || data['end_date'];
+        else if (key === 'start_date') value = data['start_date'];
+        else if (key === 'parent_workspace' || key === 'parent_workspace_name') value = data['parent_workspace'] || data['parent_workspace_name'];
+        else if (key === 'task_name' || key === 'task' || key === 'subject') value = data['task_name'] || data['subject'] || data['ticket_title'];
+        else if (key === 'task_code' || key === 'code') value = data['task_code'] || data['code'] || data['ticket_no'];
+        else if (key === 'ticket_title' || key === 'title') value = data['ticket_title'] || data['title'] || data['task_name'];
+        else if (key === 'ticket_no' || key === 'ticket_number') value = data['ticket_no'] || data['task_code'];
+        else if (key === 'workspace_name' || key === 'workspace') value = data['workspace_name'] || data['sub_workspace_name'];
+        else if (key === 'workspace_code') value = data['workspace_code'];
+        else if (key === 'creator_name' || key === 'updated_by' || key === 'created_by' || key === 'assigned_by') value = data['creator_name'] || data['updated_by'] || data['created_by'];
+        else if (key === 'status' || key === 'new_status') value = data['status'];
+        else if (key === 'priority') value = data['priority'];
+        else if (key === 'description') value = data['description'];
       }
       hydrated = hydrated.replace(match, value !== undefined && value !== null ? String(value) : "");
     });

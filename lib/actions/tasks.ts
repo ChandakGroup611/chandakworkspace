@@ -378,7 +378,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   // Get current status, workspace, and owner
   const { data: task } = await supabaseAdmin
     .from('tasks')
-    .select('status_id, assigned_to, created_by, owner_id, workspace_id, workspace:workspaces(workspace_owner_id)')
+    .select('subject, status_id, assigned_to, created_by, owner_id, workspace_id, workspace:workspaces(workspace_owner_id)')
     .eq('id', taskId)
     .single();
 
@@ -472,7 +472,10 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     entity_id: taskId,
     triggering_user_id: userId,
     status: targetStatusId, // Note: This is an ID, but for email mapping we might want the code. Assuming code for simplicity.
+    task_name: task.subject,
     assigned_to: task.assigned_to,
+    created_by: task.created_by,
+    workspace_id: task.workspace_id,
     link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
   }).catch(e => console.error("[NotificationEngine] Status change queue push failed", e));
 
@@ -1280,7 +1283,7 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
   // Fetch current task to check assignee
   const { data: currentTask, error: fetchError } = await supabaseAdmin
     .from('tasks')
-    .select('assigned_to, status_id, parent_task_id')
+    .select('id, subject, assigned_to, status_id, parent_task_id, created_by, workspace_id')
     .eq('id', taskId)
     .single();
 
@@ -1366,6 +1369,18 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
 
   if (newStatusId && newStatusId !== currentTask.status_id) {
     await propagateTaskDependencies(taskId);
+    queueBusinessEvent("Task", "Status Changed", {
+      entity_id: taskId,
+      triggering_user_id: userId,
+      status: newStatusId,
+      task_name: currentTask.subject,
+      remarks: remark || "",
+      remark: remark || "",
+      assigned_to: currentTask.assigned_to,
+      created_by: currentTask.created_by,
+      workspace_id: currentTask.workspace_id,
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
+    }).catch(e => console.error("[NotificationEngine] Inline status change queue push failed", e));
   }
 
   const { revalidatePath } = await import('next/cache');
@@ -1658,12 +1673,15 @@ export async function executeTaskBatchOperation(payload: {
   revalidatePath(`/workspaces/tasks`);
   
   // Fire-and-forget: Push to async background queue
-  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
+  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id, description, priority_id, start_date, end_date').eq('id', taskId).single().then(({ data: taskData }) => {
       queueBusinessEvent("Task", "Updated", {
           entity_id: taskId,
           triggering_user_id: userId,
           status: statusChanges || taskData?.status_id || "UPDATED",
           task_name: taskData?.subject || "Task Updated",
+          description: taskData?.description || "",
+          remarks: remarks || "",
+          remark: remarks || "",
           assigned_to: taskData?.assigned_to,
           created_by: taskData?.created_by,
           workspace_id: taskData?.workspace_id,

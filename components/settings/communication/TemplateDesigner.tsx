@@ -188,6 +188,7 @@ export const TASK_MERGE_TAGS = [
   "{{task_type}}",
   "{{parent_task_name}}",
   "{{remarks}}",
+  "{{remark}}",
   "{{recipient_name}}",
   "{{link}}"
 ];
@@ -203,6 +204,7 @@ export const TICKET_MERGE_TAGS = [
   "{{assigned_user}}",
   "{{creator_name}}",
   "{{remarks}}",
+  "{{remark}}",
   "{{recipient_name}}",
   "{{link}}"
 ];
@@ -217,6 +219,7 @@ export const REQUIREMENT_MERGE_TAGS = [
   "{{creator_name}}",
   "{{due_date}}",
   "{{remarks}}",
+  "{{remark}}",
   "{{recipient_name}}",
   "{{link}}"
 ];

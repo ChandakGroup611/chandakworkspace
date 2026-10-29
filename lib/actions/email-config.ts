@@ -132,6 +132,7 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
     priority: "High",
     role: "Project Lead",
     remarks: "Milestone achieved according to standard compliance specifications.",
+    remark: "Milestone achieved according to standard compliance specifications.",
     task_type: "Task",
     parent_task_name: "Primary Architecture Setup",
     type: "Workspace",

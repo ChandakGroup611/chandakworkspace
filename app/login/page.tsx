@@ -317,15 +317,7 @@ export default function LoginPage() {
         <div className={loginBlend.sceneBleed}>
           <LoginScene3D />
         </div>
-        <div className="pointer-events-none relative z-10 flex h-full flex-col items-center justify-between p-10 text-center xl:p-14">
-          <div className="inline-flex w-fit items-center justify-center rounded-xl bg-surface px-6 py-3.5 shadow-lg animate-in fade-in-0 slide-in-from-top-3 duration-700">
-            <img
-              src="/Chandak_Group_Official_Logo.png"
-              alt="Chandak Group official logo"
-              className="h-14 w-auto object-contain lg:h-16 dark:brightness-0 dark:invert"
-              style={{ imageRendering: "-webkit-optimize-contrast" }}
-            />
-          </div>
+        <div className="pointer-events-none relative z-10 flex h-full flex-col items-center justify-end p-10 text-center xl:p-14">
           <div className="max-w-xl animate-in fade-in-0 slide-in-from-bottom-3 duration-700">
             <h1 className={`mb-3 text-[32px] font-semibold leading-tight tracking-[-0.01em] ${sceneInk.title}`}>
               Chandak Workspace
@@ -347,21 +339,19 @@ export default function LoginPage() {
           <div className={`w-full max-w-[440px] ${formMotion.card}`}>
             
             {/* phones and tablets: compact animated header */}
-            <div className="relative mb-8 lg:hidden">
+            <div className="relative mb-6 overflow-hidden rounded-xl lg:hidden">
               <LoginScene3D variant="compact" />
-              <div className="absolute inset-x-0 top-3 flex justify-center">
-                <div className="inline-flex w-fit items-center justify-center rounded-xl bg-surface px-4 py-2 shadow-md">
-                  <img
-                    src="/Chandak_Group_Official_Logo.png"
-                    alt="Chandak Group official logo"
-                    className="h-9 w-auto object-contain dark:brightness-0 dark:invert"
-                    style={{ imageRendering: "-webkit-optimize-contrast" }}
-                  />
-                </div>
-              </div>
             </div>
 
             <div className={`mb-8 ${formMotion.item}`} style={{ "--d": 0 } as React.CSSProperties}>
+              <div className="mb-6 flex items-center justify-start">
+                <img
+                  src="/Chandak_Group_Official_Logo.png"
+                  alt="Chandak Group official logo"
+                  className="h-11 lg:h-12 w-auto object-contain dark:brightness-0 dark:invert"
+                  style={{ imageRendering: "-webkit-optimize-contrast" }}
+                />
+              </div>
               <h2 className={`mb-3 text-[22px] font-semibold text-heading ${formMotion.underline}`}>
                 Sign in
               </h2>
