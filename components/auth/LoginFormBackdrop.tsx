@@ -84,7 +84,14 @@ export function LoginFormBackdrop() {
 }
 
 /** Classes for the form: glass `card`, staggered entrance (`item` + `--d` order), heading `underline`, button `sheen`. */
-export const formMotion = { card: s.card, item: s.item, sheen: s.sheen, underline: s.underline };
+export const formMotion = { 
+  card: s.card, 
+  item: s.item, 
+  sheen: s.sheen, 
+  underline: s.underline,
+  logoBadge: s.logoBadge,
+  logoBadgeInner: s.logoBadgeInner,
+};
 
 /** Page-level blend: `sceneBleed` wraps the 3D scene so it runs on under the form side and fades out;
  *  `seam` (a direct child of the page root) tints that fade with the theme accent. */

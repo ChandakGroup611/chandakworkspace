@@ -344,13 +344,17 @@ export default function LoginPage() {
             </div>
 
             <div className={`mb-8 ${formMotion.item}`} style={{ "--d": 0 } as React.CSSProperties}>
-              <div className="mb-6 flex items-center justify-start">
-                <img
-                  src="/Chandak_Group_Official_Logo.png"
-                  alt="Chandak Group official logo"
-                  className="h-11 lg:h-12 w-auto object-contain dark:brightness-0 dark:invert"
-                  style={{ imageRendering: "-webkit-optimize-contrast" }}
-                />
+              <div className="mb-6 flex items-center justify-center">
+                <div className={formMotion.logoBadge}>
+                  <div className={formMotion.logoBadgeInner}>
+                    <img
+                      src="/Chandak_Group_Official_Logo.png"
+                      alt="Chandak Group official logo"
+                      className="h-10 lg:h-11 w-auto object-contain dark:brightness-0 dark:invert"
+                      style={{ imageRendering: "-webkit-optimize-contrast" }}
+                    />
+                  </div>
+                </div>
               </div>
               <h2 className={`mb-3 text-[22px] font-semibold text-heading ${formMotion.underline}`}>
                 Sign in
