@@ -24,6 +24,42 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Change ID:** INFRA-001 (Dashboards MSSQL Instance Migration to 10.9.0.4\MSSQLSERVER_INT)
+* **Date:** 2026-10-29
+* **Requested functionality:** Migrate analytics dashboards engine database source from `localhost\MSSQLSERVERNEW` / `DASHBOARD` on `10.0.1.46` to dedicated instance `10.9.0.4\MSSQLSERVER_INT` on host `CG-DB-01`, database `INTERNAL_WORK`.
+* **Reason:** Transition dashboard reporting to dedicated, performant Microsoft SQL Server instance hosting full IN4 copy.
+* **Modules affected:** Executive & Operational Dashboards Engine (services on ports 8080, 8081, 8083).
+* **Files changed:** `docs/DASHBOARDS_SQL_MIGRATION.md`, `docs/SYSTEM_INVENTORY.md`, `docs/CHANGELOG.md`.
+* **Database changes:** Connection target updated to `INTERNAL_WORK` on `10.9.0.4\MSSQLSERVER_INT`.
+* **API changes:** None; service endpoints `/healthz` continue serving data on ports 8080, 8081, 8083 (`data_ready=true`).
+* **UI changes:** None.
+* **Business logic changes:** None. Engine cache invalidation protocol forced via `cache.refresh()` inside each venv.
+* **Security impact:** Instance operates under `sa` on dedicated network; engine `.env` credentials secured via SYSTEM/Administrator ACLs. Prepared `dashboard_reader` script stored for optional future read-only hardening.
+* **RBAC impact:** None.
+* **Performance impact:** High-performance direct connection to dedicated database server `CG-DB-01`.
+* **Testing performed:** Full check suite (32/33 passed; 1 known variance: cancelled cert #14537 for ₹25,134). All FY 25–26 and FY 26–27 budget, billed, and paid KPIs verified matching.
+* **Regression testing performed:** Confirmed all three services responding `HTTP 200` on healthz with `data_ready=true`.
+* **Deployment status:** Deployed & Verified.
+* **Rollback information:** Restore `.env.before-switch` to `.env` in engine directories and restart tasks via `C:\dashboards-deploy\SWITCH_SQL_SOURCE.ps1`.
+
+* **Change ID:** BUDGET-002 (Organization Budget Master & Transaction Level CRUD Action Buttons)
+* **Date:** 2026-10-29
+* **Requested functionality:** Standardize explicit, enterprise-grade CRUD action buttons (`+ Add / Create`, `View`, `Edit`, `Delete / Remove`) across all master, transaction, and list pages in the Organization Budget module.
+* **Reason:** Replace unstyled plain text links and add missing CRUD controls across Portfolio, Towers, Cost Heads, Sign-off Levels, Budget Entry, Cost Incurred (Bills & Entries), Supporting Schedules, Commitments, and Custom Fields / Member Access.
+* **Modules affected:** Organization Budget (`/budget`).
+* **Files changed:** `app/budget/page.tsx`, `app/budget/_components/views.tsx`, `app/budget/_components/forms.tsx`, `app/budget/_components/admin.tsx`, `app/budget/budget.css`, `lib/budget/actions.ts`.
+* **Database changes:** None (utilized existing schema, actions, and validation constraints). Added server action `deleteProject` in `lib/budget/actions.ts`.
+* **API changes:** Added `deleteProject` action; updated `EntryTable`, `ProjectActions`, `BillRow`, `EntryActions`, `SignoffLevelsEditor`, `ScheduleEditor`, `AreasForm`, `TowerRow`, `FieldSettings`.
+* **UI changes:** Clean standardized `.btn-action`, `.btn-action.primary`, and `.btn-action.danger` button tokens with hover states, compact height, and responsive `.actions-group` alignment.
+* **Business logic changes:** None (100% preservation of calculations, GST logic, R1/R2 variance gates, and draft locking).
+* **Security impact:** Zero unauthorized access. Actions mirror backend RBAC (`canManage`, `canChangeDraft`, `budget.edit`, `cost.enter`).
+* **RBAC impact:** Fully symmetric with user permissions.
+* **Performance impact:** Zero layout shifts, compact table actions column with fixed alignment.
+* **Testing performed:** TypeScript typecheck (`npx tsc --noEmit`), Design QA Suite (47/47 passed), Organization Budget E2E Cycle Test Suite (`scripts/test-budget-cycle-e2e.js`, 13/13 passed).
+* **Regression testing performed:** Multi-route zero-downtime warmup gate verified on live production server (Build `build-1793284371594`).
+* **Deployment status:** Deployed & Verified.
+* **Rollback information:** `git revert 9a0fa581`.
+
 * **Change ID:** FLEET-009 / SEC-002 (Vehicle Master Dropdowns, Dossier Connections & Dependency Security Patches)
 * **Date:** 2026-10-24
 * **Requested functionality:** Fix empty insurance vendor and purchase vendor dropdowns across registration, edit, renew, and vault modals; fix master creation and bulk import column mappings for `fleet_insurance_vendors`; auto-link operational connections (maintenance job cards, mounted parts, trips, drivers) in the vehicle 360° dossier; remediate 5 upstream security vulnerabilities (`dompurify`, `next`, `sharp`, `source-map-js`, `nodemailer`).

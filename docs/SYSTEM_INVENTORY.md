@@ -15,6 +15,8 @@ This document details the comprehensive application architecture and subsystem i
 10. **Notification & Asynchronous Email Engine (`/api/email`, `lib/actions/email-queue.ts`)**: Realtime notification websocket bus, transactional email queue, automated escalation dispatch.
 11. **Universal Compliance & Trash Framework (`/compliance`)**: Soft-deletion architecture, non-destructive trash bin, instant restoration, immutable system audit trail.
 12. **Knowledge & Learning Base (`/knowledge`, `/learning`)**: Enterprise SOPs, training materials, knowledge artifacts.
+13. **Organization Budget Management (`/budget`)**: Multi-version project budget formulation (R1 to Rn revisions), departmental cost heads, tower allocation, supporting cost schedules, invoice bill recording & cost incurred actuals, sequential merge locking, sign-off chains, and full variance audit reporting.
+14. **Executive & Operational Dashboards Engine**: Triple-engine analytics services (`8080`, `8081`, `8083`) backed by dedicated Microsoft SQL Server instance (`10.9.0.4\MSSQLSERVER_INT`, DB: `INTERNAL_WORK` on host `CG-DB-01`) providing real-time IN4 operational, asset, and budget reconciliation. See `docs/DASHBOARDS_SQL_MIGRATION.md`.
 
 ## 2. Database Tables & Key Relations
 - **Identity & IAM**: `user_master`, `permissions`, `roles`, `fleet_user_access`, `design_user_access`, `active_sessions`.
