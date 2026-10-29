@@ -248,7 +248,7 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
         'posix_kill_exists' => function_exists('posix_kill'),
         'disabled_functions' => ini_get('disable_functions'),
         'timestamp' => date('Y-m-d H:i:s')
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
 
@@ -534,6 +534,6 @@ echo json_encode([
     'zip_path' => $zipFile,
     'results' => $extractionResults,
     'timestamp' => date('Y-m-d H:i:s')
-], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
 exit;
 ?>
