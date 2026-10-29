@@ -481,8 +481,11 @@ export function ScheduleEditor({ s, editable }: {
           <tr key={r.row_id}><td>{r.label}</td><td className="n">{n(r.qty)}</td><td className="n">{n(r.rate)}</td><td className="n">{n(r.pct)}</td><td className="n">{n(r.periods)}</td>
             <td className="n">{rupees(r.amount_paise)}</td><td>{r.remark}</td></tr>
         ))}
-        {editable && <tr key={`new-${s.rows.length}`}>{cells("new")}<td></td><td><input type="text" className="rem" id={f("remark", "new")} aria-label="Row remark" /></td>
-          <td><button disabled={pending} onClick={() => run(() => A.saveScheduleRow(s.id, null, (s.rows[s.rows.length - 1]?.sort ?? 0) + 1, read("new")))}>Add row</button></td></tr>}
+        {editable && <tr key="new">{cells("new")}<td></td><td><input type="text" className="rem" id={f("remark", "new")} aria-label="Row remark" /></td>
+          <td><button disabled={pending} onClick={() => run(() => A.saveScheduleRow(s.id, null, (s.rows[s.rows.length - 1]?.sort ?? 0) + 1, read("new")), () => {
+            // the new row stays in place (so typing is never lost to a refresh); clear it for the next one
+            for (const [k, d] of [["label", ""], ["qty", ""], ["rate", ""], ["pct", "100"], ["periods", "1"], ["amount", ""], ["remark", ""]]) (document.getElementById(f(k, "new")) as HTMLInputElement).value = d;
+          })}>Add row</button></td></tr>}
         <tr className="total"><td colSpan={editable ? 6 : 5}>Total = CTC of the line</td><td className="n">{rupees(total)}</td><td>{fmt(total / 1e9)} Cr</td>{editable && <td></td>}</tr>
       </tbody></table></div>
       {editable && <div className="row">
@@ -518,7 +521,7 @@ export function VersionDetailsForm({ versionId, asOn, reason, categories, reason
       <div className="scroll"><table><thead><tr><th>Category</th><th>Reason for the change</th></tr></thead><tbody>
         {categories.map((c) => (
           <tr key={c}><td>{c}</td><td><input type="text" className="rem" aria-label={`Reason for ${c}`} defaultValue={reasons[c] ?? ""}
-            onBlur={(e) => e.currentTarget.value.trim() !== (reasons[c] ?? "") && run(() => A.updateVersion(versionId, { category_reasons: { ...reasons, [c]: e.currentTarget.value.trim() } }))} /></td></tr>
+            onBlur={(e) => e.currentTarget.value.trim() !== (reasons[c] ?? "") && run(() => A.updateVersion(versionId, { category_reasons: { [c]: e.currentTarget.value.trim() } }))} /></td></tr>
         ))}
       </tbody></table></div>
     </>
@@ -782,28 +785,30 @@ const AREA_FIELDS: [string, string][] = [
 ];
 export function AreasForm({ versionId, areas, editable, net }: { versionId: number; areas: Record<string, unknown> & { commitments?: { name: string; area: number }[] }; editable: boolean; net: number | null }) {
   const { run, banner } = useAction();
-  const commitments = areas.commitments ?? [];
-  const save = (patch: object) => run(() => A.updateVersion(versionId, { areas: { ...areas, ...patch } }));
+  // only the changed field is sent (the server merges it); commitments are kept here so quick edits build on each other
+  const [commitments, setCommitments] = useState(areas.commitments ?? []);
+  const save = (patch: object) => run(() => A.updateVersion(versionId, { areas: patch }));
+  const saveCommitments = (next: { name: string; area: number }[]) => { setCommitments(next); save({ commitments: next }); };
   return (
     <>
       {banner}
       <div className="row">
         {AREA_FIELDS.map(([k, label]) => (
-          <label key={k}>{label}<input type="number" disabled={!editable} defaultValue={(areas[k] as number | null) ?? ""} key={`${k}-${areas[k]}`}
+          <label key={k}>{label}<input type="number" disabled={!editable} defaultValue={(areas[k] as number | null) ?? ""} key={k}
             onBlur={(e) => { const v = e.currentTarget.value; if (v !== String(areas[k] ?? "")) save({ [k]: v === "" ? null : Number(v) }); }} /></label>
         ))}
       </div>
       <h3>Commitments deducted from sale area</h3>
       <div className="scroll"><table><thead><tr><th></th><th>Commitment</th><th className="n">Area (sft)</th><th></th></tr></thead><tbody>
         {commitments.map((c, i) => (
-          <tr key={`${i}-${c.name}-${c.area}`}><td>{String.fromCharCode(66 + i)}</td>
-            <td><input type="text" disabled={!editable} defaultValue={c.name} aria-label="Commitment" onBlur={(e) => e.currentTarget.value !== c.name && save({ commitments: commitments.map((x, j) => (j === i ? { ...x, name: e.currentTarget.value } : x)) })} /></td>
-            <td className="n"><input type="number" className="amt" disabled={!editable} defaultValue={c.area} aria-label="Area" onBlur={(e) => Number(e.currentTarget.value) !== c.area && save({ commitments: commitments.map((x, j) => (j === i ? { ...x, area: Number(e.currentTarget.value) || 0 } : x)) })} /></td>
-            <td>{editable && <button className="link" onClick={() => save({ commitments: commitments.filter((_, j) => j !== i) })}>Remove</button>}</td></tr>
+          <tr key={`${i}-${commitments.length}`}><td>{String.fromCharCode(66 + i)}</td>
+            <td><input type="text" disabled={!editable} defaultValue={c.name} aria-label="Commitment" onBlur={(e) => e.currentTarget.value !== c.name && saveCommitments(commitments.map((x, j) => (j === i ? { ...x, name: e.currentTarget.value } : x)))} /></td>
+            <td className="n"><input type="number" className="amt" disabled={!editable} defaultValue={c.area} aria-label="Area" onBlur={(e) => Number(e.currentTarget.value) !== c.area && saveCommitments(commitments.map((x, j) => (j === i ? { ...x, area: Number(e.currentTarget.value) || 0 } : x)))} /></td>
+            <td>{editable && <button className="link" onClick={() => saveCommitments(commitments.filter((_, j) => j !== i))}>Remove</button>}</td></tr>
         ))}
         <tr className="total"><td></td><td>Net sale carpet area (E)</td><td className="n">{net == null ? "" : new Intl.NumberFormat("en-IN").format(net)}</td><td></td></tr>
       </tbody></table></div>
-      {editable && <div className="row"><button onClick={() => save({ commitments: [...commitments, { name: "New commitment", area: 0 }] })}>Add commitment</button></div>}
+      {editable && <div className="row"><button onClick={() => saveCommitments([...commitments, { name: "New commitment", area: 0 }])}>Add commitment</button></div>}
     </>
   );
 }

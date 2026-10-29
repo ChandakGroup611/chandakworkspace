@@ -139,6 +139,7 @@ export async function saveScheduleRow(scheduleId: number, rowId: number | null, 
     if (!/^-?\d*\.?\d+$/.test(t)) throw new Error(`${name}: type a number`);
     return Number(t);
   };
+  if (!r.label.trim() && !r.qty.trim() && !r.rate.trim() && !r.amount.trim()) return fail("Type the item and its quantity and rate, or an amount");
   let row: Record<string, unknown>;
   try {
     const amount = num(r.amount, "Amount", null);
@@ -256,9 +257,17 @@ export async function deleteDraft(versionId: number): Promise<Result> {
   return { ok: true };
 }
 
+/** `areas` and `category_reasons` are merged into what is saved, so two fields saved in quick succession both stay. */
 export async function updateVersion(versionId: number, patch: { as_on?: string; reason?: string | null; category_reasons?: Record<string, string>; areas?: object }): Promise<Result> {
   const sb = await createClient();
-  const { data, error } = await sb.from("budget_versions").update(patch).eq("id", versionId).select("id");
+  const row: Record<string, unknown> = { ...patch };
+  if (patch.areas || patch.category_reasons) {
+    const { data: cur, error: e0 } = await sb.from("budget_versions").select("areas, category_reasons").eq("id", versionId).single();
+    if (e0) return fail(e0);
+    if (patch.areas) row.areas = { ...(cur.areas ?? {}), ...patch.areas };
+    if (patch.category_reasons) row.category_reasons = { ...(cur.category_reasons ?? {}), ...patch.category_reasons };
+  }
+  const { data, error } = await sb.from("budget_versions").update(row).eq("id", versionId).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("Only the preparer of this draft can change it");
   refresh();

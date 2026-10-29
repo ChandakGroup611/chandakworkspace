@@ -847,13 +847,13 @@ export async function Setup(c: Ctx) {
         <F.ProjectForm key={project.id} p={project} /></section>}
       <section className="panel"><div className="panel-head"><h2>Towers · {project.name}</h2><span className="sub">{can ? "Typed only: name each tower and set its building type; the Summary groups construction by type." : "Read only for you."}</span></div>
         <div className="scroll"><table><thead><tr><th>Tower</th><th>Building type</th><th className="n">Carpet area (sft)</th><th className="n">Engg. construction area (sft)</th><th>OC date</th>{tf.map((f) => <th key={f.id} title={fieldTitle(f)}>{f.label}{f.required && " *"}</th>)}{can && <th></th>}</tr></thead><tbody>
-          {towers.map((t) => <F.TowerRow key={`${t.id}-${t.name}-${t.type}-${t.carpet_area}-${t.eng_area}-${t.oc_date}`} t={t} editable={can} customFields={tf} cells={tc.cells.get(t.id)} picks={picks} />)}
+          {towers.map((t) => <F.TowerRow key={t.id} t={t} editable={can} customFields={tf} cells={tc.cells.get(t.id)} picks={picks} />)}
           {towers.length === 0 && <tr><td colSpan={6 + tf.length}>No towers yet.</td></tr>}
         </tbody></table></div>
         {can && <F.AddTowerButton projectId={project.id} />}
       </section>
       {v && <section className="panel"><div className="panel-head"><h2>Areas for R{v.number}</h2><span className="sub">{editAreas ? "Typed here or imported from the workbook header; saved with this draft" : "Areas are kept per version; edit them on a draft version"}</span></div>
-        <F.AreasForm versionId={v.id} areas={v.areas as Record<string, unknown>} editable={editAreas} net={areas?.net_sale_carpet ?? null} />
+        <F.AreasForm key={v.id} versionId={v.id} areas={v.areas as Record<string, unknown>} editable={editAreas} net={areas?.net_sale_carpet ?? null} />
       </section>}
       <section className="panel"><div className="panel-head"><h2>Cost heads · {project.name}</h2><span className="sub">{heads.length} heads; one list, so names never drift between files</span></div>
         {can && <F.AddHeadForm projectId={project.id} departments={depts} baseOptions={baseOptions} summaryOptions={options} />}

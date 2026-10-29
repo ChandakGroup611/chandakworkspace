@@ -10,7 +10,7 @@ npm install
 
 `package.json` now lists `xlsx` (SheetJS 0.20.3 from cdn.sheetjs.com). The budget import uses it to read workbooks in the browser.
 
-## 2. Run the eleven database migrations, in order
+## 2. Run the twelve database migrations, in order
 
 ```
 supabase/migrations/20261028120000_budget_module.sql          tables, calculation views, roles and rights, RLS
@@ -24,6 +24,7 @@ supabase/migrations/20261028120700_budget_tower_workings.sql      tower workings
 supabase/migrations/20261028120800_budget_schedules.sql           supporting schedules behind Summary lines
 supabase/migrations/20261028120900_budget_bills.sql               cost incurred built up from bills
 supabase/migrations/20261028121000_budget_edit_delete.sql         edit bills, delete towers and cost heads
+supabase/migrations/20261028121100_budget_cycle_fixes.sql         memo items out of GST bases; no remarks needed on a first version
 ```
 
 You can run them with `supabase db push` or paste them into the Supabase SQL editor one by one. Every object they create is prefixed `budget_`, so nothing existing is changed. The only exception is the last file, which adds rows to existing tables:
