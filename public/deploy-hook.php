@@ -108,6 +108,35 @@ function ensurePreviewProps($appRoots) {
     }
 }
 
+// Helper: Ensure .htaccess with PassengerAppRoot is present in all possible document roots
+function syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective) {
+    $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
+    
+    // 1. Write to public_html
+    @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
+    @touch($domainRoot . '/public_html/.htaccess');
+    
+    // 2. Write to all primary app roots and their public subdirectories
+    foreach ((array)$primaryAppRoots as $targetRoot) {
+        if ($targetRoot && is_dir($targetRoot)) {
+            @file_put_contents($targetRoot . '/.htaccess', $pubHtaccess);
+            @touch($targetRoot . '/.htaccess');
+            if (is_dir($targetRoot . '/public')) {
+                @file_put_contents($targetRoot . '/public/.htaccess', $pubHtaccess);
+                @touch($targetRoot . '/public/.htaccess');
+            }
+        }
+    }
+    
+    // 3. Write to all public document roots
+    foreach ((array)$publicDocRoots as $pub) {
+        if ($pub && is_dir($pub)) {
+            @file_put_contents($pub . '/.htaccess', $pubHtaccess);
+            @touch($pub . '/.htaccess');
+        }
+    }
+}
+
 // Domain root discovery
 $domainRoot = '/home/u859582759/domains/chandakgroup.tech';
 if (!is_dir($domainRoot)) {
@@ -177,6 +206,9 @@ $publicDocRoots = array_values(array_unique(array_filter($publicDocRoots, 'is_di
 
 // Ensure preview-props.json is present in .next/server so Next.js never crashes with ENOENT
 ensurePreviewProps($primaryAppRoots);
+
+// Ensure .htaccess with PassengerAppRoot is present in all possible document roots
+syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective);
 
 // Diagnostic / Info Mode
 if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isset($_GET['logs'])) {
@@ -300,27 +332,8 @@ if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     @unlink($domainRoot . '/public_html/server.js');
     @unlink($domainRoot . '/public_html/package.json');
 
-    // Remove duplicate .htaccess from canonicalAppRoot and all primaryAppRoots
-    // ONLY public_html/.htaccess should declare PassengerAppRoot to prevent duplicate LiteSpeed worker pools
-    foreach ($primaryAppRoots as $targetRoot) {
-        if ($targetRoot !== $domainRoot . '/public_html') {
-            @unlink($targetRoot . '/.htaccess');
-        }
-    }
-    if ($versionedDirs) {
-        foreach ($versionedDirs as $vDir) {
-            if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
-                @unlink($vDir . '/.htaccess');
-                @unlink($vDir . '/public/.htaccess');
-                @unlink($vDir . '/tmp/restart.txt');
-            }
-        }
-    }
-
-    // Write pristine public_html/.htaccess with V8 and thread bounds
-    $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
-    @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
-    @touch($domainRoot . '/public_html/.htaccess');
+    // Sync .htaccess with PassengerAppRoot to ALL roots so LiteSpeed routes correctly regardless of vhost docroot
+    syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective);
 
     ensurePreviewProps($primaryAppRoots);
 
@@ -485,27 +498,8 @@ if ($zipFile && class_exists('ZipArchive')) {
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
 }
 
-// 1. Write to public_html/.htaccess pointing exclusively to canonical app root
-$pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
-@file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
-@touch($domainRoot . '/public_html/.htaccess');
-
-// 2. Remove duplicate .htaccess from canonicalAppRoot and all primaryAppRoots
-// ONLY public_html/.htaccess should declare PassengerAppRoot to prevent duplicate LiteSpeed worker pools
-foreach ($primaryAppRoots as $targetRoot) {
-    if ($targetRoot !== $domainRoot . '/public_html') {
-        @unlink($targetRoot . '/.htaccess');
-    }
-}
-if ($versionedDirs) {
-    foreach ($versionedDirs as $vDir) {
-        if ($vDir !== $canonicalAppRoot && realpath($vDir) !== realpath($canonicalAppRoot)) {
-            @unlink($vDir . '/.htaccess');
-            @unlink($vDir . '/public/.htaccess');
-            @unlink($vDir . '/tmp/restart.txt');
-        }
-    }
-}
+// 1. Sync .htaccess with PassengerAppRoot to ALL roots so LiteSpeed routes correctly regardless of vhost docroot
+syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective);
 
 // 3. Clean up any stray server.js in public_html
 @unlink($domainRoot . '/public_html/server.js');

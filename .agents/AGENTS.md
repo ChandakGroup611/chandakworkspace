@@ -15,12 +15,14 @@ You will ALWAYS double-check the logic of the fields, database columns, and code
 
 The project is deployed on a custom domain portal/server (standard Node environment), NOT on Vercel. Do not rely on serverless-specific features (like  ercel.json crons) or assume Vercel deployment constraints. Assume a long-running Node.js process unless told otherwise.
 
-## Zero-Downtime Deployment & Anti-503 Warmup Guarantee
+## Zero-Downtime Deployment, Anti-503 Warmup & Anti-403 Guarantee
 
-Deployments to the production server must strictly prevent `503 Service Unavailable` errors:
+Deployments to the production server must strictly prevent `503 Service Unavailable` and `403 Forbidden` errors:
 - **Zero Destructive Pre-Wipes**: Never delete `.next/server` prior to extracting deployment packages. Extraction must overwrite in-place to avoid `ENOENT` runtime crashes on in-flight requests.
 - **Standalone Runtime Manifests**: Always guarantee `preview-props.json` exists in standalone builds.
+- **Multi-Docroot .htaccess Synchronization**: Never delete `.htaccess` from target app directories. Synchronize `.htaccess` with `PassengerAppRoot` to `public_html`, all versioned app roots, and `public/` directories to prevent LiteSpeed static fallback 403 Forbidden errors.
 - **Automated Warmup Gate**: Every CI/CD deployment pipeline and deploy script MUST poll `/api/version` until `HTTP 200` (`status: "online"`) is received before notifying the user or declaring deployment done. Cold-boot latency must be absorbed by the deployment pipeline, never exposed to users.
+- **Orphan Process Cleanup**: Ensure orphan `lsnode.js` workers are reaped to prevent hitting CloudLinux LVE NPROC thread limits.
 
 ## Mandatory Self-Verification
 

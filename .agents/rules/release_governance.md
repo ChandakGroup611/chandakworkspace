@@ -363,6 +363,12 @@ To permanently prevent LiteSpeed/Passenger `503 Service Unavailable` errors duri
 5. **Elimination of Blind Status Reporting**:
    Deploy systems must never rely on static PHP endpoints or file-existence flags to declare health. Health validation MUST execute against the live Node.js application server.
 
+6. **Multi-Docroot .htaccess Synchronization & Zero 403 Forbidden Guarantee**:
+   LiteSpeed Web Server dynamically resolves document roots across `public_html`, active version paths (`hbuilds/versions/<uuid>/nodejs/public`), or symlinked current roots. Deployment scripts, workflows, and deploy-hooks must NEVER delete `.htaccess` from versioned application directories. `.htaccess` containing the exact `PassengerAppRoot` directives MUST be systematically synchronized across all potential docroots (`public_html`, target app roots, and `public/` directories) so that LiteSpeed never defaults to static directory indexing or serves `403 Forbidden: Access to this resource on the server is denied!`.
+
+7. **Orphan Process Cleanup & Resource Bounds**:
+   Repeated deploys and restarts must actively prune orphaned `lsnode.js` workers to avoid hitting CloudLinux LVE NPROC ceilings, which trigger `Assertion failed: uv_thread_create` and subsequent 503/403 connection aborts.
+
 ## 19. STOP-WORK CONDITIONS
 
 STOP implementation or release when:

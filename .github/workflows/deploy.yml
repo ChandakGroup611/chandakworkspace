@@ -187,8 +187,11 @@ jobs:
                 if [ -f "$target/package.json" ]; then
                   touch "$target/package.json"
                 fi
-                # Never keep .htaccess in app root - only public_html/.htaccess controls routing
-                rm -f "$target/.htaccess"
+                # Ensure .htaccess with PassengerAppRoot exists in target and target/public so LiteSpeed routes correctly regardless of vhost docroot
+                cp -f "$DOMAIN_ROOT/public_html/.htaccess" "$target/.htaccess" 2>/dev/null || true
+                if [ -d "$target/public" ]; then
+                  cp -f "$DOMAIN_ROOT/public_html/.htaccess" "$target/public/.htaccess" 2>/dev/null || true
+                fi
                 if [ -d "$target/.next" ]; then
                   cp -rf "$target/.next" "$DOMAIN_ROOT/public_html/" 2>/dev/null || true
                   cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/_next/" 2>/dev/null || true
