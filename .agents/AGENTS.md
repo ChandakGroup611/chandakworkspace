@@ -15,6 +15,13 @@ You will ALWAYS double-check the logic of the fields, database columns, and code
 
 The project is deployed on a custom domain portal/server (standard Node environment), NOT on Vercel. Do not rely on serverless-specific features (like  ercel.json crons) or assume Vercel deployment constraints. Assume a long-running Node.js process unless told otherwise.
 
+## Zero-Downtime Deployment & Anti-503 Warmup Guarantee
+
+Deployments to the production server must strictly prevent `503 Service Unavailable` errors:
+- **Zero Destructive Pre-Wipes**: Never delete `.next/server` prior to extracting deployment packages. Extraction must overwrite in-place to avoid `ENOENT` runtime crashes on in-flight requests.
+- **Standalone Runtime Manifests**: Always guarantee `preview-props.json` exists in standalone builds.
+- **Automated Warmup Gate**: Every CI/CD deployment pipeline and deploy script MUST poll `/api/version` until `HTTP 200` (`status: "online"`) is received before notifying the user or declaring deployment done. Cold-boot latency must be absorbed by the deployment pipeline, never exposed to users.
+
 ## Mandatory Self-Verification
 
 Whenever you are given a requirement, report an issue, or report an error, you MUST independently verify your fix from your end. After writing code or making modifications, do not just assume it works. You must run relevant checks (e.g., `npx tsc --noEmit`, linters, or test scripts), check logs, and definitively confirm that the changes actually resolve the stated issue before notifying the user that it is complete. You are responsible for the final quality assurance of your own changes.

@@ -252,6 +252,26 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     exit;
 }
 
+// Dedicated Warmup Action: pre-warm Passenger worker so human users never encounter cold-start 503
+if (isset($_GET['warmup'])) {
+    ensurePreviewProps($primaryAppRoots);
+    $ctx = stream_context_create([
+        'http' => [
+            'timeout' => 5,
+            'ignore_errors' => true,
+            'header' => "User-Agent: DeployHook-Warmup\r\n"
+        ]
+    ]);
+    @file_get_contents('http://127.0.0.1:3000/api/version', false, $ctx);
+    @file_get_contents('https://chandakgroup.tech/api/version', false, $ctx);
+    echo json_encode([
+        'success' => true,
+        'action' => 'warmup',
+        'timestamp' => date('Y-m-d H:i:s')
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 // Dedicated Force Restart Action
 if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     $killOut = [];
@@ -379,12 +399,10 @@ if ($zipFile && class_exists('ZipArchive')) {
             @mkdir($target, 0755, true);
         }
         
-        // Clear stale Next.js cache and old server/static files to avoid collisions
+        // Clear stale Next.js cache and public chunks to avoid collisions
+        // DO NOT delete .next/server beforehand: running Node workers require files in-place to avoid ENOENT crashes!
         if (is_dir($target . '/.next/cache')) {
             recursiveRemove($target . '/.next/cache');
-        }
-        if (is_dir($target . '/.next/server')) {
-            recursiveRemove($target . '/.next/server');
         }
         if (is_dir($target . '/_next')) {
             recursiveRemove($target . '/_next');

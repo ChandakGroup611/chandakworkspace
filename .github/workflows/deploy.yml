@@ -170,8 +170,9 @@ jobs:
             
             for target in "${TARGET_DIRS[@]}"; do
               if [ -d "$target" ]; then
-                echo "Cleaning stale cache and old chunks in: $target"
-                rm -rf "$target/.next/cache" "$target/.next/server" "$target/_next" "$target/public/_next"
+                echo "Preparing target for in-place atomic extraction: $target"
+                # Never delete .next/server prior to extraction - running workers need it to avoid ENOENT crashes
+                rm -rf "$target/.next/cache" "$target/_next" "$target/public/_next"
                 if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
                   unzip -o -q "$ZIP_PATH" -d "$target" 2>/dev/null || php -r '$z = new ZipArchive(); if ($z->open("'"$ZIP_PATH"'") === TRUE) { $z->extractTo("'"$target"'"); $z->close(); echo "Extracted via PHP ZipArchive to '"$target"'\n"; } else { echo "Failed to extract via PHP\n"; }'
                 fi
@@ -229,17 +230,42 @@ jobs:
           RESPONSE=$(curl -sS --connect-timeout 10 --max-time 45 --retry 3 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY" || echo '{"success":true}')
           echo "Hook Response: $RESPONSE"
 
-      # Final Live Status Verification
-      - name: Verify Live Deployment Status
+      # Final Live Status Verification & Automated Zero-Downtime Warmup Gate
+      - name: Verify Live Deployment Status & Warmup Worker
+        timeout-minutes: 3
         run: |
-          sleep 3
-          echo "Verifying server status..."
+          echo "Initiating automated application warmup..."
           DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
           if [ -z "$DEPLOY_KEY" ]; then
             DEPLOY_KEY="chandak_deploy_secret_2026"
           fi
-          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&info=1" || echo "no-info")
-          echo "Server Info: $INFO"
+          
+          # 1. Trigger deploy-hook extraction and internal warmup
+          curl -sS --connect-timeout 10 --max-time 45 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&warmup=1" || true
+          
+          # 2. Execute active warmup polling loop directly against Node.js /api/version
+          echo "Warming up Node.js Passenger worker..."
+          WARM=false
+          for i in {1..20}; do
+            HTTP_CODE=$(curl -s -o /tmp/warmup_resp.json -w "%{http_code}" --connect-timeout 5 --max-time 10 "https://chandakgroup.tech/api/version" || echo "000")
+            echo "Attempt $i: HTTP $HTTP_CODE"
+            if [ "$HTTP_CODE" = "200" ]; then
+              if grep -q '"status":"online"' /tmp/warmup_resp.json 2>/dev/null; then
+                echo "SUCCESS: Passenger Node.js worker is warm, responsive, and online!"
+                cat /tmp/warmup_resp.json
+                echo ""
+                WARM=true
+                break
+              fi
+            fi
+            sleep 2
+          done
+          
+          if [ "$WARM" != "true" ]; then
+            echo "::error::Deployment warmup gate failed! Node.js did not reach healthy 200 state."
+            curl -sS "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&info=1" || true
+            exit 1
+          fi
 
       - name: Update Deployment Status
         uses: bobheadxi/deployments@v1

@@ -344,6 +344,25 @@ If the deployed application uses stale or incorrect code, STOP further rollout, 
 
 Do not automatically roll back database changes or perform destructive recovery without evaluating data integrity and migration compatibility.
 
+### 18.1 ZERO-DOWNTIME DEPLOYMENT & MANDATORY WARMUP GATE (ANTI-503 PROTOCOL)
+
+To permanently prevent LiteSpeed/Passenger `503 Service Unavailable` errors during and immediately following releases, the following rules are non-negotiable and strictly binding:
+
+1. **Zero Blind Wipes (In-Place Atomic Overwrites)**:
+   Deployment workflows, SSH scripts, and deploy-hooks must NEVER execute destructive pre-extraction wipes (such as `rm -rf .next/server`) while the Node.js process is active. Running workers require runtime manifests and page chunks to remain in place to prevent fatal `ENOENT` process exits during incoming requests. Releases must extract over existing files (`unzip -o` or atomic directory swapping).
+
+2. **Standalone Runtime Manifest Guarantee**:
+   Next.js standalone packaging in CI/CD must unconditionally package all server manifests into `.next/standalone/.next/server/`, specifically `preview-props.json`, `routes-manifest.json`, and `prerender-manifest.json`. If missing from standard tracing, fallbacks must be injected during packaging and verified by the deployment hook.
+
+3. **Graceful Process Transition**:
+   Worker recycling must prioritize graceful passenger reloads (`touch tmp/restart.txt`) over abrupt `kill -9` terminations to prevent severed TCP sockets and in-flight request dropped connections.
+
+4. **Mandatory CI/CD Automated Warmup Gate**:
+   A deployment is NEVER considered complete merely because files were transferred or FTP completed. The deployment pipeline (and deploy scripts) MUST execute an automated polling warmup loop against `https://chandakgroup.tech/api/version`. The pipeline must absorb the 2–5 second worker cold-boot window and definitively confirm `HTTP 200` with `status: "online"` before marking the release successful or notifying users.
+
+5. **Elimination of Blind Status Reporting**:
+   Deploy systems must never rely on static PHP endpoints or file-existence flags to declare health. Health validation MUST execute against the live Node.js application server.
+
 ## 19. STOP-WORK CONDITIONS
 
 STOP implementation or release when:
