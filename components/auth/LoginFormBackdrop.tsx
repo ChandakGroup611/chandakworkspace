@@ -91,6 +91,7 @@ export const formMotion = {
   underline: s.underline,
   logoBadge: s.logoBadge,
   logoBadgeInner: s.logoBadgeInner,
+  logoBadgeContainer: s.logoBadgeContainer,
 };
 
 /** Page-level blend: `sceneBleed` wraps the 3D scene so it runs on under the form side and fades out;

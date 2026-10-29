@@ -228,6 +228,20 @@
 }
 
 /* ---------- animated logo badge ---------- */
+.logoBadgeContainer {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Ambient multi-tier shadow that physically grounds the badge to the card */
+  filter: drop-shadow(0 14px 24px color-mix(in srgb, var(--a1) 28%, transparent))
+          drop-shadow(0 4px 10px rgba(0, 0, 0, 0.08));
+}
+
 .logoBadge {
   --a1: var(--accent-primary, #702963);
   --a2: var(--accent-secondary, #5a1f4f);
@@ -236,21 +250,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
-  border-radius: 18px;
+  padding: 2.5px;
+  border-radius: 22px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--border, #e2e8f0) 80%, transparent);
-  box-shadow:
-    0 12px 28px -4px color-mix(in srgb, var(--a1) 28%, transparent),
-    0 4px 12px -2px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: color-mix(in srgb, var(--border, #e2e8f0) 85%, transparent);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.logoBadge:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 16px 32px -4px color-mix(in srgb, var(--a1) 36%, transparent),
-    0 6px 14px -2px rgba(0, 0, 0, 0.1);
+.logoBadgeContainer:hover .logoBadge {
+  transform: translateY(-2px) scale(1.015);
 }
 
 .logoBadge::before {
@@ -266,7 +274,7 @@
     color-mix(in srgb, var(--a1) 20%, transparent) 40deg,
     var(--a1) 85deg,
     var(--a3) 125deg,
-    color-mix(in srgb, var(--a1) 25%, transparent) 165deg,
+    color-mix(in srgb, var(--a1) 30%, transparent) 165deg,
     transparent 205deg 360deg
   );
   animation: rotateLogoBorder 4.5s linear infinite;
@@ -279,10 +287,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 22px;
-  border-radius: 16px;
-  background: var(--bg-surface, #ffffff);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 12px 32px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, 
+    color-mix(in srgb, var(--bg-surface, #ffffff) 98%, #ffffff) 0%, 
+    color-mix(in srgb, var(--bg-surface, #ffffff) 92%, #f8fafc) 100%
+  );
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow:
+    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.04),
+    0 2px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 @keyframes rotateLogoBorder {
