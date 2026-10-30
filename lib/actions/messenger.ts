@@ -270,13 +270,19 @@ export async function fetchMessengerConversations(): Promise<MessengerConversati
       const lastReadAt = myPart?.last_read_at || conv.created_at;
       const isPinned = myPart?.is_pinned || false;
 
-      // Count unread messages (not sent by self)
-      const { count } = await supabaseAdmin
+      // Count unread messages (not sent by self, not deleted, and after last_read_at)
+      let unreadQuery = supabaseAdmin
         .from("messenger_messages")
         .select("*", { count: "exact", head: true })
         .eq("conversation_id", conv.id)
         .neq("sender_id", currentUserId)
-        .gt("created_at", lastReadAt);
+        .eq("is_deleted", false);
+
+      if (myPart?.last_read_at) {
+        unreadQuery = unreadQuery.gt("created_at", myPart.last_read_at);
+      }
+
+      const { count } = await unreadQuery;
 
       const participants = partsByConv.get(conv.id) || [];
       let otherUser: WorkspaceUser | null = null;
@@ -910,9 +916,9 @@ export async function deleteMessengerMessage(messageId: string): Promise<{ succe
 /**
  * Get total unread messages count across all conversations for current user.
  */
-export async function getMessengerTotalUnreadCount(): Promise<number> {
+export async function getMessengerTotalUnreadCount(targetUserId?: string): Promise<number> {
   try {
-    const currentUserId = await getAuthUser();
+    const currentUserId = targetUserId || (await getAuthUser());
 
     const { data: participations } = await supabaseAdmin
       .from("messenger_participants")
@@ -923,17 +929,46 @@ export async function getMessengerTotalUnreadCount(): Promise<number> {
 
     let total = 0;
     for (const p of participations) {
-      const { count } = await supabaseAdmin
+      let query = supabaseAdmin
         .from("messenger_messages")
         .select("*", { count: "exact", head: true })
         .eq("conversation_id", p.conversation_id)
         .neq("sender_id", currentUserId)
-        .gt("created_at", p.last_read_at);
+        .eq("is_deleted", false);
+
+      if (p.last_read_at) {
+        query = query.gt("created_at", p.last_read_at);
+      }
+
+      const { count } = await query;
       total += count || 0;
     }
     return total;
-  } catch {
+  } catch (err) {
+    console.error("getMessengerTotalUnreadCount error:", err);
     return 0;
+  }
+}
+
+/**
+ * Fetch sender preview info for real-time floating in-app notification.
+ */
+export async function fetchSenderInfoForNotification(
+  senderId: string
+): Promise<{ full_name: string; profile_photo: string | null }> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("user_master")
+      .select("full_name, profile_photo")
+      .eq("id", senderId)
+      .maybeSingle();
+
+    return {
+      full_name: data?.full_name || "Colleague",
+      profile_photo: data?.profile_photo || null,
+    };
+  } catch {
+    return { full_name: "Colleague", profile_photo: null };
   }
 }
 

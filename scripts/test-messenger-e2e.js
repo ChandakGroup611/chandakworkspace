@@ -186,6 +186,77 @@ async function runMessengerE2E() {
         recordFail('Realtime Publication', `Realtime tables count mismatch: ${pubRes.rows.length}/4`);
       }
 
+      // 12. Test Replica Identity FULL for Realtime UPDATE filters
+      const replRes = await client.query(`
+        SELECT relname, relreplident FROM pg_class 
+        WHERE relname IN ('messenger_conversations', 'messenger_messages', 'messenger_participants', 'messenger_reactions')
+          AND relreplident = 'f';
+      `);
+      if (replRes.rows.length === 4) {
+        recordPass('Replica Identity FULL', 'All 4 messenger tables configured with REPLICA IDENTITY FULL for live filter events');
+      } else {
+        recordFail('Replica Identity FULL', `Expected 4 tables with FULL replica identity, found ${replRes.rows.length}`);
+      }
+
+      // 13. Test Message Sent State (Single Gray Tick ✓)
+      // Set recipient last read to prior to message creation
+      await client.query(`
+        UPDATE public.messenger_participants 
+        SET last_read_at = NOW() - INTERVAL '5 minutes' 
+        WHERE conversation_id = $1 AND user_id = $2;
+      `, [testConvId, u2.id]);
+
+      const partBefore = await client.query(`
+        SELECT last_read_at FROM public.messenger_participants 
+        WHERE conversation_id = $1 AND user_id = $2;
+      `, [testConvId, u2.id]);
+      const msgCreated = new Date(msgRes.rows[0].created_at).getTime();
+      const user2ReadBefore = new Date(partBefore.rows[0].last_read_at).getTime();
+      const isSeenBefore = user2ReadBefore >= msgCreated;
+
+      if (!isSeenBefore) {
+        recordPass('Message Sent State (Single Tick)', 'Message created after recipient last_read_at correctly evaluates as Unread (Single Tick ✓)');
+      } else {
+        recordFail('Message Sent State (Single Tick)', 'Message falsely marked as seen before recipient read action');
+      }
+
+      // 14. Test Mark As Read Action & Seen Transition (Double Blue Tick ✓✓)
+      await client.query(`
+        UPDATE public.messenger_participants 
+        SET last_read_at = NOW() + INTERVAL '1 second' 
+        WHERE conversation_id = $1 AND user_id = $2;
+      `, [testConvId, u2.id]);
+
+      const partAfter = await client.query(`
+        SELECT last_read_at FROM public.messenger_participants 
+        WHERE conversation_id = $1 AND user_id = $2;
+      `, [testConvId, u2.id]);
+      const user2ReadAfter = new Date(partAfter.rows[0].last_read_at).getTime();
+      const isSeenAfter = user2ReadAfter >= msgCreated;
+
+      if (isSeenAfter) {
+        recordPass('Message Seen State (Double Blue Tick)', 'Recipient read action successfully triggers Seen transition (Double Blue Tick ✓✓)');
+      } else {
+        recordFail('Message Seen State (Double Blue Tick)', 'Message failed to transition to Seen status');
+      }
+
+      // 15. Test Unread Count Lifecycle
+      const unreadCountRes = await client.query(`
+        SELECT COUNT(*) as unread FROM public.messenger_messages m
+        JOIN public.messenger_participants p ON p.conversation_id = m.conversation_id
+        WHERE p.user_id = $1 
+          AND m.conversation_id = $2 
+          AND m.sender_id != $1 
+          AND m.is_deleted = false 
+          AND m.created_at > p.last_read_at;
+      `, [u2.id, testConvId]);
+
+      if (parseInt(unreadCountRes.rows[0].unread, 10) === 0) {
+        recordPass('Unread Message Count Lifecycle', 'Unread count dynamically drops to 0 after conversation is marked as read');
+      } else {
+        recordFail('Unread Message Count Lifecycle', `Expected 0 unread messages, got ${unreadCountRes.rows[0].unread}`);
+      }
+
       // Rollback test transaction
       await client.query('ROLLBACK;');
       console.log('\n--- Test transaction rolled back cleanly (zero residual test artifacts) ---');

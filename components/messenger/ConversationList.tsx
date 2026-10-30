@@ -10,6 +10,8 @@ import {
   Clock,
   Sparkles,
   Building,
+  Check,
+  CheckCheck,
 } from "lucide-react";
 import {
   MessengerConversation,
@@ -20,6 +22,7 @@ import {
 interface ConversationListProps {
   conversations: MessengerConversation[];
   activeConversationId: string | null;
+  currentUserId?: string;
   onSelectConversation: (conversation: MessengerConversation) => void;
   onOpenNewChat: () => void;
   onOpenNewGroup: () => void;
@@ -30,6 +33,7 @@ interface ConversationListProps {
 export function ConversationList({
   conversations,
   activeConversationId,
+  currentUserId,
   onSelectConversation,
   onOpenNewChat,
   onOpenNewGroup,
@@ -246,25 +250,48 @@ export function ConversationList({
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between gap-1 text-[11.5px]">
-                    <span
-                      className={`truncate ${
-                        c.unread_count > 0 ? "text-foreground font-medium" : "text-muted"
-                      }`}
-                    >
-                      {c.last_message_preview || "No messages"}
-                    </span>
+                  {(() => {
+                    const isLastFromMe = c.last_message_sender_id === currentUserId;
+                    const otherPart = c.participants?.find((p) => p.user_id !== currentUserId);
+                    const isLastSeen =
+                      isDirect &&
+                      otherPart?.last_read_at &&
+                      c.last_message_at &&
+                      new Date(otherPart.last_read_at).getTime() >= new Date(c.last_message_at).getTime();
 
-                    {/* Unread & Pin Badges */}
-                    <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                      {c.is_pinned && <Pin className="h-3 w-3 text-accent fill-accent shrink-0" />}
-                      {c.unread_count > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-accent-contrast text-[10px] font-bold">
-                          {c.unread_count > 99 ? "99+" : c.unread_count}
+                    return (
+                      <div className="flex items-center justify-between gap-1 text-[11.5px]">
+                        <span
+                          className={`truncate flex items-center gap-1 ${
+                            c.unread_count > 0 ? "text-foreground font-semibold" : "text-muted"
+                          }`}
+                        >
+                          {isLastFromMe && (
+                            isLastSeen ? (
+                              <span title="Seen" className="inline-flex items-center shrink-0">
+                                <CheckCheck className="h-3.5 w-3.5 text-sky-400 stroke-[2.5]" />
+                              </span>
+                            ) : (
+                              <span title="Sent" className="inline-flex items-center shrink-0">
+                                <Check className="h-3.5 w-3.5 text-muted stroke-[2]" />
+                              </span>
+                            )
+                          )}
+                          <span className="truncate">{c.last_message_preview || "No messages"}</span>
                         </span>
-                      )}
-                    </div>
-                  </div>
+
+                        {/* Unread & Pin Badges */}
+                        <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                          {c.is_pinned && <Pin className="h-3 w-3 text-accent fill-accent shrink-0" />}
+                          {c.unread_count > 0 && (
+                            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-accent-contrast text-[10px] font-bold shadow-xs animate-in zoom-in-50 duration-150">
+                              {c.unread_count > 99 ? "99+" : c.unread_count}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Pin toggle hover button */}
                   <button

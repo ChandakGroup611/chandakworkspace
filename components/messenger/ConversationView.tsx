@@ -26,6 +26,7 @@ import {
 import {
   MessengerConversation,
   MessengerMessage,
+  MessengerParticipant,
   MessengerAttachment,
   WorkspaceUser,
   fetchMessengerMessages,
@@ -56,6 +57,9 @@ export function ConversationView({
   onConversationUpdated,
 }: ConversationViewProps) {
   const [messages, setMessages] = useState<MessengerMessage[]>([]);
+  const [participants, setParticipants] = useState<MessengerParticipant[]>(
+    conversation.participants || []
+  );
   const [loading, setLoading] = useState(true);
   const [replyTo, setReplyTo] = useState<{
     id: string;
@@ -73,6 +77,13 @@ export function ConversationView({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  // Keep participants in sync with conversation updates
+  useEffect(() => {
+    if (conversation.participants) {
+      setParticipants(conversation.participants);
+    }
+  }, [conversation.participants]);
 
   // Scroll to bottom helper
   const scrollToBottom = useCallback((smooth = true) => {
@@ -153,12 +164,87 @@ export function ConversationView({
           );
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messenger_participants",
+          filter: `conversation_id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          const updatedUserId = payload.new.user_id;
+          const updatedLastRead = payload.new.last_read_at;
+          setParticipants((prev) =>
+            prev.map((p) =>
+              p.user_id === updatedUserId
+                ? { ...p, last_read_at: updatedLastRead }
+                : p
+            )
+          );
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [conversation.id, supabase, scrollToBottom]);
+
+  // Dynamic WhatsApp-style Read Receipts Calculation
+  const getReadReceipt = useCallback(
+    (msg: MessengerMessage) => {
+      // 1. Direct Conversation
+      if (conversation.type === "direct") {
+        const other = participants.find((p) => p.user_id !== currentUserId);
+        const isSeen =
+          other?.last_read_at &&
+          new Date(other.last_read_at).getTime() >= new Date(msg.created_at).getTime();
+
+        if (isSeen) {
+          return {
+            status: "seen",
+            label: `Read by ${other?.user?.full_name || "colleague"}`,
+            icon: <CheckCheck className="h-3.5 w-3.5 text-sky-400 stroke-[2.5]" />,
+          };
+        }
+        return {
+          status: "sent",
+          label: "Sent",
+          icon: <Check className="h-3.5 w-3.5 text-white/70 stroke-[2]" />,
+        };
+      }
+
+      // 2. Group Conversation
+      const others = participants.filter((p) => p.user_id !== currentUserId);
+      const readMembers = others.filter(
+        (p) =>
+          p.last_read_at &&
+          new Date(p.last_read_at).getTime() >= new Date(msg.created_at).getTime()
+      );
+
+      if (others.length > 0 && readMembers.length === others.length) {
+        return {
+          status: "seen",
+          label: `Read by all members (${readMembers.length})`,
+          icon: <CheckCheck className="h-3.5 w-3.5 text-sky-400 stroke-[2.5]" />,
+        };
+      }
+      if (readMembers.length > 0) {
+        return {
+          status: "delivered",
+          label: `Read by ${readMembers.length} of ${others.length} members`,
+          icon: <CheckCheck className="h-3.5 w-3.5 text-white/70 stroke-[2]" />,
+        };
+      }
+      return {
+        status: "sent",
+        label: "Sent",
+        icon: <Check className="h-3.5 w-3.5 text-white/70 stroke-[2]" />,
+      };
+    },
+    [conversation.type, participants, currentUserId]
+  );
 
   // Handle Send Message
   const handleSendMessage = async (payload: SendMessagePayload): Promise<boolean> => {
@@ -549,7 +635,14 @@ export function ConversationView({
                     <div className="flex items-center justify-end gap-1 mt-1 text-[10px] opacity-70 select-none">
                       <span>{timeStr}</span>
                       {isMe && !msg.is_deleted && (
-                        <CheckCheck className="h-3 w-3 text-current" />
+                        (() => {
+                          const receipt = getReadReceipt(msg);
+                          return (
+                            <span title={receipt.label} className="inline-flex items-center ml-0.5">
+                              {receipt.icon}
+                            </span>
+                          );
+                        })()
                       )}
                     </div>
                   </div>

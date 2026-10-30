@@ -17,6 +17,7 @@ import {
   WorkspaceUser,
   fetchMessengerConversations,
   fetchWorkspaceUsersForMessenger,
+  markConversationAsRead,
 } from "@/lib/actions/messenger";
 import { ConversationList } from "./ConversationList";
 import { ConversationView } from "./ConversationView";
@@ -28,12 +29,18 @@ interface ChandakMessengerDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   currentUserId: string;
+  initialConversationId?: string | null;
+  onClearInitialConversation?: () => void;
+  onUnreadChange?: () => void;
 }
 
 export function ChandakMessengerDrawer({
   isOpen,
   onClose,
   currentUserId,
+  initialConversationId,
+  onClearInitialConversation,
+  onUnreadChange,
 }: ChandakMessengerDrawerProps) {
   const [conversations, setConversations] = useState<MessengerConversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<MessengerConversation | null>(null);
@@ -56,6 +63,23 @@ export function ChandakMessengerDrawer({
   useEffect(() => {
     activeConversationRef.current = activeConversation;
   }, [activeConversation]);
+
+  // Open initial conversation if passed from notification
+  useEffect(() => {
+    if (initialConversationId && conversations.length > 0) {
+      const match = conversations.find((c) => c.id === initialConversationId);
+      if (match) {
+        setActiveConversation(match);
+        setConversations((prev) =>
+          prev.map((c) => (c.id === match.id ? { ...c, unread_count: 0 } : c))
+        );
+        markConversationAsRead(match.id).then(() => {
+          onUnreadChange?.();
+        });
+        onClearInitialConversation?.();
+      }
+    }
+  }, [initialConversationId, conversations, onClearInitialConversation, onUnreadChange]);
 
   // Fetch initial conversations and workspace users
   const loadData = useCallback(async () => {
@@ -81,6 +105,19 @@ export function ChandakMessengerDrawer({
     }
   }, [currentUserId]);
 
+  const handleSelectConversation = useCallback(
+    (conv: MessengerConversation) => {
+      setActiveConversation(conv);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conv.id ? { ...c, unread_count: 0 } : c))
+      );
+      markConversationAsRead(conv.id).then(() => {
+        onUnreadChange?.();
+      });
+    },
+    [onUnreadChange]
+  );
+
   useEffect(() => {
     if (isOpen) {
       loadData();
@@ -100,8 +137,12 @@ export function ChandakMessengerDrawer({
           schema: "public",
           table: "messenger_messages",
         },
-        () => {
+        (payload) => {
+          if (activeConversationRef.current?.id === payload.new.conversation_id) {
+            markConversationAsRead(payload.new.conversation_id).catch(() => {});
+          }
           loadData();
+          onUnreadChange?.();
         }
       )
       .on(
@@ -113,6 +154,18 @@ export function ChandakMessengerDrawer({
         },
         () => {
           loadData();
+          onUnreadChange?.();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messenger_participants",
+        },
+        () => {
+          loadData();
         }
       )
       .subscribe();
@@ -120,7 +173,7 @@ export function ChandakMessengerDrawer({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUserId, supabase, loadData]);
+  }, [currentUserId, supabase, loadData, onUnreadChange]);
 
   if (!mounted || !isOpen) return null;
 
@@ -182,7 +235,8 @@ export function ChandakMessengerDrawer({
             <ConversationList
               conversations={conversations}
               activeConversationId={activeConversation?.id || null}
-              onSelectConversation={(conv) => setActiveConversation(conv)}
+              currentUserId={currentUserId}
+              onSelectConversation={handleSelectConversation}
               onOpenNewChat={() => setShowNewChat(true)}
               onOpenNewGroup={() => setShowNewGroup(true)}
               onRefresh={loadData}
