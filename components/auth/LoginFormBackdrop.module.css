@@ -22,27 +22,63 @@
   z-index: 0;
   contain: layout paint;
   background:
+    radial-gradient(100% 85% at 0% 50%, color-mix(in srgb, var(--a1) 14%, transparent) 0%, transparent 70%),
     radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--a1) 9%, transparent), transparent 60%),
     radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--a2) 9%, transparent), transparent 60%);
 }
 
 /* ---------- the 3D scene bleeding under the form side (page-level blend) ---------- */
 .sceneBleed {
-  position: absolute; top: 0; bottom: 0; left: -12%; right: -12%;
-  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 66%, rgba(0,0,0,.55) 82%, transparent 100%);
-  mask-image: linear-gradient(to right, #000 0%, #000 66%, rgba(0,0,0,.55) 82%, transparent 100%);
+  position: absolute; top: 0; bottom: 0; left: 0; right: -28%;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 55%,
+    rgba(0, 0, 0, 0.94) 66%,
+    rgba(0, 0, 0, 0.82) 74%,
+    rgba(0, 0, 0, 0.60) 82%,
+    rgba(0, 0, 0, 0.35) 89%,
+    rgba(0, 0, 0, 0.15) 94%,
+    rgba(0, 0, 0, 0.03) 98%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 55%,
+    rgba(0, 0, 0, 0.94) 66%,
+    rgba(0, 0, 0, 0.82) 74%,
+    rgba(0, 0, 0, 0.60) 82%,
+    rgba(0, 0, 0, 0.35) 89%,
+    rgba(0, 0, 0, 0.15) 94%,
+    rgba(0, 0, 0, 0.03) 98%,
+    transparent 100%
+  );
 }
-/* the seam between the halves: colours the dark-to-light fade with the theme accent (blend mode
-   "color" keeps the brightness underneath and takes only the hue), so it melts instead of turning grey */
+/* the seam between the halves: ultra-smooth merge divide with soft ambient glow and subtle hairline */
 .seam {
-  position: absolute; top: 0; bottom: 0; left: 34%; width: 34%;
-  z-index: 1;
+  position: absolute; top: 0; bottom: 0; left: calc(50% - 90px); width: 180px;
+  z-index: 2;
   pointer-events: none;
-  background: var(--a1);
-  mix-blend-mode: color;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 35%, #000 65%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 35%, #000 65%, transparent);
+  background: radial-gradient(ellipse 90px 70% at 50% 50%, color-mix(in srgb, var(--a1) 20%, transparent) 0%, color-mix(in srgb, var(--a1) 6%, transparent) 50%, transparent 80%);
   animation: seamBreathe 6s ease-in-out infinite;
+}
+.seam::after {
+  content: "";
+  position: absolute;
+  top: 10%; bottom: 10%;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--a1) 25%, var(--border, rgba(148,163,184,0.18))) 15%,
+    color-mix(in srgb, var(--a1) 50%, var(--border, rgba(148,163,184,0.35))) 50%,
+    color-mix(in srgb, var(--a1) 25%, var(--border, rgba(148,163,184,0.18))) 85%,
+    transparent 100%
+  );
+  opacity: 0.7;
 }
 @media (max-width: 1023px) { .seam { display: none; } }
 
@@ -52,9 +88,9 @@
   opacity: 0;
   animation: designCycle 12s linear infinite;
   animation-delay: calc(var(--s) * 3s);
-  /* fade in from the left edge, where the 3D scene blends in */
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 22%);
+  /* fade in smoothly from the left edge, where the 3D scene blends in */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 6%, rgba(0,0,0,0.6) 14%, #000 24%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 6%, rgba(0,0,0,0.6) 14%, #000 24%);
 }
 
 /* design 1: aurora */
@@ -336,7 +372,7 @@
 /* ---------- keyframes ---------- */
 @keyframes designCycle { 0% { opacity: 0; } 8%, 25% { opacity: 1; } 33%, 100% { opacity: 0; } }
 @keyframes ringOut { 0% { transform: scale(.6); opacity: 0; } 12% { opacity: 1; } 70% { opacity: .55; } 100% { transform: scale(2.8); opacity: 0; } }
-@keyframes seamBreathe { 0%, 100% { opacity: .38; } 50% { opacity: .55; } }
+@keyframes seamBreathe { 0%, 100% { opacity: .55; } 50% { opacity: .85; } }
 @keyframes pulseGlow { 0%, 100% { transform: scale(.92); opacity: .7; } 50% { transform: scale(1.06); opacity: 1; } }
 @keyframes beamMove { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(217.5px, 101.4px, 0); } }
 @keyframes sweep { from { background-position: 100% 0; } to { background-position: 0% 0; } }
