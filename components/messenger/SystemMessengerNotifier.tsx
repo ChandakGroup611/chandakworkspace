@@ -75,12 +75,16 @@ export function SystemMessengerNotifier() {
     }
   }, [profile?.id, profile?.full_name]);
 
-  // Request browser notification permission proactively on user gesture
+  // Request browser notification permission and register service worker for native device alerts
   useEffect(() => {
-    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (typeof window === "undefined") return;
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
 
     const requestPerm = () => {
-      if (Notification.permission === "default") {
+      if ("Notification" in window && Notification.permission === "default") {
         Notification.requestPermission().catch(() => {});
       }
     };
@@ -211,25 +215,39 @@ export function SystemMessengerNotifier() {
           // 3. Flash document title
           flashTitle(sender.full_name);
 
-          // 4. Native OS / Desktop Notification (fires even when browser is minimized or in background)
+          // 4. Native OS / Desktop / Device Notification (fires even when browser is minimized or in background)
           if ("Notification" in window && Notification.permission === "granted") {
             try {
-              const notif = new Notification(sender.full_name, {
-                body: preview,
-                icon: sender.profile_photo || "/chandak-40-icon.png",
-                badge: "/chandak-40-icon.png",
-                tag: `msg-${newMsg.id}`,
-              });
+              if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+                const reg = await navigator.serviceWorker.ready;
+                await reg.showNotification(sender.full_name, {
+                  body: preview,
+                  icon: sender.profile_photo || "/chandak-40-icon.png",
+                  badge: "/chandak-40-icon.png",
+                  tag: `msg-${newMsg.id}`,
+                  data: {
+                    url: `/#messenger:${newMsg.conversation_id}`,
+                    conversationId: newMsg.conversation_id,
+                  },
+                });
+              } else {
+                const notif = new Notification(sender.full_name, {
+                  body: preview,
+                  icon: sender.profile_photo || "/chandak-40-icon.png",
+                  badge: "/chandak-40-icon.png",
+                  tag: `msg-${newMsg.id}`,
+                });
 
-              notif.onclick = () => {
-                window.focus();
-                window.dispatchEvent(
-                  new CustomEvent("open-chandak-messenger", {
-                    detail: { conversationId: newMsg.conversation_id },
-                  })
-                );
-                notif.close();
-              };
+                notif.onclick = () => {
+                  window.focus();
+                  window.dispatchEvent(
+                    new CustomEvent("open-chandak-messenger", {
+                      detail: { conversationId: newMsg.conversation_id },
+                    })
+                  );
+                  notif.close();
+                };
+              }
             } catch {
               // Ignore native notification errors
             }

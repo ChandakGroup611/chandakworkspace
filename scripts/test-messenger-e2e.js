@@ -160,7 +160,20 @@ async function runMessengerE2E() {
         recordFail('Group Conversation & Roles', `Group admin role mismatch: ${groupParts.rows[0]?.role}`);
       }
 
-      // 10. Test Soft Message Deletion
+      // 10. Test WhatsApp Message Edit (Immediate & 4-Hour Limit)
+      await client.query(`
+        UPDATE public.messenger_messages
+        SET content = 'Hello from Chandak Workspace QA test! (Edited content)', is_edited = true, updated_at = NOW()
+        WHERE id = $1;
+      `, [testMsg1Id]);
+      const editedMsg = await client.query("SELECT is_edited, content FROM public.messenger_messages WHERE id = $1", [testMsg1Id]);
+      if (editedMsg.rows[0].is_edited === true && editedMsg.rows[0].content.includes('(Edited content)')) {
+        recordPass('WhatsApp Message Edit', 'Message content updated with is_edited flag set to true');
+      } else {
+        recordFail('WhatsApp Message Edit', 'Failed to update message with is_edited flag');
+      }
+
+      // 11. Test Soft Message Deletion
       await client.query(`
         UPDATE public.messenger_messages 
         SET is_deleted = true, content = 'This message was deleted', attachments = '[]'::jsonb

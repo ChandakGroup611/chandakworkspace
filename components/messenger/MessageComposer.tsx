@@ -16,6 +16,8 @@ import {
   Loader2,
   Trash2,
   AlertCircle,
+  Pencil,
+  Check,
 } from "lucide-react";
 import {
   WorkspaceUser,
@@ -30,13 +32,16 @@ interface MessageComposerProps {
   users: WorkspaceUser[];
   replyTo: { id: string; content: string; sender_name: string; message_type: string } | null;
   onCancelReply: () => void;
+  editingMessage?: { id: string; content: string } | null;
+  onCancelEdit?: () => void;
+  onSaveEdit?: (messageId: string, newContent: string) => Promise<boolean>;
   onSendMessage: (payload: SendMessagePayload) => Promise<boolean>;
   onViewAttachment: (attachment: MessengerAttachment) => void;
   disabled?: boolean;
 }
 
 const COMMON_EMOJIS = [
-  "👍", "❤️", "😊", "😂", "🎉", "🔥", "🙏", "👏", 
+  "👍", "❤️", "😊", "😂", "🎉", "🔥", "🙏", "👏",
   "🚀", "💡", "✅", "⚠️", "❌", "🤝", "👌", "💪",
   "🙌", "✨", "📌", "💼", "📊", "🎯", "💯", "👋"
 ];
@@ -46,6 +51,9 @@ export function MessageComposer({
   users,
   replyTo,
   onCancelReply,
+  editingMessage = null,
+  onCancelEdit,
+  onSaveEdit,
   onSendMessage,
   onViewAttachment,
   disabled = false,
@@ -84,6 +92,18 @@ export function MessageComposer({
   useEffect(() => {
     adjustTextareaHeight();
   }, [content, adjustTextareaHeight]);
+
+  // Synchronize content when entering edit mode
+  useEffect(() => {
+    if (editingMessage) {
+      setContent(editingMessage.content);
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const len = editingMessage.content.length;
+        textareaRef.current.setSelectionRange(len, len);
+      }
+    }
+  }, [editingMessage]);
 
   // Mention search matching
   const matchingMentionUsers = React.useMemo(() => {
@@ -259,12 +279,39 @@ export function MessageComposer({
     mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
   };
 
-  // Submit Message
+  // Submit Message or Save Edit
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (sending || uploading || disabled) return;
 
     const trimmed = content.trim();
+
+    // If in message editing mode, execute save edit
+    if (editingMessage && onSaveEdit) {
+      if (!trimmed) {
+        setError("Message content cannot be empty.");
+        return;
+      }
+      setSending(true);
+      setError(null);
+      try {
+        const ok = await onSaveEdit(editingMessage.id, trimmed);
+        if (ok) {
+          setContent("");
+          onCancelEdit?.();
+          if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+          }
+        }
+      } catch (err: any) {
+        console.error("handleSaveEdit error:", err);
+        setError(err.message || "Failed to edit message.");
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
+
     if (!trimmed && stagedFiles.length === 0) return;
 
     setSending(true);
@@ -341,6 +388,13 @@ export function MessageComposer({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Escape" && editingMessage) {
+      e.preventDefault();
+      setContent("");
+      onCancelEdit?.();
+      return;
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -355,6 +409,32 @@ export function MessageComposer({
 
   return (
     <div className="relative border-t border-border bg-surface flex flex-col shrink-0">
+      {/* Editing Message Banner (WhatsApp Style) */}
+      {editingMessage && (
+        <div className="flex items-center justify-between px-3 py-1.5 bg-blue-500/10 border-b border-border text-xs animate-in slide-in-from-bottom-1">
+          <div className="flex items-center gap-2 min-w-0 pr-2 border-l-2 border-primary pl-2">
+            <Pencil className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="font-semibold text-primary truncate">
+              Editing message:
+            </span>
+            <span className="text-muted truncate max-w-xs md:max-w-md">
+              {editingMessage.content}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setContent("");
+              onCancelEdit?.();
+            }}
+            className="p-1 text-muted hover:text-foreground rounded transition-colors shrink-0 cursor-pointer"
+            title="Cancel editing (Esc)"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Reply Quote Banner */}
       {replyTo && (
         <div className="flex items-center justify-between px-3 py-1.5 bg-accent-soft/40 border-b border-border text-xs">
@@ -571,8 +651,8 @@ export function MessageComposer({
             />
           </div>
 
-          {/* Voice Note or Send Button */}
-          {content.trim() === "" && stagedFiles.length === 0 ? (
+          {/* Voice Note or Send/Save Button */}
+          {content.trim() === "" && stagedFiles.length === 0 && !editingMessage ? (
             <button
               type="button"
               onClick={startVoiceRecording}
@@ -587,13 +667,15 @@ export function MessageComposer({
             <button
               type="button"
               onClick={() => handleSend()}
-              disabled={disabled || sending || uploading}
-              className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-accent text-accent-contrast hover:opacity-90 transition-opacity shrink-0 disabled:opacity-50"
-              title="Send message (Enter)"
-              aria-label="Send message"
+              disabled={disabled || sending || uploading || (editingMessage ? !content.trim() : false)}
+              className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-accent text-accent-contrast hover:opacity-90 transition-opacity shrink-0 disabled:opacity-50 cursor-pointer"
+              title={editingMessage ? "Save edit (Enter)" : "Send message (Enter)"}
+              aria-label={editingMessage ? "Save edit" : "Send message"}
             >
               {sending || uploading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : editingMessage ? (
+                <Check className="h-4 w-4" />
               ) : (
                 <Send className="h-4 w-4" />
               )}

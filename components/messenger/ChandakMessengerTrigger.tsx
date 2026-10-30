@@ -30,6 +30,36 @@ export function ChandakMessengerTrigger() {
     refreshUnread();
   }, [refreshUnread]);
 
+  // Detect conversation link in URL (#messenger:ID or ?chat=ID) from device notifications
+  useEffect(() => {
+    const checkUrlForMessenger = () => {
+      if (typeof window === "undefined") return;
+      const hash = window.location.hash;
+      if (hash.startsWith("#messenger:")) {
+        const convId = hash.replace("#messenger:", "").trim();
+        if (convId) {
+          setSelectedConversationId(convId);
+          setIsOpen(true);
+        }
+      } else {
+        const params = new URLSearchParams(window.location.search);
+        const chatParam = params.get("chat");
+        if (chatParam) {
+          setSelectedConversationId(chatParam.trim());
+          setIsOpen(true);
+        }
+      }
+    };
+
+    checkUrlForMessenger();
+    window.addEventListener("hashchange", checkUrlForMessenger);
+    window.addEventListener("popstate", checkUrlForMessenger);
+    return () => {
+      window.removeEventListener("hashchange", checkUrlForMessenger);
+      window.removeEventListener("popstate", checkUrlForMessenger);
+    };
+  }, []);
+
   // Listen for custom events (system notifications, external triggers)
   useEffect(() => {
     const handleOpen = (e: any) => {

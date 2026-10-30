@@ -757,19 +757,47 @@ export async function sendMessengerMessage(payload: SendMessagePayload): Promise
       const senderName = (inserted.user_master as any)?.full_name || "A colleague";
       const previewText = content.trim() || (attachments.length ? `Sent ${attachments.length} attachment(s)` : "New message");
 
-      // Dispatch in-app notifications
+      // Dispatch in-app and offline device notifications
       for (const p of otherParticipants || []) {
         const isMentioned = mentions.includes(p.user_id) || mentions.includes("all");
         const notifTitle = isMentioned ? `${senderName} mentioned you in Chandak Messenger` : `Message from ${senderName}`;
+
+        // Check if recipient has an active session in the workspace in the last 2.5 minutes
+        let isOnline = false;
+        try {
+          const { data: session } = await supabaseAdmin
+            .from("active_sessions")
+            .select("last_active_at")
+            .eq("user_id", p.user_id)
+            .maybeSingle();
+
+          if (session?.last_active_at) {
+            const diffMs = Date.now() - new Date(session.last_active_at).getTime();
+            if (diffMs < 2.5 * 60 * 1000) {
+              isOnline = true;
+            }
+          }
+        } catch {
+          isOnline = false;
+        }
+
+        // If online: dispatch in-app only to avoid unnecessary email inbox spam.
+        // If offline (browser closed or not logged in): dispatch with email enabled so mobile device buzzes with notification!
         dispatchNotification(
           p.user_id,
           notifTitle,
-          previewText.slice(0, 150),
+          previewText.slice(0, 180),
           `#messenger:${conversationId}`,
           "CHANDAK_MESSENGER",
           isMentioned ? "MESSENGER_MENTION" : "MESSENGER_NEW_MESSAGE",
-          { _disableEmail: true } // Keep messenger fast in-app without email spam
-        ).catch(() => {});
+          isOnline
+            ? { _disableEmail: true }
+            : {
+                "Sender": senderName,
+                "Channel": "Chandak Messenger",
+                "Device Alert": "Offline notification delivered to your registered device",
+              }
+        ).catch((err) => console.warn("Failed to dispatch messenger notification:", err));
       }
     } catch (notifErr) {
       console.warn("Non-blocking notification dispatch error:", notifErr);
@@ -881,6 +909,7 @@ export async function toggleMessageReaction(messageId: string, reaction: string)
 
 /**
  * Soft delete a message (only sender or super admin).
+ * WhatsApp style: clears attachments, reactions, and marks message as deleted.
  */
 export async function deleteMessengerMessage(messageId: string): Promise<{ success: boolean; error?: string }> {
   try {
@@ -907,9 +936,135 @@ export async function deleteMessengerMessage(messageId: string): Promise<{ succe
       })
       .eq("id", messageId);
 
+    // Clean up reactions on deleted message
+    await supabaseAdmin
+      .from("messenger_reactions")
+      .delete()
+      .eq("message_id", messageId);
+
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Edit a sent message within 4 hours of creation (WhatsApp style).
+ * Can be edited immediately after sending, up to 4 hours.
+ * Only the message sender can edit their own message.
+ */
+export async function editMessengerMessage(
+  messageId: string,
+  newContent: string
+): Promise<{ success: boolean; message?: MessengerMessage; error?: string }> {
+  try {
+    const currentUserId = await getAuthUser();
+
+    if (!newContent || !newContent.trim()) {
+      return { success: false, error: "Message content cannot be empty." };
+    }
+
+    const { data: msg, error: fetchErr } = await supabaseAdmin
+      .from("messenger_messages")
+      .select("id, sender_id, conversation_id, is_deleted, created_at")
+      .eq("id", messageId)
+      .single();
+
+    if (fetchErr || !msg) {
+      return { success: false, error: "Message not found." };
+    }
+
+    if (msg.sender_id !== currentUserId) {
+      return { success: false, error: "You can only edit your own messages." };
+    }
+
+    if (msg.is_deleted) {
+      return { success: false, error: "Deleted messages cannot be edited." };
+    }
+
+    // Check 4-hour window: WhatsApp allows editing up to 4 hours
+    const createdAtTime = new Date(msg.created_at).getTime();
+    const nowTime = Date.now();
+    const fourHoursMs = 4 * 60 * 60 * 1000;
+
+    if (nowTime - createdAtTime > fourHoursMs) {
+      return {
+        success: false,
+        error: "Messages can only be edited within 4 hours of sending.",
+      };
+    }
+
+    const { data: updated, error: updateErr } = await supabaseAdmin
+      .from("messenger_messages")
+      .update({
+        content: newContent.trim(),
+        is_edited: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", messageId)
+      .select(`
+        id,
+        conversation_id,
+        sender_id,
+        content,
+        message_type,
+        reply_to_id,
+        attachments,
+        mentions,
+        is_edited,
+        is_deleted,
+        created_at,
+        updated_at,
+        user_master (
+          id,
+          full_name,
+          email,
+          profile_photo,
+          departments!fk_user_master_department (name),
+          designations!fk_user_master_designation (name),
+          roles!fk_user_master_role (name)
+        )
+      `)
+      .single();
+
+    if (updateErr || !updated) {
+      console.error("editMessengerMessage update error:", updateErr);
+      return { success: false, error: updateErr?.message || "Failed to edit message." };
+    }
+
+    const u = updated.user_master as any;
+    const formatted: MessengerMessage = {
+      id: updated.id,
+      conversation_id: updated.conversation_id,
+      sender_id: updated.sender_id,
+      content: updated.content,
+      message_type: updated.message_type as any,
+      reply_to_id: updated.reply_to_id,
+      attachments: (updated.attachments as MessengerAttachment[]) || [],
+      mentions: (updated.mentions as string[]) || [],
+      is_edited: updated.is_edited,
+      is_deleted: updated.is_deleted,
+      created_at: updated.created_at,
+      updated_at: updated.updated_at,
+      sender: u
+        ? {
+            id: u.id,
+            full_name: u.full_name,
+            email: u.email,
+            profile_photo: u.profile_photo,
+            department_name: u.departments?.name || null,
+            designation_name: u.designations?.name || null,
+            role_name: u.roles?.name || null,
+            is_active: true,
+          }
+        : undefined,
+      reactions: [],
+    };
+
+    return { success: true, message: formatted };
+  } catch (err: any) {
+    console.error("editMessengerMessage exception:", err);
+    return { success: false, error: err.message || "Failed to edit message." };
   }
 }
 

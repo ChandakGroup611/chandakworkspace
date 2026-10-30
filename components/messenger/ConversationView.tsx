@@ -22,6 +22,8 @@ import {
   Image as ImageIcon,
   Loader2,
   Smile,
+  Pencil,
+  Ban,
 } from "lucide-react";
 import {
   MessengerConversation,
@@ -33,6 +35,7 @@ import {
   sendMessengerMessage,
   markConversationAsRead,
   deleteMessengerMessage,
+  editMessengerMessage,
   toggleMessageReaction,
   SendMessagePayload,
 } from "@/lib/actions/messenger";
@@ -66,6 +69,10 @@ export function ConversationView({
     content: string;
     sender_name: string;
     message_type: string;
+  } | null>(null);
+  const [editingMessage, setEditingMessage] = useState<{
+    id: string;
+    content: string;
   } | null>(null);
 
   // Modals & Tools
@@ -271,9 +278,9 @@ export function ConversationView({
     return false;
   };
 
-  // Delete message
+  // Delete message (WhatsApp style - Delete for everyone)
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm("Are you sure you want to delete this message?")) return;
+    if (!confirm("Delete this message for everyone?")) return;
     const res = await deleteMessengerMessage(messageId);
     if (res.success) {
       setMessages((prev) =>
@@ -283,6 +290,25 @@ export function ConversationView({
             : m
         )
       );
+    }
+  };
+
+  // Edit message (WhatsApp style - within 4 hours)
+  const handleSaveEdit = async (messageId: string, newContent: string): Promise<boolean> => {
+    const res = await editMessengerMessage(messageId, newContent);
+    if (res.success && res.message) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, content: newContent, is_edited: true, updated_at: new Date().toISOString() }
+            : m
+        )
+      );
+      setEditingMessage(null);
+      return true;
+    } else {
+      alert(res.error || "Failed to edit message");
+      return false;
     }
   };
 
@@ -463,6 +489,8 @@ export function ConversationView({
               hour: "2-digit",
               minute: "2-digit",
             });
+            const createdAtTime = new Date(msg.created_at).getTime();
+            const isEditable = isMe && !msg.is_deleted && (Date.now() - createdAtTime <= 4 * 60 * 60 * 1000);
 
             return (
               <div
@@ -497,8 +525,8 @@ export function ConversationView({
                   {msg.reply_to && (
                     <div
                       className={`text-xs px-3 py-1.5 mb-1.5 rounded-lg border-l-2 text-left ${isMe
-                          ? "bg-blue-700/80 border-white text-white"
-                          : "bg-surface-hover border-primary text-foreground"
+                        ? "bg-blue-700/80 border-white text-white"
+                        : "bg-surface-hover border-primary text-foreground"
                         }`}
                     >
                       <p className={`font-semibold text-[11px] truncate ${isMe ? "text-blue-100" : "text-primary"}`}>
@@ -513,12 +541,15 @@ export function ConversationView({
                   {/* Bubble Content */}
                   <div
                     className={`rounded-2xl px-4 py-2.5 text-[13.5px] shadow-xs break-words leading-relaxed select-text ${isMe
-                        ? "bg-blue-600 dark:bg-blue-600 text-white rounded-br-xs shadow-sm"
-                        : "bg-surface dark:bg-elevated border border-border text-foreground rounded-bl-xs"
+                      ? "bg-blue-600 dark:bg-blue-600 text-white rounded-br-xs shadow-sm"
+                      : "bg-surface dark:bg-elevated border border-border text-foreground rounded-bl-xs"
                       }`}
                   >
                     {msg.is_deleted ? (
-                      <span className="italic opacity-70 text-xs">This message was deleted</span>
+                      <div className="flex items-center gap-1.5 italic text-xs py-0.5 select-none opacity-80">
+                        <Ban className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                        <span>This message was deleted</span>
+                      </div>
                     ) : (
                       <>
                         {/* Text Content */}
@@ -596,8 +627,8 @@ export function ConversationView({
                                 <div
                                   key={aIdx}
                                   className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${isMe
-                                      ? "bg-blue-700/60 border-blue-400/30 text-white"
-                                      : "bg-surface-hover border-border text-foreground"
+                                    ? "bg-blue-700/60 border-blue-400/30 text-white"
+                                    : "bg-surface-hover border-border text-foreground"
                                     }`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0 mr-2">
@@ -644,6 +675,9 @@ export function ConversationView({
                     <div className={`flex items-center justify-end gap-1 mt-1.5 text-[10.5px] select-none ${isMe ? "text-blue-100 font-medium" : "text-muted font-medium"
                       }`}>
                       <span>{timeStr}</span>
+                      {msg.is_edited && !msg.is_deleted && (
+                        <span className="text-[10px] italic opacity-85 ml-0.5" title="Edited message">(edited)</span>
+                      )}
                       {isMe && !msg.is_deleted && (
                         (() => {
                           const receipt = getReadReceipt(msg);
@@ -673,9 +707,9 @@ export function ConversationView({
                     </div>
                   )}
 
-                  {/* Action Bar on Message Hover */}
+                  {/* Action Bar on Message Hover & Mobile Tap */}
                   {!msg.is_deleted && (
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-1 bg-surface border border-border rounded-md px-1.5 py-0.5 shadow-sm">
+                    <div className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-1 bg-surface border border-border rounded-md px-1.5 py-0.5 shadow-sm">
                       {/* Quick Reacts */}
                       <button
                         type="button"
@@ -727,12 +761,26 @@ export function ConversationView({
                       >
                         <Copy className="h-3 w-3" />
                       </button>
+                      {/* WhatsApp Style Edit: Available within 4 hours */}
+                      {isEditable && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyTo(null);
+                            setEditingMessage({ id: msg.id, content: msg.content });
+                          }}
+                          className="p-1 text-muted hover:text-primary rounded transition-colors"
+                          title="Edit message (available up to 4 hours)"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                      )}
                       {isMe && (
                         <button
                           type="button"
                           onClick={() => handleDeleteMessage(msg.id)}
                           className="p-1 text-muted hover:text-danger rounded transition-colors"
-                          title="Delete message"
+                          title="Delete for everyone"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -752,6 +800,9 @@ export function ConversationView({
         users={allUsers}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
+        editingMessage={editingMessage}
+        onCancelEdit={() => setEditingMessage(null)}
+        onSaveEdit={handleSaveEdit}
         onSendMessage={handleSendMessage}
         onViewAttachment={(att) => setPreviewAttachment(att)}
       />
@@ -789,8 +840,8 @@ function renderContentWithMentions(content: string, isSender: boolean) {
         <span
           key={i}
           className={`font-semibold underline decoration-dotted px-1 py-0.2 rounded ${isSender
-              ? "bg-blue-800/80 text-white"
-              : "bg-primary/10 text-primary"
+            ? "bg-blue-800/80 text-white"
+            : "bg-primary/10 text-primary"
             }`}
         >
           {part}

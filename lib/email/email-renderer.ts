@@ -183,6 +183,7 @@ export function inferActionText(title: string, actionUrl?: string): string {
   if (t.includes('approval') || t.includes('approve')) return 'Review & Approve';
   if (t.includes('course') || t.includes('learning')) return 'View Course';
   if (t.includes('sla')) return 'View SLA Details';
+  if (t.includes('messenger') || t.includes('message') || url.includes('messenger') || url.includes('chat=')) return 'Open Chat & Reply';
   if (t.includes('mention') || t.includes('remark') || t.includes('comment')) return 'View Discussion';
 
   return 'View Details';
