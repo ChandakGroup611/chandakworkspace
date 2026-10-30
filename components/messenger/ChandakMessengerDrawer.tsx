@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   X,
@@ -52,6 +52,11 @@ export function ChandakMessengerDrawer({
     setMounted(true);
   }, []);
 
+  const activeConversationRef = useRef(activeConversation);
+  useEffect(() => {
+    activeConversationRef.current = activeConversation;
+  }, [activeConversation]);
+
   // Fetch initial conversations and workspace users
   const loadData = useCallback(async () => {
     if (!currentUserId) return;
@@ -65,8 +70,8 @@ export function ChandakMessengerDrawer({
       setWorkspaceUsers(users);
 
       // If active conversation is open, update its reference
-      if (activeConversation) {
-        const updated = convs.find((c) => c.id === activeConversation.id);
+      if (activeConversationRef.current) {
+        const updated = convs.find((c) => c.id === activeConversationRef.current?.id);
         if (updated) setActiveConversation(updated);
       }
     } catch (err) {
@@ -74,7 +79,7 @@ export function ChandakMessengerDrawer({
     } finally {
       setLoading(false);
     }
-  }, [currentUserId, activeConversation]);
+  }, [currentUserId]);
 
   useEffect(() => {
     if (isOpen) {

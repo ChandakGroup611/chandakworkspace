@@ -1,8 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Search, Users, Loader2, Check, Building } from "lucide-react";
-import { WorkspaceUser, createGroupConversation, MessengerConversation } from "@/lib/actions/messenger";
+import {
+  WorkspaceUser,
+  createGroupConversation,
+  MessengerConversation,
+  fetchWorkspaceUsersForMessenger,
+} from "@/lib/actions/messenger";
 
 interface NewGroupModalProps {
   users: WorkspaceUser[];
@@ -12,11 +17,13 @@ interface NewGroupModalProps {
 }
 
 export function NewGroupModal({
-  users,
+  users: initialUsers,
   currentUserId,
   onClose,
   onGroupCreated,
 }: NewGroupModalProps) {
+  const [userList, setUserList] = useState<WorkspaceUser[]>(initialUsers || []);
+  const [loadingUsers, setLoadingUsers] = useState<boolean>(!initialUsers || initialUsers.length === 0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -24,9 +31,27 @@ export function NewGroupModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (initialUsers && initialUsers.length > 0) {
+      setUserList(initialUsers);
+      setLoadingUsers(false);
+    } else {
+      setLoadingUsers(true);
+      fetchWorkspaceUsersForMessenger()
+        .then((fetched) => {
+          setUserList(fetched);
+          setLoadingUsers(false);
+        })
+        .catch((err) => {
+          console.error("Failed to load workspace users in group modal:", err);
+          setLoadingUsers(false);
+        });
+    }
+  }, [initialUsers]);
+
   const availableUsers = useMemo(() => {
-    return users.filter((u) => u.id !== currentUserId);
-  }, [users, currentUserId]);
+    return userList.filter((u) => u.id !== currentUserId);
+  }, [userList, currentUserId]);
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -188,8 +213,15 @@ export function NewGroupModal({
 
           {/* Members List */}
           <div className="flex-1 overflow-y-auto divide-y divide-border/40 max-h-[35vh]">
-            {filteredUsers.length === 0 ? (
-              <div className="py-8 text-center text-muted text-xs">No colleagues found.</div>
+            {loadingUsers ? (
+              <div className="py-8 flex flex-col items-center justify-center gap-2 text-muted text-xs">
+                <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                <span>Loading colleagues...</span>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="py-8 text-center text-muted text-xs">
+                {search.trim() ? `No colleagues matching "${search}".` : "No colleagues found."}
+              </div>
             ) : (
               filteredUsers.map((u) => {
                 const isSelected = selectedUserIds.includes(u.id);

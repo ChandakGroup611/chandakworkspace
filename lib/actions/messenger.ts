@@ -116,17 +116,40 @@ export async function fetchWorkspaceUsersForMessenger(): Promise<WorkspaceUser[]
         profile_photo,
         last_login_at,
         is_active,
-        departments (name),
-        designations (name),
-        roles (name)
+        departments!fk_user_master_department (name),
+        designations!fk_user_master_designation (name),
+        roles!fk_user_master_role (name)
       `)
       .eq("is_active", true)
-      .eq("is_deleted", false)
+      .neq("is_deleted", true)
       .order("full_name", { ascending: true });
 
     if (error) {
-      console.error("fetchWorkspaceUsersForMessenger error:", error);
-      return [];
+      console.error("fetchWorkspaceUsersForMessenger primary query error:", error);
+      // Resilient fallback without foreign joins
+      const { data: fbData, error: fbError } = await supabaseAdmin
+        .from("user_master")
+        .select("id, full_name, email, profile_photo, last_login_at, is_active")
+        .eq("is_active", true)
+        .neq("is_deleted", true)
+        .order("full_name", { ascending: true });
+
+      if (fbError || !fbData) {
+        console.error("fetchWorkspaceUsersForMessenger fallback error:", fbError);
+        return [];
+      }
+
+      return fbData.map((u: any) => ({
+        id: u.id,
+        full_name: u.full_name || "Unknown Colleague",
+        email: u.email || "",
+        profile_photo: u.profile_photo || null,
+        last_login_at: u.last_login_at || null,
+        is_active: u.is_active,
+        department_name: null,
+        designation_name: null,
+        role_name: null,
+      }));
     }
 
     return (data || []).map((u: any) => ({
@@ -196,9 +219,9 @@ export async function fetchMessengerConversations(): Promise<MessengerConversati
           full_name,
           email,
           profile_photo,
-          departments (name),
-          designations (name),
-          roles (name)
+          departments!fk_user_master_department (name),
+          designations!fk_user_master_designation (name),
+          roles!fk_user_master_role (name)
         )
       `)
       .in("conversation_id", conversationIds);
@@ -513,9 +536,9 @@ export async function fetchMessengerMessages(
           full_name,
           email,
           profile_photo,
-          departments (name),
-          designations (name),
-          roles (name)
+          departments!fk_user_master_department (name),
+          designations!fk_user_master_designation (name),
+          roles!fk_user_master_role (name)
         )
       `)
       .eq("conversation_id", conversationId)
@@ -698,9 +721,9 @@ export async function sendMessengerMessage(payload: SendMessagePayload): Promise
           full_name,
           email,
           profile_photo,
-          departments (name),
-          designations (name),
-          roles (name)
+          departments!fk_user_master_department (name),
+          designations!fk_user_master_designation (name),
+          roles!fk_user_master_role (name)
         )
       `)
       .single();

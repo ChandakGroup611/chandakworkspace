@@ -1,8 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { X, Search, User, Loader2, Building, Shield } from "lucide-react";
-import { WorkspaceUser, getOrCreateDirectConversation, MessengerConversation } from "@/lib/actions/messenger";
+import React, { useState, useEffect, useMemo } from "react";
+import { X, Search, Loader2, Building } from "lucide-react";
+import {
+  WorkspaceUser,
+  getOrCreateDirectConversation,
+  MessengerConversation,
+  fetchWorkspaceUsersForMessenger,
+} from "@/lib/actions/messenger";
 
 interface NewChatModalProps {
   users: WorkspaceUser[];
@@ -12,19 +17,39 @@ interface NewChatModalProps {
 }
 
 export function NewChatModal({
-  users,
+  users: initialUsers,
   currentUserId,
   onClose,
   onConversationCreated,
 }: NewChatModalProps) {
+  const [userList, setUserList] = useState<WorkspaceUser[]>(initialUsers || []);
+  const [loadingUsers, setLoadingUsers] = useState<boolean>(!initialUsers || initialUsers.length === 0);
   const [search, setSearch] = useState("");
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (initialUsers && initialUsers.length > 0) {
+      setUserList(initialUsers);
+      setLoadingUsers(false);
+    } else {
+      setLoadingUsers(true);
+      fetchWorkspaceUsersForMessenger()
+        .then((fetched) => {
+          setUserList(fetched);
+          setLoadingUsers(false);
+        })
+        .catch((err) => {
+          console.error("Failed to load workspace users in modal:", err);
+          setLoadingUsers(false);
+        });
+    }
+  }, [initialUsers]);
+
   // Exclude current user from candidate list
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return users
+    return userList
       .filter((u) => u.id !== currentUserId)
       .filter((u) => {
         if (!q) return true;
@@ -35,7 +60,7 @@ export function NewChatModal({
           (u.designation_name && u.designation_name.toLowerCase().includes(q))
         );
       });
-  }, [users, currentUserId, search]);
+  }, [userList, currentUserId, search]);
 
   const handleSelectUser = async (targetUser: WorkspaceUser) => {
     setLoadingId(targetUser.id);
@@ -101,9 +126,18 @@ export function NewChatModal({
 
         {/* User List */}
         <div className="flex-1 overflow-y-auto divide-y divide-border/50 max-h-[50vh]">
-          {filteredUsers.length === 0 ? (
+          {loadingUsers ? (
+            <div className="py-12 flex flex-col items-center justify-center gap-2 text-muted text-sm">
+              <Loader2 className="h-5 w-5 animate-spin text-accent" />
+              <span>Loading Chandak Workspace colleagues...</span>
+            </div>
+          ) : filteredUsers.length === 0 ? (
             <div className="py-12 text-center text-muted text-sm">
-              No colleagues found matching &quot;{search}&quot;.
+              {search.trim() ? (
+                <span>No colleagues found matching &quot;{search}&quot;.</span>
+              ) : (
+                <span>No other colleagues found in Chandak Workspace.</span>
+              )}
             </div>
           ) : (
             filteredUsers.map((u) => {
@@ -157,7 +191,11 @@ export function NewChatModal({
 
         {/* Footer */}
         <div className="px-4 py-2.5 border-t border-border bg-surface text-xs text-muted flex items-center justify-between">
-          <span>{filteredUsers.length} colleagues available</span>
+          <span>
+            {loadingUsers
+              ? "Loading colleagues..."
+              : `${filteredUsers.length} colleague${filteredUsers.length === 1 ? "" : "s"} available`}
+          </span>
           <button
             type="button"
             onClick={onClose}
