@@ -212,13 +212,13 @@ export function ConversationList({
                 onClick={() => onSelectConversation(c)}
                 className={`group relative flex items-center gap-3 px-3.5 py-3 cursor-pointer transition-colors ${
                   isActive
-                    ? "bg-accent-soft/30 border-l-3 border-accent"
+                    ? "bg-primary/10 dark:bg-primary/20 border-l-4 border-primary font-semibold shadow-xs"
                     : "hover:bg-surface-hover"
                 }`}
               >
                 {/* Avatar */}
                 <div className="relative shrink-0">
-                  <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-accent-soft text-sm font-semibold text-accent-soft-text">
+                  <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-bold text-primary">
                     {isDirect ? (
                       otherUser?.profile_photo ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -284,7 +284,7 @@ export function ConversationList({
                         <div className="flex items-center gap-1.5 shrink-0 ml-1">
                           {c.is_pinned && <Pin className="h-3 w-3 text-accent fill-accent shrink-0" />}
                           {c.unread_count > 0 && (
-                            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-accent-contrast text-[10px] font-bold shadow-xs animate-in zoom-in-50 duration-150">
+                            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold shadow-xs animate-in zoom-in-50 duration-150">
                               {c.unread_count > 99 ? "99+" : c.unread_count}
                             </span>
                           )}

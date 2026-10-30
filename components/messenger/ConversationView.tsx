@@ -127,18 +127,19 @@ export function ConversationView({
           filter: `conversation_id=eq.${conversation.id}`,
         },
         async (payload) => {
-          const newMsgId = payload.new.id;
-          // Fetch full message with sender join
-          const recent = await fetchMessengerMessages(conversation.id, 10);
-          const found = recent.find((m) => m.id === newMsgId);
-          if (found) {
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === found.id)) return prev;
-              return [...prev, found];
-            });
-            setTimeout(() => scrollToBottom(true), 50);
-            markConversationAsRead(conversation.id);
-          }
+          const newMsgId = payload.new?.id;
+          if (!newMsgId) return;
+
+          // Fetch full recent messages with sender join
+          const recent = await fetchMessengerMessages(conversation.id, 20);
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const newOnes = recent.filter((m) => !existingIds.has(m.id));
+            if (newOnes.length === 0) return prev;
+            return [...prev, ...newOnes];
+          });
+          setTimeout(() => scrollToBottom(true), 50);
+          markConversationAsRead(conversation.id).then(() => onConversationUpdated());
         }
       )
       .on(
@@ -154,11 +155,11 @@ export function ConversationView({
             prev.map((m) =>
               m.id === payload.new.id
                 ? {
-                    ...m,
-                    content: payload.new.content,
-                    is_deleted: payload.new.is_deleted,
-                    is_edited: payload.new.is_edited,
-                  }
+                  ...m,
+                  content: payload.new.content,
+                  is_deleted: payload.new.is_deleted,
+                  is_edited: payload.new.is_edited,
+                }
                 : m
             )
           );
@@ -184,12 +185,24 @@ export function ConversationView({
           );
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "messenger_reactions",
+        },
+        async () => {
+          const recent = await fetchMessengerMessages(conversation.id, 60);
+          setMessages(recent);
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversation.id, supabase, scrollToBottom]);
+  }, [conversation.id, supabase, scrollToBottom, onConversationUpdated]);
 
   // Dynamic WhatsApp-style Read Receipts Calculation
   const getReadReceipt = useCallback(
@@ -205,13 +218,13 @@ export function ConversationView({
           return {
             status: "seen",
             label: `Read by ${other?.user?.full_name || "colleague"}`,
-            icon: <CheckCheck className="h-3.5 w-3.5 text-sky-400 stroke-[2.5]" />,
+            icon: <CheckCheck className="h-3.5 w-3.5 text-sky-300 stroke-[3]" />,
           };
         }
         return {
           status: "sent",
           label: "Sent",
-          icon: <Check className="h-3.5 w-3.5 text-white/70 stroke-[2]" />,
+          icon: <Check className="h-3.5 w-3.5 text-blue-200 stroke-[2.5]" />,
         };
       }
 
@@ -227,20 +240,20 @@ export function ConversationView({
         return {
           status: "seen",
           label: `Read by all members (${readMembers.length})`,
-          icon: <CheckCheck className="h-3.5 w-3.5 text-sky-400 stroke-[2.5]" />,
+          icon: <CheckCheck className="h-3.5 w-3.5 text-sky-300 stroke-[3]" />,
         };
       }
       if (readMembers.length > 0) {
         return {
           status: "delivered",
           label: `Read by ${readMembers.length} of ${others.length} members`,
-          icon: <CheckCheck className="h-3.5 w-3.5 text-white/70 stroke-[2]" />,
+          icon: <CheckCheck className="h-3.5 w-3.5 text-blue-200 stroke-[2.5]" />,
         };
       }
       return {
         status: "sent",
         label: "Sent",
-        icon: <Check className="h-3.5 w-3.5 text-white/70 stroke-[2]" />,
+        icon: <Check className="h-3.5 w-3.5 text-blue-200 stroke-[2.5]" />,
       };
     },
     [conversation.type, participants, currentUserId]
@@ -310,7 +323,7 @@ export function ConversationView({
     : messages;
 
   return (
-    <div className="flex flex-col h-full bg-surface/30 relative">
+    <div className="flex flex-col h-full bg-canvas/60 dark:bg-canvas relative">
       {/* Toast Notification */}
       {copyToast && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 rounded-full bg-foreground text-background text-xs font-semibold shadow-lg animate-in fade-in slide-in-from-top-2 duration-150">
@@ -367,9 +380,8 @@ export function ConversationView({
           <button
             type="button"
             onClick={() => setShowSearch(!showSearch)}
-            className={`p-2 rounded-lg transition-colors ${
-              showSearch ? "bg-surface-hover text-accent" : "text-muted hover:text-foreground hover:bg-surface-hover"
-            }`}
+            className={`p-2 rounded-lg transition-colors ${showSearch ? "bg-surface-hover text-accent" : "text-muted hover:text-foreground hover:bg-surface-hover"
+              }`}
             title="Search in conversation"
             aria-label="Search messages"
           >
@@ -484,14 +496,15 @@ export function ConversationView({
                   {/* Quoted Reply Snippet */}
                   {msg.reply_to && (
                     <div
-                      className={`text-xs px-3 py-1.5 mb-1 rounded-lg border-l-2 border-accent text-left ${
-                        isMe ? "bg-accent-soft/20 text-foreground" : "bg-surface text-foreground"
-                      }`}
+                      className={`text-xs px-3 py-1.5 mb-1.5 rounded-lg border-l-2 text-left ${isMe
+                          ? "bg-blue-700/80 border-white text-white"
+                          : "bg-surface-hover border-primary text-foreground"
+                        }`}
                     >
-                      <p className="font-semibold text-[11px] text-accent truncate">
+                      <p className={`font-semibold text-[11px] truncate ${isMe ? "text-blue-100" : "text-primary"}`}>
                         {msg.reply_to.sender_name}
                       </p>
-                      <p className="text-[11px] text-muted truncate">
+                      <p className={`text-[11px] truncate ${isMe ? "text-white/80" : "text-muted"}`}>
                         {msg.reply_to.content || "Attachment"}
                       </p>
                     </div>
@@ -499,11 +512,10 @@ export function ConversationView({
 
                   {/* Bubble Content */}
                   <div
-                    className={`rounded-2xl px-3.5 py-2 text-sm shadow-xs break-words ${
-                      isMe
-                        ? "bg-accent text-accent-contrast rounded-br-xs"
-                        : "bg-elevated border border-border text-foreground rounded-bl-xs"
-                    }`}
+                    className={`rounded-2xl px-4 py-2.5 text-[13.5px] shadow-xs break-words leading-relaxed select-text ${isMe
+                        ? "bg-blue-600 dark:bg-blue-600 text-white rounded-br-xs shadow-sm"
+                        : "bg-surface dark:bg-elevated border border-border text-foreground rounded-bl-xs"
+                      }`}
                   >
                     {msg.is_deleted ? (
                       <span className="italic opacity-70 text-xs">This message was deleted</span>
@@ -583,11 +595,10 @@ export function ConversationView({
                               return (
                                 <div
                                   key={aIdx}
-                                  className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
-                                    isMe
-                                      ? "bg-white/10 border-white/20 text-white"
-                                      : "bg-surface border-border text-foreground"
-                                  }`}
+                                  className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${isMe
+                                      ? "bg-blue-700/60 border-blue-400/30 text-white"
+                                      : "bg-surface-hover border-border text-foreground"
+                                    }`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0 mr-2">
                                     <FileText className="h-4 w-4 shrink-0 opacity-80" />
@@ -605,9 +616,8 @@ export function ConversationView({
                                     <button
                                       type="button"
                                       onClick={() => setPreviewAttachment(att)}
-                                      className={`px-2 py-1 text-[11px] font-semibold rounded transition-colors ${
-                                        isMe ? "hover:bg-white/20" : "hover:bg-surface-hover"
-                                      }`}
+                                      className={`px-2 py-1 text-[11px] font-semibold rounded transition-colors ${isMe ? "hover:bg-white/20" : "hover:bg-surface-hover"
+                                        }`}
                                       title="View in modal"
                                     >
                                       View
@@ -615,9 +625,8 @@ export function ConversationView({
                                     <a
                                       href={`${att.url}${att.url.includes("?") ? "&" : "?"}download=1`}
                                       download={att.name}
-                                      className={`px-2 py-1 text-[11px] font-semibold rounded transition-colors ${
-                                        isMe ? "hover:bg-white/20" : "hover:bg-surface-hover"
-                                      }`}
+                                      className={`px-2 py-1 text-[11px] font-semibold rounded transition-colors ${isMe ? "hover:bg-white/20" : "hover:bg-surface-hover"
+                                        }`}
                                       title="Download file"
                                     >
                                       Download
@@ -632,7 +641,8 @@ export function ConversationView({
                     )}
 
                     {/* Timestamp & Read Receipts */}
-                    <div className="flex items-center justify-end gap-1 mt-1 text-[10px] opacity-70 select-none">
+                    <div className={`flex items-center justify-end gap-1 mt-1.5 text-[10.5px] select-none ${isMe ? "text-blue-100 font-medium" : "text-muted font-medium"
+                      }`}>
                       <span>{timeStr}</span>
                       {isMe && !msg.is_deleted && (
                         (() => {
@@ -778,11 +788,10 @@ function renderContentWithMentions(content: string, isSender: boolean) {
       return (
         <span
           key={i}
-          className={`font-semibold underline decoration-dotted px-1 py-0.2 rounded ${
-            isSender
-              ? "bg-white/20 text-white"
-              : "bg-accent-soft text-accent-soft-text"
-          }`}
+          className={`font-semibold underline decoration-dotted px-1 py-0.2 rounded ${isSender
+              ? "bg-blue-800/80 text-white"
+              : "bg-primary/10 text-primary"
+            }`}
         >
           {part}
         </span>
@@ -810,9 +819,8 @@ function VoicePlayer({ url, isSender }: { url: string; isSender: boolean }) {
 
   return (
     <div
-      className={`flex items-center gap-2 p-2 rounded-lg ${
-        isSender ? "bg-white/10 text-white" : "bg-surface border border-border text-foreground"
-      }`}
+      className={`flex items-center gap-2 p-2 rounded-lg ${isSender ? "bg-blue-700/60 text-white" : "bg-surface-hover border border-border text-foreground"
+        }`}
     >
       <audio
         ref={audioRef}
@@ -823,7 +831,8 @@ function VoicePlayer({ url, isSender }: { url: string; isSender: boolean }) {
       <button
         type="button"
         onClick={togglePlay}
-        className="h-7 w-7 rounded-full bg-accent text-accent-contrast flex items-center justify-center shrink-0 hover:opacity-90"
+        className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 hover:opacity-90 shadow-xs ${isSender ? "bg-white text-blue-600" : "bg-primary text-primary-contrast"
+          }`}
       >
         {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
       </button>

@@ -17,6 +17,7 @@ import GlobalShortcuts from "./GlobalShortcuts";
 import MobileBottomNav from "./MobileBottomNav";
 import DeploymentVersionBanner from "./DeploymentVersionBanner";
 import { ConfirmHost } from "@/components/ui/feedback/confirm";
+import { SystemMessengerNotifier } from "@/components/messenger/SystemMessengerNotifier";
 import { cn } from "@/lib/utils";
 
 const AUTH_ROUTES = new Set(["/login", "/register", "/select-module"]);
@@ -47,6 +48,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
     return (
       <div className="min-h-dvh bg-background text-foreground">
         <DeploymentVersionBanner />
+        <SystemMessengerNotifier />
         {children}
         <ConfirmHost />
       </div>
@@ -61,6 +63,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
 
       <div className="relative flex min-w-0 flex-1 flex-col">
         <DeploymentVersionBanner />
+        <SystemMessengerNotifier />
         <Navbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
         <main
           ref={mainRef}

@@ -108,6 +108,14 @@ export function ChandakMessengerDrawer({
   const handleSelectConversation = useCallback(
     (conv: MessengerConversation) => {
       setActiveConversation(conv);
+      activeConversationRef.current = conv;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("chandak:messenger-drawer-state", {
+            detail: { isOpen: true, activeConversationId: conv.id },
+          })
+        );
+      }
       setConversations((prev) =>
         prev.map((c) => (c.id === conv.id ? { ...c, unread_count: 0 } : c))
       );
@@ -255,7 +263,17 @@ export function ChandakMessengerDrawer({
                 conversation={activeConversation}
                 currentUserId={currentUserId}
                 allUsers={workspaceUsers}
-                onBack={() => setActiveConversation(null)}
+                onBack={() => {
+                  setActiveConversation(null);
+                  activeConversationRef.current = null;
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(
+                      new CustomEvent("chandak:messenger-drawer-state", {
+                        detail: { isOpen: true, activeConversationId: null },
+                      })
+                    );
+                  }
+                }}
                 onConversationUpdated={loadData}
               />
             ) : (
@@ -275,7 +293,7 @@ export function ChandakMessengerDrawer({
                   <button
                     type="button"
                     onClick={() => setShowNewChat(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-contrast hover:opacity-90 transition-opacity shadow-xs"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-contrast hover:opacity-90 transition-opacity shadow-xs"
                   >
                     <MessageSquarePlus className="h-4 w-4" />
                     <span>Start Direct Chat</span>
