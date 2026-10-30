@@ -183,12 +183,13 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
         )}
       </div>
 
-      <div className="flex items-center gap-1">
-        <button type="button" onClick={toggleMode} aria-label={isLight ? "Switch to dark theme" : "Switch to light theme"} className={iconBtn}>
+      {/* phones: theme toggle, palette and design gallery move into the account menu so the bar fits */}
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+        <button type="button" onClick={toggleMode} aria-label={isLight ? "Switch to dark theme" : "Switch to light theme"} className={cn(iconBtn, "hidden sm:inline-flex")}>
           {isLight ? <Moon className="h-4 w-4" aria-hidden /> : <Sun className="h-4 w-4" aria-hidden />}
         </button>
-        <ThemeMenu />
-        <Link href="/settings" aria-label="Design gallery" title="Design gallery" className={iconBtn}>
+        <div className="hidden sm:contents"><ThemeMenu /></div>
+        <Link href="/settings" aria-label="Design gallery" title="Design gallery" className={cn(iconBtn, "hidden sm:inline-flex")}>
           <Settings className="h-4 w-4" aria-hidden />
         </Link>
         <RealtimeNotificationsDrawer />
@@ -207,7 +208,7 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
 
         <Popover.Root>
           <Popover.Trigger asChild>
-            <button type="button" aria-label="Account menu" className="flex items-center gap-2.5 rounded-md py-1 pl-1 pr-2 hover:bg-surface-hover">
+            <button type="button" aria-label="Account menu" className="flex items-center gap-2.5 rounded-md py-1 pl-1 pr-1 hover:bg-surface-hover lg:pr-2">
               <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-accent-soft text-[12px] font-semibold text-accent-soft-text">
                 {profile?.profile_photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -228,6 +229,12 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
               </div>
               <Link href="/profile" className="mt-1 flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-surface-hover">
                 <User className="h-4 w-4 text-muted" aria-hidden /> Profile & preferences
+              </Link>
+              <button type="button" onClick={toggleMode} className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] hover:bg-surface-hover sm:hidden">
+                {isLight ? <Moon className="h-4 w-4 text-muted" aria-hidden /> : <Sun className="h-4 w-4 text-muted" aria-hidden />} {isLight ? "Dark mode" : "Light mode"}
+              </button>
+              <Link href="/settings" className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-surface-hover sm:hidden">
+                <Settings className="h-4 w-4 text-muted" aria-hidden /> Themes & design gallery
               </Link>
               <button
                 type="button"

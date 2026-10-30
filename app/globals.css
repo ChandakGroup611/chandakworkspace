@@ -298,3 +298,16 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Phones & tablets: app-like defaults for every module (see .agents/AGENTS.md "Mobile-first") ---- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { overscroll-behavior-y: none; }
+@media (pointer: coarse) {
+  a, button, [role="button"], summary, label { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+}
+@media (max-width: 767px) {
+  /* iOS zooms the page when an input under 16px gets focus; keep fields at 16px on phones */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px !important; }
+  /* the page itself never scrolls sideways; wide tables and boards scroll inside their own card */
+  main { overflow-x: clip; }
+}

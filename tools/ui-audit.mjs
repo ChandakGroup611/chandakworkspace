@@ -48,6 +48,9 @@ const RULES = [
   ["blur", "WARN", /\bbackdrop-blur(?:-\w+)?\b/g, "backdrop-blur (disabled app-wide; leaves translucent panels)", "Use opaque bg-elevated / bg-surface"],
   ["date-format", "WARN", /toLocaleDateString\(|toLocaleString\(\s*\)|format\([^)]*["'`](?:dd[-/]MM[-/]yyyy|yyyy-MM-dd|DD[-/]MM[-/]YYYY|YYYY-MM-DD)["'`]|\.split\(\s*["']T["']\s*\)\[0\]/g, "Ad-hoc date formatting (mixed formats)", "DateCell / DueDateCell / formatDate() from components/ui/data"],
   ["emoji", "WARN", /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "Emoji in UI", "Use a lucide icon or plain text"],
+  // ---- mobile-first (.agents/AGENTS.md "Mobile-First, App-Like UI") ----
+  ["mobile-nowrap-row", "WARN", /["'`](?=[^"'`\n]*(?<![\w-])flex(?![\w-]))(?=[^"'`\n]*(?<![\w-])gap-\d)(?=[^"'`\n]*(?<![\w:-])shrink-0(?![\w-]))(?![^"'`\n]*(?<![\w-])flex-(?:wrap|col)(?![\w-]))[^"'`\n]*["'`]/g, "Action row that cannot wrap (flex + shrink-0, no flex-wrap): buttons get cut off on phones", "flex flex-wrap items-center gap-2 sm:shrink-0"],
+  ["mobile-fixed-width", "WARN", /(?<=["'`\s])(?:min-)?w-\[(?:3[5-9]\d|[4-9]\d\d|\d{4,})px\](?![\w-])/g, "Fixed width wider than a phone, without a breakpoint prefix", "w-full sm:w-[…px] / max-w-full, or put it inside an overflow-x-auto wrapper"],
   ["old-hover-token", "ERROR", /hover:opacity-90\/10|(?<![-\w])bg-hover\b|border-border-subtle\b|ring-focus-ring\b|shadow-\[var\(--shadow-ambient\)\]/g, "Class that resolves to nothing", "See UI_STANDARDS.md token list"],
 ];
 

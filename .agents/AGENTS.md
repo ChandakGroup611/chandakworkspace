@@ -110,6 +110,17 @@ This rule is MANDATORY for all present and future developments across all module
 - **Buttons**: Exactly ONE primary action per contextual group; secondary actions use outline/ghost; destructive actions use distinct, safe styling.
 - **Modals**: Focused solely on title, relevant fields, and explicit actions.
 
+## Mobile-First, App-Like UI on Every Module (Phone · iPad · Laptop · Desktop)
 
+MANDATORY for every present and future page, component and module (Task Workflow, Vehicle Desk, Design Tracking, Executive Dashboards, Chandak Meet, Organization Budget, AMC, IAM, Masters, and any module added later). A feature is not done until it works at phone, tablet and desktop sizes.
 
+1. **Test at three sizes before reporting done**: 375×812 (phone), 820×1180 (iPad) and 1440×900 (desktop). The page must never scroll sideways (`document.documentElement.scrollWidth === innerWidth`). Wide tables, boards and matrices scroll sideways *inside their own card* (`overflow-x-auto` wrapper, e.g. `AppTableContainer`).
+2. **Module navigation**: every module has its own tabs in `components/layout/MobileBottomNav.tsx` (max 4 tabs + Menu). A new module or module area MUST add its tab set and its path prefix there, and its module code in `ModuleSwitcher.tsx` (`ICONS`, `FALLBACK_NAMES`, `FALLBACK_ROUTES`, `moduleFromPath`). Tabs of one module must never send the user into another module.
+3. **No popovers/dropdowns portalled out of a modal on phones**: anything opened from inside the mobile drawer or a `Dialog` must either render inline or use the same Radix version as the dialog. Two copies of `@radix-ui/react-dismissable-layer` make portalled menus visible but untappable. Check `npm ls @radix-ui/react-dismissable-layer` shows ONE version after any Radix change.
+4. **Touch targets** are at least 44×44px on phones (`min-h-11`, `h-10 w-10` icon buttons); keep desktop density with `sm:`/`md:` overrides.
+5. **Headers, toolbars and filter bars wrap**: action rows use `flex flex-wrap gap-2` (never `shrink-0` + `whitespace-nowrap` on a row of several buttons); titles wrap; long numbers use `break-words`/`tabular-nums` and fit their card.
+6. **Dialogs** never exceed the screen (`max-h-[calc(100dvh-2rem)] overflow-y-auto`, built into `components/ui/dialog.tsx`); footers stack on phones. Never build a custom fixed overlay that ignores this.
+7. **Layout**: use responsive grids (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`), never fixed pixel widths above 340px without a `max-w-full`. Content at the bottom must clear the bottom tab bar (the shell already pads `main`; fixed bottom bars must add `pb-[env(safe-area-inset-bottom)]`).
+8. **Inputs** stay at 16px on phones (set globally in `app/globals.css`) so iOS does not zoom; use the correct `inputMode`/`type` (`tel`, `email`, `numeric`).
+9. **Verify** with `node tools/ui-audit.mjs` (its mobile rules flag non-wrapping action rows, fixed wide widths and small tap targets) and a real look at 375px before deploying.
 

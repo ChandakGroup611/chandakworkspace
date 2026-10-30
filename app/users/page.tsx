@@ -698,7 +698,7 @@ export default function UserMasterPage() {
         "border-border"
       }`}>
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h1 className={`text-xl font-semibold tracking-tight ${"text-foreground"}`}>Enterprise personnel registry</h1>
             <AppBadge variant="info">Identity directory</AppBadge>
           </div>
@@ -707,7 +707,7 @@ export default function UserMasterPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
           <AppButton 
             variant="outline" 
             size="sm" 

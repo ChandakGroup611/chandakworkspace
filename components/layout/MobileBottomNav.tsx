@@ -5,11 +5,13 @@
  * and Design Tracking. Tabs now follow the active module. Also: solid surface instead of
  * a blurred translucent bar (blur was globally disabled), no glow/pulse on the active tab,
  * aria-current, and safe-area padding.
+ * AMC (part of Task Workflow's admin area) gets its own tabs while inside /amc, with Home to go
+ * back, instead of the Tasks / Tickets / Requirements set. Tap targets are at least 44px.
  */
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, Settings2 } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, Settings2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = { label: string; href: string; icon: React.ElementType; match: (p: string) => boolean };
@@ -37,6 +39,12 @@ const TABS: Record<string, Tab[]> = {
     { label: "All", href: "/dashboards", icon: LayoutDashboard, match: (p) => p === "/dashboards" },
     { label: "IT", href: "/dashboards/it", icon: LineChart, match: (p) => p.startsWith("/dashboards/it") },
     { label: "Marketing", href: "/dashboards/mkt", icon: LineChart, match: (p) => p.startsWith("/dashboards/mkt") },
+  ],
+  amc: [
+    { label: "Home", href: "/", icon: LayoutDashboard, match: (p) => p === "/" },
+    { label: "Contracts", href: "/amc", icon: ShieldCheck, match: (p) => p === "/amc" },
+    { label: "Analytics", href: "/amc/analytics", icon: LineChart, match: (p) => p.startsWith("/amc/analytics") },
+    { label: "Reports", href: "/amc/reports", icon: FileText, match: (p) => p.startsWith("/amc/reports") },
   ],
   meet: [
     { label: "Overview", href: "/meet", icon: LayoutDashboard, match: (p) => p === "/meet" },
@@ -66,7 +74,7 @@ export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu
   }, []);
 
   if (!mounted) return null;
-  let key = pathname.startsWith("/budget") ? "budget" : pathname.startsWith("/meet") ? "meet" : pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
+  let key = pathname.startsWith("/budget") ? "budget" : pathname.startsWith("/meet") ? "meet" : pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : pathname.startsWith("/amc") ? "amc" : "task";
   if (pathname.startsWith("/settings") || pathname === "/profile") {
     if (typeof document !== "undefined") {
       const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
@@ -92,7 +100,7 @@ export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu
 
   const tabs = key === "budget" ? getBudgetTabs(budgetPid) : TABS[key];
 
-  const item = "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-[11px] transition-colors";
+  const item = "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-[11px] transition-colors";
 
   return (
     <nav

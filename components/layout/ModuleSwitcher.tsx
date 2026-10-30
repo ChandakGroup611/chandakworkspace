@@ -10,6 +10,10 @@
  * - Module list is fetched once per session, not on every route change.
  * - Active-module icon uses --btn-primary-text (v1 forced white, unreadable on the
  *   yellow / cyan / emerald primaries of the old themes).
+ * - Mobile drawer (onCloseMobile given): the list expands inline inside the drawer instead of a
+ *   portalled popover. A popover portalled outside a modal Radix Dialog sits behind the dialog's
+ *   "pointer-events: none" body lock, so taps on a module fell through and nothing switched.
+ *   Rows are 44px tall for touch.
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -145,7 +149,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     </span>
   );
 
-  const trigger = isCompact ? (
+  const trigger: React.ReactElement<React.ButtonHTMLAttributes<HTMLButtonElement> & Record<string, unknown>> = isCompact ? (
     <button
       type="button"
       disabled={!canSwitch}
@@ -174,6 +178,74 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     </button>
   );
 
+  const inline = !!onCloseMobile && !isCompact;
+  const list = (
+      <ul className="space-y-0.5">
+        {modules.map((m) => {
+          const Icon = ICONS[m.code] ?? Layers;
+          const current = m.code === activeCode;
+          return (
+            <li key={m.code} className={cn("flex items-center gap-1 rounded-md pr-1", current ? "bg-accent-soft" : "hover:bg-surface-hover")}>
+              <button
+                type="button"
+                onClick={() => selectModule(m.code)}
+                aria-current={current ? "true" : undefined}
+                className={cn("flex min-w-0 flex-1 items-center gap-2.5 px-2 text-left", inline ? "min-h-11 py-2" : "py-2")}
+              >
+                <span className={cn("inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md", current ? "bg-primary text-primary-foreground" : "bg-sunken text-muted")}>
+                  {busy === m.code ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Icon className="h-4 w-4" aria-hidden />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className={cn("block truncate text-[13px]", current ? "font-semibold text-accent-soft-text" : "font-medium")}>{m.name}</span>
+                  {m.is_default && <span className="block text-[11px] text-muted">Opens after login</span>}
+                </span>
+                {current && <Check className="h-4 w-4 shrink-0 text-accent-soft-text" aria-hidden />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDefault(m.code)}
+                disabled={!!m.is_default || busy === `default:${m.code}`}
+                aria-label={m.is_default ? `${m.name} is your default module` : `Make ${m.name} my default module`}
+                title={m.is_default ? "Default after login" : "Set as default after login"}
+                className={cn("inline-flex shrink-0 items-center justify-center rounded text-muted hover:bg-sunken hover:text-foreground disabled:cursor-default", inline ? "h-10 w-10" : "h-7 w-7")}
+              >
+                <Star className={cn("h-3.5 w-3.5", m.is_default && "fill-warning text-warning")} aria-hidden />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+  );
+  const manage = (
+    <div className="mt-1 border-t border-border pt-1">
+      <a href="/select-module?choose=1" onClick={() => onCloseMobile?.()} className={cn("flex items-center gap-1.5 rounded-md px-2 text-[12.5px] font-medium text-accent-soft-text hover:bg-surface-hover", inline ? "min-h-11" : "py-1.5")}>
+        Manage modules <ExternalLink className="h-3 w-3" aria-hidden />
+      </a>
+    </div>
+  );
+
+  if (inline) {
+    return (
+      <div>
+        {React.cloneElement(trigger, {
+          onClick: () => canSwitch && setOpen((o) => !o),
+          "aria-expanded": canSwitch ? open : undefined,
+          "aria-controls": "mobile-module-list",
+        })}
+        {open && canSwitch && (
+          <div id="mobile-module-list" className="mt-2 rounded-[10px] border border-border bg-elevated p-1.5 text-foreground animate-in fade-in-0">
+            <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
+              <span className="theme-label">Switch module</span>
+              <span className="text-[11px] text-muted tabular">{modules.length} available</span>
+            </div>
+            {list}
+            {manage}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Popover.Root open={open && canSwitch} onOpenChange={setOpen}>
       <Popover.Trigger asChild>{trigger}</Popover.Trigger>
@@ -188,46 +260,8 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
             <span className="theme-label">Switch module</span>
             <span className="text-[11px] text-muted tabular">{modules.length} available</span>
           </div>
-          <ul className="space-y-0.5">
-            {modules.map((m) => {
-              const Icon = ICONS[m.code] ?? Layers;
-              const current = m.code === activeCode;
-              return (
-                <li key={m.code} className={cn("flex items-center gap-1 rounded-md pr-1", current ? "bg-accent-soft" : "hover:bg-surface-hover")}>
-                  <button
-                    type="button"
-                    onClick={() => selectModule(m.code)}
-                    aria-current={current ? "true" : undefined}
-                    className="flex min-w-0 flex-1 items-center gap-2.5 px-2 py-2 text-left"
-                  >
-                    <span className={cn("inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md", current ? "bg-primary text-primary-foreground" : "bg-sunken text-muted")}>
-                      {busy === m.code ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Icon className="h-4 w-4" aria-hidden />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className={cn("block truncate text-[13px]", current ? "font-semibold text-accent-soft-text" : "font-medium")}>{m.name}</span>
-                      {m.is_default && <span className="block text-[11px] text-muted">Opens after login</span>}
-                    </span>
-                    {current && <Check className="h-4 w-4 shrink-0 text-accent-soft-text" aria-hidden />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDefault(m.code)}
-                    disabled={!!m.is_default || busy === `default:${m.code}`}
-                    aria-label={m.is_default ? `${m.name} is your default module` : `Make ${m.name} my default module`}
-                    title={m.is_default ? "Default after login" : "Set as default after login"}
-                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted hover:bg-sunken hover:text-foreground disabled:cursor-default"
-                  >
-                    <Star className={cn("h-3.5 w-3.5", m.is_default && "fill-warning text-warning")} aria-hidden />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="mt-1 border-t border-border pt-1">
-            <a href="/select-module?choose=1" onClick={() => onCloseMobile?.()} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12.5px] font-medium text-accent-soft-text hover:bg-surface-hover">
-              Manage modules <ExternalLink className="h-3 w-3" aria-hidden />
-            </a>
-          </div>
+          {list}
+          {manage}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

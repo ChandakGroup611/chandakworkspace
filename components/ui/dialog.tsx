@@ -45,7 +45,9 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed left-1/2 top-1/2 z-[var(--z-modal)] grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4",
-        "rounded-[var(--radius-modal)] border border-border bg-elevated p-6 text-foreground shadow-lg",
+        // never taller than the screen: long forms scroll inside the dialog on phones and short laptops
+        "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
+        "rounded-[var(--radius-modal)] border border-border bg-elevated p-5 text-foreground shadow-lg sm:p-6",
         "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98]",
         "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.98]",
         className
@@ -55,7 +57,7 @@ const DialogContent = React.forwardRef<
       {children}
       {!hideClose && (
         <DialogPrimitive.Close
-          className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+          className="absolute right-2 top-2 inline-flex h-10 w-10 items-center sm:right-3 sm:top-3 sm:h-8 sm:w-8 justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
           aria-label="Close"
         >
           <X className="h-4 w-4" aria-hidden />
