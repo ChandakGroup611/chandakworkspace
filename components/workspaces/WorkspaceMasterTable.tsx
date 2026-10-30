@@ -171,7 +171,7 @@ export function WorkspaceMasterTable({
     return user ? user.full_name : "System";
   };
 
-  const gridCols = 'minmax(360px, 4.5fr) minmax(110px, 1fr) minmax(76px, 0.8fr) minmax(76px, 0.8fr) minmax(88px, 0.8fr) minmax(80px, 0.8fr) minmax(190px, 1.3fr) 108px';
+  const gridCols = 'minmax(340px, 4.5fr) minmax(110px, 1fr) minmax(76px, 0.8fr) minmax(76px, 0.8fr) minmax(88px, 0.8fr) minmax(80px, 0.8fr) minmax(220px, 1.4fr) 108px';
 
   const renderAvatarGroup = (members: any[], title: string, fallbackText: string = "None") => {
     if (!members || members.length === 0) {
@@ -447,7 +447,7 @@ export function WorkspaceMasterTable({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
-                  className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12.5px] font-medium text-subtle hover:bg-sunken hover:text-foreground"
+                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12.5px] font-medium text-subtle hover:bg-sunken hover:text-foreground transition-colors"
                   title="Add a sub-workspace"
                 >
                   <Plus className="h-3.5 w-3.5" aria-hidden /> Sub-workspace
@@ -457,7 +457,7 @@ export function WorkspaceMasterTable({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
-                  className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[12.5px] font-medium text-subtle hover:bg-sunken hover:text-foreground"
+                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12.5px] font-medium text-subtle hover:bg-sunken hover:text-foreground transition-colors"
                   title={isWorkspaceType ? "Add a task" : "Add a sub-task"}
                 >
                   <Plus className="h-3.5 w-3.5" aria-hidden /> {isWorkspaceType ? "Task" : "Sub-task"}
@@ -864,7 +864,7 @@ export function WorkspaceMasterTable({
       </div>
 
       <div className="hidden w-full overflow-x-auto lg:block">
-        <div className="w-full flex flex-col min-w-[1040px]">
+        <div className="w-full flex flex-col min-w-[1120px]">
           <div 
             className="sticky top-0 z-[var(--z-sticky)] grid items-center border-b border-border bg-sunken text-[12px] font-semibold text-subtle"
             style={{ gridTemplateColumns: gridCols }}

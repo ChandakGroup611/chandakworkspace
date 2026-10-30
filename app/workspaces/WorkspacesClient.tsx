@@ -1229,7 +1229,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   }
 
   return (
-    <PageContainer strict={true}>
+    <PageContainer>
       <PageHeader
         title="Workspaces"
         description="Workspaces, sub-workspaces and their tasks in one hierarchy"
@@ -1824,10 +1824,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Full Width Master Table Layout */}
       {workspaces.length > 0 ? (
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="w-full flex flex-col pb-8">
             
             {/* Hierarchical Task Matrix */}
-            <div className="theme-card-structural flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="theme-card-structural flex flex-col">
               <div className="flex flex-col justify-between gap-2.5 border-b border-border px-3 py-2.5 sm:flex-row sm:items-center">
                 <div className="inline-flex gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="View">
                   <button
@@ -1897,7 +1897,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
 
               {activeView === 'HIERARCHY' ? (
-                <div className="min-h-0 flex-1 overflow-auto">
+                <div className="w-full">
               <WorkspaceMasterTable 
                 hierarchy={masterHierarchy} 
                 expandedNodes={expandedNodes}
@@ -1973,7 +1973,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               />
               </div>
               ) : (
-                <div className="flex-1 overflow-hidden">
+                <div className="w-full min-h-[600px] overflow-hidden">
                   <SprintBoard workspaceId={activeWorkspace?.id || workspaces[0]?.id} currentUser={currentUser} />
                 </div>
               )}
