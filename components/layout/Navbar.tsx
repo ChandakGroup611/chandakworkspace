@@ -27,6 +27,7 @@ import { ThemeMenu } from "@/components/theme/ThemeMenu";
 import { useProfile, usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
+import { ChandakMessengerTrigger } from "@/components/messenger/ChandakMessengerTrigger";
 import { CopilotDrawer } from "@/components/copilot/CopilotDrawer";
 import { ChandakMitraIcon } from "@/components/copilot/ChandakMitraIcon";
 
@@ -191,6 +192,7 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
           <Settings className="h-4 w-4" aria-hidden />
         </Link>
         <RealtimeNotificationsDrawer />
+        <ChandakMessengerTrigger />
         <button
           type="button"
           onClick={() => setCopilotOpen(true)}

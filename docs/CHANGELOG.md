@@ -24,6 +24,24 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Change ID:** MESSENGER-001 (Universal Chandak Messenger Live Communication Platform)
+* **Date:** 2026-10-30
+* **Requested functionality:** Develop Chandak Messenger universally accessible from the top navbar near the notification trigger across all modules; implement WhatsApp-style live messaging, 1-on-1 direct chat, team groups, @mentions, voice notes, attachments with dual View & Download compliance, emoji reactions, and live unread badge counters with auto-population of all workspace users from `user_master`.
+* **Reason:** Provide unified, single-platform workplace communication across all Chandak Workspace operations without forcing users to leave active workflows.
+* **Modules affected:** Universal across all modules; Header Navbar (`components/layout/Navbar.tsx`), new Messenger module (`components/messenger/*`, `lib/actions/messenger.ts`).
+* **Files changed:** `supabase/migrations/20261030110000_chandak_messenger_core.sql`, `lib/actions/messenger.ts`, `components/messenger/ChandakMessengerTrigger.tsx`, `components/messenger/ChandakMessengerDrawer.tsx`, `components/messenger/ConversationList.tsx`, `components/messenger/ConversationView.tsx`, `components/messenger/MessageComposer.tsx`, `components/messenger/NewChatModal.tsx`, `components/messenger/NewGroupModal.tsx`, `components/messenger/GroupInfoModal.tsx`, `components/messenger/AttachmentPreviewModal.tsx`, `components/layout/Navbar.tsx`, `scripts/test-messenger-e2e.js`, `scripts/deploy.js`, `docs/CHANDAK_MESSENGER_SPECIFICATION.md`, `docs/SYSTEM_INVENTORY.md`, `docs/CHANGELOG.md`.
+* **Database changes:** Created `messenger_conversations`, `messenger_participants`, `messenger_messages`, `messenger_reactions`, automated preview update trigger `tr_messenger_message_insert`, RLS policies, and added tables to `supabase_realtime` publication.
+* **API changes:** Added Server Actions in `lib/actions/messenger.ts` (`fetchWorkspaceUsersForMessenger`, `fetchMessengerConversations`, `getOrCreateDirectConversation`, `createGroupConversation`, `fetchMessengerMessages`, `sendMessengerMessage`, `markConversationAsRead`, `togglePinConversation`, `toggleMessageReaction`, `deleteMessengerMessage`, `getMessengerTotalUnreadCount`, `addGroupMembers`, `leaveGroupConversation`).
+* **UI changes:** Added universal `<ChandakMessengerTrigger />` with real-time unread counter badge in Navbar; WhatsApp-style 2-column drawer/modal with conversation list, search, filter tabs, active conversation feed with bubble messages, @mentions, voice note player, staged attachments, and modal previewer.
+* **Business logic changes:** Enforced canonical user pair ordering `(direct_user1_id, direct_user2_id)` ensuring single direct chat between colleagues; group creator assigned `admin` role.
+* **Security impact:** Zero unauthorized access. Strictly enforced RLS ensuring users only see and post to conversations where they are participants.
+* **RBAC impact:** Registered `CHANDAK_MESSENGER` in `modules_master` and permissions `MESSENGER_ACCESS`, `MESSENGER_SEND`, `MESSENGER_GROUP_CREATE`, `MESSENGER_GROUP_MANAGE`.
+* **Performance impact:** Composite B-tree indexes on conversation recency, participant lookups, and message timelines; lightweight push-updates via Supabase Realtime without polling.
+* **Testing performed:** TypeScript typecheck (`npx tsc --noEmit`), automated E2E QA test suite (`scripts/test-messenger-e2e.js`, 11/11 passed), Design Tracking QA suite (`scripts/qa-design-tracking.js`, 47/47 passed), Organization Budget E2E suite (`scripts/test-budget-cycle-e2e.js`, 13/13 passed).
+* **Regression testing performed:** Verified backward compatibility across navbar layouts, theme switcher, notifications drawer, and route handling.
+* **Deployment status:** Deployed & Verified.
+* **Rollback information:** Additive migration and components; can be reverted via `git revert`.
+
 * **Change ID:** INFRA-001 (Dashboards MSSQL Instance Migration to 10.9.0.4\MSSQLSERVER_INT)
 * **Date:** 2026-10-29
 * **Requested functionality:** Migrate analytics dashboards engine database source from `localhost\MSSQLSERVERNEW` / `DASHBOARD` on `10.0.1.46` to dedicated instance `10.9.0.4\MSSQLSERVER_INT` on host `CG-DB-01`, database `INTERNAL_WORK`.

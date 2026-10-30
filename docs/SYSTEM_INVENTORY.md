@@ -17,9 +17,11 @@ This document details the comprehensive application architecture and subsystem i
 12. **Knowledge & Learning Base (`/knowledge`, `/learning`)**: Enterprise SOPs, training materials, knowledge artifacts.
 13. **Organization Budget Management (`/budget`)**: Multi-version project budget formulation (R1 to Rn revisions), departmental cost heads, tower allocation, supporting cost schedules, invoice bill recording & cost incurred actuals, sequential merge locking, sign-off chains, and full variance audit reporting.
 14. **Executive & Operational Dashboards Engine**: Triple-engine analytics services (`8080`, `8081`, `8083`) backed by dedicated Microsoft SQL Server instance (`10.9.0.4\MSSQLSERVER_INT`, DB: `INTERNAL_WORK` on host `CG-DB-01`) providing real-time IN4 operational, asset, and budget reconciliation. See `docs/DASHBOARDS_SQL_MIGRATION.md`.
+15. **Chandak Messenger (`components/messenger`, `lib/actions/messenger.ts`)**: Universal real-time communication platform accessible from the global navigation bar across all modules (1-on-1 direct messaging, project groups, @mentions, voice notes, attachments with dual View & Download, emoji reactions, and live unread badge counters). See `docs/CHANDAK_MESSENGER_SPECIFICATION.md`.
 
 ## 2. Database Tables & Key Relations
 - **Identity & IAM**: `user_master`, `permissions`, `roles`, `fleet_user_access`, `design_user_access`, `active_sessions`.
+- **Chandak Messenger**: `messenger_conversations`, `messenger_participants`, `messenger_messages`, `messenger_reactions`.
 - **Workspaces & Tasks**: `workspaces`, `workspace_members`, `workspace_tasks`, `task_checklists`, `task_time_logs`, `task_tags`, `task_relations`, `task_participants`.
 - **Tickets & Requirements**: `tickets`, `ticket_chat_messages`, `ticket_macros`, `ticket_relations`, `ticket_escalations`, `requirements`, `requirement_approvals`, `requirement_amendments`.
 - **AMC & Assets**: `software_amc`, `amc_licenses`, `amc_invoices`, `amc_transactions`, `amc_payments`, `amc_auto_renewals`, `amc_audit_logs`.

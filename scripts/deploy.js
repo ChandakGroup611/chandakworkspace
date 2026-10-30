@@ -36,6 +36,22 @@ rl.question('📝 Enter your commit message (leave blank for auto-generated): ',
       console.warn('⚠️ Warning: QA test script returned non-zero. Review output above.');
     }
 
+    console.log('\n💬 Running Chandak Messenger QA Test Suite (test-messenger-e2e.js)...');
+    try {
+      execSync('node scripts/test-messenger-e2e.js', { stdio: 'inherit' });
+      console.log('✅ Chandak Messenger QA tests passed successfully.');
+    } catch (msgErr) {
+      console.warn('⚠️ Warning: Messenger test script returned non-zero. Review output above.');
+    }
+
+    console.log('\n📊 Running Organization Budget QA Test Suite (test-budget-cycle-e2e.js)...');
+    try {
+      execSync('node scripts/test-budget-cycle-e2e.js', { stdio: 'inherit' });
+      console.log('✅ Budget cycle QA tests passed successfully.');
+    } catch (bgtErr) {
+      console.warn('⚠️ Warning: Budget test script returned non-zero. Review output above.');
+    }
+
     console.log('\n🔍 Checking git working tree...');
     const status = execSync('git status --porcelain', { encoding: 'utf-8' }).trim();
     if (status) {
