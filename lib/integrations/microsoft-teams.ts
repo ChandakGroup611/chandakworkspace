@@ -14,11 +14,15 @@ export interface GenerateTeamsMeetingParams {
   organizerId?: string;
   organizerEmail?: string;
   meetingCode?: string;
+  attendeeEmails?: string[];
+  callType?: "call" | "meeting";
 }
 
 /**
- * Automatically generates a Microsoft Teams meeting join link.
- * Requires zero manual copy-pasting from users.
+ * Automatically generates an authentic Microsoft Teams meeting/call link.
+ * Uses official Microsoft Teams deep-linking protocol (/l/call or /l/meeting/new)
+ * or Microsoft Graph API when Azure tenant credentials are configured.
+ * Never outputs synthetic/fabricated thread URLs that fail with "Unable to join".
  */
 export async function generateTeamsMeetingLink(
   params: GenerateTeamsMeetingParams
@@ -30,6 +34,8 @@ export async function generateTeamsMeetingLink(
     organizerId,
     organizerEmail,
     meetingCode = "MTG",
+    attendeeEmails = [],
+    callType = "call",
   } = params;
 
   // 1. Try Microsoft Graph API if Azure App credentials are configured in environment
@@ -90,28 +96,49 @@ export async function generateTeamsMeetingLink(
     }
   }
 
-  // 2. Generate standard Microsoft Teams enterprise meetup link
-  // Format matches Microsoft 365 Tenant Join specification:
-  // https://teams.microsoft.com/l/meetup-join/{threadId}/0?context={contextJson}
-  const cleanCode = meetingCode.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-  const randomEntropy = Math.random().toString(36).substring(2, 10);
-  const threadId = `19:meeting_${cleanCode}_${randomEntropy}@thread.v2`;
+  // 2. Clean and deduplicate attendee email list
+  const validEmails = Array.from(
+    new Set(
+      [...(organizerEmail ? [organizerEmail] : []), ...attendeeEmails]
+        .map((e) => e?.trim().toLowerCase())
+        .filter((e): e is string => Boolean(e && e.includes("@")))
+    )
+  );
 
-  const contextData = {
-    Tid: tenantId || "chandakgroup.com",
-    Oid: organizerId || "chandak-meeting-host",
-    MessageId: "0",
-  };
+  // 3. For live calls & instant calls: use Microsoft Teams direct video call protocol
+  // Format: https://teams.microsoft.com/l/call/0/0?users={emails}&withVideo=true
+  // This opens Teams (App or Web) and immediately connects the participants with zero URL errors.
+  if (callType === "call" && validEmails.length > 0) {
+    const encodedUsers = validEmails.map((e) => encodeURIComponent(e)).join(",");
+    return `https://teams.microsoft.com/l/call/0/0?users=${encodedUsers}&withVideo=true`;
+  }
 
-  const encodedContext = encodeURIComponent(JSON.stringify(contextData));
-  return `https://teams.microsoft.com/l/meetup-join/${encodeURIComponent(threadId)}/0?context=${encodedContext}`;
+  // 4. For scheduled calendar meetings: use Microsoft Teams native meeting scheduler
+  // Format: https://teams.microsoft.com/l/meeting/new?subject={title}&attendees={emails}&startTime={start}&endTime={end}
+  const queryParams = new URLSearchParams();
+  queryParams.set("subject", `Chandak Meet: ${title}`);
+  if (validEmails.length > 0) {
+    queryParams.set("attendees", validEmails.join(","));
+  }
+  if (scheduledStart) {
+    queryParams.set("startTime", scheduledStart);
+  }
+  if (scheduledEnd) {
+    queryParams.set("endTime", scheduledEnd);
+  }
+
+  return `https://teams.microsoft.com/l/meeting/new?${queryParams.toString()}`;
 }
 
 /**
- * Checks if a given URL is a Microsoft Teams meeting link
+ * Checks if a given URL is a valid Microsoft Teams link
  */
 export function isMicrosoftTeamsLink(url: string | null | undefined): boolean {
   if (!url) return false;
-  return /teams\.microsoft\.com\/l\/meetup-join/i.test(url);
+  return (
+    /teams\.microsoft\.com\/l\/(meetup-join|call|meeting)/i.test(url) ||
+    /teams\.cloud\.microsoft/i.test(url) ||
+    /teams\.microsoft\.com\/meet/i.test(url)
+  );
 }
 

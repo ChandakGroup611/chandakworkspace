@@ -588,12 +588,28 @@ export async function createSessionForMeeting(input: {
     let sessionVideoLink = (input.videoLink || meeting.video_link || "").trim();
     if (!sessionVideoLink) {
       try {
+        const { data: members } = await supabaseAdmin
+          .from("meet_meeting_members")
+          .select("user_id, guest_email, user:user_master(email)")
+          .eq("meeting_id", input.meetingId)
+          .eq("is_deleted", false);
+
+        const attendeeEmails: string[] = [];
+        for (const m of members || []) {
+          const email = (m as any)?.user?.email || (m as any)?.guest_email;
+          if (email && !attendeeEmails.includes(email)) {
+            attendeeEmails.push(email);
+          }
+        }
+
         const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
         sessionVideoLink = await generateTeamsMeetingLink({
           title: meeting.title,
           scheduledStart,
           scheduledEnd,
           meetingCode: sessionCode,
+          attendeeEmails,
+          callType: "call",
         });
       } catch (e) {
         console.warn("Auto Teams meeting generation fallback:", e);

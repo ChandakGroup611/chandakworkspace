@@ -173,14 +173,45 @@ export async function createMeeting(input: CreateMeetingInput) {
   try {
     const { userId } = await requireMeet("MEET_CREATE");
 
+    // Collect attendee emails for Microsoft Teams call/meeting link
+    let attendeeEmails: string[] = [];
+    if (input.members && input.members.length > 0) {
+      const memberUserIds = input.members.map((m) => m.user_id).filter(Boolean) as string[];
+      if (memberUserIds.length > 0) {
+        const { data: userRecords } = await supabaseAdmin
+          .from("user_master")
+          .select("id, email")
+          .in("id", memberUserIds);
+        for (const u of userRecords || []) {
+          if (u.email && !attendeeEmails.includes(u.email)) {
+            attendeeEmails.push(u.email);
+          }
+        }
+      }
+      for (const m of input.members) {
+        if (m.guest_email && !attendeeEmails.includes(m.guest_email)) {
+          attendeeEmails.push(m.guest_email);
+        }
+      }
+    }
+
     // Automatically generate Microsoft Teams meeting link if not manually supplied
     let effectiveVideoLink = (input.video_link || "").trim();
     if (!effectiveVideoLink && input.mode !== "in_person") {
       try {
+        const { data: orgUser } = await supabaseAdmin
+          .from("user_master")
+          .select("email")
+          .eq("id", input.organizer_id)
+          .maybeSingle();
+
         effectiveVideoLink = await generateTeamsMeetingLink({
           title: input.title,
           scheduledStart: `${input.start_date || new Date().toISOString().split("T")[0]}T${input.default_start_time || "10:00:00"}+05:30`,
           organizerId: input.organizer_id,
+          organizerEmail: orgUser?.email,
+          attendeeEmails,
+          callType: "call",
           meetingCode: "MTG",
         });
       } catch (teamsErr) {

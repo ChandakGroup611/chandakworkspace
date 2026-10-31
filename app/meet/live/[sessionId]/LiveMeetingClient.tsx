@@ -360,9 +360,14 @@ export default function LiveMeetingClient({
               onClick={async () => {
                 try {
                   const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+                  const attendeeEmails = (attendees || [])
+                    .map((a) => (a as any).user?.email || a.guest_email)
+                    .filter(Boolean) as string[];
                   const autoLink = await generateTeamsMeetingLink({
                     title: session.meeting?.title || "Meeting",
                     meetingCode: session.code,
+                    attendeeEmails,
+                    callType: "call",
                   });
                   await updateSessionVideoLink({ sessionId: session.id, videoLink: autoLink });
                   setVideoLink(autoLink);

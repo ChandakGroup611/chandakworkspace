@@ -1336,7 +1336,7 @@ export async function startInstantCallFromChat(
     const currentUserId = await getAuthUser();
     const { data: user } = await supabaseAdmin
       .from("user_master")
-      .select("full_name")
+      .select("full_name, email")
       .eq("id", currentUserId)
       .maybeSingle();
 
@@ -1344,11 +1344,29 @@ export async function startInstantCallFromChat(
     const callRoomId = `call-${conversationId.slice(0, 8)}-${Date.now()}`;
     const meetUrl = `/meet/live?room=${callRoomId}`;
 
+    // Collect all participant emails in this conversation
+    const { data: participants } = await supabaseAdmin
+      .from("messenger_participants")
+      .select("user_id, user_master(id, email, full_name)")
+      .eq("conversation_id", conversationId);
+
+    const attendeeEmails: string[] = [];
+    if (user?.email) attendeeEmails.push(user.email);
+    for (const p of participants || []) {
+      const email = (p as any)?.user_master?.email;
+      if (email && !attendeeEmails.includes(email)) {
+        attendeeEmails.push(email);
+      }
+    }
+
     const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
     const teamsUrl = await generateTeamsMeetingLink({
       title: `Instant Call with ${senderName}`,
       meetingCode: `CHAT-${conversationId.slice(0, 6)}`,
       organizerId: currentUserId,
+      organizerEmail: user?.email,
+      attendeeEmails,
+      callType: "call",
     });
 
     const cardContent = JSON.stringify({
