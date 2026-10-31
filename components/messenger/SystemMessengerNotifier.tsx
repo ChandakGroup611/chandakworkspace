@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useProfile } from "@/hooks/usePermissions";
 import { createClient } from "@/utils/supabase/client";
 import { fetchSenderInfoForNotification } from "@/lib/actions/messenger";
-import { X, Reply, MessageSquare } from "lucide-react";
+import { X, Reply } from "lucide-react";
 
 interface FloatingToast {
   id: string;
@@ -14,18 +14,33 @@ interface FloatingToast {
   content: string;
 }
 
+// Shared running Web Audio context for zero-latency notification chimes
+let sharedAudioCtx: AudioContext | null = null;
+
+function getRunningAudioContext(): AudioContext | null {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!sharedAudioCtx) {
+      sharedAudioCtx = new AudioCtx();
+    }
+    if (sharedAudioCtx.state === "suspended") {
+      sharedAudioCtx.resume().catch(() => {});
+    }
+    return sharedAudioCtx;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Synthesizes a high-fidelity, crisp two-tone audio chime using Web Audio API.
  * Operates across all browsers with zero external sound file dependencies.
  */
 function playSystemNotificationChime() {
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
-    }
+    const ctx = getRunningAudioContext();
+    if (!ctx) return;
     const now = ctx.currentTime;
 
     const osc1 = ctx.createOscillator();
@@ -41,7 +56,7 @@ function playSystemNotificationChime() {
     osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.16); // E6
 
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.28, now + 0.02);
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
 
     osc1.connect(gain);
@@ -57,6 +72,14 @@ function playSystemNotificationChime() {
   }
 }
 
+// Cross-tab broadcast channel to deduplicate notifications across multiple open tabs
+let broadcastBus: BroadcastChannel | null = null;
+if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+  try {
+    broadcastBus = new BroadcastChannel("chandak_messenger_notif_bus");
+  } catch {}
+}
+
 export function SystemMessengerNotifier() {
   const { data: profile } = useProfile();
   const [activeToast, setActiveToast] = useState<FloatingToast | null>(null);
@@ -65,6 +88,30 @@ export function SystemMessengerNotifier() {
   const originalTitleRef = useRef<string>("");
   const titleIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const supabase = createClient();
+
+  // In-memory caches to guarantee 0ms instant notification without network latency
+  const conversationsCacheRef = useRef<Set<string>>(new Set());
+  const mutedConversationsCacheRef = useRef<Set<string>>(new Set());
+  const senderCacheRef = useRef<Map<string, { full_name: string; profile_photo: string | null }>>(new Map());
+  const recentNotifiedIdsRef = useRef<Set<string>>(new Set());
+
+  // Listen to cross-tab broadcast to prevent duplicate audio chimes/popups
+  useEffect(() => {
+    if (!broadcastBus) return;
+    const handleBusMessage = (event: MessageEvent) => {
+      if (event.data?.type === "MSG_NOTIFIED" && event.data?.id) {
+        recentNotifiedIdsRef.current.add(event.data.id);
+        // Clean up old entries after 10 seconds
+        setTimeout(() => {
+          recentNotifiedIdsRef.current.delete(event.data.id);
+        }, 10000);
+      }
+    };
+    broadcastBus.addEventListener("message", handleBusMessage);
+    return () => {
+      broadcastBus?.removeEventListener("message", handleBusMessage);
+    };
+  }, []);
 
   // Remember authenticated user in localStorage for background / logged-out notifications
   useEffect(() => {
@@ -78,7 +125,7 @@ export function SystemMessengerNotifier() {
     }
   }, [profile?.id, profile?.full_name]);
 
-  // Request browser notification permission and register service worker for native device alerts
+  // Proactively warm up AudioContext and request browser notification permission
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -86,20 +133,57 @@ export function SystemMessengerNotifier() {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
 
-    const requestPerm = () => {
+    const warmAudioAndRequestPerm = () => {
+      getRunningAudioContext();
       if ("Notification" in window && Notification.permission === "default") {
         Notification.requestPermission().catch(() => {});
       }
     };
 
-    window.addEventListener("click", requestPerm, { once: true });
-    window.addEventListener("keydown", requestPerm, { once: true });
+    window.addEventListener("click", warmAudioAndRequestPerm);
+    window.addEventListener("keydown", warmAudioAndRequestPerm);
+    window.addEventListener("pointerdown", warmAudioAndRequestPerm);
 
     return () => {
-      window.removeEventListener("click", requestPerm);
-      window.removeEventListener("keydown", requestPerm);
+      window.removeEventListener("click", warmAudioAndRequestPerm);
+      window.removeEventListener("keydown", warmAudioAndRequestPerm);
+      window.removeEventListener("pointerdown", warmAudioAndRequestPerm);
     };
   }, []);
+
+  // Preload and cache user's participant conversations for zero-latency checks
+  const getEffectiveUserId = useCallback((): string | null => {
+    return profile?.id || (typeof window !== "undefined" ? localStorage.getItem("chandak_messenger_user_id") : null) || null;
+  }, [profile?.id]);
+
+  const refreshUserConversations = useCallback(async (userId: string) => {
+    try {
+      const { data: parts } = await supabase
+        .from("messenger_participants")
+        .select("conversation_id, is_muted")
+        .eq("user_id", userId);
+
+      if (parts) {
+        const convSet = new Set<string>();
+        const mutedSet = new Set<string>();
+        for (const p of parts) {
+          convSet.add(p.conversation_id);
+          if (p.is_muted) mutedSet.add(p.conversation_id);
+        }
+        conversationsCacheRef.current = convSet;
+        mutedConversationsCacheRef.current = mutedSet;
+      }
+    } catch (e) {
+      console.warn("Failed to cache conversations:", e);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    const effectiveUserId = getEffectiveUserId();
+    if (effectiveUserId) {
+      refreshUserConversations(effectiveUserId);
+    }
+  }, [getEffectiveUserId, refreshUserConversations]);
 
   // Listen for drawer open/close and active conversation state
   useEffect(() => {
@@ -139,27 +223,80 @@ export function SystemMessengerNotifier() {
   // Flash title helper
   const flashTitle = useCallback((senderName: string) => {
     if (typeof window === "undefined") return;
-    if (document.hasFocus()) return;
+    if (document.hasFocus() && !document.hidden) return;
 
     if (!titleIntervalRef.current) {
       originalTitleRef.current = document.title;
       let toggle = false;
       titleIntervalRef.current = setInterval(() => {
         document.title = toggle
-          ? `(1) New message from ${senderName}`
+          ? `(1) 💬 New message from ${senderName}`
           : originalTitleRef.current;
         toggle = !toggle;
-      }, 1500);
+      }, 1200);
     }
   }, []);
+
+  // Helper to dispatch native OS desktop notifications
+  const dispatchNativeNotification = useCallback(
+    async (senderName: string, preview: string, msgId: string, convId: string, photo: string | null) => {
+      if (typeof window === "undefined" || !("Notification" in window) || Notification.permission !== "granted") {
+        return;
+      }
+
+      const notifOptions = {
+        body: preview,
+        icon: photo || "/chandak-40-icon.png",
+        badge: "/chandak-40-icon.png",
+        tag: `chandak-msg-${convId}`,
+        renotify: true,
+        requireInteraction: false,
+        silent: false,
+        data: {
+          url: `/#messenger:${convId}`,
+          conversationId: convId,
+        },
+      };
+
+      let swShown = false;
+      if ("serviceWorker" in navigator) {
+        try {
+          const reg = await Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 800)),
+          ]);
+          if (reg && reg.showNotification) {
+            await reg.showNotification(senderName, notifOptions as any);
+            swShown = true;
+          }
+        } catch (swErr) {
+          console.warn("SW notification error:", swErr);
+        }
+      }
+
+      if (!swShown) {
+        try {
+          const notif = new Notification(senderName, notifOptions as any);
+          notif.onclick = () => {
+            window.focus();
+            window.dispatchEvent(
+              new CustomEvent("open-chandak-messenger", {
+                detail: { conversationId: convId },
+              })
+            );
+            notif.close();
+          };
+        } catch (winErr) {
+          console.warn("Window notification fallback error:", winErr);
+        }
+      }
+    },
+    []
+  );
 
   // Global Realtime listener on messenger_messages with resilient self-healing reconnection
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const getEffectiveUserId = (): string | null => {
-      return profile?.id || localStorage.getItem("chandak_messenger_user_id") || null;
-    };
 
     let channel: any = null;
     let isConnected = false;
@@ -192,26 +329,50 @@ export function SystemMessengerNotifier() {
             // Ignore messages sent by oneself
             if (newMsg.sender_id === effectiveUserId) return;
 
-            // Check if effective user is a participant of this conversation
-            const { data: myPart } = await supabase
-              .from("messenger_participants")
-              .select("id, is_muted")
-              .eq("conversation_id", newMsg.conversation_id)
-              .eq("user_id", effectiveUserId)
-              .maybeSingle();
+            // Multi-tab deduplication: skip if another tab already processed this message
+            if (recentNotifiedIdsRef.current.has(newMsg.id)) return;
+            recentNotifiedIdsRef.current.add(newMsg.id);
+            setTimeout(() => {
+              recentNotifiedIdsRef.current.delete(newMsg.id);
+            }, 10000);
 
+            try {
+              broadcastBus?.postMessage({ type: "MSG_NOTIFIED", id: newMsg.id });
+            } catch {}
+
+            // Check if effective user is a participant of this conversation
             let isRecipient = false;
-            if (myPart && !myPart.is_muted) {
-              isRecipient = true;
-            } else if (!myPart) {
-              // Also check direct conversation users for immediate delivery
-              const { data: conv } = await supabase
-                .from("messenger_conversations")
-                .select("direct_user1_id, direct_user2_id")
-                .eq("id", newMsg.conversation_id)
-                .maybeSingle();
-              if (conv && (conv.direct_user1_id === effectiveUserId || conv.direct_user2_id === effectiveUserId)) {
+            if (conversationsCacheRef.current.has(newMsg.conversation_id)) {
+              if (!mutedConversationsCacheRef.current.has(newMsg.conversation_id)) {
                 isRecipient = true;
+              }
+            } else {
+              // Cache miss fallback: query database
+              const { data: myPart } = await supabase
+                .from("messenger_participants")
+                .select("id, is_muted")
+                .eq("conversation_id", newMsg.conversation_id)
+                .eq("user_id", effectiveUserId)
+                .maybeSingle();
+
+              if (myPart) {
+                conversationsCacheRef.current.add(newMsg.conversation_id);
+                if (myPart.is_muted) {
+                  mutedConversationsCacheRef.current.add(newMsg.conversation_id);
+                } else {
+                  isRecipient = true;
+                }
+              } else {
+                const { data: conv } = await supabase
+                  .from("messenger_conversations")
+                  .select("direct_user1_id, direct_user2_id")
+                  .eq("id", newMsg.conversation_id)
+                  .maybeSingle();
+
+                if (conv && (conv.direct_user1_id === effectiveUserId || conv.direct_user2_id === effectiveUserId)) {
+                  conversationsCacheRef.current.add(newMsg.conversation_id);
+                  isRecipient = true;
+                }
               }
             }
 
@@ -224,71 +385,52 @@ export function SystemMessengerNotifier() {
               })
             );
 
-            // If the user is currently viewing this exact conversation in the drawer,
-            // do not play sound or show system notifications
-            if (
-              isDrawerOpen &&
-              activeConversationIdRef.current === newMsg.conversation_id
-            ) {
-              return;
-            }
-
-            // 1. Play audio chime
+            // 1. MUST ALWAYS play audio chime on EVERY incoming message
             playSystemNotificationChime();
 
-            // 2. Fetch sender info
-            const sender = await fetchSenderInfoForNotification(newMsg.sender_id);
+            // Resolve sender details (memory cache first for 0ms latency)
+            let sender = senderCacheRef.current.get(newMsg.sender_id);
+            if (!sender) {
+              sender = await fetchSenderInfoForNotification(newMsg.sender_id);
+              if (sender?.full_name) {
+                senderCacheRef.current.set(newMsg.sender_id, sender);
+              }
+            }
+
             const preview =
               newMsg.content?.trim() ||
               (Array.isArray(newMsg.attachments) && newMsg.attachments.length > 0
                 ? `Sent ${newMsg.attachments.length} attachment(s)`
                 : "New message");
 
-            // 3. Flash document title
-            flashTitle(sender.full_name);
+            // Check if the user is looking directly at this conversation on screen right now
+            const isChatActivelyFocused =
+              isDrawerOpen &&
+              activeConversationIdRef.current === newMsg.conversation_id &&
+              document.hasFocus() &&
+              !document.hidden;
 
-            // 4. Native OS / Desktop / Device Notification (fires even when browser is minimized or in background)
-            if ("Notification" in window && Notification.permission === "granted") {
-              try {
-                if ("serviceWorker" in navigator) {
-                  const reg = await navigator.serviceWorker.ready;
-                  await reg.showNotification(sender.full_name, {
-                    body: preview,
-                    icon: sender.profile_photo || "/chandak-40-icon.png",
-                    badge: "/chandak-40-icon.png",
-                    tag: `msg-${newMsg.id}`,
-                    renotify: true,
-                    requireInteraction: true,
-                    data: {
-                      url: `/#messenger:${newMsg.conversation_id}`,
-                      conversationId: newMsg.conversation_id,
-                    },
-                  } as any);
-                } else {
-                  const notif = new Notification(sender.full_name, {
-                    body: preview,
-                    icon: sender.profile_photo || "/chandak-40-icon.png",
-                    badge: "/chandak-40-icon.png",
-                    tag: `msg-${newMsg.id}`,
-                    requireInteraction: true,
-                  } as any);
-
-                  notif.onclick = () => {
-                    window.focus();
-                    window.dispatchEvent(
-                      new CustomEvent("open-chandak-messenger", {
-                        detail: { conversationId: newMsg.conversation_id },
-                      })
-                    );
-                    notif.close();
-                  };
-                }
-              } catch (nativeErr) {
-                console.warn("Native notification dispatch error:", nativeErr);
-              }
+            // If the user is actively typing/looking right at this conversation on screen,
+            // the message is rendered right in front of them and the chime played.
+            if (isChatActivelyFocused) {
+              return;
             }
 
-            // 5. Floating in-app notification toast
+            // In all other cases (e.g., user is on another browser tab, another app,
+            // or chatting in another room, or drawer closed):
+            // 2. Flash tab title
+            flashTitle(sender.full_name);
+
+            // 3. Dispatch native OS Desktop notification
+            await dispatchNativeNotification(
+              sender.full_name,
+              preview,
+              newMsg.id,
+              newMsg.conversation_id,
+              sender.profile_photo
+            );
+
+            // 4. Show floating in-app toast
             setActiveToast({
               id: newMsg.id,
               conversationId: newMsg.conversation_id,
@@ -318,6 +460,10 @@ export function SystemMessengerNotifier() {
 
     // Auto-reconnect when tab regains focus or comes back online
     const handleReconnection = () => {
+      const effectiveUserId = getEffectiveUserId();
+      if (effectiveUserId) {
+        refreshUserConversations(effectiveUserId);
+      }
       if (!isConnected && !isCleanedUp) {
         setupChannel();
       }
@@ -346,7 +492,14 @@ export function SystemMessengerNotifier() {
         } catch {}
       }
     };
-  }, [profile?.id, isDrawerOpen, supabase, flashTitle]);
+  }, [
+    getEffectiveUserId,
+    isDrawerOpen,
+    supabase,
+    flashTitle,
+    dispatchNativeNotification,
+    refreshUserConversations,
+  ]);
 
   // Auto-dismiss floating toast after 6 seconds
   useEffect(() => {
