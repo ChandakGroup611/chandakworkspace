@@ -1072,10 +1072,29 @@ export function ConversationView({
         onViewAttachment={(att) => setPreviewAttachment(att)}
       />
 
-      {/* Modals */}
+      {/* Modals & Drawers */}
       <AttachmentPreviewModal
         attachment={previewAttachment}
         onClose={() => setPreviewAttachment(null)}
+      />
+
+      <CreateTaskFromMessageModal
+        isOpen={!!taskModalMessage}
+        onClose={() => setTaskModalMessage(null)}
+        message={taskModalMessage}
+        conversationId={conversation.id}
+        allUsers={allUsers}
+        onTaskCreated={() => {
+          setTaskModalMessage(null);
+          onConversationUpdated();
+        }}
+      />
+
+      <MediaGalleryDrawer
+        isOpen={showMediaGallery}
+        onClose={() => setShowMediaGallery(false)}
+        messages={messages}
+        onViewAttachment={(att) => setPreviewAttachment(att)}
       />
 
       {showGroupInfo && (

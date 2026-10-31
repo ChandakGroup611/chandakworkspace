@@ -206,7 +206,13 @@ export function MessageComposer({
       }, 1000);
     } catch (err: any) {
       console.error("Microphone error:", err);
-      setError(err.message || "Failed to access microphone.");
+      if (err.name === "NotAllowedError" || /denied|permission/i.test(err.message || "")) {
+        setError("Microphone permission blocked. Please allow microphone access in your browser (click the lock or settings icon in your address bar).");
+      } else if (err.name === "NotFoundError" || /device not found/i.test(err.message || "")) {
+        setError("No microphone found. Please connect an audio input device.");
+      } else {
+        setError(err.message || "Failed to access microphone.");
+      }
     }
   };
 
