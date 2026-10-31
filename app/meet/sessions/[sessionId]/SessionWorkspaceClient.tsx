@@ -43,6 +43,7 @@ import {
   cancelSession,
   addAgendaItem,
   deleteAgendaItem,
+  updateSessionVideoLink,
 } from "@/lib/actions/meet/sessions";
 import { generateMoMSnapshot, publishMoM } from "@/lib/actions/meet/mom";
 import { toast } from "react-toastify";
@@ -84,6 +85,42 @@ export default function SessionWorkspaceClient({
   const [publishingMoM, setPublishingMoM] = useState(false);
   const [momSnapshot, setMomSnapshot] = useState<any>(null);
   const [isPending, startTransition] = useTransition();
+  const [currentVideoLink, setCurrentVideoLink] = useState(
+    session.video_link || session.meeting?.video_link || ""
+  );
+  const [generatingTeamsLink, setGeneratingTeamsLink] = useState(false);
+
+  const handleGenerateTeamsLink = async () => {
+    setGeneratingTeamsLink(true);
+    try {
+      const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+      const attendeeEmails = (attendees || [])
+        .map((a: any) => a.user?.email || a.guest_email)
+        .filter(Boolean) as string[];
+
+      const scheduledStart = session.scheduled_start;
+      const scheduledEnd = session.scheduled_end;
+
+      const link = await generateTeamsMeetingLink({
+        title: session.meeting?.title || "Meeting Session",
+        meetingCode: session.code,
+        scheduledStart,
+        scheduledEnd,
+        organizerId: session.meeting?.organizer_id,
+        organizerEmail: (session.meeting?.organizer as any)?.email,
+        attendeeEmails,
+        callType: "meeting",
+      });
+
+      await updateSessionVideoLink({ sessionId: session.id, videoLink: link });
+      setCurrentVideoLink(link);
+      toast.success("Microsoft Teams meeting link generated with all parameters!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate Teams link");
+    } finally {
+      setGeneratingTeamsLink(false);
+    }
+  };
 
   // Modals state
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
@@ -512,20 +549,38 @@ export default function SessionWorkspaceClient({
         </div>
 
         <div className="flex items-center gap-2 text-[12px]">
-          {(session.video_link || session.meeting?.video_link) ? (
-            <a
-              href={sanitizeTeamsUrl(session.video_link || session.meeting?.video_link, (attendees || []).map((a) => (a as any).user?.email || a.guest_email).filter(Boolean), session.meeting?.title) || (session.video_link || session.meeting?.video_link!)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#4B53BC]/40 bg-[#4B53BC]/10 px-3 py-1.5 font-semibold text-[#4B53BC] dark:text-[#8B93FF] hover:bg-[#4B53BC]/20 transition-colors"
-              title="Join Microsoft Teams Meeting"
-            >
-              <Video className="h-3.5 w-3.5" /> Join Teams Meeting <ExternalLink className="h-3 w-3" />
-            </a>
+          {currentVideoLink ? (
+            <div className="flex items-center gap-1.5">
+              <a
+                href={sanitizeTeamsUrl(currentVideoLink, (attendees || []).map((a) => (a as any).user?.email || a.guest_email).filter(Boolean), session.meeting?.title) || currentVideoLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-[#4B53BC]/40 bg-[#4B53BC]/10 px-3 py-1.5 font-semibold text-[#4B53BC] dark:text-[#8B93FF] hover:bg-[#4B53BC]/20 transition-colors"
+                title="Join Microsoft Teams Meeting"
+              >
+                <Video className="h-3.5 w-3.5" /> Join Teams Meeting <ExternalLink className="h-3 w-3" />
+              </a>
+              <button
+                type="button"
+                onClick={handleGenerateTeamsLink}
+                disabled={generatingTeamsLink}
+                className="p-1.5 rounded-md border border-border bg-surface hover:bg-surface-hover text-muted hover:text-foreground transition-colors shrink-0 cursor-pointer"
+                title="Regenerate Microsoft Teams Link with all parameters"
+              >
+                {generatingTeamsLink ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-primary" />}
+              </button>
+            </div>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-sunken px-2.5 py-1 text-muted text-[11.5px]">
-              <Video className="h-3.5 w-3.5 opacity-60" /> In-Person / No Video Link
-            </span>
+            <button
+              type="button"
+              onClick={handleGenerateTeamsLink}
+              disabled={generatingTeamsLink}
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 font-semibold text-[12px] transition-colors cursor-pointer disabled:opacity-50"
+              title="Generate Microsoft Teams Meeting Link"
+            >
+              {generatingTeamsLink ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              <span>+ Generate Teams Link</span>
+            </button>
           )}
           {session.meeting?.room && (
             <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-subtle font-medium">

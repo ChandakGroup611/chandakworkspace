@@ -19,6 +19,10 @@ import {
   AlertTriangle,
   Filter,
   Search,
+  Sparkles,
+  ExternalLink,
+  Copy,
+  Loader2,
 } from "lucide-react";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -61,6 +65,39 @@ export default function MeetingDetailTabs({
   const [sessionDuration, setSessionDuration] = useState(meeting.default_duration_minutes || 60);
   const [sessionRoomId, setSessionRoomId] = useState(meeting.room_id || "");
   const [sessionVideoLink, setSessionVideoLink] = useState(meeting.video_link || "");
+  const [generatingSessionLink, setGeneratingSessionLink] = useState(false);
+
+  const handleGenerateSessionLink = async () => {
+    setGeneratingSessionLink(true);
+    try {
+      const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+      const attendeeEmails = (meeting.members || [])
+        .map((m: any) => m.user?.email || m.guest_email)
+        .filter(Boolean) as string[];
+
+      const scheduledStart = `${sessionStartDate}T${sessionStartTime}:00`;
+      const endDt = new Date(new Date(scheduledStart).getTime() + Number(sessionDuration) * 60 * 1000);
+      const scheduledEnd = endDt.toISOString().replace(/\.\d{3}Z$/, "");
+
+      const link = await generateTeamsMeetingLink({
+        title: meeting.title,
+        description: meeting.description || undefined,
+        scheduledStart,
+        scheduledEnd,
+        organizerId: meeting.organizer_id,
+        organizerEmail: (meeting.organizer as any)?.email,
+        attendeeEmails,
+        callType: "meeting",
+      });
+
+      setSessionVideoLink(link);
+      toast.success("Microsoft Teams meeting link generated with all parameters!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate Teams link");
+    } finally {
+      setGeneratingSessionLink(false);
+    }
+  };
 
   // Add Member Form
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -101,12 +138,39 @@ export default function MeetingDetailTabs({
     startTransition(async () => {
       try {
         const scheduledStart = `${sessionStartDate}T${sessionStartTime}:00`;
+
+        let effectiveLink = sessionVideoLink.trim();
+        if (!effectiveLink && meeting.mode !== "in_person") {
+          try {
+            const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+            const attendeeEmails = (meeting.members || [])
+              .map((m: any) => m.user?.email || m.guest_email)
+              .filter(Boolean) as string[];
+
+            const endDt = new Date(new Date(scheduledStart).getTime() + Number(sessionDuration) * 60 * 1000);
+            const scheduledEnd = endDt.toISOString().replace(/\.\d{3}Z$/, "");
+
+            effectiveLink = await generateTeamsMeetingLink({
+              title: meeting.title,
+              description: meeting.description || undefined,
+              scheduledStart,
+              scheduledEnd,
+              organizerId: meeting.organizer_id,
+              organizerEmail: (meeting.organizer as any)?.email,
+              attendeeEmails,
+              callType: "meeting",
+            });
+          } catch {
+            // fallback
+          }
+        }
+
         const res = await createSessionForMeeting({
           meetingId: meeting.id,
           scheduledStart,
           durationMinutes: Number(sessionDuration),
           roomId: sessionRoomId || undefined,
-          videoLink: sessionVideoLink || undefined,
+          videoLink: effectiveLink || undefined,
         });
 
         if (res.success && res.session) {
@@ -604,17 +668,57 @@ export default function MeetingDetailTabs({
                 </select>
               </div>
 
-              <div>
-                <label className="block text-[12px] font-medium text-foreground mb-1">
-                  Video Link (Optional)
-                </label>
-                <input
-                  type="url"
-                  value={sessionVideoLink}
-                  onChange={(e) => setSessionVideoLink(e.target.value)}
-                  placeholder="https://meet.google.com/..."
-                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
-                />
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="block text-[12px] font-semibold text-foreground flex items-center gap-1.5">
+                    <Video className="h-3.5 w-3.5 text-primary" />
+                    Microsoft Teams Video Link
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateSessionLink}
+                    disabled={generatingSessionLink}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-primary hover:bg-primary-hover text-white text-[11px] font-medium shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {generatingSessionLink ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    <span>{sessionVideoLink ? "Regenerate" : "Generate Teams Link"}</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={sessionVideoLink}
+                    onChange={(e) => setSessionVideoLink(e.target.value)}
+                    placeholder="Click 'Generate Teams Link' or auto-generate on schedule..."
+                    className="flex-1 rounded border border-border bg-background px-3 py-1.5 text-[12px] font-mono text-foreground focus:border-primary focus:outline-none"
+                  />
+                  {sessionVideoLink && (
+                    <>
+                      <a
+                        href={sessionVideoLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded border border-[#4B53BC]/40 bg-[#4B53BC]/10 hover:bg-[#4B53BC]/20 text-[#4B53BC] dark:text-[#8B93FF] text-[11px] font-semibold transition-colors shrink-0"
+                        title="Test opening in Microsoft Teams"
+                      >
+                        <span>Test</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(sessionVideoLink);
+                          toast.success("Meeting link copied!");
+                        }}
+                        className="p-1.5 rounded border border-border bg-surface hover:bg-surface-hover text-muted hover:text-foreground transition-colors shrink-0 cursor-pointer"
+                        title="Copy link"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">

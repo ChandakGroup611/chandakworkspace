@@ -367,8 +367,12 @@ export default function LiveMeetingClient({
                   const autoLink = await generateTeamsMeetingLink({
                     title: session.meeting?.title || "Meeting",
                     meetingCode: session.code,
+                    scheduledStart: session.scheduled_start,
+                    scheduledEnd: session.scheduled_end,
+                    organizerId: session.meeting?.organizer_id,
+                    organizerEmail: (session.meeting?.organizer as any)?.email,
                     attendeeEmails,
-                    callType: "call",
+                    callType: "meeting",
                   });
                   await updateSessionVideoLink({ sessionId: session.id, videoLink: autoLink });
                   setVideoLink(autoLink);

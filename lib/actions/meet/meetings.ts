@@ -214,13 +214,19 @@ export async function createMeeting(input: CreateMeetingInput) {
           .eq("id", input.organizer_id)
           .maybeSingle();
 
+        const startIso = `${input.start_date || new Date().toISOString().split("T")[0]}T${input.default_start_time || "10:00:00"}`;
+        const dur = input.default_duration_minutes || 60;
+        const endIso = new Date(new Date(startIso).getTime() + dur * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "");
+
         effectiveVideoLink = await generateTeamsMeetingLink({
           title: input.title,
-          scheduledStart: `${input.start_date || new Date().toISOString().split("T")[0]}T${input.default_start_time || "10:00:00"}+05:30`,
+          description: input.description,
+          scheduledStart: startIso,
+          scheduledEnd: endIso,
           organizerId: input.organizer_id,
           organizerEmail: orgUser?.email,
           attendeeEmails,
-          callType: "call",
+          callType: "meeting",
           meetingCode: "MTG",
         });
       } catch (teamsErr) {

@@ -16,6 +16,10 @@ import {
   ArrowRight,
   Shield,
   FileCheck2,
+  Sparkles,
+  ExternalLink,
+  Copy,
+  Loader2,
 } from "lucide-react";
 import type { MeetingType, MeetingRoom, MeetingTemplate } from "@/types/meet";
 
@@ -58,6 +62,47 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
   const [requiresMomApproval, setRequiresMomApproval] = useState(false);
   const [preUpdateEnabled, setPreUpdateEnabled] = useState(true);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [generatingLink, setGeneratingLink] = useState(false);
+
+  const handleGenerateTeamsLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+
+      const attendeeEmails: string[] = [];
+      const org = masters.users.find((u) => u.id === organizerId);
+      if (org?.email) attendeeEmails.push(org.email);
+      const ch = masters.users.find((u) => u.id === chairId);
+      if (ch?.email && !attendeeEmails.includes(ch.email)) attendeeEmails.push(ch.email);
+
+      for (const uid of selectedUserIds) {
+        const u = masters.users.find((usr) => usr.id === uid);
+        if (u?.email && !attendeeEmails.includes(u.email)) attendeeEmails.push(u.email);
+      }
+
+      const scheduledStart = `${startDate}T${startTime}`;
+      const endDt = new Date(new Date(scheduledStart).getTime() + duration * 60 * 1000);
+      const scheduledEnd = endDt.toISOString().replace(/\.\d{3}Z$/, "");
+
+      const link = await generateTeamsMeetingLink({
+        title: title.trim() || "Team Review",
+        description: description.trim(),
+        scheduledStart,
+        scheduledEnd,
+        organizerId,
+        organizerEmail: org?.email,
+        attendeeEmails,
+        callType: "meeting",
+      });
+
+      setVideoLink(link);
+      toast.success("Microsoft Teams meeting link generated with all parameters!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate Teams link");
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
 
   // Apply template pre-fill
   const handleTemplateSelect = (templateId: string) => {
@@ -99,6 +144,40 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
         role: "required",
       }));
 
+      let effectiveLink = videoLink.trim();
+      if (!effectiveLink && mode !== "in_person") {
+        try {
+          const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+          const attendeeEmails: string[] = [];
+          const org = masters.users.find((u) => u.id === organizerId);
+          if (org?.email) attendeeEmails.push(org.email);
+          const ch = masters.users.find((u) => u.id === chairId);
+          if (ch?.email && !attendeeEmails.includes(ch.email)) attendeeEmails.push(ch.email);
+
+          for (const uid of selectedUserIds) {
+            const u = masters.users.find((usr) => usr.id === uid);
+            if (u?.email && !attendeeEmails.includes(u.email)) attendeeEmails.push(u.email);
+          }
+
+          const scheduledStart = `${startDate}T${startTime}`;
+          const endDt = new Date(new Date(scheduledStart).getTime() + duration * 60 * 1000);
+          const scheduledEnd = endDt.toISOString().replace(/\.\d{3}Z$/, "");
+
+          effectiveLink = await generateTeamsMeetingLink({
+            title: title.trim() || "Team Review",
+            description: description.trim(),
+            scheduledStart,
+            scheduledEnd,
+            organizerId,
+            organizerEmail: org?.email,
+            attendeeEmails,
+            callType: "meeting",
+          });
+        } catch {
+          // ignore fallback
+        }
+      }
+
       const res = await createMeeting({
         title: title.trim(),
         description: description.trim() || undefined,
@@ -112,7 +191,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
         mode,
         room_id: roomId || undefined,
         video_provider: videoProvider,
-        video_link: videoLink.trim() || undefined,
+        video_link: effectiveLink || undefined,
         start_date: startDate,
         default_start_time: startTime,
         default_duration_minutes: duration,
@@ -334,7 +413,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
         </div>
 
         {/* Venue & Video Link */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           <div>
             <label className="block text-[12.5px] font-medium text-foreground mb-1">
               Meeting Mode
@@ -372,25 +451,68 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
               </span>
             )}
           </div>
-
-          <div className="flex flex-col justify-end">
-            <label className="block text-[12.5px] font-medium text-foreground mb-1">
-              Video Conference
-            </label>
-            <div className="rounded-md border border-primary/20 bg-primary/5 p-2 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <Video className="h-4 w-4 text-primary shrink-0" />
-                <div className="text-[11px] leading-tight truncate">
-                  <span className="font-semibold text-foreground block">Microsoft Teams Auto-Link</span>
-                  <span className="text-muted text-[10px]">Generated automatically · Zero manual paste</span>
-                </div>
-              </div>
-              <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded shrink-0">
-                Automatic
-              </span>
-            </div>
-          </div>
         </div>
+
+        {mode !== "in_person" && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Video className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-[13px] font-semibold text-foreground">Microsoft Teams Meeting Link</span>
+                <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded">
+                  Direct Teams Parameters
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleGenerateTeamsLink}
+                disabled={generatingLink}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary hover:bg-primary-hover text-white text-[12px] font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {generatingLink ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                <span>{videoLink ? "Regenerate Teams Link" : "Generate Teams Meeting Link"}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                value={videoLink}
+                onChange={(e) => setVideoLink(e.target.value)}
+                placeholder="Click 'Generate Teams Meeting Link' or it will auto-generate upon saving..."
+                className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-[12px] font-mono text-foreground focus:border-primary focus:outline-none"
+              />
+              {videoLink && (
+                <>
+                  <a
+                    href={videoLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-[#4B53BC]/40 bg-[#4B53BC]/10 hover:bg-[#4B53BC]/20 text-[#4B53BC] dark:text-[#8B93FF] text-[12px] font-semibold transition-colors shrink-0"
+                    title="Test opening in Microsoft Teams with meeting parameters"
+                  >
+                    <span>Test Link</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(videoLink);
+                      toast.success("Meeting link copied to clipboard!");
+                    }}
+                    className="p-2 rounded-md border border-border bg-surface hover:bg-surface-hover text-muted hover:text-foreground transition-colors shrink-0 cursor-pointer"
+                    title="Copy link"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
+            <p className="text-[11px] text-muted leading-relaxed">
+              Pre-populates Microsoft Teams with subject, attendees, scheduled start/end times, and description. Clicking opens Teams directly with all meeting parameters ready.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Roles & Standing Members */}

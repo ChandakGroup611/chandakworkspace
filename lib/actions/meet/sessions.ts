@@ -624,7 +624,7 @@ export async function createSessionForMeeting(input: {
           scheduledEnd,
           meetingCode: sessionCode,
           attendeeEmails,
-          callType: "call",
+          callType: "meeting",
         });
       } catch (e) {
         console.warn("Auto Teams meeting generation fallback:", e);

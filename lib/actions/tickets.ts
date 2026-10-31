@@ -66,7 +66,7 @@ export async function addTicketRemark(ticketId: string, content: string) {
   }
 
   const hasAccess = await checkServerPermission(supabase, user.id, "TICKETS_UPDATE");
-  
+
   // Relaxed: Allow all authenticated members to add remarks
   // Removed strict capability/creator check as per new requirement.
 
@@ -154,7 +154,7 @@ export async function updateTicketDetails(ticketId: string, payload: {
   }
 
   const hasAccess = await checkServerPermission(supabase, user.id, "TICKETS_UPDATE");
-  
+
   // Relaxed: Allow all authenticated members to update the ticket
   // Removed strict capability/creator check as per new requirement.
 
@@ -211,7 +211,7 @@ export async function updateTicketDetails(ticketId: string, payload: {
   // Notifications
   if (data) {
     const { supabaseAdmin } = await import('@/lib/supabase/service_role');
-    
+
     // Notification for assignment change
     if (payload.assignee_id && payload.assignee_id !== user.id) {
       await supabaseAdmin.from('notification_queue').insert({
@@ -285,8 +285,8 @@ export async function generateTeamsMeetingLink(ticketId: string) {
     callType: "call",
   });
 
-  const currentCustomFields = (ticket.custom_fields && typeof ticket.custom_fields === 'object') 
-    ? ticket.custom_fields 
+  const currentCustomFields = (ticket.custom_fields && typeof ticket.custom_fields === 'object')
+    ? ticket.custom_fields
     : {};
 
   const updatedCustomFields = {
@@ -448,8 +448,8 @@ export async function createEnterpriseTicket(payload: any) {
 
   // Mandatory Requirement Validation
   if (isRequirement) {
-    if (!payload.custom_fields?.requirement_description || 
-        !payload.custom_fields?.business_reason) {
+    if (!payload.custom_fields?.requirement_description ||
+      !payload.custom_fields?.business_reason) {
       throw new Error("Requirement Description and Business Reason are STRICTLY MANDATORY for Requirements.");
     }
   }
@@ -537,7 +537,7 @@ export async function createEnterpriseTicket(payload: any) {
       .select('id')
       .eq('department_id', finalDeptId)
       .eq('is_deleted', false);
-      
+
     if (deptUsers && deptUsers.length > 0) {
       // Fetch open tickets for these users to find the one with the lowest workload
       const { data: openTickets } = await supabaseAdmin
@@ -545,10 +545,10 @@ export async function createEnterpriseTicket(payload: any) {
         .select('assignee_id, status_master!inner(status_name)')
         .in('assignee_id', deptUsers.map(u => u.id))
         .eq('is_deleted', false);
-        
+
       const counts: Record<string, number> = {};
       deptUsers.forEach(u => counts[u.id] = 0);
-      
+
       if (openTickets) {
         openTickets.forEach((t: any) => {
           const sName = t.status_master?.status_name?.toLowerCase() || '';
@@ -559,7 +559,7 @@ export async function createEnterpriseTicket(payload: any) {
           }
         });
       }
-      
+
       let minId = deptUsers[0].id;
       let minCount = counts[minId];
       for (const [uid, count] of Object.entries(counts)) {
@@ -622,9 +622,9 @@ export async function createEnterpriseTicket(payload: any) {
         const nextYear = (year + 1).toString().slice(-2);
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const sequencePrefix = `${scopePrefix}-REQ-${year}-${nextYear}-${month}`;
-        
+
         const reqCode = `${sequencePrefix}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-        
+
         const { data: req, error: reqErr } = await supabaseAdmin.from('requirements').insert({
           code: reqCode,
           title: ticket.title || ticket.subject || 'New Requirement',
@@ -692,7 +692,7 @@ export async function createEnterpriseTicket(payload: any) {
   Promise.resolve().then(async () => {
     try {
       const { dispatchNotification } = await import('@/lib/actions/notifications');
-      
+
       // Fire generic 'Created' event
       await queueBusinessEvent("Ticket", "Created", {
         entity_id: ticket.id,
@@ -712,7 +712,7 @@ export async function createEnterpriseTicket(payload: any) {
           'TICKET',
           'ASSIGNED'
         ).catch((e: any) => console.error("In-app notification failed:", e));
-        
+
         await queueBusinessEvent("Ticket", "Assigned", {
           entity_id: ticket.id,
           triggering_user_id: user.id,
@@ -779,18 +779,18 @@ export async function fetchTicketMetrics() {
   if (error || !tickets) return null;
 
   const now = Date.now();
-  
+
   let openTickets = 0;
   let resolvedTickets = 0;
   let breachedSla = 0;
-  
+
   const workloadMap: Record<string, number> = {};
   const volumeMap: Record<string, number> = {};
 
   tickets.forEach(t => {
     const status = (t.status_master as any)?.status_name?.toLowerCase() || "";
     const isResolved = status.includes("resolv") || status.includes("clos");
-    
+
     if (isResolved) {
       resolvedTickets++;
     } else {
@@ -882,7 +882,7 @@ export async function linkTicket(sourceId: string, targetCode: string, relationT
 export async function searchTickets(query: string) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
-  
+
   const safeQuery = query?.trim() || "";
 
   let queryBuilder = supabase
@@ -938,7 +938,7 @@ export async function fetchTicketMacros(departmentId?: string) {
   if (authError || !user) throw new Error("Unauthenticated.");
 
   let query = supabase.from('ticket_macros').select('id, title, content').eq('is_deleted', false);
-  
+
   if (departmentId) {
     query = query.or(`department_id.eq.${departmentId},department_id.is.null`);
   } else {
@@ -964,7 +964,7 @@ export async function fetchSingleTicketDetails(ticketId: string) {
   if (!user) throw new Error("Unauthenticated.");
 
   const { supabaseAdmin } = await import('@/lib/supabase/service_role');
-  
+
   const { data, error } = await supabaseAdmin
     .from('tickets')
     .select(`
@@ -986,7 +986,7 @@ export async function fetchSingleTicketDetails(ticketId: string) {
   // Permission check
   const { hasPermission } = await import('@/lib/permissions');
   const canViewAll = await hasPermission(user.id, 'TICKETS_MANAGE');
-  
+
   if (!canViewAll) {
     let allowed = data.creator_id === user.id || data.assignee_id === user.id || data.queue_owner_id === user.id;
     if (!allowed) {

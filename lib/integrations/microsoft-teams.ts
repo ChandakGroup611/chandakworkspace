@@ -9,6 +9,8 @@
 
 export interface GenerateTeamsMeetingParams {
   title: string;
+  description?: string;
+  content?: string;
   scheduledStart?: string;
   scheduledEnd?: string;
   organizerId?: string;
@@ -29,13 +31,15 @@ export async function generateTeamsMeetingLink(
 ): Promise<string> {
   const {
     title,
+    description,
+    content,
     scheduledStart,
     scheduledEnd,
     organizerId,
     organizerEmail,
     meetingCode = "MTG",
     attendeeEmails = [],
-    callType = "call",
+    callType = "meeting",
   } = params;
 
   // 1. Try Microsoft Graph API if Azure App credentials are configured in environment
@@ -105,29 +109,50 @@ export async function generateTeamsMeetingLink(
     )
   );
 
-  // 3. For live calls & instant calls: use Microsoft Teams direct video call protocol
-  // Official Microsoft Teams deep link format:
-  // https://teams.microsoft.com/l/call/0/0?users=user1@domain.com,user2@domain.com&withVideo=true
-  // This opens Teams (App or Web) and immediately connects the participants with zero URL errors.
-  if (callType === "call" && validEmails.length > 0) {
+  // 3. For instant calls (e.g. 1-on-1 chat calls): use Microsoft Teams direct video call protocol
+  // Format: https://teams.microsoft.com/l/call/0/0?users=user1@domain.com,user2@domain.com&withVideo=true
+  if (callType === "call" && validEmails.length > 0 && !scheduledStart) {
     return `https://teams.microsoft.com/l/call/0/0?users=${validEmails.join(",")}&withVideo=true`;
   }
 
-  // 4. For scheduled calendar meetings: use Microsoft Teams native meeting scheduler
-  // Format: https://teams.microsoft.com/l/meeting/new?subject={title}&attendees={emails}&startTime={start}&endTime={end}
-  const queryParams = new URLSearchParams();
-  queryParams.set("subject", `Chandak Meet: ${title}`);
+  // 4. For meetings & scheduled sessions: use Microsoft Teams meeting scheduler with all parameters
+  // Official format: https://teams.microsoft.com/l/meeting/new?subject=<title>&attendees=<emails>&startTime=<start>&endTime=<end>&content=<content>
+  // Opens Microsoft Teams directly pre-filled with subject, attendees, times, and description
+  const parts: string[] = [];
+  parts.push(`subject=${encodeURIComponent(`Chandak Meet: ${title}`)}`);
+
   if (validEmails.length > 0) {
-    queryParams.set("attendees", validEmails.join(","));
-  }
-  if (scheduledStart) {
-    queryParams.set("startTime", scheduledStart);
-  }
-  if (scheduledEnd) {
-    queryParams.set("endTime", scheduledEnd);
+    parts.push(`attendees=${validEmails.join(",")}`);
   }
 
-  return `https://teams.microsoft.com/l/meeting/new?${queryParams.toString()}`;
+  if (scheduledStart) {
+    try {
+      const startStr = scheduledStart.includes("T")
+        ? new Date(scheduledStart).toISOString().replace(/\.\d{3}Z$/, "")
+        : scheduledStart;
+      parts.push(`startTime=${encodeURIComponent(startStr)}`);
+    } catch {
+      parts.push(`startTime=${encodeURIComponent(scheduledStart)}`);
+    }
+  }
+
+  if (scheduledEnd) {
+    try {
+      const endStr = scheduledEnd.includes("T")
+        ? new Date(scheduledEnd).toISOString().replace(/\.\d{3}Z$/, "")
+        : scheduledEnd;
+      parts.push(`endTime=${encodeURIComponent(endStr)}`);
+    } catch {
+      parts.push(`endTime=${encodeURIComponent(scheduledEnd)}`);
+    }
+  }
+
+  const bodyContent = content || description || `Meeting conducted via Chandak Meet Workspace (${meetingCode})`;
+  if (bodyContent) {
+    parts.push(`content=${encodeURIComponent(bodyContent)}`);
+  }
+
+  return `https://teams.microsoft.com/l/meeting/new?${parts.join("&")}`;
 }
 
 /**
