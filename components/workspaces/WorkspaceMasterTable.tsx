@@ -171,7 +171,7 @@ export function WorkspaceMasterTable({
     return user ? user.full_name : "System";
   };
 
-  const gridCols = 'minmax(340px, 4.5fr) minmax(110px, 1fr) minmax(76px, 0.8fr) minmax(76px, 0.8fr) minmax(88px, 0.8fr) minmax(80px, 0.8fr) minmax(220px, 1.4fr) 108px';
+  const gridCols = 'minmax(260px, 1fr) 92px 56px 56px 72px 64px 208px 68px';
 
   const renderAvatarGroup = (members: any[], title: string, fallbackText: string = "None") => {
     if (!members || members.length === 0) {
@@ -191,7 +191,7 @@ export function WorkspaceMasterTable({
     const isOnline = onlineUsers.has(uId);
 
     return (
-      <div className="flex items-center gap-1.5" title={`${title}: ${members.map((m: any) => {
+      <div className="flex items-center justify-center gap-1.5" title={`${title}: ${members.map((m: any) => {
         const id = m.user_id || m.id;
         return usersMap.get(id)?.full_name || m.name || id;
       }).join(", ")}`}>
@@ -406,12 +406,12 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Creator */}
-          <div className="flex items-center px-3 py-2">
+          <div className="flex items-center justify-center px-1 py-2">
             {renderAvatarGroup(creatorId ? [{ id: creatorId }] : [], "Creator", "System")}
           </div>
 
           {/* Owner */}
-          <div className="flex items-center px-3 py-2">
+          <div className="flex items-center justify-center px-1 py-2">
             {renderAvatarGroup(
               isWorkspaceType 
                 ? (node.owner_id ? [{ id: node.owner_id }] : (node.workspace_owner_id ? [{ id: node.workspace_owner_id }] : (node.members?.filter((m: any) => m.role === 'OWNER') || [])))
@@ -421,7 +421,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Executives */}
-          <div className="flex items-center px-3 py-2">
+          <div className="flex items-center justify-center px-1 py-2">
             {renderAvatarGroup(
               isWorkspaceType 
                 ? (node.members?.filter((m: any) => m.role === 'EXECUTOR') || [])
@@ -431,7 +431,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Watchers */}
-          <div className="flex items-center px-3 py-2">
+          <div className="flex items-center justify-center px-1 py-2">
             {renderAvatarGroup(
               isWorkspaceType 
                 ? (node.members?.filter((m: any) => m.role === 'WATCHER') || [])
@@ -441,7 +441,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Create Sub-Items */}
-          <div className="py-2 px-2">
+          <div className="py-2 px-1">
             <div className="flex items-center gap-1 whitespace-nowrap">
               {isWorkspaceType && onCreateSubWorkspace && canCreateWs && (
                 <button
@@ -466,11 +466,10 @@ export function WorkspaceMasterTable({
             </div>
           </div>
 
-          {/* Sticky Actions Column - Pinned on Right so it never scrolls off */}
+          {/* Actions Column */}
           <div className={cn(
-            "sticky right-0 flex items-center justify-end gap-0.5 self-stretch whitespace-nowrap bg-surface px-2 py-1 shadow-[inset_1px_0_0_var(--border-subtle)] group-hover:bg-surface-hover",
-            node.isMatched && "bg-accent-soft",
-            isMenuOpen ? "z-[3]" : "z-[2]"
+            "flex items-center justify-end gap-1 self-stretch whitespace-nowrap px-2 py-1 pr-3",
+            isMenuOpen ? "z-[3]" : "z-[1]"
           )}>
             {isTask && onOpenTask && (
               <AppButton 
@@ -864,19 +863,19 @@ export function WorkspaceMasterTable({
       </div>
 
       <div className="hidden w-full overflow-x-auto lg:block">
-        <div className="w-full flex flex-col min-w-[1120px]">
+        <div className="w-full flex flex-col min-w-[876px]">
           <div 
             className="sticky top-0 z-[var(--z-sticky)] grid items-center border-b border-border bg-sunken text-[12px] font-semibold text-subtle"
             style={{ gridTemplateColumns: gridCols }}
           >
             <div className="px-4 py-2.5 pl-[72px]">Name</div>
             <div className="px-3 py-2.5">Created</div>
-            <div className="px-3 py-2.5">Creator</div>
-            <div className="px-3 py-2.5">Owner</div>
-            <div className="px-3 py-2.5">Executives</div>
-            <div className="px-3 py-2.5">Watchers</div>
-            <div className="px-3 py-2.5">Add</div>
-            <div className="sticky right-0 z-[1] bg-sunken px-3 py-2.5 text-right shadow-[inset_1px_0_0_var(--border-subtle)]">Actions</div>
+            <div className="px-1 py-2.5 text-center">Creator</div>
+            <div className="px-1 py-2.5 text-center">Owner</div>
+            <div className="px-1 py-2.5 text-center">Executives</div>
+            <div className="px-1 py-2.5 text-center">Watchers</div>
+            <div className="px-2 py-2.5">Add</div>
+            <div className="px-2 py-2.5 text-right pr-3">Actions</div>
           </div>
 
           <div className="flex flex-col">

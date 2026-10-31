@@ -762,27 +762,7 @@ export async function sendMessengerMessage(payload: SendMessagePayload): Promise
         const isMentioned = mentions.includes(p.user_id) || mentions.includes("all");
         const notifTitle = isMentioned ? `${senderName} mentioned you in Chandak Messenger` : `Message from ${senderName}`;
 
-        // Check if recipient has an active session in the workspace in the last 2.5 minutes
-        let isOnline = false;
-        try {
-          const { data: session } = await supabaseAdmin
-            .from("active_sessions")
-            .select("last_active_at")
-            .eq("user_id", p.user_id)
-            .maybeSingle();
-
-          if (session?.last_active_at) {
-            const diffMs = Date.now() - new Date(session.last_active_at).getTime();
-            if (diffMs < 2.5 * 60 * 1000) {
-              isOnline = true;
-            }
-          }
-        } catch {
-          isOnline = false;
-        }
-
-        // If online: dispatch in-app only to avoid unnecessary email inbox spam.
-        // If offline (browser closed or not logged in): dispatch with email enabled so mobile device buzzes with notification!
+        // Dispatch in-app and native OS desktop push (Strictly NO email notifications for messenger)
         dispatchNotification(
           p.user_id,
           notifTitle,
@@ -790,13 +770,7 @@ export async function sendMessengerMessage(payload: SendMessagePayload): Promise
           `#messenger:${conversationId}`,
           "CHANDAK_MESSENGER",
           isMentioned ? "MESSENGER_MENTION" : "MESSENGER_NEW_MESSAGE",
-          isOnline
-            ? { _disableEmail: true }
-            : {
-                "Sender": senderName,
-                "Channel": "Chandak Messenger",
-                "Device Alert": "Offline notification delivered to your registered device",
-              }
+          { _disableEmail: true }
         ).catch((err) => console.warn("Failed to dispatch messenger notification:", err));
       }
     } catch (notifErr) {

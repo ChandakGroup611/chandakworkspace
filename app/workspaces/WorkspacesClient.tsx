@@ -517,7 +517,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         if (saved !== null) return JSON.parse(saved);
       } catch (e) {}
     }
-    return true; // default
+    return false; // Default false: keep branches open on list page basis
   });
 
   useEffect(() => {
