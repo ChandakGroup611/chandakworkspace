@@ -7,7 +7,7 @@ import { requireMeet } from "@/lib/permissions/meet";
 import { generateICS } from "@/lib/utils/ics";
 import type { MeetingSeries, MeetingMember } from "@/types/meet";
 
-import { generateTeamsMeetingLink } from "@/lib/integrations/microsoft-teams";
+import { generateTeamsMeetingLink, sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 
 export interface CreateMeetingInput {
   title: string;
@@ -124,8 +124,13 @@ export async function getMeetings(filters?: {
       pointCountMap[p.meeting_id] = (pointCountMap[p.meeting_id] || 0) + 1;
     }
 
-    return (data || []).map((m) => ({
+    return (data || []).map((m: any) => ({
       ...m,
+      video_link: sanitizeTeamsUrl(
+        m.video_link,
+        (m.members || []).map((mb: any) => mb.user?.email || mb.guest_email).filter(Boolean),
+        m.title
+      ),
       sessions_count: sessionCountMap[m.id] || 0,
       open_points_count: pointCountMap[m.id] || 0,
     })) as MeetingSeries[];
@@ -162,7 +167,11 @@ export async function getMeetingById(id: string): Promise<MeetingSeries | null> 
       return null;
     }
 
-    return data as MeetingSeries;
+    const attendeeEmails = ((data as any).members || []).map((mb: any) => mb.user?.email || mb.guest_email).filter(Boolean);
+    return {
+      ...data,
+      video_link: sanitizeTeamsUrl((data as any).video_link, attendeeEmails, (data as any).title),
+    } as MeetingSeries;
   } catch (err: any) {
     console.error("Unexpected error in getMeetingById:", err);
     return null;

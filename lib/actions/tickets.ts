@@ -276,8 +276,14 @@ export async function generateTeamsMeetingLink(ticketId: string) {
   }
 
   const meetingId = "meet-" + Math.random().toString(36).substring(2, 15);
-  const threadId = "19:meeting_" + Math.random().toString(36).substring(2, 10) + "thread.v2";
-  const mockTeamsLink = `https://teams.microsoft.com/l/meetup-join/${threadId}/0?context=%7b%22Tid%22%3a%22enterprise-internal-tenant-id%22%2c%22Oid%22%3a%22${meetingId}%22%7d`;
+  const { generateTeamsMeetingLink: genTeams } = await import("@/lib/integrations/microsoft-teams");
+  const threadId = "MTG-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+  const mockTeamsLink = await genTeams({
+    title: `Ticket ${ticket.code}: ${ticket.title}`,
+    organizerEmail: user.email,
+    attendeeEmails: user.email ? [user.email] : [],
+    callType: "call",
+  });
 
   const currentCustomFields = (ticket.custom_fields && typeof ticket.custom_fields === 'object') 
     ? ticket.custom_fields 

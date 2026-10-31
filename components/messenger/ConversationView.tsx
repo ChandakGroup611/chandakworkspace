@@ -51,6 +51,7 @@ import { GroupInfoModal } from "./GroupInfoModal";
 import { CreateTaskFromMessageModal } from "./CreateTaskFromMessageModal";
 import { MediaGalleryDrawer } from "./MediaGalleryDrawer";
 import { createClient } from "@/utils/supabase/client";
+import { sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 
 interface ConversationViewProps {
   conversation: MessengerConversation;
@@ -133,7 +134,7 @@ function MeetingInviteMessage({ content, isMe }: { content: string; isMe: boolea
         <div className="pt-1 flex flex-wrap gap-2">
           {data.teamsUrl && (
             <a
-              href={data.teamsUrl}
+              href={sanitizeTeamsUrl(data.teamsUrl) || data.teamsUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4B53BC] text-white font-semibold text-xs hover:bg-[#3C4296] transition-colors shadow-xs"

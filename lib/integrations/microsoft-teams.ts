@@ -106,11 +106,11 @@ export async function generateTeamsMeetingLink(
   );
 
   // 3. For live calls & instant calls: use Microsoft Teams direct video call protocol
-  // Format: https://teams.microsoft.com/l/call/0/0?users={emails}&withVideo=true
+  // Official Microsoft Teams deep link format:
+  // https://teams.microsoft.com/l/call/0/0?users=user1@domain.com,user2@domain.com&withVideo=true
   // This opens Teams (App or Web) and immediately connects the participants with zero URL errors.
   if (callType === "call" && validEmails.length > 0) {
-    const encodedUsers = validEmails.map((e) => encodeURIComponent(e)).join(",");
-    return `https://teams.microsoft.com/l/call/0/0?users=${encodedUsers}&withVideo=true`;
+    return `https://teams.microsoft.com/l/call/0/0?users=${validEmails.join(",")}&withVideo=true`;
   }
 
   // 4. For scheduled calendar meetings: use Microsoft Teams native meeting scheduler
@@ -131,10 +131,52 @@ export async function generateTeamsMeetingLink(
 }
 
 /**
+ * Checks if a given URL is a broken synthetic Teams link (e.g. fabricated thread.v2)
+ */
+export function isBrokenSyntheticTeamsLink(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return (
+    /19(:|%3A)meeting_.*thread\.v2/i.test(url) ||
+    /enterprise-internal-tenant-id/i.test(url) ||
+    /enterprise-bridge/i.test(url)
+  );
+}
+
+/**
+ * Sanitizes or repairs any synthetic or legacy Teams link into an authentic Microsoft Teams URL
+ */
+export function sanitizeTeamsUrl(
+  url: string | null | undefined,
+  fallbackEmails: string[] = [],
+  title?: string
+): string | null {
+  if (!url) return null;
+  if (!isBrokenSyntheticTeamsLink(url)) return url;
+
+  // Extract attendee emails or use fallback
+  const valid = Array.from(
+    new Set(
+      fallbackEmails
+        .map((e) => e?.trim().toLowerCase())
+        .filter((e): e is string => Boolean(e && e.includes("@")))
+    )
+  );
+
+  if (valid.length > 0) {
+    return `https://teams.microsoft.com/l/call/0/0?users=${valid.join(",")}&withVideo=true`;
+  }
+
+  const queryParams = new URLSearchParams();
+  queryParams.set("subject", `Chandak Meet: ${title || "Team Meeting"}`);
+  return `https://teams.microsoft.com/l/meeting/new?${queryParams.toString()}`;
+}
+
+/**
  * Checks if a given URL is a valid Microsoft Teams link
  */
 export function isMicrosoftTeamsLink(url: string | null | undefined): boolean {
   if (!url) return false;
+  if (isBrokenSyntheticTeamsLink(url)) return false;
   return (
     /teams\.microsoft\.com\/l\/(meetup-join|call|meeting)/i.test(url) ||
     /teams\.cloud\.microsoft/i.test(url) ||

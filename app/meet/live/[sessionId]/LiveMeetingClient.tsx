@@ -28,6 +28,7 @@ import { QuickPointCapture } from "@/components/meet/QuickPointCapture";
 import { CreateTaskModal } from "@/components/meet/CreateTaskModal";
 import { EndSessionModal } from "@/components/meet/EndSessionModal";
 import RunningNotesCard from "@/components/meet/RunningNotesCard";
+import { sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 import DraggableLiveNotesWidget from "@/components/meet/DraggableLiveNotesWidget";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus, updateSessionPointNotes } from "@/lib/actions/meet/points";
@@ -332,7 +333,7 @@ export default function LiveMeetingClient({
           {videoLink ? (
             <div className="flex items-center gap-1">
               <a
-                href={videoLink}
+                href={sanitizeTeamsUrl(videoLink, (attendees || []).map((a) => (a as any).user?.email || a.guest_email).filter(Boolean), session.meeting?.title) || videoLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#4B53BC] hover:bg-[#3C4299] text-white font-semibold text-[12px] shadow-xs transition-colors shrink-0"

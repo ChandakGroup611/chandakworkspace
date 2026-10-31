@@ -28,6 +28,7 @@ import {
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { QuickPointCapture } from "@/components/meet/QuickPointCapture";
+import { sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 import { CreateTaskModal } from "@/components/meet/CreateTaskModal";
 import InvitationsCard from "@/components/meet/InvitationsCard";
 import AttendanceCard from "@/components/meet/AttendanceCard";
@@ -513,7 +514,7 @@ export default function SessionWorkspaceClient({
         <div className="flex items-center gap-2 text-[12px]">
           {(session.video_link || session.meeting?.video_link) ? (
             <a
-              href={session.video_link || session.meeting?.video_link!}
+              href={sanitizeTeamsUrl(session.video_link || session.meeting?.video_link, (attendees || []).map((a) => (a as any).user?.email || a.guest_email).filter(Boolean), session.meeting?.title) || (session.video_link || session.meeting?.video_link!)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-md border border-[#4B53BC]/40 bg-[#4B53BC]/10 px-3 py-1.5 font-semibold text-[#4B53BC] dark:text-[#8B93FF] hover:bg-[#4B53BC]/20 transition-colors"

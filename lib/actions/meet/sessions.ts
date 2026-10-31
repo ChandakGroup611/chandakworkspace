@@ -5,6 +5,7 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import { requireMeet } from "@/lib/permissions/meet";
 import type { MeetingSession, SessionAttendee, AgendaItem, MeetingPoint } from "@/types/meet";
+import { sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 
 export async function getSessionsForMeeting(meetingId: string): Promise<MeetingSession[]> {
   try {
@@ -47,8 +48,12 @@ export async function getSessionsForMeeting(meetingId: string): Promise<MeetingS
       }
     }
 
-    return (data || []).map((s) => ({
+    return (data || []).map((s: any) => ({
       ...s,
+      video_link: sanitizeTeamsUrl(
+        s.video_link,
+        (s.attendees || []).map((a: any) => a.user?.email).filter(Boolean)
+      ),
       points_count: countMap[s.id]?.total || 0,
       closed_points_count: countMap[s.id]?.closed || 0,
     })) as MeetingSession[];
@@ -158,8 +163,18 @@ export async function getSessionById(sessionId: string): Promise<{
       };
     }).filter(Boolean);
 
+    const attendeeEmails = (attendees || []).map((a: any) => a.user?.email || a.guest_email).filter(Boolean);
+    const sanitizedSession = {
+      ...session,
+      video_link: sanitizeTeamsUrl((session as any).video_link, attendeeEmails, (session as any).meeting?.title),
+      meeting: (session as any).meeting ? {
+        ...(session as any).meeting,
+        video_link: sanitizeTeamsUrl((session as any).meeting?.video_link, attendeeEmails, (session as any).meeting?.title),
+      } : (session as any).meeting,
+    };
+
     return {
-      session: session as MeetingSession,
+      session: sanitizedSession as MeetingSession,
       points,
       agenda: (agenda || []) as AgendaItem[],
       attendees: (attendees || []) as SessionAttendee[],
