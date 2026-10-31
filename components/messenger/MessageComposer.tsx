@@ -401,6 +401,32 @@ export function MessageComposer({
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    if (!e.clipboardData) return;
+    const items = e.clipboardData.items;
+    const filesToAdd: File[] = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) {
+          const isScreenshot = !file.name || file.name === "image.png";
+          const ext = file.type.split("/")[1] || "png";
+          const namedFile = isScreenshot
+            ? new File([file], `screenshot-${Date.now().toString().slice(-6)}.${ext}`, { type: file.type })
+            : file;
+          filesToAdd.push(namedFile);
+        }
+      }
+    }
+
+    if (filesToAdd.length > 0) {
+      e.preventDefault();
+      setStagedFiles((prev) => [...prev, ...filesToAdd]);
+    }
+  };
+
   const formatTimer = (secs: number) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
@@ -644,8 +670,9 @@ export function MessageComposer({
               value={content}
               onChange={handleTextChange}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               disabled={disabled || sending}
-              placeholder="Type a message or @mention a colleague (Enter to send)..."
+              placeholder="Type a message or @mention a colleague (Enter to send, Ctrl+V to paste screenshot)..."
               rows={1}
               className="w-full resize-none py-2 px-3 text-sm rounded-lg border border-border bg-elevated text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent leading-normal min-h-[38px] max-h-[120px]"
             />

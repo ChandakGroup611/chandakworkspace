@@ -3,6 +3,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   ArrowLeft,
+  Video,
+  CheckSquare,
+  ExternalLink,
+  FolderOpen,
   Users,
   Search,
   MoreVertical,
@@ -28,6 +32,7 @@ import {
 } from "lucide-react";
 import {
   MessengerConversation,
+  startInstantCallFromChat,
   MessengerMessage,
   MessengerParticipant,
   MessengerAttachment,
@@ -43,6 +48,8 @@ import {
 import { MessageComposer } from "./MessageComposer";
 import { AttachmentPreviewModal } from "./AttachmentPreviewModal";
 import { GroupInfoModal } from "./GroupInfoModal";
+import { CreateTaskFromMessageModal } from "./CreateTaskFromMessageModal";
+import { MediaGalleryDrawer } from "./MediaGalleryDrawer";
 import { createClient } from "@/utils/supabase/client";
 
 interface ConversationViewProps {
@@ -51,6 +58,95 @@ interface ConversationViewProps {
   allUsers: WorkspaceUser[];
   onBack?: () => void;
   onConversationUpdated: () => void;
+}
+
+
+function TaskCardMessage({ content, isMe }: { content: string; isMe: boolean }) {
+  try {
+    const data = JSON.parse(content);
+    return (
+      <div
+        className={`rounded-xl p-3 text-xs space-y-2 max-w-[280px] sm:max-w-xs ${
+          isMe
+            ? "bg-white/10 text-white border border-white/20"
+            : "bg-surface text-foreground border border-emerald-500/30"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-1.5 border-b border-current/15 pb-1.5">
+          <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+            <CheckSquare className="h-4 w-4 shrink-0" />
+            <span>Task Created · {data.taskCode}</span>
+          </div>
+          {data.workspaceName && (
+            <span className="text-[10px] opacity-75 truncate max-w-[100px]">
+              {data.workspaceName}
+            </span>
+          )}
+        </div>
+        <p className="font-semibold text-[13px] leading-snug">{data.title}</p>
+        <div className="flex flex-col gap-0.5 text-[11px] opacity-85">
+          <span>
+            Assignee: <strong>{data.assigneeName || "Unassigned"}</strong>
+          </span>
+          {data.dueDate && (
+            <span>
+              Due Date: <strong>{data.dueDate}</strong>
+            </span>
+          )}
+        </div>
+        <div className="pt-1">
+          <a
+            href={`/tasks/${data.taskId}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 px-3 py-1 rounded bg-emerald-600 text-white font-medium text-[11px] hover:bg-emerald-700 transition-colors shadow-xs"
+          >
+            <span>Open Task</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </div>
+    );
+  } catch {
+    return <div className="text-xs whitespace-pre-wrap">{content}</div>;
+  }
+}
+
+function MeetingInviteMessage({ content, isMe }: { content: string; isMe: boolean }) {
+  try {
+    const data = JSON.parse(content);
+    return (
+      <div
+        className={`rounded-xl p-3 text-xs space-y-2 max-w-[280px] sm:max-w-xs ${
+          isMe
+            ? "bg-white/10 text-white border border-white/20"
+            : "bg-surface text-foreground border border-sky-500/30"
+        }`}
+      >
+        <div className="flex items-center gap-2 border-b border-current/15 pb-1.5 font-bold text-sky-400">
+          <Video className="h-4 w-4 shrink-0" />
+          <span>Chandak Meet Invitation</span>
+        </div>
+        <p className="font-medium text-[12.5px]">
+          <strong>{data.startedByName}</strong> started an instant video meeting.
+        </p>
+        <div className="pt-1">
+          <a
+            href={data.meetUrl || "/meet/live"}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-sky-600 text-white font-semibold text-xs hover:bg-sky-700 transition-colors shadow-xs"
+          >
+            <Video className="h-3.5 w-3.5" />
+            <span>Join Meeting Now</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </div>
+    );
+  } catch {
+    return <div className="text-xs whitespace-pre-wrap">{content}</div>;
+  }
 }
 
 export function ConversationView({
@@ -97,6 +193,23 @@ export function ConversationView({
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [copyToast, setCopyToast] = useState(false);
+  const [taskModalMessage, setTaskModalMessage] = useState<MessengerMessage | null>(null);
+  const [showMediaGallery, setShowMediaGallery] = useState(false);
+  const [startingCall, setStartingCall] = useState(false);
+
+  const handleStartCall = async () => {
+    setStartingCall(true);
+    try {
+      const res = await startInstantCallFromChat(conversation.id);
+      if (res.success && res.meetUrl) {
+        window.open(res.meetUrl, "_blank");
+      }
+    } catch (err) {
+      console.error("Failed to start call:", err);
+    } finally {
+      setStartingCall(false);
+    }
+  };
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -419,6 +532,37 @@ export function ConversationView({
 
         {/* Action icons */}
         <div className="flex items-center gap-1 shrink-0">
+                    {/* Instant Video Call */}
+          <button
+            type="button"
+            onClick={handleStartCall}
+            disabled={startingCall}
+            className="p-2 text-muted hover:text-emerald-500 hover:bg-surface-hover rounded-lg transition-colors"
+            title="Start Video Meeting (Chandak Meet)"
+            aria-label="Start Video Call"
+          >
+            {startingCall ? (
+              <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+            ) : (
+              <Video className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* Media & Docs Gallery */}
+          <button
+            type="button"
+            onClick={() => setShowMediaGallery(!showMediaGallery)}
+            className={`p-2 rounded-lg transition-colors ${
+              showMediaGallery
+                ? "bg-surface-hover text-accent font-semibold"
+                : "text-muted hover:text-foreground hover:bg-surface-hover"
+            }`}
+            title="Shared files and media"
+            aria-label="Media gallery"
+          >
+            <FolderOpen className="h-4 w-4" />
+          </button>
+
           <button
             type="button"
             onClick={() => setShowSearch(!showSearch)}
@@ -617,6 +761,19 @@ export function ConversationView({
                             <span>Delete for everyone</span>
                           </button>
                         )}
+                                                {/* Convert to Task */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenMenuMessageId(null);
+                            setTaskModalMessage(msg);
+                          }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover text-foreground font-medium cursor-pointer"
+                        >
+                          <CheckSquare className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          <span>Create task</span>
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => {
@@ -653,11 +810,17 @@ export function ConversationView({
                       </div>
                     ) : (
                       <>
-                        {/* Text Content */}
-                        {msg.content && (
-                          <div className="whitespace-pre-wrap leading-relaxed select-text">
-                            {renderContentWithMentions(msg.content, isMe)}
-                          </div>
+                        {/* Text or Card Content */}
+                        {msg.message_type === "task_card" ? (
+                          <TaskCardMessage content={msg.content} isMe={isMe} />
+                        ) : msg.message_type === "meeting_invite" ? (
+                          <MeetingInviteMessage content={msg.content} isMe={isMe} />
+                        ) : (
+                          msg.content && (
+                            <div className="whitespace-pre-wrap leading-relaxed select-text">
+                              {renderContentWithMentions(msg.content, isMe)}
+                            </div>
+                          )
                         )}
 
                         {/* Attachments Section (Dual View & Download Compliance) */}

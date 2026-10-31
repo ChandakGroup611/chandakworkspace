@@ -52,7 +52,7 @@ export interface MessengerMessage {
   conversation_id: string;
   sender_id: string;
   content: string;
-  message_type: "text" | "image" | "file" | "voice" | "system";
+  message_type: "text" | "image" | "file" | "voice" | "system" | "task_card" | "meeting_invite";
   reply_to_id: string | null;
   reply_to?: {
     id: string;
@@ -663,7 +663,7 @@ export async function fetchMessengerMessages(
 export interface SendMessagePayload {
   conversationId: string;
   content: string;
-  messageType?: "text" | "image" | "file" | "voice";
+  messageType?: "text" | "image" | "file" | "voice" | "system" | "task_card" | "meeting_invite";
   replyToId?: string | null;
   attachments?: MessengerAttachment[];
   mentions?: string[];
@@ -1186,3 +1186,180 @@ export async function leaveGroupConversation(conversationId: string): Promise<{ 
   }
 }
 
+/**
+ * Fetch task creation options (workspaces, priorities) for in-chat task creation modal.
+ */
+export async function fetchTaskOptionsForMessenger(): Promise<{
+  workspaces: { id: string; name: string }[];
+  priorities: { id: string; name: string; color?: string }[];
+}> {
+  try {
+    await getAuthUser();
+    const [wsRes, prioRes] = await Promise.all([
+      supabaseAdmin
+        .from("workspaces")
+        .select("id, workspace_name")
+        .eq("is_deleted", false)
+        .order("workspace_name", { ascending: true })
+        .limit(40),
+      supabaseAdmin
+        .from("priority_master")
+        .select("id, priority_name, priority_color")
+        .eq("is_active", true)
+        .eq("is_deleted", false)
+        .order("priority_order", { ascending: true }),
+    ]);
+
+    return {
+      workspaces: (wsRes.data || []).map((w: any) => ({ id: w.id, name: w.workspace_name })),
+      priorities: (prioRes.data || []).map((p: any) => ({
+        id: p.id,
+        name: p.priority_name,
+        color: p.priority_color,
+      })),
+    };
+  } catch (err) {
+    console.warn("fetchTaskOptionsForMessenger fallback:", err);
+    return { workspaces: [], priorities: [] };
+  }
+}
+
+/**
+ * Convert a chat message into a formal workspace task.
+ * Creates the task and posts a rich interactive task card into the conversation.
+ */
+export async function createTaskFromChatMessage(payload: {
+  conversationId: string;
+  messageId: string;
+  title: string;
+  description?: string;
+  workspaceId: string;
+  subWorkspaceId?: string;
+  assigneeId?: string;
+  priorityId?: string;
+  dueDate?: string;
+}): Promise<{ success: boolean; task?: any; error?: string }> {
+  try {
+    const currentUserId = await getAuthUser();
+
+    // 1. Resolve default priority if not supplied
+    let priorityId = payload.priorityId?.trim();
+    if (!priorityId) {
+      const { data: prio } = await supabaseAdmin
+        .from("priority_master")
+        .select("id")
+        .eq("is_active", true)
+        .eq("is_deleted", false)
+        .order("priority_order", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      priorityId = prio?.id;
+    }
+
+    if (!priorityId) {
+      return { success: false, error: "No active priority found in system." };
+    }
+
+    // 2. Import createTask and execute
+    const { createTask } = await import("@/lib/actions/tasks");
+    const taskResult = await createTask({
+      workspace_id: payload.workspaceId,
+      sub_workspace_id: payload.subWorkspaceId,
+      title: payload.title,
+      subject: payload.title,
+      description:
+        payload.description ||
+        `Created from Chandak Messenger message #${payload.messageId.slice(0, 8)}`,
+      priority_id: priorityId,
+      assigned_to: payload.assigneeId,
+      end_date: payload.dueDate,
+      created_by: currentUserId,
+    });
+
+    if (taskResult?.error || !taskResult?.data) {
+      return { success: false, error: taskResult?.error || "Failed to create task" };
+    }
+
+    const createdTask = taskResult.data;
+
+    // 3. Fetch assignee and workspace names for rich presentation card
+    let assigneeName = "Unassigned";
+    if (payload.assigneeId) {
+      const { data: u } = await supabaseAdmin
+        .from("user_master")
+        .select("full_name")
+        .eq("id", payload.assigneeId)
+        .maybeSingle();
+      if (u?.full_name) assigneeName = u.full_name;
+    }
+
+    let workspaceName = "Workspace";
+    const { data: ws } = await supabaseAdmin
+      .from("workspaces")
+      .select("workspace_name")
+      .eq("id", payload.workspaceId)
+      .maybeSingle();
+    if (ws?.workspace_name) workspaceName = ws.workspace_name;
+
+    // 4. Post interactive Task Card into conversation
+    const cardContent = JSON.stringify({
+      taskId: createdTask.id,
+      taskCode: createdTask.code || `TSK-${createdTask.id.slice(0, 4).toUpperCase()}`,
+      title: payload.title,
+      workspaceName,
+      assigneeName,
+      dueDate: payload.dueDate || null,
+      sourceMessageId: payload.messageId,
+    });
+
+    await sendMessengerMessage({
+      conversationId: payload.conversationId,
+      content: cardContent,
+      messageType: "task_card",
+    });
+
+    return { success: true, task: createdTask };
+  } catch (err: any) {
+    console.error("[createTaskFromChatMessage] Error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Start an instant video call from a conversation.
+ * Posts an interactive meeting invitation card into the conversation.
+ */
+export async function startInstantCallFromChat(
+  conversationId: string
+): Promise<{ success: boolean; meetUrl?: string; error?: string }> {
+  try {
+    const currentUserId = await getAuthUser();
+    const { data: user } = await supabaseAdmin
+      .from("user_master")
+      .select("full_name")
+      .eq("id", currentUserId)
+      .maybeSingle();
+
+    const senderName = user?.full_name || "Colleague";
+    const callRoomId = `call-${conversationId.slice(0, 8)}-${Date.now()}`;
+    const meetUrl = `/meet/live?room=${callRoomId}`;
+
+    const cardContent = JSON.stringify({
+      callRoomId,
+      meetUrl,
+      startedByName: senderName,
+      startedAt: new Date().toISOString(),
+    });
+
+    await sendMessengerMessage({
+      conversationId,
+      content: cardContent,
+      messageType: "meeting_invite",
+    });
+
+    return { success: true, meetUrl };
+  } catch (err: any) {
+    console.error("[startInstantCallFromChat] Error:", err);
+    return { success: false, error: err.message };
+  }
+}
