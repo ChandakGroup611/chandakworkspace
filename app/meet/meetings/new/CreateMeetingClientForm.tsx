@@ -373,29 +373,22 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
             )}
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-[12.5px] font-medium text-foreground">
-                Video Call Link (Teams / In-Portal)
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  const randomRoom = `mtg-${Date.now().toString(36)}`;
-                  setVideoLink(`https://chandakgroup.tech/meet/live?room=${randomRoom}`);
-                }}
-                className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
-              >
-                + Generate In-Portal Link
-              </button>
+          <div className="flex flex-col justify-end">
+            <label className="block text-[12.5px] font-medium text-foreground mb-1">
+              Video Conference
+            </label>
+            <div className="rounded-md border border-primary/20 bg-primary/5 p-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <Video className="h-4 w-4 text-primary shrink-0" />
+                <div className="text-[11px] leading-tight truncate">
+                  <span className="font-semibold text-foreground block">Microsoft Teams Auto-Link</span>
+                  <span className="text-muted text-[10px]">Generated automatically · Zero manual paste</span>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded shrink-0">
+                Automatic
+              </span>
             </div>
-            <input
-              type="url"
-              value={videoLink}
-              onChange={(e) => setVideoLink(e.target.value)}
-              placeholder="Paste Microsoft Teams / Google Meet link or click generate..."
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px] text-foreground placeholder:text-muted focus:border-primary focus:outline-none"
-            />
           </div>
         </div>
       </div>

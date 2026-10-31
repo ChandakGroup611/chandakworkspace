@@ -7,6 +7,8 @@ import { requireMeet } from "@/lib/permissions/meet";
 import { generateICS } from "@/lib/utils/ics";
 import type { MeetingSeries, MeetingMember } from "@/types/meet";
 
+import { generateTeamsMeetingLink } from "@/lib/integrations/microsoft-teams";
+
 export interface CreateMeetingInput {
   title: string;
   description?: string;
@@ -171,6 +173,21 @@ export async function createMeeting(input: CreateMeetingInput) {
   try {
     const { userId } = await requireMeet("MEET_CREATE");
 
+    // Automatically generate Microsoft Teams meeting link if not manually supplied
+    let effectiveVideoLink = (input.video_link || "").trim();
+    if (!effectiveVideoLink && input.mode !== "in_person") {
+      try {
+        effectiveVideoLink = await generateTeamsMeetingLink({
+          title: input.title,
+          scheduledStart: `${input.start_date || new Date().toISOString().split("T")[0]}T${input.default_start_time || "10:00:00"}+05:30`,
+          organizerId: input.organizer_id,
+          meetingCode: "MTG",
+        });
+      } catch (teamsErr) {
+        console.warn("[createMeeting] Auto Teams link generation fallback:", teamsErr);
+      }
+    }
+
     // 1. Insert Meeting Series
     const { data: meeting, error: meetingError } = await supabaseAdmin
       .from("meet_meetings")
@@ -189,7 +206,7 @@ export async function createMeeting(input: CreateMeetingInput) {
         room_id: input.room_id || null,
         venue_text: input.venue_text || null,
         video_provider: input.video_provider,
-        video_link: input.video_link || null,
+        video_link: effectiveVideoLink || null,
         default_start_time: input.default_start_time || "10:00:00",
         default_duration_minutes: input.default_duration_minutes || 60,
         recurrence: input.recurrence,
@@ -256,7 +273,7 @@ export async function createMeeting(input: CreateMeetingInput) {
         scheduled_start: scheduledStart,
         scheduled_end: scheduledEnd,
         room_id: input.room_id || null,
-        video_link: input.video_link || null,
+        video_link: effectiveVideoLink || null,
         minute_taker_id: input.default_minute_taker_id || null,
         status: "scheduled",
         created_by: userId,

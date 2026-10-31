@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Paperclip,
   Send,
@@ -73,6 +74,12 @@ export function MessageComposer({
   // Voice Note State
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [showMicHelp, setShowMicHelp] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -207,7 +214,8 @@ export function MessageComposer({
     } catch (err: any) {
       console.error("Microphone error:", err);
       if (err.name === "NotAllowedError" || /denied|permission/i.test(err.message || "")) {
-        setError("Microphone permission blocked. Please allow microphone access in your browser (click the lock or settings icon in your address bar).");
+        setShowMicHelp(true);
+        setError("Microphone permission blocked by your browser.");
       } else if (err.name === "NotFoundError" || /device not found/i.test(err.message || "")) {
         setError("No microphone found. Please connect an audio input device.");
       } else {
@@ -718,10 +726,76 @@ export function MessageComposer({
       )}
 
       {error && (
-        <div className="px-3 pb-2 text-[11px] text-danger flex items-center gap-1">
-          <AlertCircle className="h-3 w-3 shrink-0" />
-          <span>{error}</span>
+        <div className="px-3 pb-2 text-[11px] text-danger flex items-center justify-between gap-1">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <AlertCircle className="h-3 w-3 shrink-0" />
+            <span className="truncate">{error}</span>
+            {error.includes("blocked") && (
+              <button
+                type="button"
+                onClick={() => setShowMicHelp(true)}
+                className="underline hover:opacity-80 font-medium shrink-0 ml-1 text-accent cursor-pointer"
+              >
+                How to enable
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="p-0.5 text-muted hover:text-foreground shrink-0 cursor-pointer"
+            title="Dismiss"
+          >
+            <X className="h-3 w-3" />
+          </button>
         </div>
+      )}
+
+      {showMicHelp && mounted && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[var(--z-modal,99999)] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-elevated p-5 shadow-2xl space-y-3.5 animate-in zoom-in-95 duration-150" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-2 border-b border-border">
+              <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
+                <Mic className="h-4 w-4 text-accent" />
+                <span>Enable Microphone Access</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMicHelp(false)}
+                className="p-1 text-muted hover:text-foreground rounded cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-xs text-muted leading-relaxed">
+              Your browser has blocked microphone access for <strong>chandakgroup.tech</strong>. Follow these 3 steps to record voice notes:
+            </p>
+            <ol className="text-xs text-foreground space-y-2 list-decimal list-inside pl-1 bg-surface p-3 rounded-lg border border-border">
+              <li>Click the <strong>🔒 lock / tune icon</strong> at the left side of your browser address bar.</li>
+              <li>Change <strong>Microphone</strong> from <em>Blocked</em> to <strong>Allow</strong>.</li>
+              <li>Tap <strong>Reload Page</strong> below to apply.</li>
+            </ol>
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowMicHelp(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-foreground cursor-pointer"
+              >
+                Dismiss
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") window.location.reload();
+                }}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-accent text-accent-contrast hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                Reload Page
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

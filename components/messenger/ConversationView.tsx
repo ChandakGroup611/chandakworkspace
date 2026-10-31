@@ -130,15 +130,28 @@ function MeetingInviteMessage({ content, isMe }: { content: string; isMe: boolea
         <p className="font-medium text-[12.5px]">
           <strong>{data.startedByName}</strong> started an instant video meeting.
         </p>
-        <div className="pt-1">
+        <div className="pt-1 flex flex-wrap gap-2">
+          {data.teamsUrl && (
+            <a
+              href={data.teamsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4B53BC] text-white font-semibold text-xs hover:bg-[#3C4296] transition-colors shadow-xs"
+              title="Join via Microsoft Teams (Desktop / Web / Mobile)"
+            >
+              <Video className="h-3.5 w-3.5" />
+              <span>Join Teams Meeting</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
           <a
             href={data.meetUrl || "/meet/live"}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-sky-600 text-white font-semibold text-xs hover:bg-sky-700 transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 text-white font-semibold text-xs hover:bg-sky-700 transition-colors shadow-xs"
           >
             <Video className="h-3.5 w-3.5" />
-            <span>Join Meeting Now</span>
+            <span>Join In-Portal Room</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>

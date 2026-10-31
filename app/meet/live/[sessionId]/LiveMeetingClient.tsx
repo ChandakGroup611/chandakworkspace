@@ -335,11 +335,11 @@ export default function LiveMeetingClient({
                 href={videoLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[12px] shadow-xs transition-colors shrink-0"
-                title="Join Video Call (Microsoft Teams / Google Meet / Chandak Video)"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#4B53BC] hover:bg-[#3C4299] text-white font-semibold text-[12px] shadow-xs transition-colors shrink-0"
+                title="Join Microsoft Teams Call"
               >
                 <Video className="h-3.5 w-3.5" />
-                <span>Join Video Call</span>
+                <span>Join Teams Meeting</span>
                 <ExternalLink className="h-3 w-3 opacity-80" />
               </a>
               <button
@@ -349,7 +349,7 @@ export default function LiveMeetingClient({
                   setShowVideoModal(true);
                 }}
                 className="p-1 text-muted hover:text-foreground rounded transition-colors"
-                title="Edit video call link"
+                title="View / Edit Video Link"
               >
                 <Settings className="h-3.5 w-3.5" />
               </button>
@@ -357,15 +357,25 @@ export default function LiveMeetingClient({
           ) : (
             <button
               type="button"
-              onClick={() => {
-                setVideoLinkInput("");
-                setShowVideoModal(true);
+              onClick={async () => {
+                try {
+                  const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+                  const autoLink = await generateTeamsMeetingLink({
+                    title: session.meeting?.title || "Meeting",
+                    meetingCode: session.code,
+                  });
+                  await updateSessionVideoLink({ sessionId: session.id, videoLink: autoLink });
+                  setVideoLink(autoLink);
+                  toast.success("Microsoft Teams meeting link generated!");
+                } catch (e: any) {
+                  toast.error(e.message || "Failed to generate link");
+                }
               }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-sunken hover:bg-surface text-foreground font-medium text-[11.5px] transition-colors"
-              title="Add or Generate Video Call Link"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-sunken hover:bg-surface text-foreground font-medium text-[11.5px] transition-colors cursor-pointer"
+              title="Generate Microsoft Teams Meeting Link"
             >
-              <Video className="h-3.5 w-3.5 text-muted" />
-              <span>+ Video Call</span>
+              <Video className="h-3.5 w-3.5 text-primary" />
+              <span>+ Generate Teams Link</span>
             </button>
           )}
 

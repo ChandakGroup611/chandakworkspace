@@ -470,3 +470,4 @@ export default function InstantCallRoomClient({ roomId }: InstantCallRoomClientP
     </div>
   );
 }
+

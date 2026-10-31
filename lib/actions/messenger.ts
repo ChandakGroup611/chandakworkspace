@@ -1344,9 +1344,17 @@ export async function startInstantCallFromChat(
     const callRoomId = `call-${conversationId.slice(0, 8)}-${Date.now()}`;
     const meetUrl = `/meet/live?room=${callRoomId}`;
 
+    const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+    const teamsUrl = await generateTeamsMeetingLink({
+      title: `Instant Call with ${senderName}`,
+      meetingCode: `CHAT-${conversationId.slice(0, 6)}`,
+      organizerId: currentUserId,
+    });
+
     const cardContent = JSON.stringify({
       callRoomId,
       meetUrl,
+      teamsUrl,
       startedByName: senderName,
       startedAt: new Date().toISOString(),
     });

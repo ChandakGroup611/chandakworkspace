@@ -585,6 +585,21 @@ export async function createSessionForMeeting(input: {
     const scheduledStart = new Date(input.scheduledStart).toISOString();
     const scheduledEnd = new Date(new Date(scheduledStart).getTime() + durationMin * 60 * 1000).toISOString();
 
+    let sessionVideoLink = (input.videoLink || meeting.video_link || "").trim();
+    if (!sessionVideoLink) {
+      try {
+        const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+        sessionVideoLink = await generateTeamsMeetingLink({
+          title: meeting.title,
+          scheduledStart,
+          scheduledEnd,
+          meetingCode: sessionCode,
+        });
+      } catch (e) {
+        console.warn("Auto Teams meeting generation fallback:", e);
+      }
+    }
+
     const { data: newSession, error: sErr } = await supabaseAdmin
       .from("meet_sessions")
       .insert({
@@ -594,7 +609,7 @@ export async function createSessionForMeeting(input: {
         scheduled_start: scheduledStart,
         scheduled_end: scheduledEnd,
         room_id: input.roomId || meeting.room_id || null,
-        video_link: input.videoLink || meeting.video_link || null,
+        video_link: sessionVideoLink || null,
         status: "scheduled",
         created_by: userId,
       })

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, CheckSquare, Calendar, User, Folder, AlertCircle, Loader2 } from "lucide-react";
 import {
   MessengerMessage,
@@ -38,6 +39,11 @@ export function CreateTaskFromMessageModal({
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Initialize form state when message changes
   useEffect(() => {
@@ -80,10 +86,9 @@ export function CreateTaskFromMessageModal({
     };
   }, [isOpen]);
 
-  if (!isOpen || !message) return null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!message) return;
     if (!title.trim()) {
       setError("Task title is required");
       return;
@@ -121,8 +126,10 @@ export function CreateTaskFromMessageModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[var(--z-modal,9999)] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+  if (!isOpen || !message || !mounted) return null;
+
+  const modalContent = (
+    <div className="fixed inset-0 z-[var(--z-modal,99999)] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
       <div
         className="w-full max-w-md rounded-2xl border border-border bg-elevated p-5 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
@@ -178,11 +185,17 @@ export function CreateTaskFromMessageModal({
               disabled={loadingOptions || workspaces.length === 0}
               className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-accent"
             >
-              {workspaces.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
+              {loadingOptions ? (
+                <option value="">Loading workspaces...</option>
+              ) : workspaces.length === 0 ? (
+                <option value="">No workspaces found</option>
+              ) : (
+                workspaces.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
@@ -214,13 +227,18 @@ export function CreateTaskFromMessageModal({
               <select
                 value={priorityId}
                 onChange={(e) => setPriorityId(e.target.value)}
+                disabled={loadingOptions || priorities.length === 0}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-accent"
               >
-                {priorities.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
+                {loadingOptions ? (
+                  <option value="">Loading...</option>
+                ) : (
+                  priorities.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           </div>
@@ -285,5 +303,7 @@ export function CreateTaskFromMessageModal({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(modalContent, document.body) : modalContent;
 }
 

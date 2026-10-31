@@ -516,10 +516,10 @@ export default function SessionWorkspaceClient({
               href={session.video_link || session.meeting?.video_link!}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-500/10 px-3 py-1.5 font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-              title="Join Live Video Conference (Microsoft Teams / Google Meet)"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#4B53BC]/40 bg-[#4B53BC]/10 px-3 py-1.5 font-semibold text-[#4B53BC] dark:text-[#8B93FF] hover:bg-[#4B53BC]/20 transition-colors"
+              title="Join Microsoft Teams Meeting"
             >
-              <Video className="h-3.5 w-3.5" /> Join Video Call <ExternalLink className="h-3 w-3" />
+              <Video className="h-3.5 w-3.5" /> Join Teams Meeting <ExternalLink className="h-3 w-3" />
             </a>
           ) : (
             <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-sunken px-2.5 py-1 text-muted text-[11.5px]">
