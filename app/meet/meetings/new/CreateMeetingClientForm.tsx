@@ -374,14 +374,26 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-medium text-foreground mb-1">
-              Video Call Link (Google Meet / Teams)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[12.5px] font-medium text-foreground">
+                Video Call Link (Teams / In-Portal)
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const randomRoom = `mtg-${Date.now().toString(36)}`;
+                  setVideoLink(`https://chandakgroup.tech/meet/live?room=${randomRoom}`);
+                }}
+                className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
+              >
+                + Generate In-Portal Link
+              </button>
+            </div>
             <input
               type="url"
               value={videoLink}
               onChange={(e) => setVideoLink(e.target.value)}
-              placeholder="https://meet.google.com/xyz-abc"
+              placeholder="Paste Microsoft Teams / Google Meet link or click generate..."
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px] text-foreground placeholder:text-muted focus:border-primary focus:outline-none"
             />
           </div>

@@ -511,15 +511,20 @@ export default function SessionWorkspaceClient({
         </div>
 
         <div className="flex items-center gap-2 text-[12px]">
-          {session.video_link && (
+          {(session.video_link || session.meeting?.video_link) ? (
             <a
-              href={session.video_link}
+              href={session.video_link || session.meeting?.video_link!}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 font-medium text-primary hover:bg-sunken transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-500/10 px-3 py-1.5 font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+              title="Join Live Video Conference (Microsoft Teams / Google Meet)"
             >
               <Video className="h-3.5 w-3.5" /> Join Video Call <ExternalLink className="h-3 w-3" />
             </a>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-sunken px-2.5 py-1 text-muted text-[11.5px]">
+              <Video className="h-3.5 w-3.5 opacity-60" /> In-Person / No Video Link
+            </span>
           )}
           {session.meeting?.room && (
             <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-subtle font-medium">

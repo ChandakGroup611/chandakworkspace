@@ -18,6 +18,10 @@ import {
   ExternalLink,
   MessageSquare,
   CornerDownLeft,
+  Settings,
+  Sparkles,
+  X,
+  Loader2,
 } from "lucide-react";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { QuickPointCapture } from "@/components/meet/QuickPointCapture";
@@ -27,7 +31,7 @@ import RunningNotesCard from "@/components/meet/RunningNotesCard";
 import DraggableLiveNotesWidget from "@/components/meet/DraggableLiveNotesWidget";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus, updateSessionPointNotes } from "@/lib/actions/meet/points";
-import { updateSessionAttendance, startSession } from "@/lib/actions/meet/sessions";
+import { updateSessionAttendance, startSession, updateSessionVideoLink } from "@/lib/actions/meet/sessions";
 import { recordDecision } from "@/lib/actions/meet/decisions";
 import { toast } from "react-toastify";
 import { createClient } from "@/utils/supabase/client";
@@ -68,6 +72,37 @@ export default function LiveMeetingClient({
   const [focusedPointId, setFocusedPointId] = useState<string | null>(initialPoints[0]?.id || null);
   const [onlinePresence, setOnlinePresence] = useState<{ user_id: string; full_name?: string }[]>([]);
   const focusedPoint = points.find((p) => p.id === focusedPointId) || points[0] || null;
+
+  const [videoLink, setVideoLink] = useState(
+    session.video_link || session.meeting?.video_link || ""
+  );
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoLinkInput, setVideoLinkInput] = useState(
+    session.video_link || session.meeting?.video_link || ""
+  );
+  const [savingVideoLink, setSavingVideoLink] = useState(false);
+
+  const handleSaveVideoLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingVideoLink(true);
+    try {
+      const res = await updateSessionVideoLink({
+        sessionId: session.id,
+        videoLink: videoLinkInput,
+      });
+      if (res.success) {
+        setVideoLink(videoLinkInput.trim());
+        setShowVideoModal(false);
+        toast.success("Video call link updated successfully!");
+      } else {
+        toast.error(res.error || "Failed to update video link");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update video link");
+    } finally {
+      setSavingVideoLink(false);
+    }
+  };
 
   const supabaseRef = useRef(createClient());
 
@@ -292,8 +327,48 @@ export default function LiveMeetingClient({
           </div>
         </div>
 
-        {/* Stopwatch & Controls */}
-        <div className="flex items-center gap-3">
+        {/* Video Call & Stopwatch Controls */}
+        <div className="flex items-center gap-2.5">
+          {videoLink ? (
+            <div className="flex items-center gap-1">
+              <a
+                href={videoLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[12px] shadow-xs transition-colors shrink-0"
+                title="Join Video Call (Microsoft Teams / Google Meet / Chandak Video)"
+              >
+                <Video className="h-3.5 w-3.5" />
+                <span>Join Video Call</span>
+                <ExternalLink className="h-3 w-3 opacity-80" />
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoLinkInput(videoLink);
+                  setShowVideoModal(true);
+                }}
+                className="p-1 text-muted hover:text-foreground rounded transition-colors"
+                title="Edit video call link"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setVideoLinkInput("");
+                setShowVideoModal(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-sunken hover:bg-surface text-foreground font-medium text-[11.5px] transition-colors"
+              title="Add or Generate Video Call Link"
+            >
+              <Video className="h-3.5 w-3.5 text-muted" />
+              <span>+ Video Call</span>
+            </button>
+          )}
+
           <div
             className={`flex items-center gap-1.5 font-mono text-[13px] font-bold px-3 py-1 rounded-md border ${
               isCriticalOverTime
@@ -616,6 +691,75 @@ export default function LiveMeetingClient({
         sessionCode={session.code}
         points={points}
       />
+
+      {/* Set/Edit Video Call Modal */}
+      {showVideoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
+                <Video className="h-4 w-4 text-emerald-500" />
+                <span>Configure Video Call Link</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowVideoModal(false)}
+                className="p-1 text-muted hover:text-foreground rounded-lg"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveVideoLink} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1">
+                  Video Conference URL (Microsoft Teams / Google Meet / In-Portal)
+                </label>
+                <input
+                  type="url"
+                  value={videoLinkInput}
+                  onChange={(e) => setVideoLinkInput(e.target.value)}
+                  placeholder="https://teams.microsoft.com/... or https://meet.google.com/..."
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const roomName = `session-${session.code.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}`;
+                    setVideoLinkInput(`https://chandakgroup.tech/meet/live?room=${roomName}`);
+                  }}
+                  className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  <span>Generate In-Portal Room Link</span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowVideoModal(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingVideoLink}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-contrast font-medium text-xs hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+                >
+                  {savingVideoLink && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  <span>Save Video Link</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Draggable High-Visibility Floating Live Notes Action Widget */}
       <DraggableLiveNotesWidget
         sessionId={session.id}

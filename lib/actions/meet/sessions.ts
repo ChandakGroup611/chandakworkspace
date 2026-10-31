@@ -819,3 +819,48 @@ export async function deleteAgendaItem(input: {
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * Update or set the video call link for a meeting session (Teams, Google Meet, or Chandak Video)
+ */
+export async function updateSessionVideoLink(input: {
+  sessionId: string;
+  videoLink: string;
+}): Promise<{ success: boolean; session?: any; error?: string }> {
+  try {
+    await requireMeet("MEET_UPDATE", { sessionId: input.sessionId, requireOrganizerOrChair: false });
+
+    const cleanLink = (input.videoLink || "").trim();
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("meet_sessions")
+      .update({
+        video_link: cleanLink || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.sessionId)
+      .select(`
+        id, code, video_link, meeting_id,
+        meeting:meet_meetings (id, title, video_link)
+      `)
+      .single();
+
+    if (error) throw error;
+
+    // Also update parent meeting default video link if not set
+    if (cleanLink && updated?.meeting_id) {
+      await supabaseAdmin
+        .from("meet_meetings")
+        .update({ video_link: cleanLink })
+        .eq("id", updated.meeting_id)
+        .is("video_link", null);
+    }
+
+    revalidatePath(`/meet/sessions/${input.sessionId}`);
+    revalidatePath(`/meet/live/${input.sessionId}`);
+    return { success: true, session: updated };
+  } catch (err: any) {
+    console.error("updateSessionVideoLink error:", err);
+    return { success: false, error: err.message || "Failed to update video link" };
+  }
+}

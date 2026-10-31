@@ -2,19 +2,31 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import Link from "next/link";
-import { Video, Calendar, Plus, ArrowRight } from "lucide-react";
+import { Video } from "lucide-react";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
+import InstantCallRoomClient from "@/components/meet/InstantCallRoomClient";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Live Meeting Mode · Chandak Meet",
-  description: "Real-time agenda timer, quick point capture and inline carry-forward management",
+  description: "Real-time agenda timer, video war room, quick point capture and inline carry-forward management",
 };
 
-export default async function LiveModeIndexPage() {
+interface LiveModeIndexPageProps {
+  searchParams?: Promise<{ room?: string }>;
+}
+
+export default async function LiveModeIndexPage({ searchParams }: LiveModeIndexPageProps) {
+  const params = searchParams ? await searchParams : {};
+
+  // If entering an ad-hoc instant video room (e.g. from Chandak Messenger or direct room invite)
+  if (params.room) {
+    return <InstantCallRoomClient roomId={params.room} />;
+  }
+
   // Find current in-progress or next scheduled session
   const { data: activeSession } = await supabaseAdmin
     .from("meet_sessions")
