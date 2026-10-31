@@ -183,7 +183,22 @@ export function SystemMessengerNotifier() {
             .eq("user_id", effectiveUserId)
             .maybeSingle();
 
-          if (!myPart || myPart.is_muted) return;
+          let isRecipient = false;
+          if (myPart && !myPart.is_muted) {
+            isRecipient = true;
+          } else if (!myPart) {
+            // Also check direct conversation users for immediate delivery
+            const { data: conv } = await supabase
+              .from("messenger_conversations")
+              .select("direct_user1_id, direct_user2_id")
+              .eq("id", newMsg.conversation_id)
+              .maybeSingle();
+            if (conv && (conv.direct_user1_id === effectiveUserId || conv.direct_user2_id === effectiveUserId)) {
+              isRecipient = true;
+            }
+          }
+
+          if (!isRecipient) return;
 
           // Notify all trigger buttons and open drawers to sync unread counts
           window.dispatchEvent(
@@ -281,6 +296,10 @@ export function SystemMessengerNotifier() {
 
   const handleOpenConversation = (conversationId: string) => {
     setActiveToast(null);
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/login")) {
+      window.location.href = `/#messenger:${conversationId}`;
+      return;
+    }
     window.dispatchEvent(
       new CustomEvent("open-chandak-messenger", {
         detail: { conversationId },

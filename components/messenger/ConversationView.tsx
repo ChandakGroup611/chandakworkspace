@@ -24,6 +24,7 @@ import {
   Smile,
   Pencil,
   Ban,
+  ChevronDown,
 } from "lucide-react";
 import {
   MessengerConversation,
@@ -74,6 +75,21 @@ export function ConversationView({
     id: string;
     content: string;
   } | null>(null);
+  const [openMenuMessageId, setOpenMenuMessageId] = useState<string | null>(null);
+
+  // Close message context menu on click outside or escape
+  useEffect(() => {
+    const handleOutsideClick = () => setOpenMenuMessageId(null);
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenuMessageId(null);
+    };
+    window.addEventListener("click", handleOutsideClick);
+    window.addEventListener("keydown", handleEsc);
+    return () => {
+      window.removeEventListener("click", handleOutsideClick);
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, []);
 
   // Modals & Tools
   const [previewAttachment, setPreviewAttachment] = useState<MessengerAttachment | null>(null);
@@ -540,11 +556,96 @@ export function ConversationView({
 
                   {/* Bubble Content */}
                   <div
-                    className={`rounded-2xl px-4 py-2.5 text-[13.5px] shadow-xs break-words leading-relaxed select-text ${isMe
+                    onDoubleClick={() => {
+                      if (isEditable) {
+                        setReplyTo(null);
+                        setEditingMessage({ id: msg.id, content: msg.content });
+                      }
+                    }}
+                    title={isEditable ? "Double-click to edit message" : undefined}
+                    className={`relative group/bubble rounded-2xl px-4 py-2.5 text-[13.5px] shadow-xs break-words leading-relaxed select-text ${isMe
                       ? "bg-blue-600 dark:bg-blue-600 text-white rounded-br-xs shadow-sm"
                       : "bg-surface dark:bg-elevated border border-border text-foreground rounded-bl-xs"
                       }`}
                   >
+                    {/* WhatsApp-style Dropdown Chevron */}
+                    {!msg.is_deleted && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuMessageId(openMenuMessageId === msg.id ? null : msg.id);
+                        }}
+                        className={`opacity-0 group-hover/bubble:opacity-100 focus:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/20 text-current absolute top-1.5 ${isMe ? "left-1.5" : "right-1.5"} z-10 cursor-pointer`}
+                        title="Message options"
+                        aria-label="Message options"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+
+                    {/* WhatsApp-style Dropdown Menu */}
+                    {openMenuMessageId === msg.id && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className={`absolute z-30 ${isMe ? "right-0" : "left-0"} top-8 min-w-[170px] rounded-lg border border-border bg-elevated py-1 shadow-xl text-xs text-foreground animate-in fade-in zoom-in-95`}
+                      >
+                        {isEditable && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenuMessageId(null);
+                              setReplyTo(null);
+                              setEditingMessage({ id: msg.id, content: msg.content });
+                            }}
+                            className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover font-medium text-foreground cursor-pointer"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-primary shrink-0" />
+                            <span>Edit message</span>
+                          </button>
+                        )}
+                        {isMe && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenuMessageId(null);
+                              handleDeleteMessage(msg.id);
+                            }}
+                            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-danger hover:bg-danger/10 font-medium cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                            <span>Delete for everyone</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenMenuMessageId(null);
+                            setReplyTo({
+                              id: msg.id,
+                              content: msg.content,
+                              sender_name: senderName,
+                              message_type: msg.message_type,
+                            });
+                          }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover text-foreground cursor-pointer"
+                        >
+                          <Reply className="h-3.5 w-3.5 text-muted shrink-0" />
+                          <span>Reply</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenMenuMessageId(null);
+                            handleCopyText(msg.content);
+                          }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover text-foreground cursor-pointer"
+                        >
+                          <Copy className="h-3.5 w-3.5 text-muted shrink-0" />
+                          <span>Copy text</span>
+                        </button>
+                      </div>
+                    )}
                     {msg.is_deleted ? (
                       <div className="flex items-center gap-1.5 italic text-xs py-0.5 select-none opacity-80">
                         <Ban className="h-3.5 w-3.5 shrink-0 opacity-70" />
@@ -769,10 +870,11 @@ export function ConversationView({
                             setReplyTo(null);
                             setEditingMessage({ id: msg.id, content: msg.content });
                           }}
-                          className="p-1 text-muted hover:text-primary rounded transition-colors"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 text-muted hover:text-primary rounded hover:bg-surface-hover transition-colors font-medium text-[11px] cursor-pointer"
                           title="Edit message (available up to 4 hours)"
                         >
                           <Pencil className="h-3 w-3" />
+                          <span>Edit</span>
                         </button>
                       )}
                       {isMe && (

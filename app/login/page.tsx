@@ -14,7 +14,8 @@ import {
   ArrowRight, 
   AlertCircle, 
   User,
-  Zap
+  Zap,
+  Bell
 } from "lucide-react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { LoginScene3D, sceneInk } from "@/components/auth/LoginScene3D";
@@ -34,6 +35,13 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [noticeMsg, setNoticeMsg] = useState<{ type: 'warning' | 'info' | 'error'; title: string; description: string } | null>(null);
   const [isOAuthCallback, setIsOAuthCallback] = useState(false);
+  const [notifPerm, setNotifPerm] = useState<string>("granted");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifPerm(Notification.permission);
+    }
+  }, []);
 
   // Where to go after sign-in. Rules (lib/module-gate.ts): one module → open it; a saved default →
   // open it; otherwise the "Choose a module" screen. A deep link (?next=) is honoured only when a
@@ -186,6 +194,10 @@ export default function LoginPage() {
       } else {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
+          if (typeof window !== "undefined") {
+            if (session.user?.id) localStorage.setItem("chandak_messenger_user_id", session.user.id);
+            if (session.user?.email) localStorage.setItem("chandak_messenger_user_email", session.user.email);
+          }
           const rawNext = searchParams.get("next");
           const destination = await resolvePostLoginDestination(rawNext, session.user.id);
           window.location.href = destination;
@@ -202,6 +214,9 @@ export default function LoginPage() {
       const newToken = crypto.randomUUID();
       if (typeof window !== "undefined") {
         localStorage.setItem("app_session_token", newToken);
+        if (user?.id) localStorage.setItem("chandak_messenger_user_id", user.id);
+        if (user?.email) localStorage.setItem("chandak_messenger_user_email", user.email);
+        if (user?.user_metadata?.full_name) localStorage.setItem("chandak_messenger_user_name", user.user_metadata.full_name);
         if (!destination.startsWith("/select-module") && !destination.startsWith("/login")) {
           const destMod = moduleOfPath(destination);
           if (destMod) {
@@ -365,6 +380,27 @@ export default function LoginPage() {
                 Use your Chandak Microsoft account, or your email and password.
               </p>
             </div>
+
+            {/* Desktop Notification Alert Enable */}
+            {notifPerm === "default" && (
+              <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-foreground animate-in fade-in duration-200">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span className="font-medium">Get desktop message alerts even when logged out</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== "undefined" && "Notification" in window) {
+                      Notification.requestPermission().then((p) => setNotifPerm(p));
+                    }
+                  }}
+                  className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shrink-0 cursor-pointer"
+                >
+                  Enable
+                </button>
+              </div>
+            )}
 
             {/* Realtime Alert Displays */}
             {noticeMsg && (

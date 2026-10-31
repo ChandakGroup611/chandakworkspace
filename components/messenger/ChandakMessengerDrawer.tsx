@@ -11,6 +11,8 @@ import {
   MessageSquarePlus,
   RefreshCw,
   Sparkles,
+  Bell,
+  BellRing,
 } from "lucide-react";
 import {
   MessengerConversation,
@@ -53,11 +55,23 @@ export function ChandakMessengerDrawer({
   const [showNewGroup, setShowNewGroup] = useState(false);
 
   const [mounted, setMounted] = useState(false);
+  const [notifPerm, setNotifPerm] = useState<string>("default");
   const supabase = createClient();
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifPerm(Notification.permission);
+    }
   }, []);
+
+  const requestNotif = () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      Notification.requestPermission().then((p) => {
+        setNotifPerm(p);
+      });
+    }
+  };
 
   const activeConversationRef = useRef(activeConversation);
   useEffect(() => {
@@ -210,7 +224,24 @@ export function ChandakMessengerDrawer({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            {notifPerm === "granted" ? (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[11px] font-medium" title="System desktop notifications active">
+                <BellRing className="h-3 w-3" />
+                <span>PC Alerts Active</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={requestNotif}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 text-[11px] font-medium transition-colors cursor-pointer"
+                title="Click to enable computer system notifications"
+              >
+                <Bell className="h-3 w-3" />
+                <span>Enable PC Notifications</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setIsMaximized(!isMaximized)}
