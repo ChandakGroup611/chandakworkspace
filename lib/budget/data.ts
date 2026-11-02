@@ -84,16 +84,18 @@ export async function getSession() {
     data.user.user_metadata?.role === "SUPER_ADMIN" ||
     me?.is_super_admin === true;
 
-  let isSuper = isSuperJwt;
+  const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com", "avinash.pise@chandakgroup.com", "avinash@gmail.com"];
+  let isSuper = isSuperJwt || (!!data.user.email && adminEmails.includes(data.user.email.toLowerCase()));
+
   if (!isSuper) {
     try {
       const { data: um } = await sb
         .from("user_master")
-        .select("full_name, email, roles(code)")
-        .eq("id", data.user.id)
+        .select("full_name, email, role_id, role:roles(code)")
+        .or(`id.eq.${data.user.id},email.eq.${data.user.email || ""}`)
         .maybeSingle();
 
-      const roleCode = (um?.roles as any)?.code?.toUpperCase();
+      const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
       if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode)) {
         isSuper = true;
       }

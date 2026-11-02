@@ -31,7 +31,7 @@ export interface UserModulesResult {
   userEmail?: string;
 }
 
-const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET"]);
+const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET", "CHANDAK_MESSENGER"]);
 
 const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
   {
@@ -195,6 +195,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
         if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
         if (m.code === "CHANDAK_MEET" && !route) route = "/meet";
         if (m.code === "ORG_BUDGET" && !route) route = "/budget";
+        if (m.code === "CHANDAK_MESSENGER" && !route) route = "/messenger";
         return {
           ...m,
           route_path: route,

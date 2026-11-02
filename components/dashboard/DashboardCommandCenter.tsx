@@ -158,11 +158,23 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
   const isManager = currentUser?.isManager || (currentUser?.subordinateUserIds && currentUser.subordinateUserIds.length > 1);
   const managedDepts = currentUser?.managedDepartments || [];
 
+  // Automatically enforce user scope: non-super-admins cannot default to or remain on "all"
+  useEffect(() => {
+    if (currentUser && !isSuperAdmin && hierarchyScope === "all") {
+      setHierarchyScope(isManager ? "my_reports" : (currentUser.departmentName ? "my_dept" : "assigned_me"));
+    }
+  }, [currentUser, isSuperAdmin, isManager, hierarchyScope]);
+
   // Filter metrics based on hierarchy & global filters memoized
   const filteredMetrics = useMemo(() => {
     const isAllUsersSelected = !usersInitialized || globalUsers.length === 0 || globalUsers.length >= uniqueUsers.filter(u => u !== 'Unassigned').length;
 
     return metrics.filter(m => {
+      // 0. Super Admin Enforcement: Non-super-admins cannot view 'all' (entire organisation)
+      if (!isSuperAdmin && hierarchyScope === "all") {
+        if (currentUser?.id && m.userId !== currentUser.id && m.assigneeId !== currentUser.id) return false;
+      }
+
       // 1. Hierarchy & Department Filtering
       if (hierarchyScope === "my_dept") {
         if (selectedDepartmentName !== "ALL") {
@@ -522,7 +534,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
               </span>
 
               {/* Entire Organization (Super Admin / Global) */}
-              {(isSuperAdmin || !isManager) && (
+              {isSuperAdmin && (
                 <button
                   type="button"
                   onClick={() => {

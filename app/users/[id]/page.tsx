@@ -30,7 +30,9 @@ import {
   LineChart,
   Star,
   CheckCircle2,
-  Video
+  Video,
+  Landmark,
+  MessageSquare
 } from "lucide-react";
 
 const PRESET_AVATARS = [
@@ -83,6 +85,18 @@ const getModuleMeta = (code: string) => {
         icon: Video,
         badgeBg: "bg-purple-500/10 text-purple-500 border-purple-500/30",
         description: "Meetings, agendas, points with automated carry-forward, decisions & action items."
+      };
+    case "ORG_BUDGET":
+      return {
+        icon: Landmark,
+        badgeBg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/30",
+        description: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports."
+      };
+    case "CHANDAK_MESSENGER":
+      return {
+        icon: MessageSquare,
+        badgeBg: "bg-sky-500/10 text-sky-500 border-sky-500/30",
+        description: "Real-time enterprise team chat, direct 1:1 messaging, group channels and instant audio/video calls."
       };
     default:
       return {

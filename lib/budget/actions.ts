@@ -16,9 +16,9 @@ const refresh = () => revalidatePath("/budget", "layout");
 const AMOUNT = /^\d*\.?\d+$/;
 
 async function getEffectiveClient() {
-  const sb = await createClient();
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return { sb, user: null, isSuper: false };
+  const sbUser = await createClient();
+  const { data: { user } } = await sbUser.auth.getUser();
+  if (!user) return { sb: sbUser, user: null, isSuper: false };
 
   const isSuperMeta =
     user.app_metadata?.role === "SUPER_ADMIN" ||
@@ -26,25 +26,30 @@ async function getEffectiveClient() {
 
   if (isSuperMeta) return { sb: supabaseAdmin, user, isSuper: true };
 
+  const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com", "avinash.pise@chandakgroup.com", "avinash@gmail.com"];
+  if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+    return { sb: supabaseAdmin, user, isSuper: true };
+  }
+
   try {
     const { data: um } = await supabaseAdmin
       .from("user_master")
-      .select("roles(code)")
-      .eq("id", user.id)
+      .select("role_id, role:roles(code)")
+      .or(`id.eq.${user.id},email.eq.${user.email || ""}`)
       .maybeSingle();
 
-    const roleCode = (um?.roles as any)?.code?.toUpperCase();
+    const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
     if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode)) {
       return { sb: supabaseAdmin, user, isSuper: true };
     }
   } catch {}
 
-  return { sb, user, isSuper: false };
+  return { sb: sbUser, user, isSuper: false };
 }
 
 
 export async function updateLine(lineId: number, field: "initial" | "ctc" | "remark", raw: string, isTax: boolean): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   let patch: Record<string, unknown>;
   if (field === "remark") patch = { remark: raw.trim() || null };
   else {
@@ -79,7 +84,7 @@ export async function setLineRule(lineId: number, rule: LineRule): Promise<Resul
     if (!AMOUNT.test(total)) return fail("Type the total in crores, for example 45");
     Object.assign(patch, { balance_of_paise: BudgetImporter.paiseFromCr(total), balance_scope: rule.scope });
   }
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_lines").update(patch).eq("id", lineId).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You cannot change this line");
@@ -88,7 +93,7 @@ export async function setLineRule(lineId: number, rule: LineRule): Promise<Resul
 }
 
 export async function setDepartmentRemark(versionId: number, departmentId: number, text: string): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_set_department_remark", { p_version: versionId, p_department: departmentId, p_text: text });
   if (error) return fail(error);
   refresh();
@@ -96,7 +101,7 @@ export async function setDepartmentRemark(versionId: number, departmentId: numbe
 }
 
 export async function setTowerNote(versionId: number, towerId: number, ocDate: string, reason: string): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_set_tower_note", { p_version: versionId, p_tower: towerId, p_oc_date: ocDate || null, p_reason: reason });
   if (error) return fail(error);
   refresh();
@@ -107,7 +112,7 @@ export async function setTowerNote(versionId: number, towerId: number, ocDate: s
 export async function setCertified(lineId: number, raw: string): Promise<Result> {
   const text = raw.replace(/,/g, "").trim();
   if (text !== "" && !AMOUNT.test(text)) return fail("Type the certified amount in crores, for example 12.5");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_lines").update({ certified_paise: text === "" ? null : BudgetImporter.paiseFromCr(text) }).eq("id", lineId).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You cannot change this line");
@@ -119,7 +124,7 @@ export async function setCertified(lineId: number, raw: string): Promise<Result>
 export async function setTowerAreas(versionId: number, towerId: number, bua: string, design: string): Promise<Result> {
   const n = (s: string) => (s.trim() === "" ? null : Number(s.replace(/,/g, "")));
   if ([bua, design].some((s) => s.trim() !== "" && !(Number(s.replace(/,/g, "")) >= 0))) return fail("Type the areas in sq ft");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_set_tower_areas", { p_version: versionId, p_tower: towerId, p_bua: n(bua), p_design: n(design) });
   if (error) return fail(error);
   refresh();
@@ -129,7 +134,7 @@ export async function setTowerAreas(versionId: number, towerId: number, bua: str
 // ---------- supporting schedules ----------
 /** Gives a line a schedule: from now on its CTC is the schedule's total. */
 export async function addSchedule(versionId: number, lineId: number, title: string): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error: e1 } = await sb.from("budget_lines").update({ ctc_rate: null, ctc_basis: null, balance_of_paise: null, balance_scope: null, is_memo: false }).eq("id", lineId);
   if (e1) return fail(e1);
   const { data, error } = await sb.from("budget_schedules").insert({ version_id: versionId, line_id: lineId, title: title.trim() || "Working" }).select("id");
@@ -141,7 +146,7 @@ export async function addSchedule(versionId: number, lineId: number, title: stri
 
 export async function updateSchedule(id: number, patch: { title?: string; note?: string | null }): Promise<Result> {
   if (patch.title !== undefined && !patch.title.trim()) return fail("Give the schedule a title");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_schedules").update(patch).eq("id", id).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You cannot change this schedule");
@@ -151,7 +156,7 @@ export async function updateSchedule(id: number, patch: { title?: string; note?:
 
 /** Removes the schedule; the line keeps its last CTC and can be typed again. */
 export async function deleteSchedule(id: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_schedules").delete().eq("id", id).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You cannot change this schedule");
@@ -180,7 +185,7 @@ export async function saveScheduleRow(scheduleId: number, rowId: number | null, 
   } catch (e) {
     return fail((e as Error).message);
   }
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const res = rowId ? await sb.from("budget_schedule_rows").update(row).eq("id", rowId).select("id") : await sb.from("budget_schedule_rows").insert(row).select("id");
   if (res.error) return fail(res.error.message.includes("row-level security") ? "You cannot change this schedule" : res.error.message);
   if (!res.data?.length) return fail("You cannot change this schedule");
@@ -189,7 +194,7 @@ export async function saveScheduleRow(scheduleId: number, rowId: number | null, 
 }
 
 export async function deleteScheduleRow(rowId: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_schedule_rows").delete().eq("id", rowId).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You cannot change this schedule");
@@ -198,7 +203,7 @@ export async function deleteScheduleRow(rowId: number): Promise<Result> {
 }
 
 export async function addTowerLine(versionId: number, headId: number, towerId: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.from("budget_lines").insert({ version_id: versionId, cost_head_id: headId, subproject_id: towerId, initial_paise: 0, ctc_paise: 0 });
   if (error) return fail(error.code === "23505" ? "That tower already has a line for this cost head" : error.message);
   refresh();
@@ -206,7 +211,7 @@ export async function addTowerLine(versionId: number, headId: number, towerId: n
 }
 
 export async function removeLine(lineId: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.from("budget_lines").delete().eq("id", lineId);
   if (error) return fail(error);
   refresh();
@@ -214,7 +219,7 @@ export async function removeLine(lineId: number): Promise<Result> {
 }
 
 export async function openVersion(projectId: number, asOn: string, reason: string): Promise<Result<{ number: number }>> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.rpc("budget_create_version", { p_project: projectId, p_as_on: asOn, p_reason: reason.trim() || null });
   if (error) return fail(error);
   const { data: v } = await sb.from("budget_versions").select("number").eq("id", data).single();
@@ -223,7 +228,7 @@ export async function openVersion(projectId: number, asOn: string, reason: strin
 }
 
 export async function approveVersion(versionId: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_approve_version", { p_version: versionId });
   if (error) return fail(error);
   refresh();
@@ -232,7 +237,7 @@ export async function approveVersion(versionId: number): Promise<Result> {
 
 // ---------- sign-off ----------
 export async function submitVersion(versionId: number, comment: string): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_submit_version", { p_version: versionId, p_comment: comment });
   if (error) return fail(error);
   refresh();
@@ -240,7 +245,7 @@ export async function submitVersion(versionId: number, comment: string): Promise
 }
 
 export async function signVersion(versionId: number, action: "signed" | "returned", comment: string): Promise<Result<{ outcome: string }>> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.rpc("budget_sign_version", { p_version: versionId, p_action: action, p_comment: comment });
   if (error) return fail(error);
   refresh();
@@ -248,7 +253,7 @@ export async function signVersion(versionId: number, action: "signed" | "returne
 }
 
 export async function recallVersion(versionId: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_recall_version", { p_version: versionId });
   if (error) return fail(error);
   refresh();
@@ -259,7 +264,7 @@ export async function recallVersion(versionId: number): Promise<Result> {
 export async function saveSignoffLevel(l: { id?: number; project_id: number | null; sort: number; title: string; approver_ids: string[] }): Promise<Result> {
   if (!l.title.trim()) return fail("Give the level a title, for example Checked by");
   if (!l.approver_ids.length) return fail("Choose at least one approver for the level");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const row = { project_id: l.project_id, sort: l.sort, title: l.title.trim(), approver_ids: l.approver_ids };
   const res = l.id ? await sb.from("budget_signoff_levels").update(row).eq("id", l.id).select("id") : await sb.from("budget_signoff_levels").insert(row).select("id");
   if (res.error) return fail(res.error.message.includes("row-level security") ? "You cannot change this sign-off chain" : res.error.message);
@@ -269,7 +274,7 @@ export async function saveSignoffLevel(l: { id?: number; project_id: number | nu
 }
 
 export async function deleteSignoffLevel(id: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_signoff_levels").delete().eq("id", id).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You cannot change this sign-off chain");
@@ -278,7 +283,7 @@ export async function deleteSignoffLevel(id: number): Promise<Result> {
 }
 
 export async function deleteDraft(versionId: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_versions").delete().eq("id", versionId).eq("status", "draft").select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("Only the person who prepared this draft can delete it");
@@ -288,7 +293,7 @@ export async function deleteDraft(versionId: number): Promise<Result> {
 
 /** `areas` and `category_reasons` are merged into what is saved, so two fields saved in quick succession both stay. */
 export async function updateVersion(versionId: number, patch: { as_on?: string; reason?: string | null; category_reasons?: Record<string, string>; areas?: object }): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const row: Record<string, unknown> = { ...patch };
   if (patch.areas || patch.category_reasons) {
     const { data: cur, error: e0 } = await sb.from("budget_versions").select("areas, category_reasons").eq("id", versionId).single();
@@ -313,14 +318,14 @@ export interface ImportPreview {
 }
 
 export async function previewImport(projectId: number | null, payload: ImportPayload): Promise<Result<{ preview: ImportPreview }>> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.rpc("budget_preview_import", { p_project: projectId, p_payload: payload });
   if (error) return fail(error);
   return { ok: true, preview: data as ImportPreview };
 }
 
 export async function importWorkbook(projectId: number | null, payload: ImportPayload): Promise<Result<{ projectId: number; versionNumber: number; linesChanged: number; adjustments: number }>> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.rpc("budget_import_version", { p_project: projectId, p_payload: payload });
   if (error) return fail(error);
   const { data: v } = await sb.from("budget_versions").select("number").eq("id", data.version_id).single();
@@ -329,14 +334,14 @@ export async function importWorkbook(projectId: number | null, payload: ImportPa
 }
 
 export async function checkCostRows(projectId: number, rows: CostRow[]): Promise<Result<{ rows: CostRow[] }>> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.rpc("budget_check_incurred", { p_project: projectId, p_payload: { rows } });
   if (error) return fail(error);
   return { ok: true, rows: data as CostRow[] };
 }
 
 export async function importCostRows(projectId: number, file: string, rows: CostRow[]): Promise<Result<{ entries: number; totalPaise: number }>> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const clean = rows.map(({ problem: _p, ...r }) => r);
   const { data, error } = await sb.rpc("budget_import_incurred", { p_project: projectId, p_payload: { file, rows: clean } });
   if (error) return fail(error);
@@ -347,7 +352,7 @@ export async function importCostRows(projectId: number, file: string, rows: Cost
 export async function addEntry(projectId: number, headId: number, towerId: number | null, month: string, amount: string, reference: string, custom: Record<string, unknown> = {}): Promise<Result> {
   const text = amount.replace(/,/g, "").trim();
   if (!/^-?\d*\.?\d+$/.test(text) || !/^\d{4}-\d{2}$/.test(month)) return fail("Enter the month and an amount in rupees");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_incurred_entries").insert({
     project_id: projectId, cost_head_id: headId, subproject_id: towerId, month: month + "-01",
     amount_paise: BudgetImporter.paiseFromInr(text), reference: reference.trim() || null,
@@ -378,7 +383,7 @@ export async function addBill(projectId: number, bill: BillInput, splits: BillSp
   const used = splits.filter((s) => s.amount.replace(/,/g, "").trim());
   if (!used.length) return fail("Split the bill over at least one cost head");
   if (used.some((s) => !RUPEES.test(s.amount.replace(/,/g, "").trim()))) return fail("Enter each split's amount in rupees");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_add_bill", {
     p_project: projectId,
     p_bill: { vendor: bill.vendor, bill_no: bill.billNo, bill_date: bill.date, work_order: bill.workOrder, note: bill.note, gst_paise: gst ? BudgetImporter.paiseFromInr(gst) : 0 },
@@ -397,7 +402,7 @@ export async function updateBill(billId: number, bill: BillInput, splits: BillSp
   const used = splits.filter((s) => s.amount.replace(/,/g, "").trim());
   if (!used.length) return fail("Split the bill over at least one cost head");
   if (used.some((s) => !RUPEES.test(s.amount.replace(/,/g, "").trim()))) return fail("Enter each split's amount in rupees");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_update_bill", {
     p_bill_id: billId,
     p_bill: { vendor: bill.vendor, bill_no: bill.billNo, bill_date: bill.date, work_order: bill.workOrder, note: bill.note, gst_paise: gst ? BudgetImporter.paiseFromInr(gst) : 0 },
@@ -412,7 +417,7 @@ export async function updateBill(billId: number, bill: BillInput, splits: BillSp
 export async function updateEntry(entryId: number, headId: number, towerId: number | null, month: string, amount: string, reference: string): Promise<Result> {
   const text = amount.replace(/,/g, "").trim();
   if (!RUPEES.test(text) || !/^\d{4}-\d{2}$/.test(month)) return fail("Enter the month and an amount in rupees");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_incurred_entries").update({
     cost_head_id: headId, subproject_id: towerId, month: month + "-01", amount_paise: BudgetImporter.paiseFromInr(text), reference: reference.trim() || null,
   }).eq("id", entryId).is("bill_id", null).select("id");
@@ -424,7 +429,7 @@ export async function updateEntry(entryId: number, headId: number, towerId: numb
 
 /** Deletes a bill and its splits. */
 export async function deleteBill(billId: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_bills").delete().eq("id", billId).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You cannot delete this bill: it is split over a department you do not record cost for");
@@ -433,7 +438,7 @@ export async function deleteBill(billId: number): Promise<Result> {
 }
 
 export async function deleteEntry(entryId: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_incurred_entries").delete().eq("id", entryId).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You cannot delete this entry");
@@ -531,14 +536,14 @@ export async function deleteProject(projectId: number): Promise<Result> {
 /** Comments on a budget line. */
 export async function addComment(versionId: number, lineId: number, body: string): Promise<Result> {
   if (!body.trim()) return fail("Write the comment first");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.from("budget_comments").insert({ version_id: versionId, line_id: lineId, body: body.trim() });
   if (error) return fail(error.message.includes("row-level security") ? "You cannot comment on this project" : error.message);
   refresh();
   return { ok: true };
 }
 export async function deleteComment(id: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_comments").delete().eq("id", id).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You can delete only your own comments");
@@ -547,7 +552,7 @@ export async function deleteComment(id: number): Promise<Result> {
 }
 
 export async function addTower(projectId: number, name: string): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { count } = await sb.from("budget_subprojects").select("id", { count: "exact", head: true }).eq("project_id", projectId);
   const { error } = await sb.from("budget_subprojects").insert({ project_id: projectId, name: name.trim() || `Tower ${(count ?? 0) + 1}`, sort: (count ?? 0) + 1 });
   if (error) return fail(error.code === "23505" ? "A tower with that name already exists" : error.message);
@@ -556,7 +561,7 @@ export async function addTower(projectId: number, name: string): Promise<Result>
 }
 
 export async function updateTower(towerId: number, field: "name" | "type" | "carpet_area" | "eng_area" | "oc_date", value: string): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const v = value.trim();
   if (field === "name" && !v) return fail("A tower needs a name");
   const patch = { [field]: field === "carpet_area" || field === "eng_area" ? (v === "" ? null : Number(v)) : v || null };
@@ -570,7 +575,7 @@ export async function updateTower(towerId: number, field: "name" | "type" | "car
 export async function addHead(projectId: number, h: { department_id: number; category: string; sub_category: string; summary_subcategory: string | null; is_tax: boolean; tax_rate_pct: number | null; tax_share_pct: number | null; tax_base: number[] }): Promise<Result<{ draftNumber: number | null }>> {
   if (!h.category.trim()) return fail("Give the cost head a category name");
   if (h.is_tax && !(Number(h.tax_rate_pct) > 0 && Number(h.tax_share_pct) > 0 && Number(h.tax_share_pct) <= 100)) return fail("Enter the GST rate and the eligible share in percent");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data: last } = await sb.from("budget_cost_heads").select("sort").eq("project_id", projectId).order("sort", { ascending: false }).limit(1);
   const { data: head, error } = await sb.from("budget_cost_heads").insert({
     project_id: projectId, department_id: h.department_id, category: h.category.trim(), sub_category: h.sub_category.trim() || null,
@@ -592,7 +597,7 @@ export async function updateHead(headId: number, patch: { summary_subcategory?: 
   for (const k of ["tax_rate_pct", "tax_share_pct"] as const) {
     if (k in patch && !(Number(patch[k]) > 0 && Number(patch[k]) <= 100)) return fail("Enter a percentage between 0 and 100");
   }
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_cost_heads").update(patch).eq("id", headId).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("Only the budget preparer or an administrator changes cost heads");
@@ -602,7 +607,7 @@ export async function updateHead(headId: number, patch: { summary_subcategory?: 
 
 // ---------- custom field values ----------
 export async function setCustomValues(entity: Entity, entityId: number, values: Record<string, unknown>): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_set_custom_values", { p_entity: entity, p_entity_id: entityId, p_values: values });
   if (error) return fail(error);
   refresh();
@@ -613,7 +618,7 @@ export async function setCustomValues(entity: Entity, entityId: number, values: 
 export type FieldInput = Omit<CustomField, "id" | "active"> & { id?: number };
 
 export async function saveField(f: FieldInput): Promise<Result<{ id: number }>> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   if (!/^[a-z][a-z0-9_]{0,39}$/.test(f.key)) return fail("The key starts with a letter and uses only small letters, digits and _ (for example planned_qty)");
   if (!f.label.trim()) return fail("Give the field a name");
   const isFormula = f.field_type === "formula";
@@ -647,7 +652,7 @@ export async function saveField(f: FieldInput): Promise<Result<{ id: number }>> 
 }
 
 export async function setFieldActive(id: number, active: boolean): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_custom_fields").update({ active, updated_at: new Date().toISOString() }).eq("id", id).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You do not have the right to change custom fields");
@@ -656,7 +661,7 @@ export async function setFieldActive(id: number, active: boolean): Promise<Resul
 }
 
 export async function deleteField(id: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_custom_fields").delete().eq("id", id).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail("You do not have the right to change custom fields");

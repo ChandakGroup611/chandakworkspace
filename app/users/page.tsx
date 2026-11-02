@@ -56,7 +56,9 @@ import {
   EyeOff,
   Compass,
   LineChart,
-  Video
+  Video,
+  Landmark,
+  MessageSquare
 } from "lucide-react";
 
 // Initial premium fallback/mock user datasets to guarantee absolute rich presentation
@@ -1669,6 +1671,20 @@ export default function UserMasterPage() {
                       desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.",
                       icon: Video,
                       color: "text-purple-500 border-purple-500/30 bg-purple-500/10"
+                    },
+                    {
+                      code: "ORG_BUDGET",
+                      name: "Organization Budget",
+                      desc: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports.",
+                      icon: Landmark,
+                      color: "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
+                    },
+                    {
+                      code: "CHANDAK_MESSENGER",
+                      name: "Chandak Messenger",
+                      desc: "Real-time enterprise team chat, direct 1:1 messaging, group channels and instant audio/video calls.",
+                      icon: MessageSquare,
+                      color: "text-sky-500 border-sky-500/30 bg-sky-500/10"
                     }
                   ].map(mod => {
                     const isSelected = modalSelectedCodes.includes(mod.code);
@@ -1740,7 +1756,7 @@ export default function UserMasterPage() {
                   >
                     {modalSelectedCodes.map(code => (
                       <option key={code} value={code}>
-                        {code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : code === "DASHBOARDS" ? "Dashboards" : code === "CHANDAK_MEET" ? "Chandak Meet" : "Vehicle Desk"}
+                        {code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : code === "DASHBOARDS" ? "Dashboards" : code === "CHANDAK_MEET" ? "Chandak Meet" : code === "ORG_BUDGET" ? "Organization Budget" : code === "CHANDAK_MESSENGER" ? "Chandak Messenger" : "Vehicle Desk"}
                       </option>
                     ))}
                   </select>
