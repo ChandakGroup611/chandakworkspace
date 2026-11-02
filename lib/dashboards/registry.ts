@@ -49,6 +49,15 @@ export const DASHBOARDS: DashboardDef[] = [
     defaultEngineUrl: "https://v9tbp89l-8083.inc1.devtunnels.ms",
     accent: "#0C6E8A",
   },
+  {
+    key: "engg",
+    name: "Engineering Budget & Inventory",
+    description: "WO category budget, WO status, abstracts, WO payment status, contractors, WO inventory, BOQ and store stock.",
+    permissionPrefix: "DASH_ENGG",
+    engineUrlEnv: "DASHBOARD_ENGINE_URL_ENGG",
+    defaultEngineUrl: "https://v9tbp89l-8084.inc1.devtunnels.ms",
+    accent: "#5B4BD6",
+  },
 ];
 
 export function getDashboard(key: string): DashboardDef | undefined {
