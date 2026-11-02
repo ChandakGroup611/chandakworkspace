@@ -226,7 +226,7 @@ export default function IAMGovernanceCockpit({
   }, [permissionsList, permSearchQuery, selectedModule]);
 
   const handleTogglePermissionByCode = async (permissionId: string, action: string) => {
-    if (!activeRoleID) return;
+    if (!activeRoleID || isRoleLoading || isSaving) return;
     if (activeRole?.code?.toUpperCase() === "SUPER_ADMIN") return;
 
 
@@ -290,7 +290,7 @@ export default function IAMGovernanceCockpit({
 
   // Database Actions
   const handleTogglePermission = async (permissionId: string) => {
-    if (!activeRoleID) return;
+    if (!activeRoleID || isRoleLoading || isSaving) return;
     
     const isAdding = !activeRolePerms.includes(permissionId);
     let newPerms: string[];

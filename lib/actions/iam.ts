@@ -138,37 +138,79 @@ export async function syncRolePermissions(roleId: string, permissionIds: string[
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
   
-  // 1. Clear existing mappings
-  const { error: deleteError } = await supabase
-    .from("role_permissions")
-    .delete()
-    .eq("role_id", roleId);
-    
-  if (deleteError) {
-    console.error("[IAM] Error clearing role permissions:", deleteError);
-    throw new Error("Failed to reset role permissions.");
-  }
-  
   // Deduplicate and filter valid IDs
-  const validPermissionIds = Array.from(new Set(permissionIds.filter(Boolean)));
-  
-  if (validPermissionIds.length === 0) return;
+  const validPermissionIds = new Set(permissionIds.filter(Boolean));
 
-  // 2. Insert new mappings
-  const mappings = validPermissionIds.map(pid => ({
-    role_id: roleId,
-    permission_id: pid
-  }));
-  
-  const { error: insertError } = await supabase
+  // 1. Fetch current role permissions to compute delta (NEVER blindly delete all)
+  const { data: currentRows, error: fetchError } = await supabase
     .from("role_permissions")
-    .insert(mappings);
-    
-  if (insertError) {
-    console.error("[IAM] Error syncing role permissions:", insertError);
-    throw new Error("Failed to map role permissions.");
+    .select("permission_id")
+    .eq("role_id", roleId);
+
+  if (fetchError) {
+    console.error("[IAM] Error fetching current role permissions:", fetchError);
+    throw new Error("Failed to inspect role permissions.");
   }
-  
+
+  const currentIds = new Set((currentRows || []).map(r => r.permission_id));
+
+  // Determine what to delete (in currentIds but not in target validPermissionIds)
+  const toDelete = Array.from(currentIds).filter(id => !validPermissionIds.has(id));
+  // Determine what to insert (in validPermissionIds but not in currentIds)
+  const toInsert = Array.from(validPermissionIds).filter(id => !currentIds.has(id));
+
+  // 2. Perform delta deletions
+  if (toDelete.length > 0) {
+    const { error: delError } = await supabase
+      .from("role_permissions")
+      .delete()
+      .eq("role_id", roleId)
+      .in("permission_id", toDelete);
+      
+    if (delError) {
+      console.error("[IAM] Error clearing unselected role permissions:", delError);
+      throw new Error("Failed to remove permissions.");
+    }
+  }
+
+  // 3. Perform delta insertions
+  if (toInsert.length > 0) {
+    const mappings = toInsert.map(pid => ({
+      role_id: roleId,
+      permission_id: pid
+    }));
+    
+    const { error: insertError } = await supabase
+      .from("role_permissions")
+      .insert(mappings);
+      
+    if (insertError) {
+      console.error("[IAM] Error adding new role permissions:", insertError);
+      throw new Error("Failed to map role permissions.");
+    }
+  }
+
+  revalidatePath("/iam");
+}
+
+export async function toggleRolePermission(roleId: string, permissionId: string, enabled: boolean) {
+  await checkIAMAuthorization("IAM_MANAGE");
+  const supabase = supabaseAdmin;
+
+  if (enabled) {
+    const { error } = await supabase
+      .from("role_permissions")
+      .upsert({ role_id: roleId, permission_id: permissionId }, { onConflict: "role_id,permission_id" });
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase
+      .from("role_permissions")
+      .delete()
+      .eq("role_id", roleId)
+      .eq("permission_id", permissionId);
+    if (error) throw new Error(error.message);
+  }
+
   revalidatePath("/iam");
 }
 
