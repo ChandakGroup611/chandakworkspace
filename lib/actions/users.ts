@@ -33,20 +33,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
   let isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
 
   if (!isCallerAdmin && editUserId !== authUser.id) {
-    // Check permissions in snapshot
-    const { data: userPerms } = await supabase
-      .from("user_permissions_snapshot")
-      .select("permission_code")
-      .eq("user_id", authUser.id);
-      
-    const perms = userPerms ? userPerms.map((r: any) => r.permission_code) : [];
-    const isEditing = !!editUserId;
-    const requiredPerm = isEditing ? "USERS_UPDATE" : "USERS_CREATE";
-    const canManage = perms.includes(requiredPerm) || perms.includes("USERS_MANAGE");
-
-    if (!canManage) {
-      return { success: false, error: "Unauthorized: You do not have permissions to manage user records." };
-    }
+    return { success: false, error: "Unauthorized: Only Super Administrators can manage other user records." };
   }
 
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -117,6 +104,15 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       updatePayload.role_id = payload.role_id;
     }
 
+    if (!isCallerAdmin) {
+      // Regular users cannot modify their own administrative assignments
+      delete updatePayload.role_id;
+      delete updatePayload.is_active;
+      delete updatePayload.department_id;
+      delete updatePayload.designation_id;
+      delete updatePayload.manager_id;
+    }
+
     // B. Update in user_master (using target client based on environment capability)
     const { error: dbError } = await targetClient
       .from("user_master")
@@ -139,6 +135,9 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
 
   } else {
     // ── CREATE NEW USER ──
+    if (!isCallerAdmin) {
+      return { success: false, error: "Unauthorized: Only Super Administrators can create user records." };
+    }
     const targetPassword = password || "DefaultWelcomePass123!";
 
     // RESURRECTION MECHANISM for trapped soft-deleted users
@@ -398,11 +397,12 @@ export async function fetchUsersDashboardData() {
     throw new Error("Unauthenticated. Please log in first.");
   }
 
-  const { getVisibleUsers } = await import('@/lib/repositories/users');
+  const { getVisibleUsers, checkIsSuperAdmin } = await import('@/lib/repositories/users');
+  const isSuperAdmin = await checkIsSuperAdmin(user.id);
   
   // Parallelize ALL network requests (Users list + metadata lists) to eliminate waterfall latency
   const [users, [deptRes, desigRes, roleRes, astRes, modRes]] = await Promise.all([
-    getVisibleUsers(user.id),
+    getVisibleUsers(user.id, isSuperAdmin),
     Promise.all([
       supabase.from("departments").select("id, code, name").eq("is_deleted", false),
       supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
@@ -415,6 +415,7 @@ export async function fetchUsersDashboardData() {
   return {
     users,
     authUser: user,
+    isSuperAdmin,
     departments: deptRes.data || [],
     designations: desigRes.data || [],
     roles: roleRes.data || [],
@@ -454,23 +455,12 @@ export async function deleteUserAction(userId: string) {
     return { success: false, error: "Unauthenticated request." };
   }
 
-  // Authorize the caller (Must be SUPER_ADMIN or have USERS_DELETE permission)
+  // Authorize the caller (Must be SUPER_ADMIN to delete a user)
   const { hasPermission } = await import('@/lib/permissions');
-  let isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  const isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
 
   if (!isCallerAdmin) {
-    // Check permissions in snapshot
-    const { data: userPerms } = await supabase
-      .from("user_permissions_snapshot")
-      .select("permission_code")
-      .eq("user_id", authUser.id);
-      
-    const perms = userPerms ? userPerms.map((r: any) => r.permission_code) : [];
-    const canManage = perms.includes("USERS_DELETE") || perms.includes("USERS_MANAGE");
-
-    if (!canManage) {
-      return { success: false, error: "Unauthorized: You do not have permissions to delete user records." };
-    }
+    return { success: false, error: "Unauthorized: Only Super Administrators can delete user records." };
   }
 
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -552,20 +542,12 @@ export async function inviteUserAction(
     return { success: false, error: "Unauthenticated request. Please log in." };
   }
 
-  // 2. Authorize the caller
+  // 2. Authorize the caller (Must be SUPER_ADMIN to invite users)
   const { hasPermission } = await import('@/lib/permissions');
-  let isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  const isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
 
   if (!isCallerAdmin) {
-    const { data: userPerms } = await supabase
-      .from("user_permissions_snapshot")
-      .select("permission_code")
-      .eq("user_id", authUser.id);
-      
-    const perms = userPerms ? userPerms.map((r: any) => r.permission_code) : [];
-    if (!perms.includes("USERS_CREATE") && !perms.includes("USERS_MANAGE")) {
-      return { success: false, error: "Unauthorized: You do not have permissions to invite users." };
-    }
+    return { success: false, error: "Unauthorized: Only Super Administrators can invite users." };
   }
 
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;

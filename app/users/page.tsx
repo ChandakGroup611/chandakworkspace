@@ -130,7 +130,8 @@ export default function UserMasterPage() {
   const presenceMap = usePresence(allUserIds);
 
   // Helper to determine if current logged in user has administrative privileges
-  const isSuperAdmin = hasPermission("SUPER_ADMIN");
+  const [serverIsSuperAdmin, setServerIsSuperAdmin] = useState<boolean | null>(null);
+  const isSuperAdmin = serverIsSuperAdmin ?? hasPermission("SUPER_ADMIN");
 
   // Lookup selections
   const [departments, setDepartments] = useState<any[]>([]);
@@ -328,6 +329,9 @@ export default function UserMasterPage() {
         if (storedDeleted) localDeleted = JSON.parse(storedDeleted);
       } catch (e) {}
 
+      const serverAdmin = typeof data.isSuperAdmin === "boolean" ? data.isSuperAdmin : isSuperAdmin;
+      setServerIsSuperAdmin(serverAdmin);
+
       const rawUsers = data.users || [];
       const cleanUsers = rawUsers.filter((usr: any) => usr.is_deleted !== true).map((usr: any) => {
         let mergedUser = { ...usr };
@@ -338,7 +342,7 @@ export default function UserMasterPage() {
       });
 
       // 3. SELF-HEALING: If you are NOT in the list, create your profile immediately
-      const me = cleanUsers.find((u: any) => u.id === authUser.id);
+      const me = cleanUsers.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
       
       if (!me) {
         console.log("Self-healing: Creating missing profile for", authUser.email);
@@ -355,14 +359,16 @@ export default function UserMasterPage() {
         cleanUsers.push({ ...newProfile });
       }
 
-      // Merge local created users and filter out deleted users
-      const allMergedUsers = [...localCreated, ...cleanUsers].filter(u => !localDeleted.includes(u.id));
+      // STRICT GOVERNANCE: Only Super Admin can see the entire user list; otherwise user can see its own profile in list only
+      const visibleUsers = serverAdmin
+        ? [...localCreated, ...cleanUsers].filter(u => !localDeleted.includes(u.id))
+        : cleanUsers.filter(u => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
 
-      const enriched = enrichUserItems(allMergedUsers, loadedDepts, loadedDesigs, loadedRoles, assetsData);
+      const enriched = enrichUserItems(visibleUsers, loadedDepts, loadedDesigs, loadedRoles, assetsData);
       setUsers(enriched);
-      setSelectedUser(enriched.find((u: any) => u.id === authUser.id) || enriched[0] || null);
+      setSelectedUser(enriched.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase())) || enriched[0] || null);
       
-      const activeMe = enriched.find((u: any) => u.id === authUser.id);
+      const activeMe = enriched.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
       if (activeMe) {
         setCurrentUserProfile(activeMe);
       } else {
@@ -716,24 +722,26 @@ export default function UserMasterPage() {
           >
             Refresh directory
           </AppButton>
-          <AppButton 
-            variant="outline" 
-            size="sm" 
-            leftIcon={<Mail className="h-3.5 w-3.5" />}
-            onClick={() => setInviteModalOpen(true)}
-            disabled={!(hasPermission("USERS_CREATE") || isSuperAdmin)}
-          >
-            Invite user
-          </AppButton>
-          <AppButton 
-            variant="primary" 
-            size="sm" 
-            leftIcon={<UserPlus className="h-3.5 w-3.5" />}
-            onClick={() => router.push("/users/new")}
-            disabled={!(hasPermission("USERS_CREATE") || isSuperAdmin)}
-          >
-            Register user account
-          </AppButton>
+          {isSuperAdmin && (
+            <>
+              <AppButton 
+                variant="outline" 
+                size="sm" 
+                leftIcon={<Mail className="h-3.5 w-3.5" />}
+                onClick={() => setInviteModalOpen(true)}
+              >
+                Invite user
+              </AppButton>
+              <AppButton 
+                variant="primary" 
+                size="sm" 
+                leftIcon={<UserPlus className="h-3.5 w-3.5" />}
+                onClick={() => router.push("/users/new")}
+              >
+                Register user account
+              </AppButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -1347,7 +1355,7 @@ export default function UserMasterPage() {
 
                             <AppTableCell className="text-right w-32 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1.5">
-                                {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
+                                {isSuperAdmin && (
                                   <AppButton aria-label="Assign workspace modules" variant="secondary"
                                     type="button"
                                     onClick={() => handleOpenModuleModal(usr)}
@@ -1357,7 +1365,7 @@ export default function UserMasterPage() {
                                     <Layers className="h-4 w-4" />
                                   </AppButton>
                                 )}
-                                {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
+                                {(isSuperAdmin || usr.id === currentUserProfile?.id) && (
                                   <AppButton aria-label="Edit user profile" variant="secondary"
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
@@ -1369,7 +1377,7 @@ export default function UserMasterPage() {
                                     <Edit3 className="h-4 w-4" />
                                   </AppButton>
                                 )}
-                                {(hasPermission("USERS_DELETE") || isSuperAdmin) && (
+                                {isSuperAdmin && (
                                   <AppButton aria-label="Remove user" variant="secondary"
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}

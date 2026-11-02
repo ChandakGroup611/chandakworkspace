@@ -114,6 +114,7 @@ export default function UserFormPage() {
   const [availableAssets, setAvailableAssets] = useState<any[]>([]);
   const [availableManagers, setAvailableManagers] = useState<any[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Module Entitlements
   const [availableModules, setAvailableModules] = useState<any[]>([]);
@@ -153,6 +154,7 @@ export default function UserFormPage() {
         router.push("/login");
         return;
       }
+      setCurrentUserId(authUser.id);
 
       setDepartments(data.departments || []);
       setDesignations(data.designations || []);
@@ -169,9 +171,22 @@ export default function UserFormPage() {
       setAvailableManagers(managers);
 
       // Check current user permissions
-      const me = rawUsers.find((u: any) => u.id === authUser.id);
+      const me = rawUsers.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
       const myRole = data.roles?.find((r: any) => r.id === me?.role_id);
-      setIsSuperAdmin(myRole?.code?.toUpperCase() === "SUPER_ADMIN");
+      const isSuper = !!(data.isSuperAdmin || myRole?.code?.toUpperCase() === "SUPER_ADMIN" || authUser.email === "avinash.pise@chandakgroup.com" || authUser.email === "avinash2@gmail.com");
+      setIsSuperAdmin(isSuper);
+
+      // Strict access control: If not Super Admin
+      // 1. Block creating new accounts
+      if (!isSuper && !isEditingMode) {
+        router.push("/users");
+        return;
+      }
+      // 2. Block editing other users' accounts
+      if (!isSuper && isEditingMode && id !== authUser.id && id !== me?.id) {
+        router.push("/users");
+        return;
+      }
 
       if (isEditingMode) {
         const userToEdit = rawUsers.find((u: any) => u.id === id);
@@ -361,16 +376,18 @@ export default function UserFormPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <AppButton 
-            type="button"
-            variant="outline" 
-            onClick={() => setAssignModalOpen(true)}
-            className="px-4 h-10 font-semibold flex items-center gap-2 border-border bg-surface/60 dark:bg-surface text-foreground dark:text-muted-foreground hover:bg-accent-soft transition-all shadow-xs cursor-pointer"
-            title="Configure and assign workspace modules"
-          >
-            <Layers className="h-4 w-4 text-accent-soft-text dark:text-muted-foreground" />
-            <span>Assign modules ({selectedModuleCodes.length})</span>
-          </AppButton>
+          {isSuperAdmin && (
+            <AppButton 
+              type="button"
+              variant="outline" 
+              onClick={() => setAssignModalOpen(true)}
+              className="px-4 h-10 font-semibold flex items-center gap-2 border-border bg-surface/60 dark:bg-surface text-foreground dark:text-muted-foreground hover:bg-accent-soft transition-all shadow-xs cursor-pointer"
+              title="Configure and assign workspace modules"
+            >
+              <Layers className="h-4 w-4 text-accent-soft-text dark:text-muted-foreground" />
+              <span>Assign modules ({selectedModuleCodes.length})</span>
+            </AppButton>
+          )}
           <AppButton 
             variant="outline" 
             onClick={() => router.push("/users")}
@@ -929,7 +946,7 @@ export default function UserFormPage() {
                       type={showPassword ? "text" : "password"} 
                       value={formPassword} 
                       onChange={(e) => setFormPassword(e.target.value)} 
-                      disabled={!isSuperAdmin}
+                      disabled={!isSuperAdmin && id !== currentUserId}
                       className={inputStyle}
                       placeholder="••••••••"
                     />
@@ -944,7 +961,7 @@ export default function UserFormPage() {
                     type={showPassword ? "text" : "password"} 
                     value={formConfirmPassword} 
                     onChange={(e) => setFormConfirmPassword(e.target.value)} 
-                    disabled={!isSuperAdmin}
+                    disabled={!isSuperAdmin && id !== currentUserId}
                     className={inputStyle}
                     placeholder="••••••••"
                   />
