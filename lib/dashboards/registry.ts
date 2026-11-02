@@ -52,7 +52,7 @@ export const DASHBOARDS: DashboardDef[] = [
   {
     key: "engg",
     name: "Engineering Budget & Inventory",
-    description: "WO category budget, WO status, abstracts, WO payment status, contractors, WO inventory, BOQ and store stock.",
+    description: "WO category budget, WO status, abstracts, WO payment status, contractors, WO inventory, BOQ, WO reports and store stock.",
     permissionPrefix: "DASH_ENGG",
     engineUrlEnv: "DASHBOARD_ENGINE_URL_ENGG",
     defaultEngineUrl: "https://v9tbp89l-8084.inc1.devtunnels.ms",
