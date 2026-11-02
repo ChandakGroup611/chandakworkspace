@@ -13,6 +13,7 @@ import { getVisibleWorkspaces } from "@/lib/repositories/workspaces";
 import { logActivityEvent } from "@/lib/actions/tasks";
 import { LifecycleManager } from "@/lib/services/LifecycleManager";
 import { HierarchyManager } from "@/lib/services/HierarchyManager";
+import { formatHierarchicalWorkspaceName } from "@/lib/utils/workspace-naming";
 
 /**
  * Enterprise permission verification helper for server actions
@@ -238,10 +239,25 @@ export async function createWorkspace(formData: any) {
       }
     }
 
+    let finalWorkspaceName = formData.name.trim();
+    const parentWorkspaceId = (formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null;
+
+    if (parentWorkspaceId) {
+      const { data: parentWs } = await supabaseAdmin
+        .from("workspaces")
+        .select("workspace_name")
+        .eq("id", parentWorkspaceId)
+        .maybeSingle();
+
+      if (parentWs?.workspace_name) {
+        finalWorkspaceName = formatHierarchicalWorkspaceName(finalWorkspaceName, parentWs.workspace_name);
+      }
+    }
+
     const { data, error } = await supabaseAdmin
       .from("workspaces")
       .insert([{
-        workspace_name: formData.name,
+        workspace_name: finalWorkspaceName,
         workspace_code: formData.code || null,
         description: formData.description,
         company_id: (formData.company_id && formData.company_id.trim()) ? formData.company_id : null,
@@ -249,7 +265,7 @@ export async function createWorkspace(formData: any) {
         end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
         status_id: statusId,
         workspace_owner_id: userId,
-        parent_workspace_id: (formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null,
+        parent_workspace_id: parentWorkspaceId,
         visibility_settings: formData.visibility_settings || { public: false }
       }])
       .select()
@@ -1271,10 +1287,27 @@ export async function updateWorkspace(id: string, formData: any) {
     return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or owner access." };
   }
 
-  const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name").eq("id", id).single();
+  const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name, parent_workspace_id").eq("id", id).single();
+
+  let finalUpdateName = formData.name ? formData.name.trim() : formData.name;
+  const effectiveParentId = (formData.parent_workspace_id !== undefined)
+    ? ((formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null)
+    : oldWs?.parent_workspace_id;
+
+  if (finalUpdateName && effectiveParentId) {
+    const { data: parentWs } = await supabaseAdmin
+      .from("workspaces")
+      .select("workspace_name")
+      .eq("id", effectiveParentId)
+      .maybeSingle();
+
+    if (parentWs?.workspace_name) {
+      finalUpdateName = formatHierarchicalWorkspaceName(finalUpdateName, parentWs.workspace_name);
+    }
+  }
 
   const updatePayload = {
-    workspace_name: formData.name,
+    workspace_name: finalUpdateName,
     description: formData.description,
     company_id: (formData.company_id && formData.company_id.trim()) ? formData.company_id : null,
     start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,

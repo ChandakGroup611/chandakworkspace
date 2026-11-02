@@ -31,6 +31,7 @@ import Link from "next/link";
 import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
 import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
 import { WorkspaceFilterMultiSelect } from "@/components/workspaces/WorkspaceFilterMultiSelect";
+import { formatHierarchicalWorkspaceName } from "@/lib/utils/workspace-naming";
 import dynamic from "next/dynamic";
 
 const TaskCreationWizard = dynamic(() => import("@/components/tasks/TaskCreationWizard"), {
@@ -832,7 +833,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     }
     try {
       setIsSubmitting(true);
-      let finalName = newWS.name;
+      let finalName = (newWS.name || "").trim();
+      if (newWS.parent_workspace_id) {
+        const parent = workspaces.find(w => w.id === newWS.parent_workspace_id);
+        if (parent) {
+          finalName = formatHierarchicalWorkspaceName(finalName, parent.name || parent.workspace_name);
+        }
+      }
 
       const payload = {
         name: finalName,
@@ -2026,8 +2033,22 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className={FIELD_LABEL}>Name <span className="text-danger-text" aria-hidden>*</span></label>
-                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className="h-9 text-[13.5px]" />
+                  <label className={FIELD_LABEL}>{wsModalMode === 'SUB' || !!newWS.parent_workspace_id ? "Sub-workspace Name" : "Workspace Name"} <span className="text-danger-text" aria-hidden>*</span></label>
+                  <AppInput placeholder={wsModalMode === 'SUB' || !!newWS.parent_workspace_id ? "e.g. CRM, Sales, Marketing" : "e.g. Q4 Platform Migration"} value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className="h-9 text-[13.5px]" />
+                  {(() => {
+                    const isSub = wsModalMode === 'SUB' || !!newWS.parent_workspace_id;
+                    const pNode = isSub ? workspaces.find(w => w.id === newWS.parent_workspace_id) : null;
+                    const pName = pNode?.name || pNode?.workspace_name || "";
+                    const preview = (isSub && pName && newWS.name?.trim())
+                      ? formatHierarchicalWorkspaceName(newWS.name, pName)
+                      : null;
+                    if (!preview) return null;
+                    return (
+                      <p className="text-[12px] text-muted">
+                        Hierarchy preview: <strong className="text-foreground font-medium">{preview}</strong>
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div className="space-y-1.5">
                   <label className={FIELD_LABEL}>Code</label>
