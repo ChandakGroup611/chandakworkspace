@@ -138,3 +138,13 @@ BEGIN
 END;
 $$;
 
+-- 6. Add DELETE and INSERT policies on budget_projects so project creation & deletion are allowed
+DROP POLICY IF EXISTS delete_project ON public.budget_projects;
+CREATE POLICY delete_project ON public.budget_projects FOR DELETE TO authenticated
+  USING (public.budget_is_super_admin() OR public.budget_has('project.delete') OR public.budget_has('project.setup', id));
+
+DROP POLICY IF EXISTS insert_project ON public.budget_projects;
+CREATE POLICY insert_project ON public.budget_projects FOR INSERT TO authenticated
+  WITH CHECK (public.budget_is_super_admin() OR public.budget_has('project.create'));
+
+
