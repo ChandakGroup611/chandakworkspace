@@ -27,7 +27,7 @@ export default async function Settings({ params }: { params: Promise<{ section: 
       const members = access.members.map((m) => ({ ...m, name: names[m.user_id] ?? "Member", email: email.get(m.user_id) ?? null }))
         .sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
       body = <AccessSettings permissions={access.permissions} roles={access.roles} members={members} directory={directory}
-        projects={projects.map((p) => ({ id: p.id, name: p.name }))} departments={depts.map((d) => ({ id: d.id, name: d.name }))} me={me.user_id} />;
+        projects={projects.map((p) => ({ id: p.id, name: p.name }))} departments={depts.map((d) => ({ id: d.id, name: d.name }))} me={me.user_id} isSuperAdmin={Boolean(me.is_super_admin || me.role === 'Super Administrator' || me.role_id === 1)} />;
     }
   } else if (!D.can(me, "fields.manage")) body = <Notice>You do not have the right to change custom fields.</Notice>;
   else {

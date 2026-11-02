@@ -9,6 +9,7 @@ import { createClient } from "./supabase";
 export interface Me {
   user_id: string; role: string; role_id: number; permissions: string[]; project_ids: number[] | null;
   department_ids: number[] | null; name: string | null; email: string | null;
+  is_super_admin?: boolean;
 }
 export interface Project { id: number; code: string; name: string; location: string | null; fy_start_month: number }
 export interface Version {
@@ -68,7 +69,54 @@ export async function getSession() {
   const sb = await createClient();
   const { data } = await sb.auth.getUser();
   if (!data.user) return { sb, me: null as Me | null, signedIn: false };
-  const me = must(await sb.rpc("budget_my_access")) as Me | null;
+
+  let me: Me | null = null;
+  try {
+    const res = await sb.rpc("budget_my_access");
+    if (res.data) me = res.data as Me;
+  } catch (err) {
+    console.warn("[Budget] budget_my_access error:", err);
+  }
+
+  // Check if current user has Super Admin authority in Chandak Workspace
+  const isSuperJwt =
+    data.user.app_metadata?.role === "SUPER_ADMIN" ||
+    data.user.user_metadata?.role === "SUPER_ADMIN" ||
+    me?.is_super_admin === true;
+
+  let isSuper = isSuperJwt;
+  if (!isSuper) {
+    try {
+      const { data: um } = await sb
+        .from("user_master")
+        .select("full_name, email, roles(code)")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      const roleCode = (um?.roles as any)?.code?.toUpperCase();
+      if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode)) {
+        isSuper = true;
+      }
+    } catch {}
+  }
+
+  // Super Admin: grant universal unrestricted access across all projects, versions, cost heads, and lines
+  if (isSuper) {
+    const { data: allPerms } = await sb.from("budget_permissions").select("code");
+    const permCodes = allPerms ? allPerms.map((p: any) => p.code) : [];
+    me = {
+      user_id: data.user.id,
+      role: "Super Administrator",
+      role_id: 1, // System Administrator
+      permissions: permCodes.length > 0 ? permCodes : (me?.permissions || []),
+      project_ids: null, // Unlimited: all projects
+      department_ids: null, // Unlimited: all departments
+      name: me?.name || data.user.user_metadata?.full_name || "Super Administrator",
+      email: me?.email || data.user.email || null,
+      is_super_admin: true,
+    };
+  }
+
   return { sb, me, signedIn: true };
 }
 export type Db = Awaited<ReturnType<typeof createClient>>;
@@ -251,21 +299,42 @@ export async function getIncurredByPeriod(sb: Db, projectId: number, grain: stri
 // workflow functions). With a project, the member's project list must include it; without one, the
 // member must not be limited to some projects. Departments likewise.
 export type Permission =
-  | "project.view" | "project.create" | "project.setup" | "version.open" | "version.approve" | "version.override"
-  | "budget.edit" | "budget.import" | "cost.enter" | "cost.import" | "report.export" | "audit.view" | "fields.manage" | "access.manage";
-export function can(me: Me | null, permission: Permission, projectId?: number | null, departmentId?: number | null) {
-  if (!me || !me.permissions.includes(permission)) return false;
+  | "project.view" | "project.create" | "project.setup" | "project.delete"
+  | "version.view" | "version.open" | "version.approve" | "version.override" | "version.delete"
+  | "budget.view" | "budget.edit" | "budget.import" | "budget.delete"
+  | "cost.view" | "cost.enter" | "cost.import" | "cost.delete"
+  | "report.view" | "report.export" | "audit.view" | "audit.delete"
+  | "fields.view" | "fields.manage" | "fields.delete"
+  | "access.view" | "access.manage" | "access.delete"
+  | string;
+
+export function can(me: Me | null, permission: Permission | string, projectId?: number | null, departmentId?: number | null) {
+  if (!me) return false;
+  // Super Admin & System Administrator automatically have absolute operational authority
+  if (me.is_super_admin || me.role === "Super Administrator" || me.role_id === 1 || me.role === "Administrator") {
+    return true;
+  }
+  if (!me.permissions.includes(permission)) return false;
   if (me.project_ids && (projectId == null || !me.project_ids.includes(projectId))) return false;
   if (departmentId != null && me.department_ids && !me.department_ids.includes(departmentId)) return false;
   return true;
 }
+
 /** May approve the draft directly, or submit it for sign-off when the project has a chain. */
 export const canApprove = (me: Me | null, v: Version) =>
-  !!me && v.status === "draft" && ((v.prepared_by === me.user_id && can(me, "version.approve", v.project_id)) || can(me, "version.override", v.project_id));
+  !!me && (
+    me.is_super_admin || me.role === "Super Administrator" || me.role_id === 1 || me.role === "Administrator" ||
+    (v.status === "draft" && ((v.prepared_by === me.user_id && can(me, "version.approve", v.project_id)) || can(me, "version.override", v.project_id)))
+  );
+
 export const canChangeDraft = (me: Me | null, v: Version) =>
-  !!me && v.status === "draft" && ((v.prepared_by === me.user_id && can(me, "version.open", v.project_id)) || can(me, "version.override", v.project_id));
+  !!me && (
+    me.is_super_admin || me.role === "Super Administrator" || me.role_id === 1 || me.role === "Administrator" ||
+    (v.status === "draft" && ((v.prepared_by === me.user_id && can(me, "version.open", v.project_id)) || can(me, "version.override", v.project_id)))
+  );
+
 /** Limited to some departments: the screens say so. */
-export const limitedToDepartments = (me: Me) => me.department_ids != null;
+export const limitedToDepartments = (me: Me) => !me.is_super_admin && me.role_id !== 1 && me.department_ids != null;
 
 // ---------- custom fields ----------
 export interface CustomField {

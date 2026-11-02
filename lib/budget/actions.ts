@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "./supabase";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 import type { CustomField, Entity } from "./data";
 import { checkFormula, type FieldDef } from "./formula";
 import BudgetImporter, { type CostRow, type ImportPayload } from "./importer";
@@ -606,22 +607,70 @@ export async function deleteField(id: number): Promise<Result> {
   return { ok: true };
 }
 
+
+async function getEffectiveClient() {
+  const sb = await createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return { sb, user: null, isSuper: false };
+
+  const isSuperMeta =
+    user.app_metadata?.role === "SUPER_ADMIN" ||
+    user.user_metadata?.role === "SUPER_ADMIN";
+
+  if (isSuperMeta) return { sb: supabaseAdmin, user, isSuper: true };
+
+  try {
+    const { data: um } = await supabaseAdmin
+      .from("user_master")
+      .select("roles(code)")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const roleCode = (um?.roles as any)?.code?.toUpperCase();
+    if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode)) {
+      return { sb: supabaseAdmin, user, isSuper: true };
+    }
+  } catch {}
+
+  return { sb, user, isSuper: false };
+}
+
 // ---------- access settings (right: access.manage) ----------
 const noRight = (e: { message: string }) => fail(e.message.includes("row-level security") ? "You do not have the right to manage access" : e.message);
 
-export async function saveRole(id: number | null, name: string, description: string): Promise<Result<{ id: number }>> {
+export async function saveRole(
+  id: number | null,
+  name: string,
+  description: string,
+  permissions?: string[]
+): Promise<Result<{ id: number }>> {
   if (!name.trim()) return fail("Give the role a name");
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const row = { name: name.trim(), description: description.trim() || null };
-  const res = id ? await sb.from("budget_roles").update(row).eq("id", id).select("id") : await sb.from("budget_roles").insert(row).select("id");
+  const res = id
+    ? await sb.from("budget_roles").update(row).eq("id", id).select("id")
+    : await sb.from("budget_roles").insert(row).select("id");
+
   if (res.error) return res.error.code === "23505" ? fail("A role with that name already exists") : noRight(res.error);
   if (!res.data?.length) return fail("You do not have the right to manage access");
+  
+  const roleId = res.data[0].id;
+
+  // If initial permissions are passed, sync them
+  if (permissions && Array.isArray(permissions)) {
+    await sb.from("budget_role_permissions").delete().eq("role_id", roleId);
+    if (permissions.length > 0) {
+      const rows = permissions.map((p) => ({ role_id: roleId, permission: p }));
+      await sb.from("budget_role_permissions").insert(rows);
+    }
+  }
+
   refresh();
-  return { ok: true, id: res.data[0].id };
+  return { ok: true, id: roleId };
 }
 
 export async function deleteRole(id: number): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { count } = await sb.from("budget_members").select("user_id", { count: "exact", head: true }).eq("role_id", id);
   if (count) return fail(`${count} member(s) have this role. Give them another role first.`);
   const { data, error } = await sb.from("budget_roles").delete().eq("id", id).select("id");
@@ -632,7 +681,7 @@ export async function deleteRole(id: number): Promise<Result> {
 }
 
 export async function setRolePermission(roleId: number, permission: string, on: boolean): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { error } = on
     ? await sb.from("budget_role_permissions").insert({ role_id: roleId, permission })
     : await sb.from("budget_role_permissions").delete().eq("role_id", roleId).eq("permission", permission);
@@ -641,10 +690,41 @@ export async function setRolePermission(roleId: number, permission: string, on: 
   return { ok: true };
 }
 
-export async function saveMember(m: { user_id: string; role_id: number; project_ids: number[] | null; department_ids: number[] | null; active: boolean }, isNew: boolean): Promise<Result> {
-  const sb = await createClient();
-  const row = { ...m, project_ids: m.project_ids?.length ? m.project_ids : null, department_ids: m.department_ids?.length ? m.department_ids : null };
-  const res = isNew ? await sb.from("budget_members").insert(row).select("user_id") : await sb.from("budget_members").update(row).eq("user_id", m.user_id).select("user_id");
+export async function batchSetRolePermissions(roleId: number, permissions: string[]): Promise<Result> {
+  const { sb } = await getEffectiveClient();
+  // Never strip all rights from Administrator system role
+  const { data: role } = await sb.from("budget_roles").select("name, is_system").eq("id", roleId).single();
+  if (role?.is_system && permissions.length === 0) {
+    return fail("Cannot remove all permissions from system Administrator");
+  }
+
+  // Clear existing role permissions
+  const { error: delErr } = await sb.from("budget_role_permissions").delete().eq("role_id", roleId);
+  if (delErr) return noRight(delErr);
+
+  if (permissions.length > 0) {
+    const rows = permissions.map((p) => ({ role_id: roleId, permission: p }));
+    const { error: insErr } = await sb.from("budget_role_permissions").insert(rows);
+    if (insErr) return noRight(insErr);
+  }
+
+  refresh();
+  return { ok: true };
+}
+
+export async function saveMember(
+  m: { user_id: string; role_id: number; project_ids: number[] | null; department_ids: number[] | null; active: boolean },
+  isNew: boolean
+): Promise<Result> {
+  const { sb } = await getEffectiveClient();
+  const row = {
+    ...m,
+    project_ids: m.project_ids?.length ? m.project_ids : null,
+    department_ids: m.department_ids?.length ? m.department_ids : null,
+  };
+  const res = isNew
+    ? await sb.from("budget_members").insert(row).select("user_id")
+    : await sb.from("budget_members").update(row).eq("user_id", m.user_id).select("user_id");
   if (res.error) return res.error.code === "23505" ? fail("That person is already a member") : noRight(res.error);
   if (!res.data?.length) return fail("You do not have the right to manage access");
   refresh();
@@ -652,7 +732,7 @@ export async function saveMember(m: { user_id: string; role_id: number; project_
 }
 
 export async function removeMember(userId: string): Promise<Result> {
-  const sb = await createClient();
+  const { sb } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_members").delete().eq("user_id", userId).select("user_id");
   if (error) return noRight(error);
   if (!data?.length) return fail("You do not have the right to manage access");
