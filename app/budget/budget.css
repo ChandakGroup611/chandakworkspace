@@ -254,13 +254,37 @@
 .budget-app .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
 
 /* Banners */
-.budget-app .banner { overflow-wrap: anywhere; border-radius: 8px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; border: 1px solid var(--line); background: var(--surface); }
+.budget-app .banner {
+  white-space: normal;
+  text-align: left;
+  overflow-wrap: anywhere;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  line-height: 1.4;
+}
 .budget-app .banner.locked { background: var(--b-accent-soft); border-color: transparent; }
-.budget-app .banner > div { min-width: 0; flex: 1 1 320px; }
+.budget-app .banner > div { min-width: 0; flex: 1 1 auto; text-align: left; }
+.budget-app .banner button.link { flex-shrink: 0; white-space: nowrap; margin-left: 8px; cursor: pointer; }
 .budget-app .banner.info { background: var(--b-accent-soft); border-color: transparent; }
 .budget-app .banner.draft { background: var(--warn-soft); border-color: transparent; }
 .budget-app .banner.error { background: var(--bad-soft); border-color: transparent; color: var(--ink); }
 .budget-app .banner.ok { background: var(--good-soft); border-color: transparent; }
+
+.budget-app td .banner,
+.budget-app .actions .banner {
+  white-space: normal;
+  text-align: left;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 520px;
+  margin-left: auto;
+}
 
 /* Pills & Chips */
 .budget-app .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: capitalize; }

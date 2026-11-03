@@ -28,8 +28,22 @@ export function useAction() {
     });
   const banner = (
     <>
-      {error && <div className="banner error" role="alert"><div>{error}</div><button className="link" onClick={() => setError(null)}>Dismiss</button></div>}
-      {notice && <div className="banner ok" role="status"><div>{notice}</div><button className="link" onClick={() => setNotice(null)}>Dismiss</button></div>}
+      {error && (
+        <div className="banner error" role="alert">
+          <div>{error}</div>
+          <button type="button" className="link" onClick={() => setError(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
+      {notice && (
+        <div className="banner ok" role="status">
+          <div>{notice}</div>
+          <button type="button" className="link" onClick={() => setNotice(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
     </>
   );
   return { pending, run, banner, setNotice, setError };
