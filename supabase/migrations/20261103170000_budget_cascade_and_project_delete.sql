@@ -116,3 +116,4 @@ BEGIN
 
   PERFORM set_config('budget.deleting_project', 'false', true);
 END $$;
+

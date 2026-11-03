@@ -278,13 +278,16 @@ function getActiveBudgetProject(pathname: string): string | null {
 
 function getBudgetRouteAction(path: string): string {
   if (path === "/budget" || path === "/budget/") return "home";
+  if (path === "/budget/admin" || path === "/budget/admin/") return "admin:masters";
   const adminMatch = path.match(/^\/budget\/admin\/([^/?#]+)/);
   if (adminMatch) return `admin:${adminMatch[1]}`;
   const projTabMatch = path.match(/^\/budget\/\d+\/([^/?#]+)/);
   if (projTabMatch) return projTabMatch[1];
+  const projOnlyMatch = path.match(/^\/budget\/(\d+)\/?$/);
+  if (projOnlyMatch) return "overview";
   const tabMatch = path.match(/^\/budget\/([^/?#]+)/);
   if (tabMatch && !/^\d+$/.test(tabMatch[1])) return tabMatch[1];
-  return "";
+  return "home";
 }
 
 function getBudgetNavGroups(projectId?: string | null): NavGroup[] {

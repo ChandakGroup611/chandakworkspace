@@ -910,7 +910,7 @@ export async function Setup(c: Ctx) {
         </div>
       </div>
         {can && <F.AddHeadForm projectId={project.id} departments={depts} baseOptions={baseOptions} summaryOptions={options} gstRules={gstRules} />}
-        <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="label">Category</th><th className="label">Sub-category</th><th>Summary row</th><th>GST rule</th>{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="label">Category</th><th className="label-sm">Sub-category</th><th>Summary row</th><th>GST rule</th>{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
           {sorted.map((h) => {
             const d = dept.get(h.department_id)!;
             const byTower = d.summary_category === "Construction" && !h.is_tax;
