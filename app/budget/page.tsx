@@ -16,7 +16,7 @@ const TAB_NAMES: Record<string, string> = {
   detail: "Detail report",
   periods: "Periodic breakdown",
   incurred: "Cost incurred",
-  setup: "Towers & set-up",
+  setup: "Project setup",
   compare: "Compare versions",
 };
 

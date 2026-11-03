@@ -4,13 +4,14 @@ import * as D from "@/lib/budget/data";
 import { AccessSettings, FieldSettings } from "../../_components/admin";
 import { MastersSettings } from "../../_components/masters";
 import { loadSession } from "../../_components/page-data";
-import { Notice, Shell } from "../../_components/shell";
+import { MasterNav, Notice, Shell } from "../../_components/shell";
 
 export const dynamic = "force-dynamic";
 
 // Settings: /budget/admin/access (right access.manage) and /budget/admin/fields (right fields.manage).
-export default async function Settings({ params }: { params: Promise<{ section: string }> }) {
+export default async function Settings({ params, searchParams }: { params: Promise<{ section: string }>; searchParams?: Promise<Record<string, string | undefined>> }) {
   const { section } = await params;
+  const sp = searchParams ? await searchParams : {};
   if (section !== "access" && section !== "fields" && section !== "masters") notFound();
   const { sb, me, block } = await loadSession();
   if (block || !me) return block;
@@ -40,10 +41,18 @@ export default async function Settings({ params }: { params: Promise<{ section: 
         sb.from("budget_cost_heads").select("department_id"),
       ]);
       const used = (id: number) => (heads.data ?? []).filter((h) => h.department_id === id).length;
-      body = <MastersSettings editable={D.can(me, "project.setup")}
+      // one master per screen: /budget/admin/masters?section=departments|summary|gst
+      const cats = new Set(((summary.data ?? []) as { category: string }[]).map((r) => r.category)).size;
+      const tabs = [
+        { key: "departments", label: "Departments", href: "/budget/admin/masters?section=departments", count: depts.length, hint: "Shared by every project. Each department rolls into one category of the Project Budget Summary." },
+        { key: "summary", label: "Summary categories", href: "/budget/admin/masters?section=summary", count: cats, hint: "Category and sub-category rows of the Project Budget Summary, in report order. Construction rows follow the tower building types." },
+        { key: "gst", label: "GST rules", href: "/budget/admin/masters?section=gst", count: (gst.data ?? []).length, hint: "GST = rate % × eligible share %. Picked when adding a GST cost head; changing a rule does not change heads already set up." },
+      ];
+      const ms = (tabs.some((t) => t.key === sp.section) ? sp.section : "departments") as "departments" | "summary" | "gst";
+      body = <><MasterNav label="Common masters" items={tabs} active={ms} /><MastersSettings section={ms} editable={D.can(me, "project.setup")}
         departments={depts.map((d) => ({ ...d, heads: used(d.id) }))}
         summary={(summary.data ?? []) as { category: string; subcategory: string; category_sort: number; subcategory_sort: number }[]}
-        gst={(gst.data ?? []) as { id: number; name: string; rate_pct: number; share_pct: number; sort: number; active: boolean }[]} />;
+        gst={(gst.data ?? []) as { id: number; name: string; rate_pct: number; share_pct: number; sort: number; active: boolean }[]} /></>;
     }
   } else if (!D.can(me, "fields.manage")) body = <Notice>You do not have the right to change custom fields.</Notice>;
   else {

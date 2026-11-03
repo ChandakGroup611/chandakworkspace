@@ -318,8 +318,8 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
     {
       label: "Masters and setup",
       items: [
-        { label: "Towers & set-up", href: p === "/budget" ? "/budget/setup" : `${p}/setup`, icon: Settings2 },
-        { label: "Masters", href: "/budget/admin/masters", icon: Database },
+        { label: "Project setup", href: p === "/budget" ? "/budget/setup" : `${p}/setup`, icon: Settings2 },
+        { label: "Common masters", href: "/budget/admin/masters", icon: Database },
         { label: "Access, roles & rights", href: "/budget/admin/access", icon: Users },
         { label: "Custom fields & forms", href: "/budget/admin/fields", icon: Sliders },
       ]

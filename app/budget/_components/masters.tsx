@@ -15,16 +15,18 @@ const v = (id: string) => (document.getElementById(id) as HTMLInputElement | HTM
 const checked = (id: string) => (document.getElementById(id) as HTMLInputElement).checked;
 const LOCKED = "Construction";
 
-export function MastersSettings({ departments, summary, gst, editable }: {
+export function MastersSettings({ departments, summary, gst, editable, section }: {
   departments: DepartmentRow[]; summary: SummaryRow[]; gst: GstRule[]; editable: boolean;
+  /** which master to show; all three when omitted */
+  section?: "departments" | "summary" | "gst";
 }) {
   const categories = [...new Map(summary.map((r) => [r.category, r.category_sort])).entries()].sort((a, b) => a[1] - b[1]);
   return (
     <>
       {!editable && <div className="banner"><div>Read only. Changing masters needs the right to maintain towers, areas, cost heads and GST rules for all projects.</div></div>}
-      <Departments rows={departments} categories={categories.map(([c]) => c)} editable={editable} />
-      <SummaryRows rows={summary} categories={categories} editable={editable} />
-      <GstRules rows={gst} editable={editable} />
+      {(!section || section === "departments") && <Departments rows={departments} categories={categories.map(([c]) => c)} editable={editable} />}
+      {(!section || section === "summary") && <SummaryRows rows={summary} categories={categories} editable={editable} />}
+      {(!section || section === "gst") && <GstRules rows={gst} editable={editable} />}
     </>
   );
 }
@@ -63,7 +65,7 @@ function Departments({ rows, categories, editable }: { rows: DepartmentRow[]; ca
           <td>{catSelect("dp-cat-new")}</td>
           <td></td>
           <td><button className="primary" disabled={pending} onClick={() => run(() => M.saveDepartment(null, { name: v("dp-name-new"), summary_category: v("dp-cat-new"), sort: v("dp-sort-new") }),
-            () => setNotice("Department added. Add its cost heads under Towers & set-up."))}>Add department</button></td>
+            () => setNotice("Department added. Add its cost heads under Project setup → Cost heads."))}>Add department</button></td>
         </tr>}
       </tbody></table></div>
     </section>
@@ -113,7 +115,7 @@ function SummaryRows({ rows, categories, editable }: { rows: SummaryRow[]; categ
                 <td className="n"><input type="number" className="amt" style={{ width: 60 }} id={id("no")} defaultValue={nextSub} aria-label="New row order" /></td>
                 <td><input type="text" id={id("ns")} placeholder="New sub-category" aria-label="New sub-category" style={{ minWidth: 280 }} /></td>
                 <td><button disabled={pending} onClick={() => run(() => M.saveSummaryRow(null, { category: cat, subcategory: v(id("ns")), category_sort: cs, subcategory_sort: v(id("no")) }),
-                  () => setNotice("Row added. Point cost heads at it under Towers & set-up → Cost heads → Summary row."))}>Add row</button></td>
+                  () => setNotice("Row added. Point cost heads at it under Project setup → Cost heads → Summary row."))}>Add row</button></td>
               </tr>}
             </tbody></table></div>
           </details>

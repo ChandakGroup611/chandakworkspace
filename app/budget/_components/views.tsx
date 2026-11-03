@@ -8,7 +8,7 @@ import { fieldTitle } from "@/lib/budget/fields";
 import { CustomFieldsForm, CustomInput, type Picks } from "./custom-fields";
 import * as F from "./forms";
 import { ImportPanel } from "./import-panel";
-import { Notice, VersionBanner } from "./shell";
+import { MasterNav, Notice, VersionBanner } from "./shell";
 import { getAlerts, latestNote, type Alert } from "@/lib/budget/insights";
 
 // The budget screens. Server components: they read the calculated views as the signed-in user.
@@ -401,7 +401,7 @@ export async function Workings(c: Ctx & { version: Version }) {
   const editAreas = draft && (D.canChangeDraft(me, v) || D.can(me, "project.setup", project.id));
   const crOf = (p: number | null | undefined) => Number(p ?? 0) / 1e9;
   const head = (x: { department: string; category: string; sub_category: string | null }) => x.sub_category ? `${x.category} · ${x.sub_category}` : x.category;
-  if (!t) return <section className="panel"><h2>Tower workings</h2><p>This project has no towers yet. Add them under Towers &amp; set-up.</p></section>;
+  if (!t) return <section className="panel"><h2>Tower workings</h2><p>This project has no towers yet. Add them under <Link href={`/budget/${project.id}/setup?section=towers`}>Project setup → Towers &amp; areas</Link>.</p></section>;
   const rows = work.filter((w) => w.tower_id === t.tower_id && !w.is_memo);
   const sum = (k: "ctc_paise" | "certified_paise" | "to_certify_paise" | "incurred_paise") => rows.reduce((s, r) => s + Number(r[k] ?? 0), 0);
   const deptIds = new Map((await D.getDepartments(sb)).map((d) => [d.name, d.id]));
@@ -608,7 +608,7 @@ export async function Summary(c: Ctx & { version: Version }) {
           ))}
           <tr className="total"><td></td><td colSpan={5}>Total</td><td className="n">{fmt(t.ctc_cr)}</td></tr>
         </tbody></table></div>
-        <p className="note">Construction is split by each tower&apos;s building type. Lines not yet split by tower show as &quot;Not allocated to a building&quot;; set tower types under Towers &amp; set-up and split lines under Budget entry.</p>
+        <p className="note">Construction is split by each tower&apos;s building type. Lines not yet split by tower show as &quot;Not allocated to a building&quot;; set tower types under Project setup → Towers &amp; areas and split lines under Budget entry.</p>
       </section>
       <div className="grid2">
         <section className="panel"><h3>Area particulars (sq.ft.)</h3>
@@ -884,15 +884,25 @@ export async function Setup(c: Ctx) {
   const tf = tc.fields.filter((f) => f.show_in_entry);
   const picks = await picksFor(sb, project.id, c.names);
   const editAreas = !!v && v.status === "draft" && can;
+  // one master per screen: /budget/<project>/setup?section=project|towers|heads|signoff|new
+  const canCreate = D.can(me, "project.create");
+  const qs = (k: string) => `/budget/${project.id}/setup?${v ? `v=${v.number}&` : ""}section=${k}`;
+  const tabs = [
+    can ? { key: "project", label: "Project details", href: qs("project"), hint: "Name, code and location of the project." } : null,
+    { key: "towers", label: "Towers & areas", href: qs("towers"), count: towers.length, hint: can ? "Name each tower and set its building type (the Summary groups construction by type), then the areas of this version." : "Read only for you." },
+    { key: "heads", label: "Cost heads", href: qs("heads"), count: heads.length, hint: "One list of cost heads per project, so names never drift between files." },
+    { key: "signoff", label: "Sign-off chain", href: qs("signoff"), hint: "Who signs a version, and in which order, before it is approved." },
+    canCreate ? { key: "new", label: "New project", href: qs("new"), hint: "Typed set-up; or import a workbook and choose \"New project\"." } : null,
+  ].filter(Boolean) as { key: string; label: string; href: string; count?: number; hint?: string }[];
+  const section = tabs.some((t) => t.key === c.search.section) ? c.search.section! : tabs[0].key;
   return (
     <>
-      {can && <section className="panel"><div className="panel-head"><h2>Project</h2><span className="sub">Name, code and location</span></div>
+      <MasterNav label="Project setup masters" items={tabs} active={section} />
+      {section === "project" && can && <section className="panel"><div className="panel-head"><h2>Project details · {project.name}</h2></div>
         <F.ProjectForm key={project.id} p={project} /></section>}
+      {section === "towers" && <>
       <section className="panel"><div className="panel-head"><h2>Towers · {project.name}</h2>
-        <div className="row" style={{ alignItems: "center", gap: 8 }}>
-          <span className="sub">{can ? "Typed only: name each tower and set its building type; the Summary groups construction by type." : "Read only for you."}</span>
-          {can && <a href="#add-tower" className="btn-action primary">+ Add Tower</a>}
-        </div>
+        {can && <a href="#add-tower" className="btn-action primary">+ Add Tower</a>}
       </div>
         <div className="scroll"><table><thead><tr><th>Tower</th><th>Building type</th><th className="n">Carpet area (sft)</th><th className="n">Engg. construction area (sft)</th><th>OC date</th>{tf.map((f) => <th key={f.id} title={fieldTitle(f)}>{f.label}{f.required && " *"}</th>)}{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
           {towers.map((t) => <F.TowerRow key={t.id} t={t} editable={can} customFields={tf} cells={tc.cells.get(t.id)} picks={picks} />)}
@@ -903,11 +913,9 @@ export async function Setup(c: Ctx) {
       {v && <section className="panel"><div className="panel-head"><h2>Areas for R{v.number}</h2><span className="sub">{editAreas ? "Typed here or imported from the workbook header; saved with this draft" : "Areas are kept per version; edit them on a draft version"}</span></div>
         <F.AreasForm key={v.id} versionId={v.id} areas={v.areas as Record<string, unknown>} editable={editAreas} net={areas?.net_sale_carpet ?? null} />
       </section>}
-      <section className="panel"><div className="panel-head"><h2>Cost heads · {project.name}</h2>
-        <div className="row" style={{ alignItems: "center", gap: 8 }}>
-          <span className="sub">{heads.length} heads; one list, so names never drift between files</span>
-          {can && <a href="#add-head" className="btn-action primary">+ Add Cost Head</a>}
-        </div>
+      </>}
+      {section === "heads" && <section className="panel"><div className="panel-head"><h2>Cost heads · {project.name}</h2>
+        {can && <a href="#add-head" className="btn-action primary">+ Add Cost Head</a>}
       </div>
         {can && <F.AddHeadForm projectId={project.id} departments={depts} baseOptions={baseOptions} summaryOptions={options} gstRules={gstRules} />}
         <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="label">Category</th><th className="label-sm">Sub-category</th><th>Summary row</th><th>GST rule</th>{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
@@ -917,9 +925,9 @@ export async function Setup(c: Ctx) {
             return <F.HeadRow key={h.id} h={h} deptName={d.name} byTower={byTower} can={can} options={options[d.summary_category] ?? []} gstRules={gstRules} />;
           })}
         </tbody></table></div>
-      </section>
-      <SignoffSetup c={c} />
-      {D.can(me, "project.create") && <section className="panel"><div className="panel-head"><h2>New project</h2><span className="sub">Typed set-up; or import a workbook and choose &quot;New project&quot;</span></div>
+      </section>}
+      {section === "signoff" && <SignoffSetup c={c} />}
+      {section === "new" && canCreate && <section className="panel"><div className="panel-head"><h2>New project</h2></div>
         <F.NewProjectForm projects={projects.map((p) => ({ id: p.id, name: p.name, heads: headCount(p.id) }))} />
       </section>}
     </>

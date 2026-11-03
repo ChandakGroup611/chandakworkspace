@@ -367,6 +367,21 @@
   white-space: nowrap;
 }
 
+/* Master tabs (Project setup / Common masters): one master per screen */
+.budget-app .master-head { display: flex; flex-direction: column; gap: 6px; }
+.budget-app .master-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.budget-app .master-nav a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 13.5px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+.budget-app .master-nav a:hover { border-color: var(--line-strong); background: var(--row-sub); }
+.budget-app .master-nav a[aria-current=page] { border-color: var(--accent); background: var(--b-accent-soft); color: var(--accent); font-weight: 600; }
+.budget-app .master-nav .count { min-width: 22px; padding: 0 6px; border-radius: 999px; background: var(--row-group); color: var(--muted); font-size: 11.5px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+.budget-app .master-nav a[aria-current=page] .count { background: var(--surface); color: var(--accent); }
+.budget-app .master-hint { margin: 0; }
+@media (max-width: 767px) {
+  .budget-app .master-nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -2px; padding-inline: 2px; }
+  .budget-app .master-nav::-webkit-scrollbar { display: none; }
+  .budget-app .master-nav a { min-height: 40px; }
+}
+
 /* Page body */
 .budget-app .budget-body {
   padding-block: 20px 60px;

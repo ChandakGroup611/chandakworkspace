@@ -6,7 +6,7 @@ import { Selectors, SignoffActions } from "./forms";
 export const TABS: [string, string][] = [
   ["overview", "Overview"], ["entry", "Budget entry"], ["import", "Import from Excel"], ["summary", "Summary report"],
   ["detail", "Detail report"], ["compare", "Compare versions"], ["incurred", "Cost incurred"], ["periods", "Month / quarter / year"],
-  ["setup", "Towers & set-up"], ["workings", "Tower workings"], ["schedules", "Schedules"], ["line", "Budget line"], ["guide", "Workflow guide & learning hub"],
+  ["setup", "Project setup"], ["workings", "Tower workings"], ["schedules", "Schedules"], ["line", "Budget line"], ["guide", "Workflow guide & learning hub"],
 ];
 
 export interface TabDef {
@@ -48,11 +48,11 @@ export const BUDGET_SECTIONS: SectionDef[] = [
     key: "setup",
     label: "Masters & setup",
     tabs: [
-      { id: "setup", label: "Towers & set-up", href: (pid, q) => `/budget/${pid}/setup${q}` },
-      { id: "guide", label: "Workflow guide & learning hub", href: (pid, q) => `/budget/${pid}/guide${q}` },
-      { id: "masters", label: "Masters", href: () => `/budget/admin/masters` },
+      { id: "setup", label: "Project setup", href: (pid, q) => `/budget/${pid}/setup${q}` },
+      { id: "masters", label: "Common masters", href: () => `/budget/admin/masters` },
       { id: "access", label: "Access, roles & rights", href: () => `/budget/admin/access` },
       { id: "fields", label: "Custom fields & forms", href: () => `/budget/admin/fields` },
+      { id: "guide", label: "Workflow guide", href: (pid, q) => `/budget/${pid}/guide${q}` },
     ],
   },
 ];
@@ -165,4 +165,22 @@ export async function VersionBanner({ sb, me, project, version, names }: { sb: D
 
 export function Notice({ children, kind = "" }: { children: React.ReactNode; kind?: string }) {
   return <div className={`banner ${kind}`}><div>{children}</div></div>;
+}
+
+/** One tab per master (Project details, Towers & areas, Cost heads, …). Only the chosen master is shown below it. */
+export interface MasterTab { key: string; label: string; href: string; count?: number; hint?: string }
+export function MasterNav({ label, items, active }: { label: string; items: MasterTab[]; active: string }) {
+  const current = items.find((i) => i.key === active);
+  return (
+    <div className="master-head">
+      <nav className="master-nav" aria-label={label}>
+        {items.map((i) => (
+          <Link key={i.key} href={i.href} aria-current={i.key === active ? "page" : undefined} scroll={false}>
+            {i.label}{i.count != null && <span className="count">{i.count}</span>}
+          </Link>
+        ))}
+      </nav>
+      {current?.hint && <p className="sub master-hint">{current.hint}</p>}
+    </div>
+  );
 }
