@@ -272,30 +272,30 @@ function getActiveBudgetProject(pathname: string): string | null {
       return decodeURIComponent(cookieMatch[1]);
     }
   }
-  return "1";
+  return null;
 }
 
 function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
-  const p = `/budget/${projectId && /^\d+$/.test(projectId) ? projectId : "1"}`;
+  const p = projectId && /^\d+$/.test(projectId) ? `/budget/${projectId}` : "/budget";
   return [
     {
       label: "Budget planning",
       items: [
         { label: "All projects", href: "/budget", icon: FolderKanban },
-        { label: "Overview", href: `${p}/overview`, icon: LayoutDashboard },
-        { label: "Workflow guide", href: `${p}/guide`, icon: BookOpen },
-        { label: "Budget entry", href: `${p}/entry`, icon: Layers },
-        { label: "Import from Excel", href: `${p}/import`, icon: Package },
-        { label: "Compare versions", href: `${p}/compare`, icon: RotateCcw },
+        { label: "Overview", href: p === "/budget" ? "/budget/overview" : `${p}/overview`, icon: LayoutDashboard },
+        { label: "Workflow guide", href: p === "/budget" ? "/budget/guide" : `${p}/guide`, icon: BookOpen },
+        { label: "Budget entry", href: p === "/budget" ? "/budget/entry" : `${p}/entry`, icon: Layers },
+        { label: "Import from Excel", href: p === "/budget" ? "/budget/import" : `${p}/import`, icon: Package },
+        { label: "Compare versions", href: p === "/budget" ? "/budget/compare" : `${p}/compare`, icon: RotateCcw },
       ]
     },
     {
       label: "Reports and actuals",
       items: [
-        { label: "Summary report", href: `${p}/summary`, icon: LineChart },
-        { label: "Detail report", href: `${p}/detail`, icon: FileText },
-        { label: "Periodic breakdown", href: `${p}/periods`, icon: Clock },
-        { label: "Cost incurred", href: `${p}/incurred`, icon: CheckCircle2 },
+        { label: "Summary report", href: p === "/budget" ? "/budget/summary" : `${p}/summary`, icon: LineChart },
+        { label: "Detail report", href: p === "/budget" ? "/budget/detail" : `${p}/detail`, icon: FileText },
+        { label: "Periodic breakdown", href: p === "/budget" ? "/budget/periods" : `${p}/periods`, icon: Clock },
+        { label: "Cost incurred", href: p === "/budget" ? "/budget/incurred" : `${p}/incurred`, icon: CheckCircle2 },
       ]
     },
     {
@@ -303,10 +303,10 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
       items: [
         {
           label: "Masters setup",
-          href: `${p}/setup`,
+          href: p === "/budget" ? "/budget/setup" : `${p}/setup`,
           icon: Settings2,
           subItems: [
-            { label: "Towers & set-up", href: `${p}/setup` },
+            { label: "Towers & set-up", href: p === "/budget" ? "/budget/setup" : `${p}/setup` },
             { label: "Workflow guide & learning", href: `${p}/guide` },
             { label: "Access, roles & rights", href: "/budget/admin/access" },
             { label: "Custom fields & forms", href: "/budget/admin/fields" },

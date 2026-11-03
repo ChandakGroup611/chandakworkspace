@@ -55,13 +55,13 @@ const TABS: Record<string, Tab[]> = {
 };
 
 function getBudgetTabs(projectId?: string | null): Tab[] {
-  const p = `/budget/${projectId && /^\d+$/.test(projectId) ? projectId : "1"}`;
+  const p = projectId && /^\d+$/.test(projectId) ? `/budget/${projectId}` : "/budget";
   return [
     { label: "Projects", href: "/budget", icon: FolderKanban, match: (path) => path === "/budget" },
-    { label: "Overview", href: `${p}/overview`, icon: LayoutDashboard, match: (path) => path.endsWith("/overview") },
-    { label: "Entry", href: `${p}/entry`, icon: Layers, match: (path) => path.endsWith("/entry") || path.endsWith("/import") || path.endsWith("/compare") },
-    { label: "Reports", href: `${p}/summary`, icon: LineChart, match: (path) => path.endsWith("/summary") || path.endsWith("/detail") || path.endsWith("/periods") || path.endsWith("/incurred") },
-    { label: "Setup", href: `${p}/setup`, icon: Settings2, match: (path) => path.endsWith("/setup") || path.startsWith("/budget/admin") },
+    { label: "Overview", href: p === "/budget" ? "/budget/overview" : `${p}/overview`, icon: LayoutDashboard, match: (path) => path.endsWith("/overview") },
+    { label: "Entry", href: p === "/budget" ? "/budget/entry" : `${p}/entry`, icon: Layers, match: (path) => path.endsWith("/entry") || path.endsWith("/import") || path.endsWith("/compare") },
+    { label: "Reports", href: p === "/budget" ? "/budget/summary" : `${p}/summary`, icon: LineChart, match: (path) => path.endsWith("/summary") || path.endsWith("/detail") || path.endsWith("/periods") || path.endsWith("/incurred") },
+    { label: "Setup", href: p === "/budget" ? "/budget/setup" : `${p}/setup`, icon: Settings2, match: (path) => path.endsWith("/setup") || path.startsWith("/budget/admin") },
   ];
 }
 
