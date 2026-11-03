@@ -22,7 +22,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import {
   LayoutDashboard, Ticket, FileCheck2, ShieldAlert, Settings, Database, FolderKanban,
   ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
-  Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
+  Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2, Sliders,
   FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X, Tag,
   Video, StickyNote, Wallet,
 } from "lucide-react";
@@ -275,6 +275,17 @@ function getActiveBudgetProject(pathname: string): string | null {
   return null;
 }
 
+function getBudgetRouteAction(path: string): string {
+  if (path === "/budget" || path === "/budget/") return "home";
+  const adminMatch = path.match(/^\/budget\/admin\/([^/?#]+)/);
+  if (adminMatch) return `admin:${adminMatch[1]}`;
+  const projTabMatch = path.match(/^\/budget\/\d+\/([^/?#]+)/);
+  if (projTabMatch) return projTabMatch[1];
+  const tabMatch = path.match(/^\/budget\/([^/?#]+)/);
+  if (tabMatch && !/^\d+$/.test(tabMatch[1])) return tabMatch[1];
+  return "";
+}
+
 function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
   const p = projectId && /^\d+$/.test(projectId) ? `/budget/${projectId}` : "/budget";
   return [
@@ -283,10 +294,10 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
       items: [
         { label: "All projects", href: "/budget", icon: FolderKanban },
         { label: "Overview", href: p === "/budget" ? "/budget/overview" : `${p}/overview`, icon: LayoutDashboard },
-        { label: "Workflow guide", href: p === "/budget" ? "/budget/guide" : `${p}/guide`, icon: BookOpen },
         { label: "Budget entry", href: p === "/budget" ? "/budget/entry" : `${p}/entry`, icon: Layers },
         { label: "Import from Excel", href: p === "/budget" ? "/budget/import" : `${p}/import`, icon: Package },
         { label: "Compare versions", href: p === "/budget" ? "/budget/compare" : `${p}/compare`, icon: RotateCcw },
+        { label: "Workflow guide", href: p === "/budget" ? "/budget/guide" : `${p}/guide`, icon: BookOpen },
       ]
     },
     {
@@ -301,17 +312,10 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
     {
       label: "Masters and setup",
       items: [
-        {
-          label: "Masters setup",
-          href: p === "/budget" ? "/budget/setup" : `${p}/setup`,
-          icon: Settings2,
-          subItems: [
-            { label: "Towers & set-up", href: p === "/budget" ? "/budget/setup" : `${p}/setup` },
-            { label: "Workflow guide & learning", href: `${p}/guide` },
-            { label: "Access, roles & rights", href: "/budget/admin/access" },
-            { label: "Custom fields & forms", href: "/budget/admin/fields" },
-          ]
-        }
+        { label: "Towers & set-up", href: p === "/budget" ? "/budget/setup" : `${p}/setup`, icon: Settings2 },
+        { label: "Masters", href: "/budget/admin/masters", icon: Database },
+        { label: "Access, roles & rights", href: "/budget/admin/access", icon: Users },
+        { label: "Custom fields & forms", href: "/budget/admin/fields", icon: Sliders },
       ]
     }
   ];
@@ -320,25 +324,29 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
 /* ---------- active-route rules (same behaviour as v1, pulled out of the render loop) ---------- */
 function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchParams | null) {
   if (item.href === "/requirements" && searchParams?.get("from") === "approvals") return false;
+  if (pathname.startsWith("/budget") && item.href.startsWith("/budget")) {
+    const currentAction = getBudgetRouteAction(pathname);
+    const itemAction = getBudgetRouteAction(item.href);
+    return Boolean(currentAction && itemAction && currentAction === itemAction);
+  }
   switch (item.href) {
     case "/": return pathname === "/";
     case "/meet": return pathname === "/meet";
-    case "/budget": return pathname === "/budget";
     case "/design/matrix": return ["/design", "/design/matrix", "/design/dashboard"].includes(pathname);
     case "/vehicle": return pathname === "/vehicle" || pathname === "/vehicle/dashboard";
     case "/design/masters":
       return ["/design/masters", "/design/projects", "/design/sub-projects", "/design/categories", "/design/packages", "/design/sub-packages", "/design/authorities", "/design/templates"].includes(pathname);
     default:
-      if (/^\/budget\/\d+\//.test(pathname) && /^\/budget\/\d+\//.test(item.href)) {
-        const pathAction = pathname.replace(/^\/budget\/\d+\//, "");
-        const itemAction = item.href.replace(/^\/budget\/\d+\//, "");
-        return pathAction === itemAction;
-      }
       return pathname === item.href || pathname.startsWith(item.href + "/");
   }
 }
 
 function isSubActive(href: string, pathname: string, sp: URLSearchParams | null) {
+  if (pathname.startsWith("/budget") && href.startsWith("/budget")) {
+    const currentAction = getBudgetRouteAction(pathname);
+    const hrefAction = getBudgetRouteAction(href);
+    return Boolean(currentAction && hrefAction && currentAction === hrefAction);
+  }
   const view = sp?.get("view"), from = sp?.get("from"), ws = sp?.get("workspaceId");
   if (href.startsWith("/?view=")) {
     const target = href.split("view=")[1];
@@ -349,11 +357,6 @@ function isSubActive(href: string, pathname: string, sp: URLSearchParams | null)
   if (href === "/workspaces/tasks") return pathname === href && !ws;
   if (href === "/workspaces") return pathname === href || (pathname === "/workspaces/tasks" && !!ws);
   if (href === "/design/projects") return pathname === href || pathname === "/design/masters";
-  if (/^\/budget\/\d+\//.test(pathname) && /^\/budget\/\d+\//.test(href)) {
-    const pathAction = pathname.replace(/^\/budget\/\d+\//, "");
-    const hrefAction = href.replace(/^\/budget\/\d+\//, "");
-    return pathAction === hrefAction;
-  }
   return pathname === href;
 }
 

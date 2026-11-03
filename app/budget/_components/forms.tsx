@@ -60,7 +60,7 @@ export function Selectors(props: {
             if (val && typeof document !== "undefined") {
               document.cookie = `active_budget_project=${val}; path=/; max-age=31536000; SameSite=Lax`;
             }
-            const nextTab = props.tab === "home" || props.tab === "access" || props.tab === "fields" ? "overview" : props.tab;
+            const nextTab = props.tab === "home" || props.tab === "access" || props.tab === "fields" || props.tab === "masters" ? "overview" : props.tab;
             router.push(`/budget/${val}/${nextTab}`);
           }}
         >

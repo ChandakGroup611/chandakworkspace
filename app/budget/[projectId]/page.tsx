@@ -25,14 +25,16 @@ export default async function ProjectHome({
     const cookieStore = await cookies();
     const cookiePid = cookieStore.get("active_budget_project")?.value;
 
-    let targetPid = cookiePid && /^\d+$/.test(cookiePid) ? cookiePid : null;
-    if (!targetPid) {
-      try {
-        const { sb } = await D.getSession();
-        const projects = await D.getProjects(sb);
-        if (projects.length > 0) targetPid = String(projects[0].id);
-      } catch {}
-    }
+    let targetPid: string | null = null;
+    try {
+      const { sb } = await D.getSession();
+      const projects = await D.getProjects(sb);
+      if (cookiePid && projects.some((p) => String(p.id) === cookiePid)) {
+        targetPid = cookiePid;
+      } else if (projects.length > 0) {
+        targetPid = String(projects[0].id);
+      }
+    } catch {}
 
     if (targetPid) {
       redirect(`/budget/${targetPid}/${tabName}${qStr}`);
