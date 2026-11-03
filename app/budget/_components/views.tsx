@@ -541,7 +541,7 @@ export async function ImportTab(c: Ctx) {
   const vnum = new Map((await D.getVersions(c.sb)).map((v) => [v.id, v.number]));
   return (
     <>
-      <ImportPanel projects={c.projects.map((p) => ({ id: p.id, name: p.name }))} projectId={c.project.id} canDetail={D.can(c.me, "budget.import", c.project.id)} canCost={D.can(c.me, "cost.import", c.project.id)} />
+      <ImportPanel projects={c.projects.map((p) => ({ id: p.id, name: p.name }))} projectId={c.project?.id || null} canDetail={c.project?.id ? D.can(c.me, "budget.import", c.project.id) : D.can(c.me, "project.create")} canCost={c.project?.id ? D.can(c.me, "cost.import", c.project.id) : true} />
       <ImportHistory imports={imports} pname={pname} vnum={vnum} names={c.names} />
     </>
   );
@@ -776,7 +776,7 @@ export async function Incurred(c: Ctx) {
   const head = new Map(heads.map((h) => [h.id, h]));
   const tower = new Map(towers.map((t) => [t.id, t.name]));
   const allowed = heads.filter((h) => !h.is_tax && D.can(me, "cost.enter", project.id, h.department_id))
-    .sort((a, b) => dept.get(a.department_id)!.sort - dept.get(b.department_id)!.sort || a.sort - b.sort);
+    .sort((a, b) => ((dept.get(a.department_id)?.sort ?? 999) - (dept.get(b.department_id)?.sort ?? 999)) || a.sort - b.sort);
   // ?head=&tower=&upto= shows the entries behind one budget line (tower 0 = not split by tower)
   const line = search.head ? { head: Number(search.head), tower: search.tower ? Number(search.tower) : null, upto: search.upto } : null;
   const shown = entries.filter((e) => (!search.dept || dept.get(head.get(e.cost_head_id)!.department_id)?.name === search.dept)
@@ -787,7 +787,7 @@ export async function Incurred(c: Ctx) {
     billHeads.set(e.bill_id, [...(billHeads.get(e.bill_id) ?? []), `${h.sub_category || h.category}${e.subproject_id ? ` · ${tower.get(e.subproject_id)}` : ""}`]);
   }
   const lineHead = line && head.get(line.head);
-  const headOptions = allowed.map((h) => ({ id: h.id, label: `${dept.get(h.department_id)!.name} · ${h.sub_category || h.category}` }));
+  const headOptions = allowed.map((h) => ({ id: h.id, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}` }));
   const total = shown.reduce((s, e) => s + Number(e.amount_paise), 0);
   const cf = await loadCustom(sb, "cost_entry", project.id, new Map(shown.map((e) => [e.id, { amount: rupeesFromPaise(e.amount_paise), month: day(e.month) }])), await lookupNames(sb, project.id, c.names));
   const listed = cf.fields.filter((f) => f.show_in_reports);
@@ -795,12 +795,12 @@ export async function Incurred(c: Ctx) {
   return (
     <>
       {allowed.length ? <section className="panel"><div className="panel-head"><h2>Record cost incurred</h2><span className="sub">Type one entry here, or import a cost incurred sheet on Import from Excel</span></div>
-        <F.EntryForm projectId={project.id} heads={allowed.map((h) => ({ id: h.id, label: `${dept.get(h.department_id)!.name} · ${h.sub_category || h.category}` }))} towers={towers}
+        <F.EntryForm projectId={project.id} heads={allowed.map((h) => ({ id: h.id, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}` }))} towers={towers}
           month={(v?.as_on ?? new Date().toISOString()).slice(0, 7)} customFields={cf.fields.filter((f) => f.show_in_entry)} picks={picks} />
         <p className="note">Amounts are entered in rupees and shown in crores in the budget.{v && ` A version counts every entry up to its as-on month (R${v.number}: up to ${monthName(v.as_on)}).`}</p></section>
         : <Notice>{!D.can(me, "cost.enter", project.id) ? "You can read every entry; departments record their own costs." : "No cost heads you can record against."}</Notice>}
       {allowed.length > 0 && <section className="panel"><div className="panel-head"><h2>Record a bill</h2><span className="sub">Split a vendor bill over cost heads and towers; each split counts as cost incurred in the bill&apos;s month</span></div>
-        <F.BillForm projectId={project.id} heads={allowed.map((h) => ({ id: h.id, label: `${dept.get(h.department_id)!.name} · ${h.sub_category || h.category}` }))} towers={towers}
+        <F.BillForm projectId={project.id} heads={allowed.map((h) => ({ id: h.id, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}` }))} towers={towers}
           date={(v?.as_on ?? new Date().toISOString()).slice(0, 10)} />
         <p className="note">Enter the basic amount of each split; GST on the bill is kept for reference, as the GST heads work out GST cost. The same bill number of a vendor cannot be recorded twice.</p></section>}
       <section className="panel"><div className="panel-head"><h2>Bills · {project.name}</h2><span className="sub">{bills.length} bills · basic {fmt(toCr(bills.reduce((s, b) => s + Number(b.basic_paise), 0)))} crores</span>
@@ -874,8 +874,8 @@ export async function Setup(c: Ctx) {
     groups.get(k)!.push(h.id);
   }
   const baseOptions = [
-    ...[...groups].map(([k, ids]) => { const [d, cat] = k.split("|"); return { value: `cat:${k}`, label: `All of ${dept.get(Number(d))!.name} · ${cat}`, ids }; }),
-    ...plain.map((h) => ({ value: `head:${h.id}`, label: `${dept.get(h.department_id)!.name} · ${h.sub_category || h.category}`, ids: [h.id] })),
+    ...[...groups].map(([k, ids]) => { const [d, cat] = k.split("|"); return { value: `cat:${k}`, label: `All of ${(dept.get(Number(d))?.name ?? "Department")} · ${cat}`, ids }; }),
+    ...plain.map((h) => ({ value: `head:${h.id}`, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}`, ids: [h.id] })),
   ];
   const headCount = (pid: number) => allHeads.filter((h) => h.project_id === pid).length;
   const tc = await loadCustom(sb, "tower", project.id, new Map(towers.map((t) => [t.id, { carpet_area: cr(t.carpet_area), eng_area: cr(t.eng_area), oc_date: day(t.oc_date) }])), await lookupNames(sb, project.id, c.names));

@@ -18,6 +18,14 @@ export default async function ProjectHome({
   }
   const qStr = qs.toString() ? `?${qs.toString()}` : "";
 
+  // Dedicated routes
+  if (projectId === "guide") {
+    redirect(`/budget/guide${qStr}`);
+  }
+  if (projectId === "import") {
+    redirect(`/budget/import${qStr}`);
+  }
+
   // If projectId is actually a tab name (like /budget/overview, /budget/entry, /budget/setup, etc.):
   const isTab = TABS.some(([t]) => t === projectId);
   if (isTab || !/^\d+$/.test(projectId)) {
@@ -39,7 +47,7 @@ export default async function ProjectHome({
     if (targetPid) {
       redirect(`/budget/${targetPid}/${tabName}${qStr}`);
     } else {
-      redirect("/budget");
+      redirect(`/budget?needProject=${encodeURIComponent(tabName)}`);
     }
   }
 

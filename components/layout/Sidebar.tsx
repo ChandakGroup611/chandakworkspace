@@ -266,6 +266,7 @@ const meetNavGroups: NavGroup[] = [
 function getActiveBudgetProject(pathname: string): string | null {
   const m = pathname.match(/^\/budget\/(\d+)/);
   if (m) return m[1];
+  if (pathname === "/budget" || pathname === "/budget/") return null;
   if (typeof document !== "undefined") {
     const cookieMatch = document.cookie.match(/(?:^|; )active_budget_project=([^;]*)/);
     if (cookieMatch && /^\d+$/.test(decodeURIComponent(cookieMatch[1]))) {
@@ -295,9 +296,9 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
         { label: "All projects", href: "/budget", icon: FolderKanban },
         { label: "Overview", href: p === "/budget" ? "/budget/overview" : `${p}/overview`, icon: LayoutDashboard },
         { label: "Budget entry", href: p === "/budget" ? "/budget/entry" : `${p}/entry`, icon: Layers },
-        { label: "Import from Excel", href: p === "/budget" ? "/budget/import" : `${p}/import`, icon: Package },
+        { label: "Import from Excel", href: "/budget/import", icon: Package },
         { label: "Compare versions", href: p === "/budget" ? "/budget/compare" : `${p}/compare`, icon: RotateCcw },
-        { label: "Workflow guide", href: p === "/budget" ? "/budget/guide" : `${p}/guide`, icon: BookOpen },
+        { label: "Workflow guide", href: "/budget/guide", icon: BookOpen },
       ]
     },
     {

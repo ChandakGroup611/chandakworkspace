@@ -21,7 +21,7 @@ export default async function BudgetScreen({ params, searchParams }: {
   if (!project && projects.length > 0) {
     redirect(`/budget/${projects[0].id}/${tab}${search.v ? `?v=${search.v}` : ""}`);
   }
-  if (!project) redirect("/budget");
+  if (!project) redirect(`/budget?needProject=${encodeURIComponent(tab)}`);
   const versions = await D.getVersions(sb, project.id);
   const version = versions.find((v) => String(v.number) === search.v) ?? versions[versions.length - 1] ?? null;
   const ctx: V.Ctx = { sb, me, projects, project, versions, version, names, search };
