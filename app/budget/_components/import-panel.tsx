@@ -48,14 +48,14 @@ export function ImportPanel({ projects, projectId, canDetail, canCost }: {
       if (kind === "detail") {
         if (!canDetail) return setError(`${file.name} is a budget workbook. Only the budget preparer or an administrator can import it.`);
         const payload = BudgetImporter.toImportPayload(BudgetImporter.parseDetailWorkbook(XLSX, wb, file.name));
-        const match = projects.find((p) => norm(p.name) === norm(payload.project.name));
+        const match = projects.find((p) => norm(p.name) === norm(payload.project.name) || norm(p.name) === norm(payload.project.name.replace(/^Chandak\s+/i, "")));
         preview({ kind, fileName: file.name, payload, target: match ? String(match.id) : projectId != null ? String(projectId) : "new", preview: null });
       } else if (kind === "cost") {
         if (projectId == null && projects.length === 0) return setError("Create the project first, then import its cost sheet.");
         const sheet = BudgetImporter.parseCostSheet(XLSX, wb, file.name);
         preview({ kind, fileName: file.name, rows: sheet.rows, errors: sheet.errors, target: String(projectId ?? projects[0].id), checked: null });
       } else {
-        setError(`${file.name} is neither the detail budget format (a 'Sr. No.' header with an Estimated CTC column) nor a cost incurred sheet (Month, Department, Category, Amount columns).`);
+        setError(`${file.name} could not be recognised as a detail budget workbook (expected a sheet with 'Sr. No.' and budget amount columns) or a cost incurred sheet (Month, Department, Category, Amount columns).`);
       }
     } catch (e) {
       setError(`Could not read ${file.name}: ${(e as Error).message}`);
