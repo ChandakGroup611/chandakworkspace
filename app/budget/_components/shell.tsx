@@ -50,6 +50,7 @@ export const BUDGET_SECTIONS: SectionDef[] = [
     tabs: [
       { id: "setup", label: "Towers & set-up", href: (pid, q) => `/budget/${pid}/setup${q}` },
       { id: "guide", label: "Workflow guide & learning hub", href: (pid, q) => `/budget/${pid}/guide${q}` },
+      { id: "masters", label: "Masters", href: () => `/budget/admin/masters` },
       { id: "access", label: "Access, roles & rights", href: () => `/budget/admin/access` },
       { id: "fields", label: "Custom fields & forms", href: () => `/budget/admin/fields` },
     ],
@@ -64,7 +65,7 @@ export function Shell({ me, projects, project, versions, version, tab, children 
   const activeSectionKey = 
     ["overview", "entry", "workings", "schedules", "import", "compare"].includes(tab) ? "planning"
     : ["summary", "detail", "periods", "incurred"].includes(tab) ? "reports"
-    : ["setup", "guide", "access", "fields"].includes(tab) ? "setup"
+    : ["setup", "guide", "masters", "access", "fields"].includes(tab) ? "setup"
     : "planning";
 
   const activeSection = BUDGET_SECTIONS.find((s) => s.key === activeSectionKey) ?? BUDGET_SECTIONS[0];

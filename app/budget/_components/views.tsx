@@ -859,6 +859,9 @@ export async function Setup(c: Ctx) {
     D.getTowers(sb, project.id), D.getHeads(sb, project.id), D.getDepartments(sb), getTemplate(sb), v ? D.getVersionAreas(sb, v.id) : Promise.resolve(null),
     sb.from("budget_cost_heads").select("project_id").then((r) => (r.data ?? []) as { project_id: number }[]),
   ]);
+  // GST rules master (Masters & setup → Masters); empty until migration 20261028121200 is applied
+  const gstRules = ((await sb.from("budget_gst_rules").select("id, name, rate_pct, share_pct").eq("active", true).order("sort").order("name")).data ?? [])
+    .map((r) => ({ id: Number(r.id), name: String(r.name), rate: Number(r.rate_pct), share: Number(r.share_pct) }));
   const dept = new Map(depts.map((d) => [d.id, d]));
   const options: Record<string, string[]> = {};
   for (const t of template) (options[t.category] ??= []).push(t.subcategory);
@@ -904,14 +907,14 @@ export async function Setup(c: Ctx) {
           {can && <a href="#add-head" className="btn-action primary">+ Add Cost Head</a>}
         </div>
       </div>
-        {can && <F.AddHeadForm projectId={project.id} departments={depts} baseOptions={baseOptions} summaryOptions={options} />}
+        {can && <F.AddHeadForm projectId={project.id} departments={depts} baseOptions={baseOptions} summaryOptions={options} gstRules={gstRules} />}
         <div className="scroll"><table><thead><tr><th>Department</th><th>Category</th><th>Sub-category</th><th>Summary row</th><th>GST rule</th>{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
           {sorted.map((h) => {
             const d = dept.get(h.department_id)!;
             const byTower = d.summary_category === "Construction" && !h.is_tax;
             return <tr key={h.id}><td>{d.name}</td><td>{h.category}</td><td>{h.sub_category}</td>
               <td>{byTower ? "By tower building type" : can ? <F.HeadSummarySelect headId={h.id} value={h.summary_subcategory} options={options[d.summary_category] ?? []} /> : h.summary_subcategory}</td>
-              <td>{h.is_tax && (can ? <F.TaxRuleInputs key={`${h.tax_rate_pct}-${h.tax_share_pct}`} headId={h.id} rate={Number(h.tax_rate_pct)} share={Number(h.tax_share_pct ?? 100)} baseCount={h.tax_base.length} />
+              <td>{h.is_tax && (can ? <F.TaxRuleInputs key={`${h.tax_rate_pct}-${h.tax_share_pct}`} headId={h.id} rate={Number(h.tax_rate_pct)} share={Number(h.tax_share_pct ?? 100)} baseCount={h.tax_base.length} gstRules={gstRules} />
                 : `GST ${Number(h.tax_rate_pct)}% × ${Number(h.tax_share_pct ?? 100)}% of ${h.tax_base.length} head(s)`)}</td>
               {can && <td className="actions"><F.HeadActions key={`${h.category}-${h.sub_category}`} h={h} /></td>}</tr>;
           })}

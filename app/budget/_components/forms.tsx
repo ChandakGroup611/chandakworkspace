@@ -922,7 +922,9 @@ export function HeadSummarySelect({ headId, value: v, options }: { headId: numbe
     {v == null && <option value="">Not set</option>}{options.map((o) => <option key={o}>{o}</option>)}</select></>;
 }
 
-export function TaxRuleInputs({ headId, rate, share, baseCount }: { headId: number; rate: number; share: number; baseCount: number }) {
+type GstRuleOpt = { id: number; name: string; rate: number; share: number };
+
+export function TaxRuleInputs({ headId, rate, share, baseCount, gstRules = [] }: { headId: number; rate: number; share: number; baseCount: number; gstRules?: GstRuleOpt[] }) {
   const { run, banner } = useAction();
   const save = (k: "tax_rate_pct" | "tax_share_pct", old: number) => (e: React.FocusEvent<HTMLInputElement>) => {
     const n = Number(e.currentTarget.value);
@@ -933,15 +935,18 @@ export function TaxRuleInputs({ headId, rate, share, baseCount }: { headId: numb
       <span className="row" style={{ gap: 4, alignItems: "center", flexWrap: "nowrap" }}>
         GST <input type="text" className="amt" style={{ width: 60 }} aria-label="GST rate" defaultValue={rate} onBlur={save("tax_rate_pct", rate)} />% ×
         <input type="text" className="amt" style={{ width: 70 }} aria-label="Eligible share" defaultValue={share} onBlur={save("tax_share_pct", share)} />% of {baseCount} head(s)
+        {gstRules.length > 0 && <select aria-label="Apply a GST rule" value={gstRules.find((g) => g.rate === Number(rate) && g.share === Number(share))?.id ?? ""}
+          onChange={(e) => { const g = gstRules.find((x) => x.id === Number(e.currentTarget.value)); if (g) run(() => A.updateHead(headId, { tax_rate_pct: g.rate, tax_share_pct: g.share })); }}>
+          <option value="">Custom</option>{gstRules.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>}
       </span>
       {banner}
     </>
   );
 }
 
-export function AddHeadForm({ projectId, departments, baseOptions, summaryOptions }: {
+export function AddHeadForm({ projectId, departments, baseOptions, summaryOptions, gstRules = [] }: {
   projectId: number; departments: { id: number; name: string; summary_category: string }[];
-  baseOptions: { value: string; label: string; ids: number[] }[]; summaryOptions: Record<string, string[]>;
+  baseOptions: { value: string; label: string; ids: number[] }[]; summaryOptions: Record<string, string[]>; gstRules?: GstRuleOpt[];
 }) {
   const { pending, run, banner, setNotice } = useAction();
   return (
@@ -951,6 +956,13 @@ export function AddHeadForm({ projectId, departments, baseOptions, summaryOption
         <label style={{ flex: 1, minWidth: 180 }}>Category<input type="text" id="nh-cat" /></label>
         <label style={{ flex: 1, minWidth: 180 }}>Sub-category<input type="text" id="nh-sub" /></label>
         <label style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><input type="checkbox" id="nh-tax" /> GST line</label>
+        {gstRules.length > 0 && <label>GST rule<select id="nh-rule" defaultValue="" onChange={(e) => {
+          const g = gstRules.find((x) => x.id === Number(e.currentTarget.value));
+          if (!g) return;
+          (document.getElementById("nh-tax") as HTMLInputElement).checked = true;
+          (document.getElementById("nh-rate") as HTMLInputElement).value = String(g.rate);
+          (document.getElementById("nh-share") as HTMLInputElement).value = String(g.share);
+        }}><option value="">Type it</option>{gstRules.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>}
         <label>GST %<input type="text" id="nh-rate" defaultValue="18" style={{ width: 60 }} /></label>
         <label>Eligible share %<input type="text" id="nh-share" defaultValue="74.08" style={{ width: 70 }} /></label>
         <label style={{ minWidth: 220 }}>Charged on<select id="nh-base">{baseOptions.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}</select></label>
