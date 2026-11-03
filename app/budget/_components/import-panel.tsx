@@ -100,7 +100,14 @@ export function ImportPanel({ projects, projectId, canDetail, canCost }: {
           {busy && <span className="sub">Working…</span>}
         </div>
       </section>
-      {error && <div className="banner error" role="alert"><div>{error}</div><button className="link" onClick={() => setError(null)}>Dismiss</button></div>}
+      {error && (
+        <div className="banner error" role="alert">
+          <div>{error}</div>
+          <button type="button" className="link" onClick={() => setError(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
       {done && <div className="banner ok" role="status"><div>{done}</div></div>}
       {pending?.kind === "detail" && <DetailPreview p={pending} projects={projects} busy={busy}
         onTarget={(t) => preview({ ...pending, target: t, preview: null })} onSave={save} onCancel={() => setPending(null)} />}

@@ -182,7 +182,7 @@ $htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine O
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
 // STRICT: Explicit PassengerEnabled on, bound V8 and libuv thread pools so total threads per process <= 3
-$passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
+$passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxPoolSize 1\nPassengerMaxInstancesPerApp 1\nPassengerMinInstances 1\nPassengerPoolIdleTime 300\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
 
 // Keep canonicalAppRoot and current/nodejs synchronized if one is newer
 if ($canonicalAppRoot !== $domainRoot . '/hbuilds/current/nodejs') {

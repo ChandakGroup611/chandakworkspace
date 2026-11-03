@@ -51,11 +51,11 @@
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
-/* Sticky top navigation */
+/* Sticky top navigation: docks cleanly beneath workspace navbar (56px / 3.5rem) */
 .budget-app .top {
   position: sticky;
-  top: 0;
-  z-index: 30;
+  top: 3.5rem;
+  z-index: 25;
   background: var(--surface);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -321,15 +321,11 @@
 
 .budget-app table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 .budget-app th, .budget-app td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
-.budget-app th { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: var(--row-sub); position: sticky; top: 0; z-index: 1; }
+.budget-app th { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: var(--row-sub); }
 .budget-app td.n, .budget-app th.n { text-align: right; white-space: nowrap; }
-.budget-app th.label { min-width: 15rem; }
-.budget-app th.label-sm { min-width: 10rem; }
+.budget-app th.label { min-width: 11rem; }
+.budget-app th.label-sm { min-width: 9rem; }
 .budget-app th.sr { width: 3.5rem; }
-/* wide sheets: the label column stays in view while the figures scroll sideways */
-/* (kept at low specificity so group / total / flagged rows keep their own background) */
-.budget-app :where(.scroll table:not(:has(th.sr)) th:first-child) { position: sticky; left: 0; z-index: 2; }
-.budget-app :where(.scroll table:not(:has(th.sr)) td:first-child) { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--line); }
 .budget-app tr.group td { background: var(--row-group); font-weight: 600; }
 .budget-app tr.cat td { background: var(--row-sub); font-weight: 600; }
 .budget-app tr.total td { font-weight: 700; border-top: 2px solid var(--line-strong); background: var(--row-group); }
@@ -342,8 +338,16 @@
 .budget-app th.actions-col, .budget-app td.actions {
   white-space: nowrap;
   text-align: right;
-  padding-right: 12px;
-  min-width: 140px;
+  padding-right: 16px;
+  min-width: 185px;
+}
+
+.budget-app .actions-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 /* In-row editing */

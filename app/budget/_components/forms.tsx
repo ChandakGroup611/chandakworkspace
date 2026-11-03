@@ -908,25 +908,6 @@ export function HeadRow({
   );
 }
 
-/** Rename or delete a cost head (Towers & set-up). */
-export function HeadActions({ h }: { h: { id: number; category: string; sub_category: string | null } }) {
-  const { pending, run, banner } = useAction();
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <div className="actions-group">
-        <button className="btn-action" onClick={() => setOpen(!open)}>{open ? "Close" : "Edit / Rename"}</button>
-        <ConfirmDelete onConfirm={() => A.deleteHead(h.id)} />
-      </div>
-      {open && <div className="rule-form">
-        <label>Category<input type="text" id={`hn-${h.id}-c`} defaultValue={h.category} /></label>
-        <label>Sub-category<input type="text" id={`hn-${h.id}-s`} defaultValue={h.sub_category ?? ""} /></label>
-        <button className="btn-action primary" disabled={pending} onClick={() => run(() => A.renameHead(h.id, value(`hn-${h.id}-c`), value(`hn-${h.id}-s`)), () => setOpen(false))}>Save</button>
-      </div>}
-      {banner}
-    </>
-  );
-}
 
 /** Project name, code and location (Towers & set-up). */
 export function ProjectForm({ p }: { p: { id: number; name: string; code: string; location: string | null } }) {

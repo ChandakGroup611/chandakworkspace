@@ -1,55 +1,43 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import * as D from "@/lib/budget/data";
+import { getProjects } from "@/lib/budget/data";
+import { loadSession } from "../_components/page-data";
 import { TABS } from "../_components/shell";
 
-export default async function ProjectHome({
+export const dynamic = "force-dynamic";
+
+export default async function BudgetProjectCatchAll({
   params,
   searchParams,
 }: {
   params: Promise<{ projectId: string }>;
-  searchParams?: Promise<Record<string, string | undefined>>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const { projectId } = await params;
-  const search = searchParams ? await searchParams : {};
-  const qs = new URLSearchParams();
-  for (const [k, v] of Object.entries(search)) {
-    if (v !== undefined) qs.set(k, v);
-  }
-  const qStr = qs.toString() ? `?${qs.toString()}` : "";
+  const search = await searchParams;
+  const queryStr = search.v ? `?v=${search.v}` : "";
 
-  // Dedicated routes
-  if (projectId === "guide") {
-    redirect(`/budget/guide${qStr}`);
-  }
-  if (projectId === "import") {
-    redirect(`/budget/import${qStr}`);
-  }
+  // Check if projectId is actually a tab shortcut (e.g. /budget/overview, /budget/setup)
+  const isTab = TABS.some(([k]) => k === projectId);
 
-  // If projectId is actually a tab name (like /budget/overview, /budget/entry, /budget/setup, etc.):
-  const isTab = TABS.some(([t]) => t === projectId);
-  if (isTab || !/^\d+$/.test(projectId)) {
-    const tabName = isTab ? projectId : "overview";
-    const cookieStore = await cookies();
-    const cookiePid = cookieStore.get("active_budget_project")?.value;
+  const { sb } = await loadSession();
+  const projects = await getProjects(sb);
 
-    let targetPid: string | null = null;
-    try {
-      const { sb } = await D.getSession();
-      const projects = await D.getProjects(sb);
-      if (cookiePid && projects.some((p) => String(p.id) === cookiePid)) {
-        targetPid = cookiePid;
-      } else if (projects.length > 0) {
-        targetPid = String(projects[0].id);
-      }
-    } catch {}
-
-    if (targetPid) {
-      redirect(`/budget/${targetPid}/${tabName}${qStr}`);
+  if (isTab) {
+    if (projects.length > 0) {
+      redirect(`/budget/${projects[0].id}/${projectId}${queryStr}`);
     } else {
-      redirect(`/budget?needProject=${encodeURIComponent(tabName)}`);
+      redirect(`/budget?needProject=${encodeURIComponent(projectId)}`);
     }
   }
 
-  redirect(`/budget/${projectId}/overview${qStr}`);
+  // If projectId is a numeric ID, redirect to that project's overview
+  if (/^\d+$/.test(projectId)) {
+    const project = projects.find((p) => String(p.id) === projectId) ?? projects[0];
+    if (project) {
+      redirect(`/budget/${project.id}/overview${queryStr}`);
+    }
+  }
+
+  // Fallback to portfolio home
+  redirect("/budget");
 }
