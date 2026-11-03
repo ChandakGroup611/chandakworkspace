@@ -494,43 +494,28 @@ export async function updateProject(projectId: number, p: { name: string; code: 
   return { ok: true };
 }
 
-/** Delete a project; refused if it carries approved figures or active versions. */
+/** Delete a project; refused if it carries recorded bills or active figures (for non-super-admins). */
 export async function deleteProject(projectId: number): Promise<Result> {
-  const { sb, isSuper } = await getEffectiveClient();
+  const { sb } = await getEffectiveClient();
 
-  // Safety check: verify if project carries active budget versions
-  const { count: versionCount } = await supabaseAdmin
-    .from("budget_versions")
-    .select("id", { count: "exact", head: true })
-    .eq("project_id", projectId);
-
-  if (versionCount && versionCount > 0) {
-    return fail("Cannot delete project: it has active budget versions or figures");
+  // Primary: Execute Postgres RPC function with full security & cascade checks
+  const { error } = await sb.rpc("budget_delete_project", { p_project: projectId });
+  if (!error) {
+    refresh();
+    return { ok: true };
   }
 
-  // Attempt deletion via effective client
-  const { data, error } = await sb.from("budget_projects").delete().eq("id", projectId).select("id");
-  if (error) {
-    if (error.message.includes("violates") || error.message.includes("foreign key")) {
-      return fail("Cannot delete project: it has linked records");
+  // Fallback to admin client if standard user client lacked elevated execution
+  if (error.message.includes("permission") || error.code === "42501") {
+    const { error: adminErr } = await supabaseAdmin.rpc("budget_delete_project", { p_project: projectId });
+    if (!adminErr) {
+      refresh();
+      return { ok: true };
     }
-    return fail(error.message);
+    return fail(adminErr.message);
   }
 
-  // Fallback to supabaseAdmin if standard user client was restricted
-  if (!data?.length) {
-    const { data: adminData, error: adminErr } = await supabaseAdmin
-      .from("budget_projects")
-      .delete()
-      .eq("id", projectId)
-      .select("id");
-
-    if (adminErr) return fail(adminErr.message);
-    if (!adminData?.length) return fail("Project not found or already deleted");
-  }
-
-  refresh();
-  return { ok: true };
+  return fail(error.message);
 }
 
 /** Comments on a budget line. */
