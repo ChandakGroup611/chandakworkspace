@@ -755,7 +755,143 @@ export function ProjectActions({ p, canManage = true }: { p: { id: number; name:
 export function ConfirmDelete({ label = "Delete", onConfirm }: { label?: string; onConfirm: () => Promise<A.Result> }) {
   const { pending, run, banner } = useAction();
   const [confirm, setConfirm] = useState(false);
-  return <>{banner}<button className="btn-action danger" disabled={pending} onClick={() => { if (!confirm) return setConfirm(true); run(onConfirm, () => setConfirm(false)); }}>{confirm ? "Confirm Delete" : label}</button></>;
+  return (
+    <>
+      {banner}
+      {confirm ? (
+        <span className="inline-flex items-center gap-1.5">
+          <button className="btn-action danger" disabled={pending} onClick={() => run(onConfirm, () => setConfirm(false))}>
+            Confirm Delete
+          </button>
+          <button className="btn-action" disabled={pending} onClick={() => setConfirm(false)}>
+            Cancel
+          </button>
+        </span>
+      ) : (
+        <button className="btn-action danger" disabled={pending} onClick={() => setConfirm(true)}>
+          {label}
+        </button>
+      )}
+    </>
+  );
+}
+
+
+export function HeadRow({
+  h,
+  deptName,
+  byTower,
+  can,
+  options,
+  gstRules = [],
+}: {
+  h: { id: number; category: string; sub_category: string | null; summary_subcategory: string | null; is_tax: boolean; tax_rate_pct: number | null; tax_share_pct: number | null; tax_base: number[] };
+  deptName: string;
+  byTower: boolean;
+  can: boolean;
+  options: string[];
+  gstRules?: GstRuleOpt[];
+}) {
+  const { pending, run, banner } = useAction();
+  const [editing, setEditing] = useState(false);
+  const [cat, setCat] = useState(h.category);
+  const [sub, setSub] = useState(h.sub_category ?? "");
+
+  return (
+    <tr className={editing ? "editing-row" : ""}>
+      <td>{deptName}</td>
+      <td>
+        {editing ? (
+          <input
+            type="text"
+            className="row-edit-input"
+            value={cat}
+            onChange={(e) => setCat(e.target.value)}
+            placeholder="Category name"
+            autoFocus
+          />
+        ) : (
+          <span className="font-medium">{h.category}</span>
+        )}
+      </td>
+      <td>
+        {editing ? (
+          <input
+            type="text"
+            className="row-edit-input"
+            value={sub}
+            onChange={(e) => setSub(e.target.value)}
+            placeholder="Sub-category (optional)"
+          />
+        ) : (
+          h.sub_category || <span className="sub">—</span>
+        )}
+      </td>
+      <td>
+        {byTower ? (
+          <span className="sub" style={{ fontStyle: "italic" }}>By tower building type</span>
+        ) : can ? (
+          <HeadSummarySelect headId={h.id} value={h.summary_subcategory} options={options} />
+        ) : (
+          h.summary_subcategory || <span className="sub">—</span>
+        )}
+      </td>
+      <td>
+        {h.is_tax &&
+          (can ? (
+            <TaxRuleInputs
+              key={`${h.tax_rate_pct}-${h.tax_share_pct}`}
+              headId={h.id}
+              rate={Number(h.tax_rate_pct)}
+              share={Number(h.tax_share_pct ?? 100)}
+              baseCount={h.tax_base.length}
+              gstRules={gstRules}
+            />
+          ) : (
+            `GST ${Number(h.tax_rate_pct)}% × ${Number(h.tax_share_pct ?? 100)}% of ${h.tax_base.length} head(s)`
+          ))}
+      </td>
+      {can && (
+        <td className="actions">
+          {editing ? (
+            <div className="actions-group">
+              <button
+                className="btn-action primary"
+                disabled={pending || !cat.trim()}
+                onClick={() =>
+                  run(
+                    () => A.renameHead(h.id, cat.trim(), sub.trim()),
+                    () => setEditing(false)
+                  )
+                }
+              >
+                Save
+              </button>
+              <button
+                className="btn-action"
+                disabled={pending}
+                onClick={() => {
+                  setCat(h.category);
+                  setSub(h.sub_category ?? "");
+                  setEditing(false);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="actions-group">
+              <button className="btn-action" onClick={() => setEditing(true)}>
+                Edit / Rename
+              </button>
+              <ConfirmDelete onConfirm={() => A.deleteHead(h.id)} />
+            </div>
+          )}
+          {banner}
+        </td>
+      )}
+    </tr>
+  );
 }
 
 /** Rename or delete a cost head (Towers & set-up). */
@@ -949,36 +1085,111 @@ export function AddHeadForm({ projectId, departments, baseOptions, summaryOption
   baseOptions: { value: string; label: string; ids: number[] }[]; summaryOptions: Record<string, string[]>; gstRules?: GstRuleOpt[];
 }) {
   const { pending, run, banner, setNotice } = useAction();
+  const [isTax, setIsTax] = useState(false);
+  const [rate, setRate] = useState("18");
+  const [share, setShare] = useState("74.08");
+
   return (
-    <>
-      <div className="row">
-        <label>Department<select id="nh-dept">{departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
-        <label style={{ flex: 1, minWidth: 180 }}>Category<input type="text" id="nh-cat" /></label>
-        <label style={{ flex: 1, minWidth: 180 }}>Sub-category<input type="text" id="nh-sub" /></label>
-        <label style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><input type="checkbox" id="nh-tax" /> GST line</label>
-        {gstRules.length > 0 && <label>GST rule<select id="nh-rule" defaultValue="" onChange={(e) => {
-          const g = gstRules.find((x) => x.id === Number(e.currentTarget.value));
-          if (!g) return;
-          (document.getElementById("nh-tax") as HTMLInputElement).checked = true;
-          (document.getElementById("nh-rate") as HTMLInputElement).value = String(g.rate);
-          (document.getElementById("nh-share") as HTMLInputElement).value = String(g.share);
-        }}><option value="">Type it</option>{gstRules.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>}
-        <label>GST %<input type="text" id="nh-rate" defaultValue="18" style={{ width: 60 }} /></label>
-        <label>Eligible share %<input type="text" id="nh-share" defaultValue="74.08" style={{ width: 70 }} /></label>
-        <label style={{ minWidth: 220 }}>Charged on<select id="nh-base">{baseOptions.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}</select></label>
-        <button disabled={pending} onClick={() => {
-          const dept = departments.find((d) => d.id === Number(value("nh-dept")))!;
-          const isTax = (document.getElementById("nh-tax") as HTMLInputElement).checked;
-          const opts = summaryOptions[dept.summary_category] ?? [];
-          const summary = dept.summary_category === "Construction" && !isTax ? null : isTax ? (opts.find((o) => o.startsWith("GST")) ?? null) : (opts[0] ?? null);
-          run(() => A.addHead(projectId, {
-            department_id: dept.id, category: value("nh-cat"), sub_category: value("nh-sub"), summary_subcategory: summary, is_tax: isTax,
-            tax_rate_pct: Number(value("nh-rate")), tax_share_pct: Number(value("nh-share")), tax_base: baseOptions.find((b) => b.value === value("nh-base"))?.ids ?? [],
-          }), (r) => setNotice(r.draftNumber ? `Added, with a line in draft R${r.draftNumber}` : "Added. It appears in the next version you open."));
-        }}>Add cost head</button>
+    <div className="add-head-card">
+      <div className="add-head-grid">
+        <label className="field-group">
+          <span className="field-label">Department</span>
+          <select id="nh-dept" className="form-select">
+            {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+        </label>
+        <label className="field-group" style={{ flex: 1, minWidth: 200 }}>
+          <span className="field-label">Category *</span>
+          <input type="text" id="nh-cat" className="form-input" placeholder="e.g. Civil Contractor" />
+        </label>
+        <label className="field-group" style={{ flex: 1, minWidth: 200 }}>
+          <span className="field-label">Sub-category</span>
+          <input type="text" id="nh-sub" className="form-input" placeholder="e.g. RCC Structure" />
+        </label>
+      </div>
+
+      <div className="add-head-gst-box">
+        <label className="gst-toggle">
+          <input type="checkbox" id="nh-tax" checked={isTax} onChange={(e) => setIsTax(e.target.checked)} />
+          <span style={{ fontWeight: 500 }}>This is a GST / Tax line</span>
+        </label>
+
+        {isTax && (
+          <div className="gst-subfields">
+            {gstRules.length > 0 && (
+              <label className="field-group">
+                <span className="field-label">GST Rule Preset</span>
+                <select
+                  id="nh-rule"
+                  className="form-select"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const g = gstRules.find((x) => x.id === Number(e.currentTarget.value));
+                    if (!g) return;
+                    setRate(String(g.rate));
+                    setShare(String(g.share));
+                  }}
+                >
+                  <option value="">Custom GST</option>
+                  {gstRules.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </select>
+              </label>
+            )}
+            <label className="field-group" style={{ width: 90 }}>
+              <span className="field-label">GST %</span>
+              <input type="text" id="nh-rate" className="form-input" value={rate} onChange={(e) => setRate(e.target.value)} />
+            </label>
+            <label className="field-group" style={{ width: 110 }}>
+              <span className="field-label">Eligible Share %</span>
+              <input type="text" id="nh-share" className="form-input" value={share} onChange={(e) => setShare(e.target.value)} />
+            </label>
+            <label className="field-group" style={{ flex: 1, minWidth: 240 }}>
+              <span className="field-label">Charged on</span>
+              <select id="nh-base" className="form-select">
+                {baseOptions.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+              </select>
+            </label>
+          </div>
+        )}
+      </div>
+
+      <div className="add-head-footer">
+        <button
+          className="btn-action primary"
+          disabled={pending}
+          onClick={() => {
+            const dept = departments.find((d) => d.id === Number(value("nh-dept")))!;
+            const catVal = value("nh-cat");
+            if (!catVal) return;
+            const opts = summaryOptions[dept.summary_category] ?? [];
+            const summary = dept.summary_category === "Construction" && !isTax ? null : isTax ? (opts.find((o) => o.startsWith("GST")) ?? null) : (opts[0] ?? null);
+            run(
+              () => A.addHead(projectId, {
+                department_id: dept.id,
+                category: catVal,
+                sub_category: value("nh-sub"),
+                summary_subcategory: summary,
+                is_tax: isTax,
+                tax_rate_pct: Number(value("nh-rate") || rate),
+                tax_share_pct: Number(value("nh-share") || share),
+                tax_base: baseOptions.find((b) => b.value === value("nh-base"))?.ids ?? [],
+              }),
+              (r) => {
+                setNotice(r.draftNumber ? `Added, with a line in draft R${r.draftNumber}` : "Added. It appears in the next version you open.");
+                const catEl = document.getElementById("nh-cat") as HTMLInputElement | null;
+                const subEl = document.getElementById("nh-sub") as HTMLInputElement | null;
+                if (catEl) catEl.value = "";
+                if (subEl) subEl.value = "";
+                setIsTax(false);
+              }
+            );
+          }}
+        >
+          + Add Cost Head
+        </button>
       </div>
       {banner}
-    </>
+    </div>
   );
 }
 

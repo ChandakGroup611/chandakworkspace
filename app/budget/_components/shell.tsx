@@ -73,34 +73,36 @@ export function Shell({ me, projects, project, versions, version, tab, children 
   return (
     <>
       <header className="top">
-        <div className="wrap top-bar">
-          <div className="top-title">
-            <Link href="/budget" className="crumb-home" title="View all projects">
-              Projects
-            </Link>
-            {project && (
-              <>
-                <span className="crumb-sep">/</span>
-                <span className="crumb-current">{project.name}</span>
-                {version && (
-                  <span className={`pill ${version.status}`}>R{version.number} · {version.status.replace("_", " ")}</span>
-                )}
-              </>
-            )}
-          </div>
-          <div className="top-selectors">
-            <Selectors
-              projects={projects.map((p) => ({ id: p.id, name: p.name }))}
-              projectId={project?.id ?? null}
-              versions={versions.map((v) => ({ number: v.number, as_on: v.as_on, status: v.status }))}
-              versionNumber={version?.number ?? null}
-              tab={tab}
-            />
+        <div className="top-outer">
+          <div className="wrap top-bar">
+            <div className="top-title">
+              <Link href="/budget" className="crumb-home" title="View all projects">
+                Projects
+              </Link>
+              {project && (
+                <>
+                  <span className="crumb-sep">/</span>
+                  <span className="crumb-current">{project.name}</span>
+                  {version && (
+                    <span className={`pill ${version.status}`}>R{version.number} · {version.status.replace("_", " ")}</span>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="top-selectors">
+              <Selectors
+                projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+                projectId={project?.id ?? null}
+                versions={versions.map((v) => ({ number: v.number, as_on: v.as_on, status: v.status }))}
+                versionNumber={version?.number ?? null}
+                tab={tab}
+              />
+            </div>
           </div>
         </div>
         {project && (
-          <div className="wrap subnav-wrap">
-            <div className="budget-subnav">
+          <div className="subnav-outer">
+            <div className="wrap budget-subnav">
               <div className="section-pills" role="tablist" aria-label="Budget sections">
                 {BUDGET_SECTIONS.map((sec) => {
                   const isCurrentSection = sec.key === activeSectionKey;
@@ -117,6 +119,7 @@ export function Shell({ me, projects, project, versions, version, tab, children 
                   );
                 })}
               </div>
+              <div className="subnav-divider" aria-hidden />
               <nav className="tabs" aria-label={`${activeSection.label} screens`}>
                 {activeSection.tabs.map((t) => (
                   <Link
@@ -132,7 +135,7 @@ export function Shell({ me, projects, project, versions, version, tab, children 
           </div>
         )}
       </header>
-      <main className="wrap">{children}</main>
+      <div className="wrap budget-body">{children}</div>
     </>
   );
 }

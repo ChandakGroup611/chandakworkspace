@@ -30,7 +30,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
   const isAuthRoute = AUTH_ROUTES.has(pathname);
   const segs = pathname.split("/");
   const isRequirementDetails = pathname.startsWith("/requirements/") && segs.length === 3 && !["reports", "approvals", "grooming"].includes(segs[2]);
-  const isZeroPadding = isAuthRoute || isRequirementDetails || pathname === "/";
+  const isZeroPadding = isAuthRoute || isRequirementDetails || pathname === "/" || pathname.startsWith("/budget");
   const isDesign = pathname.startsWith("/design");
 
   useEffect(() => {

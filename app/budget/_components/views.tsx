@@ -912,11 +912,7 @@ export async function Setup(c: Ctx) {
           {sorted.map((h) => {
             const d = dept.get(h.department_id)!;
             const byTower = d.summary_category === "Construction" && !h.is_tax;
-            return <tr key={h.id}><td>{d.name}</td><td>{h.category}</td><td>{h.sub_category}</td>
-              <td>{byTower ? "By tower building type" : can ? <F.HeadSummarySelect headId={h.id} value={h.summary_subcategory} options={options[d.summary_category] ?? []} /> : h.summary_subcategory}</td>
-              <td>{h.is_tax && (can ? <F.TaxRuleInputs key={`${h.tax_rate_pct}-${h.tax_share_pct}`} headId={h.id} rate={Number(h.tax_rate_pct)} share={Number(h.tax_share_pct ?? 100)} baseCount={h.tax_base.length} gstRules={gstRules} />
-                : `GST ${Number(h.tax_rate_pct)}% × ${Number(h.tax_share_pct ?? 100)}% of ${h.tax_base.length} head(s)`)}</td>
-              {can && <td className="actions"><F.HeadActions key={`${h.category}-${h.sub_category}`} h={h} /></td>}</tr>;
+            return <F.HeadRow key={h.id} h={h} deptName={d.name} byTower={byTower} can={can} options={options[d.summary_category] ?? []} gstRules={gstRules} />;
           })}
         </tbody></table></div>
       </section>
