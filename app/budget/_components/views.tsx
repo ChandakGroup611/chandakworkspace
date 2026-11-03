@@ -87,7 +87,7 @@ export async function Overview(c: Ctx & { version: Version }) {
         {kpi("Budget utilised", fmtPct(t.util_pct), "Cost incurred ÷ CTC")}
       </div>
       <section className="panel"><div className="panel-head"><h2>Departments</h2><span className="sub">All amounts in crores · R{v.number}</span></div>
-        <div className="scroll"><table><thead><tr><th>Sr</th><th>Department</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th><th className="n">Variance (a−b)</th><th className="n">Utilised</th></tr></thead>
+        <div className="scroll"><table><thead><tr><th className="sr">Sr</th><th className="label">Department</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th><th className="n">Variance (a−b)</th><th className="n">Utilised</th></tr></thead>
           <tbody>{depts.map((d, i) => <tr key={d.department_id}><td>{i + 1}</td><td>{d.department}</td><td className="n">{fmt(d.initial_cr)}</td><td className="n">{fmt(d.ctc_cr)}</td><td className="n">{fmt(d.incurred_cr)}</td><td className="n"><Neg v={d.balance_cr} /></td><td className="n"><Neg v={d.variance_cr} /></td><td className="n"><Bar v={d.util_pct} /></td></tr>)}
             <tr className="total"><td></td><td>Total</td><td className="n">{fmt(t.initial_cr)}</td><td className="n">{fmt(t.ctc_cr)}</td><td className="n">{fmt(t.incurred_cr)}</td><td className="n"><Neg v={t.balance_cr} /></td><td className="n"><Neg v={t.variance_cr} /></td><td className="n"><Bar v={t.util_pct} /></td></tr></tbody></table></div>
       </section>
@@ -95,7 +95,7 @@ export async function Overview(c: Ctx & { version: Version }) {
       <SignoffPanel c={c} />
       <div className="grid2">
         <section className="panel"><div className="panel-head"><h2>Budget versions</h2><span className="sub">Each revision is kept; nothing is overwritten</span></div>
-          <div className="scroll"><table><thead><tr><th>Version</th><th>As on</th><th>Status</th><th className="n">CTC (Cr)</th><th className="n">Change</th><th>Prepared by</th><th>Reason</th><th className="actions-col">Actions</th></tr></thead><tbody>
+          <div className="scroll"><table><thead><tr><th>Version</th><th>As on</th><th>Status</th><th className="n">CTC (Cr)</th><th className="n">Change</th><th>Prepared by</th><th className="label-sm">Reason</th><th className="actions-col">Actions</th></tr></thead><tbody>
             {versions.slice().reverse().map((x) => {
               const xt = totals.find((y) => y.version_id === x.id)!;
               const pt = totals.find((y) => y.version_id === x.parent_id);
@@ -152,13 +152,13 @@ async function SignoffPanel({ c }: { c: Ctx & { version: Version } }) {
   return (
     <div className="grid2">
       <section className="panel"><div className="panel-head"><h2>Sign-off · R{v.number}</h2><span className="sub">Each level signs in order; the last signature approves the version</span></div>
-        <div className="scroll"><table><thead><tr><th>Level</th><th>Approvers</th><th>Signed</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>Level</th><th className="label-sm">Approvers</th><th>Signed</th></tr></thead><tbody>
           {steps.map((s) => <tr key={s.level_id}><td>{s.title}</td><td>{s.approver_ids.map(who).join(", ")}</td>
             <td>{s.signed_by ? `${who(s.signed_by)}, ${dmy(s.signed_at!)}` : s.is_next ? <span className="chip warn">waiting</span> : v.status === "approved" ? "" : "Not yet"}</td></tr>)}
         </tbody></table></div>
       </section>
       <section className="panel"><div className="panel-head"><h2>Sign-off history</h2></div>
-        {log.length ? <div className="scroll"><table><thead><tr><th>Date</th><th>What</th><th>Level</th><th>By</th><th>Comment</th></tr></thead><tbody>
+        {log.length ? <div className="scroll"><table><thead><tr><th>Date</th><th className="label-sm">What</th><th>Level</th><th>By</th><th className="label-sm">Comment</th></tr></thead><tbody>
           {log.map((e) => <tr key={e.id}><td>{dmy(e.at)}</td><td>{ACTION_LABEL[e.action]}</td><td>{e.level_title}</td><td>{who(e.user_id)}</td><td>{e.comment}</td></tr>)}
         </tbody></table></div> : <p className="sub">Not submitted yet.</p>}
       </section>
@@ -189,7 +189,7 @@ const ALERT_LABEL: Record<Alert["level"], [string, string]> = {
 };
 function AlertTable({ alerts }: { alerts: Alert[] }) {
   return (
-    <div className="scroll"><table><thead><tr><th>Alert</th><th>Department</th><th>Line</th><th>Why</th></tr></thead><tbody>
+    <div className="scroll"><table><thead><tr><th className="label">Alert</th><th className="label">Department</th><th className="label">Line</th><th className="label-sm">Why</th></tr></thead><tbody>
       {alerts.map((a, i) => <tr key={i}><td><span className={`chip ${ALERT_LABEL[a.level][1]}`}>{ALERT_LABEL[a.level][0]}</span></td><td>{a.department}</td><td>{a.line}</td><td>{a.message}</td></tr>)}
     </tbody></table></div>
   );
@@ -219,7 +219,7 @@ async function Insights({ c }: { c: Ctx & { version: Version } }) {
 
 export function Portfolio({ projects, totals, canManage = true }: { projects: Project[]; totals: D.Totals[]; canManage?: boolean }) {
   return (
-    <div className="scroll"><table><thead><tr><th>Project</th><th>Version</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Variance (a−b)</th><th className="n">Utilised</th><th className="actions-col">Actions</th></tr></thead><tbody>
+    <div className="scroll"><table><thead><tr><th className="label">Project</th><th>Version</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Variance (a−b)</th><th className="n">Utilised</th><th className="actions-col">Actions</th></tr></thead><tbody>
       {projects.map((p) => {
         const pv = totals.filter((t) => t.project_id === p.id);
         const cur = pv.filter((t) => t.status === "approved").pop() ?? pv[pv.length - 1];
@@ -373,7 +373,7 @@ export async function Entry(c: Ctx & { version: Version }) {
       </section>}
       {ocMoves.length > 0 && <section className="panel">
         <div className="panel-head"><h3>OC dates · R{v.number}</h3><span className="sub">A date that moved since the previous version needs its reason before approval; both go on the Detail report</span></div>
-        <div className="scroll"><table><thead><tr><th>Tower</th><th>Planned OC</th><th>Previous version</th><th>This version</th><th>Reason for the change</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>Tower</th><th>Planned OC</th><th>Previous version</th><th>This version</th><th className="label-sm">Reason for the change</th></tr></thead><tbody>
           {ocMoves.map((t) => <F.TowerNoteRow key={t.tower_id} versionId={v.id} t={t} editable={editOc} />)}
         </tbody></table></div>
       </section>}
@@ -412,15 +412,17 @@ export async function Workings(c: Ctx & { version: Version }) {
       <VersionBanner sb={sb} me={me} project={project} version={v} names={c.names} />
       <section className="panel">
         <div className="panel-head"><h2>Tower workings · R{v.number}</h2>
-          <F.QuerySelect name="tower" label="" value={String(t.tower_id)} options={areas.map((a): [string, string] => [String(a.tower_id), a.type ? `${a.name} · ${a.type}` : a.name])} />
-          <Download c={c} kind="workings" /></div>
+          <div className="actions-group">
+            <F.QuerySelect name="tower" label="" value={String(t.tower_id)} options={areas.map((a): [string, string] => [String(a.tower_id), a.type ? `${a.name} · ${a.type}` : a.name])} />
+            <Download c={c} kind="workings" />
+          </div></div>
         <dl className="sumhead"><dt>Tower</dt><dd>{t.name}</dd><dt>Building type</dt><dd>{t.type ?? "Not set"}</dd>
-          <dt>Construction BUA</dt><dd>{fmtArea(t.bua)} sft{t.bua !== t.planned_bua && t.planned_bua != null ? ` (planned ${fmtArea(t.planned_bua)})` : ""}</dd>
-          <dt>Design area</dt><dd>{fmtArea(t.design_area)} sft</dd></dl>
+          <dt>Construction BUA</dt><dd>{t.bua != null ? `${fmtArea(t.bua)} sft` : "Not set"}{t.bua !== t.planned_bua && t.planned_bua != null ? ` (planned ${fmtArea(t.planned_bua)} sft)` : ""}</dd>
+          <dt>Design area</dt><dd>{t.design_area != null ? `${fmtArea(t.design_area)} sft` : "Not set"}</dd></dl>
         {editAreas && <F.TowerAreasForm versionId={v.id} towerId={t.tower_id} bua={v.tower_notes?.[String(t.tower_id)] && "bua" in v.tower_notes[String(t.tower_id)] ? t.bua : null}
           design={v.tower_notes?.[String(t.tower_id)] && "design_area" in v.tower_notes[String(t.tower_id)] ? t.design_area : null} planned={{ bua: t.planned_bua, design: t.planned_design_area }} />}
-        <div className="scroll"><table><thead><tr><th>Sr</th><th>Department</th><th>Work category</th><th className="n">Rate per sft</th><th className="n">Amount (Cr)</th>
-          <th className="n">Certified (Cr)</th><th className="n">Balance to certify (Cr)</th><th className="n">Cost incurred (Cr)</th><th>Remark</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="sr">Sr</th><th className="label">Department</th><th className="label">Work category</th><th className="n">Rate per sft</th><th className="n">Amount (Cr)</th>
+          <th className="n">Certified (Cr)</th><th className="n">Balance to certify (Cr)</th><th className="n">Cost incurred (Cr)</th><th className="label-sm">Remark</th></tr></thead><tbody>
           {rows.map((r, i) => <tr key={r.line_id}><td>{i + 1}</td><td>{r.department}</td><td>{head(r)}</td><td className="n">{fmt(r.rate_psf)}</td><td className="n">{fmt(crOf(r.ctc_paise))}</td>
             <td className="n"><F.CertifiedInput lineId={r.line_id} paise={r.certified_paise} editable={draft && D.can(me, "budget.edit", project.id, deptIds.get(r.department))} /></td>
             <td className="n"><Neg v={crOf(r.to_certify_paise)} /></td><td className="n">{fmt(crOf(r.incurred_paise))}</td><td>{r.remark}</td></tr>)}
@@ -432,7 +434,7 @@ export async function Workings(c: Ctx & { version: Version }) {
       </section>
       <section className="panel"><div className="panel-head"><h2>Allocation to towers</h2>
         <span className="sub">{unallocated === 0 ? "Every split cost head is fully allocated to towers" : `${fmt(crOf(unallocated))} Cr of split cost heads is not allocated to a tower`}</span></div>
-        <div className="scroll"><table><thead><tr><th>Department</th><th>Cost head</th>{towersUsed.map((a) => <th key={a.tower_id} className="n">{a.name}</th>)}
+        <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="label">Cost head</th>{towersUsed.map((a) => <th key={a.tower_id} className="n">{a.name}</th>)}
           <th className="n">Not allocated</th><th className="n">Total (Detail)</th></tr></thead><tbody>
           {check.map((x) => <tr key={x.cost_head_id} className={Number(x.unallocated_paise) !== 0 ? "flag" : ""}><td>{x.department}</td><td>{head(x)}</td>
             {towersUsed.map((a) => <td key={a.tower_id} className="n">{fmt(crOf(work.filter((w) => w.tower_id === a.tower_id && w.cost_head_id === x.cost_head_id).reduce((s, w) => s + Number(w.ctc_paise), 0)))}</td>)}
@@ -508,7 +510,7 @@ export async function LineView(c: Ctx & { version: Version }) {
         </tbody></table></div>
       </section>
       <section className="panel"><h3>This line in every version</h3>
-        <div className="scroll"><table><thead><tr><th>Version</th><th>As on</th><th>Status</th><th className="n">Initial (Cr)</th><th className="n">CTC (Cr)</th><th className="n">Incurred (Cr)</th><th>Remark</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>Version</th><th>As on</th><th>Status</th><th className="n">Initial (Cr)</th><th className="n">CTC (Cr)</th><th className="n">Incurred (Cr)</th><th className="label-sm">Remark</th></tr></thead><tbody>
           {across.map((x) => ({ x, vv: byVersion.get(x.version_id) })).filter((r) => r.vv).sort((a, b) => b.vv!.number - a.vv!.number).map(({ x, vv }) => (
             <tr key={x.line_id} className={x.line_id === f.line_id ? "flag" : ""}><td><Link href={`/budget/${project.id}/line?v=${vv!.number}&id=${x.line_id}`}>R{vv!.number}</Link></td><td>{dmy(vv!.as_on)}</td>
               <td>{vv!.status.replace("_", " ")}</td><td className="n">{fmt(x.initial_cr)}</td><td className="n">{fmt(x.ctc_cr)}</td><td className="n">{fmt(x.incurred_cr)}</td><td>{x.remark}</td></tr>))}
@@ -522,7 +524,7 @@ export async function LineView(c: Ctx & { version: Version }) {
         {D.can(me, "project.view", project.id) && <F.CommentForm versionId={v.id} lineId={f.line_id} />}
       </section>
       {D.can(me, "audit.view", project.id) && <section className="panel"><h3>Change history</h3>
-        {changes.length ? <div className="scroll"><table><thead><tr><th>Date</th><th>By</th><th>Change</th></tr></thead><tbody>
+        {changes.length ? <div className="scroll"><table><thead><tr><th>Date</th><th>By</th><th className="label-sm">Change</th></tr></thead><tbody>
           {changes.map((ch) => {
             const what = ch.action === "insert" ? "Line added" : ch.action === "delete" ? "Line removed"
               : CHANGE_FIELDS.filter(([k]) => JSON.stringify(ch.old_row?.[k] ?? null) !== JSON.stringify(ch.new_row?.[k] ?? null)).map(([k, label, show]) => `${label}: ${show(ch.old_row?.[k])} → ${show(ch.new_row?.[k])}`).join("; ");
@@ -550,7 +552,7 @@ export async function ImportTab(c: Ctx) {
 export function ImportHistory({ imports, pname, vnum, names }: { imports: Awaited<ReturnType<typeof D.getImports>>; pname: Map<number, string>; vnum: Map<number, number>; names: Record<string, string> }) {
   return (
     <section className="panel"><h3>Import history</h3>
-      <div className="scroll"><table><thead><tr><th>Date</th><th>File</th><th>Type</th><th>Into</th><th>Result</th><th>By</th></tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th>Date</th><th className="label-sm">File</th><th>Type</th><th>Into</th><th>Result</th><th>By</th></tr></thead><tbody>
         {imports.map((i) => {
           const s = i.summary as Record<string, number>;
           const what = i.kind === "detail" ? `${s.lines_changed ?? 0} lines, ${s.incurred_adjustments ?? 0} cost entries, ${s.new_heads ?? 0} new heads, ${s.new_towers ?? 0} new towers`
@@ -599,7 +601,7 @@ export async function Summary(c: Ctx & { version: Version }) {
       <section className="panel">
         <div className="panel-head"><h2>Project Budget Summary</h2><span className="sub">Chandak Group internal working · amounts in crores</span><Download c={c} kind="summary" /></div>
         <dl className="sumhead"><dt>Project name</dt><dd>{project.name}</dd><dt>Version</dt><dd>R{v.number} ({v.status})</dd><dt>Date</dt><dd>{dmy(v.as_on)}</dd><dt>Print date</dt><dd>{dmy(new Date().toISOString())}</dd></dl>
-        <div className="scroll"><table><thead><tr><th>Sr</th><th>Category</th><th>Sub-category</th><th className="n">Carpet area</th><th className="n">Engg. construction area</th><th className="n">Amount</th><th className="n">Total amount</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="sr">Sr</th><th className="label">Category</th><th className="label">Sub-category</th><th className="n">Carpet area</th><th className="n">Engg. construction area</th><th className="n">Amount</th><th className="n">Total amount</th></tr></thead><tbody>
           {[...byCat].map(([cat, subs], i) => (
             <SummaryCategory key={cat} sr={i + 1} cat={cat} total={Number(thisCats.find((x) => x.category === cat)?.budget_cr ?? 0)}
               subs={subs.map((s) => ({ name: s.subcategory, amount: s.amount_cr, workings: workingsOf(cat, s.subcategory), carpet: cat === "Construction" ? typeArea(s.subcategory, "carpet_area") : null, eng: cat === "Construction" ? typeArea(s.subcategory, "eng_area") : null }))} />
@@ -622,7 +624,7 @@ export async function Summary(c: Ctx & { version: Version }) {
           {vf.length > 0 && <><h3>Version fields</h3><div className="scroll"><table><tbody><CustomRows fields={vf} cells={custom.version.cells.get(v.id)} /></tbody></table></div></>}
         </section>
         <section className="panel"><h3>Budget vs incurred, till {dmy(v.as_on)}</h3>
-          <div className="scroll"><table><thead><tr><th>Sr</th><th>Category</th><th className="n">Budget</th><th className="n">Incurred</th><th className="n">Balance</th></tr></thead><tbody>
+          <div className="scroll"><table><thead><tr><th className="sr">Sr</th><th className="label">Category</th><th className="n">Budget</th><th className="n">Incurred</th><th className="n">Balance</th></tr></thead><tbody>
             {thisCats.map((x, i) => <tr key={x.category}><td>{i + 1}</td><td>{x.category}</td><td className="n">{fmt(x.budget_cr)}</td><td className="n">{fmt(x.incurred_cr)}</td><td className="n"><Neg v={x.balance_cr} /></td></tr>)}
             <tr className="total"><td></td><td>Total</td><td className="n">{fmt(sumBy("budget_cr"))}</td><td className="n">{fmt(sumBy("incurred_cr"))}</td><td className="n"><Neg v={sumBy("balance_cr")} /></td></tr>
           </tbody></table></div>
@@ -634,7 +636,7 @@ export async function Summary(c: Ctx & { version: Version }) {
         </tbody></table></div>
       </section>
       <section className="panel"><h3>Budget version-wise and category-wise breakup</h3>
-        <div className="scroll"><table><thead><tr><th>Sr</th><th>Category</th>{upTo.map((x) => <th key={x.id} className="n">R{x.number}<br />{dmy(x.as_on)}</th>)}<th>Reason</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="sr">Sr</th><th className="label">Category</th>{upTo.map((x) => <th key={x.id} className="n">R{x.number}<br />{dmy(x.as_on)}</th>)}<th className="label-sm">Reason</th></tr></thead><tbody>
           {thisCats.map((x, i) => <tr key={x.category}><td>{i + 1}</td><td>{x.category}</td>
             {upTo.map((u) => <td key={u.id} className="n">{fmt(cats.find((y) => y.version_id === u.id && y.category === x.category)?.budget_cr ?? 0)}</td>)}<td>{v.category_reasons?.[x.category]}</td></tr>)}
           <tr className="total"><td></td><td>Total</td>{upTo.map((u) => <td key={u.id} className="n">{fmt(totals.find((y) => y.version_id === u.id)?.ctc_cr)}</td>)}<td></td></tr>
@@ -688,7 +690,7 @@ export async function Detail(c: Ctx & { version: Version }) {
             <CustomRows fields={vf} cells={custom.version.cells.get(v.id)} />
           </tbody></table></div>
         </div>
-        <div className="scroll"><table><thead><tr><th>Sr</th><th>Department</th><th>Category</th><th>Sub-category</th><th className="n">PSF on initial</th><th className="n">PSF on CTC</th><th className="n">Initial budget (a)</th><th className="n">Estimated CTC (b)</th><th className="n">Cost incurred (c)</th><th className="n">Balance CTC (d = b − c)</th><th className="n">Variance (a − b)</th><th>Remark</th><th className="n">Utilised</th>{lf.map((f) => <th key={f.id} className={isNum(f) ? "n" : ""} title={fieldTitle(f)}>{f.label}</th>)}</tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="sr">Sr</th><th className="label">Department</th><th className="label">Category</th><th className="label">Sub-category</th><th className="n">PSF on initial</th><th className="n">PSF on CTC</th><th className="n">Initial budget (a)</th><th className="n">Estimated CTC (b)</th><th className="n">Cost incurred (c)</th><th className="n">Balance CTC (d = b − c)</th><th className="n">Variance (a − b)</th><th className="label-sm">Remark</th><th className="n">Utilised</th>{lf.map((f) => <th key={f.id} className={isNum(f) ? "n" : ""} title={fieldTitle(f)}>{f.label}</th>)}</tr></thead><tbody>
           {g.departments.filter((d) => !search.dept || d.department === search.dept).map((d) => (
             <DeptRows key={d.department_id} d={d} tower={search.tower} Cells={Cells} fields={lf} cells={custom.lines.cells} remark={remarks[String(d.department_id)]}
               lineHref={(f) => `/budget/${project.id}/line?v=${v.number}&id=${f.line_id}`}
@@ -698,13 +700,13 @@ export async function Detail(c: Ctx & { version: Version }) {
         </tbody></table></div>
       </section>
       <section className="panel"><h3>Department recap</h3>
-        <div className="scroll"><table><thead><tr><th>Sr</th><th>Department</th><th className="n">PSF on initial</th><th className="n">PSF on CTC</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (d)</th><th className="n">Variance (a − b)</th><th>Remark</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="sr">Sr</th><th className="label">Department</th><th className="n">PSF on initial</th><th className="n">PSF on CTC</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (d)</th><th className="n">Variance (a − b)</th><th className="label-sm">Remark</th></tr></thead><tbody>
           {g.departments.map((d) => <tr key={d.department_id}><td>{d.sr}</td><td>{d.department}</td><Cells x={d.totals} /><td>{remarks[String(d.department_id)]}</td></tr>)}
           <tr className="total"><td></td><td>Total</td><Cells x={t} /><td></td></tr>
         </tbody></table></div>
       </section>
       {g.memo.length > 0 && <section className="panel"><h3>Memo items</h3><p className="sub">Shown for reference; they are outside every total above.</p>
-        <div className="scroll"><table><thead><tr><th>Department</th><th>Item</th><th className="n">Estimated CTC (Cr)</th><th className="n">Cost incurred (Cr)</th><th>Remark</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="label">Item</th><th className="n">Estimated CTC (Cr)</th><th className="n">Cost incurred (Cr)</th><th className="label-sm">Remark</th></tr></thead><tbody>
           {g.memo.map((f) => <tr key={f.line_id}><td>{f.department}</td><td>{[f.category, f.sub_category, f.subproject].filter(Boolean).join(" · ")}</td><td className="n">{fmt(f.ctc_cr)}</td><td className="n">{fmt(f.incurred_cr)}</td><td>{f.remark}</td></tr>)}
         </tbody></table></div></section>}
       {steps.length > 0 && <section className="panel"><h3>Sign-off</h3>
@@ -752,7 +754,7 @@ export async function Compare(c: Ctx) {
           <div className="row"><F.QuerySelect name="from" label="From" value={String(A.number)} options={opts} /><F.QuerySelect name="to" label="To" value={String(B.number)} options={opts} />
             <F.QuerySelect name="all" label="Show" value={only ? "" : "1"} options={[["", "Changed lines only"], ["1", "All lines"]]} /></div></div>
         <p className="sub">{rows.filter((r) => r.change !== "same").length} line(s) differ between R{A.number} and R{B.number}. Amounts in crores.</p>
-        <div className="scroll"><table><thead><tr><th>Department</th><th>Cost head</th><th className="n">Initial R{A.number}</th><th className="n">Initial R{B.number}</th><th className="n">CTC R{A.number}</th><th className="n">CTC R{B.number}</th><th className="n">Change</th><th className="n">%</th><th>Remark</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="label">Cost head</th><th className="n">Initial R{A.number}</th><th className="n">Initial R{B.number}</th><th className="n">CTC R{A.number}</th><th className="n">CTC R{B.number}</th><th className="n">Change</th><th className="n">%</th><th className="label-sm">Remark</th></tr></thead><tbody>
           {shown.map((r, i) => <tr key={i}><td>{r.department}</td><td>{r.sub_category || r.category}{r.subproject && <span className="chip">{r.subproject}</span>}{(r.change === "added" || r.change === "removed") && <span className="chip warn">{r.change}</span>}</td>
             <td className="n">{fmt(r.from_initial_cr)}</td><td className="n">{fmt(r.to_initial_cr)}</td><td className="n">{fmt(r.from_ctc_cr)}</td><td className="n">{fmt(r.to_ctc_cr)}</td>
             <td className="n"><Neg v={r.ctc_change_cr} /></td><td className="n">{fmtPct(r.ctc_change_pct)}</td><td>{r.to_remark}</td></tr>)}
@@ -760,7 +762,7 @@ export async function Compare(c: Ctx) {
         </tbody></table></div>
       </section>
       <section className="panel"><h3>Category totals (Estimated CTC)</h3>
-        <div className="scroll"><table><thead><tr><th>Category</th><th className="n">R{A.number}</th><th className="n">R{B.number}</th><th className="n">Change</th><th>Reason</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="label">Category</th><th className="n">R{A.number}</th><th className="n">R{B.number}</th><th className="n">Change</th><th className="label-sm">Reason</th></tr></thead><tbody>
           {catNames.map((n) => <tr key={n}><td>{n}</td><td className="n">{fmt(cat(A.id, n))}</td><td className="n">{fmt(cat(B.id, n))}</td><td className="n"><Neg v={cat(B.id, n) - cat(A.id, n)} /></td><td>{B.category_reasons?.[n]}</td></tr>)}
         </tbody></table></div>
       </section>
@@ -805,7 +807,7 @@ export async function Incurred(c: Ctx) {
         <p className="note">Enter the basic amount of each split; GST on the bill is kept for reference, as the GST heads work out GST cost. The same bill number of a vendor cannot be recorded twice.</p></section>}
       <section className="panel"><div className="panel-head"><h2>Bills · {project.name}</h2><span className="sub">{bills.length} bills · basic {fmt(toCr(bills.reduce((s, b) => s + Number(b.basic_paise), 0)))} crores</span>
         {v && D.can(me, "report.export", project.id) && <a className="btn" href={`/budget/${project.id}/export/bills?v=${v.number}`} download title={`Bills dated up to ${monthName(v.as_on)}, the ones R${v.number} counts`}>Download Excel</a>}</div>
-        <div className="scroll"><table><thead><tr><th>Bill date</th><th>Vendor</th><th>Bill no.</th><th>Work order</th><th>Split over</th><th className="n">Basic (₹)</th><th className="n">GST (₹)</th><th className="n">Total (₹)</th><th>Entered by</th><th className="actions-col">Actions</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>Bill date</th><th className="label">Vendor</th><th>Bill no.</th><th>Work order</th><th>Split over</th><th className="n">Basic (₹)</th><th className="n">GST (₹)</th><th className="n">Total (₹)</th><th>Entered by</th><th className="actions-col">Actions</th></tr></thead><tbody>
           {bills.map((b) => <F.BillRow key={`${b.bill_id}-${b.basic_paise}-${b.bill_date}-${b.vendor}-${b.bill_no}-${b.gst_paise}`} b={b} heads={headOptions} towers={towers} editable={D.can(me, "cost.enter", project.id)}
             splits={entries.filter((e) => e.bill_id === b.bill_id).map((e) => { const h = head.get(e.cost_head_id)!; return { head: e.cost_head_id, headLabel: `${dept.get(h.department_id)?.name} · ${h.sub_category || h.category}`,
               tower: e.subproject_id, towerName: e.subproject_id ? tower.get(e.subproject_id) ?? null : null, amount_paise: e.amount_paise, month: monthName(e.month) }; })}>
@@ -820,7 +822,7 @@ export async function Incurred(c: Ctx) {
         <div className="row"><F.QuerySelect name="dept" label="" value={search.dept ?? ""} options={[["", "All departments"], ...depts.map((d): [string, string] => [d.name, d.name])]} /></div></div>
         {lineHead && <Notice>Showing the entries behind {dept.get(lineHead.department_id)?.name} · {lineHead.sub_category || lineHead.category}{line!.tower ? ` · ${tower.get(line!.tower)}` : line!.tower === 0 ? " (not split by tower)" : ""}{line!.upto ? ` up to ${monthName(line!.upto + "-01")}` : ""}. <Link href={`/budget/${project.id}/incurred${v ? `?v=${v.number}` : ""}`}>Show all</Link></Notice>}
         <p className="sub">{shown.length} entries · {fmt(toCr(total))} crores. Imported entries carry the file or Excel formula they came from.</p>
-        <div className="scroll"><table><thead><tr><th>Month</th><th>Department</th><th>Cost head</th><th>Tower</th><th className="n">Amount (₹)</th><th>Reference</th>{listed.map((f) => <th key={f.id} className={isNum(f) ? "n" : ""} title={fieldTitle(f)}>{f.label}</th>)}<th>Source</th><th>Entered by</th><th className="actions-col">Actions</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th>Month</th><th className="label">Department</th><th className="label">Cost head</th><th>Tower</th><th className="n">Amount (₹)</th><th>Reference</th>{listed.map((f) => <th key={f.id} className={isNum(f) ? "n" : ""} title={fieldTitle(f)}>{f.label}</th>)}<th>Source</th><th>Entered by</th><th className="actions-col">Actions</th></tr></thead><tbody>
           {shown.map((e) => { const h = head.get(e.cost_head_id)!; return <tr key={e.id}><td>{monthName(e.month)}</td><td>{dept.get(h.department_id)?.name}</td><td>{h.sub_category || h.category}</td><td>{e.subproject_id ? tower.get(e.subproject_id) : ""}</td>
             <td className="n"><span className={e.amount_paise < 0 ? "neg" : ""}>{fmtRupees(e.amount_paise)}</span></td><td><div className="trunc" title={e.reference ?? ""}>{e.reference}</div></td>
             {listed.map((f) => <td key={f.id} className={isNum(f) ? "n" : ""}><CustomInput field={f} entity="cost_entry" entityId={e.id} cell={cf.cells.get(e.id)?.[f.key]} editable={D.can(me, "cost.enter", project.id, h.department_id)} picks={picks} compact /></td>)}
@@ -843,7 +845,7 @@ export async function Periods(c: Ctx) {
     <section className="panel"><div className="panel-head"><h2>Cost incurred by period · {c.project.name}</h2>
       <div className="row"><F.QuerySelect name="grain" label="View by" value={grain} options={[["month", "Month"], ["quarter", "Quarter"], ["year", "Financial year"]]} /></div></div>
       <p className="sub">Financial year April to March (Q1 = Apr–Jun). Crores. Typed and imported entries count the same way.</p>
-      <div className="scroll"><table><thead><tr><th>Category</th>{periods.map((p) => <th key={p} className="n">{p}</th>)}<th className="n">Total</th></tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th className="label">Category</th>{periods.map((p) => <th key={p} className="n">{p}</th>)}<th className="n">Total</th></tr></thead><tbody>
         {cats.map((cat) => <tr key={cat}><td>{cat}</td>{periods.map((p) => <td key={p} className="n">{fmt(cell(cat, p))}</td>)}<td className="n">{fmt(cell(cat, null))}</td></tr>)}
         <tr className="total"><td>Total</td>{periods.map((p) => <td key={p} className="n">{fmt(cell(null, p))}</td>)}<td className="n">{fmt(cell(null, null))}</td></tr>
       </tbody></table></div>
@@ -908,7 +910,7 @@ export async function Setup(c: Ctx) {
         </div>
       </div>
         {can && <F.AddHeadForm projectId={project.id} departments={depts} baseOptions={baseOptions} summaryOptions={options} gstRules={gstRules} />}
-        <div className="scroll"><table><thead><tr><th>Department</th><th>Category</th><th>Sub-category</th><th>Summary row</th><th>GST rule</th>{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="label">Category</th><th className="label">Sub-category</th><th>Summary row</th><th>GST rule</th>{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
           {sorted.map((h) => {
             const d = dept.get(h.department_id)!;
             const byTower = d.summary_category === "Construction" && !h.is_tax;

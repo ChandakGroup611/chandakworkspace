@@ -43,7 +43,7 @@ function Departments({ rows, categories, editable }: { rows: DepartmentRow[]; ca
     <section className="panel">
       <div className="panel-head"><h2>Departments</h2><span className="sub">Shared by every project. Each department rolls into one category of the Project Budget Summary.</span></div>
       {banner}
-      <div className="scroll"><table><thead><tr><th className="n">Order</th><th>Department</th><th>Summary category</th><th className="n">Cost heads</th>{editable && <th></th>}</tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th className="n">Order</th><th className="label">Department</th><th>Summary category</th><th className="n">Cost heads</th>{editable && <th></th>}</tr></thead><tbody>
         {rows.map((d) => (
           <tr key={`${d.id}-${d.name}-${d.summary_category}-${d.sort}`}>
             <td className="n"><input type="number" className="amt" style={{ width: 60 }} id={`dp-sort-${d.id}`} defaultValue={d.sort} disabled={!editable} aria-label="Order" /></td>
@@ -93,7 +93,7 @@ function SummaryRows({ rows, categories, editable }: { rows: SummaryRow[]; categ
               <label style={{ minWidth: 220 }}>Category name<input type="text" id={id("cn")} defaultValue={cat} /></label>
               <button disabled={pending} onClick={() => run(() => M.renameSummaryCategory(cat, v(id("cn")), v(id("cs"))), () => setNotice("Category saved; its departments follow"))}>Save category</button>
             </div>}
-            <div className="scroll"><table><thead><tr><th className="n">Order</th><th>Sub-category</th>{!locked && <th></th>}</tr></thead><tbody>
+            <div className="scroll"><table><thead><tr><th className="n">Order</th><th className="label">Sub-category</th>{!locked && <th></th>}</tr></thead><tbody>
               {list.map((r, i) => {
                 const k = key(r), rid = (s: string) => `${id("r")}-${i}-${s}`;
                 return (

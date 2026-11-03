@@ -515,7 +515,7 @@ export function AccessSettings({
           <table>
             <thead>
               <tr>
-                <th>Person</th>
+                <th className="label">Person</th>
                 <th>Role</th>
                 <th>Projects</th>
                 <th>Departments</th>
@@ -1062,7 +1062,7 @@ export function AccessSettings({
                   <table className="matrix w-full text-xs">
                     <thead>
                       <tr>
-                        <th>Resource</th>
+                        <th className="label">Resource</th>
                         <th className="text-center">View</th>
                         <th className="text-center">Create</th>
                         <th className="text-center">Update</th>
@@ -1267,7 +1267,7 @@ export function FieldSettings({ fields, projects, permissions }: { fields: Custo
             {e.label} ({fields.filter((f) => f.entity === e.entity).length})</a>)}
         </nav>
         <p className="note">{ENTITIES.find((e) => e.entity === entity)!.where}.</p>
-        <div className="scroll"><table><thead><tr><th>#</th><th>Field</th><th>Key</th><th>Type</th><th>Projects</th><th>Filled by</th><th>Required</th><th>Shown</th><th>Status</th><th className="actions-col">Actions</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="sr">#</th><th className="label">Field</th><th>Key</th><th>Type</th><th>Projects</th><th>Filled by</th><th>Required</th><th>Shown</th><th>Status</th><th className="actions-col">Actions</th></tr></thead><tbody>
           {list.map((f) => (
             <tr key={f.id} className={f.active ? "" : "muted"}>
               <td>{f.sort}</td><td>{f.label}{f.section && <div className="note">{f.section}</div>}</td><td><code>{f.key}</code></td>

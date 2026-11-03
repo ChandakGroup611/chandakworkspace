@@ -141,7 +141,9 @@ export function Shell({ me, projects, project, versions, version, tab, children 
 }
 
 export async function VersionBanner({ sb, me, project, version, names }: { sb: Db; me: Me; project: Project; version: Version; names: Record<string, string> }) {
-  const who = (id: string | null) => (id && names[id]) || "someone";
+  // unknown people (imported versions, removed members) are left out instead of showing "someone"
+  const who = (id: string | null) => (id && names[id]) || null;
+  const by = (verb: string, id: string | null) => { const n = who(id); return n ? `${verb} by ${n}` : verb; };
   const [levels, steps] = await Promise.all([getSignoffLevels(sb), version.status === "approved" ? Promise.resolve([]) : getSignoffStatus(sb, version.id)]);
   const chain = chainOf(levels, project.id).length > 0;
   const next = steps.find((s) => s.is_next) ?? null;
@@ -151,9 +153,9 @@ export async function VersionBanner({ sb, me, project, version, names }: { sb: D
   return (
     <div className={`banner ${version.status === "approved" ? "locked" : "draft"}`}>
       <div><b>{project.name} R{version.number}</b> as on {dmy(version.as_on)} · <span className={`pill ${version.status}`}>{version.status.replace("_", " ")}</span> ·{" "}
-        {version.status === "approved" ? `approved by ${who(version.approved_by)}`
-          : version.status === "in_review" ? `prepared by ${who(version.prepared_by)}; ${signed} of ${steps.length} signed, waiting for ${next?.title ?? "sign-off"}`
-          : `draft prepared by ${who(version.prepared_by)}`}
+        {version.status === "approved" ? by("approved", version.approved_by)
+          : version.status === "in_review" ? `${by("prepared", version.prepared_by)}; ${signed} of ${steps.length} signed, waiting for ${next?.title ?? "sign-off"}`
+          : `draft ${by("prepared", version.prepared_by)}`}
         {version.reason && ` · ${version.reason}`}</div>
       <SignoffActions versionId={version.id} number={version.number} projectId={project.id} status={version.status} chain={chain}
         mayApprove={canApprove(me, version)} mayRecall={mayRecall} next={next ? { title: next.title, mine: next.approver_ids.includes(me.user_id) } : null} />

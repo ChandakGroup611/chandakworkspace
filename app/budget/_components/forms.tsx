@@ -204,7 +204,7 @@ export function SignoffLevelsEditor({ projectId, levels, members, editable }: {
   return (
     <>
       {banner}
-      <div className="scroll"><table><thead><tr><th className="n">Order</th><th>Level</th><th>Approvers (any one signs)</th><th className="actions-col">Actions</th></tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th className="n">Order</th><th>Level</th><th className="label-sm">Approvers (any one signs)</th><th className="actions-col">Actions</th></tr></thead><tbody>
         {levels.map((l) => editable ? (
           <tr key={l.id}>
             <td className="n"><input type="number" id={`sl-sort-${l.id}`} className="amt" style={{ width: 60 }} defaultValue={l.sort} aria-label="Order" /></td>
@@ -323,8 +323,8 @@ export function EntryTable({ rows, total, customFields = [], picks }: { rows: En
     <>
       {banner}
       <div className="scroll"><table>
-        <thead><tr><th>Cost head</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th>
-          <th className="n">Variance (a−b)</th><th className="n">Utilised</th><th className="n">PSF on CTC</th><th>Remark</th>
+        <thead><tr><th className="label">Cost head</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th>
+          <th className="n">Variance (a−b)</th><th className="n">Utilised</th><th className="n">PSF on CTC</th><th className="label-sm">Remark</th>
           {customFields.map((f) => <th key={f.id} className={f.field_type === "formula" || ["number", "integer", "amount_cr", "amount_inr", "percent"].includes(f.field_type) ? "n cf" : "cf"} title={fieldTitle(f)}>{f.label}{f.required && " *"}</th>)}
           <th>Source</th><th className="actions-col">Actions</th></tr></thead>
         <tbody>
@@ -480,8 +480,8 @@ export function ScheduleEditor({ s, editable }: {
   return (
     <>
       {banner}
-      <div className="scroll"><table><thead><tr><th>Item</th><th className="n">Quantity</th><th className="n">Rate (₹)</th><th className="n">%</th><th className="n">Periods</th>
-        {editable && <th className="n">Typed amount (₹)</th>}<th className="n">Amount (₹)</th><th>Remark</th>{editable && <th className="actions-col">Actions</th>}</tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th className="label">Item</th><th className="n">Quantity</th><th className="n">Rate (₹)</th><th className="n">%</th><th className="n">Periods</th>
+        {editable && <th className="n">Typed amount (₹)</th>}<th className="n">Amount (₹)</th><th className="label-sm">Remark</th>{editable && <th className="actions-col">Actions</th>}</tr></thead><tbody>
         {s.rows.map((r) => editable ? (
           <tr key={`${r.row_id}-${r.amount_paise}-${r.label}`}>{cells(r.row_id, r)}<td className="n">{rupees(r.amount_paise)}</td>
             <td><input type="text" className="rem" id={f("remark", r.row_id)} defaultValue={r.remark ?? ""} aria-label="Row remark" /></td>
@@ -532,7 +532,7 @@ export function VersionDetailsForm({ versionId, asOn, reason, categories, reason
         <label>As on<input type="date" defaultValue={asOn} onBlur={(e) => e.currentTarget.value !== asOn && run(() => A.updateVersion(versionId, { as_on: e.currentTarget.value }))} /></label>
         <label style={{ flex: 1, minWidth: 240 }}>Reason for this version<input type="text" defaultValue={reason ?? ""} onBlur={(e) => e.currentTarget.value !== (reason ?? "") && run(() => A.updateVersion(versionId, { reason: e.currentTarget.value.trim() || null }))} /></label>
       </div>
-      <div className="scroll"><table><thead><tr><th>Category</th><th>Reason for the change</th></tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th className="label">Category</th><th className="label-sm">Reason for the change</th></tr></thead><tbody>
         {categories.map((c) => (
           <tr key={c}><td>{c}</td><td><input type="text" className="rem" aria-label={`Reason for ${c}`} defaultValue={reasons[c] ?? ""}
             onBlur={(e) => e.currentTarget.value.trim() !== (reasons[c] ?? "") && run(() => A.updateVersion(versionId, { category_reasons: { [c]: e.currentTarget.value.trim() } }))} /></td></tr>
@@ -605,7 +605,7 @@ export function BillForm({ projectId, heads, towers, date, bill, onDone }: {
         <label>Work order / PO<input type="text" id={id("wo")} defaultValue={bill?.workOrder} /></label>
         <label>GST on the bill (₹)<input type="text" inputMode="decimal" id={id("gst")} placeholder="0" defaultValue={bill?.gst} /></label>
       </div>
-      <div className="scroll"><table><thead><tr><th>Cost head</th><th>Tower</th><th className="n">Basic amount (₹)</th><th className="actions-col">Actions</th></tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th className="label">Cost head</th><th>Tower</th><th className="n">Basic amount (₹)</th><th className="actions-col">Actions</th></tr></thead><tbody>
         {rows.map((k) => <tr key={k}>
           <td><select id={id(`head-${k}`)} aria-label="Split cost head" defaultValue={start[k]?.head}>{heads.map((h) => <option key={h.id} value={h.id}>{h.label}</option>)}</select></td>
           <td><select id={id(`tower-${k}`)} aria-label="Split tower" defaultValue={start[k]?.tower ?? ""}><option value="">Not split by tower</option>{towers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></td>
@@ -644,7 +644,7 @@ export function BillRow({ b, splits, heads, towers, editable, children }: {
         </td>
       </tr>
       {mode === "view" && <tr className="detail"><td colSpan={10}>
-        <div className="scroll"><table><thead><tr><th>Cost head</th><th>Tower</th><th>Counts in</th><th className="n">Basic (₹)</th></tr></thead><tbody>
+        <div className="scroll"><table><thead><tr><th className="label">Cost head</th><th>Tower</th><th>Counts in</th><th className="n">Basic (₹)</th></tr></thead><tbody>
           {splits.map((s, i) => <tr key={i}><td>{s.headLabel}</td><td>{s.towerName ?? "Not split by tower"}</td><td>{s.month}</td><td className="n">{rupees(s.amount_paise)}</td></tr>)}
         </tbody></table></div>
         {b.note && <p className="note">Note: {b.note}</p>}
@@ -1038,7 +1038,7 @@ export function AreasForm({ versionId, areas, editable, net }: { versionId: numb
         ))}
       </div>
       <h3>Commitments deducted from sale area</h3>
-      <div className="scroll"><table><thead><tr><th></th><th>Commitment</th><th className="n">Area (sft)</th>{editable && <th className="actions-col">Actions</th>}</tr></thead><tbody>
+      <div className="scroll"><table><thead><tr><th></th><th className="label">Commitment</th><th className="n">Area (sft)</th>{editable && <th className="actions-col">Actions</th>}</tr></thead><tbody>
         {commitments.map((c, i) => (
           <tr key={`${i}-${commitments.length}`}><td>{String.fromCharCode(66 + i)}</td>
             <td><input type="text" disabled={!editable} defaultValue={c.name} aria-label="Commitment" onBlur={(e) => e.currentTarget.value !== c.name && saveCommitments(commitments.map((x, j) => (j === i ? { ...x, name: e.currentTarget.value } : x)))} /></td>

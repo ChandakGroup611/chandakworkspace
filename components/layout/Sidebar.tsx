@@ -296,9 +296,11 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
         { label: "All projects", href: "/budget", icon: FolderKanban },
         { label: "Overview", href: p === "/budget" ? "/budget/overview" : `${p}/overview`, icon: LayoutDashboard },
         { label: "Budget entry", href: p === "/budget" ? "/budget/entry" : `${p}/entry`, icon: Layers },
-        { label: "Import from Excel", href: "/budget/import", icon: Package },
+        { label: "Tower workings", href: p === "/budget" ? "/budget/workings" : `${p}/workings`, icon: Building2 },
+        { label: "Schedules", href: p === "/budget" ? "/budget/schedules" : `${p}/schedules`, icon: Calendar },
+        { label: "Import from Excel", href: p === "/budget" ? "/budget/import" : `${p}/import`, icon: Package },
         { label: "Compare versions", href: p === "/budget" ? "/budget/compare" : `${p}/compare`, icon: RotateCcw },
-        { label: "Workflow guide", href: "/budget/guide", icon: BookOpen },
+        { label: "Workflow guide", href: p === "/budget" ? "/budget/guide" : `${p}/guide`, icon: BookOpen },
       ]
     },
     {

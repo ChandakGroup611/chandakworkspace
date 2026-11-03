@@ -38,20 +38,7 @@ export default async function BudgetHome({
   return (
     <Shell me={me} projects={projects} project={null} versions={[]} version={null} tab="home">
       {neededTab && (
-        <div
-          className="banner"
-          style={{
-            background: "rgba(59, 130, 246, 0.08)",
-            border: "1px solid rgba(59, 130, 246, 0.25)",
-            borderRadius: "8px",
-            padding: "12px 16px",
-            marginBottom: "16px",
-            color: "var(--theme-text-primary, #1e293b)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div className="banner info" role="status">
           <div>
             <strong>No active project selected.</strong> Create a new project below or import a detail budget workbook to access <strong>{neededTab}</strong>.
           </div>
@@ -59,7 +46,7 @@ export default async function BudgetHome({
       )}
       <section className="panel"><div className="panel-head"><h2>All projects</h2>
         <div className="row" style={{ alignItems: "center", gap: 8 }}>
-          <span className="sub">Latest approved version of each project · crores</span>
+          <span className="sub">Latest approved version of each project · amounts in crores</span>
           {D.can(me, "project.create") && <a href="#new-project" className="btn-action primary">+ New Project</a>}
         </div>
       </div>
