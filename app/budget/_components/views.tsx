@@ -328,17 +328,25 @@ export async function Entry(c: Ctx & { version: Version }) {
   let notice: React.ReactNode;
   const draft = draftOf(versions);
   if (v.status === "in_review") notice = <>R{v.number} is under sign-off and locked. {D.canChangeDraft(me, { ...v, status: "draft" }) ? "Take it back to draft from the banner above to make changes." : "The preparer takes it back if changes are needed."}</>;
-  else if (v.status === "approved") notice = <>R{v.number} is approved and locked. {draft ? <>Pick <Link href={`/budget/${project.id}/entry?v=${draft.number}`}>draft R{draft.number}</Link> to edit it.</> : D.can(me, "version.open", project.id) ? "Open the next version from the Overview to make changes." : "The budget preparer opens the next version."}</>;
+  else if (v.status === "approved") notice = <>R{v.number} is approved and locked. {draft ? <>Changes go into the newer {draft.status === "draft" ? "draft" : "version"} R{draft.number}: <Link className="btn-action primary" href={`/budget/${project.id}/entry?v=${draft.number}`}>{draft.status === "draft" ? `Edit draft R${draft.number}` : `Open R${draft.number}`}</Link></> : D.can(me, "version.open", project.id) ? "To type a budget by hand, start the next version below; it opens as an editable draft." : "The budget preparer opens the next version."}</>;
   else if (!D.can(me, "budget.edit", project.id)) notice = `You can read every figure here (role: ${me.role}); departments and the preparer make the changes.`;
   else if (D.limitedToDepartments(me)) notice = "You can change your own department's lines. Other departments' lines are read only for you.";
   else notice = <>Type amounts in crores, then press Tab or Enter, or <Link href={`/budget/${project.id}/import`}>import a workbook</Link> into this draft. Balance, variance, PSF, GST and totals are recalculated by the database either way. The Source column shows where each figure came from.</>;
   const splitHeads = heads.filter((h) => !h.is_tax && D.can(me, "budget.edit", project.id, h.department_id));
+  // manual entry: start a typed draft from a locked version, or add a new budget line (cost head) to the draft
+  const canOpenNext = v.status === "approved" && !draft && D.can(me, "version.open", project.id);
+  const canAddLine = v.status === "draft" && D.can(me, "project.setup", project.id);
+  const headForm = canAddLine ? await headFormData(sb, heads, template) : null;
   const vf = custom.version.fields;
   const deptName = new Map(figs.map((f) => [f.department_id, f.department]));
   return (
     <>
       <VersionBanner sb={sb} me={me} project={project} version={v} names={c.names} />
       <Notice kind={v.status === "approved" ? "locked" : ""}>{notice}</Notice>
+      {canOpenNext && <section className="panel" id="manual-entry">
+        <div className="panel-head"><h3>Type a budget manually · R{v.number + 1}</h3><span className="sub">Opens R{v.number + 1} as an editable draft; type Initial and CTC in the sheet, add lines if needed, then send it for sign-off</span></div>
+        <F.OpenVersionForm projectId={project.id} defaultDate={nextQuarterEnd(v.as_on)} />
+      </section>}
       <section className="panel">
         <div className="panel-head">
           <div>
@@ -348,8 +356,10 @@ export async function Entry(c: Ctx & { version: Version }) {
           <div className="row" style={{ alignItems: "center", gap: 8 }}>
             <Filters ctx={c} depts={g.departments.map((d) => d.department)} towers={towers} />
             <div className="actions-group">
+              {canAddLine && <a href="#add-line" className="btn-action primary">+ Add budget line</a>}
+              {canOpenNext && <a href="#manual-entry" className="btn-action primary">+ Manual entry</a>}
               {v.status === "draft" && splitHeads.length > 0 && towers.length > 0 && (
-                <a href="#split-head" className="btn-action primary">+ Split Tower</a>
+                <a href="#split-head" className="btn-action">+ Split Tower</a>
               )}
               <Link href={`/budget/${project.id}/import?v=${v.number}`} className="btn-action">Import Excel</Link>
               <Link href={`/budget/${project.id}/detail?v=${v.number}`} className="btn-action">Detail View</Link>
@@ -365,6 +375,10 @@ export async function Entry(c: Ctx & { version: Version }) {
       {vf.length > 0 && <section className="panel">
         <div className="panel-head"><h3>Version fields · R{v.number}</h3><span className="sub">Custom fields of this version{v.status === "approved" ? "; locked with it" : ""}</span></div>
         <CustomFieldsForm fields={vf} sections={sectionsOf(vf)} entity="version" entityId={v.id} cells={custom.version.cells.get(v.id) ?? {}} editable={D.canChangeDraft(me, v)} picks={picks} />
+      </section>}
+      {canAddLine && headForm && <section className="panel" id="add-line">
+        <div className="panel-head"><h3>Add a budget line · R{v.number}</h3><span className="sub">Adds a new cost head to {project.name}; it appears in the sheet above at 0.00, ready to type Initial and CTC</span></div>
+        <F.AddHeadForm projectId={project.id} departments={headForm.depts} baseOptions={headForm.baseOptions} summaryOptions={headForm.options} gstRules={headForm.gstRules} />
       </section>}
       {v.status === "draft" && splitHeads.length > 0 && towers.length > 0 && <section className="panel" id="split-head">
         <div className="panel-head"><h3>Split a cost head by tower</h3><span className="sub">Adds a line for one tower; the Summary then shows it under that tower&apos;s building type</span></div>
@@ -383,6 +397,28 @@ export async function Entry(c: Ctx & { version: Version }) {
       </section>}
     </>
   );
+}
+
+/** Inputs of the add-cost-head form; shared by Project setup → Cost heads and Budget entry → Add a budget line. */
+async function headFormData(sb: Db, heads: D.Head[], template: { category: string; subcategory: string }[]) {
+  const depts = await D.getDepartments(sb);
+  const gstRules = ((await sb.from("budget_gst_rules").select("id, name, rate_pct, share_pct").eq("active", true).order("sort").order("name")).data ?? [])
+    .map((r) => ({ id: Number(r.id), name: String(r.name), rate: Number(r.rate_pct), share: Number(r.share_pct) }));
+  const dept = new Map(depts.map((d) => [d.id, d]));
+  const options: Record<string, string[]> = {};
+  for (const t of template) (options[t.category] ??= []).push(t.subcategory);
+  const plain = heads.filter((h) => !h.is_tax);
+  const groups = new Map<string, number[]>();
+  for (const h of plain) {
+    const k = `${h.department_id}|${h.category}`;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(h.id);
+  }
+  const baseOptions = [
+    ...[...groups].map(([k, ids]) => { const [d, cat] = k.split("|"); return { value: `cat:${k}`, label: `All of ${(dept.get(Number(d))?.name ?? "Department")} · ${cat}`, ids }; }),
+    ...plain.map((h) => ({ value: `head:${h.id}`, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}`, ids: [h.id] })),
+  ];
+  return { depts, gstRules, options, baseOptions };
 }
 
 async function getTemplate(sb: Db) {
