@@ -81,6 +81,18 @@ Both ways in give the same stored value: a typed value and an imported cell go t
 - **Approval gates.** A version cannot be approved while required fields are empty or a line that moved more than 10% has no remark.
 - **Imports are previewed against the database** (nothing saved), including a check of the system totals against the sheet's Total row.
 
+## Typing a budget by hand, step by step
+
+No Excel file is needed for any part of the cycle. The screens for it:
+
+- **New project** (Projects home): name, code, location, financial-year start and the towers (name, building type, carpet and construction area, planned OC date) in one form. Cost heads are either typed on the next screen or copied from another project. Creating the project opens Get started.
+- **Get started** (first tab of every project, for the preparer): the cycle in order with what is done and what is next, and the form for each step: towers and areas, budget lines, GST lines, open R1, type the figures, record cost incurred, send for sign-off. A project with no version opens here.
+- **Add several lines** (Get started and Budget entry): a grid of rows (department, category, sub-category, Summary row, optional tower, Initial, CTC, remark) saved together; *Fill suggestions* adds a department's usual lines from the Summary format. Rows are checked first and nothing is saved while any row has a problem. A blank CTC starts equal to Initial. Existing cost heads are reused, so the grid can also update figures.
+- **Line by line** (Budget entry → Line by line, `?mode=form`): one line at a time with Initial, CTC and remark, the previous version's CTC and the cost incurred so far, Save & next (Enter), a department filter and "only lines without a CTC". It edits the same lines as the sheet.
+- **Add tower**: a full form (type, areas, OC date) instead of a name only.
+
+The server actions behind these are in `lib/budget/manual-actions.ts`; they write the same tables as the sheet and the import, so the database checks and access rules are unchanged.
+
 ## Two ways in: Excel import and typed entry
 
 Both write to the same draft version, and every line and cost entry records where it came from (`source` = `excel` or `manual`, plus `import_id`). A typed change after an import flips the line to `manual`. The Field Map document lists which fields are typed, imported or calculated.

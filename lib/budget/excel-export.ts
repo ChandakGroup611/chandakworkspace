@@ -22,6 +22,9 @@ export interface DetailExport {
   lineFields: { label: string; numeric: boolean; values: Map<number, string> }[];
   /** Custom version fields shown in reports: one row each under the OC dates. */
   versionFields: { label: string; value: string }[];
+  /** GST rule of each GST cost head (by cost head id): written as a live formula on its base rows, so the
+   *  file imports back with the rule instead of a typed amount. */
+  taxRules?: Record<string, { rate: number; share: number; base: number[] }>;
 }
 
 export interface SummaryExport {
@@ -39,7 +42,7 @@ export interface SummaryExport {
   schedules: { title: string; line: string; category: string; subcategory: string; rows: { label: string; qty: number | null; rate: number | null; pct: number; periods: number; typed: number | null; remark: string | null }[] }[];
 }
 
-type Value = string | number | Date | null | { formula: string };
+type Value = string | number | Date | null | { formula: string; result?: number };
 const f = (formula: string): Value => ({ formula });
 const cr = (paise: number | string) => Number(paise) / 1e9;
 const day = (iso: string) => { const [y, m, d] = iso.slice(0, 10).split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)); };
@@ -174,7 +177,11 @@ export async function detailWorkbook(x: DetailExport) {
     const n = fd.numeric ? Number(t.replace(/[^0-9.\-]/g, "")) : NaN;
     S.set(`${col(14 + i)}${r}`, t === "" ? null : fd.numeric && Number.isFinite(n) ? n : t);
   });
+  const rowsOf = new Map<number, number[]>();
+  const taxCells: { r: number; l: LineFigure }[] = [];
   const figures = (r: number, l: LineFigure) => {
+    rowsOf.set(l.cost_head_id, [...(rowsOf.get(l.cost_head_id) ?? []), r]);
+    if (l.is_tax) taxCells.push({ r, l });
     S.set(`G${r}`, cr(l.initial_paise)); S.set(`H${r}`, cr(l.ctc_paise)); S.set(`I${r}`, cr(l.incurred_paise));
     S.set(`L${r}`, l.remark ?? null);
   };
@@ -205,6 +212,16 @@ export async function detailWorkbook(x: DetailExport) {
     const last = S.r;
     for (const c of "GHI") S.set(`${c}${r}`, f(`SUM(${c}${first}:${c}${last})`));
   });
+  // GST lines worked out by their rule: base rows x rate % x eligible share %, as in the format
+  for (const { r, l } of taxCells) {
+    const rule = x.taxRules?.[String(l.cost_head_id)];
+    const refs = rule ? rule.base.flatMap((id) => rowsOf.get(id) ?? []) : [];
+    if (!rule || !refs.length) continue;
+    const gst = (c: string, paise: number): Value => ({ formula: `(${refs.map((n) => `${c}${n}`).join("+")})*${Number(rule.rate)}%*${Number(rule.share)}%`, result: cr(paise) });
+    if (l.initial_calculated) S.set(`G${r}`, gst("G", l.initial_paise));
+    if (l.ctc_calculated) S.set(`H${r}`, gst("H", l.ctc_paise));
+    if (l.incurred_source === "tax rule") S.set(`I${r}`, gst("I", l.incurred_paise));
+  }
   const sumOf = (c: string) => f(groupRows.length ? groupRows.map((g) => `${c}${g.r}`).join("+") : "0");
   const tr = S.row(82, { A: "Total", G: sumOf("G"), H: sumOf("H"), I: sumOf("I"), J: sumOf("J") });
   S.set(`E${tr}`, psf("G", tr)); S.set(`F${tr}`, psf("H", tr)); S.set(`K${tr}`, f(`G${tr}-H${tr}`)); S.set(`M${tr}`, util(tr));

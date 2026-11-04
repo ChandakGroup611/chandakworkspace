@@ -30,7 +30,7 @@ async function custom(sb: D.Db, project: D.Project, v: D.Version, figs: D.LineFi
 }
 
 export async function detailExport(sb: D.Db, project: D.Project, v: D.Version, names: Record<string, string>): Promise<DetailExport> {
-  const [figs, towers, steps] = await Promise.all([D.getLineFigures(sb, v.id), D.getTowers(sb, project.id), D.getSignoffStatus(sb, v.id)]);
+  const [figs, towers, steps, heads] = await Promise.all([D.getLineFigures(sb, v.id), D.getTowers(sb, project.id), D.getSignoffStatus(sb, v.id), D.getHeads(sb, project.id)]);
   const c = await custom(sb, project, v, figs, names);
   const notes = v.tower_notes ?? {};
   return {
@@ -42,6 +42,8 @@ export async function detailExport(sb: D.Db, project: D.Project, v: D.Version, n
       : [{ title: "Prepared by", name: (v.prepared_by && names[v.prepared_by]) || null, date: null },
          { title: "Approved by", name: (v.approved_by && names[v.approved_by]) || null, date: v.approved_at }],
     lineFields: c.lineFields, versionFields: c.versionFields,
+    taxRules: Object.fromEntries(heads.filter((h) => h.is_tax && h.tax_rate_pct != null)
+      .map((h) => [String(h.id), { rate: Number(h.tax_rate_pct), share: Number(h.tax_share_pct ?? 100), base: (h.tax_base ?? []).map(Number) }])),
   };
 }
 

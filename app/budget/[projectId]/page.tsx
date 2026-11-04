@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getProjects } from "@/lib/budget/data";
 import { loadSession } from "../_components/page-data";
-import { TABS } from "../_components/shell";
+import { TABS, landingTab } from "../_components/shell";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export default async function BudgetProjectCatchAll({
   // Check if projectId is actually a tab shortcut (e.g. /budget/overview, /budget/setup)
   const isTab = TABS.some(([k]) => k === projectId);
 
-  const { sb } = await loadSession();
+  const { sb, me } = await loadSession();
   const projects = await getProjects(sb);
 
   if (isTab) {
@@ -34,7 +34,7 @@ export default async function BudgetProjectCatchAll({
   if (/^\d+$/.test(projectId)) {
     const project = projects.find((p) => String(p.id) === projectId) ?? projects[0];
     if (project) {
-      redirect(`/budget/${project.id}/overview${queryStr}`);
+      redirect(`/budget/${project.id}/${me ? landingTab(me, project.id) : "overview"}${queryStr}`);
     }
   }
 

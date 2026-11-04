@@ -43,7 +43,7 @@ export function ImportPanel({ projects, projectId, canDetail, canCost }: {
     setDone(null);
     setError(null);
     try {
-      const wb = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: "array", cellFormula: true, cellNF: true });
+      const wb = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: "array", cellFormula: true, cellNF: true, sheetStubs: true });
       const kind = BudgetImporter.detectKind(XLSX, wb);
       if (kind === "detail") {
         if (!canDetail) return setError(`${file.name} is a budget workbook. Only the budget preparer or an administrator can import it.`);
@@ -100,14 +100,7 @@ export function ImportPanel({ projects, projectId, canDetail, canCost }: {
           {busy && <span className="sub">Working…</span>}
         </div>
       </section>
-      {error && (
-        <div className="banner error" role="alert">
-          <div>{error}</div>
-          <button type="button" className="link" onClick={() => setError(null)}>
-            Dismiss
-          </button>
-        </div>
-      )}
+      {error && <div className="banner error" role="alert"><div>{error}</div><button className="link" onClick={() => setError(null)}>Dismiss</button></div>}
       {done && <div className="banner ok" role="status"><div>{done}</div></div>}
       {pending?.kind === "detail" && <DetailPreview p={pending} projects={projects} busy={busy}
         onTarget={(t) => preview({ ...pending, target: t, preview: null })} onSave={save} onCancel={() => setPending(null)} />}
@@ -156,7 +149,7 @@ function DetailPreview({ p, projects, busy, onTarget, onSave, onCancel }: {
             {s.adjustments.map((a, i) => <tr key={i}><td>{a.department} · {a.head}</td><td className="n">{fmt(toCr(a.recorded))}</td><td className="n">{fmt(toCr(Number(a.recorded) + Number(a.entry)))}</td><td className="n"><Neg v={toCr(a.entry)} /></td></tr>)}
           </tbody></table></div></>}
         {s.new_head_names.length > 0 && <><h3>New cost heads</h3><ul className="plain">{s.new_head_names.map((x) => <li key={x}>{x}</li>)}</ul></>}
-        {s.new_tower_names.length > 0 && <><h3>New towers</h3><p className="sub">{s.new_tower_names.join(", ")}. Set their building types under Project setup → Towers &amp; areas.</p></>}
+        {s.new_tower_names.length > 0 && <><h3>New towers</h3><p className="sub">{s.new_tower_names.join(", ")}. Set their building types under Towers &amp; set-up.</p></>}
         {(s.custom_values ?? 0) + (s.custom_problems?.length ?? 0) > 0 && <><h3>Custom field columns</h3>
           <p className="sub">{s.custom_values} value(s) read from columns matched to custom fields by their header.{s.custom_problems?.length ? " These cells do not fit their field's rules and are not saved; the rest of the file is:" : ""}</p>
           {s.custom_problems?.length ? <ul className="plain">{s.custom_problems.map((x) => <li key={x} className="bad-text">{x}</li>)}</ul> : null}</>}

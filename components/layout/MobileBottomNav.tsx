@@ -11,7 +11,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, Settings2, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = { label: string; href: string; icon: React.ElementType; match: (p: string) => boolean };
@@ -55,13 +55,16 @@ const TABS: Record<string, Tab[]> = {
 };
 
 function getBudgetTabs(projectId?: string | null): Tab[] {
+  // Budget areas; Setup and Administration open from the Budget page header for people with those rights.
   const p = projectId && /^\d+$/.test(projectId) ? `/budget/${projectId}` : "/budget";
+  const to = (t: string) => (p === "/budget" ? `/budget/${t}` : `${p}/${t}`);
+  const is = (path: string, tabs: string[]) => tabs.some((t) => path.endsWith(`/${t}`));
   return [
     { label: "Projects", href: "/budget", icon: FolderKanban, match: (path) => path === "/budget" },
-    { label: "Overview", href: p === "/budget" ? "/budget/overview" : `${p}/overview`, icon: LayoutDashboard, match: (path) => path.endsWith("/overview") },
-    { label: "Entry", href: p === "/budget" ? "/budget/entry" : `${p}/entry`, icon: Layers, match: (path) => path.endsWith("/entry") || path.endsWith("/import") || path.endsWith("/compare") },
-    { label: "Reports", href: p === "/budget" ? "/budget/summary" : `${p}/summary`, icon: LineChart, match: (path) => path.endsWith("/summary") || path.endsWith("/detail") || path.endsWith("/periods") || path.endsWith("/incurred") },
-    { label: "Setup", href: p === "/budget" ? "/budget/setup" : `${p}/setup`, icon: Settings2, match: (path) => path.endsWith("/setup") || path.startsWith("/budget/admin") },
+    { label: "Overview", href: to("overview"), icon: LayoutDashboard, match: (path) => is(path, ["overview"]) },
+    { label: "Prepare", href: to("entry"), icon: Layers, match: (path) => is(path, ["entry", "workings", "schedules", "import", "line"]) },
+    { label: "Actuals", href: to("incurred"), icon: Wallet, match: (path) => is(path, ["incurred"]) },
+    { label: "Reports", href: to("summary"), icon: LineChart, match: (path) => is(path, ["summary", "detail", "compare", "periods"]) },
   ];
 }
 

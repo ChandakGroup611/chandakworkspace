@@ -22,7 +22,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import {
   LayoutDashboard, Ticket, FileCheck2, ShieldAlert, Settings, Database, FolderKanban,
   ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
-  Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2, Sliders,
+  Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
   FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X, Tag,
   Video, StickyNote, Wallet,
 } from "lucide-react";
@@ -291,37 +291,46 @@ function getBudgetRouteAction(path: string): string {
 }
 
 function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
+  // Mirrors the Budget areas (Overview · Prepare budget · Actuals · Reports). Setup and Administration are not
+  // listed here: they appear in the Budget page header only for people with those rights.
   const p = projectId && /^\d+$/.test(projectId) ? `/budget/${projectId}` : "/budget";
+  const to = (t: string) => (p === "/budget" ? `/budget/${t}` : `${p}/${t}`);
   return [
     {
-      label: "Budget planning",
+      label: "Budget",
       items: [
         { label: "All projects", href: "/budget", icon: FolderKanban },
-        { label: "Overview", href: p === "/budget" ? "/budget/overview" : `${p}/overview`, icon: LayoutDashboard },
-        { label: "Budget entry", href: p === "/budget" ? "/budget/entry" : `${p}/entry`, icon: Layers },
-        { label: "Tower workings", href: p === "/budget" ? "/budget/workings" : `${p}/workings`, icon: Building2 },
-        { label: "Schedules", href: p === "/budget" ? "/budget/schedules" : `${p}/schedules`, icon: Calendar },
-        { label: "Import from Excel", href: p === "/budget" ? "/budget/import" : `${p}/import`, icon: Package },
-        { label: "Compare versions", href: p === "/budget" ? "/budget/compare" : `${p}/compare`, icon: RotateCcw },
-        { label: "Workflow guide", href: p === "/budget" ? "/budget/guide" : `${p}/guide`, icon: BookOpen },
+        { label: "Overview", href: to("overview"), icon: LayoutDashboard },
       ]
     },
     {
-      label: "Reports and actuals",
+      label: "Prepare budget",
       items: [
-        { label: "Summary report", href: p === "/budget" ? "/budget/summary" : `${p}/summary`, icon: LineChart },
-        { label: "Detail report", href: p === "/budget" ? "/budget/detail" : `${p}/detail`, icon: FileText },
-        { label: "Periodic breakdown", href: p === "/budget" ? "/budget/periods" : `${p}/periods`, icon: Clock },
-        { label: "Cost incurred", href: p === "/budget" ? "/budget/incurred" : `${p}/incurred`, icon: CheckCircle2 },
+        { label: "Budget sheet", href: to("entry"), icon: Layers },
+        { label: "Tower workings", href: to("workings"), icon: Building2 },
+        { label: "Schedules", href: to("schedules"), icon: Calendar },
+        { label: "Import Excel", href: to("import"), icon: Package },
       ]
     },
     {
-      label: "Masters and setup",
+      label: "Actuals",
       items: [
-        { label: "Project setup", href: p === "/budget" ? "/budget/setup" : `${p}/setup`, icon: Settings2 },
-        { label: "Common masters", href: "/budget/admin/masters", icon: Database },
-        { label: "Access, roles & rights", href: "/budget/admin/access", icon: Users },
-        { label: "Custom fields & forms", href: "/budget/admin/fields", icon: Sliders },
+        { label: "Cost incurred", href: to("incurred"), icon: CheckCircle2 },
+      ]
+    },
+    {
+      label: "Reports",
+      items: [
+        { label: "Summary", href: to("summary"), icon: LineChart },
+        { label: "Detail", href: to("detail"), icon: FileText },
+        { label: "Compare versions", href: to("compare"), icon: RotateCcw },
+        { label: "Periodic breakdown", href: to("periods"), icon: Clock },
+      ]
+    },
+    {
+      label: "Help",
+      items: [
+        { label: "Workflow guide", href: to("guide"), icon: BookOpen },
       ]
     }
   ];

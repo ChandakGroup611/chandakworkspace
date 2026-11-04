@@ -367,6 +367,52 @@
   white-space: nowrap;
 }
 
+/* ---- Task-based navigation: trail · area tabs · progress · screen tabs ---- */
+.budget-app .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; font-size: 13.5px; color: var(--muted); }
+.budget-app .crumbs a { color: var(--muted); text-decoration: none; font-weight: 500; }
+.budget-app .crumbs a:hover { color: var(--ink); text-decoration: underline; }
+.budget-app .crumbs .crumb-project { color: var(--ink); font-size: 16px; font-weight: 600; }
+.budget-app .crumbs .crumb-current { color: var(--ink); font-weight: 600; }
+.budget-app .crumbs .crumb-sep { color: var(--line-strong); }
+.budget-app .top-links { display: flex; align-items: center; gap: 6px; }
+.budget-app .icon-link { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); font-size: 12.5px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.budget-app .icon-link:hover { color: var(--ink); border-color: var(--line-strong); }
+.budget-app .icon-link[aria-current=page] { color: var(--accent); border-color: var(--accent); background: var(--b-accent-soft); }
+
+.budget-app .areas { display: flex; align-items: stretch; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.budget-app .areas::-webkit-scrollbar { display: none; }
+.budget-app .areas a { display: inline-flex; align-items: center; padding: 8px 14px; font-size: 14px; font-weight: 500; color: var(--muted); text-decoration: none; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -9px; }
+.budget-app .areas a:hover { color: var(--ink); }
+.budget-app .areas a[aria-current=page] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.budget-app .back-link { margin-left: auto; font-size: 13px; text-decoration: none; white-space: nowrap; }
+
+.budget-app .stepper { display: flex; align-items: center; gap: 4px; margin: 0 0 0 auto; padding: 0; list-style: none; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.budget-app .stepper li { display: inline-flex; align-items: center; gap: 5px; }
+.budget-app .stepper li + li::before { content: ""; width: 18px; height: 1px; background: var(--line-strong); margin-right: 4px; }
+.budget-app .stepper .dot { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line-strong); font-size: 10.5px; font-weight: 600; }
+.budget-app .stepper li.done { color: var(--good); }
+.budget-app .stepper li.done .dot { background: var(--good-soft); border-color: transparent; color: var(--good); }
+.budget-app .stepper li.current { color: var(--ink); font-weight: 600; }
+.budget-app .stepper li.current .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.budget-app .subtabs-row { padding-block: 6px 8px; border-top: 1px solid var(--line); }
+
+/* "What to do next" card on Overview */
+.budget-app .next-step { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; border: 1px solid var(--accent); border-left-width: 4px; }
+.budget-app .next-step h2 { font-size: 16px; }
+.budget-app .next-step p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.budget-app .next-step .actions-group { flex-wrap: wrap; white-space: normal; }
+
+@media (max-width: 767px) {
+  .budget-app .crumbs .crumb-project { font-size: 15px; }
+  .budget-app .top-selectors .top-links { grid-column: 1 / -1; justify-content: flex-start; }
+  .budget-app .top-selectors:not(:has(> label + label)) { grid-template-columns: minmax(0, 1fr); }
+  .budget-app .budget-subnav { gap: 8px; }
+  .budget-app .areas { margin-inline: -4px; }
+  .budget-app .areas a { padding: 10px 12px; margin-bottom: 0; }
+  .budget-app .stepper { margin: 0; overflow-x: auto; scrollbar-width: none; }
+  .budget-app .stepper li + li::before { width: 10px; }
+}
+
 /* Master tabs (Project setup / Common masters): one master per screen */
 .budget-app .master-head { display: flex; flex-direction: column; gap: 6px; }
 .budget-app .master-nav { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1320,3 +1366,56 @@
   color: var(--accent);
   margin: 6px 0;
 }
+/* ---------- guided manual entry (Get started, new project, add lines, line by line) ---------- */
+.budget-app .guide-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.budget-app .guide-head h2 { margin: 0 0 4px; }
+.budget-app .guide-progress { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.budget-app .guide-progress .bar, .budget-app .lbl-progress .bar { width: 140px; }
+.budget-app .guide-steps { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.budget-app .guide-step { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.budget-app .guide-step.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.budget-app .guide-step details > summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin: 0; color: var(--ink); }
+.budget-app .guide-step details > summary::-webkit-details-marker { display: none; }
+.budget-app .step-badge { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 600;
+  background: var(--row-group); color: var(--muted); }
+.budget-app .guide-step.done .step-badge { background: var(--good-soft); color: var(--good); }
+.budget-app .guide-step.current .step-badge { background: var(--accent); color: var(--accent-ink); }
+.budget-app .step-text { flex: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.budget-app .step-text small { flex-basis: 100%; color: var(--muted); }
+.budget-app .step-body { padding: 0 16px 16px 56px; }
+@media (max-width: 640px) { .budget-app .step-body { padding-left: 16px; } }
+
+.budget-app .mg-wizard { display: flex; flex-direction: column; gap: 12px; }
+.budget-app .mg-step { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 0; }
+.budget-app .mg-step legend { padding: 0 6px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.budget-app .mg-num { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 12px;
+  background: var(--accent); color: var(--accent-ink); }
+.budget-app .mg-row { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: flex-end; }
+.budget-app .mg-row > label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.budget-app .tower-fields { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.budget-app .tower-fields:last-of-type { border-bottom: 0; }
+.budget-app .mg-choice { display: flex; flex-direction: column; gap: 8px; }
+.budget-app .mg-choice .radio { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.budget-app .mg-choice .radio:has(input:checked) { border-color: var(--accent); background: var(--b-accent-soft); }
+.budget-app .mg-choice .radio span { display: flex; flex-direction: column; }
+.budget-app .mg-choice .radio small { color: var(--muted); }
+.budget-app .mg-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); }
+.budget-app .mg-toolbar { margin-bottom: 8px; }
+.budget-app .mg-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.budget-app .mg-foot .note { flex: 1; min-width: 200px; margin: 0; }
+.budget-app .mg-grid input, .budget-app .mg-grid select { width: 100%; min-width: 90px; }
+.budget-app .mg-grid input.amt { min-width: 80px; text-align: right; }
+.budget-app .mg-grid td { padding: 3px 4px; }
+.budget-app label.check { flex-direction: row; align-items: center; gap: 6px; }
+
+.budget-app .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
+.budget-app .seg a { padding: 5px 12px; color: var(--ink); text-decoration: none; }
+.budget-app .seg a + a { border-left: 1px solid var(--line-strong); }
+.budget-app .seg a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
+
+.budget-app .lbl-progress { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); margin-left: auto; }
+.budget-app .lbl-card { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--surface); }
+.budget-app .lbl-head { margin-bottom: 12px; display: flex; flex-direction: column; gap: 2px; }
+.budget-app .lbl-head h3 { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.budget-app input.amt.big { font-size: 18px; padding: 8px 10px; width: 170px; text-align: right; }
+.budget-app details.import-alt > summary { color: var(--ink); }

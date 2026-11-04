@@ -4,6 +4,7 @@ import * as D from "@/lib/budget/data";
 import { loadSession } from "../../_components/page-data";
 import { Shell, TABS } from "../../_components/shell";
 import * as V from "../../_components/views";
+import { GetStarted } from "../../_components/start";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +28,13 @@ export default async function BudgetScreen({ params, searchParams }: {
   const ctx: V.Ctx = { sb, me, projects, project, versions, version, names, search };
 
   let body: React.ReactNode;
-  if (tab === "import") body = await V.ImportTab(ctx);
+  if (tab === "start") body = await GetStarted(ctx);
+  else if (tab === "import") body = await V.ImportTab(ctx);
   else if (tab === "setup") body = await V.Setup(ctx);
   else if (tab === "guide") body = <BudgetLearningGuide projectId={project.id} version={version} />;
   else if (tab === "incurred") body = await V.Incurred(ctx);
   else if (tab === "periods") body = await V.Periods(ctx);
-  else if (!version) body = V.NoVersion(ctx);
+  else if (!version) body = D.can(me, "project.setup", project.id) || D.can(me, "version.open", project.id) ? await GetStarted(ctx) : V.NoVersion(ctx);
   else {
     const c = { ...ctx, version };
     body = await ({ overview: V.Overview, entry: V.Entry, workings: V.Workings, schedules: V.Schedules, line: V.LineView, summary: V.Summary, detail: V.Detail, compare: V.Compare } as Record<string, (c: V.Ctx & { version: D.Version }) => Promise<React.ReactNode>>)[tab](c);

@@ -8,6 +8,7 @@ import { fieldTitle } from "@/lib/budget/fields";
 import { CustomFieldsForm, CustomInput, type Picks } from "./custom-fields";
 import * as F from "./forms";
 import { ImportPanel } from "./import-panel";
+import { type FormLine, LineByLineForm, LinesGrid } from "./manual";
 import { MasterNav, Notice, VersionBanner } from "./shell";
 import { getAlerts, latestNote, type Alert } from "@/lib/budget/insights";
 
@@ -63,8 +64,8 @@ export function NoVersion({ me, project }: Ctx) {
 // ---------- overview ----------
 export async function Overview(c: Ctx & { version: Version }) {
   const { sb, me, project, versions, version: v, names } = c;
-  const [totals, depts, allTotals, imports, towers] = await Promise.all([
-    D.getTotals(sb, project.id), D.getDepartmentTotals(sb, v.id), D.getTotals(sb), D.getImports(sb, project.id), D.getTowers(sb, project.id),
+  const [totals, depts, imports, towers] = await Promise.all([
+    D.getTotals(sb, project.id), D.getDepartmentTotals(sb, v.id), D.getImports(sb, project.id), D.getTowers(sb, project.id),
   ]);
   const lookup = await lookupNames(sb, project.id, names);
   const pc = await loadCustom(sb, "project", project.id, new Map([[project.id, { towers: cr(towers.length) }]]), lookup);
@@ -77,7 +78,7 @@ export async function Overview(c: Ctx & { version: Version }) {
   return (
     <>
       <VersionBanner sb={sb} me={me} project={project} version={v} names={names} />
-      <MySignoffs sb={sb} />
+      <NextStep c={c} draft={draft} />
       <div className="kpis">
         {kpi("Initial Budget (a)", fmt(t.initial_cr), "Crores")}
         {kpi("Estimated CTC (b)", fmt(t.ctc_cr), psf == null ? undefined : `PSF ₹${fmt(psf)}`)}
@@ -104,14 +105,14 @@ export async function Overview(c: Ctx & { version: Version }) {
                 <td className="actions">
                   <div className="actions-group">
                     <Link className="btn-action" href={`/budget/${project.id}/overview?v=${x.number}`} title="View overview">View</Link>
-                    <Link className="btn-action primary" href={`/budget/${project.id}/entry?v=${x.number}`} title="Open working sheet">Entry</Link>
+                    <Link className="btn-action primary" href={`/budget/${project.id}/entry?v=${x.number}`} title="Open the budget sheet of this version">Budget sheet</Link>
                   </div>
                 </td></tr>;
             })}
           </tbody></table></div>
-          {D.can(me, "version.open", project.id) && !draft ? <>
-            <F.OpenVersionForm projectId={project.id} defaultDate={nextQuarterEnd((approved ?? v).as_on)} />
-            <p className="note">Two ways to fill it: departments type their changes on Budget entry, or upload the revised workbook on Import from Excel. Both land in the same draft.</p></>
+          {D.can(me, "version.open", project.id) && !draft && approved ? <>
+            <div className="row"><Link className="btn-action primary" href={`/budget/${project.id}/entry?v=${approved.number}#manual-entry`}>Start R{Math.max(...versions.map((x) => x.number)) + 1}</Link></div>
+            <p className="note">Opens the next version as a draft under Prepare budget. Two ways to fill it: departments type their changes on the Budget sheet, or upload the revised workbook on Import Excel. Both land in the same draft.</p></>
             : <p className="note">{draft ? (draft.status === "in_review" ? `R${draft.number} is under sign-off. It is approved or sent back before another version is opened.` : `Draft R${draft.number} is open. Approve or delete it before opening another.`) : "Only the budget preparer or an administrator opens new versions."}</p>}
         </section>
         {lastImport && <section className="panel"><div className="panel-head"><h2>What the last import found in the Excel</h2></div>
@@ -123,10 +124,47 @@ export async function Overview(c: Ctx & { version: Version }) {
         <CustomFieldsForm fields={pc.fields} sections={sectionsOf(pc.fields)} entity="project" entityId={project.id} cells={pc.cells.get(project.id) ?? {}}
           editable={D.can(me, "project.setup", project.id)} picks={await picksFor(sb, project.id, names)} />
       </section>}
-      <section className="panel"><div className="panel-head"><h2>All projects</h2><span className="sub">Latest approved version of each project · crores</span></div>
-        <Portfolio projects={c.projects} totals={allTotals} />
-      </section>
     </>
+  );
+}
+
+/** Overview: one card that says where this version stands and what the person should do next. */
+function NextStep({ c, draft }: { c: Ctx & { version: Version }; draft: Version | null }) {
+  const { me, project, version: v, versions } = c;
+  const pid = project.id;
+  const canPrepare = D.can(me, "budget.edit", pid) || D.can(me, "version.open", pid);
+  const canImport = D.can(me, "budget.import", pid);
+  const next = Math.max(...versions.map((x) => x.number)) + 1;
+  let title: string, text: string;
+  const actions: { href: string; label: string; primary?: boolean }[] = [];
+  if (v.status === "draft") {
+    title = `R${v.number} is a draft: prepare the figures`;
+    text = "Type the figures line by line or in the sheet (or import them), add any new lines, then send it for sign-off from the banner above.";
+    if (canPrepare) actions.push({ href: `/budget/${pid}/entry?v=${v.number}&mode=form`, label: "Enter line by line", primary: true });
+    if (canPrepare) actions.push({ href: `/budget/${pid}/entry?v=${v.number}`, label: "Open budget sheet" });
+    if (D.can(me, "project.setup", pid)) actions.push({ href: `/budget/${pid}/start?v=${v.number}`, label: "Get started checklist" });
+    if (canImport) actions.push({ href: `/budget/${pid}/import?v=${v.number}`, label: "Import Excel" });
+  } else if (v.status === "in_review") {
+    title = `R${v.number} is under sign-off`;
+    text = "The figures are locked while it is being signed. Sign it or send it back from the banner above; progress is shown under Sign-off below.";
+    actions.push({ href: `/budget/${pid}/detail?v=${v.number}`, label: "Read the detail report", primary: true });
+  } else if (draft && draft.number !== v.number) {
+    title = `R${v.number} is approved; R${draft.number} is ${draft.status === "draft" ? "being prepared" : "under sign-off"}`;
+    text = draft.status === "draft" ? "Changes are made in the newer draft." : "The newer version is waiting for signatures.";
+    actions.push({ href: `/budget/${pid}/${draft.status === "draft" && canPrepare ? "entry" : "overview"}?v=${draft.number}`, label: `Go to R${draft.number}`, primary: true });
+  } else {
+    title = `R${v.number} is approved and locked`;
+    text = D.can(me, "version.open", pid) ? `To revise the budget, start R${next}: it opens as an editable draft.` : "Read the reports, or record cost incurred under Actuals.";
+    if (D.can(me, "version.open", pid)) actions.push({ href: `/budget/${pid}/entry?v=${v.number}#manual-entry`, label: `Start R${next}`, primary: true });
+    actions.push({ href: `/budget/${pid}/summary?v=${v.number}`, label: "Summary report", primary: !D.can(me, "version.open", pid) });
+  }
+  return (
+    <section className="panel next-step" aria-label="What to do next">
+      <div><h2>{title}</h2><p>{text}</p></div>
+      {actions.length > 0 && <div className="actions-group">
+        {actions.map((a) => <Link key={a.href} href={a.href} className={`btn-action${a.primary ? " primary" : ""}`}>{a.label}</Link>)}
+      </div>}
+    </section>
   );
 }
 
@@ -225,14 +263,14 @@ export function Portfolio({ projects, totals, canManage = true }: { projects: Pr
         const cur = pv.filter((t) => t.status === "approved").pop() ?? pv[pv.length - 1];
         if (!cur) return (
           <tr key={p.id}>
-            <td><Link href={`/budget/${p.id}/overview`}>{p.name}</Link></td>
+            <td><Link href={`/budget/${p.id}`}>{p.name}</Link></td>
             <td colSpan={6} className="sub">No version yet</td>
             <td className="actions"><F.ProjectActions p={p} canManage={canManage} /></td>
           </tr>
         );
         return (
           <tr key={p.id}>
-            <td><Link href={`/budget/${p.id}/overview`}>{p.name}</Link></td>
+            <td><Link href={`/budget/${p.id}`}>{p.name}</Link></td>
             <td>R{cur.number} · {dmy(cur.as_on)}{cur.status !== "approved" && ` (${cur.status.replace("_", " ")})`}</td>
             <td className="n">{fmt(cur.initial_cr)}</td>
             <td className="n">{fmt(cur.ctc_cr)}</td>
@@ -339,6 +377,28 @@ export async function Entry(c: Ctx & { version: Version }) {
   const headForm = canAddLine ? await headFormData(sb, heads, template) : null;
   const vf = custom.version.fields;
   const deptName = new Map(figs.map((f) => [f.department_id, f.department]));
+  // line-by-line entry (?mode=form): the same lines as the sheet, one at a time, for typing without a spreadsheet
+  const formMode = search.mode === "form" && v.status === "draft";
+  const sheetHref = `/budget/${project.id}/entry?v=${v.number}`;
+  let formLines: FormLine[] = [];
+  if (formMode) {
+    const prev = v.parent_id ? await D.getLineFigures(sb, v.parent_id) : [];
+    const prevCtc = new Map(prev.map((p) => [`${p.cost_head_id}|${p.subproject_id ?? ""}`, p.ctc_cr]));
+    const ordered = rows.filter((r) => r.line?.editable).map((r) => figs.find((f) => `l${f.line_id}` === r.key)!).filter(Boolean);
+    formLines = ordered.map((f) => {
+      const raw = lineById.get(f.line_id)!, rule = ruleOf(f);
+      const h = headById.get(f.cost_head_id);
+      return {
+        id: f.line_id, department: f.department, label: f.sub_category ? `${f.category} · ${f.sub_category}` : f.category, tower: f.subproject,
+        isTax: f.is_tax, taxRule: f.is_tax && h ? `GST ${Number(h.tax_rate_pct)}% × ${Number(h.tax_share_pct ?? 100)}%` : null,
+        initial: f.is_tax && raw.initial_paise == null ? "" : String(+((raw.initial_paise ?? 0) / 1e9).toFixed(9)),
+        ctc: f.is_tax && raw.ctc_paise == null ? "" : String(+((raw.ctc_paise ?? 0) / 1e9).toFixed(9)),
+        remark: f.remark ?? "", needsRemark: flag.has(f.line_id), previousCtc: prevCtc.get(`${f.cost_head_id}|${f.subproject_id ?? ""}`) ?? null,
+        ctcRule: rule.kind === "rate" || rule.kind === "balance" || rule.kind === "schedule" ? rule.label : null, incurredCr: f.incurred_cr,
+      };
+    });
+  }
+  const gridForm = canAddLine ? headForm : null;
   return (
     <>
       <VersionBanner sb={sb} me={me} project={project} version={v} names={c.names} />
@@ -351,12 +411,16 @@ export async function Entry(c: Ctx & { version: Version }) {
         <div className="panel-head">
           <div>
             <h2>Budget entry · R{v.number}</h2>
-            <span className="sub">Working sheet · All amounts in crores</span>
+            <span className="sub">{formMode ? "Line by line" : "Working sheet"} · All amounts in crores</span>
           </div>
+          {v.status === "draft" && <nav className="seg" aria-label="Entry view">
+            <Link href={sheetHref} aria-current={!formMode ? "page" : undefined}>Sheet</Link>
+            <Link href={`${sheetHref}&mode=form`} aria-current={formMode ? "page" : undefined}>Line by line</Link>
+          </nav>}
           <div className="row" style={{ alignItems: "center", gap: 8 }}>
             <Filters ctx={c} depts={g.departments.map((d) => d.department)} towers={towers} />
             <div className="actions-group">
-              {canAddLine && <a href="#add-line" className="btn-action primary">+ Add budget line</a>}
+              {canAddLine && <a href="#add-lines" className="btn-action primary">+ Add lines</a>}
               {canOpenNext && <a href="#manual-entry" className="btn-action primary">+ Manual entry</a>}
               {v.status === "draft" && splitHeads.length > 0 && towers.length > 0 && (
                 <a href="#split-head" className="btn-action">+ Split Tower</a>
@@ -366,7 +430,8 @@ export async function Entry(c: Ctx & { version: Version }) {
             </div>
           </div>
         </div>
-        <F.EntryTable rows={rows} total={total} customFields={lineFields} picks={picks} />
+        {figs.length === 0 && <Notice kind="draft">R{v.number} has no budget lines yet. {canAddLine ? <>Add them in <a href="#add-lines">Add several lines</a> below, with their amounts, or follow <Link href={`/budget/${project.id}/start?v=${v.number}`}>Get started</Link>.</> : "The budget preparer adds the lines."}</Notice>}
+        {formMode ? <LineByLineForm lines={formLines} sheetHref={sheetHref} /> : <F.EntryTable rows={rows} total={total} customFields={lineFields} picks={picks} />}
         <p className="note">Crores. Typed or imported: Initial, CTC, Remark. Everything else is calculated. PSF = amount ÷ engineering construction area ({fmtArea(v.areas.eng_area)} sft). Cost incurred comes from the Cost incurred tab, up to {dmy(v.as_on)}.
           {flag.size > 0 && ` ${flag.size} line(s) changed by more than 10% need a remark before approval.`}
           {lineFields.length > 0 && " Extra columns are custom fields; calculated ones are worked out on the server from the figures in the row."}</p>
@@ -376,8 +441,12 @@ export async function Entry(c: Ctx & { version: Version }) {
         <div className="panel-head"><h3>Version fields · R{v.number}</h3><span className="sub">Custom fields of this version{v.status === "approved" ? "; locked with it" : ""}</span></div>
         <CustomFieldsForm fields={vf} sections={sectionsOf(vf)} entity="version" entityId={v.id} cells={custom.version.cells.get(v.id) ?? {}} editable={D.canChangeDraft(me, v)} picks={picks} />
       </section>}
+      {gridForm && <section className="panel" id="add-lines">
+        <div className="panel-head"><h3>Add several lines · R{v.number}</h3><span className="sub">One row per line, with its amounts; saved together into this draft</span></div>
+        <LinesGrid projectId={project.id} departments={gridForm.depts} towers={towers.map((t) => ({ id: t.id, label: t.name }))} summaryOptions={gridForm.options} draftNumber={v.number} startRows={figs.length ? 3 : 5} />
+      </section>}
       {canAddLine && headForm && <section className="panel" id="add-line">
-        <div className="panel-head"><h3>Add a budget line · R{v.number}</h3><span className="sub">Adds a new cost head to {project.name}; it appears in the sheet above at 0.00, ready to type Initial and CTC</span></div>
+        <div className="panel-head"><h3>Add a GST or single line · R{v.number}</h3><span className="sub">Adds one cost head to {project.name}, including GST lines worked out from other lines; it appears above at 0.00</span></div>
         <F.AddHeadForm projectId={project.id} departments={headForm.depts} baseOptions={headForm.baseOptions} summaryOptions={headForm.options} gstRules={headForm.gstRules} />
       </section>}
       {v.status === "draft" && splitHeads.length > 0 && towers.length > 0 && <section className="panel" id="split-head">
@@ -400,7 +469,7 @@ export async function Entry(c: Ctx & { version: Version }) {
 }
 
 /** Inputs of the add-cost-head form; shared by Project setup → Cost heads and Budget entry → Add a budget line. */
-async function headFormData(sb: Db, heads: D.Head[], template: { category: string; subcategory: string }[]) {
+export async function headFormData(sb: Db, heads: D.Head[], template: { category: string; subcategory: string }[]) {
   const depts = await D.getDepartments(sb);
   const gstRules = ((await sb.from("budget_gst_rules").select("id, name, rate_pct, share_pct").eq("active", true).order("sort").order("name")).data ?? [])
     .map((r) => ({ id: Number(r.id), name: String(r.name), rate: Number(r.rate_pct), share: Number(r.share_pct) }));
@@ -421,7 +490,7 @@ async function headFormData(sb: Db, heads: D.Head[], template: { category: strin
   return { depts, gstRules, options, baseOptions };
 }
 
-async function getTemplate(sb: Db) {
+export async function getTemplate(sb: Db) {
   const { data } = await sb.from("budget_summary_template").select("category, subcategory, category_sort, subcategory_sort").order("category_sort").order("subcategory_sort");
   return (data ?? []) as { category: string; subcategory: string }[];
 }
@@ -832,12 +901,12 @@ export async function Incurred(c: Ctx) {
   const picks = await picksFor(sb, project.id, c.names);
   return (
     <>
-      {allowed.length ? <section className="panel"><div className="panel-head"><h2>Record cost incurred</h2><span className="sub">Type one entry here, or import a cost incurred sheet on Import from Excel</span></div>
+      {allowed.length ? <section className="panel" id="record-cost"><div className="panel-head"><h2>Record cost incurred</h2><span className="sub">Type one entry here, or import a cost incurred sheet on Import from Excel</span></div>
         <F.EntryForm projectId={project.id} heads={allowed.map((h) => ({ id: h.id, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}` }))} towers={towers}
           month={(v?.as_on ?? new Date().toISOString()).slice(0, 7)} customFields={cf.fields.filter((f) => f.show_in_entry)} picks={picks} />
         <p className="note">Amounts are entered in rupees and shown in crores in the budget.{v && ` A version counts every entry up to its as-on month (R${v.number}: up to ${monthName(v.as_on)}).`}</p></section>
         : <Notice>{!D.can(me, "cost.enter", project.id) ? "You can read every entry; departments record their own costs." : "No cost heads you can record against."}</Notice>}
-      {allowed.length > 0 && <section className="panel"><div className="panel-head"><h2>Record a bill</h2><span className="sub">Split a vendor bill over cost heads and towers; each split counts as cost incurred in the bill&apos;s month</span></div>
+      {allowed.length > 0 && <section className="panel" id="record-bill"><div className="panel-head"><h2>Record a bill</h2><span className="sub">Split a vendor bill over cost heads and towers; each split counts as cost incurred in the bill&apos;s month</span></div>
         <F.BillForm projectId={project.id} heads={allowed.map((h) => ({ id: h.id, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}` }))} towers={towers}
           date={(v?.as_on ?? new Date().toISOString()).slice(0, 10)} />
         <p className="note">Enter the basic amount of each split; GST on the bill is kept for reference, as the GST heads work out GST cost. The same bill number of a vendor cannot be recorded twice.</p></section>}
@@ -891,11 +960,10 @@ export async function Periods(c: Ctx) {
 
 // ---------- set-up ----------
 export async function Setup(c: Ctx) {
-  const { sb, me, project, version: v, projects } = c;
+  const { sb, me, project, version: v } = c;
   const can = D.can(me, "project.setup", project.id);
-  const [towers, heads, depts, template, areas, allHeads] = await Promise.all([
+  const [towers, heads, depts, template, areas] = await Promise.all([
     D.getTowers(sb, project.id), D.getHeads(sb, project.id), D.getDepartments(sb), getTemplate(sb), v ? D.getVersionAreas(sb, v.id) : Promise.resolve(null),
-    sb.from("budget_cost_heads").select("project_id").then((r) => (r.data ?? []) as { project_id: number }[]),
   ]);
   // GST rules master (Masters & setup → Masters); empty until migration 20261028121200 is applied
   const gstRules = ((await sb.from("budget_gst_rules").select("id, name, rate_pct, share_pct").eq("active", true).order("sort").order("name")).data ?? [])
@@ -915,20 +983,17 @@ export async function Setup(c: Ctx) {
     ...[...groups].map(([k, ids]) => { const [d, cat] = k.split("|"); return { value: `cat:${k}`, label: `All of ${(dept.get(Number(d))?.name ?? "Department")} · ${cat}`, ids }; }),
     ...plain.map((h) => ({ value: `head:${h.id}`, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}`, ids: [h.id] })),
   ];
-  const headCount = (pid: number) => allHeads.filter((h) => h.project_id === pid).length;
   const tc = await loadCustom(sb, "tower", project.id, new Map(towers.map((t) => [t.id, { carpet_area: cr(t.carpet_area), eng_area: cr(t.eng_area), oc_date: day(t.oc_date) }])), await lookupNames(sb, project.id, c.names));
   const tf = tc.fields.filter((f) => f.show_in_entry);
   const picks = await picksFor(sb, project.id, c.names);
   const editAreas = !!v && v.status === "draft" && can;
   // one master per screen: /budget/<project>/setup?section=project|towers|heads|signoff|new
-  const canCreate = D.can(me, "project.create");
   const qs = (k: string) => `/budget/${project.id}/setup?${v ? `v=${v.number}&` : ""}section=${k}`;
   const tabs = [
     can ? { key: "project", label: "Project details", href: qs("project"), hint: "Name, code and location of the project." } : null,
     { key: "towers", label: "Towers & areas", href: qs("towers"), count: towers.length, hint: can ? "Name each tower and set its building type (the Summary groups construction by type), then the areas of this version." : "Read only for you." },
     { key: "heads", label: "Cost heads", href: qs("heads"), count: heads.length, hint: "One list of cost heads per project, so names never drift between files." },
     { key: "signoff", label: "Sign-off chain", href: qs("signoff"), hint: "Who signs a version, and in which order, before it is approved." },
-    canCreate ? { key: "new", label: "New project", href: qs("new"), hint: "Typed set-up; or import a workbook and choose \"New project\"." } : null,
   ].filter(Boolean) as { key: string; label: string; href: string; count?: number; hint?: string }[];
   const section = tabs.some((t) => t.key === c.search.section) ? c.search.section! : tabs[0].key;
   return (
@@ -963,9 +1028,6 @@ export async function Setup(c: Ctx) {
         </tbody></table></div>
       </section>}
       {section === "signoff" && <SignoffSetup c={c} />}
-      {section === "new" && canCreate && <section className="panel"><div className="panel-head"><h2>New project</h2></div>
-        <F.NewProjectForm projects={projects.map((p) => ({ id: p.id, name: p.name, heads: headCount(p.id) }))} />
-      </section>}
     </>
   );
 }
