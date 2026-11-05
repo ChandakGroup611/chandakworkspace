@@ -73,7 +73,11 @@ export async function GetStarted(c: Ctx) {
       summary: versions.length ? `R${work!.number} as on ${dmy(work!.as_on)} is ${work!.status.replace("_", " ")}` : "A version holds the figures as on a date; R1 is the first budget.",
       action: versions.length && draft ? { href: href("setup", "section=towers"), label: "Areas of this version" } : undefined,
       body: versions.length ? <p className="sub">{draft ? <>Set the project areas of R{draft.number} (carpet, sold, construction area) under <Link href={href("setup", "section=towers")}>Towers &amp; areas</Link>; PSF figures use them.</> : "Versions are listed on the Overview."}</p>
-        : canOpen ? <F.OpenVersionForm projectId={pid} defaultDate={nextQuarterEnd(new Date().toISOString().slice(0, 10))} first />
+        : canOpen ? <>
+          <p className="sub">Recommended: the <b>Create budget form</b> takes the as-on date, areas, towers, every line with Initial, CTC and cost incurred, and GST in one guided flow, and opens R1 when you save.</p>
+          <div className="row"><Link className="btn-action primary" href={`/budget/${pid}/create`}>Open the Create budget form →</Link></div>
+          <details><summary>Or open an empty R1 and type in the sheet</summary><F.OpenVersionForm projectId={pid} defaultDate={nextQuarterEnd(new Date().toISOString().slice(0, 10))} first /></details>
+        </>
         : <p className="note">The budget preparer opens the first version.</p>,
     },
     {
@@ -83,13 +87,14 @@ export async function GetStarted(c: Ctx) {
         : "No figures yet.",
       action: work && draft ? { href: href("entry", "mode=form"), label: "Enter line by line" } : undefined,
       body: !work ? <p className="sub">Open R1 first.</p> : draft && canEdit ? <>
-        <p className="sub">Two ways, same figures: <b>line by line</b> walks you through each line with Save &amp; next; the <b>budget sheet</b> shows every line in one table.</p>
+        <p className="sub">The <b>Create budget form</b> takes every workbook input in one guided flow; <b>line by line</b> walks through each line with Save &amp; next; the <b>budget sheet</b> shows every line in one table. All three edit the same figures.</p>
         <div className="actions-group">
-          <Link className="btn-action primary" href={href("entry", "mode=form")}>Enter line by line</Link>
+          <Link className="btn-action primary" href={`/budget/${pid}/create`}>Create budget form</Link>
+          <Link className="btn-action" href={href("entry", "mode=form")}>Enter line by line</Link>
           <Link className="btn-action" href={href("entry")}>Open budget sheet</Link>
           <Link className="btn-action" href={href("schedules")}>Schedules (workings)</Link>
         </div>
-      </> : <p className="sub">R{work.number} is {work.status.replace("_", " ")}; figures are locked. {approved && canOpen && !open ? <Link href={href("entry") + "#manual-entry"}>Start the next version</Link> : null}</p>,
+      </> : <p className="sub">R{work.number} is {work.status.replace("_", " ")}; figures are locked. {approved && canOpen && !open ? <Link href={`/budget/${pid}/create`}>Create the next version</Link> : null}</p>,
     },
     {
       key: "cost", title: "Record cost incurred", optional: true, done: entries.length > 0,

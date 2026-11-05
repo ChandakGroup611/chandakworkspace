@@ -5,6 +5,7 @@ import { loadSession } from "../../_components/page-data";
 import { Shell, TABS } from "../../_components/shell";
 import * as V from "../../_components/views";
 import { GetStarted } from "../../_components/start";
+import { CreateBudget } from "../../_components/create";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function BudgetScreen({ params, searchParams }: {
 
   let body: React.ReactNode;
   if (tab === "start") body = await GetStarted(ctx);
+  else if (tab === "create") body = await CreateBudget(ctx);
   else if (tab === "import") body = await V.ImportTab(ctx);
   else if (tab === "setup") body = await V.Setup(ctx);
   else if (tab === "guide") body = <BudgetLearningGuide projectId={project.id} version={version} />;

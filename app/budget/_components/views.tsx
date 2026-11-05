@@ -111,7 +111,7 @@ export async function Overview(c: Ctx & { version: Version }) {
             })}
           </tbody></table></div>
           {D.can(me, "version.open", project.id) && !draft && approved ? <>
-            <div className="row"><Link className="btn-action primary" href={`/budget/${project.id}/entry?v=${approved.number}#manual-entry`}>Start R{Math.max(...versions.map((x) => x.number)) + 1}</Link></div>
+            <div className="row"><Link className="btn-action primary" href={`/budget/${project.id}/create`}>Create budget R{Math.max(...versions.map((x) => x.number)) + 1}</Link></div>
             <p className="note">Opens the next version as a draft under Prepare budget. Two ways to fill it: departments type their changes on the Budget sheet, or upload the revised workbook on Import Excel. Both land in the same draft.</p></>
             : <p className="note">{draft ? (draft.status === "in_review" ? `R${draft.number} is under sign-off. It is approved or sent back before another version is opened.` : `Draft R${draft.number} is open. Approve or delete it before opening another.`) : "Only the budget preparer or an administrator opens new versions."}</p>}
         </section>
@@ -140,7 +140,8 @@ function NextStep({ c, draft }: { c: Ctx & { version: Version }; draft: Version 
   if (v.status === "draft") {
     title = `R${v.number} is a draft: prepare the figures`;
     text = "Type the figures line by line or in the sheet (or import them), add any new lines, then send it for sign-off from the banner above.";
-    if (canPrepare) actions.push({ href: `/budget/${pid}/entry?v=${v.number}&mode=form`, label: "Enter line by line", primary: true });
+    if (D.canChangeDraft(me, v)) actions.push({ href: `/budget/${pid}/create`, label: "Create budget form", primary: true });
+    if (canPrepare) actions.push({ href: `/budget/${pid}/entry?v=${v.number}&mode=form`, label: "Enter line by line" });
     if (canPrepare) actions.push({ href: `/budget/${pid}/entry?v=${v.number}`, label: "Open budget sheet" });
     if (D.can(me, "project.setup", pid)) actions.push({ href: `/budget/${pid}/start?v=${v.number}`, label: "Get started checklist" });
     if (canImport) actions.push({ href: `/budget/${pid}/import?v=${v.number}`, label: "Import Excel" });
@@ -155,7 +156,7 @@ function NextStep({ c, draft }: { c: Ctx & { version: Version }; draft: Version 
   } else {
     title = `R${v.number} is approved and locked`;
     text = D.can(me, "version.open", pid) ? `To revise the budget, start R${next}: it opens as an editable draft.` : "Read the reports, or record cost incurred under Actuals.";
-    if (D.can(me, "version.open", pid)) actions.push({ href: `/budget/${pid}/entry?v=${v.number}#manual-entry`, label: `Start R${next}`, primary: true });
+    if (D.can(me, "version.open", pid)) actions.push({ href: `/budget/${pid}/create`, label: `Create budget R${next}`, primary: true });
     actions.push({ href: `/budget/${pid}/summary?v=${v.number}`, label: "Summary report", primary: !D.can(me, "version.open", pid) });
   }
   return (
@@ -404,8 +405,11 @@ export async function Entry(c: Ctx & { version: Version }) {
       <VersionBanner sb={sb} me={me} project={project} version={v} names={c.names} />
       <Notice kind={v.status === "approved" ? "locked" : ""}>{notice}</Notice>
       {canOpenNext && <section className="panel" id="manual-entry">
-        <div className="panel-head"><h3>Type a budget manually · R{v.number + 1}</h3><span className="sub">Opens R{v.number + 1} as an editable draft; type Initial and CTC in the sheet, add lines if needed, then send it for sign-off</span></div>
-        <F.OpenVersionForm projectId={project.id} defaultDate={nextQuarterEnd(v.as_on)} />
+        <div className="panel-head"><h3>Create budget R{v.number + 1}</h3><span className="sub">R{v.number} is locked. The Create budget form takes you through every input: as-on date, areas, towers, lines by department with Initial, CTC and cost incurred, GST, then review</span></div>
+        <div className="row"><Link className="btn-action primary big" href={`/budget/${project.id}/create`}>Open the Create budget form →</Link></div>
+        <details><summary>Or only open R{v.number + 1} as an empty draft and type in the sheet</summary>
+          <F.OpenVersionForm projectId={project.id} defaultDate={nextQuarterEnd(v.as_on)} />
+        </details>
       </section>}
       <section className="panel">
         <div className="panel-head">
@@ -420,8 +424,9 @@ export async function Entry(c: Ctx & { version: Version }) {
           <div className="row" style={{ alignItems: "center", gap: 8 }}>
             <Filters ctx={c} depts={g.departments.map((d) => d.department)} towers={towers} />
             <div className="actions-group">
-              {canAddLine && <a href="#add-lines" className="btn-action primary">+ Add lines</a>}
-              {canOpenNext && <a href="#manual-entry" className="btn-action primary">+ Manual entry</a>}
+              {v.status === "draft" && D.canChangeDraft(me, v) && <Link href={`/budget/${project.id}/create`} className="btn-action primary">Edit in Create budget form</Link>}
+              {canAddLine && <a href="#add-lines" className="btn-action">+ Add lines</a>}
+              {canOpenNext && <Link href={`/budget/${project.id}/create`} className="btn-action primary">+ Create budget</Link>}
               {v.status === "draft" && splitHeads.length > 0 && towers.length > 0 && (
                 <a href="#split-head" className="btn-action">+ Split Tower</a>
               )}

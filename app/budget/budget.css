@@ -1419,3 +1419,37 @@
 .budget-app .lbl-head h3 { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .budget-app input.amt.big { font-size: 18px; padding: 8px 10px; width: 170px; text-align: right; }
 .budget-app details.import-alt > summary { color: var(--ink); }
+
+/* ---------- Create budget form ---------- */
+.budget-app .wz { display: flex; flex-direction: column; gap: 12px; }
+.budget-app .wz-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.budget-app .wz-steps button { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; }
+.budget-app .wz-steps li.current button { border-color: var(--accent); background: var(--b-accent-soft); font-weight: 600; }
+.budget-app .wz-steps li.current .step-badge { background: var(--accent); color: var(--accent-ink); }
+.budget-app .wz-steps li.done .step-badge { background: var(--good-soft); color: var(--good); }
+.budget-app .wz-steps .step-badge { width: 24px; height: 24px; font-size: 12px; }
+.budget-app .wz-body h2 { margin-top: 0; }
+.budget-app .wz-areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px 14px; margin: 8px 0 16px; }
+.budget-app .wz-areas label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.budget-app .wz-depts { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 860px) { .budget-app .wz-depts { grid-template-columns: 1fr; } }
+.budget-app .wz-dept-list { display: flex; flex-direction: column; gap: 4px; position: sticky; top: 8px; }
+@media (max-width: 860px) { .budget-app .wz-dept-list { position: static; flex-direction: row; overflow-x: auto; } }
+.budget-app .wz-dept-list button { text-align: left; display: flex; flex-direction: column; padding: 8px 10px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; min-width: 150px; }
+.budget-app .wz-dept-list button small { color: var(--muted); }
+.budget-app .wz-dept-list button[aria-current="true"] { border-color: var(--accent); background: var(--b-accent-soft); }
+.budget-app .wz-grand { display: flex; justify-content: space-between; padding: 8px 10px; border-top: 1px solid var(--line); margin-top: 4px; min-width: 150px; }
+.budget-app .wz-lines td small { display: block; font-size: 11px; }
+.budget-app .wz-lines .warn-text { color: var(--warn); }
+.budget-app .wz-rate { display: flex; gap: 4px; margin-top: 4px; }
+.budget-app .wz-rate input { width: 80px; min-width: 70px; }
+.budget-app .wz-remark { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.budget-app .wz-gst { margin-bottom: 10px; }
+.budget-app .wz-base { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.budget-app .wz-base fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.budget-app .wz-base label.check { display: flex; font-size: 13px; }
+.budget-app input[aria-invalid="true"] { border-color: var(--bad); background: var(--bad-soft); }
+.budget-app .btn-action.big { font-size: 15px; padding: 9px 16px; }
+.budget-app .wz-done h2 { margin-top: 0; }

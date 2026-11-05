@@ -4,7 +4,7 @@ import { dmy } from "@/lib/budget/format";
 import { Selectors, SignoffActions } from "./forms";
 
 export const TABS: [string, string][] = [
-  ["start", "Get started"], ["overview", "Overview"], ["entry", "Budget entry"], ["import", "Import from Excel"], ["summary", "Summary report"],
+  ["start", "Get started"], ["create", "Create budget"], ["overview", "Overview"], ["entry", "Budget entry"], ["import", "Import from Excel"], ["summary", "Summary report"],
   ["detail", "Detail report"], ["compare", "Compare versions"], ["incurred", "Cost incurred"], ["periods", "Month / quarter / year"],
   ["setup", "Project setup"], ["workings", "Tower workings"], ["schedules", "Schedules"], ["line", "Budget line"], ["guide", "Workflow guide & learning hub"],
 ];
@@ -19,7 +19,7 @@ export type Area = "home" | "start" | "overview" | "prepare" | "actuals" | "repo
 
 export const AREA_OF: Record<string, Area> = {
   home: "home", start: "start", overview: "overview",
-  entry: "prepare", workings: "prepare", schedules: "prepare", import: "prepare", line: "prepare",
+  create: "prepare", entry: "prepare", workings: "prepare", schedules: "prepare", import: "prepare", line: "prepare",
   incurred: "actuals",
   summary: "reports", detail: "reports", compare: "reports", periods: "reports",
   setup: "setup", guide: "help",
@@ -31,7 +31,7 @@ const AREAS: { id: Area; label: string; first: string; subs?: SubTab[] }[] = [
   { id: "start", label: "Get started", first: "start" },
   { id: "overview", label: "Overview", first: "overview" },
   { id: "prepare", label: "Prepare budget", first: "entry", subs: [
-    { id: "entry", label: "Budget entry" }, { id: "workings", label: "Tower workings" }, { id: "schedules", label: "Schedules" }, { id: "import", label: "Import Excel (optional)" },
+    { id: "create", label: "Create budget" }, { id: "entry", label: "Budget entry" }, { id: "workings", label: "Tower workings" }, { id: "schedules", label: "Schedules" }, { id: "import", label: "Import Excel (optional)" },
   ] },
   { id: "actuals", label: "Actuals", first: "incurred" },
   { id: "reports", label: "Reports", first: "summary", subs: [
