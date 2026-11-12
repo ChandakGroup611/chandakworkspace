@@ -30,10 +30,12 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
 
   // 2. Authorize the caller (Must be SUPER_ADMIN or have USERS_CREATE/USERS_UPDATE/USERS_MANAGE permission)
   const { hasPermission } = await import('@/lib/permissions');
-  let isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  let isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN') || 
+                      await hasPermission(authUser.id, 'USERS_MANAGE') ||
+                      (editUserId ? await hasPermission(authUser.id, 'USERS_UPDATE') : await hasPermission(authUser.id, 'USERS_CREATE'));
 
   if (!isCallerAdmin && editUserId !== authUser.id) {
-    return { success: false, error: "Unauthorized: Only Super Administrators can manage other user records." };
+    return { success: false, error: "Unauthorized: You do not have permissions to manage other user records." };
   }
 
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -299,7 +301,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
     try {
       const { assignUserModules } = await import("@/lib/actions/module-switcher");
       const defaultMod = payload.default_module_code || payload.module_codes[0] || "TASK_WORKFLOW";
-      await assignUserModules(savedUserId, payload.module_codes, defaultMod);
+      await assignUserModules(savedUserId, payload.module_codes, defaultMod, payload.dashboard_keys || payload.dashboardKeys);
     } catch (modErr) {
       console.error("[saveUserAction] Error saving module assignments:", modErr);
     }
@@ -526,6 +528,7 @@ export interface InviteUserPayload {
   designationId?: string | null;
   moduleCodes?: string[];
   defaultModuleCode?: string;
+  dashboardKeys?: string[];
   redirectTo?: string;
 }
 
@@ -542,12 +545,14 @@ export async function inviteUserAction(
     return { success: false, error: "Unauthenticated request. Please log in." };
   }
 
-  // 2. Authorize the caller (Must be SUPER_ADMIN to invite users)
+  // 2. Authorize the caller (Must be SUPER_ADMIN or have USERS_CREATE/USERS_MANAGE to invite users)
   const { hasPermission } = await import('@/lib/permissions');
-  const isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  const isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN') ||
+                        await hasPermission(authUser.id, 'USERS_MANAGE') ||
+                        await hasPermission(authUser.id, 'USERS_CREATE');
 
   if (!isCallerAdmin) {
-    return { success: false, error: "Unauthorized: Only Super Administrators can invite users." };
+    return { success: false, error: "Unauthorized: You do not have permission to invite users." };
   }
 
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -623,8 +628,21 @@ export async function inviteUserAction(
         return { success: false, error: `Invite failed: ${inviteError.message}` };
       }
     } else {
-      console.error("[Server Action] Invite error:", inviteError);
-      return { success: false, error: `Invite failed: ${inviteError.message}` };
+      console.warn("[Server Action] Invite error, attempting direct user creation fallback:", inviteError.message);
+      const { data: createdAuthUser, error: createAuthError } = await adminClient.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName || email.split("@")[0],
+          invited_by: authUser.id
+        }
+      });
+      if (createdAuthUser?.user?.id) {
+        targetUserId = createdAuthUser.user.id;
+      } else {
+        console.error("[Server Action] Direct user creation fallback also failed:", createAuthError);
+        return { success: false, error: `Invite failed: ${inviteError.message}` };
+      }
     }
   }
 
@@ -672,7 +690,7 @@ export async function inviteUserAction(
   // 7. Configure and assign operational modules
   try {
     const { assignUserModules } = await import("@/lib/actions/module-switcher");
-    await assignUserModules(targetUserId, moduleCodes, defaultModuleCode);
+    await assignUserModules(targetUserId, moduleCodes, defaultModuleCode, payload.dashboardKeys);
   } catch (modErr) {
     console.error("[Server Action] Error assigning modules during invite:", modErr);
   }
@@ -703,3 +721,13 @@ export async function inviteUserAction(
     message: `Invitation successfully sent to ${email} with assigned role and module access.` 
   };
 }
+
+/**
+ * Fetches dashboard assignments (keys) for a specific user.
+ */
+export async function fetchUserDashboardsAction(targetUserId: string): Promise<string[]> {
+  noStore();
+  const { fetchUserDashboardKeys } = await import("@/lib/actions/module-switcher");
+  return fetchUserDashboardKeys(targetUserId);
+}
+

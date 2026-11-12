@@ -20,7 +20,8 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePresence } from "@/hooks/use-presence";
-import { saveUserAction, fetchUsersDashboardData, deleteUserAction, inviteUserAction, fetchUserModulesAction } from "@/lib/actions/users";
+import { saveUserAction, fetchUsersDashboardData, deleteUserAction, inviteUserAction, fetchUserModulesAction, fetchUserDashboardsAction } from "@/lib/actions/users";
+import { DASHBOARDS } from "@/lib/dashboards/registry";
 import { assignUserModules } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
@@ -62,6 +63,58 @@ import {
 } from "lucide-react";
 
 // Initial premium fallback/mock user datasets to guarantee absolute rich presentation
+const OPERATIONAL_MODULES = [
+  { 
+    code: "TASK_WORKFLOW", 
+    name: "Workspace & Tasks", 
+    desc: "Task tracker, sprints, ticketing/helpdesk, requirements & AMC lifecycle.", 
+    icon: FolderKanban, 
+    color: "text-info-text bg-info-soft border-info-border" 
+  },
+  { 
+    code: "VEHICLE_DESK", 
+    name: "Vehicle Management Desk", 
+    desc: "Fleet master, vehicle allocation, trip sheets, driver roster, maintenance & spare parts.", 
+    icon: Car, 
+    color: "text-success-text bg-success-soft border-success-border" 
+  },
+  { 
+    code: "DESIGN_TRACKING", 
+    name: "Design & Drawing Tracking", 
+    desc: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC.", 
+    icon: Compass, 
+    color: "text-accent-soft-text bg-accent-soft border-border" 
+  },
+  { 
+    code: "DASHBOARDS", 
+    name: "Executive Dashboards", 
+    desc: "Department budget & expense dashboards on live IN4 data (IT, Marketing, etc.).", 
+    icon: LineChart, 
+    color: "text-amber-500 bg-amber-500/10 border-amber-500/30" 
+  },
+  { 
+    code: "CHANDAK_MEET", 
+    name: "Chandak Meet", 
+    desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.", 
+    icon: Video, 
+    color: "text-purple-500 bg-purple-500/10 border-purple-500/30" 
+  },
+  { 
+    code: "ORG_BUDGET", 
+    name: "Organization Budget", 
+    desc: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports.", 
+    icon: Landmark, 
+    color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/30" 
+  },
+  { 
+    code: "CHANDAK_MESSENGER", 
+    name: "Chandak Messenger", 
+    desc: "Real-time enterprise team chat, direct 1:1 messaging, group channels and instant audio/video calls.", 
+    icon: MessageSquare, 
+    color: "text-sky-500 bg-sky-500/10 border-sky-500/30" 
+  }
+];
+
 interface AppUserItem {
   id: string;
   full_name: string;
@@ -169,6 +222,7 @@ export default function UserMasterPage() {
   const [inviteDesignation, setInviteDesignation] = useState<string>("");
   const [inviteSelectedModules, setInviteSelectedModules] = useState<string[]>(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
   const [inviteDefaultModule, setInviteDefaultModule] = useState<string>("TASK_WORKFLOW");
+  const [inviteSelectedDashboards, setInviteSelectedDashboards] = useState<string[]>(["adm", "engg"]);
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const handleSendInvite = async () => {
@@ -188,7 +242,8 @@ export default function UserMasterPage() {
       departmentId: inviteDepartment || null,
       designationId: inviteDesignation || null,
       moduleCodes: inviteSelectedModules,
-      defaultModuleCode: inviteDefaultModule
+      defaultModuleCode: inviteDefaultModule,
+      dashboardKeys: inviteSelectedDashboards
     });
     if (res.success) {
       triggerToast(res.message || "Invitation sent successfully.");
@@ -212,6 +267,7 @@ export default function UserMasterPage() {
   const [moduleModalUser, setModuleModalUser] = useState<AppUserItem | null>(null);
   const [modalSelectedCodes, setModalSelectedCodes] = useState<string[]>(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
   const [modalDefaultCode, setModalDefaultCode] = useState<string>("TASK_WORKFLOW");
+  const [modalSelectedDashboards, setModalSelectedDashboards] = useState<string[]>([]);
   const [moduleModalLoading, setModuleModalLoading] = useState(false);
   const [moduleModalSaving, setModuleModalSaving] = useState(false);
 
@@ -220,7 +276,11 @@ export default function UserMasterPage() {
     setModuleModalOpen(true);
     setModuleModalLoading(true);
     try {
-      const userMods: any[] = (await fetchUserModulesAction(user.id)) as any[];
+      const [userMods, userDashboards]: [any[], any[]] = await Promise.all([
+        fetchUserModulesAction(user.id) as any,
+        fetchUserDashboardsAction(user.id) as any
+      ]);
+      setModalSelectedDashboards(userDashboards && userDashboards.length > 0 ? userDashboards : ["adm", "engg"]);
       if (userMods && userMods.length > 0) {
         const codes = userMods.map((m: any) => {
           const mod = Array.isArray(m.module) ? m.module[0] : m.module;
@@ -247,7 +307,7 @@ export default function UserMasterPage() {
     if (!moduleModalUser) return;
     setModuleModalSaving(true);
     try {
-      const res = await assignUserModules(moduleModalUser.id, modalSelectedCodes, modalDefaultCode);
+      const res = await assignUserModules(moduleModalUser.id, modalSelectedCodes, modalDefaultCode, modalSelectedDashboards);
       if (res.success) {
         triggerToast(`Operational modules updated for ${moduleModalUser.full_name}`);
         setModuleModalOpen(false);
@@ -861,36 +921,7 @@ export default function UserMasterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  {[
-                    { 
-                      code: "TASK_WORKFLOW", 
-                      name: "Workspace & Tasks", 
-                      desc: "Task tracker, sprints, ticketing/helpdesk, requirements & AMC lifecycle.", 
-                      icon: FolderKanban, 
-                      color: "text-info-text bg-info-soft border-info-border" 
-                    },
-                    { 
-                      code: "VEHICLE_DESK", 
-                      name: "Vehicle Management Desk", 
-                      desc: "Fleet master, vehicle allocation, trip sheets, driver roster, maintenance & spare parts.", 
-                      icon: Car, 
-                      color: "text-success-text bg-success-soft border-success-border" 
-                    },
-                    { 
-                      code: "DESIGN_TRACKING", 
-                      name: "Design & Drawing Tracking", 
-                      desc: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC.", 
-                      icon: Compass, 
-                      color: "text-accent-soft-text bg-accent-soft border-border" 
-                    },
-                    { 
-                      code: "CHANDAK_MEET", 
-                      name: "Chandak Meet", 
-                      desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.", 
-                      icon: Video, 
-                      color: "text-purple-500 bg-purple-500/10 border-purple-500/30" 
-                    }
-                  ].map((mod) => {
+                  {OPERATIONAL_MODULES.map((mod) => {
                     const isChecked = inviteSelectedModules.includes(mod.code);
                     const isDefault = inviteDefaultModule === mod.code;
                     const IconComp = mod.icon;
@@ -954,6 +985,47 @@ export default function UserMasterPage() {
                             {isDefault ? "Default" : "Set Default"}
                           </button>
                         )}
+
+                        {mod.code === "DASHBOARDS" && isChecked && (
+                          <div className="mt-2 ml-4 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
+                              <span>Accessible Dashboards:</span>
+                              <span className="text-[10px] text-muted-foreground">{inviteSelectedDashboards.length} selected</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {DASHBOARDS.map((d) => {
+                                const isDashActive = inviteSelectedDashboards.includes(d.key);
+                                return (
+                                  <label
+                                    key={d.key}
+                                    className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${
+                                      isDashActive
+                                        ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
+                                        : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isDashActive}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setInviteSelectedDashboards(prev => [...prev, d.key]);
+                                        } else {
+                                          setInviteSelectedDashboards(prev => prev.filter(k => k !== d.key));
+                                        }
+                                      }}
+                                      className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
+                                    />
+                                    <div className="min-w-0">
+                                      <span className="block text-xs truncate font-semibold">{d.name}</span>
+                                      <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -980,158 +1052,6 @@ export default function UserMasterPage() {
               >
                 {inviteLoading ? "Sending Invitation..." : "Send Invitation"}
               </AppButton>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Assign Modules Modal Dialog */}
-      {moduleModalOpen && moduleModalUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-lg shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-surface text-accent-soft-text flex items-center justify-center border border-border">
-                  <Layers className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Assign operational modules
-                  </h3>
-                  <p className="text-xs text-muted">
-                    Configure permitted workspaces for {moduleModalUser.full_name} ({moduleModalUser.email})
-                  </p>
-                </div>
-              </div>
-              <AppButton aria-label="Close" 
-                variant="ghost" 
-                size="icon-sm" 
-                onClick={() => setModuleModalOpen(false)}
-                className="text-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            <div className="p-5 space-y-3.5 overflow-y-auto flex-1">
-              {moduleModalLoading ? (
-                <div className="py-8 text-center text-muted flex flex-col items-center gap-2">
-                  <RefreshCw className="h-5 w-5 animate-spin text-accent-soft-text" />
-                  <span className="text-xs">Loading module entitlements…</span>
-                </div>
-              ) : (
-                [
-                  { code: "VEHICLE_DESK", name: "Vehicle Module", desc: "Fleet inventory, trip sheets, driver rosters, maintenance & spare parts.", icon: Car, color: "text-success-text bg-success-soft border-success-border" },
-                  { code: "TASK_WORKFLOW", name: "Workspace Module", desc: "Executive task tracker, sprints, ticketing/helpdesk, requirements & AMC.", icon: FolderKanban, color: "text-info-text bg-info-soft border-info-border" },
-                  { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-accent-soft-text bg-surface border-border" },
-                  { code: "DASHBOARDS", name: "Dashboards", desc: "IT & Marketing budget dashboards. What each user can do is set by DASH_* role permissions.", icon: LineChart, color: "text-accent-soft-text bg-accent-soft border-border" },
-                  { code: "CHANDAK_MEET", name: "Chandak Meet", desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.", icon: Video, color: "text-purple-500 bg-purple-500/10 border-purple-500/30" }
-                ].map((mod) => {
-                  const isChecked = modalSelectedCodes.includes(mod.code);
-                  const isDefault = modalDefaultCode === mod.code;
-                  const Icon = mod.icon;
-
-                  return (
-                    <div
-                      key={mod.code}
-                      className={`p-3.5 rounded-lg border transition-all flex items-center justify-between gap-3 ${
-                        isChecked
-                          ? "bg-surface border-border shadow-xs"
-                          : "bg-muted/20 border-border/40 opacity-60"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border ${mod.color}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-sm text-foreground">
-                              {mod.name}
-                            </span>
-                            {isDefault && isChecked && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
-                                <Star className="h-2.5 w-2.5 fill-warning text-warning-text" /> Landing default
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted mt-0.5 line-clamp-2">
-                            {mod.desc}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {isChecked && (
-                          <AppButton
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            disabled={isDefault}
-                            onClick={() => setModalDefaultCode(mod.code)}
-                            className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${
-                              isDefault
-                                ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
-                                : "text-muted hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
-                            }`}
-                          >
-                            <Star className={`h-3 w-3 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
-                            <span>{isDefault ? "Default" : "Make Default"}</span>
-                          </AppButton>
-                        )}
-
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                const updated = [...modalSelectedCodes, mod.code];
-                                setModalSelectedCodes(updated);
-                                if (!modalDefaultCode) setModalDefaultCode(mod.code);
-                              } else {
-                                const updated = modalSelectedCodes.filter(c => c !== mod.code);
-                                setModalSelectedCodes(updated);
-                                if (modalDefaultCode === mod.code && updated.length > 0) {
-                                  setModalDefaultCode(updated[0]);
-                                }
-                              }
-                            }}
-                            className="sr-only peer"
-                          />
-                          <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                        </label>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between gap-3">
-              <span className="text-xs text-muted">
-                {modalSelectedCodes.length} of 5 modules enabled
-              </span>
-              <div className="flex items-center gap-2">
-                <AppButton 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setModuleModalOpen(false)}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton 
-                  type="button" 
-                  size="sm" 
-                  className="bg-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
-                  onClick={handleSaveModules}
-                  disabled={moduleModalSaving || moduleModalLoading}
-                >
-                  {moduleModalSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  <span>{moduleModalSaving ? "Saving..." : "Save Assignments"}</span>
-                </AppButton>
-              </div>
             </div>
           </div>
         </div>
@@ -1636,57 +1556,7 @@ export default function UserMasterPage() {
 
                 {/* Module Cards */}
                 <div className="space-y-2.5">
-                  {[
-                    {
-                      code: "TASK_WORKFLOW",
-                      name: "Workspace Tasks & Governance",
-                      desc: "Executive tasks, sprints, tickets, requirements, SLA, and enterprise analytics.",
-                      icon: FolderKanban,
-                      color: "text-info-text border-info-border bg-info-soft"
-                    },
-                    {
-                      code: "DESIGN_TRACKING",
-                      name: "Design & Engineering Tracking",
-                      desc: "Architectural drawings, CAD revisions, stage-gate reviews, GFC site handover & consultant directory.",
-                      icon: Compass,
-                      color: "text-success-text border-success-border bg-success-soft"
-                    },
-                    {
-                      code: "VEHICLE_DESK",
-                      name: "Fleet & Vehicle Desk",
-                      desc: "Vehicle allocations, driver roster, trip sheets, maintenance, parts inventory & logistics.",
-                      icon: Car,
-                      color: "text-warning-text border-warning-border bg-warning-soft"
-                    },
-                    {
-                      code: "DASHBOARDS",
-                      name: "Department Dashboards",
-                      desc: "IT & Marketing budget dashboards on live IN4 data. Actions are set by DASH_* role permissions.",
-                      icon: LineChart,
-                      color: "text-accent-soft-text border-border bg-accent-soft"
-                    },
-                    {
-                      code: "CHANDAK_MEET",
-                      name: "Chandak Meet",
-                      desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.",
-                      icon: Video,
-                      color: "text-purple-500 border-purple-500/30 bg-purple-500/10"
-                    },
-                    {
-                      code: "ORG_BUDGET",
-                      name: "Organization Budget",
-                      desc: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports.",
-                      icon: Landmark,
-                      color: "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
-                    },
-                    {
-                      code: "CHANDAK_MESSENGER",
-                      name: "Chandak Messenger",
-                      desc: "Real-time enterprise team chat, direct 1:1 messaging, group channels and instant audio/video calls.",
-                      icon: MessageSquare,
-                      color: "text-sky-500 border-sky-500/30 bg-sky-500/10"
-                    }
-                  ].map(mod => {
+                  {OPERATIONAL_MODULES.map(mod => {
                     const isSelected = modalSelectedCodes.includes(mod.code);
                     const isDefault = modalDefaultCode === mod.code;
                     const IconComp = mod.icon;
@@ -1741,6 +1611,47 @@ export default function UserMasterPage() {
                             {isSelected && <Check className="h-3 w-3" />}
                           </div>
                         </div>
+                        {mod.code === "DASHBOARDS" && isSelected && (
+                          <div className="mt-2 ml-4 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
+                              <span>Accessible Dashboards (User-Wise):</span>
+                              <span className="text-[10px] text-muted-foreground">{modalSelectedDashboards.length} selected</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {DASHBOARDS.map((d) => {
+                                const isDashActive = modalSelectedDashboards.includes(d.key);
+                                return (
+                                  <label
+                                    key={d.key}
+                                    className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${
+                                      isDashActive
+                                        ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
+                                        : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
+                                    }`}
+                                    onClick={e => e.stopPropagation()}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isDashActive}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setModalSelectedDashboards(prev => [...prev, d.key]);
+                                        } else {
+                                          setModalSelectedDashboards(prev => prev.filter(k => k !== d.key));
+                                        }
+                                      }}
+                                      className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
+                                    />
+                                    <div className="min-w-0">
+                                      <span className="block text-xs truncate font-semibold">{d.name}</span>
+                                      <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1756,7 +1667,7 @@ export default function UserMasterPage() {
                   >
                     {modalSelectedCodes.map(code => (
                       <option key={code} value={code}>
-                        {code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : code === "DASHBOARDS" ? "Dashboards" : code === "CHANDAK_MEET" ? "Chandak Meet" : code === "ORG_BUDGET" ? "Organization Budget" : code === "CHANDAK_MESSENGER" ? "Chandak Messenger" : "Vehicle Desk"}
+                        {OPERATIONAL_MODULES.find(m => m.code === code)?.name || (code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : code === "DASHBOARDS" ? "Dashboards" : code === "CHANDAK_MEET" ? "Chandak Meet" : code === "ORG_BUDGET" ? "Organization Budget" : code === "CHANDAK_MESSENGER" ? "Chandak Messenger" : "Vehicle Desk")}
                       </option>
                     ))}
                   </select>

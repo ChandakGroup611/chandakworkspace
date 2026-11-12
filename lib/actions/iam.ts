@@ -15,16 +15,15 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 async function checkIAMAuthorization(requiredPermission?: string) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const { getCachedUser } = await import("@/lib/auth/cached-user");
+    const { user } = await getCachedUser();
+    if (!user) {
       throw new Error("Unauthenticated request. Please log in.");
     }
 
-    const isAuthorized = await checkServerPermission(requiredPermission || "IAM_MANAGE");
-    
+    const { hasPermission } = await import("@/lib/permissions");
+    const isAuthorized = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, requiredPermission || "IAM_MANAGE");
+
     if (!isAuthorized) {
       throw new Error("Unauthorized: You do not have capabilities to perform this IAM operation.");
     }
@@ -36,13 +35,13 @@ async function checkIAMAuthorization(requiredPermission?: string) {
 export async function fetchRoles() {
   await checkIAMAuthorization("IAM_VIEW");
   const supabase = supabaseAdmin;
-  
+
   const { data, error } = await supabase
     .from("roles")
     .select("*, department:departments(name)")
     .eq("is_deleted", false)
     .order("name", { ascending: true });
-    
+
   if (error) {
     console.error("[IAM] Error fetching roles:", error);
     return [];
@@ -53,13 +52,13 @@ export async function fetchRoles() {
 export async function fetchPermissions() {
   await checkIAMAuthorization("IAM_VIEW");
   const supabase = supabaseAdmin;
-  
+
   const { data, error } = await supabase
     .from("permissions")
     .select("*")
     .order("module", { ascending: true })
     .order("name", { ascending: true });
-    
+
   if (error) {
     console.error("[IAM] Error fetching permissions:", error);
     return [];
@@ -74,12 +73,12 @@ export async function fetchRolePermissions(roleId: string) {
     return [];
   }
   const supabase = supabaseAdmin;
-  
+
   const { data, error } = await supabase
     .from("role_permissions")
     .select("permission_id")
     .eq("role_id", roleId);
-    
+
   if (error) {
     console.error("[IAM] Error fetching role permissions:", error);
     return [];
@@ -91,7 +90,7 @@ export async function fetchRolePermissions(roleId: string) {
 export async function createRole(formData: { name: string, code: string, description: string, department_id?: string }) {
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
-  
+
   const { data, error } = await supabase
     .from("roles")
     .insert([{
@@ -101,20 +100,21 @@ export async function createRole(formData: { name: string, code: string, descrip
     }])
     .select()
     .single();
-    
+
   if (error) {
     console.error("[IAM] Error creating role:", error);
     throw new Error(error.message);
   }
-  
+
   revalidatePath("/iam");
+  revalidatePath("/rbac");
   return data;
 }
 
 export async function updateRole(roleId: string, updates: any) {
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
-  
+
   // Protect system roles from certain modifications if needed
   const { data: role } = await supabase.from("roles").select("is_system").eq("id", roleId).single();
   if (role?.is_system && updates.code) {
@@ -125,19 +125,21 @@ export async function updateRole(roleId: string, updates: any) {
     .from("roles")
     .update(updates)
     .eq("id", roleId);
-    
+
   if (error) {
     console.error("[IAM] Error updating role:", error);
     throw new Error(error.message);
   }
-  
+
   revalidatePath("/iam");
+  revalidatePath("/rbac");
+  return { success: true };
 }
 
 export async function syncRolePermissions(roleId: string, permissionIds: string[]) {
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
-  
+
   // Deduplicate and filter valid IDs
   const validPermissionIds = new Set(permissionIds.filter(Boolean));
 
@@ -166,7 +168,7 @@ export async function syncRolePermissions(roleId: string, permissionIds: string[
       .delete()
       .eq("role_id", roleId)
       .in("permission_id", toDelete);
-      
+
     if (delError) {
       console.error("[IAM] Error clearing unselected role permissions:", delError);
       throw new Error("Failed to remove permissions.");
@@ -179,18 +181,37 @@ export async function syncRolePermissions(roleId: string, permissionIds: string[
       role_id: roleId,
       permission_id: pid
     }));
-    
+
     const { error: insertError } = await supabase
       .from("role_permissions")
       .insert(mappings);
-      
+
     if (insertError) {
       console.error("[IAM] Error adding new role permissions:", insertError);
       throw new Error("Failed to map role permissions.");
     }
   }
 
+  // Refresh snapshots for all users affected by this role change
+  try {
+    const [uMasterRes, uRolesRes] = await Promise.all([
+      supabase.from("user_master").select("id").eq("role_id", roleId).eq("is_deleted", false),
+      supabase.from("user_roles").select("user_id").eq("role_id", roleId)
+    ]);
+    const userIds = new Set<string>();
+    uMasterRes.data?.forEach(u => userIds.add(u.id));
+    uRolesRes.data?.forEach(u => userIds.add(u.user_id));
+
+    for (const uid of userIds) {
+      await supabase.rpc("refresh_single_user_permissions_snapshot", { p_user_id: uid });
+    }
+  } catch (refErr) {
+    console.warn("[IAM] Snapshot refresh notice:", refErr);
+  }
+
   revalidatePath("/iam");
+  revalidatePath("/rbac");
+  return { success: true };
 }
 
 export async function toggleRolePermission(roleId: string, permissionId: string, enabled: boolean) {
@@ -211,17 +232,36 @@ export async function toggleRolePermission(roleId: string, permissionId: string,
     if (error) throw new Error(error.message);
   }
 
+  // Refresh snapshots for all users affected by this role change
+  try {
+    const [uMasterRes, uRolesRes] = await Promise.all([
+      supabase.from("user_master").select("id").eq("role_id", roleId).eq("is_deleted", false),
+      supabase.from("user_roles").select("user_id").eq("role_id", roleId)
+    ]);
+    const userIds = new Set<string>();
+    uMasterRes.data?.forEach(u => userIds.add(u.id));
+    uRolesRes.data?.forEach(u => userIds.add(u.user_id));
+
+    for (const uid of userIds) {
+      await supabase.rpc("refresh_single_user_permissions_snapshot", { p_user_id: uid });
+    }
+  } catch (refErr) {
+    console.warn("[IAM] Snapshot refresh notice:", refErr);
+  }
+
   revalidatePath("/iam");
+  revalidatePath("/rbac");
+  return { success: true };
 }
 
 export async function cloneRole(sourceRoleId: string, newRoleName: string, newRoleCode: string) {
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
-  
+
   // 1. Fetch source role and its permissions
   const { data: sourceRole } = await supabase.from("roles").select("*").eq("id", sourceRoleId).single();
   const { data: sourcePerms } = await supabase.from("role_permissions").select("permission_id").eq("role_id", sourceRoleId);
-  
+
   if (!sourceRole) throw new Error("Source role not found.");
 
   // 2. Create new role
@@ -237,7 +277,7 @@ export async function cloneRole(sourceRoleId: string, newRoleName: string, newRo
     }])
     .select()
     .single();
-    
+
   if (roleError) throw new Error(`Failed to create cloned role: ${roleError.message}`);
 
   // 3. Copy permissions
@@ -248,7 +288,7 @@ export async function cloneRole(sourceRoleId: string, newRoleName: string, newRo
     }));
     await supabase.from("role_permissions").insert(newMappings);
   }
-  
+
   revalidatePath("/iam");
   return newRole;
 }
@@ -256,7 +296,7 @@ export async function cloneRole(sourceRoleId: string, newRoleName: string, newRo
 export async function deleteRole(roleId: string) {
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
-  
+
   // Check if system role
   const { data: role } = await supabase.from("roles").select("is_system").eq("id", roleId).single();
   if (role?.is_system) {
@@ -267,13 +307,15 @@ export async function deleteRole(roleId: string) {
     .from("roles")
     .update({ is_deleted: true, deleted_at: new Date().toISOString() })
     .eq("id", roleId);
-    
+
   if (error) {
     console.error("[IAM] Error deleting role:", error);
     throw new Error(error.message);
   }
-  
+
   revalidatePath("/iam");
+  revalidatePath("/rbac");
+  return { success: true };
 }
 
 
@@ -291,17 +333,17 @@ export async function registerUserSession(sessionToken: string, userAgent?: stri
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) return { success: false, error: "Unauthenticated" };
-    
+
     const headersList = await headers();
-    const ipAddress = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-                      headersList.get("x-real-ip") || 
-                      "127.0.0.1";
+    const ipAddress = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      headersList.get("x-real-ip") ||
+      "127.0.0.1";
     const clientUserAgent = userAgent || headersList.get("user-agent") || "Unknown Device";
-    
+
     const now = new Date().toISOString();
-    
+
     // 1. Upsert into active_sessions table
     await supabaseAdmin
       .from("active_sessions")
@@ -310,7 +352,7 @@ export async function registerUserSession(sessionToken: string, userAgent?: stri
         session_token: sessionToken,
         last_active_at: now
       }, { onConflict: "user_id" });
-      
+
     // 2. Mark any other session tokens for this user as inactive in auth_session_logs
     await supabaseAdmin
       .from("auth_session_logs")
@@ -349,7 +391,7 @@ export async function registerUserSession(sessionToken: string, userAgent?: stri
           is_active: true
         }]);
     }
-    
+
     // 4. Update user_master last_login_at and last_active_at
     await supabaseAdmin
       .from("user_master")
@@ -358,7 +400,7 @@ export async function registerUserSession(sessionToken: string, userAgent?: stri
         last_active_at: now
       })
       .eq("id", user.id);
-      
+
     return { success: true };
   } catch (err: any) {
     console.error("[IAM] registerUserSession error:", err);
@@ -376,7 +418,7 @@ export async function checkActiveSessionConflict(userId: string, currentSessionT
       .select("session_token, last_active_at")
       .eq("user_id", userId)
       .maybeSingle();
-      
+
     if (!activeSession || !activeSession.session_token) {
       return { hasConflict: false };
     }
@@ -385,12 +427,12 @@ export async function checkActiveSessionConflict(userId: string, currentSessionT
     if (currentSessionToken && activeSession.session_token === currentSessionToken) {
       return { hasConflict: false };
     }
-    
+
     // Check if the session is within 24 hours
     const lastActive = activeSession.last_active_at ? new Date(activeSession.last_active_at).getTime() : 0;
     const now = Date.now();
     const isRecent = (now - lastActive) < 24 * 60 * 60 * 1000;
-    
+
     return {
       hasConflict: isRecent,
       lastActiveAt: activeSession.last_active_at
@@ -403,14 +445,14 @@ export async function checkActiveSessionConflict(userId: string, currentSessionT
 export async function fetchActiveSessions() {
   await checkIAMAuthorization("IAM_VIEW");
   const supabase = supabaseAdmin;
-  
+
   // Join with user_master to get user details
   const { data, error } = await supabase
     .from("auth_session_logs")
     .select("*, user:user_master(id, full_name, email, user_code)")
     .eq("is_active", true)
     .order("last_activity", { ascending: false });
-    
+
   if (error) {
     console.error("[IAM] Error fetching active sessions:", error);
     return [];
@@ -421,28 +463,28 @@ export async function fetchActiveSessions() {
 export async function killSession(sessionId: string) {
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
-  
+
   const { data: sessionLog } = await supabase
     .from("auth_session_logs")
     .select("user_id, session_token")
     .eq("id", sessionId)
     .maybeSingle();
-    
+
   const { error } = await supabase
     .from("auth_session_logs")
     .update({ is_active: false })
     .eq("id", sessionId);
-    
+
   if (error) {
     throw new Error(`Failed to kill session: ${error.message}`);
   }
-  
+
   if (sessionLog) {
     await supabase
       .from("active_sessions")
       .delete()
       .eq("user_id", sessionLog.user_id);
   }
-  
+
   revalidatePath("/iam/sessions");
 }

@@ -87,7 +87,7 @@ function deny(api: boolean, status: number, message: string) {
   const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboards</title><body style="font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0;background:#ffffff;color:#0f172a">
 <div style="max-width:420px;text-align:center;padding:24px"><h1 style="font-size:20px;margin:0 0 8px">${status === 403 ? "No access" : "Dashboard unavailable"}</h1>
-<p style="color:#475569;font-size:14px;line-height:1.5">${message}</p><p><a href="/dashboards" style="color:#6d2158;font-weight:600">Back to dashboards</a></p></div></body>`;
+<p style="color:#475569;font-size:14px;line-height:1.5">${message}</p><p><a href="/dashboards?view=list" style="color:#6d2158;font-weight:600">Back to dashboards</a></p></div></body>`;
   return new NextResponse(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
 
@@ -201,11 +201,11 @@ async function handle(req: NextRequest, ctx: Ctx) {
     // Guarantee that any "Portal home" or "Dashboard Home" button navigates Back to Navigation (/dashboards)
     html = html.replace(
       /<a([^>]*?)href="[^"]*?"([^>]*?)>(?:<svg[^>]*?>[\s\S]*?<\/svg>\s*)?(?:Portal home|Portal Home|Dashboard Home|Back to Navigation|Back to Dashboards)<\/a>/gi,
-      '<a$1href="/dashboards"$2><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;vertical-align:middle;margin-right:6px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Navigation</a>'
+      '<a$1href="/dashboards?view=list"$2><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;vertical-align:middle;margin-right:6px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Dashboards</a>'
     );
     html = html.replace(
       />\s*(?:Portal home|Portal Home|Dashboard Home)\s*<\/a>/gi,
-      '><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;vertical-align:middle;margin-right:6px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Navigation</a>'
+      '><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;vertical-align:middle;margin-right:6px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Dashboards</a>'
     );
     out.delete("content-length");
     const res = new NextResponse(html, { status: upstream.status, headers: out });

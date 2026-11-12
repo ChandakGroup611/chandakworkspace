@@ -6,7 +6,8 @@ import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/componen
 import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
-import { saveUserAction, fetchUsersDashboardData, fetchUserModulesAction } from "@/lib/actions/users";
+import { saveUserAction, fetchUsersDashboardData, fetchUserModulesAction, fetchUserDashboardsAction } from "@/lib/actions/users";
+import { DASHBOARDS } from "@/lib/dashboards/registry";
 import { assignUserModules } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
@@ -133,6 +134,7 @@ export default function UserFormPage() {
   // Module Entitlements
   const [availableModules, setAvailableModules] = useState<any[]>([]);
   const [selectedModuleCodes, setSelectedModuleCodes] = useState<string[]>(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
+  const [selectedDashboards, setSelectedDashboards] = useState<string[]>(["adm", "engg"]);
   const [defaultModuleCode, setDefaultModuleCode] = useState<string>("TASK_WORKFLOW");
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignModalSaving, setAssignModalSaving] = useState(false);
@@ -224,7 +226,13 @@ export default function UserFormPage() {
 
         // Fetch assigned modules
         try {
-          const userModules: any[] = (await fetchUserModulesAction(id)) as any[];
+          const [userModules, userDashboards]: [any[], any[]] = await Promise.all([
+            fetchUserModulesAction(id) as any,
+            fetchUserDashboardsAction(id) as any
+          ]);
+          if (userDashboards && userDashboards.length > 0) {
+            setSelectedDashboards(userDashboards);
+          }
           if (userModules && userModules.length > 0) {
             const assignedCodes: string[] = userModules
               .map((m: any) => {
@@ -334,7 +342,8 @@ export default function UserFormPage() {
       manager_id: formManagerId || null,
       assigned_assets: formAssignedAssets.split(",").map(a => a.trim()).filter(Boolean),
       module_codes: selectedModuleCodes,
-      default_module_code: defaultModuleCode || selectedModuleCodes[0] || "TASK_WORKFLOW"
+      default_module_code: defaultModuleCode || selectedModuleCodes[0] || "TASK_WORKFLOW",
+      dashboard_keys: selectedDashboards
     };
 
     setSaving(true);
@@ -536,6 +545,48 @@ export default function UserFormPage() {
                         <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                       </label>
                     </div>
+
+                      {mod.code === "DASHBOARDS" && isChecked && (
+                        <div className="w-full mt-3 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
+                            <span>Accessible Department Dashboards (User-Wise):</span>
+                            <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {DASHBOARDS.map((d) => {
+                              const isDashActive = selectedDashboards.includes(d.key);
+                              return (
+                                <label
+                                  key={d.key}
+                                  className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${
+                                    isDashActive
+                                      ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
+                                      : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isDashActive}
+                                    disabled={!isSuperAdmin}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedDashboards(prev => [...prev, d.key]);
+                                      } else {
+                                        setSelectedDashboards(prev => prev.filter(k => k !== d.key));
+                                      }
+                                    }}
+                                    className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
+                                  />
+                                  <div className="min-w-0">
+                                    <span className="block text-xs truncate font-semibold">{d.name}</span>
+                                    <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 );
               })}
@@ -562,7 +613,7 @@ export default function UserFormPage() {
                     if (isEditingMode && id) {
                       setAssignModalSaving(true);
                       try {
-                        const res = await assignUserModules(id, selectedModuleCodes, defaultModuleCode);
+                        const res = await assignUserModules(id, selectedModuleCodes, defaultModuleCode, selectedDashboards);
                         if (res.success) {
                           setAssignModalOpen(false);
                           setSuccessAlert("Workspace module entitlements updated successfully!");
@@ -885,6 +936,48 @@ export default function UserFormPage() {
                         </label>
                       </div>
                     </div>
+
+                    {mod.code === "DASHBOARDS" && isChecked && (
+                      <div className="w-full mt-3 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
+                          <span>Accessible Department Dashboards (User-Wise):</span>
+                          <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {DASHBOARDS.map((d) => {
+                            const isDashActive = selectedDashboards.includes(d.key);
+                            return (
+                              <label
+                                key={d.key}
+                                className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${
+                                  isDashActive
+                                    ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
+                                    : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isDashActive}
+                                  disabled={!isSuperAdmin}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedDashboards(prev => [...prev, d.key]);
+                                    } else {
+                                      setSelectedDashboards(prev => prev.filter(k => k !== d.key));
+                                    }
+                                  }}
+                                  className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
+                                />
+                                <div className="min-w-0">
+                                  <span className="block text-xs truncate font-semibold">{d.name}</span>
+                                  <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -33,34 +33,40 @@ export async function fetchEnrolledWorkspaces() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthenticated");
 
-  // Fetch workspaces the user is explicitly a member of
-  const { data: wsMembers } = await supabaseAdmin.from("workspace_members").select("workspace_id").eq("user_id", user.id);
-  const wsIds = wsMembers?.map(m => m.workspace_id) || [];
-  
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+
   let workspaces: any[] = [];
-  if (wsIds.length > 0) {
-    const { data: ws } = await supabaseAdmin
-      .from('workspaces')
-      .select('*, status:status_master!workspaces_status_id_fkey(status_name, status_color), company:company_master(company_name)')
-      .in('id', wsIds)
-      .eq('is_deleted', false);
-    workspaces = ws || [];
-  }
-
-  // Fetch sub-workspaces where parent_workspace_id is not null that the user has access to
   let subWorkspaces: any[] = [];
-  if (wsIds.length > 0) {
-    const { data: sw } = await supabaseAdmin
+
+  if (isSuper) {
+    const { data: allWs } = await supabaseAdmin
       .from('workspaces')
       .select('*, status:status_master!workspaces_status_id_fkey(status_name, status_color), company:company_master(company_name)')
-      .in('id', wsIds)
-      .not('parent_workspace_id', 'is', null)
       .eq('is_deleted', false);
-    subWorkspaces = sw || [];
-  }
+    workspaces = (allWs || []).filter(w => !w.parent_workspace_id);
+    subWorkspaces = (allWs || []).filter(w => !!w.parent_workspace_id);
+  } else {
+    // Fetch workspaces the user is explicitly a member of
+    const { data: wsMembers } = await supabaseAdmin.from("workspace_members").select("workspace_id").eq("user_id", user.id).eq("is_deleted", false);
+    const wsIds = wsMembers?.map(m => m.workspace_id) || [];
+    
+    if (wsIds.length > 0) {
+      const { data: ws } = await supabaseAdmin
+        .from('workspaces')
+        .select('*, status:status_master!workspaces_status_id_fkey(status_name, status_color), company:company_master(company_name)')
+        .in('id', wsIds)
+        .eq('is_deleted', false);
+      workspaces = (ws || []).filter(w => !w.parent_workspace_id);
 
-  // Filter root workspaces to those where parent_workspace_id is null
-  workspaces = workspaces.filter(w => !w.parent_workspace_id);
+      const { data: sw } = await supabaseAdmin
+        .from('workspaces')
+        .select('*, status:status_master!workspaces_status_id_fkey(status_name, status_color), company:company_master(company_name)')
+        .in('id', wsIds)
+        .not('parent_workspace_id', 'is', null)
+        .eq('is_deleted', false);
+      subWorkspaces = sw || [];
+    }
+  }
 
   return { workspaces, subWorkspaces };
 }
@@ -161,7 +167,34 @@ export async function createWorkspace(formData: any) {
     const userId = userData.user?.id;
     if (!userId) throw new Error("Unauthenticated");
 
-    const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_CREATE");
+    let hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_CREATE") ||
+                    await checkServerPermission(supabase, userId, "SUPER_ADMIN") ||
+                    await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
+
+    // Allow parent workspace owner or manager to create sub-workspaces
+    if (!hasAccess && formData.parent_workspace_id) {
+      const { data: parentWs } = await supabaseAdmin
+        .from("workspaces")
+        .select("workspace_owner_id")
+        .eq("id", formData.parent_workspace_id)
+        .maybeSingle();
+
+      if (parentWs?.workspace_owner_id === userId) {
+        hasAccess = true;
+      } else {
+        const { data: member } = await supabaseAdmin
+          .from("workspace_members")
+          .select("role")
+          .eq("workspace_id", formData.parent_workspace_id)
+          .eq("user_id", userId)
+          .eq("is_deleted", false)
+          .maybeSingle();
+        if (member && (member.role === 'manager' || member.role === 'owner' || member.role === 'WORKSPACE_MANAGER' || member.role === 'WORKSPACE_OWNER')) {
+          hasAccess = true;
+        }
+      }
+    }
+
     if (!hasAccess) {
       throw new Error("Unauthorized: Missing WORKSPACES_CREATE capability.");
     }
@@ -1269,22 +1302,35 @@ export async function updateWorkspace(id: string, formData: any) {
     const userId = userData.user?.id;
     if (!userId) return { error: "Unauthenticated" };
 
-  // Check if user has global UPDATE permissions via IAM/RBAC
-  const canUpdateGlobal = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE");
+  // Check if user has global UPDATE permissions via IAM/RBAC or Super Admin
+  const canUpdateGlobal = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE") ||
+                          await checkServerPermission(supabase, userId, "SUPER_ADMIN") ||
+                          await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
   
   let canUpdate = canUpdateGlobal;
   
-  // If no global permissions, check if they are the owner of the workspace
+  // If no global permissions, check if they are the owner or manager of the workspace
   if (!canUpdate) {
-    const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
+    const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).maybeSingle();
     if (ws && ws.workspace_owner_id === userId) {
       canUpdate = true;
+    } else {
+      const { data: member } = await supabaseAdmin
+        .from("workspace_members")
+        .select("role")
+        .eq("workspace_id", id)
+        .eq("user_id", userId)
+        .eq("is_deleted", false)
+        .maybeSingle();
+      if (member && (member.role === 'manager' || member.role === 'owner' || member.role === 'WORKSPACE_MANAGER' || member.role === 'WORKSPACE_OWNER')) {
+        canUpdate = true;
+      }
     }
   }
 
   if (!canUpdate) {
     await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'UPDATE_WORKSPACE' }, userId);
-    return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or owner access." };
+    return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or owner/manager access." };
   }
 
   const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name, parent_workspace_id").eq("id", id).single();

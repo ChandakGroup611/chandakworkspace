@@ -27,12 +27,6 @@ const ISSUER = "chandakgroup-portal";
 
 export async function getDashboardAccess(userId: string, def: DashboardDef): Promise<DashboardAccess> {
   const manage = await hasPermission(userId, `${def.permissionPrefix}_MANAGE`);
-  const perms: DashboardPermission[] = [];
-  for (const p of DASHBOARD_PERMISSIONS) {
-    if (manage || (await hasPermission(userId, `${def.permissionPrefix}_${PERM_SUFFIX[p]}`))) perms.push(p);
-  }
-  // Every other permission is meaningless without view.
-  if (!perms.includes("view")) return { perms: [], companies: [] };
 
   const { data } = await supabaseAdmin
     .from("dashboard_user_access")
@@ -40,6 +34,20 @@ export async function getDashboardAccess(userId: string, def: DashboardDef): Pro
     .eq("user_id", userId)
     .eq("dashboard_key", def.key)
     .maybeSingle();
+
+  const hasDirectRow = !!data;
+  const perms: DashboardPermission[] = [];
+  for (const p of DASHBOARD_PERMISSIONS) {
+    if (manage || (await hasPermission(userId, `${def.permissionPrefix}_${PERM_SUFFIX[p]}`))) {
+      perms.push(p);
+    } else if (hasDirectRow && (p === "view" || p === "details" || p === "export" || p === "chat" || p === "schedule")) {
+      perms.push(p);
+    }
+  }
+
+  // Every other permission is meaningless without view.
+  if (!perms.includes("view")) return { perms: [], companies: [] };
+
   const raw = (data as { company_ids: number[] | null } | null)?.company_ids;
   const companies = Array.isArray(raw) ? raw.map(Number).filter(Number.isFinite) : null;
   return { perms, companies };

@@ -41,10 +41,10 @@ export async function checkWorkspaceUserDependencies(workspaceId: string, userId
 
   const wsIdList = Array.from(targetWorkspaceIds);
 
-  // 2. Check Tasks in this workspace and child workspaces
+  // 2. Check Tasks in this workspace and child workspaces (only active/open tasks block member removal)
   const { data: tasks } = await supabaseAdmin
     .from("tasks")
-    .select("id, subject, assigned_to, workspace_id, task_participants(user_id, participation_role)")
+    .select("id, subject, assigned_to, workspace_id, status:status_master!tasks_status_id_fkey(status_code, is_closed, is_terminal), task_participants(user_id, participation_role)")
     .in("workspace_id", wsIdList)
     .eq("is_deleted", false);
 
@@ -69,6 +69,13 @@ export async function checkWorkspaceUserDependencies(workspaceId: string, userId
     
     // Evaluate Tasks
     tasks?.forEach(task => {
+      const statusObj: any = Array.isArray(task.status) ? task.status[0] : task.status;
+      const isClosed = statusObj?.is_closed || statusObj?.is_terminal || 
+        ['TASK COMPLETED', 'CLOSED', 'RESOLVED', 'DONE', 'CANCELLED'].includes((statusObj?.status_code || '').toUpperCase());
+      
+      // Completed or terminal tasks do NOT block member removal
+      if (isClosed) return;
+
       const taskName = task.subject || "Untitled Task";
       if (task.assigned_to === userId) {
         blockingItems.push(`Task: "${taskName}" (Primary Assignee)`);

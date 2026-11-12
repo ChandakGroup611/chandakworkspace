@@ -155,9 +155,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       const { getDepartments } = await import("@/lib/actions/tasks");
       const [fields, priorityList, existingTasks, statusList, workspaceStakeholders, sprintList, templateList, deptList] = await Promise.all([
         fetchCustomFields(workspaceId),
-        fetchPriorities('e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'),
+        fetchPriorities(workspaceId),
         fetchTasksByWorkspace(workspaceId),
-        fetchStatusesByScope('TASK', 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'),
+        fetchStatusesByScope('TASK', workspaceId),
         m.fetchWorkspaceStakeholders(workspaceId),
         m.fetchSprints(workspaceId),
         m.fetchTaskTemplates(workspaceId),
@@ -165,8 +165,22 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       ]);
       setCustomFields(fields);
       setPriorities(priorityList);
+      if (priorityList && priorityList.length > 0) {
+        setPriorityId(curr => {
+          if (curr) return curr;
+          const defaultPri = priorityList.find((p: any) => p.name?.toLowerCase().includes("medium") || p.name?.toLowerCase().includes("normal")) || priorityList[0];
+          return defaultPri?.id || "";
+        });
+      }
       setWorkspaceTasks(existingTasks);
       setStatuses(statusList);
+      if (statusList && statusList.length > 0) {
+        setStatusId(curr => {
+          if (curr) return curr;
+          const defaultStat = statusList.find((s: any) => s.is_default || s.name?.toLowerCase().includes("open") || s.name?.toLowerCase().includes("to do") || s.name?.toLowerCase().includes("new")) || statusList[0];
+          return defaultStat?.id || "";
+        });
+      }
       setDepartments(deptList || []);
       setStakeholders(workspaceStakeholders || []);
       setSprints(sprintList.filter((s: any) => s.status !== 'CLOSED'));

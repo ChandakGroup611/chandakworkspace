@@ -82,7 +82,19 @@ export async function createTask(payload: {
       finalStatusId = statusMaster.id;
     }
 
-    if (!payload.priority_id || !payload.priority_id.trim()) {
+    let finalPriorityId = payload.priority_id && typeof payload.priority_id === 'string' ? payload.priority_id.trim() : null;
+    if (!finalPriorityId) {
+      const { data: defaultPri } = await supabaseAdmin
+        .from('priority_master')
+        .select('id')
+        .eq('is_active', true)
+        .eq('is_deleted', false)
+        .order('priority_order', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      finalPriorityId = defaultPri?.id || null;
+    }
+    if (!finalPriorityId) {
       return { error: "Task Priority is mandatory. Please select a priority." };
     }
 
@@ -122,33 +134,55 @@ export async function createTask(payload: {
 
       const isParentOwner = parentTask.assigned_to === creatorId || parentTask.created_by === creatorId || parentTask.owner_id === creatorId;
       if (!isParentOwner) {
-        const { data: isPart } = await supabaseAdmin
-          .from('task_participants')
-          .select('user_id')
-          .eq('task_id', parentTaskId)
-          .eq('user_id', creatorId)
-          .maybeSingle();
+        let isWsLeader = false;
+        if (finalWorkspaceId) {
+          const { data: ws } = await supabaseAdmin.from('workspaces').select('workspace_owner_id').eq('id', finalWorkspaceId).maybeSingle();
+          if (ws?.workspace_owner_id === creatorId) {
+            isWsLeader = true;
+          } else {
+            const { data: mem } = await supabaseAdmin.from('workspace_members').select('role').eq('workspace_id', finalWorkspaceId).eq('user_id', creatorId).eq('is_deleted', false).maybeSingle();
+            if (mem && (mem.role === 'manager' || mem.role === 'owner' || mem.role === 'WORKSPACE_MANAGER' || mem.role === 'WORKSPACE_OWNER')) {
+              isWsLeader = true;
+            }
+          }
+        }
 
-        if (!isPart) {
-          return { error: "Access Denied: You must be a participant or assignee on the parent task to create sub-tasks under it." };
+        if (!isWsLeader) {
+          const { data: isPart } = await supabaseAdmin
+            .from('task_participants')
+            .select('user_id')
+            .eq('task_id', parentTaskId)
+            .eq('user_id', creatorId)
+            .maybeSingle();
+
+          if (!isPart) {
+            return { error: "Access Denied: You must be a participant, assignee, or workspace leader to create sub-tasks under it." };
+          }
         }
       }
     }
     
-    // Prevent duplicate task creation (Idempotency / Retry Protection)
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    // Prevent duplicate rapid-fire task creation (Idempotency / Double-click Protection: 3 seconds)
+    const threeSecondsAgo = new Date(Date.now() - 3 * 1000).toISOString();
     const taskSubject = payload.subject || payload.title || 'Untitled Task';
-    const { data: existingTask } = await supabaseAdmin
+    let dupQuery = supabaseAdmin
       .from('tasks')
       .select('id')
       .eq('subject', taskSubject)
       .eq('workspace_id', finalWorkspaceId)
       .eq('created_by', creatorId)
-      .gte('created_at', twoMinutesAgo)
-      .limit(1);
+      .gte('created_at', threeSecondsAgo);
+
+    if (parentTaskId) {
+      dupQuery = dupQuery.eq('parent_task_id', parentTaskId);
+    } else {
+      dupQuery = dupQuery.is('parent_task_id', null);
+    }
+
+    const { data: existingTask } = await dupQuery.limit(1);
 
     if (existingTask && existingTask.length > 0) {
-      console.warn("[createTask] Prevented duplicate task creation");
+      console.warn("[createTask] Prevented duplicate rapid task creation");
       return { success: true, warning: "Task was already created recently. Duplicate prevented." };
     }
     let startDate = (payload.start_date && payload.start_date.trim()) ? payload.start_date.trim() : null;
@@ -849,34 +883,55 @@ export async function updateTask(taskId: string, payload: any) {
   const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by, owner_id, workspace_id, start_date, end_date, workspace:workspaces(workspace_owner_id)').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId;
+  const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId || task.created_by === userId;
 
   if (!isTaskAssignee) {
-    const { data: participant } = await supabaseAdmin
-      .from('task_participants')
-      .select('user_id, participation_role')
-      .eq('task_id', taskId)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    const isExecutor = participant && (participant.participation_role === 'EXECUTOR' || participant.participation_role === 'PRIMARY');
-
-    if (!isExecutor) {
-      // Check if user is a super admin
-      let isAuthorizedAdmin = false;
-      try {
-        const permissionsModule = await import('@/lib/permissions');
-        isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") || 
-                            await permissionsModule.hasPermission(userId, "TASKS_UPDATE");
-      } catch (e) {
-        console.warn("[updateTask] Permission check failed", e);
+    // Check if workspace owner or manager
+    let isWorkspaceLeader = false;
+    const wsOwnerId = Array.isArray(task.workspace) ? (task.workspace[0] as any)?.workspace_owner_id : (task.workspace as any)?.workspace_owner_id;
+    if (wsOwnerId === userId) {
+      isWorkspaceLeader = true;
+    } else if (task.workspace_id) {
+      const { data: member } = await supabaseAdmin
+        .from('workspace_members')
+        .select('role')
+        .eq('workspace_id', task.workspace_id)
+        .eq('user_id', userId)
+        .eq('is_deleted', false)
+        .maybeSingle();
+      if (member && (member.role === 'manager' || member.role === 'owner' || member.role === 'WORKSPACE_MANAGER' || member.role === 'WORKSPACE_OWNER')) {
+        isWorkspaceLeader = true;
       }
-      
-      if (!isAuthorizedAdmin) {
-        await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
-          action_attempted: 'UPDATE_TASK'
-        }, userId);
-        return { error: "You do not have permission to edit this task. Only the Task Assignee (Task Owner), Assigned Executives, or Super Admins can edit." };
+    }
+
+    if (!isWorkspaceLeader) {
+      const { data: participant } = await supabaseAdmin
+        .from('task_participants')
+        .select('user_id, participation_role')
+        .eq('task_id', taskId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const isExecutor = participant && (participant.participation_role === 'EXECUTOR' || participant.participation_role === 'PRIMARY');
+
+      if (!isExecutor) {
+        // Check if user is a super admin
+        let isAuthorizedAdmin = false;
+        try {
+          const permissionsModule = await import('@/lib/permissions');
+          isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") || 
+                              await permissionsModule.hasPermission(userId, "TASKS_UPDATE") ||
+                              await permissionsModule.hasPermission(userId, "TASKS_MANAGE");
+        } catch (e) {
+          console.warn("[updateTask] Permission check failed", e);
+        }
+        
+        if (!isAuthorizedAdmin) {
+          await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+            action_attempted: 'UPDATE_TASK'
+          }, userId);
+          return { error: "You do not have permission to edit this task. Only the Task Owner/Creator, Assigned Executives, Workspace Leaders, or Super Admins can edit." };
+        }
       }
     }
   }
@@ -1708,18 +1763,34 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   if (!userId) return { error: "Unauthenticated" };
 
   // Fetch the task
-  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, created_by, owner_id, workspace_id').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
   // Check if current user is Super Admin
-  const { checkServerPermission } = await import("@/lib/permissions");
-  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+  const { hasPermission } = await import("@/lib/permissions");
+  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "TASKS_MANAGE");
 
-  if (!isSuperAdmin && task.assigned_to !== userId) {
+  let isWorkspaceLeader = false;
+  const effectiveWsId = workspaceId || task.workspace_id;
+  if (effectiveWsId) {
+    const { data: ws } = await supabaseAdmin.from('workspaces').select('workspace_owner_id').eq('id', effectiveWsId).maybeSingle();
+    if (ws?.workspace_owner_id === userId) {
+      isWorkspaceLeader = true;
+    } else {
+      const { data: member } = await supabaseAdmin.from('workspace_members').select('role').eq('workspace_id', effectiveWsId).eq('user_id', userId).eq('is_deleted', false).maybeSingle();
+      if (member && (member.role === 'manager' || member.role === 'owner' || member.role === 'WORKSPACE_MANAGER' || member.role === 'WORKSPACE_OWNER')) {
+        isWorkspaceLeader = true;
+      }
+    }
+  }
+
+  const isTaskOwnerOrCreator = task.assigned_to === userId || task.created_by === userId || task.owner_id === userId;
+
+  if (!isSuperAdmin && !isWorkspaceLeader && !isTaskOwnerOrCreator) {
     await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
       action_attempted: 'UPDATE_ASSIGNMENT'
     }, userId);
-    return { error: "You do not have permission to edit assignees. Only the Primary Assignee or a Super Admin can do this." };
+    return { error: "You do not have permission to edit assignees. Only the Primary Assignee, Creator, Workspace Leader, or Super Admin can do this." };
   }
 
   // Handle explicit removal of primary assignee (if passed as empty string)
@@ -1839,15 +1910,31 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
   if (!userId) return { error: "Unauthenticated" };
 
   // Fetch the task
-  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, created_by, subject').eq('id', taskId).single();
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, created_by, owner_id, workspace_id, subject').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  // Check permissions: Super Admin, Primary Assignee, or Creator
-  const { checkServerPermission } = await import("@/lib/permissions");
-  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+  // Check permissions: Super Admin, Primary Assignee, Creator, or Workspace Leader
+  const { hasPermission } = await import("@/lib/permissions");
+  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "TASKS_MANAGE");
 
-  if (!isSuperAdmin && task.assigned_to !== userId && task.created_by !== userId) {
-    return { error: "You do not have permission to edit watchers. Only the Primary Assignee, Creator, or a Super Admin can do this." };
+  let isWorkspaceLeader = false;
+  const effectiveWsId = workspaceId || task.workspace_id;
+  if (effectiveWsId) {
+    const { data: ws } = await supabaseAdmin.from('workspaces').select('workspace_owner_id').eq('id', effectiveWsId).maybeSingle();
+    if (ws?.workspace_owner_id === userId) {
+      isWorkspaceLeader = true;
+    } else {
+      const { data: member } = await supabaseAdmin.from('workspace_members').select('role').eq('workspace_id', effectiveWsId).eq('user_id', userId).eq('is_deleted', false).maybeSingle();
+      if (member && (member.role === 'manager' || member.role === 'owner' || member.role === 'WORKSPACE_MANAGER' || member.role === 'WORKSPACE_OWNER')) {
+        isWorkspaceLeader = true;
+      }
+    }
+  }
+
+  const isTaskOwnerOrCreator = task.assigned_to === userId || task.created_by === userId || task.owner_id === userId;
+
+  if (!isSuperAdmin && !isWorkspaceLeader && !isTaskOwnerOrCreator) {
+    return { error: "You do not have permission to edit watchers. Only the Primary Assignee, Creator, Workspace Leader, or Super Admin can do this." };
   }
 
   // Fetch all workspace members for validation & audit names

@@ -8,6 +8,8 @@ export const metadata = {
   description: "Configure a recurring review series with template agendas and standing attendees",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function NewMeetingPage() {
   const masters = await getMeetingMasters();
 

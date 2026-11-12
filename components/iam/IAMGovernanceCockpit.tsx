@@ -195,17 +195,16 @@ export default function IAMGovernanceCockpit({
     
     permissionsList.forEach((p: any) => {
       const modName = p.module ? p.module.toUpperCase() : "GENERAL";
-      const subModName = p.submodule || "Core";
-      const groupKey = `${modName}__${subModName}`;
+      const codeParts = p.code.split("_");
+      const lastPart = codeParts[codeParts.length - 1];
+      if (["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"].includes(lastPart?.toUpperCase())) {
+        codeParts.pop();
+      }
+      const baseCode = codeParts.join("_");
+      const subModName = p.submodule || (baseCode !== modName ? baseCode : "Core");
+      const groupKey = `${modName}__${baseCode}`;
       
       if (!modulesMap.has(groupKey)) {
-        const codeParts = p.code.split("_");
-        const lastPart = codeParts[codeParts.length - 1];
-        if (["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"].includes(lastPart?.toUpperCase())) {
-          codeParts.pop();
-        }
-        const baseCode = codeParts.join("_");
-        
         modulesMap.set(groupKey, { 
           name: `${modName} - ${subModName}`, 
           module: modName,
@@ -227,8 +226,6 @@ export default function IAMGovernanceCockpit({
 
   const handleTogglePermissionByCode = async (permissionId: string, action: string) => {
     if (!activeRoleID || isRoleLoading || isSaving) return;
-    if (activeRole?.code?.toUpperCase() === "SUPER_ADMIN") return;
-
 
     const permission = permissionsList.find((p: any) => p.id === permissionId);
     if (!permission) return;
@@ -713,11 +710,8 @@ export default function IAMGovernanceCockpit({
 
                                   const getPermIdByAction = (action: string) => m.perms.find(p => p.action?.toUpperCase() === action.toUpperCase())?.id;
                                   const isActionChecked = (action: string) => {
-                                    if (isSuperAdmin) return true;
                                     const id = getPermIdByAction(action);
-                                    const checked = id ? activeRolePerms.includes(id) : false;
-                                    if (checked) console.log("Checked:", { action, id });
-                                    return checked;
+                                    return id ? activeRolePerms.includes(id) : false;
                                   };
 
                                   const actions = ["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"];
@@ -749,7 +743,7 @@ export default function IAMGovernanceCockpit({
                                               <div className="flex justify-center">
                                                 <AppButton variant="secondary"
                                                   type="button"
-                                                  disabled={false}
+                                                  disabled={isSaving}
                                                   onClick={() => {
                                                     const permId = getPermIdByAction(act);
                                                     if (permId) {
@@ -761,7 +755,7 @@ export default function IAMGovernanceCockpit({
                                                     checked
                                                       ? "bg-success border-success-border text-white shadow-md"
                                                       : "bg-surface border-border",
-                                                    isSuperAdmin ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-primary"
+                                                    "cursor-pointer hover:border-primary"
                                                   )}
                                                 >
                                                   {checked && <span className="text-white text-[12px] font-semibold">✓</span>}

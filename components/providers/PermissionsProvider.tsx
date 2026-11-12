@@ -126,6 +126,8 @@ interface UnifiedAuthData {
       
       let profileData: any = null;
       let secondaryRoles: any[] = [];
+      let snapshotPerms: string[] = [];
+      let isSuperAdminFromServer = false;
 
       try {
         // PHASE 5: REAL-TIME PERMISSIONS RESOLUTION via version-independent REST route
@@ -134,11 +136,15 @@ interface UnifiedAuthData {
           const json = await res.json();
           profileData = json.profileData;
           secondaryRoles = json.secondaryRoles || [];
+          snapshotPerms = json.snapshotPerms || [];
+          isSuperAdminFromServer = !!json.isSuperAdmin;
         } else {
           // Fallback to Server Action if REST returns non-200
           const serverRes = await fetchServerPermissions();
           profileData = serverRes.profileData;
           secondaryRoles = serverRes.secondaryRoles || [];
+          snapshotPerms = serverRes.snapshotPerms || [];
+          isSuperAdminFromServer = !!serverRes.isSuperAdmin;
         }
       } catch (e: any) {
         console.warn("[PermissionsProvider] Fetch permissions error, using fallback:", e);
@@ -146,6 +152,8 @@ interface UnifiedAuthData {
           const serverRes = await fetchServerPermissions();
           profileData = serverRes.profileData;
           secondaryRoles = serverRes.secondaryRoles || [];
+          snapshotPerms = serverRes.snapshotPerms || [];
+          isSuperAdminFromServer = !!serverRes.isSuperAdmin;
         } catch {
           // Both failed, proceed with client session fallback
         }
@@ -156,6 +164,38 @@ interface UnifiedAuthData {
         // Fallback: check client session if server endpoint did not find profile (e.g. edge cookie latency)
         const { data: sessionData } = await supabase.auth.getSession();
         clientUser = sessionData.session?.user || null;
+
+        if (clientUser) {
+          try {
+            const [clientProfileRes, clientRolesRes, clientSnapRes] = await Promise.all([
+              supabase
+                .from("user_master")
+                .select("id, full_name, email, profile_photo, is_deleted, created_at, role_id, role:roles(code, role_permissions(permissions(code)))")
+                .eq("id", clientUser.id)
+                .maybeSingle(),
+              supabase
+                .from("user_roles")
+                .select("role:roles(code, role_permissions(permissions(code)))")
+                .eq("user_id", clientUser.id),
+              supabase
+                .from("user_permissions_snapshot")
+                .select("permission_code")
+                .eq("user_id", clientUser.id)
+            ]);
+
+            if (clientProfileRes.data) {
+              profileData = clientProfileRes.data;
+            }
+            if (clientRolesRes.data) {
+              secondaryRoles = clientRolesRes.data;
+            }
+            if (clientSnapRes.data) {
+              snapshotPerms = clientSnapRes.data.map((s: any) => s.permission_code);
+            }
+          } catch (cErr) {
+            console.warn("[PermissionsProvider] Client fallback query notice:", cErr);
+          }
+        }
       }
 
       if (!profileData && !clientUser) {
@@ -184,17 +224,8 @@ interface UnifiedAuthData {
         }
       }
 
-      const profile: ProfileData = { 
-        id: profileData?.id || clientUser?.id || "", 
-        email: profileData?.email || clientUser?.email, 
-        full_name: profileData?.full_name || clientUser?.user_metadata?.full_name || "Unknown User",
-        profile_photo: profileData?.profile_photo || null,
-        roleCode: baseRoleCode,
-        created_at: profileData?.created_at
-      };
-
       let finalRoleCode = baseRoleCode;
-      const rawPermsSet = new Set<string>();
+      const rawPermsSet = new Set<string>(snapshotPerms);
 
       // Extract permissions from primary role
       if (primaryRole) {
@@ -222,9 +253,24 @@ interface UnifiedAuthData {
       let perms: string[] = expandPermissions(rawPerms);
 
       // Force SUPER_ADMIN if detected in roles or explicitly mapped
-      if (rawPerms.includes("SUPER_ADMIN")) {
+      if (
+        isSuperAdminFromServer || 
+        baseRoleCode === "SUPER_ADMIN" || 
+        rawPerms.includes("SUPER_ADMIN") || 
+        rawPerms.includes("SUPER_ADMIN_ACCESS") ||
+        rawPerms.includes("ALL_ACCESS")
+      ) {
         finalRoleCode = "SUPER_ADMIN";
       }
+
+      const profile: ProfileData = { 
+        id: profileData?.id || clientUser?.id || "", 
+        email: profileData?.email || clientUser?.email, 
+        full_name: profileData?.full_name || clientUser?.user_metadata?.full_name || "Unknown User",
+        profile_photo: profileData?.profile_photo || null,
+        roleCode: finalRoleCode,
+        created_at: profileData?.created_at
+      };
 
       return { profile, permissions: perms, roleCode: finalRoleCode };
     },
@@ -241,13 +287,13 @@ interface UnifiedAuthData {
 
   const hasPermission = useCallback((permissionCode: string) => {
     if (loading) return false;
-    if (roleCode === "SUPER_ADMIN") return true;
+    if (roleCode === "SUPER_ADMIN" || permissions.includes("SUPER_ADMIN") || permissions.includes("SUPER_ADMIN_ACCESS") || permissions.includes("ALL_ACCESS")) return true;
     return permissions.includes(permissionCode);
   }, [loading, roleCode, permissions]);
 
   const hasAnyPermission = useCallback((permissionCodes: string[]) => {
     if (loading) return false;
-    if (roleCode === "SUPER_ADMIN") return true;
+    if (roleCode === "SUPER_ADMIN" || permissions.includes("SUPER_ADMIN") || permissions.includes("SUPER_ADMIN_ACCESS") || permissions.includes("ALL_ACCESS")) return true;
     return permissionCodes.some(code => permissions.includes(code));
   }, [loading, roleCode, permissions]);
 

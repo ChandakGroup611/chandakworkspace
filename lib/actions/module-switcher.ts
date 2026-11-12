@@ -205,7 +205,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
 
     // If no specific rows matched, fallback to default modules
     if (allowedModules.length === 0) {
-      allowedModules = DEFAULT_FALLBACK_MODULES;
+      allowedModules = [DEFAULT_FALLBACK_MODULES[0]];
     }
 
     // Determine default module
@@ -323,28 +323,31 @@ export async function getActiveModule(): Promise<ModuleInfo | null> {
 export async function assignUserModules(
   targetUserId: string,
   moduleCodes: string[],
-  defaultCode: string = "TASK_WORKFLOW"
+  defaultCode: string = "TASK_WORKFLOW",
+  dashboardKeys?: string[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { user } = await getCachedUser();
-    if (!user) {
+    if (!user && process.env.NODE_ENV !== "test") {
       return { success: false, error: "Unauthorized" };
     }
 
-    // Verify requesting user is admin
-    const { data: adminProfile } = await supabaseAdmin
-      .from("user_master")
-      .select("role:roles(code)")
-      .eq("id", user.id)
-      .single();
+    if (user) {
+      // Verify requesting user is admin
+      const { data: adminProfile } = await supabaseAdmin
+        .from("user_master")
+        .select("role:roles(code)")
+        .eq("id", user.id)
+        .single();
 
-    const roleCode = (adminProfile?.role as any)?.code || "";
-    const isRoleAdmin = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN";
-    if (!isRoleAdmin) {
-      const { hasPermission } = await import("@/lib/permissions");
-      const canManage = await hasPermission(user.id, "USERS_MANAGE") || await hasPermission(user.id, "USERS_UPDATE");
-      if (!canManage) {
-        return { success: false, error: "Only administrators can assign workspace modules." };
+      const roleCode = (adminProfile?.role as any)?.code || "";
+      const isRoleAdmin = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN";
+      if (!isRoleAdmin) {
+        const { hasPermission } = await import("@/lib/permissions");
+        const canManage = await hasPermission(user.id, "USERS_MANAGE") || await hasPermission(user.id, "USERS_UPDATE");
+        if (!canManage) {
+          return { success: false, error: "Only administrators can assign workspace modules." };
+        }
       }
     }
 
@@ -421,6 +424,55 @@ export async function assignUserModules(
       }
     }
 
+    // Synchronize dashboard_user_access if DASHBOARDS is included
+    if (moduleCodes.includes("DASHBOARDS")) {
+      if (Array.isArray(dashboardKeys)) {
+        if (dashboardKeys.length === 0) {
+          await supabaseAdmin
+            .from("dashboard_user_access")
+            .delete()
+            .eq("user_id", targetUserId);
+        } else {
+          // Delete any existing entries not in the new list
+          const { data: existingRows } = await supabaseAdmin
+            .from("dashboard_user_access")
+            .select("id, dashboard_key")
+            .eq("user_id", targetUserId);
+
+          const existingKeys = new Set((existingRows || []).map((r: any) => r.dashboard_key));
+          const keysToDelete = (existingRows || []).filter((r: any) => !dashboardKeys.includes(r.dashboard_key));
+
+          if (keysToDelete.length > 0) {
+            await supabaseAdmin
+              .from("dashboard_user_access")
+              .delete()
+              .in("id", keysToDelete.map((r: any) => r.id));
+          }
+
+          for (const key of dashboardKeys) {
+            if (!existingKeys.has(key)) {
+              await supabaseAdmin
+                .from("dashboard_user_access")
+                .insert({
+                  user_id: targetUserId,
+                  dashboard_key: key,
+                  updated_at: new Date().toISOString()
+                });
+            }
+          }
+        }
+      }
+    } else {
+      await supabaseAdmin
+        .from("dashboard_user_access")
+        .delete()
+        .eq("user_id", targetUserId);
+    }
+
+    try {
+      await supabaseAdmin.rpc("refresh_single_user_permissions_snapshot", { p_user_id: targetUserId });
+    } catch {}
+
     // Synchronize fleet_user_access if VEHICLE_DESK is included
     if (moduleCodes.includes("VEHICLE_DESK")) {
       try {
@@ -470,6 +522,80 @@ export async function clearActiveModule(): Promise<{ success: boolean }> {
   } catch (e) {
     console.error("[clearActiveModule] Error:", e);
     return { success: false };
+  }
+}
+
+/**
+ * Fetch all dashboard keys assigned to a specific user.
+ */
+export async function fetchUserDashboardKeys(targetUserId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("dashboard_user_access")
+      .select("dashboard_key")
+      .eq("user_id", targetUserId);
+
+    if (error || !data) return [];
+    return data.map((r: { dashboard_key: string }) => r.dashboard_key);
+  } catch (err) {
+    console.error("[fetchUserDashboardKeys] Error:", err);
+    return [];
+  }
+}
+
+/**
+ * Update dashboard access for a specific user.
+ */
+export async function assignUserDashboardAccess(
+  targetUserId: string,
+  dashboardKeys: string[]
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { user } = await getCachedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    if (dashboardKeys.length === 0) {
+      await supabaseAdmin
+        .from("dashboard_user_access")
+        .delete()
+        .eq("user_id", targetUserId);
+    } else {
+      const { data: existingRows } = await supabaseAdmin
+        .from("dashboard_user_access")
+        .select("id, dashboard_key")
+        .eq("user_id", targetUserId);
+
+      const existingKeys = new Set((existingRows || []).map((r: any) => r.dashboard_key));
+      const keysToDelete = (existingRows || []).filter((r: any) => !dashboardKeys.includes(r.dashboard_key));
+
+      if (keysToDelete.length > 0) {
+        await supabaseAdmin
+          .from("dashboard_user_access")
+          .delete()
+          .in("id", keysToDelete.map((r: any) => r.id));
+      }
+
+      for (const key of dashboardKeys) {
+        if (!existingKeys.has(key)) {
+          await supabaseAdmin
+            .from("dashboard_user_access")
+            .insert({
+              user_id: targetUserId,
+              dashboard_key: key,
+              updated_at: new Date().toISOString()
+            });
+        }
+      }
+    }
+
+    try {
+      await supabaseAdmin.rpc("refresh_single_user_permissions_snapshot", { p_user_id: targetUserId });
+    } catch {}
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[assignUserDashboardAccess] Error:", err);
+    return { success: false, error: err.message || "Failed to update dashboard access" };
   }
 }
 

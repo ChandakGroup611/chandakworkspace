@@ -19,7 +19,7 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
     return { perms: cached.perms, role: cached.role };
   }
 
-  const [roleRes, permRes] = await Promise.all([
+  const [roleRes, permRes, secondaryRolesRes] = await Promise.all([
     supabaseAdmin
       .from("user_master")
       .select("role:roles(code), role_id, email")
@@ -28,6 +28,10 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
     supabaseAdmin
       .from("user_permissions_snapshot")
       .select("permission_code")
+      .eq("user_id", userId),
+    supabaseAdmin
+      .from("user_roles")
+      .select("role:roles(code)")
       .eq("user_id", userId)
   ]);
 
@@ -46,14 +50,27 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
     }
   }
 
-  if (dbRoleCode) {
-    const upper = dbRoleCode.toUpperCase();
-    if (upper === 'SUPER_ADMIN' || upper === 'ROLE_ADMIN' || upper === 'ADMIN' || upper === 'SUPERADMIN' || upper === 'ROLE_SUPER_ADMIN' || upper === 'SUPER_ADMINISTRATOR') {
-      dbRoleCode = 'SUPER_ADMIN';
+  // Also check secondary roles for SUPER_ADMIN
+  const allRoleCodes: string[] = [];
+  if (dbRoleCode) allRoleCodes.push(dbRoleCode);
+  if (secondaryRolesRes.data) {
+    for (const r of secondaryRolesRes.data) {
+      const code = Array.isArray(r.role) ? (r.role[0] as any)?.code : (r.role as any)?.code;
+      if (code) allRoleCodes.push(code);
     }
   }
 
   const rawPerms = permRes.data?.map(r => r.permission_code) || [];
+
+  const isSuper = allRoleCodes.some(c => {
+    const upper = c.toUpperCase();
+    return upper === 'SUPER_ADMIN' || upper === 'ROLE_ADMIN' || upper === 'ADMIN' || 
+           upper === 'SUPERADMIN' || upper === 'ROLE_SUPER_ADMIN' || upper === 'SUPER_ADMINISTRATOR';
+  }) || rawPerms.includes('SUPER_ADMIN') || rawPerms.includes('SUPER_ADMIN_ACCESS') || rawPerms.includes('ALL_ACCESS');
+
+  if (isSuper) {
+    dbRoleCode = 'SUPER_ADMIN';
+  }
   
   // Expand permissions: UPDATE implies VIEW & EDIT, EDIT implies VIEW & UPDATE, DELETE implies VIEW, CREATE implies VIEW
   // NOTE: UPDATE does NOT imply CREATE, DELETE does NOT imply CREATE.
@@ -121,7 +138,18 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
 
   const ctx = await getUserContext(userId);
   
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN" || ctx.role === "ADMIN" || ctx.role === "SUPERADMIN" || ctx.role === "admin-role-id") {
+  if (
+    ctx.role === "SUPER_ADMIN" || 
+    ctx.role === "ROLE_ADMIN" || 
+    ctx.role === "ADMIN" || 
+    ctx.role === "SUPERADMIN" || 
+    ctx.role === "ROLE_SUPER_ADMIN" || 
+    ctx.role === "SUPER_ADMINISTRATOR" || 
+    ctx.role === "admin-role-id" ||
+    ctx.perms.has("SUPER_ADMIN") ||
+    ctx.perms.has("SUPER_ADMIN_ACCESS") ||
+    ctx.perms.has("ALL_ACCESS")
+  ) {
     return true;
   }
 
@@ -135,7 +163,7 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
 export async function canAccessTicket(userId: string, ticketId: string): Promise<boolean> {
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
+  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN" || ctx.perms.has("SUPER_ADMIN")) return true;
 
   const { data } = await supabaseAdmin
     .from("tickets")
@@ -165,7 +193,7 @@ export async function canAccessTicket(userId: string, ticketId: string): Promise
 export async function canAccessTask(userId: string, taskId: string): Promise<boolean> {
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
+  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN" || ctx.perms.has("SUPER_ADMIN") || ctx.perms.has("TASKS_MANAGE")) return true;
 
   const { data } = await supabaseAdmin
     .from("tasks")
@@ -198,6 +226,16 @@ export async function canAccessTask(userId: string, taskId: string): Promise<boo
 export async function canAccessWorkspace(userId: string, workspaceId: string): Promise<boolean> {
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
+  if (
+    ctx.role === "SUPER_ADMIN" || 
+    ctx.role === "ROLE_ADMIN" || 
+    ctx.perms.has("SUPER_ADMIN") || 
+    ctx.perms.has("SUPER_ADMIN_ACCESS") ||
+    ctx.perms.has("WORKSPACES_MANAGE") || 
+    ctx.perms.has("WORKSPACES_VIEW")
+  ) {
+    return true;
+  }
 
   const { data } = await supabaseAdmin
     .from("workspaces")
@@ -213,7 +251,8 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
     .from("workspace_members")
     .select("*", { count: "exact", head: true })
     .eq("workspace_id", workspaceId)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("is_deleted", false);
 
   return (count && count > 0) ? true : false;
 }
@@ -224,6 +263,15 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
 export async function canManageWorkspace(userId: string, workspaceId: string): Promise<boolean> {
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
+  if (
+    ctx.role === "SUPER_ADMIN" || 
+    ctx.role === "ROLE_ADMIN" || 
+    ctx.perms.has("SUPER_ADMIN") || 
+    ctx.perms.has("SUPER_ADMIN_ACCESS") ||
+    ctx.perms.has("WORKSPACES_MANAGE")
+  ) {
+    return true;
+  }
 
   const { data } = await supabaseAdmin
     .from("workspaces")
@@ -238,9 +286,10 @@ export async function canManageWorkspace(userId: string, workspaceId: string): P
     .select("role")
     .eq("workspace_id", workspaceId)
     .eq("user_id", userId)
-    .single();
+    .eq("is_deleted", false)
+    .maybeSingle();
 
-  return member?.role === 'manager';
+  return member?.role === 'manager' || member?.role === 'owner' || member?.role === 'WORKSPACE_MANAGER' || member?.role === 'WORKSPACE_OWNER';
 }
 
 

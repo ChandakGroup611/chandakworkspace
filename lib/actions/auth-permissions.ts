@@ -11,18 +11,22 @@ export async function fetchServerPermissions() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      return { profileData: null, secondaryRoles: [] };
+      return { profileData: null, secondaryRoles: [], snapshotPerms: [], isSuperAdmin: false };
     }
 
-    const [profileRes, secondaryRolesRes] = await Promise.all([
+    const [profileRes, secondaryRolesRes, snapshotRes] = await Promise.all([
       supabaseAdmin
         .from("user_master")
         .select("id, full_name, email, profile_photo, is_deleted, created_at, role_id, role:roles(code, role_permissions(permissions(code)))")
         .eq("id", user.id)
-        .single(),
+        .maybeSingle(),
       supabaseAdmin
         .from("user_roles")
         .select("role:roles(code, role_permissions(permissions(code)))")
+        .eq("user_id", user.id),
+      supabaseAdmin
+        .from("user_permissions_snapshot")
+        .select("permission_code")
         .eq("user_id", user.id)
     ]);
 
@@ -37,19 +41,33 @@ export async function fetchServerPermissions() {
         .from("roles")
         .select("code, role_permissions(permissions(code))")
         .eq("id", profileData.role_id)
-        .single();
+        .maybeSingle();
       if (fallbackRole) {
         profileData.role = fallbackRole as any;
       }
     }
 
+    const snapshotPerms = snapshotRes.data?.map(s => s.permission_code) || [];
+
+    const primaryCode = Array.isArray(profileData?.role) ? (profileData?.role[0] as any)?.code : (profileData?.role as any)?.code;
+    const secondaryCodes = (secondaryRolesRes.data || []).map((r: any) => {
+      return Array.isArray(r.role) ? r.role[0]?.code : r.role?.code;
+    }).filter(Boolean);
+
+    const allCodes = [primaryCode, ...secondaryCodes].filter(Boolean).map(c => c.toUpperCase());
+    const isSuperAdmin = allCodes.some(c => 
+      c === "SUPER_ADMIN" || c === "ROLE_ADMIN" || c === "ADMIN" || c === "SUPERADMIN" || c === "ROLE_SUPER_ADMIN" || c === "SUPER_ADMINISTRATOR"
+    ) || snapshotPerms.includes("SUPER_ADMIN") || snapshotPerms.includes("SUPER_ADMIN_ACCESS");
+
     return {
       profileData,
-      secondaryRoles: secondaryRolesRes.data || []
+      secondaryRoles: secondaryRolesRes.data || [],
+      snapshotPerms,
+      isSuperAdmin
     };
   } catch (err) {
     console.error("[fetchServerPermissions] Unhandled Exception:", err);
-    return { profileData: null, secondaryRoles: [] };
+    return { profileData: null, secondaryRoles: [], snapshotPerms: [], isSuperAdmin: false };
   }
 }
 
