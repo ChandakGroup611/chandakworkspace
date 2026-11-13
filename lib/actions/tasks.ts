@@ -259,6 +259,25 @@ export async function createTask(payload: {
       }
     }
 
+    // Ensure all assigned users and participants are members of the workspace
+    if (finalWorkspaceId) {
+      const allTaskMemberIds = Array.from(new Set([
+        creatorId,
+        ...(payload.assigned_to ? [payload.assigned_to] : []),
+        ...(payload.participants?.map((p: any) => p.user_id) || [])
+      ])).filter(Boolean);
+
+      if (allTaskMemberIds.length > 0) {
+        const memberRows = allTaskMemberIds.map((uid: string) => ({
+          workspace_id: finalWorkspaceId,
+          user_id: uid,
+          role: uid === creatorId ? 'manager' : 'member',
+          is_deleted: false
+        }));
+        await supabaseAdmin.from('workspace_members').upsert(memberRows, { onConflict: 'workspace_id,user_id' });
+      }
+    }
+
     // Insert Checklist Items
     if (payload.checklist_items && payload.checklist_items.length > 0) {
       const checklistData = payload.checklist_items.map((item: string) => ({
@@ -1831,6 +1850,20 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     if (updateError) return { error: updateError.message };
   }
 
+  // Ensure all assignees and primary assignee are enrolled as workspace members
+  if (effectiveWsId) {
+    const allAssignedIds = Array.from(new Set([...uniqueAssigneeIds, ...(finalPrimaryId ? [finalPrimaryId] : [])])).filter(Boolean);
+    if (allAssignedIds.length > 0) {
+      const memberRows = allAssignedIds.map((uid: string) => ({
+        workspace_id: effectiveWsId,
+        user_id: uid,
+        role: 'member',
+        is_deleted: false
+      }));
+      await supabaseAdmin.from('workspace_members').upsert(memberRows, { onConflict: 'workspace_id,user_id' });
+    }
+  }
+
   // Purge the cache for this task to ensure Next.js auto-refresh works on production
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath(`/workspaces/tasks`);
@@ -1959,6 +1992,17 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
       .from('task_participants')
       .upsert(participants, { onConflict: 'task_id, user_id' });
     if (insertError) return { error: insertError.message };
+
+    // Ensure all watchers are also enrolled in workspace members
+    if (effectiveWsId && uniqueWatcherIds.length > 0) {
+      const memberRows = uniqueWatcherIds.map((uid: string) => ({
+        workspace_id: effectiveWsId,
+        user_id: uid,
+        role: 'member',
+        is_deleted: false
+      }));
+      await supabaseAdmin.from('workspace_members').upsert(memberRows, { onConflict: 'workspace_id,user_id' });
+    }
   }
 
   // Purge the cache for this task to ensure Next.js auto-refresh works on production

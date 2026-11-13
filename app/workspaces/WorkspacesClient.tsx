@@ -707,7 +707,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   };
 
   
-  const [wsModalMode, setWsModalMode] = useState<'ROOT' | 'SUB' | 'EDIT' | null>(null);
+  const [wsModalMode, setWsModalMode] = useState<'ROOT' | 'SUB' | 'EDIT' | 'SHARE' | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [drawerTask, setDrawerTask] = useState<any>(null);
   const [editWSId, setEditWSId] = useState<string | null>(null);
@@ -725,31 +725,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     return {};
   });
   
-  // Dependency Checks
-  const [checkingDependencyId, setCheckingDependencyId] = useState<string | null>(null);
-  const [dependencyModal, setDependencyModal] = useState<{
-    userId: string;
-    userName: string;
-    result: import("@/lib/actions/dependencies").DependencyCheckResult;
-  } | null>(null);
-  const [reassignTargetUserId, setReassignTargetUserId] = useState<string>("");
-  const [isReassigning, setIsReassigning] = useState<boolean>(false);
-
-  // User Role Modal
-  const [userRoleModal, setUserRoleModal] = useState<{
-    userId: string;
-    userName: string;
-    step: 'choice' | 'tasks';
-  } | null>(null);
-  const [workspaceTasksForRole, setWorkspaceTasksForRole] = useState<any[]>([]);
-  const [fetchingTasksForRole, setFetchingTasksForRole] = useState(false);
-  const [stagedTaskRoles, setStagedTaskRoles] = useState<Record<string, 'primary' | 'executor'>>({});
-  
-  const [isAssigningTasks, setIsAssigningTasks] = useState(false);
-
-
-
-
   const [newWS, setNewWS] = useState({ 
     name: "", 
     code: "", 
@@ -780,12 +755,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     ? (workspaces.find(w => w.id === newWS.parent_workspace_id) || findNodeInHierarchy(masterHierarchy, newWS.parent_workspace_id))
     : null;
 
-  const availableUsers = parentWorkspace 
-    ? allUsers.filter(u => {
-        const membersList = parentWorkspace.members || parentWorkspace.assignees || [];
-        return membersList.some((m: any) => (m.user_id === u.id || m.id === u.id)) || u.id === currentUser?.id;
-      })
-    : allUsers;
+  const availableUsers = useMemo(() => {
+    if (isSuperAdmin || hasPermission('WORKSPACES_MANAGE') || !parentWorkspace) {
+      return allUsers;
+    }
+    const membersList = parentWorkspace.members || parentWorkspace.assignees || [];
+    if (!membersList || membersList.length === 0) {
+      return allUsers;
+    }
+    const filtered = allUsers.filter(u => {
+      return membersList.some((m: any) => (m.user_id === u.id || m.id === u.id)) || u.id === currentUser?.id;
+    });
+    return filtered.length > 0 ? filtered : allUsers;
+  }, [isSuperAdmin, hasPermission, parentWorkspace, allUsers, currentUser?.id]);
 
   // Fetch users immediately if missing (e.g. on hot reload or missing initialData)
   useEffect(() => {
@@ -975,15 +957,16 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     }
   };
 
-  const openEditWorkspace = (ws: any) => {
+  const openEditWorkspace = async (ws: any, mode: 'EDIT' | 'SHARE' = 'EDIT') => {
     setEditWSId(ws.id);
+    const existingMemberIds = (ws.members || ws.assignees || []).map((m: any) => m.user_id || m.id).filter(Boolean);
     setNewWS({
-      name: ws.name,
-      code: ws.code,
+      name: ws.name || ws.workspace_name || "",
+      code: ws.code || ws.workspace_code || "",
       description: ws.description || "",
       company_id: ws.company_id || "",
       parent_workspace_id: ws.parent_workspace_id || "",
-      assigneeIds: ws.members?.map((m: any) => m.user_id) || [],
+      assigneeIds: existingMemberIds,
       // ui-audit-ignore-next-line html-date-input
       start_date: ws.start_date ? new Date(ws.start_date).toISOString().split('T')[0] : "",
       // ui-audit-ignore-next-line html-date-input
@@ -992,7 +975,22 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     });
     setAssigneeSearch("");
     setAssigneeDropdownOpen(false);
-    setWsModalMode('EDIT');
+    setWsModalMode(mode);
+
+    // Freshly fetch authoritative members from database to ensure no member is missing
+    try {
+      const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
+      const freshMembers = await fetchWorkspaceStakeholders(ws.id);
+      if (freshMembers && freshMembers.length > 0) {
+        const freshIds = freshMembers.map((m: any) => m.id).filter(Boolean);
+        setNewWS(prev => ({
+          ...prev,
+          assigneeIds: Array.from(new Set([...prev.assigneeIds, ...freshIds]))
+        }));
+      }
+    } catch (err) {
+      console.warn("Could not fetch fresh workspace members:", err);
+    }
   };
 
   const handleDeleteWorkspace = (id: string) => {
@@ -1919,7 +1917,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 presenceMap={presenceMap}
                 onOpenTask={(taskNode) => setDrawerTask(taskNode)}
                 onOpenWorkspace={(node) => openEditWorkspace(node)}
-                onShareNode={(node) => openEditWorkspace(node)}
+                onShareNode={(node) => {
+                  if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
+                    openEditWorkspace(node, 'SHARE');
+                  } else {
+                    setDrawerTask(node);
+                  }
+                }}
                 onCreateSubWorkspace={(node) => {
                   setNewWS({
                     name: "", 
@@ -2004,14 +2008,43 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <SidePeekDrawer
         isOpen={wsModalMode !== null}
         onClose={() => { setWsModalMode(null); setEditWSId(null); }}
-        title={wsModalMode === 'EDIT' ? "Edit workspace" : (wsModalMode === 'SUB' ? "New sub-workspace" : "New workspace")}
+        title={
+          wsModalMode === 'SHARE'
+            ? (newWS.parent_workspace_id ? "Share sub-workspace" : "Share workspace")
+            : (wsModalMode === 'EDIT'
+              ? (newWS.parent_workspace_id ? "Edit sub-workspace" : "Edit workspace")
+              : (wsModalMode === 'SUB' ? "New sub-workspace" : "New workspace"))
+        }
+        subtitle={
+          wsModalMode === 'SHARE'
+            ? `Manage members and sharing access for "${newWS.name || 'this workspace'}"`
+            : undefined
+        }
         width="lg"
       >
         <div className="flex flex-col h-full">
           <div className="flex-1 space-y-7 overflow-y-auto p-6">
+            {wsModalMode === 'SHARE' && (
+              <div className="rounded-lg border border-border bg-sunken p-4">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <span className="text-[12px] font-medium text-muted uppercase tracking-wider">
+                      {newWS.parent_workspace_id ? "Sub-workspace" : "Workspace"}
+                    </span>
+                    <h3 className="text-[16px] font-semibold text-foreground truncate">{newWS.name || 'Untitled Workspace'}</h3>
+                    {newWS.code && <p className="text-[12.5px] text-muted font-mono">{newWS.code}</p>}
+                  </div>
+                  <AppBadge variant="neutral">
+                    {newWS.assigneeIds.length} {newWS.assigneeIds.length === 1 ? "member" : "members"}
+                  </AppBadge>
+                </div>
+              </div>
+            )}
             
             {/* Section 1: Workspace Identity */}
-            <div className="space-y-4">
+            {wsModalMode !== 'SHARE' && (
+              <>
+                <div className="space-y-4">
               <div className="flex items-center gap-2 border-b border-border pb-2">
                 <Building2 className="h-4 w-4 text-muted" aria-hidden />
                 <h3 className={SECTION_TITLE}>Details</h3>
@@ -2111,6 +2144,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 />
               </div>
             </div>
+            </>
+            )}
 
             {/* Section 3: Access & Security */}
             <div className="space-y-4">
@@ -2155,52 +2190,45 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   />
                 </div>
 
-                <div className="max-h-[200px] overflow-y-auto rounded-md border border-border bg-surface p-1">
-                  {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
-                    <label key={u.id} className="flex cursor-pointer items-center gap-3 rounded-md p-1.5 text-[13.5px] hover:bg-surface-hover">
-                      <input 
-                        type="checkbox" 
-                        disabled={checkingDependencyId === u.id}
-                        checked={newWS.assigneeIds.includes(u.id)} 
-                        onChange={async e => {
-                          if (e.target.checked) {
-                            if (editWSId) {
-                              setUserRoleModal({ userId: u.id, userName: u.full_name, step: 'choice' });
-                            } else {
-                              setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
-                            }
-                          } else {
-                            if (editWSId) {
-                              setCheckingDependencyId(u.id);
-                              try {
-                                const { checkWorkspaceUserDependencies } = await import("@/lib/actions/dependencies");
-                                const deps = await checkWorkspaceUserDependencies(editWSId, [u.id]);
-                                const result = deps[u.id];
-                                if (result && !result.isSafe) {
-                                  setDependencyModal({ userId: u.id, userName: u.full_name, result });
-                                  return; // Stop here, don't update state yet
-                                }
-                              } catch (err) {
-                                console.error("Dependency check failed:", err);
-                              } finally {
-                                setCheckingDependencyId(null);
-                              }
-                            }
-                            // Safe to remove
-                            setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
-                          }
-                        }} 
-                        className="h-4 w-4"
-                      />
-                      <div className="flex flex-col min-w-0">
-                        <span className="flex items-center gap-2 truncate text-[13.5px] text-foreground">
-                          {u.full_name}
-                          {checkingDependencyId === u.id && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" aria-label="Checking assignments" />}
-                        </span>
-                      </div>
-                    </label>
-                  ))}
-                  {availableUsers.length === 0 && <p className="p-3 text-center text-[13px] text-muted">No people to add.</p>}
+                <div className="max-h-[220px] overflow-y-auto rounded-md border border-border bg-surface p-1">
+                  {availableUsers
+                    .filter(u => 
+                      u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || 
+                      u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
+                      u.email?.toLowerCase().includes(assigneeSearch.toLowerCase())
+                    )
+                    .map(u => {
+                      const isChecked = newWS.assigneeIds.includes(u.id);
+                      return (
+                        <label key={u.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 text-[13.5px] hover:bg-surface-hover transition-colors">
+                          <input 
+                            type="checkbox" 
+                            checked={isChecked} 
+                            onChange={e => {
+                              const checked = e.target.checked;
+                              setNewWS(prev => ({
+                                ...prev,
+                                assigneeIds: checked
+                                  ? Array.from(new Set([...prev.assigneeIds, u.id]))
+                                  : prev.assigneeIds.filter((id: string) => id !== u.id)
+                              }));
+                            }} 
+                            className="h-4 w-4 rounded accent-theme-btn-primary cursor-pointer"
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
+                              {u.full_name}
+                            </span>
+                            {(u.user_code || u.email) && (
+                              <span className="truncate text-[11.5px] text-muted">
+                                {u.user_code ? `${u.user_code} · ` : ''}{u.email || ''}
+                              </span>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  {availableUsers.length === 0 && <p className="p-4 text-center text-[13px] text-muted">No people available.</p>}
                 </div>
               </div>
 
@@ -2232,7 +2260,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           <div className="flex justify-end gap-2 border-t border-border px-6 py-3">
             <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting}>Cancel</AppButton>
             <AppButton variant="primary" onClick={handleCreateWorkspace} disabled={isSubmitting} isLoading={isSubmitting}>
-              {isSubmitting ? "Saving…" : (editWSId ? "Save changes" : (wsModalMode === 'SUB' ? "Create sub-workspace" : "Create workspace"))}
+              {isSubmitting ? "Saving…" : (wsModalMode === 'SHARE' ? "Save changes" : (editWSId ? "Save changes" : (wsModalMode === 'SUB' ? "Create sub-workspace" : "Create workspace")))}
             </AppButton>
           </div>
         </div>
@@ -2282,288 +2310,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           task={drawerTask} 
           onClose={() => setDrawerTask(null)} 
         />
-      )}
-
-      {/* Dependency Check Modal */}
-      {dependencyModal && (
-        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="dep-modal-title" className={MODAL_CARD}>
-            <div className="border-b border-border px-5 py-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-warning-soft text-warning-text">
-                  {dependencyModal.result.type === 'executive' ? (
-                    <ShieldAlert className="h-4 w-4" aria-hidden />
-                  ) : (
-                    <ShieldCheck className="h-4 w-4" aria-hidden />
-                  )}
-                </span>
-                <h3 id="dep-modal-title" className="text-[15px] font-semibold text-heading">
-                  {dependencyModal.result.type === 'executive' ? `Reassign ${dependencyModal.userName}'s tasks first` : `Remove ${dependencyModal.userName}?`}
-                </h3>
-              </div>
-            </div>
-            
-            <div className="space-y-4 p-5">
-              <p className="text-[13.5px] leading-relaxed text-foreground">
-                <strong className="font-semibold">{dependencyModal.userName}</strong> still has active work in this workspace:
-              </p>
-              
-              <ul className="max-h-36 space-y-1 overflow-y-auto rounded-md border border-border bg-sunken p-3 text-[13px]">
-                {dependencyModal.result.blockingItems.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-muted" aria-hidden>•</span>
-                    <span className="text-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <div className="rounded-md border border-warning-border bg-warning-soft px-3 py-2 text-[12.5px] text-warning-text">
-                {dependencyModal.result.message}
-              </div>
-
-              {dependencyModal.result.type === 'executive' && (
-                <div className="space-y-1.5 pt-2">
-                  <label className={FIELD_LABEL}>
-                    Hand their tasks to <span className="text-danger-text" aria-hidden>*</span>
-                  </label>
-                  <select
-                    value={reassignTargetUserId}
-                    onChange={e => setReassignTargetUserId(e.target.value)}
-                    className="h-9 w-full px-3 text-[13.5px]"
-                  >
-                    <option value="">Select a person</option>
-                    {availableUsers
-                      .filter(u => u.id !== dependencyModal.userId && !u.is_deleted)
-                      .map(u => (
-                        <option key={u.id} value={u.id}>
-                          {u.full_name} ({u.user_code || u.email || 'Member'})
-                        </option>
-                      ))}
-                  </select>
-                  <p className="text-[12.5px] text-muted">
-                    Their tasks, sub-tasks, checklists and tickets move to this person.
-                  </p>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
-              <AppButton
-                variant="ghost"
-                onClick={() => {
-                  setDependencyModal(null);
-                  setReassignTargetUserId("");
-                }}
-              >
-                Cancel
-              </AppButton>
-
-              {dependencyModal.result.type === 'executive' ? (
-                <AppButton 
-                  variant="primary" 
-                  disabled={!reassignTargetUserId || isReassigning}
-                  onClick={async () => {
-                    if (!reassignTargetUserId || !editWSId) return;
-                    try {
-                      setIsReassigning(true);
-                      const { reassignAndRemoveWorkspaceUser } = await import("@/lib/actions/dependencies");
-                      const res = await reassignAndRemoveWorkspaceUser(editWSId, dependencyModal.userId, reassignTargetUserId);
-                      if (res.error) throw new Error(res.error);
-                      
-                      // Update workspace assignees state: remove old user, add new user if not present
-                      setNewWS(prev => ({
-                        ...prev,
-                        assigneeIds: Array.from(new Set([...prev.assigneeIds.filter(id => id !== dependencyModal.userId), reassignTargetUserId]))
-                      }));
-                      
-                      const targetUser = availableUsers.find(u => u.id === reassignTargetUserId);
-                      triggerToast(`Tasks moved to ${targetUser?.full_name || 'the new person'}. ${dependencyModal.userName} removed.`);
-                      setDependencyModal(null);
-                      setReassignTargetUserId("");
-                    } catch (err: any) {
-                      toast.error(err.message || "Couldn't reassign the tasks. Try again.");
-                    } finally {
-                      setIsReassigning(false);
-                    }
-                  }}
-                >
-                  {isReassigning ? "Reassigning…" : "Reassign and remove"}
-                </AppButton>
-              ) : (
-                <AppButton
-                  variant="destructive"
-                  onClick={() => {
-                    // Safe to remove watcher
-                    setNewWS({
-                      ...newWS,
-                      assigneeIds: newWS.assigneeIds.filter(id => id !== dependencyModal.userId)
-                    });
-                    setDependencyModal(null);
-                  }}
-                >
-                  Remove {dependencyModal.userName}
-                </AppButton>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* User Role Assignment Modal */}
-      {userRoleModal && (
-        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="role-modal-title" className={cn(MODAL_CARD, "flex max-h-[80vh] flex-col")}>
-            <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
-              <h3 id="role-modal-title" className="text-[15px] font-semibold text-heading">Add {userRoleModal.userName}</h3>
-              <button 
-                type="button" 
-                aria-label="Close role assignment modal"
-                onClick={() => { setUserRoleModal(null); setStagedTaskRoles({}); }} 
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-foreground"
-              >
-                <X className="h-4 w-4" aria-hidden />
-              </button>
-            </div>
-            
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              {userRoleModal.step === 'choice' ? (
-                <div className="space-y-4">
-                  <p className="text-[13.5px] leading-relaxed text-foreground">
-                    Should {userRoleModal.userName} only watch this workspace, or work on specific tasks?
-                  </p>
-                  
-                  <div className="mt-4 flex flex-col gap-2">
-                    <AppButton
-                      variant="secondary"
-                      className="h-auto justify-start px-4 py-3 text-left"
-                      onClick={() => {
-                        setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, userRoleModal.userId]});
-                        setUserRoleModal(null);
-                      }}
-                    >
-                      <div>
-                        <div className="text-[13.5px] font-semibold text-foreground">Watcher only</div>
-                        <div className="mt-0.5 text-[12.5px] font-normal text-muted">Add them to the workspace without assigning tasks.</div>
-                      </div>
-                    </AppButton>
-                    
-                    <AppButton
-                      variant="secondary"
-                      className="h-auto justify-start px-4 py-3 text-left"
-                      onClick={async () => {
-                        setUserRoleModal({ ...userRoleModal, step: 'tasks' });
-                        setFetchingTasksForRole(true);
-                        try {
-                          const { fetchWorkspaceTasksList } = await import("@/lib/actions/tasks");
-                          const tasks = await fetchWorkspaceTasksList(editWSId!);
-                          setWorkspaceTasksForRole(tasks);
-                        } catch (err) {
-                          console.error(err);
-                        } finally {
-                          setFetchingTasksForRole(false);
-                        }
-                      }}
-                    >
-                      <div>
-                        <div className="text-[13.5px] font-semibold text-foreground">Assign to tasks</div>
-                        <div className="mt-0.5 text-[12.5px] font-normal text-muted">Choose tasks where they're the primary owner or an executor.</div>
-                      </div>
-                    </AppButton>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-[13.5px] leading-relaxed text-foreground">
-                    Choose a role for <strong className="font-semibold">{userRoleModal.userName}</strong> on each task:
-                  </p>
-                  
-                  {fetchingTasksForRole ? (
-                    <div className="flex items-center justify-center p-8 text-muted">
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden />
-                      <span className="text-[13.5px]">Loading tasks…</span>
-                    </div>
-                  ) : workspaceTasksForRole.length === 0 ? (
-                    <div className="rounded-md border border-border bg-sunken p-6 text-center text-[13.5px] text-muted">
-                      This workspace has no active tasks yet.
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {workspaceTasksForRole.map(task => (
-                        <div key={task.id} className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface p-3">
-                          <div className="min-w-0 truncate text-[13.5px] text-foreground" title={task.title}>{task.title}</div>
-                          <div className="flex items-center gap-2">
-                            <select
-                              aria-label={`Role on ${task.title}`}
-                              className="h-8 px-2 text-[13px]"
-                              value={stagedTaskRoles[task.id] || ""}
-                              onChange={e => {
-                                const val = e.target.value;
-                                if (!val) {
-                                  const newRoles = { ...stagedTaskRoles };
-                                  delete newRoles[task.id];
-                                  setStagedTaskRoles(newRoles);
-                                } else {
-                                  setStagedTaskRoles({ ...stagedTaskRoles, [task.id]: val as 'primary' | 'executor' });
-                                }
-                              }}
-                            >
-                              <option value="">None</option>
-                              <option value="executor">Executor</option>
-                              <option value="primary">Primary owner</option>
-                            </select>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {userRoleModal.step === 'tasks' && (
-              <div className="flex shrink-0 justify-end gap-2 border-t border-border px-5 py-3">
-                <AppButton 
-                  variant="ghost" 
-                  onClick={() => setUserRoleModal({ ...userRoleModal, step: 'choice' })}
-                  disabled={isAssigningTasks}
-                >
-                  Back
-                </AppButton>
-                <AppButton
-                  variant="primary"
-                  isLoading={isAssigningTasks}
-                  disabled={isAssigningTasks|| (workspaceTasksForRole.length > 0 && Object.keys(stagedTaskRoles).length === 0)}
-                  onClick={async () => {
-                    if (Object.keys(stagedTaskRoles).length > 0) {
-                      setIsAssigningTasks(true);
-                      try {
-                        const { assignUserToTasksBatch } = await import("@/lib/actions/tasks");
-                        const assignments = Object.entries(stagedTaskRoles).map(([taskId, role]) => ({ taskId, role }));
-                        const res = await assignUserToTasksBatch(userRoleModal.userId, assignments);
-                        if (res.error) {
-                          toast.error(res.error);
-                        } else {
-                          toast.success(`${userRoleModal.userName} added to ${assignments.length} ${assignments.length === 1 ? "task" : "tasks"}`);
-                        }
-                      } catch (err) {
-                        console.error(err);
-                        toast.error("Couldn't add them to the tasks. Try again.");
-                      } finally {
-                        setIsAssigningTasks(false);
-                      }
-                    }
-                    
-                    setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, userRoleModal.userId]});
-                    setUserRoleModal(null);
-                    setStagedTaskRoles({});
-                  }}
-                >
-                  {isAssigningTasks ? "Saving…" : "Save assignments"}
-                </AppButton>
-              </div>
-            )}
-          </div>
-        </div>
       )}
 
       <ConfirmDialog

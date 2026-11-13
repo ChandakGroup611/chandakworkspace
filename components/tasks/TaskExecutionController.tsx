@@ -228,7 +228,26 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       try {
         const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
         const res = await fetchWorkspaceStakeholders(task.workspace_id);
-        setStakeholders(res || []);
+        let finalStakeholders = res || [];
+        const isSuper = task.currentUserIsSuperAdmin || hasPermission("SUPER_ADMIN") || roleCode === "SUPER_ADMIN";
+        if (finalStakeholders.length === 0 || isSuper) {
+          const { createClient } = await import("@/utils/supabase/client");
+          const supabase = createClient();
+          const { data: allActiveUsers } = await supabase
+            .from("user_master")
+            .select("id, full_name, user_code")
+            .eq("is_active", true)
+            .eq("is_deleted", false)
+            .order("full_name");
+          if (allActiveUsers && allActiveUsers.length > 0) {
+            const existingIds = new Set(finalStakeholders.map((s: any) => s.id));
+            const extra = allActiveUsers
+              .filter(u => !existingIds.has(u.id))
+              .map(u => ({ ...u, role: 'Member', workspace_role: 'MEMBER' }));
+            finalStakeholders = [...finalStakeholders, ...extra];
+          }
+        }
+        setStakeholders(finalStakeholders);
       } catch (err) {
         console.error("[openAssigneeModal] Error fetching stakeholders:", err);
       }

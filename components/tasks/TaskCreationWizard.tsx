@@ -112,6 +112,23 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           const perms = snap?.map((s: any) => s.permission_code) || [];
           const isSuper = perms.includes("WORKSPACES_MANAGE") || perms.includes("SUPER_ADMIN");
           setCanManageAll(isSuper);
+          if (isSuper) {
+            const { data: allActiveUsers } = await supabase
+              .from("user_master")
+              .select("id, full_name, user_code")
+              .eq("is_active", true)
+              .eq("is_deleted", false)
+              .order("full_name");
+            if (allActiveUsers && allActiveUsers.length > 0) {
+              setStakeholders(prev => {
+                const existingIds = new Set(prev.map((s: any) => s.id));
+                const extra = allActiveUsers
+                  .filter(u => !existingIds.has(u.id))
+                  .map(u => ({ ...u, role: 'Member', workspace_role: 'MEMBER' }));
+                return [...prev, ...extra];
+              });
+            }
+          }
         }
       });
     });
@@ -181,8 +198,31 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           return defaultStat?.id || "";
         });
       }
+      let finalStakeholders = workspaceStakeholders || [];
+      if (finalStakeholders.length === 0 || canManageAll) {
+        try {
+          const { createClient } = await import("@/utils/supabase/client");
+          const supabase = createClient();
+          const { data: allActiveUsers } = await supabase
+            .from("user_master")
+            .select("id, full_name, user_code")
+            .eq("is_active", true)
+            .eq("is_deleted", false)
+            .order("full_name");
+
+          if (allActiveUsers && allActiveUsers.length > 0) {
+            const existingIds = new Set(finalStakeholders.map((s: any) => s.id));
+            const extra = allActiveUsers
+              .filter(u => !existingIds.has(u.id))
+              .map(u => ({ ...u, role: 'Member', workspace_role: 'MEMBER' }));
+            finalStakeholders = [...finalStakeholders, ...extra];
+          }
+        } catch (uErr) {
+          console.warn("[TaskCreationWizard] Failed to load all users:", uErr);
+        }
+      }
       setDepartments(deptList || []);
-      setStakeholders(workspaceStakeholders || []);
+      setStakeholders(finalStakeholders);
       setSprints(sprintList.filter((s: any) => s.status !== 'CLOSED'));
       setDepartments(deptList || []);
     }

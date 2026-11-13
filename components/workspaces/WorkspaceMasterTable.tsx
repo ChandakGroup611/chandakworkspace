@@ -262,7 +262,7 @@ export function WorkspaceMasterTable({
     const canCreateWs = roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE');
     const canCreateTsk = roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || isTaskOwner || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE');
     const canEditNode = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || (isWorkspaceOwner && hasPermission('TASKS_MANAGE'))));
-    const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE'));
+    const canShare = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || isWorkspaceOwner || hasPermission('TASKS_UPDATE') || hasPermission('TASKS_MANAGE')));
     const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE')) : ((isTaskOwner || isWorkspaceOwner) && hasPermission('TASKS_DELETE')));
 
     const isMenuOpen = activeMenu === node.id;
@@ -561,7 +561,7 @@ export function WorkspaceMasterTable({
                       className={MENU_ITEM}
                     >
                       <Share2 className="h-4 w-4 text-muted" aria-hidden />
-                      <span>Transfer workspace</span>
+                      <span>{isWorkspaceType ? (node.type === 'SUB_WORKSPACE' ? 'Share sub-workspace' : 'Share workspace') : (node.type === 'SUB_TASK' ? 'Share subtask' : 'Share task')}</span>
                     </button>
                   )}
 
@@ -634,7 +634,7 @@ export function WorkspaceMasterTable({
     const canCreateWs = roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE');
     const canCreateTsk = roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || isTaskOwner || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE');
     const canEditNode = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || (isWorkspaceOwner && hasPermission('TASKS_MANAGE'))));
-    const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE'));
+    const canShare = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || isWorkspaceOwner || hasPermission('TASKS_UPDATE') || hasPermission('TASKS_MANAGE')));
     const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE')) : ((isTaskOwner || isWorkspaceOwner) && hasPermission('TASKS_DELETE')));
 
     return (
@@ -769,7 +769,7 @@ export function WorkspaceMasterTable({
                     className={MENU_ITEM}
                   >
                     <Share2 className="h-4 w-4 text-muted" aria-hidden />
-                    <span>Transfer workspace</span>
+                    <span>{isWorkspaceType ? (node.type === 'SUB_WORKSPACE' ? 'Share sub-workspace' : 'Share workspace') : (node.type === 'SUB_TASK' ? 'Share subtask' : 'Share task')}</span>
                   </button>
                 )}
                 {onDeleteNode && canDelete && (

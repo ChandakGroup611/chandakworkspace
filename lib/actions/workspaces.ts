@@ -49,7 +49,7 @@ export async function fetchEnrolledWorkspaces() {
     // Fetch workspaces the user is explicitly a member of
     const { data: wsMembers } = await supabaseAdmin.from("workspace_members").select("workspace_id").eq("user_id", user.id).eq("is_deleted", false);
     const wsIds = wsMembers?.map(m => m.workspace_id) || [];
-    
+
     if (wsIds.length > 0) {
       const { data: ws } = await supabaseAdmin
         .from('workspaces')
@@ -74,14 +74,14 @@ export async function fetchEnrolledWorkspaces() {
 export async function fetchCompanies() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  
+
   const { data, error } = await supabase
     .from("company_master")
     .select("id, name:company_name, code:company_code")
     .eq('is_active', true)
     .eq('is_deleted', false)
     .order("company_name", { ascending: true });
-    
+
   if (error) console.error(`[fetchCompanies] Error: ${error.message}`);
   return data || [];
 }
@@ -89,24 +89,24 @@ export async function fetchCompanies() {
 export async function fetchPriorities(scopeId?: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  
+
   let query = supabase
     .from("priority_master")
     .select("id, name:priority_name, code:priority_code, scope_id")
     .eq('is_active', true)
     .eq('is_deleted', false);
-    
+
   if (scopeId) {
     query = query.eq('scope_id', scopeId);
   } else {
     query = query.is('scope_id', null);
   }
-    
+
   const { data, error } = await query;
   if (error) console.error(`[fetchPriorities] Error: ${error.message}`);
-  
+
   let results = data || [];
-  
+
   // If a scope was specified but no custom priorities exist for it, fallback to global
   if (scopeId && results.length === 0) {
     const { data: fallback } = await supabase
@@ -117,21 +117,21 @@ export async function fetchPriorities(scopeId?: string) {
       .is('scope_id', null);
     results = fallback || [];
   }
-  
+
   return results;
 }
 
 export async function fetchStatusesByScope(scopeType: string, scopeId?: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  
+
   let query = supabase
     .from("status_master")
     .select("id, name:status_name, code:status_code, scope_id, status_order")
     .eq('is_active', true)
     .eq('is_deleted', false)
     .eq('scope_type', scopeType);
-    
+
   if (scopeId) {
     query = query.eq('scope_id', scopeId);
   } else {
@@ -140,9 +140,9 @@ export async function fetchStatusesByScope(scopeType: string, scopeId?: string) 
 
   const { data, error } = await query;
   if (error) console.error(`[fetchStatusesByScope] Error: ${error.message}`);
-  
+
   let results = data || [];
-  
+
   // If a scope was specified but no custom statuses exist for it, fallback to global
   if (scopeId && results.length === 0) {
     const { data: fallback } = await supabase
@@ -154,7 +154,7 @@ export async function fetchStatusesByScope(scopeType: string, scopeId?: string) 
       .is('scope_id', null);
     results = fallback || [];
   }
-  
+
   return results.sort((a, b) => (a.status_order || 0) - (b.status_order || 0));
 }
 
@@ -162,14 +162,14 @@ export async function createWorkspace(formData: any) {
   try {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
-    
+
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
     if (!userId) throw new Error("Unauthenticated");
 
     let hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_CREATE") ||
-                    await checkServerPermission(supabase, userId, "SUPER_ADMIN") ||
-                    await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
+      await checkServerPermission(supabase, userId, "SUPER_ADMIN") ||
+      await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
 
     // Allow parent workspace owner or manager to create sub-workspaces
     if (!hasAccess && formData.parent_workspace_id) {
@@ -216,7 +216,7 @@ export async function createWorkspace(formData: any) {
         .order("status_order", { ascending: true })
         .limit(1)
         .maybeSingle();
-        
+
       if (status?.id) {
         statusId = status.id;
       } else {
@@ -230,7 +230,7 @@ export async function createWorkspace(formData: any) {
           .order("status_order", { ascending: true })
           .limit(1)
           .maybeSingle();
-          
+
         if (anyWorkspaceStatus?.id) {
           statusId = anyWorkspaceStatus.id;
         } else {
@@ -303,7 +303,7 @@ export async function createWorkspace(formData: any) {
       }])
       .select()
       .single();
-      
+
     if (error) {
       console.error("[Workspaces] Error creating workspace:", error.message);
       throw new Error(error.message);
@@ -329,7 +329,7 @@ export async function createWorkspace(formData: any) {
       const isSub = !!formData.parent_workspace_id;
       const title = isSub ? "Assigned to New Sub-Workspace" : "Assigned to New Workspace";
       const message = `You have been assigned to the ${isSub ? 'Sub-Workspace' : 'Workspace'}: "${data.workspace_name}" (${data.workspace_code}).`;
-      
+
       try {
         await dispatchNotification(
           assigneeId,
@@ -345,7 +345,7 @@ export async function createWorkspace(formData: any) {
             _disableEmail: true
           }
         );
-        
+
         await queueBusinessEvent("Workspace", "Assigned", {
           entity_id: data.id,
           triggering_user_id: userId,
@@ -431,7 +431,7 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     // 1. Get current authenticated user
     const { user } = await getCachedUser();
     console.timeEnd(`auth_${tId}`);
-    
+
     if (!user) {
       return {
         userProfile: null,
@@ -505,24 +505,24 @@ export async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspace
   console.time(`[PROFILER] fetchHierarchyRoots_TOTAL_${tId}`);
   try {
     // 1. Fetch ALL Visible Workspaces (use cached if provided to save DB queries)
-  const visibleWorkspaces = cachedVisibleWorkspaces || await getVisibleWorkspaces(userId);
-  const wsIds = visibleWorkspaces.map((w: any) => w.id);
-  
-  if (wsIds.length === 0) return [];
+    const visibleWorkspaces = cachedVisibleWorkspaces || await getVisibleWorkspaces(userId);
+    const wsIds = visibleWorkspaces.map((w: any) => w.id);
 
-  // Filter to roots: Nodes where parent_workspace_id is null OR parent is not in the visible set
-  const rootWorkspaces = visibleWorkspaces.filter((ws: any) => !ws.parent_workspace_id || !wsIds.includes(ws.parent_workspace_id));
+    if (wsIds.length === 0) return [];
 
-  // Note: Statistics (direct_task_count, etc.) will be handled by Phase 10 Statistics Table in the future.
-  // For now, we return 0 or rely on a lightweight cache to prevent N+1 COUNT queries.
-  return rootWorkspaces.map((ws: any) => ({
-    ...ws,
-    type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE',
-    subworkspace_count: ws.hierarchy_subws_count || 0,
-    direct_task_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0,
-    total_hierarchy_task_count: ws.hierarchy_task_count || 0,
-    children: [] // Children will be fetched on demand
-  }));
+    // Filter to roots: Nodes where parent_workspace_id is null OR parent is not in the visible set
+    const rootWorkspaces = visibleWorkspaces.filter((ws: any) => !ws.parent_workspace_id || !wsIds.includes(ws.parent_workspace_id));
+
+    // Note: Statistics (direct_task_count, etc.) will be handled by Phase 10 Statistics Table in the future.
+    // For now, we return 0 or rely on a lightweight cache to prevent N+1 COUNT queries.
+    return rootWorkspaces.map((ws: any) => ({
+      ...ws,
+      type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE',
+      subworkspace_count: ws.hierarchy_subws_count || 0,
+      direct_task_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0,
+      total_hierarchy_task_count: ws.hierarchy_task_count || 0,
+      children: [] // Children will be fetched on demand
+    }));
   } finally {
     console.timeEnd(`[PROFILER] fetchHierarchyRoots_TOTAL_${tId}`);
   }
@@ -539,8 +539,8 @@ export async function getUserTaskEnrollmentContext(userId: string) {
   ]);
 
   const partTaskIds: string[] = (partRes.data || []).map((p: any) => p.task_id);
-  const subordinateUserIds: string[] = scopeRes?.subordinateUserIds && scopeRes.subordinateUserIds.length > 0 
-    ? scopeRes.subordinateUserIds 
+  const subordinateUserIds: string[] = scopeRes?.subordinateUserIds && scopeRes.subordinateUserIds.length > 0
+    ? scopeRes.subordinateUserIds
     : [userId];
   const managedDeptIds: string[] = scopeRes?.managedDepartmentIds || [];
 
@@ -577,7 +577,7 @@ function buildTaskEnrollmentFilter(context: {
 export async function fetchHierarchyChildren(parentId: string, parentType: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  
+
   const { user: authUser } = await getCachedUser();
   const userId = authUser?.id;
   if (!userId) return [];
@@ -598,11 +598,11 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
     }
 
     let subWsQuery = supabaseAdmin
-        .from('workspaces')
-        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), hierarchy_task_count, hierarchy_subws_count, members:workspace_members(user_id, role), parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code), stats:workspace_statistics(task_count, subtask_count)')
-        .eq('parent_workspace_id', parentId)
-        .eq('is_deleted', false)
-        .order('created_at', { ascending: false });
+      .from('workspaces')
+      .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), hierarchy_task_count, hierarchy_subws_count, members:workspace_members(user_id, role), parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code), stats:workspace_statistics(task_count, subtask_count)')
+      .eq('parent_workspace_id', parentId)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false });
 
     if (!canManageAll) {
       if (allowedWorkspaceIds.length === 0) {
@@ -855,18 +855,18 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
 
   // If no search query and no filters provided, return roots
   const hasEntityFilter = (filters?.entityTypes && filters.entityTypes.length > 0 && !(filters.entityTypes.length === 3 || filters.entityTypes.includes('ALL' as any))) ||
-                          (filters?.entityType && filters.entityType !== 'ALL');
+    (filters?.entityType && filters.entityType !== 'ALL');
 
   const hasFilters = !!(
     selectedWorkspaceIds.length > 0 ||
     selectedSubWorkspaceIds.length > 0 ||
     selectedCompanyIds.length > 0 ||
-    selectedStatusIds.length > 0 || 
-    selectedPriorityIds.length > 0 || 
-    selectedAssigneeIds.length > 0 || 
-    filters?.myTasksOnly || 
-    hasEntityFilter || 
-    filters?.dateFrom || 
+    selectedStatusIds.length > 0 ||
+    selectedPriorityIds.length > 0 ||
+    selectedAssigneeIds.length > 0 ||
+    filters?.myTasksOnly ||
+    hasEntityFilter ||
+    filters?.dateFrom ||
     filters?.dateTo
   );
   if (!cleanQuery && !hasFilters) {
@@ -938,25 +938,25 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
   tasks = tasks.filter((t: any) => {
     if (!canManageAll) {
       const isEnrolled = subordinateUserIds.includes(t.assigned_to) ||
-                         subordinateUserIds.includes(t.owner_id) ||
-                         subordinateUserIds.includes(t.created_by) ||
-                         myParticipantTaskIds.has(t.id) ||
-                         t.assignees?.some((a: any) => subordinateUserIds.includes(a.user_id)) ||
-                         (t.department_id && managedDeptIds.includes(t.department_id));
+        subordinateUserIds.includes(t.owner_id) ||
+        subordinateUserIds.includes(t.created_by) ||
+        myParticipantTaskIds.has(t.id) ||
+        t.assignees?.some((a: any) => subordinateUserIds.includes(a.user_id)) ||
+        (t.department_id && managedDeptIds.includes(t.department_id));
       if (!isEnrolled) return false;
     }
     if (selectedAssigneeIds.length > 0) {
-      const isAssigned = selectedAssigneeIds.includes(t.assigned_to) || 
-                         selectedAssigneeIds.includes(t.owner_id) ||
-                         targetAssigneeTaskIds.has(t.id) ||
-                         t.assignees?.some((a: any) => selectedAssigneeIds.includes(a.user_id) && a.participation_role !== 'WATCHER');
+      const isAssigned = selectedAssigneeIds.includes(t.assigned_to) ||
+        selectedAssigneeIds.includes(t.owner_id) ||
+        targetAssigneeTaskIds.has(t.id) ||
+        t.assignees?.some((a: any) => selectedAssigneeIds.includes(a.user_id) && a.participation_role !== 'WATCHER');
       if (!isAssigned) return false;
     }
     if (filters?.myTasksOnly) {
-      const isMyTask = t.assigned_to === user.id || 
-                       t.owner_id === user.id ||
-                       myParticipantTaskIds.has(t.id) ||
-                       t.assignees?.some((a: any) => a.user_id === user.id && a.participation_role !== 'WATCHER');
+      const isMyTask = t.assigned_to === user.id ||
+        t.owner_id === user.id ||
+        myParticipantTaskIds.has(t.id) ||
+        t.assignees?.some((a: any) => a.user_id === user.id && a.participation_role !== 'WATCHER');
       if (!isMyTask) return false;
     }
     return true;
@@ -1012,16 +1012,16 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     }
 
     if (selectedAssigneeIds.length > 0) {
-      workspaces = workspaces.filter(w => 
-        selectedAssigneeIds.includes(w.owner_id) || 
-        selectedAssigneeIds.includes(w.created_by) || 
+      workspaces = workspaces.filter(w =>
+        selectedAssigneeIds.includes(w.owner_id) ||
+        selectedAssigneeIds.includes(w.created_by) ||
         w.members?.some((m: any) => selectedAssigneeIds.includes(m.user_id))
       );
     }
     if (filters?.myTasksOnly) {
-      workspaces = workspaces.filter(w => 
-        w.owner_id === user.id || 
-        w.created_by === user.id || 
+      workspaces = workspaces.filter(w =>
+        w.owner_id === user.id ||
+        w.created_by === user.id ||
         w.members?.some((m: any) => m.user_id === user.id)
       );
     }
@@ -1297,262 +1297,281 @@ export async function updateWorkspace(id: string, formData: any) {
   try {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
-    
+
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
     if (!userId) return { error: "Unauthenticated" };
 
-  // Check if user has global UPDATE permissions via IAM/RBAC or Super Admin
-  const canUpdateGlobal = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE") ||
-                          await checkServerPermission(supabase, userId, "SUPER_ADMIN") ||
-                          await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
-  
-  let canUpdate = canUpdateGlobal;
-  
-  // If no global permissions, check if they are the owner or manager of the workspace
-  if (!canUpdate) {
-    const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).maybeSingle();
-    if (ws && ws.workspace_owner_id === userId) {
-      canUpdate = true;
-    } else {
-      const { data: member } = await supabaseAdmin
-        .from("workspace_members")
-        .select("role")
-        .eq("workspace_id", id)
-        .eq("user_id", userId)
-        .eq("is_deleted", false)
-        .maybeSingle();
-      if (member && (member.role === 'manager' || member.role === 'owner' || member.role === 'WORKSPACE_MANAGER' || member.role === 'WORKSPACE_OWNER')) {
+    // Check if user has global UPDATE permissions via IAM/RBAC or Super Admin
+    const canUpdateGlobal = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE") ||
+      await checkServerPermission(supabase, userId, "SUPER_ADMIN") ||
+      await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
+
+    let canUpdate = canUpdateGlobal;
+
+    // If no global permissions, check if they are the owner or manager of the workspace
+    if (!canUpdate) {
+      const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).maybeSingle();
+      if (ws && ws.workspace_owner_id === userId) {
         canUpdate = true;
-      }
-    }
-  }
-
-  if (!canUpdate) {
-    await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'UPDATE_WORKSPACE' }, userId);
-    return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or owner/manager access." };
-  }
-
-  const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name, parent_workspace_id").eq("id", id).single();
-
-  let finalUpdateName = formData.name ? formData.name.trim() : formData.name;
-  const effectiveParentId = (formData.parent_workspace_id !== undefined)
-    ? ((formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null)
-    : oldWs?.parent_workspace_id;
-
-  if (finalUpdateName && effectiveParentId) {
-    const { data: parentWs } = await supabaseAdmin
-      .from("workspaces")
-      .select("workspace_name")
-      .eq("id", effectiveParentId)
-      .maybeSingle();
-
-    if (parentWs?.workspace_name) {
-      finalUpdateName = formatHierarchicalWorkspaceName(finalUpdateName, parentWs.workspace_name);
-    }
-  }
-
-  const updatePayload = {
-    workspace_name: finalUpdateName,
-    description: formData.description,
-    company_id: (formData.company_id && formData.company_id.trim()) ? formData.company_id : null,
-    start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,
-    end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
-    parent_workspace_id: (formData.parent_workspace_id !== undefined)
-      ? ((formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null)
-      : undefined,
-    ...(formData.visibility_settings !== undefined && { visibility_settings: formData.visibility_settings }),
-  };
-
-  // Prevent cyclical assignments: Workspace cannot be its own parent
-  if (updatePayload.parent_workspace_id === id) {
-    return { error: "Validation Error: A workspace cannot be assigned as its own parent." };
-  }
-
-  // Phase W1: Full descendant validation to prevent cyclical hierarchy loops
-  if (updatePayload.parent_workspace_id) {
-    const { data: allWs } = await supabaseAdmin
-      .from("workspaces")
-      .select("id, parent_workspace_id")
-      .eq("is_deleted", false);
-      
-    if (allWs) {
-      let currentCheckId = updatePayload.parent_workspace_id;
-      let depth = 0;
-      let isCycle = false;
-      
-      while (currentCheckId && depth < 100) {
-        if (currentCheckId === id) {
-          isCycle = true;
-          break;
-        }
-        const parentNode = allWs.find(w => w.id === currentCheckId);
-        currentCheckId = parentNode ? parentNode.parent_workspace_id : null;
-        depth++;
-      }
-      
-      if (isCycle) {
-        return { error: "Validation Error: Cyclical hierarchy detected. A workspace cannot be assigned as a child of its own descendant." };
-      }
-    }
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from("workspaces")
-    .update(updatePayload)
-    .eq("id", id)
-    .select()
-    .single();
-    
-  if (error) {
-    console.error("[Workspaces] Error updating workspace:", error);
-    if (error.code === 'PGRST116' || error.message.includes('JSON object')) {
-      return { error: "Unauthorized: You do not have permission to modify this workspace." };
-    }
-    return { error: error.message };
-  }
-
-  // Audit Log for title change
-  if (oldWs && formData.name && oldWs.workspace_name !== formData.name) {
-    await supabaseAdmin.from('activity_events').insert({
-      module_type: 'WORKSPACE',
-      record_id: id,
-      event_type: 'TITLE',
-      old_value: { title: oldWs.workspace_name },
-      new_value: { title: formData.name },
-      performed_by: userId
-    });
-  }
-
-  // Update assignees and teams if provided
-  if (formData.assigneeIds !== undefined) {
-    // 1. Get existing members to preserve roles and manage soft-deletes
-    const { data: existingMembers } = await supabaseAdmin
-      .from("workspace_members")
-      .select("id, user_id, role, is_deleted")
-      .eq("workspace_id", id);
-    
-    const roleMap = new Map();
-    const idMap = new Map();
-    existingMembers?.forEach(m => {
-      roleMap.set(m.user_id, m.role);
-      idMap.set(m.user_id, m.id);
-    });
-
-    // 2. Ensure owner is not locked out
-    const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
-    const ownerId = ws?.workspace_owner_id;
-
-    let assigneesArray = Array.from(new Set(formData.assigneeIds)).filter(Boolean) as string[];
-    if (ownerId && !assigneesArray.includes(ownerId)) {
-        assigneesArray.push(ownerId);
-    }
-
-    // 3. Perform deletes and upserts (Hard delete to fix zombie users in embedded queries)
-    const removedUserIds = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.user_id);
-    
-    // BACKEND GUARD: Prevent removal of active Executives/Assignees without prior reassignment
-    if (removedUserIds.length > 0) {
-      const { checkWorkspaceUserDependencies } = await import("@/lib/actions/dependencies");
-      const depResults = await checkWorkspaceUserDependencies(id, removedUserIds);
-      for (const rUid of removedUserIds) {
-        const res = depResults[rUid];
-        if (res && res.type === 'executive') {
-          return { 
-            error: `Cannot remove member: User is an active Primary Assignee or Executor on ${res.blockingItems.length} task(s). Please reassign their tasks first.` 
-          };
-        }
-      }
-    }
-
-    const usersToDelete = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.id);
-    if (usersToDelete.length > 0) {
-      await supabaseAdmin.from("workspace_members").delete().in("id", usersToDelete);
-    }
-    
-    // Also clean up any previously soft-deleted members for this workspace to fix the bug
-    await supabaseAdmin.from("workspace_members").delete().eq("workspace_id", id).eq("is_deleted", true);
-
-    // CASCADE REMOVAL: Automatically remove removed workspace members from all tasks/subtasks across workspace and descendants
-    if (removedUserIds.length > 0) {
-      try {
-        let targetWorkspaceIds = [id];
-        try {
-          const descendants = await HierarchyManager.getDescendants('WORKSPACE', id);
-          if (descendants && descendants.length > 0) {
-            targetWorkspaceIds = Array.from(new Set([id, ...descendants]));
-          }
-        } catch (hErr) {
-          console.warn("[updateWorkspace] Hierarchy resolution fallback:", hErr);
-        }
-
-        const { data: wsTasks } = await supabaseAdmin
-          .from("tasks")
-          .select("id")
-          .in("workspace_id", targetWorkspaceIds);
-        
-        const wsTaskIds = wsTasks?.map(t => t.id) || [];
-        if (wsTaskIds.length > 0) {
-          await Promise.all([
-            supabaseAdmin
-              .from("task_participants")
-              .delete()
-              .in("task_id", wsTaskIds)
-              .in("user_id", removedUserIds)
-              .eq("participation_role", "WATCHER"),
-            supabaseAdmin
-              .from("task_watchers")
-              .delete()
-              .in("task_id", wsTaskIds)
-              .in("user_id", removedUserIds)
-          ]);
-        }
-      } catch (cascadeErr) {
-        console.warn("[updateWorkspace] Cascade task participant cleanup warning:", cascadeErr);
-      }
-    }
-
-    for (const uid of assigneesArray) {
-      const existingRole = roleMap.get(uid);
-      const role = existingRole ? existingRole : (uid === ownerId ? 'manager' : 'member');
-      const recordId = idMap.get(uid);
-
-      if (recordId) {
-        await supabaseAdmin.from("workspace_members").update({ is_deleted: false, role }).eq("id", recordId);
       } else {
-        await supabaseAdmin.from("workspace_members").insert({ workspace_id: id, user_id: uid, role, is_deleted: false });
+        const { data: member } = await supabaseAdmin
+          .from("workspace_members")
+          .select("role")
+          .eq("workspace_id", id)
+          .eq("user_id", userId)
+          .eq("is_deleted", false)
+          .maybeSingle();
+        if (member && (member.role === 'manager' || member.role === 'owner' || member.role === 'WORKSPACE_MANAGER' || member.role === 'WORKSPACE_OWNER')) {
+          canUpdate = true;
+        }
       }
     }
 
-    // Dispatch Notifications for updates if new assignees were provided
-    const newAssignees = assigneesArray.filter(uid => !existingMembers?.some((m: any) => m.user_id === uid && !m.is_deleted));
+    if (!canUpdate) {
+      await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'UPDATE_WORKSPACE' }, userId);
+      return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or owner/manager access." };
+    }
 
-    for (const assigneeId of newAssignees) {
-      if (assigneeId === userId) continue; // Skip the updater
+    const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name, parent_workspace_id").eq("id", id).single();
 
-      const isSub = !!formData.parent_workspace_id;
-      const title = isSub ? "Workspace Assignment Updated" : "Workspace Assignment Updated";
-      const message = `You have been added/re-assigned to the workspace: "${data.workspace_name}".`;
-      
-      await dispatchNotification(
-        assigneeId,
-        title,
-        message,
-        `/workspaces`,
-        'WORKSPACE',
-        'UPDATED',
-        {
+    let finalUpdateName = formData.name ? formData.name.trim() : formData.name;
+    const effectiveParentId = (formData.parent_workspace_id !== undefined)
+      ? ((formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null)
+      : oldWs?.parent_workspace_id;
+
+    if (finalUpdateName && effectiveParentId) {
+      const { data: parentWs } = await supabaseAdmin
+        .from("workspaces")
+        .select("workspace_name")
+        .eq("id", effectiveParentId)
+        .maybeSingle();
+
+      if (parentWs?.workspace_name) {
+        finalUpdateName = formatHierarchicalWorkspaceName(finalUpdateName, parentWs.workspace_name);
+      }
+    }
+
+    const updatePayload = {
+      workspace_name: finalUpdateName,
+      description: formData.description,
+      company_id: (formData.company_id && formData.company_id.trim()) ? formData.company_id : null,
+      start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,
+      end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
+      parent_workspace_id: (formData.parent_workspace_id !== undefined)
+        ? ((formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null)
+        : undefined,
+      ...(formData.visibility_settings !== undefined && { visibility_settings: formData.visibility_settings }),
+    };
+
+    // Prevent cyclical assignments: Workspace cannot be its own parent
+    if (updatePayload.parent_workspace_id === id) {
+      return { error: "Validation Error: A workspace cannot be assigned as its own parent." };
+    }
+
+    // Phase W1: Full descendant validation to prevent cyclical hierarchy loops
+    if (updatePayload.parent_workspace_id) {
+      const { data: allWs } = await supabaseAdmin
+        .from("workspaces")
+        .select("id, parent_workspace_id")
+        .eq("is_deleted", false);
+
+      if (allWs) {
+        let currentCheckId = updatePayload.parent_workspace_id;
+        let depth = 0;
+        let isCycle = false;
+
+        while (currentCheckId && depth < 100) {
+          if (currentCheckId === id) {
+            isCycle = true;
+            break;
+          }
+          const parentNode = allWs.find(w => w.id === currentCheckId);
+          currentCheckId = parentNode ? parentNode.parent_workspace_id : null;
+          depth++;
+        }
+
+        if (isCycle) {
+          return { error: "Validation Error: Cyclical hierarchy detected. A workspace cannot be assigned as a child of its own descendant." };
+        }
+      }
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("workspaces")
+      .update(updatePayload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[Workspaces] Error updating workspace:", error);
+      if (error.code === 'PGRST116' || error.message.includes('JSON object')) {
+        return { error: "Unauthorized: You do not have permission to modify this workspace." };
+      }
+      return { error: error.message };
+    }
+
+    // Audit Log for title change
+    if (oldWs && formData.name && oldWs.workspace_name !== formData.name) {
+      await supabaseAdmin.from('activity_events').insert({
+        module_type: 'WORKSPACE',
+        record_id: id,
+        event_type: 'TITLE',
+        old_value: { title: oldWs.workspace_name },
+        new_value: { title: formData.name },
+        performed_by: userId
+      });
+    }
+
+    // Update assignees and teams if provided
+    if (formData.assigneeIds !== undefined) {
+      // 1. Get existing members to preserve roles and manage soft-deletes
+      const { data: existingMembers } = await supabaseAdmin
+        .from("workspace_members")
+        .select("id, user_id, role, is_deleted")
+        .eq("workspace_id", id);
+
+      const roleMap = new Map();
+      const idMap = new Map();
+      existingMembers?.forEach(m => {
+        roleMap.set(m.user_id, m.role);
+        idMap.set(m.user_id, m.id);
+      });
+
+      // 2. Ensure owner is not locked out
+      const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
+      const ownerId = ws?.workspace_owner_id;
+
+      let assigneesArray = Array.from(new Set(formData.assigneeIds)).filter(Boolean) as string[];
+      if (ownerId && !assigneesArray.includes(ownerId)) {
+        assigneesArray.push(ownerId);
+      }
+
+      // 3. Perform deletes and upserts (Hard delete to fix zombie users in embedded queries)
+      const removedUserIds = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.user_id);
+
+      // BACKEND GUARD: Prevent removal of active Executives/Assignees without prior reassignment
+      if (removedUserIds.length > 0) {
+        const { checkWorkspaceUserDependencies } = await import("@/lib/actions/dependencies");
+        const depResults = await checkWorkspaceUserDependencies(id, removedUserIds);
+        for (const rUid of removedUserIds) {
+          const res = depResults[rUid];
+          if (res && res.type === 'executive') {
+            return {
+              error: `Cannot remove member: User is an active Primary Assignee or Executor on ${res.blockingItems.length} task(s). Please reassign their tasks first.`
+            };
+          }
+        }
+      }
+
+      const usersToDelete = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.id);
+      if (usersToDelete.length > 0) {
+        await supabaseAdmin.from("workspace_members").delete().in("id", usersToDelete);
+      }
+
+      // Also clean up any previously soft-deleted members for this workspace to fix the bug
+      await supabaseAdmin.from("workspace_members").delete().eq("workspace_id", id).eq("is_deleted", true);
+
+      // CASCADE REMOVAL: Automatically remove removed workspace members from all tasks/subtasks across workspace and descendants
+      if (removedUserIds.length > 0) {
+        try {
+          let targetWorkspaceIds = [id];
+          try {
+            const descendants = await HierarchyManager.getDescendants('WORKSPACE', id);
+            if (descendants && descendants.length > 0) {
+              targetWorkspaceIds = Array.from(new Set([id, ...descendants]));
+            }
+          } catch (hErr) {
+            console.warn("[updateWorkspace] Hierarchy resolution fallback:", hErr);
+          }
+
+          const { data: wsTasks } = await supabaseAdmin
+            .from("tasks")
+            .select("id")
+            .in("workspace_id", targetWorkspaceIds);
+
+          const wsTaskIds = wsTasks?.map(t => t.id) || [];
+          if (wsTaskIds.length > 0) {
+            await Promise.all([
+              supabaseAdmin
+                .from("task_participants")
+                .delete()
+                .in("task_id", wsTaskIds)
+                .in("user_id", removedUserIds)
+                .eq("participation_role", "WATCHER"),
+              supabaseAdmin
+                .from("task_watchers")
+                .delete()
+                .in("task_id", wsTaskIds)
+                .in("user_id", removedUserIds)
+            ]);
+          }
+        } catch (cascadeErr) {
+          console.warn("[updateWorkspace] Cascade task participant cleanup warning:", cascadeErr);
+        }
+      }
+
+      for (const uid of assigneesArray) {
+        const existingRole = roleMap.get(uid);
+        const role = existingRole ? existingRole : (uid === ownerId ? 'manager' : 'member');
+        const recordId = idMap.get(uid);
+
+        if (recordId) {
+          await supabaseAdmin.from("workspace_members").update({ is_deleted: false, role }).eq("id", recordId);
+        } else {
+          await supabaseAdmin.from("workspace_members").insert({ workspace_id: id, user_id: uid, role, is_deleted: false });
+        }
+      }
+
+      // Dispatch Notifications for updates if new assignees were provided
+      const newAssignees = assigneesArray.filter(uid => !existingMembers?.some((m: any) => m.user_id === uid && !m.is_deleted));
+
+      for (const assigneeId of newAssignees) {
+        if (assigneeId === userId) continue; // Skip the updater
+
+        const isSub = !!formData.parent_workspace_id;
+        const title = isSub ? "Workspace Assignment Updated" : "Workspace Assignment Updated";
+        const message = `You have been added/re-assigned to the workspace: "${data.workspace_name}".`;
+
+        await dispatchNotification(
+          assigneeId,
+          title,
+          message,
+          `/workspaces`,
+          'WORKSPACE',
+          'UPDATED',
+          {
+            workspace_name: data.workspace_name,
+            workspace_code: data.workspace_code,
+            type: isSub ? 'Sub-Workspace' : 'Workspace',
+            _disableEmail: true
+          }
+        );
+
+        queueBusinessEvent("Workspace", "Assigned", {
+          entity_id: data.id,
+          triggering_user_id: userId,
+          assigned_to: assigneeId,
+          workspace_owner_id: data.workspace_owner_id || userId,
           workspace_name: data.workspace_name,
           workspace_code: data.workspace_code,
+          description: data.description,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          due_date: data.end_date,
+          status_id: data.status_id,
+          company_id: data.company_id,
+          parent_workspace_id: data.parent_workspace_id,
           type: isSub ? 'Sub-Workspace' : 'Workspace',
-          _disableEmail: true
-        }
-      );
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
+        }).catch(e => console.error("[updateWorkspace] Workspace Assigned queue push failed", e));
+      }
 
-      queueBusinessEvent("Workspace", "Assigned", {
+      // Queue Workspace Updated event
+      queueBusinessEvent("Workspace", "Updated", {
         entity_id: data.id,
         triggering_user_id: userId,
-        assigned_to: assigneeId,
         workspace_owner_id: data.workspace_owner_id || userId,
         workspace_name: data.workspace_name,
         workspace_code: data.workspace_code,
@@ -1563,39 +1582,20 @@ export async function updateWorkspace(id: string, formData: any) {
         status_id: data.status_id,
         company_id: data.company_id,
         parent_workspace_id: data.parent_workspace_id,
-        type: isSub ? 'Sub-Workspace' : 'Workspace',
+        type: !!formData.parent_workspace_id ? 'Sub-Workspace' : 'Workspace',
         link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
-      }).catch(e => console.error("[updateWorkspace] Workspace Assigned queue push failed", e));
+      }).catch(e => console.error("[updateWorkspace] Workspace Updated queue push failed", e));
     }
 
-    // Queue Workspace Updated event
-    queueBusinessEvent("Workspace", "Updated", {
-      entity_id: data.id,
-      triggering_user_id: userId,
-      workspace_owner_id: data.workspace_owner_id || userId,
-      workspace_name: data.workspace_name,
-      workspace_code: data.workspace_code,
-      description: data.description,
-      start_date: data.start_date,
-      end_date: data.end_date,
-      due_date: data.end_date,
-      status_id: data.status_id,
-      company_id: data.company_id,
-      parent_workspace_id: data.parent_workspace_id,
-      type: !!formData.parent_workspace_id ? 'Sub-Workspace' : 'Workspace',
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
-    }).catch(e => console.error("[updateWorkspace] Workspace Updated queue push failed", e));
-  }
+    revalidatePath("/workspaces");
 
-  revalidatePath("/workspaces");
-
-  // Map to frontend expected shape
-  return {
-    ...data,
-    name: data.workspace_name,
-    code: data.workspace_code,
-    members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || []
-  };
+    // Map to frontend expected shape
+    return {
+      ...data,
+      name: data.workspace_name,
+      code: data.workspace_code,
+      members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || []
+    };
   } catch (err: any) {
     console.error("[updateWorkspace] Error:", err?.message || String(err));
     return { error: err?.message || "Failed to update workspace" };
@@ -1616,11 +1616,11 @@ export async function deleteWorkspace(id: string) {
     const userId = user.id;
 
     const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
-    
+
     // Check if user has global DELETE permissions via IAM/RBAC
     const canDeleteGlobal = await checkServerPermission(supabase, userId, "WORKSPACES_DELETE");
     const isOwner = ws && ws.workspace_owner_id === userId;
-    
+
     if (!canDeleteGlobal && !isOwner) {
       await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'DELETE_WORKSPACE' }, userId);
       return { error: "Unauthorized: Missing WORKSPACES_DELETE capability or owner access." };
@@ -1640,41 +1640,67 @@ export async function deleteWorkspace(id: string) {
   }
 }
 
-export async function fetchWorkspaceStakeholders(workspaceId: string) {
-  // 1. Fetch workspace members
+export async function fetchWorkspaceStakeholders(workspaceId: string): Promise<any[]> {
+  if (!workspaceId) return [];
+  // 1. Fetch workspace info to get parent_workspace_id and workspace_owner_id
+  const { data: ws } = await supabaseAdmin
+    .from("workspaces")
+    .select("parent_workspace_id, workspace_owner_id")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  // 2. Fetch workspace members
   const { data: members, error } = await supabaseAdmin
     .from("workspace_members")
     .select("user_id, role")
     .eq("workspace_id", workspaceId)
     .eq("is_deleted", false);
-    
-  if (error || !members || members.length === 0) {
-    if (error) console.error("[Workspaces] Error fetching stakeholders:", error);
-    return [];
+
+  if (error) console.error("[Workspaces] Error fetching stakeholders:", error);
+
+  const memberList = members || [];
+
+  // If no direct members and workspace has a parent, fall back to parent workspace members
+  if (memberList.length === 0 && ws?.parent_workspace_id) {
+    return fetchWorkspaceStakeholders(ws.parent_workspace_id);
   }
-  
-  // 2. Fetch user details for those members
-  const userIds = members.map(m => m.user_id);
+
+  // 3. Collect all user IDs (members + workspace owner)
+  const userIdsSet = new Set<string>();
+  const roleMap = new Map<string, string>();
+
+  memberList.forEach(m => {
+    userIdsSet.add(m.user_id);
+    roleMap.set(m.user_id, m.role || 'MEMBER');
+  });
+
+  if (ws?.workspace_owner_id) {
+    userIdsSet.add(ws.workspace_owner_id);
+    if (!roleMap.has(ws.workspace_owner_id)) {
+      roleMap.set(ws.workspace_owner_id, 'owner');
+    }
+  }
+
+  const userIds = Array.from(userIdsSet);
+  if (userIds.length === 0) return [];
+
+  // 4. Fetch user details for those members
   const { data: users, error: userError } = await supabaseAdmin
     .from("user_master")
     .select(`id, full_name, user_code`)
     .in("id", userIds)
     .eq("is_deleted", false);
-    
+
   if (userError || !users) {
     console.error("[Workspaces] Error fetching users for stakeholders:", userError);
     return [];
   }
-  
-  // 3. Map them together
-  return members.map(mem => {
-    const user = users.find(u => u.id === mem.user_id);
-    if (!user) return null;
-    return {
-      ...user,
-      workspace_role: mem.role || 'MEMBER'
-    };
-  }).filter(Boolean);
+
+  // 5. Map them together
+  return users.map(user => ({
+    ...user,
+    workspace_role: roleMap.get(user.id) || 'MEMBER'
+  }));
 }
 
 export async function fetchTasksByWorkspace(workspaceId: string, includeDescendants: boolean = false) {
@@ -1683,7 +1709,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
   try {
     const cookieStore = await cookies();
     const supabaseClient = createClient(cookieStore);
-    
+
     const { data: userData } = await supabaseClient.auth.getUser();
     if (!userData.user) return [];
 
@@ -1699,7 +1725,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
       console.timeEnd(`[PROFILER] Hierarchy_CTE_Duration_${tId}`);
       console.log(`[PROFILER] Hierarchy_CTE_End_${tId}`);
     }
-  
+
     let query = supabase
       .from("tasks")
       .select(`
@@ -1739,13 +1765,13 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
     if (workspaceTasks && workspaceTasks.length > 0) {
       // Missing relationships like sub_workspaces or parent tasks that couldn't be efficiently queried deeply
       const wsIds = Array.from(new Set(workspaceTasks.map((t: any) => t.workspace?.parent_workspace_id).filter(Boolean)));
-      
+
       let parentWorkspaces: any[] = [];
       if (wsIds.length > 0) {
         const { data: pWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
         if (pWs) parentWorkspaces = pWs;
       }
-      
+
       const userIds = new Set<string>();
       workspaceTasks.forEach((t: any) => {
         if (t.created_by) userIds.add(t.created_by);
@@ -1837,7 +1863,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
         });
       }
     }
-    
+
     return workspaceTasks || [];
   } finally {
     console.timeEnd(`[PROFILER] fetchTasksByWorkspace_TOTAL_${tId}`);
@@ -1890,90 +1916,90 @@ export async function fetchAllTasks() {
     console.error("[Workspaces] Error fetching all tasks:", tasksError);
     return [];
   }
-  
+
   if (allTasks && allTasks.length > 0) {
-      const wsIds = Array.from(new Set(allTasks.map((t: any) => t.workspace?.parent_workspace_id).filter(Boolean)));
-      
-      let parentWorkspaces: any[] = [];
-      if (wsIds.length > 0) {
-        const { data: pWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
-        if (pWs) parentWorkspaces = pWs;
+    const wsIds = Array.from(new Set(allTasks.map((t: any) => t.workspace?.parent_workspace_id).filter(Boolean)));
+
+    let parentWorkspaces: any[] = [];
+    if (wsIds.length > 0) {
+      const { data: pWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
+      if (pWs) parentWorkspaces = pWs;
+    }
+
+    const userIds = new Set<string>();
+    allTasks.forEach((t: any) => {
+      if (t.created_by) userIds.add(t.created_by);
+      if (t.assigned_to) userIds.add(t.assigned_to);
+      if (t.participants) t.participants.forEach((p: any) => userIds.add(p.user_id));
+    });
+    let userMap: Record<string, any> = {};
+    if (userIds.size > 0) {
+      const { data: usersData } = await supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", Array.from(userIds));
+      if (usersData) usersData.forEach((u: any) => userMap[u.id] = u);
+    }
+
+    const taskIds = allTasks.map((t: any) => t.id);
+    const [checklistsData, attachmentsData, commentsData] = await Promise.all([
+      supabaseAdmin.from("task_checklists").select("task_id, is_completed").in("task_id", taskIds),
+      supabaseAdmin.from("task_attachments").select("task_id").in("task_id", taskIds),
+      supabaseAdmin.from("task_comments").select("task_id").in("task_id", taskIds)
+    ]);
+
+    const checklistMap: Record<string, any[]> = {};
+    if (checklistsData.data) checklistsData.data.forEach((c: any) => { if (!checklistMap[c.task_id]) checklistMap[c.task_id] = []; checklistMap[c.task_id].push(c); });
+
+    const attachmentCountMap: Record<string, number> = {};
+    if (attachmentsData.data) attachmentsData.data.forEach((a: any) => { attachmentCountMap[a.task_id] = (attachmentCountMap[a.task_id] || 0) + 1; });
+
+    const commentCountMap: Record<string, number> = {};
+    if (commentsData.data) commentsData.data.forEach((c: any) => { commentCountMap[c.task_id] = (commentCountMap[c.task_id] || 0) + 1; });
+
+    allTasks.forEach((t: any) => {
+      if (t.workspace && t.workspace.parent_workspace_id) {
+        const parentWs = parentWorkspaces.find((w: any) => w.id === t.workspace.parent_workspace_id);
+        t.sub_workspace = t.workspace;
+        if (parentWs) t.workspace = parentWs;
+      } else {
+        t.sub_workspace = null;
       }
-      
-      const userIds = new Set<string>();
-      allTasks.forEach((t: any) => {
-        if (t.created_by) userIds.add(t.created_by);
-        if (t.assigned_to) userIds.add(t.assigned_to);
-        if (t.participants) t.participants.forEach((p: any) => userIds.add(p.user_id));
-      });
-      let userMap: Record<string, any> = {};
-      if (userIds.size > 0) {
-        const { data: usersData } = await supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", Array.from(userIds));
-        if (usersData) usersData.forEach((u: any) => userMap[u.id] = u);
+
+      t.assignees = []; // Implicitly workspace members
+
+      t.checklists = checklistMap[t.id] || [];
+      t.attachmentCount = attachmentCountMap[t.id] || 0;
+      t.commentCount = commentCountMap[t.id] || 0;
+
+      t.creator = userMap[t.created_by] || null;
+      t.assignee = userMap[t.assigned_to] || null;
+
+      // Map Participants
+      t.executors = [];
+      t.reviewers = [];
+      if (t.participants) {
+        t.participants.forEach((p: any) => {
+          const u = userMap[p.user_id];
+          if (p.participation_role === "EXECUTOR" && u) t.executors.push(u);
+          if ((p.participation_role === "REVIEWER" || p.participation_role === "WATCHER") && u) t.reviewers.push(u);
+        });
       }
 
-      const taskIds = allTasks.map((t: any) => t.id);
-      const [checklistsData, attachmentsData, commentsData] = await Promise.all([
-        supabaseAdmin.from("task_checklists").select("task_id, is_completed").in("task_id", taskIds),
-        supabaseAdmin.from("task_attachments").select("task_id").in("task_id", taskIds),
-        supabaseAdmin.from("task_comments").select("task_id").in("task_id", taskIds)
-      ]);
-
-      const checklistMap: Record<string, any[]> = {};
-      if (checklistsData.data) checklistsData.data.forEach((c: any) => { if (!checklistMap[c.task_id]) checklistMap[c.task_id] = []; checklistMap[c.task_id].push(c); });
-
-      const attachmentCountMap: Record<string, number> = {};
-      if (attachmentsData.data) attachmentsData.data.forEach((a: any) => { attachmentCountMap[a.task_id] = (attachmentCountMap[a.task_id] || 0) + 1; });
-
-      const commentCountMap: Record<string, number> = {};
-      if (commentsData.data) commentsData.data.forEach((c: any) => { commentCountMap[c.task_id] = (commentCountMap[c.task_id] || 0) + 1; });
-        
-      allTasks.forEach((t: any) => {
-        if (t.workspace && t.workspace.parent_workspace_id) {
-          const parentWs = parentWorkspaces.find((w: any) => w.id === t.workspace.parent_workspace_id);
-          t.sub_workspace = t.workspace;
-          if (parentWs) t.workspace = parentWs;
+      // Calculate progress percentage
+      if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
+        t.progress_percentage = 100;
+      } else if (t.checklists && t.checklists.length > 0) {
+        const completed = t.checklists.filter((c: any) => c.is_completed).length;
+        t.progress_percentage = Math.round((completed / t.checklists.length) * 100);
+      } else {
+        // Fallback: Use status to infer progress if no checklists exist
+        if (t.status?.code === "IN_PROGRESS" || t.status?.code === "WIP") {
+          t.progress_percentage = 50;
+        } else if (t.status?.code === "REVIEW" || t.status?.code === "TESTING") {
+          t.progress_percentage = 80;
         } else {
-          t.sub_workspace = null;
+          t.progress_percentage = 0;
         }
-
-        t.assignees = []; // Implicitly workspace members
-
-        t.checklists = checklistMap[t.id] || [];
-        t.attachmentCount = attachmentCountMap[t.id] || 0;
-        t.commentCount = commentCountMap[t.id] || 0;
-
-        t.creator = userMap[t.created_by] || null;
-        t.assignee = userMap[t.assigned_to] || null;
-
-        // Map Participants
-        t.executors = [];
-        t.reviewers = [];
-        if (t.participants) {
-          t.participants.forEach((p: any) => {
-            const u = userMap[p.user_id];
-            if (p.participation_role === "EXECUTOR" && u) t.executors.push(u);
-            if ((p.participation_role === "REVIEWER" || p.participation_role === "WATCHER") && u) t.reviewers.push(u);
-          });
-        }
-
-        // Calculate progress percentage
-        if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
-          t.progress_percentage = 100;
-        } else if (t.checklists && t.checklists.length > 0) {
-          const completed = t.checklists.filter((c: any) => c.is_completed).length;
-          t.progress_percentage = Math.round((completed / t.checklists.length) * 100);
-        } else {
-          // Fallback: Use status to infer progress if no checklists exist
-          if (t.status?.code === "IN_PROGRESS" || t.status?.code === "WIP") {
-            t.progress_percentage = 50;
-          } else if (t.status?.code === "REVIEW" || t.status?.code === "TESTING") {
-            t.progress_percentage = 80;
-          } else {
-            t.progress_percentage = 0;
-          }
-        }
-      });
+      }
+    });
   }
 
   return allTasks || [];
@@ -1985,16 +2011,16 @@ export async function toggleChecklistItem(itemId: string, completed: boolean) {
   const supabase = createClient(cookieStore);
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) throw new Error("Unauthenticated");
-  
+
   const { data, error } = await supabaseAdmin
     .from("task_checklists")
-    .update({ 
+    .update({
       is_completed: completed
     })
     .eq("id", itemId)
     .select()
     .single();
-  
+
   if (error) throw new Error("Failed to update checklist item");
 
   if (data) {
@@ -2014,7 +2040,7 @@ export async function updateTaskProgress(taskId: string, progress: number) {
     .from("tasks")
     .update({ custom_fields: { ...customFields, progress_percentage: progress } })
     .eq("id", taskId);
-  
+
   if (error) throw new Error("Failed to update task progress");
 }
 
@@ -2047,7 +2073,7 @@ export async function fetchAssignableUsers() {
     .select("id, full_name, user_code")
     .eq("is_deleted", false)
     .order("full_name", { ascending: true });
-    
+
   if (error) {
     console.error("[fetchAssignableUsers] Error:", error);
     return [];
@@ -2078,7 +2104,7 @@ export async function createSprint(workspaceId: string, formData: any) {
 export async function fetchSprints(workspaceId: string) {
   const { data: allWs } = await supabaseAdmin.from("workspaces").select("id, parent_workspace_id").eq("is_deleted", false);
   if (!allWs) return [];
-  
+
   // Find the root workspace
   let rootId = workspaceId;
   let current = allWs.find(w => w.id === rootId);
@@ -2086,13 +2112,13 @@ export async function fetchSprints(workspaceId: string) {
     rootId = current.parent_workspace_id;
     current = allWs.find(w => w.id === rootId);
   }
-  
+
   // Now get all descendants of the root
   const getDescendants = (id: string, all: any[]): string[] => {
     const children = all.filter((w: any) => w.parent_workspace_id === id);
     return [id, ...children.flatMap((c: any) => getDescendants(c.id, all))];
   };
-  
+
   const hierarchyIds = getDescendants(rootId, allWs);
 
   const { data, error } = await supabaseAdmin.from("sprints")
