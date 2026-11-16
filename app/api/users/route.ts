@@ -7,10 +7,26 @@ import { getVisibleUsers, checkIsSuperAdmin } from "@/lib/repositories/users";
 import { hasPermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function GET(request: NextRequest) {
   try {
     let user: any = null;
+
+    // 0. Try Authorization: Bearer <token> header from client-side session
+    const authHeader = request.headers.get("authorization");
+    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+      const token = authHeader.substring(7).trim();
+      if (token) {
+        try {
+          const { data: tokenUserData, error: tokenErr } = await supabaseAdmin.auth.getUser(token);
+          if (tokenUserData?.user && !tokenErr) {
+            user = tokenUserData.user;
+          }
+        } catch (e) {}
+      }
+    }
 
     // 1. Try standard Next.js cookie store
     try {
@@ -92,7 +108,13 @@ export async function GET(request: NextRequest) {
       assets: astRes.data || [],
       modules: modRes.data || [],
       moduleRoles: modRolesRes.data || []
-    }, { status: 200 });
+    }, {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache"
+      }
+    });
 
   } catch (error: any) {
     console.error("[api/users] Error:", error);

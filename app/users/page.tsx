@@ -1,5 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 // Live Production deployment check
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -372,19 +376,38 @@ export default function UserMasterPage() {
       console.log("[User Master] Initiating Global Governance Sync...");
 
       // Purge any stale client-side caches or legacy overrides
-      try {
-        localStorage.removeItem("local_deleted_users");
-        localStorage.removeItem("local_created_users");
-        localStorage.removeItem("local_users_updates");
-        localStorage.removeItem("demo_users_cache");
-        localStorage.removeItem("mock_users");
-      } catch (e) { }
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.removeItem("local_deleted_users");
+          localStorage.removeItem("local_created_users");
+          localStorage.removeItem("local_users_updates");
+          localStorage.removeItem("demo_users_cache");
+          localStorage.removeItem("mock_users");
+          if ("caches" in window) {
+            caches.keys().then((names) => names.forEach((name) => caches.delete(name))).catch(() => {});
+          }
+        } catch (e) { }
+      }
 
       let data: any = null;
       try {
-        const apiRes = await fetch("/api/users", {
+        let token = "";
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          token = sessionData?.session?.access_token || "";
+        } catch (e) {}
+
+        const headers: Record<string, string> = {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache"
+        };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const apiRes = await fetch(`/api/users?_t=${Date.now()}`, {
           cache: "no-store",
-          headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+          headers
         });
         if (apiRes.ok) {
           data = await apiRes.json();
@@ -411,11 +434,22 @@ export default function UserMasterPage() {
             supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
             supabase.from("roles").select("id, code, name").eq("is_deleted", false)
           ]);
+
+          const myDbUser = (dbUsersRes.data || []).find((u: any) => u.id === clientAuth.id || (clientAuth.email && u.email?.toLowerCase() === clientAuth.email.toLowerCase()));
+          const myRole = (rolesRes.data || []).find((r: any) => r.id === myDbUser?.role_id);
+          const isSuperRole = myRole?.code === 'SUPER_ADMIN' || myRole?.code === 'ROLE_ADMIN' || myDbUser?.role_id === 'cd5be727-8785-482e-855e-b8494b51d93b' || myDbUser?.role_id === 'admin-role-id';
+          const resolvedIsSuper = isSuperAdmin || isSuperRole || hasPermission('SUPER_ADMIN');
+
           data = {
             users: dbUsersRes.data || [],
             authUser: clientAuth,
-            isSuperAdmin: false,
-            userRights: { canView: false, canCreate: false, canUpdate: false, canDelete: false },
+            isSuperAdmin: resolvedIsSuper,
+            userRights: {
+              canView: resolvedIsSuper,
+              canCreate: resolvedIsSuper,
+              canUpdate: resolvedIsSuper,
+              canDelete: resolvedIsSuper
+            },
             departments: deptsRes.data || [],
             designations: desigsRes.data || [],
             roles: rolesRes.data || [],

@@ -34,14 +34,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund || npm install --legacy-peer-deps --no-audit --no-fund
 
-      - name: Cache Next.js build cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-            ${{ runner.os }}-nextjs-
+      - name: Clean build directory
+        run: rm -rf .next
 
       - name: Build Next.js
         env:
@@ -153,8 +147,8 @@ jobs:
               fi
             fi
 
-            # Prevent dual-app collision by removing stray server.js from public_html
-            rm -f "$DOMAIN_ROOT/public_html/server.js" "$DOMAIN_ROOT/public_html/package.json"
+            # Prevent dual-app collision and remove stale prerendered files from public_html
+            rm -f "$DOMAIN_ROOT/public_html/server.js" "$DOMAIN_ROOT/public_html/package.json" "$DOMAIN_ROOT/public_html/users.html" "$DOMAIN_ROOT/public_html/users"
 
             echo "Target directories to update: ${TARGET_DIRS[*]}"
             

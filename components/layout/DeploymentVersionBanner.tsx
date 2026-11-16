@@ -53,7 +53,19 @@ export default function DeploymentVersionBanner() {
       <div className="flex shrink-0 items-center gap-1">
         <button
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            try {
+              localStorage.removeItem("demo_users_cache");
+              localStorage.removeItem("mock_users");
+              localStorage.removeItem("local_deleted_users");
+              localStorage.removeItem("local_created_users");
+              localStorage.removeItem("local_users_updates");
+              if ("caches" in window) {
+                caches.keys().then((names) => names.forEach((name) => caches.delete(name))).catch(() => {});
+              }
+            } catch (e) {}
+            window.location.href = window.location.pathname + (window.location.search ? window.location.search + '&_t=' : '?_t=') + Date.now();
+          }}
           className="inline-flex h-7 items-center gap-1.5 rounded-md border border-info-border bg-surface px-2.5 text-[12.5px] font-medium text-foreground hover:bg-surface-hover"
         >
           <RefreshCw className="h-3.5 w-3.5" aria-hidden />
