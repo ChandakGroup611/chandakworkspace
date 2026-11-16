@@ -46,12 +46,12 @@ export async function getDashboardAccess(userId: string, def: DashboardDef): Pro
     // Super Admin check
     const { data: um } = await supabaseAdmin
       .from("user_master")
-      .select("platform_role, role:roles(code)")
+      .select("role:roles(code)")
       .eq("id", userId)
       .maybeSingle();
 
     const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
-    const isSuperAdmin = um?.platform_role === "SUPER_ADMIN" || ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN", "ROLE_ADMIN"].includes(roleCode || "");
+    const isSuperAdmin = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN", "ROLE_ADMIN"].includes(roleCode || "");
 
     if (isSuperAdmin) {
       return {

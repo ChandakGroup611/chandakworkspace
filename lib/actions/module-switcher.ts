@@ -119,7 +119,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     // Fetch user profile and role with maybeSingle + role_id fallback
     const { data: userProfile } = await supabaseAdmin
       .from("user_master")
-      .select("id, full_name, email, role_id, role:roles(code), platform_role")
+      .select("id, full_name, email, role_id, role:roles(code)")
       .eq("id", userId)
       .maybeSingle();
 
@@ -135,7 +135,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
       }
     }
     const roleCode = String(rawRoleCode || "").toUpperCase();
-    const isAdmin = userProfile?.platform_role === "SUPER_ADMIN" || ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ADMIN_ROLE"].includes(roleCode);
+    const isAdmin = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ADMIN_ROLE"].includes(roleCode);
 
     // Fetch all active modules (with 5-minute memory cache)
     let allActiveModules: any[] | null = null;
@@ -158,14 +158,33 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
       }
     }
 
-    // Fetch user assigned modules
-    const { data: userAssignments } = await supabaseAdmin
-      .from("user_modules")
-      .select("module_id, is_default, module:modules_master(code)")
-      .eq("user_id", userId);
+    // Fetch user assigned modules from unified user_module_access (with user_modules fallback)
+    const [umaRes, legacyRes] = await Promise.all([
+      supabaseAdmin
+        .from("user_module_access")
+        .select("module_code, is_default")
+        .eq("user_id", userId),
+      supabaseAdmin
+        .from("user_modules")
+        .select("module_id, is_default, module:modules_master(code)")
+        .eq("user_id", userId)
+    ]);
 
-    const assignedModuleIds = new Set((userAssignments || []).map(a => a.module_id));
-    const defaultAssignment = (userAssignments || []).find(a => a.is_default);
+    const assignedModuleCodes = new Set<string>();
+    let defaultModuleCode: string | null = null;
+
+    if (umaRes.data && umaRes.data.length > 0) {
+      for (const row of umaRes.data) {
+        assignedModuleCodes.add(row.module_code);
+        if (row.is_default) defaultModuleCode = row.module_code;
+      }
+    } else if (legacyRes.data && legacyRes.data.length > 0) {
+      for (const row of legacyRes.data) {
+        const code = (row.module as any)?.code || row.module_id;
+        if (code) assignedModuleCodes.add(code);
+        if (row.is_default) defaultModuleCode = code;
+      }
+    }
 
     // Check if user has dashboard RBAC permissions (DASH_*) or entry in user_module_access for DASHBOARDS
     let hasDashboardPerms = false;
@@ -193,8 +212,8 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
         if (!ALLOWED_CORE_MODULE_CODES.has(m.code)) return false;
         if (isAdmin) return true;
         if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
-        if (assignedModuleIds.size === 0) return m.code === "TASK_WORKFLOW";
-        return assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code);
+        if (assignedModuleCodes.size === 0) return m.code === "TASK_WORKFLOW";
+        return assignedModuleCodes.has(m.code);
       })
       .map(m => {
         let route = m.route_path;
@@ -208,7 +227,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
         return {
           ...m,
           route_path: route,
-          is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : m.code === "TASK_WORKFLOW"
+          is_default: defaultModuleCode ? defaultModuleCode === m.code : m.code === "TASK_WORKFLOW"
         };
       });
 
@@ -290,13 +309,25 @@ export async function setActiveModule(
     // Optionally update user default module in DB
     if (setAsDefault) {
       try {
-        // Reset all defaults for this user
+        // Update user_module_access default preference
+        await supabaseAdmin
+          .from("user_module_access")
+          .update({ is_default: false })
+          .eq("user_id", user.id);
+
+        await supabaseAdmin
+          .from("user_module_access")
+          .update({ is_default: true })
+          .eq("user_id", user.id)
+          .eq("module_code", targetModule.code);
+
+        // Reset all defaults for this user in legacy user_modules
         await supabaseAdmin
           .from("user_modules")
           .update({ is_default: false })
           .eq("user_id", user.id);
 
-        // Set target module as default
+        // Set target module as default in legacy user_modules
         await supabaseAdmin
           .from("user_modules")
           .update({ is_default: true })

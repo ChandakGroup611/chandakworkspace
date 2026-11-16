@@ -51,8 +51,8 @@ export async function runDashboardsAccessTest() {
   // Test 4: Module switcher integration with DASHBOARDS access
   try {
     assert(switcherContent.includes('module_code", "DASHBOARDS"'), 'getUserAllowedModules does not check user_module_access for DASHBOARDS');
-    assert(switcherContent.includes('platform_role === "SUPER_ADMIN"'), 'getUserAllowedModules does not check platform_role for Super Admin');
-    logPass('DASHBOARD_MODULE_SWITCHER_INTEGRATION', 'Module switcher accurately determines DASHBOARDS eligibility via user_module_access and platform_role');
+    assert(switcherContent.includes('SUPER_ADMIN'), 'getUserAllowedModules does not check for Super Admin');
+    logPass('DASHBOARD_MODULE_SWITCHER_INTEGRATION', 'Module switcher accurately determines DASHBOARDS eligibility via user_module_access');
   } catch (err) {
     logFail('DASHBOARD_MODULE_SWITCHER_INTEGRATION', 'Module switcher check failed', err.message);
   }

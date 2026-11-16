@@ -43,7 +43,7 @@ export async function runWorkspacesAccessTest() {
   try {
     const taskContent = fs.readFileSync('lib/actions/tasks.ts', 'utf8');
     const wsContent = fs.readFileSync('lib/actions/workspaces.ts', 'utf8');
-    
+
     // createCustomField
     const cfMatch = taskContent.match(/export async function createCustomField\([\s\S]*?^}/m);
     assert(cfMatch && cfMatch[0].includes('getUser()') && cfMatch[0].includes('canManageWorkspace'), 'createCustomField lacks auth or permission check');
@@ -90,8 +90,8 @@ export async function runWorkspacesAccessTest() {
   try {
     const permContent = fs.readFileSync('lib/permissions/index.ts', 'utf8');
     assert(permContent.includes('can(userId, "TASK_WORKFLOW"'), 'hasPermission does not integrate with TASK_WORKFLOW Module RBAC');
-    assert(permContent.includes('platform_role'), 'user context query does not include platform_role check');
-    
+    assert(permContent.includes('SUPER_ADMIN'), 'user context query does not include SUPER_ADMIN check');
+
     const wsActionContent = fs.readFileSync('lib/actions/workspaces.ts', 'utf8');
     assert(wsActionContent.includes('can(userId, "TASK_WORKFLOW"'), 'workspaces server actions do not integrate with TASK_WORKFLOW can() helper');
 

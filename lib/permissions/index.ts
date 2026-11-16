@@ -22,7 +22,7 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
   const [roleRes, permRes, secondaryRolesRes] = await Promise.all([
     supabaseAdmin
       .from("user_master")
-      .select("role:roles(code), role_id, email, platform_role")
+      .select("role:roles(code), role_id, email")
       .eq("id", userId)
       .maybeSingle(),
     supabaseAdmin
@@ -62,7 +62,7 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
 
   const rawPerms = permRes.data?.map(r => r.permission_code) || [];
 
-  const isSuper = (roleRes.data as any)?.platform_role === 'SUPER_ADMIN' || allRoleCodes.some(c => {
+  const isSuper = allRoleCodes.some(c => {
     const upper = c.toUpperCase();
     return upper === 'SUPER_ADMIN' || upper === 'ROLE_ADMIN' || upper === 'ADMIN' ||
       upper === 'SUPERADMIN' || upper === 'ROLE_SUPER_ADMIN' || upper === 'SUPER_ADMINISTRATOR';
@@ -164,7 +164,7 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
     if (await can(userId, "TASK_WORKFLOW", checkCode)) {
       return true;
     }
-  } catch {}
+  } catch { }
 
   // 2. Strict IAM explicit snapshot check ONLY
   return ctx.perms.has(permissionCode);
@@ -254,7 +254,7 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
     if (await can(userId, "TASK_WORKFLOW", "WORKSPACES_MANAGE", { workspace_id: workspaceId })) {
       return true;
     }
-  } catch {}
+  } catch { }
 
   const { data } = await supabaseAdmin
     .from("workspaces")
@@ -297,7 +297,7 @@ export async function canManageWorkspace(userId: string, workspaceId: string): P
     if (await can(userId, "TASK_WORKFLOW", "WORKSPACES_MANAGE", { workspace_id: workspaceId })) {
       return true;
     }
-  } catch {}
+  } catch { }
 
   const { data } = await supabaseAdmin
     .from("workspaces")
