@@ -26,7 +26,7 @@ export default function DeploymentVersionBanner() {
         } else if (data.serverBootTime !== initialBootTime && isMounted) {
           setHasNewDeployment(true);
         }
-      } catch {}
+      } catch { }
     };
 
     checkVersion();
@@ -61,9 +61,9 @@ export default function DeploymentVersionBanner() {
               localStorage.removeItem("local_created_users");
               localStorage.removeItem("local_users_updates");
               if ("caches" in window) {
-                caches.keys().then((names) => names.forEach((name) => caches.delete(name))).catch(() => {});
+                caches.keys().then((names) => names.forEach((name) => caches.delete(name))).catch(() => { });
               }
-            } catch (e) {}
+            } catch (e) { }
             window.location.href = window.location.pathname + (window.location.search ? window.location.search + '&_t=' : '?_t=') + Date.now();
           }}
           className="inline-flex h-7 items-center gap-1.5 rounded-md border border-info-border bg-surface px-2.5 text-[12.5px] font-medium text-foreground hover:bg-surface-hover"
