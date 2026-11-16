@@ -293,6 +293,20 @@ export async function getModuleRole(
 
   const ctx = await loadUserModuleContext(userId);
 
+  if (ctx.isSuperAdmin) {
+    if (moduleCode === "DASHBOARDS") {
+      return {
+        module_code: "DASHBOARDS",
+        role_code: "EDITOR",
+        role_name: "Super Administrator",
+        permissions: ["VIEW", "DETAILS", "EXPORT", "SCHEDULE", "CHAT", "ADMIN"],
+        scope: { type: "all" },
+        is_default: false,
+        dashboard_key: dashboardKey || null,
+      };
+    }
+  }
+
   if (moduleCode === "DASHBOARDS" && dashboardKey) {
     const exact = ctx.modules.get(`DASHBOARDS:${dashboardKey}`);
     if (exact) return exact;

@@ -119,7 +119,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     // Fetch user profile and role with maybeSingle + role_id fallback
     const { data: userProfile } = await supabaseAdmin
       .from("user_master")
-      .select("id, full_name, email, role_id, role:roles(code)")
+      .select("id, full_name, email, role_id, role:roles(code), platform_role")
       .eq("id", userId)
       .maybeSingle();
 
@@ -135,7 +135,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
       }
     }
     const roleCode = String(rawRoleCode || "").toUpperCase();
-    const isAdmin = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ADMIN_ROLE"].includes(roleCode);
+    const isAdmin = userProfile?.platform_role === "SUPER_ADMIN" || ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ADMIN_ROLE"].includes(roleCode);
 
     // Fetch all active modules (with 5-minute memory cache)
     let allActiveModules: any[] | null = null;
@@ -167,15 +167,24 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     const assignedModuleIds = new Set((userAssignments || []).map(a => a.module_id));
     const defaultAssignment = (userAssignments || []).find(a => a.is_default);
 
-    // Check if user has dashboard RBAC permissions (DASH_*)
+    // Check if user has dashboard RBAC permissions (DASH_*) or entry in user_module_access for DASHBOARDS
     let hasDashboardPerms = false;
     if (!isAdmin) {
-      const { data: dashPerms } = await supabaseAdmin
-        .from("user_permissions_snapshot")
-        .select("permission_code")
-        .eq("user_id", userId)
-        .like("permission_code", "DASH_%");
-      hasDashboardPerms = Array.isArray(dashPerms) && dashPerms.length > 0;
+      const [dashPermsRes, moduleAccessRes] = await Promise.all([
+        supabaseAdmin
+          .from("user_permissions_snapshot")
+          .select("permission_code")
+          .eq("user_id", userId)
+          .like("permission_code", "DASH_%"),
+        supabaseAdmin
+          .from("user_module_access")
+          .select("module_code")
+          .eq("user_id", userId)
+          .eq("module_code", "DASHBOARDS")
+          .limit(1)
+      ]);
+      hasDashboardPerms = (Array.isArray(dashPermsRes.data) && dashPermsRes.data.length > 0) ||
+                          (Array.isArray(moduleAccessRes.data) && moduleAccessRes.data.length > 0);
     }
 
     // Filter modules based on user assignments and RBAC permissions (Super Admins see all active modules)

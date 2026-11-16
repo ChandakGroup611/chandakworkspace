@@ -114,13 +114,13 @@ export async function createTask(payload: {
         return { error: "Access Denied: You lack TASKS_CREATE permission in Task Workflow." };
       }
     }
-    
+
     if (!isSuperAdmin && finalWorkspaceId) {
       const [memberCheck, ownerCheck] = await Promise.all([
         supabaseAdmin.from('workspace_members').select('id').eq('workspace_id', finalWorkspaceId).eq('user_id', creatorId).eq('is_deleted', false).maybeSingle(),
         supabaseAdmin.from('workspaces').select('id').eq('id', finalWorkspaceId).eq('workspace_owner_id', creatorId).eq('is_deleted', false).maybeSingle()
       ]);
-      
+
       if (!memberCheck.data && !ownerCheck.data) {
         return { error: "Access Denied: You do not have permission to create tasks in this workspace or sub-workspace." };
       }
@@ -135,7 +135,7 @@ export async function createTask(payload: {
         .eq('id', parentTaskId)
         .eq('is_deleted', false)
         .single();
-        
+
       if (!parentTask) {
         return { error: "Parent task not found or has been removed." };
       }
@@ -169,7 +169,7 @@ export async function createTask(payload: {
         }
       }
     }
-    
+
     // Prevent duplicate rapid-fire task creation (Idempotency / Double-click Protection: 3 seconds)
     const threeSecondsAgo = new Date(Date.now() - 3 * 1000).toISOString();
     const taskSubject = payload.subject || payload.title || 'Untitled Task';
@@ -236,15 +236,15 @@ export async function createTask(payload: {
     // Insert Assignees and Watchers
     if (payload.participants && payload.participants.length > 0) {
       const rolePriority = { 'OWNER': 4, 'EXECUTOR': 3, 'REVIEWER': 2, 'WATCHER': 1 };
-      
+
       // Group by user_id and keep highest priority role
       const uniqueParticipantsMap = new Map<string, string>();
-      
+
       for (const p of payload.participants) {
         const existingRole = uniqueParticipantsMap.get(p.user_id);
         const newPriority = rolePriority[p.participation_role as keyof typeof rolePriority] || 0;
         const existingPriority = existingRole ? (rolePriority[existingRole as keyof typeof rolePriority] || 0) : -1;
-        
+
         if (newPriority > existingPriority) {
           uniqueParticipantsMap.set(p.user_id, p.participation_role);
         }
@@ -345,7 +345,7 @@ export async function createTask(payload: {
         return { error: attErr.message || JSON.stringify(attErr) };
       }
     }
-    
+
     // Insert Initial Description as a Remark (Comment)
     if (payload.description && payload.description.trim() !== '') {
       const { error: commentErr } = await supabaseAdmin.from('task_comments').insert([{
@@ -365,11 +365,11 @@ export async function createTask(payload: {
         }]);
       }
     }
-    
+
     let creatorName = 'System';
     if (creatorId) {
-       const { data: creator } = await supabaseAdmin.from('user_master').select('full_name').eq('id', creatorId).single();
-       if (creator) creatorName = creator.full_name || 'System';
+      const { data: creator } = await supabaseAdmin.from('user_master').select('full_name').eq('id', creatorId).single();
+      if (creator) creatorName = creator.full_name || 'System';
     }
 
     // In-app & realtime notifications
@@ -470,11 +470,11 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
       .maybeSingle();
 
     if (!participant || (participant.participation_role !== 'EXECUTOR' && participant.participation_role !== 'PRIMARY')) {
-       await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
-         action_attempted: 'UPDATE_STATUS', 
-         target_status: newStatusIdOrCode 
-       }, userId);
-       return { error: "You do not have permission to transition this task status. Only the Task Assignee (Task Owner), Assigned Executives, or Super Admins can edit the status." };
+      await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
+        action_attempted: 'UPDATE_STATUS',
+        target_status: newStatusIdOrCode
+      }, userId);
+      return { error: "You do not have permission to transition this task status. Only the Task Assignee (Task Owner), Assigned Executives, or Super Admins can edit the status." };
     }
   }
 
@@ -527,7 +527,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
 
   // Fire-and-forget activity log — must not block or throw to the caller
   logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system").catch(e => console.error('[logActivityEvent]', e));
-  
+
   // Fire-and-forget Notification Queue Push
   queueBusinessEvent("Task", "Status Changed", {
     entity_id: taskId,
@@ -626,7 +626,7 @@ export async function createCustomField(workspaceId: string, fieldName: string, 
   if (!canManage) throw new Error("Unauthorized: You do not have permission to manage custom fields in this workspace.");
 
   const fieldKey = fieldName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-  
+
   const { data, error } = await supabaseAdmin
     .from('task_custom_fields_master')
     .insert([{
@@ -698,10 +698,10 @@ export async function getTaskDetails(taskId: string) {
 
     let wsMembers: any[] = [];
     let isWorkspaceMember = isSuperAdmin;
-    
+
     if (task.workspace_id) {
       wsMembers = (task.workspace?.members || []).filter((m: any) => !m.is_deleted);
-      
+
       if (userId && !isSuperAdmin) {
         if (wsMembers.some(m => m.user_id === userId)) {
           isWorkspaceMember = true;
@@ -737,12 +737,12 @@ export async function getTaskDetails(taskId: string) {
       }
     }
 
-    const isAuthorized = 
-      isSuperAdmin || 
-      isWorkspaceMember || 
+    const isAuthorized =
+      isSuperAdmin ||
+      isWorkspaceMember ||
       isReportingManagerOrDeptHead ||
-      task.created_by === userId || 
-      task.assigned_to === userId || 
+      task.created_by === userId ||
+      task.assigned_to === userId ||
       (participants && participants.some(p => p.user_id === userId));
 
     if (!isAuthorized) {
@@ -764,7 +764,7 @@ export async function getTaskDetails(taskId: string) {
           .select('id, full_name, profile_photo, user_code, is_deleted, is_active')
           .in('id', Array.from(uniqueUserIds))
           .eq('is_deleted', false);
-          
+
         if (allUsers) {
           allUsers.forEach(u => {
             if (u.full_name !== 'Deleted User') {
@@ -781,11 +781,11 @@ export async function getTaskDetails(taskId: string) {
 
     task.creator = task.created_by ? usersMap.get(task.created_by) || null : null;
     task.assignee = task.assigned_to ? usersMap.get(task.assigned_to) || null : null;
-    
+
     task.task_assignees = [];
     task.task_reviewers = [];
     task.task_watchers = [];
-    
+
     if (participants) {
       participants.forEach(p => {
         const u = usersMap.get(p.user_id);
@@ -812,7 +812,7 @@ export async function getTaskDetails(taskId: string) {
       checklistCount: checklistCount || 0,
       attachmentCount: attachmentCount || 0
     };
-    
+
     const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId;
     const isTaskCreator = task.created_by === userId;
     const canManageClosedTask = isSuperAdmin || isTaskAssignee;
@@ -871,19 +871,19 @@ export async function getWorkloadSnapshot(userId: string) {
     const workspaceIds = visibleWorkspaces.map((w: any) => w.id);
 
     let activeTasks: any[] = [];
-    
+
     if (workspaceIds.length > 0) {
       const { data } = await supabaseAdmin
         .from('tasks')
         .select('id, end_date, estimated_hours, status:status_master(is_closed)')
         .in('workspace_id', workspaceIds)
         .eq('is_deleted', false);
-        
+
       if (data) {
         activeTasks = data.filter((t: any) => !t.status?.is_closed);
       }
     }
-    
+
     const now = new Date();
     const overdueTasks = activeTasks.filter(t => t.end_date && new Date(t.end_date) < now).length;
     const estimatedHours = activeTasks.reduce((acc, t) => acc + (t.estimated_hours || 0), 0);
@@ -955,15 +955,15 @@ export async function updateTask(taskId: string, payload: any) {
         let isAuthorizedAdmin = false;
         try {
           const permissionsModule = await import('@/lib/permissions');
-          isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") || 
-                              await permissionsModule.hasPermission(userId, "TASKS_UPDATE") ||
-                              await permissionsModule.hasPermission(userId, "TASKS_MANAGE");
+          isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") ||
+            await permissionsModule.hasPermission(userId, "TASKS_UPDATE") ||
+            await permissionsModule.hasPermission(userId, "TASKS_MANAGE");
         } catch (e) {
           console.warn("[updateTask] Permission check failed", e);
         }
-        
+
         if (!isAuthorizedAdmin) {
-          await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+          await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
             action_attempted: 'UPDATE_TASK'
           }, userId);
           return { error: "You do not have permission to edit this task. Only the Task Owner/Creator, Assigned Executives, Workspace Leaders, or Super Admins can edit." };
@@ -981,17 +981,17 @@ export async function updateTask(taskId: string, payload: any) {
           .select('id, subject, status_id')
           .eq('parent_task_id', taskId)
           .eq('is_deleted', false);
-          
+
         if (subTasks && subTasks.length > 0) {
           const statusIds = [...new Set(subTasks.map((t: any) => t.status_id))];
           const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
           const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
-          
+
           const incompleteBlocker = subTasks.find((t: any) => {
             const code = statusMap.get(t.status_id);
             return !code || !completedCodes.includes(code);
           });
-          
+
           if (incompleteBlocker) {
             return { error: `Cannot complete task. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
           }
@@ -1048,7 +1048,7 @@ export async function updateTask(taskId: string, payload: any) {
 
   const newTitle = payload.subject;
   const oldTitle = task.subject;
-  
+
   if (newTitle && oldTitle && oldTitle !== newTitle) {
     await supabaseAdmin.from('activity_events').insert({
       module_type: 'TASK',
@@ -1075,7 +1075,7 @@ export async function deleteTask(taskId: string) {
     const cookieStore = await cookies();
     const { data: { user } } = await createClient(cookieStore).auth.getUser();
     const userId = user?.id;
-    
+
     if (!userId) return { error: "Unauthenticated" };
 
     const { hasPermission } = await import('@/lib/permissions');
@@ -1086,7 +1086,7 @@ export async function deleteTask(taskId: string) {
     const canDelete = isSuperAdmin || isWorkspaceOwner || canDeletePerm;
 
     if (!canDelete) {
-      await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+      await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
         action_attempted: 'DELETE_TASK'
       }, userId);
       return { error: "You do not have permission to delete this task. Only Workspace Owners and Authorized Admins can delete." };
@@ -1124,7 +1124,7 @@ export async function deleteTask(taskId: string) {
       .update({ actor_id: userId })
       .eq('task_id', taskId)
       .is('actor_id', null);
-    
+
     revalidatePath("/workspaces");
     return { success: true };
   } catch (e: any) {
@@ -1157,7 +1157,7 @@ export async function createChecklistItem(taskId: string, label: string) {
       .select()
       .single();
     if (error) return { error: error.message };
-    
+
     if (data) {
       try {
         await supabaseAdmin.from('task_activity_logs').insert([{
@@ -1170,7 +1170,7 @@ export async function createChecklistItem(taskId: string, label: string) {
         console.warn("[createChecklistItem] Log error:", logErr);
       }
     }
-    
+
     return data;
   } catch (err: any) {
     console.error("[createChecklistItem] Error:", err);
@@ -1274,7 +1274,7 @@ export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
       .eq('task_id', taskId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
-      
+
     if (error) {
       console.error("[getTaskComments] Supabase error:", error);
       return [];
@@ -1317,9 +1317,9 @@ export async function addTaskRemark(taskId: string, content: string) {
       .insert([{ task_id: taskId, author_id: userId, content }])
       .select('*')
       .single();
-    
+
     if (error) return { error: error.message || JSON.stringify(error) };
-    
+
     if (data) {
       try {
         await supabaseAdmin.from('task_activity_logs').insert([{
@@ -1339,7 +1339,7 @@ export async function addTaskRemark(taskId: string, content: string) {
         console.warn("[addTaskRemark] User fetch error:", uErr);
       }
     }
-    
+
     return { success: true, data };
   } catch (err: any) {
     console.error("[addTaskRemark] Error:", err);
@@ -1395,7 +1395,7 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
           .maybeSingle();
 
         if (!participant || participant.participation_role !== 'EXECUTOR') {
-          await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+          await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
             action_attempted: 'UPDATE_STATUS_INLINE'
           }, userId);
           return { error: "Only the owner, superadmin, or an executive can change the status." };
@@ -1412,17 +1412,17 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
           .select('id, subject, status_id')
           .eq('parent_task_id', taskId)
           .eq('is_deleted', false);
-          
+
         if (subTasks && subTasks.length > 0) {
           const statusIds = [...new Set(subTasks.map((t: any) => t.status_id))];
           const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
           const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
-          
+
           const incompleteBlocker = subTasks.find((t: any) => {
             const code = statusMap.get(t.status_id);
             return !code || !completedCodes.includes(code);
           });
-          
+
           if (incompleteBlocker) {
             return { error: `Cannot complete. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
           }
@@ -1435,7 +1435,7 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
       .from('tasks')
       .update({ status_id: newStatusId })
       .eq('id', taskId);
-      
+
     if (updateError) return { error: "Failed to update status" };
   }
 
@@ -1452,9 +1452,9 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
     task_id: taskId,
     actor_id: userId,
     action: actionType,
-    new_state: { 
+    new_state: {
       status_id: newStatusId,
-      message: remark 
+      message: remark
     }
   }]);
 
@@ -1500,7 +1500,7 @@ export async function logTaskTime(taskId: string, hours: number, description: st
 
   const customFields = task.custom_fields || {};
   const timeLogs = customFields.time_logs || [];
-  
+
   const newLog = {
     id: `log-${Date.now()}`,
     user_id: user.id,
@@ -1520,7 +1520,7 @@ export async function logTaskTime(taskId: string, hours: number, description: st
     .eq('id', taskId);
 
   if (updateError) throw updateError;
-  
+
   // Also log to activity
   await supabaseAdmin.from('task_activity_logs').insert([{
     task_id: taskId,
@@ -1546,7 +1546,7 @@ export async function propagateTaskDependencies(taskId: string) {
 
     if (reqTasks && reqTasks.length > 0) {
       const { recalculateRequirementCompletion } = await import('@/lib/actions/requirements');
-      
+
       for (const reqTask of reqTasks) {
         await recalculateRequirementCompletion(reqTask.requirement_id);
 
@@ -1636,13 +1636,13 @@ export async function executeTaskBatchOperation(payload: {
   if (!userId) return { error: "Unauthenticated" };
 
   const { taskId, updates, statusChanges, departmentChange, checklistCreates, checklistUpdates, remarks, attachmentIds } = payload;
-  
+
   if (statusChanges || (departmentChange && departmentChange.new_id !== undefined)) {
     const { data: currentTask } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
     if (currentTask && currentTask.assigned_to !== userId) {
       const { checkServerPermission } = await import("@/lib/permissions");
       const isSuperAdmin = await checkServerPermission("SUPER_ADMIN") || await checkServerPermission("WORKSPACES_MANAGE");
-      
+
       if (!isSuperAdmin) {
         const { data: participant } = await supabaseAdmin
           .from('task_participants')
@@ -1662,12 +1662,12 @@ export async function executeTaskBatchOperation(payload: {
   // Update Task Core
   const updatePayload = { ...updates };
   if (statusChanges) {
-     updatePayload.status_id = statusChanges;
+    updatePayload.status_id = statusChanges;
   }
   if (departmentChange && departmentChange.new_id !== undefined) {
-     updatePayload.department_id = departmentChange.new_id;
+    updatePayload.department_id = departmentChange.new_id;
   }
-  
+
   if (updatePayload.start_date !== undefined || updatePayload.end_date !== undefined) {
     const { data: taskData } = await supabaseAdmin.from('tasks').select('start_date, end_date').eq('id', taskId).single();
     if (taskData) {
@@ -1690,7 +1690,7 @@ export async function executeTaskBatchOperation(payload: {
   const checklistInsertPromise = (checklistCreates && checklistCreates.length > 0)
     ? supabaseAdmin.from('task_checklists').insert(checklistCreates.map(c => ({ task_id: taskId, label: c.label, assignee_id: c.assignee_id || null, is_completed: false }))).select()
     : Promise.resolve({ data: [] });
-  
+
   const checklistUpdatePromises = (checklistUpdates && Object.keys(checklistUpdates).length > 0)
     ? Object.entries(checklistUpdates).map(([id, updates]) => supabaseAdmin.from('task_checklists').update(updates).eq('id', id).select())
     : [];
@@ -1720,7 +1720,7 @@ export async function executeTaskBatchOperation(payload: {
 
   // Background Side Effects (non-blocking - Phase T4)
   const sideEffects = [];
-  
+
   if (statusChanges) {
     sideEffects.push(
       supabaseAdmin.from('task_activity_logs').insert([{
@@ -1728,12 +1728,12 @@ export async function executeTaskBatchOperation(payload: {
       }])
     );
   }
-  
+
   if (departmentChange && departmentChange.new_id !== departmentChange.old_id) {
     sideEffects.push(
       supabaseAdmin.from('task_activity_logs').insert([{
-        task_id: taskId, actor_id: userId, action: 'DEPARTMENT_CHANGE', new_state: { 
-          department_id: departmentChange.new_id, 
+        task_id: taskId, actor_id: userId, action: 'DEPARTMENT_CHANGE', new_state: {
+          department_id: departmentChange.new_id,
           department_name: departmentChange.new_name,
           old_department_id: departmentChange.old_id,
           old_department_name: departmentChange.old_name
@@ -1741,7 +1741,7 @@ export async function executeTaskBatchOperation(payload: {
       }])
     );
   }
-  
+
   if (remarks && remarks.trim().length > 0) {
     sideEffects.push(
       supabaseAdmin.from('task_activity_logs').insert([{
@@ -1749,7 +1749,7 @@ export async function executeTaskBatchOperation(payload: {
       }])
     );
   }
-  
+
   if (Object.keys(updatePayload).length > 0) {
     sideEffects.push(
       supabaseAdmin.from('task_activity_logs').update({ actor_id: userId }).eq('task_id', taskId).is('actor_id', null)
@@ -1762,25 +1762,25 @@ export async function executeTaskBatchOperation(payload: {
   // Purge the cache for this task to ensure Next.js auto-refresh works on production
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath(`/workspaces/tasks`);
-  
+
   // Fire-and-forget: Push to async background queue
   supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id, description, priority_id, start_date, end_date').eq('id', taskId).single().then(({ data: taskData }) => {
-      queueBusinessEvent("Task", "Updated", {
-          entity_id: taskId,
-          triggering_user_id: userId,
-          status: statusChanges || taskData?.status_id || "UPDATED",
-          task_name: taskData?.subject || "Task Updated",
-          description: taskData?.description || "",
-          remarks: remarks || "",
-          remark: remarks || "",
-          assigned_to: taskData?.assigned_to,
-          created_by: taskData?.created_by,
-          workspace_id: taskData?.workspace_id,
-          department_id: taskData?.department_id,
-          creator_name: user?.user_metadata?.full_name || "System",
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
-      }).catch(e => console.error("[NotificationEngine] Background push failed", e));
-  }).then(undefined, () => {});
+    queueBusinessEvent("Task", "Updated", {
+      entity_id: taskId,
+      triggering_user_id: userId,
+      status: statusChanges || taskData?.status_id || "UPDATED",
+      task_name: taskData?.subject || "Task Updated",
+      description: taskData?.description || "",
+      remarks: remarks || "",
+      remark: remarks || "",
+      assigned_to: taskData?.assigned_to,
+      created_by: taskData?.created_by,
+      workspace_id: taskData?.workspace_id,
+      department_id: taskData?.department_id,
+      creator_name: user?.user_metadata?.full_name || "System",
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
+    }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+  }).then(undefined, () => { });
 
   return {
     success: true,
@@ -1825,7 +1825,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const isTaskOwnerOrCreator = task.assigned_to === userId || task.created_by === userId || task.owner_id === userId;
 
   if (!isSuperAdmin && !canAssignPerm && !isWorkspaceLeader && !isTaskOwnerOrCreator) {
-    await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+    await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
       action_attempted: 'UPDATE_ASSIGNMENT'
     }, userId);
     return { error: "You do not have permission to edit assignees. Only the Primary Assignee, Creator, Workspace Leader, or Super Admin can do this." };
@@ -1889,19 +1889,19 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
 
   // Fire-and-forget: Push to async background queue
   supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
-      queueBusinessEvent("Task", "Executors Changed", {
-          entity_id: taskId,
-          triggering_user_id: userId || "",
-          status: taskData?.status_id || "UPDATED",
-          task_name: taskData?.subject || "Task Assignment Changed",
-          assigned_to: finalPrimaryId || taskData?.assigned_to,
-          created_by: taskData?.created_by,
-          workspace_id: taskData?.workspace_id,
-          department_id: taskData?.department_id,
-          creator_name: user?.user_metadata?.full_name || "System",
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
-      }).catch(e => console.error("[NotificationEngine] Background push failed", e));
-  }).then(undefined, () => {});
+    queueBusinessEvent("Task", "Executors Changed", {
+      entity_id: taskId,
+      triggering_user_id: userId || "",
+      status: taskData?.status_id || "UPDATED",
+      task_name: taskData?.subject || "Task Assignment Changed",
+      assigned_to: finalPrimaryId || taskData?.assigned_to,
+      created_by: taskData?.created_by,
+      workspace_id: taskData?.workspace_id,
+      department_id: taskData?.department_id,
+      creator_name: user?.user_metadata?.full_name || "System",
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
+    }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+  }).then(undefined, () => { });
 
   // Log the assignment change in audit trail
   const newExecutorNames = uniqueAssigneeIds
@@ -1909,14 +1909,14 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     .filter(Boolean)
     .join(', ');
   const primaryName = stakeholders.find((s: any) => s.id === finalPrimaryId)?.full_name || 'Unassigned';
-    
+
   await supabaseAdmin.from('task_activity_logs').insert([{
     task_id: taskId,
     actor_id: userId,
     action: 'ASSIGNMENT_CHANGE',
-    new_state: { 
+    new_state: {
       primary_assignee: primaryName,
-      executors_text: newExecutorNames || 'None' 
+      executors_text: newExecutorNames || 'None'
     }
   }]);
 
@@ -2038,8 +2038,8 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
     task_id: taskId,
     actor_id: userId,
     action: 'WATCHERS_CHANGE',
-    new_state: { 
-      watchers_text: newWatcherNames || 'None' 
+    new_state: {
+      watchers_text: newWatcherNames || 'None'
     }
   }]);
 
@@ -2061,25 +2061,25 @@ export async function moveTasksInBulk(payload: {
     if (!user) return { error: "Unauthenticated" };
 
     const { taskIds, targetWorkspaceId, targetSubWorkspaceId, targetParentTaskId, newOwnerId, newParticipantIds } = payload;
-    
+
     // Recursive fetch of all task IDs including children
     let allTaskIdsToMove = new Set<string>(taskIds);
     let currentBatch = [...taskIds];
-    
+
     while (currentBatch.length > 0) {
       const { data: children, error } = await supabaseAdmin
         .from('tasks')
         .select('id')
         .in('parent_task_id', currentBatch)
         .eq('is_deleted', false);
-        
+
       if (error) throw error;
-      
+
       const childIds = (children || []).map(c => c.id).filter(id => !allTaskIdsToMove.has(id));
       childIds.forEach(id => allTaskIdsToMove.add(id));
       currentBatch = childIds;
     }
-    
+
     const finalTaskIds = Array.from(allTaskIdsToMove);
 
     // Update tasks
@@ -2128,7 +2128,7 @@ export async function moveTasksInBulk(payload: {
           });
         }
       }
-      
+
       if (newParticipantsData.length > 0) {
         await supabaseAdmin
           .from('task_participants')
@@ -2138,13 +2138,13 @@ export async function moveTasksInBulk(payload: {
 
     // --- AUTO-WATCHER LOGIC ---
     const targetStakeholders = await fetchWorkspaceStakeholders(finalWorkspaceId);
-    
+
     // Fetch all current participants for all moved tasks
     const { data: currentParticipants } = await supabaseAdmin
       .from('task_participants')
       .select('task_id, user_id')
       .in('task_id', finalTaskIds);
-      
+
     // Fetch final assignees
     const { data: currentTasks } = await supabaseAdmin
       .from('tasks')
@@ -2152,7 +2152,7 @@ export async function moveTasksInBulk(payload: {
       .in('id', finalTaskIds);
 
     const watcherData: any[] = [];
-    
+
     for (const tId of finalTaskIds) {
       const existingUserIds = new Set(
         currentParticipants?.filter(p => p.task_id === tId).map(p => p.user_id) || []
@@ -2191,7 +2191,7 @@ export async function moveTasksInBulk(payload: {
 
     revalidatePath('/workspaces/transfer-tasks');
     revalidatePath('/tasks');
-    
+
     return { success: true };
   } catch (err: any) {
     console.error("Bulk move error:", err);
@@ -2217,7 +2217,7 @@ export async function transferTask(payload: {
 
     const { hasPermission } = await import('@/lib/permissions');
     const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
-    
+
     // Check if user is an executor
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
@@ -2240,7 +2240,7 @@ export async function transferTask(payload: {
       .select('id')
       .eq('parent_task_id', taskId)
       .eq('is_deleted', false);
-      
+
     const allTaskIds = [taskId];
     if (subtasks) {
       subtasks.forEach(st => allTaskIds.push(st.id));
@@ -2248,11 +2248,11 @@ export async function transferTask(payload: {
 
     // Update tasks
     const finalWorkspaceId = targetSubworkspaceId || targetWorkspaceId;
-    const updatePayload: any = { 
+    const updatePayload: any = {
       workspace_id: finalWorkspaceId,
       sub_workspace_id: null // Explicitly clear deprecated column
     };
-    
+
     if (newAssigneeId) {
       updatePayload.assigned_to = newAssigneeId;
       // also update owner_id if it's the primary assignee
@@ -2286,7 +2286,7 @@ export async function transferTask(payload: {
         .delete()
         .in('task_id', allTaskIds)
         .in('user_id', newExecutors);
-        
+
       await supabaseAdmin.from('task_participants').insert(execsData);
     }
 
@@ -2294,16 +2294,16 @@ export async function transferTask(payload: {
     // Fetch stakeholders for the destination workspace
     const { fetchWorkspaceStakeholders } = await import('@/lib/actions/workspaces');
     const targetStakeholders = await fetchWorkspaceStakeholders(finalWorkspaceId);
-    
+
     // Fetch all current participants (which now includes valid old ones + new executors)
     const { data: currentParticipants } = await supabaseAdmin
       .from('task_participants')
       .select('task_id, user_id')
       .in('task_id', allTaskIds);
-      
+
     // Get the final assignee (either new or existing)
     const finalAssigneeId = newAssigneeId || task.assigned_to;
-    
+
     const watcherData: any[] = [];
     for (const tId of allTaskIds) {
       const existingUserIds = new Set(currentParticipants?.filter(p => p.task_id === tId).map(p => p.user_id) || []);
@@ -2329,8 +2329,8 @@ export async function transferTask(payload: {
       task_id: tId,
       actor_id: user.id,
       action: 'WORKSPACE_CHANGE',
-      new_state: { 
-        workspace_id: targetWorkspaceId, 
+      new_state: {
+        workspace_id: targetWorkspaceId,
         sub_workspace_id: targetSubworkspaceId || null,
         remarks: remarks,
         dropped_users: droppedUsers,
@@ -2348,7 +2348,7 @@ export async function transferTask(payload: {
       if (newAssigneeId) {
         commentMsg += `\n(System Note: Primary Assignee was updated due to scope mismatch.)`;
       }
-      
+
       const commentsData = allTaskIds.map(tId => ({
         task_id: tId,
         author_id: user.id,
@@ -2400,7 +2400,7 @@ export async function acknowledgeTaskAmendment(taskId: string) {
     const updatedCustomFields = { ...task.custom_fields };
     delete updatedCustomFields.pending_amendment;
 
-    await supabaseAdmin.from('tasks').update({ 
+    await supabaseAdmin.from('tasks').update({
       description: newDescription,
       custom_fields: updatedCustomFields
     }).eq('id', taskId);
@@ -2417,8 +2417,8 @@ export async function acknowledgeTaskAmendment(taskId: string) {
       await logActivityEvent('TASK', taskId, 'AMENDMENT_ATTACHMENT_SYNCED', null, { file_name: pendingAmendment.attachment.file_name }, user.id);
     }
 
-    await logActivityEvent('TASK', taskId, 'REQUIREMENT_AMENDMENT_ACKNOWLEDGED', null, { 
-       message: `Requirement amendment (Version ${pendingAmendment.version}) was acknowledged and applied.`,
+    await logActivityEvent('TASK', taskId, 'REQUIREMENT_AMENDMENT_ACKNOWLEDGED', null, {
+      message: `Requirement amendment (Version ${pendingAmendment.version}) was acknowledged and applied.`,
     }, user.id);
 
     revalidatePath(`/tasks/${taskId}`);
@@ -2437,7 +2437,7 @@ export async function fetchWorkspaceTasksList(workspaceId: string) {
       .eq('workspace_id', workspaceId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false });
-      
+
     if (error) throw error;
     return tasks || [];
   } catch (err) {
@@ -2481,10 +2481,10 @@ export async function assignUserToTasksBatch(userId: string, assignments: { task
       } else if (assignment.role === 'executor') {
         const { error } = await supabaseAdmin
           .from('task_participants')
-          .upsert({ 
-            task_id: assignment.taskId, 
-            user_id: userId, 
-            participation_role: 'EXECUTOR' 
+          .upsert({
+            task_id: assignment.taskId,
+            user_id: userId,
+            participation_role: 'EXECUTOR'
           }, { onConflict: 'task_id, user_id' });
         if (error) console.error("Error assigning executor:", error);
       }

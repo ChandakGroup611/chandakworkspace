@@ -26,6 +26,50 @@ const TOKEN_TTL_SECONDS = 120;
 const ISSUER = "chandakgroup-portal";
 
 export async function getDashboardAccess(userId: string, def: DashboardDef): Promise<DashboardAccess> {
+  const { can, getModuleRole } = await import("@/lib/permissions/module-access");
+
+  // 1. Central Module RBAC check
+  const moduleRole = await getModuleRole(userId, "DASHBOARDS", def.key);
+  const canViewByModule = await can(userId, "DASHBOARDS", "VIEW", { dashboard_key: def.key });
+
+  if (moduleRole && (canViewByModule || moduleRole.permissions.includes("VIEW"))) {
+    const perms: DashboardPermission[] = [];
+    const rolePerms = moduleRole.permissions.map(p => p.toUpperCase());
+
+    if (rolePerms.includes("VIEW") || canViewByModule) perms.push("view");
+    if (rolePerms.includes("DETAILS") || canViewByModule) perms.push("details");
+    if (rolePerms.includes("EXPORT")) perms.push("export");
+    if (rolePerms.includes("SCHEDULE")) perms.push("schedule");
+    if (rolePerms.includes("CHAT")) perms.push("chat");
+    if (rolePerms.includes("ADMIN")) perms.push("admin");
+
+    // Super Admin check
+    const { data: um } = await supabaseAdmin
+      .from("user_master")
+      .select("platform_role, role:roles(code)")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
+    const isSuperAdmin = um?.platform_role === "SUPER_ADMIN" || ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN", "ROLE_ADMIN"].includes(roleCode || "");
+
+    if (isSuperAdmin) {
+      return {
+        perms: ["view", "details", "export", "schedule", "chat", "admin"],
+        companies: null, // all companies
+      };
+    }
+
+    if (!perms.includes("view")) return { perms: [], companies: [] };
+
+    const companies = (moduleRole.scope?.type === "companies" && Array.isArray(moduleRole.scope.company_ids))
+      ? moduleRole.scope.company_ids.map(Number).filter(Number.isFinite)
+      : null;
+
+    return { perms, companies };
+  }
+
+  // 2. Legacy fallback to dashboard_user_access and hasPermission
   const manage = await hasPermission(userId, `${def.permissionPrefix}_MANAGE`);
 
   const { data } = await supabaseAdmin
