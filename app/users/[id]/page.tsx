@@ -93,12 +93,6 @@ const getModuleMeta = (code: string) => {
         badgeBg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/30",
         description: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports."
       };
-    case "CHANDAK_MESSENGER":
-      return {
-        icon: MessageSquare,
-        badgeBg: "bg-sky-500/10 text-sky-500 border-sky-500/30",
-        description: "Real-time enterprise team chat, direct 1:1 messaging, group channels and instant audio/video calls."
-      };
     default:
       return {
         icon: Layers,

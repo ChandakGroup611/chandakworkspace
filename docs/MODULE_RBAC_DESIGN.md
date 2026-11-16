@@ -517,8 +517,7 @@ export type ModuleCode =
   | "DESIGN_TRACKING" 
   | "CHANDAK_MEET" 
   | "ORG_BUDGET" 
-  | "DASHBOARDS" 
-  | "CHANDAK_MESSENGER";
+  | "DASHBOARDS";
 
 export interface UserModuleRole {
   module_code: ModuleCode;

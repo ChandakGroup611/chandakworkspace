@@ -5,14 +5,13 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 // Specification: docs/MODULE_RBAC_DESIGN.md & docs/ACCESS_RULES.md
 // ============================================================================
 
-export type ModuleCode = 
-  | "TASK_WORKFLOW" 
-  | "VEHICLE_DESK" 
-  | "DESIGN_TRACKING" 
-  | "CHANDAK_MEET" 
-  | "ORG_BUDGET" 
-  | "DASHBOARDS" 
-  | "CHANDAK_MESSENGER";
+export type ModuleCode =
+  | "TASK_WORKFLOW"
+  | "VEHICLE_DESK"
+  | "DESIGN_TRACKING"
+  | "CHANDAK_MEET"
+  | "ORG_BUDGET"
+  | "DASHBOARDS";
 
 export interface ModuleScope {
   type: "all" | "projects" | "departments" | "workspaces" | "vehicles" | "companies";
@@ -160,7 +159,7 @@ async function loadUserModuleContext(userId: string): Promise<UserContextCache> 
     }
   }
 
-  const isSuperAdmin = roleCodes.some(c => 
+  const isSuperAdmin = roleCodes.some(c =>
     ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN", "ROLE_ADMIN"].includes(c)
   );
 
@@ -183,8 +182,8 @@ async function loadUserModuleContext(userId: string): Promise<UserContextCache> 
       };
 
       // Register under specific key (e.g. DASHBOARDS:it) and general module code
-      const mapKey = row.dashboard_key 
-        ? `${row.module_code}:${row.dashboard_key}` 
+      const mapKey = row.dashboard_key
+        ? `${row.module_code}:${row.dashboard_key}`
         : row.module_code;
       moduleMap.set(mapKey, roleObj);
 

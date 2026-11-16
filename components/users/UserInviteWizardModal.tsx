@@ -73,13 +73,6 @@ const MODULE_DEFINITIONS = [
     desc: "Project budgets, towers, cost heads, workings, approvals & actuals", 
     icon: Landmark, 
     defaultRole: "VIEWER" 
-  },
-  { 
-    code: "CHANDAK_MESSENGER", 
-    name: "Chandak Messenger", 
-    desc: "Enterprise direct messaging, team channels, and collaboration", 
-    icon: MessageSquare, 
-    defaultRole: "MEMBER" 
   }
 ];
 
@@ -125,8 +118,7 @@ export function UserInviteWizardModal({
     VEHICLE_DESK: { enabled: false, role_code: "REQUESTER", scopeType: "all" },
     DESIGN_TRACKING: { enabled: false, role_code: "VIEWER", scopeType: "all" },
     CHANDAK_MEET: { enabled: true, role_code: "PARTICIPANT", scopeType: "all" },
-    ORG_BUDGET: { enabled: false, role_code: "VIEWER", scopeType: "all" },
-    CHANDAK_MESSENGER: { enabled: true, role_code: "MEMBER", scopeType: "all" }
+    ORG_BUDGET: { enabled: false, role_code: "VIEWER", scopeType: "all" }
   });
 
   // Step 4: Dashboards

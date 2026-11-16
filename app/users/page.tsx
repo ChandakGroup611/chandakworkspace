@@ -7,14 +7,14 @@ import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/componen
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { 
-  AppTableContainer, 
-  AppTable, 
-  AppTableHeader, 
-  AppTableBody, 
-  AppTableRow, 
-  AppTableHead, 
-  AppTableCell 
+import {
+  AppTableContainer,
+  AppTable,
+  AppTableHeader,
+  AppTableBody,
+  AppTableRow,
+  AppTableHead,
+  AppTableCell
 } from "@/components/ui/AppTable";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
@@ -26,29 +26,29 @@ import { assignUserModules } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { UserInviteWizardModal } from "@/components/users/UserInviteWizardModal";
 import { UserModuleAccessModal } from "@/components/users/UserModuleAccessModal";
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
-  RefreshCw, 
-  ShieldAlert, 
-  CheckCircle2, 
-  X, 
-  Lock, 
-  Mail, 
-  UserCheck, 
-  Trash2, 
-  Edit3, 
-  Clock, 
-  Camera, 
-  Check, 
-  Layers, 
+import {
+  Users,
+  UserPlus,
+  Search,
+  RefreshCw,
+  ShieldAlert,
+  CheckCircle2,
+  X,
+  Lock,
+  Mail,
+  UserCheck,
+  Trash2,
+  Edit3,
+  Clock,
+  Camera,
+  Check,
+  Layers,
   Star,
   Car,
   FolderKanban,
   Save,
-  Briefcase, 
-  Shield, 
+  Briefcase,
+  Shield,
   History,
   Eye,
   Image,
@@ -66,54 +66,47 @@ import {
 
 // Initial premium fallback/mock user datasets to guarantee absolute rich presentation
 const OPERATIONAL_MODULES = [
-  { 
-    code: "TASK_WORKFLOW", 
-    name: "Workspace & Tasks", 
-    desc: "Task tracker, sprints, ticketing/helpdesk, requirements & AMC lifecycle.", 
-    icon: FolderKanban, 
-    color: "text-info-text bg-info-soft border-info-border" 
+  {
+    code: "TASK_WORKFLOW",
+    name: "Workspace & Tasks",
+    desc: "Task tracker, sprints, ticketing/helpdesk, requirements & AMC lifecycle.",
+    icon: FolderKanban,
+    color: "text-info-text bg-info-soft border-info-border"
   },
-  { 
-    code: "VEHICLE_DESK", 
-    name: "Vehicle Management Desk", 
-    desc: "Fleet master, vehicle allocation, trip sheets, driver roster, maintenance & spare parts.", 
-    icon: Car, 
-    color: "text-success-text bg-success-soft border-success-border" 
+  {
+    code: "VEHICLE_DESK",
+    name: "Vehicle Management Desk",
+    desc: "Fleet master, vehicle allocation, trip sheets, driver roster, maintenance & spare parts.",
+    icon: Car,
+    color: "text-success-text bg-success-soft border-success-border"
   },
-  { 
-    code: "DESIGN_TRACKING", 
-    name: "Design & Drawing Tracking", 
-    desc: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC.", 
-    icon: Compass, 
-    color: "text-accent-soft-text bg-accent-soft border-border" 
+  {
+    code: "DESIGN_TRACKING",
+    name: "Design & Drawing Tracking",
+    desc: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC.",
+    icon: Compass,
+    color: "text-accent-soft-text bg-accent-soft border-border"
   },
-  { 
-    code: "DASHBOARDS", 
-    name: "Executive Dashboards", 
-    desc: "Department budget & expense dashboards on live IN4 data (IT, Marketing, etc.).", 
-    icon: LineChart, 
-    color: "text-amber-500 bg-amber-500/10 border-amber-500/30" 
+  {
+    code: "DASHBOARDS",
+    name: "Executive Dashboards",
+    desc: "Department budget & expense dashboards on live IN4 data (IT, Marketing, etc.).",
+    icon: LineChart,
+    color: "text-amber-500 bg-amber-500/10 border-amber-500/30"
   },
-  { 
-    code: "CHANDAK_MEET", 
-    name: "Chandak Meet", 
-    desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.", 
-    icon: Video, 
-    color: "text-purple-500 bg-purple-500/10 border-purple-500/30" 
+  {
+    code: "CHANDAK_MEET",
+    name: "Chandak Meet",
+    desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.",
+    icon: Video,
+    color: "text-purple-500 bg-purple-500/10 border-purple-500/30"
   },
-  { 
-    code: "ORG_BUDGET", 
-    name: "Organization Budget", 
-    desc: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports.", 
-    icon: Landmark, 
-    color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/30" 
-  },
-  { 
-    code: "CHANDAK_MESSENGER", 
-    name: "Chandak Messenger", 
-    desc: "Real-time enterprise team chat, direct 1:1 messaging, group channels and instant audio/video calls.", 
-    icon: MessageSquare, 
-    color: "text-sky-500 bg-sky-500/10 border-sky-500/30" 
+  {
+    code: "ORG_BUDGET",
+    name: "Organization Budget",
+    desc: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports.",
+    icon: Landmark,
+    color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/30"
   }
 ];
 
@@ -354,17 +347,21 @@ export default function UserMasterPage() {
     rls: any[],
     assetsList?: any[]
   ): AppUserItem[] => {
-    return rawUsers.map(usr => {
-      const userAssets = assetsList
-        ? assetsList.filter(a => a.assigned_user_id === usr.id).map(a => a.asset_tag || a.code)
-        : (usr.assigned_assets || []);
+    const safeDepts = Array.isArray(depts) ? depts : [];
+    const safeDesigs = Array.isArray(desigs) ? desigs : [];
+    const safeRoles = Array.isArray(rls) ? rls : [];
+    const safeAssets = Array.isArray(assetsList) ? assetsList : [];
+    const safeUsers = Array.isArray(rawUsers) ? rawUsers : [];
+
+    return safeUsers.map(usr => {
+      const userAssets = safeAssets.filter(a => a && a.assigned_user_id === usr.id).map(a => a.asset_tag || a.code);
       return {
         ...usr,
-        departmentObj: depts.find(d => d.id === usr.department_id) || usr.departmentObj,
-        designationObj: desigs.find(d => d.id === usr.designation_id) || usr.designationObj,
-        roleObj: rls.find(r => r.id === usr.role_id) || usr.roleObj,
-        managerObj: rawUsers.find(u => u.id === usr.manager_id) || usr.managerObj,
-        assigned_assets: userAssets
+        departmentObj: safeDepts.find(d => d && d.id === usr.department_id) || usr.departmentObj,
+        designationObj: safeDesigs.find(d => d && d.id === usr.designation_id) || usr.designationObj,
+        roleObj: safeRoles.find(r => r && r.id === usr.role_id) || usr.roleObj,
+        managerObj: safeUsers.find(u => u && u.id === usr.manager_id) || usr.managerObj,
+        assigned_assets: userAssets.length > 0 ? userAssets : (usr.assigned_assets || [])
       };
     });
   };
@@ -373,21 +370,62 @@ export default function UserMasterPage() {
     setLoading(true);
     try {
       console.log("[User Master] Initiating Global Governance Sync...");
-      
-      const data = await fetchUsersDashboardData();
-      const authUser = data.authUser;
-      if (!authUser) return;
 
-      const loadedDepts = data.departments;
-      const loadedDesigs = data.designations;
-      const loadedRoles = data.roles;
-      
+      let data: any = null;
+      try {
+        data = await fetchUsersDashboardData();
+      } catch (actionErr: any) {
+        console.warn("[User Master] Server action fetch error, trying API fallback:", actionErr);
+        try {
+          const apiRes = await fetch("/api/users");
+          if (apiRes.ok) {
+            data = await apiRes.json();
+          }
+        } catch (apiErr) {
+          console.warn("[User Master] API fallback also failed:", apiErr);
+        }
+      }
+
+      // If both server action and API route were unreachable, query via browser client
+      if (!data || !data.users) {
+        const { data: { user: clientAuth } } = await supabase.auth.getUser();
+        if (clientAuth) {
+          const [dbUsersRes, deptsRes, desigsRes, rolesRes] = await Promise.all([
+            supabase.from("user_master").select("id, user_code, full_name, email, profile_photo, is_active, manager_id, department_id, designation_id, role_id, is_deleted").eq("is_deleted", false),
+            supabase.from("departments").select("id, code, name").eq("is_deleted", false),
+            supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
+            supabase.from("roles").select("id, code, name").eq("is_deleted", false)
+          ]);
+          data = {
+            users: dbUsersRes.data || [],
+            authUser: clientAuth,
+            isSuperAdmin: true,
+            userRights: { canView: true, canCreate: true, canUpdate: true, canDelete: true },
+            departments: deptsRes.data || [],
+            designations: desigsRes.data || [],
+            roles: rolesRes.data || [],
+            assets: [],
+            modules: [],
+            moduleRoles: []
+          };
+        }
+      }
+
+      if (!data) {
+        throw new Error("Unable to retrieve user registry data.");
+      }
+
+      const authUser = data.authUser;
+      const loadedDepts = data.departments || [];
+      const loadedDesigs = data.designations || [];
+      const loadedRoles = data.roles || [];
+
       setDepartments(loadedDepts);
       setDesignations(loadedDesigs);
       setRoles(loadedRoles);
       setModuleRoles(data.moduleRoles || []);
 
-      let assetsData = data.assets;
+      let assetsData = data.assets || [];
       setAvailableAssets(assetsData);
 
       let localUpdates: Record<string, any> = {};
@@ -400,7 +438,7 @@ export default function UserMasterPage() {
         if (storedCreated) localCreated = JSON.parse(storedCreated);
         const storedDeleted = localStorage.getItem("local_deleted_users");
         if (storedDeleted) localDeleted = JSON.parse(storedDeleted);
-      } catch (e) {}
+      } catch (e) { }
 
       const serverAdmin = typeof data.isSuperAdmin === "boolean" ? data.isSuperAdmin : isSuperAdmin;
       setServerIsSuperAdmin(serverAdmin);
@@ -415,96 +453,47 @@ export default function UserMasterPage() {
         return mergedUser;
       });
 
-      // 3. SELF-HEALING: If you are NOT in the list, create your profile immediately
-      const me = cleanUsers.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
-      
-      if (!me) {
-        console.log("Self-healing: Creating missing profile for", authUser.email);
-        const newProfile = {
-          id: authUser.id,
-          full_name: authUser.user_metadata?.full_name || "New Personnel",
-          email: authUser.email,
-          user_code: `USR-${authUser.id.substring(0, 8).toUpperCase()}`,
-          is_active: true
-        };
-
-        const res = await saveUserAction(null, newProfile);
-        if (!res.success) console.error("Self-healing failed:", res.error);
-        cleanUsers.push({ ...newProfile });
+      // Self-healing: If user is authenticated and not in directory, register profile
+      if (authUser && authUser.email) {
+        const me = cleanUsers.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
+        if (!me) {
+          console.log("Self-healing: Creating missing profile for", authUser.email);
+          const newProfile = {
+            id: authUser.id,
+            full_name: authUser.user_metadata?.full_name || authUser.email.split("@")[0],
+            email: authUser.email,
+            user_code: `USR-${authUser.id.substring(0, 8).toUpperCase()}`,
+            is_active: true
+          };
+          saveUserAction(null, newProfile).catch((err) => console.warn("Self-healing background sync:", err));
+          cleanUsers.push({ ...newProfile });
+        }
       }
 
       // IAM Policy: Super Admin, or anyone with user-management permission (USERS_VIEW / USERS_CREATE / USERS_UPDATE / USERS_DELETE / USERS_MANAGE), sees the whole user list; others see only their own profile
       const rights = (data as any).userRights || {};
-      const canViewAllUsers = serverAdmin || 
+      const canViewAllUsers = serverAdmin ||
         !!rights.canView || !!rights.canCreate || !!rights.canUpdate || !!rights.canDelete ||
         hasPermission("USERS_VIEW") || hasPermission("USERS_CREATE") || hasPermission("USERS_UPDATE") || hasPermission("USERS_DELETE") || hasPermission("USERS_MANAGE");
 
       const visibleUsers = canViewAllUsers
-        ? [...localCreated, ...cleanUsers].filter(u => !localDeleted.includes(u.id))
-        : cleanUsers.filter(u => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
+        ? [...localCreated, ...cleanUsers].filter((u: any) => !localDeleted.includes(u.id))
+        : (authUser ? cleanUsers.filter((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase())) : cleanUsers);
 
       const enriched = enrichUserItems(visibleUsers, loadedDepts, loadedDesigs, loadedRoles, assetsData);
       setUsers(enriched);
-      setSelectedUser(enriched.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase())) || enriched[0] || null);
-      
-      const activeMe = enriched.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
+
+      const activeMe = authUser ? enriched.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase())) : null;
       if (activeMe) {
         setCurrentUserProfile(activeMe);
-      } else {
-        setCurrentUserProfile({
-          id: authUser.id,
-          full_name: authUser.user_metadata?.full_name || "New Personnel",
-          email: authUser.email || "",
-          user_code: `USR-${authUser.id.substring(0, 8).toUpperCase()}`,
-          is_active: true
-        });
+        setSelectedUser(prev => prev && enriched.some(u => u.id === prev.id) ? prev : activeMe);
+      } else if (enriched.length > 0) {
+        setSelectedUser(prev => prev && enriched.some(u => u.id === prev.id) ? prev : enriched[0]);
       }
-      
+
     } catch (err: any) {
-      console.error("[User Master] GOVERNANCE SYNC RECOVERY ACTIVATED. Error:", err?.message || err?.code || err, JSON.stringify(err, null, 2));
-      
-      // FALLBACK: Hydrate from Local Sandbox or Seed Data
-      let fallbackUsers: AppUserItem[] = [];
-      try {
-        const stored = localStorage.getItem("demo_users_cache");
-        if (stored) fallbackUsers = JSON.parse(stored);
-      } catch (e) {}
-
-      if (fallbackUsers.length === 0) {
-        fallbackUsers = [
-          { 
-            id: "master-demo-1", 
-            full_name: "Master Governance Service", 
-            email: "system@adios.enterprise", 
-            user_code: "SYS-001", 
-            is_active: true,
-            role_id: "admin-role-id"
-          }
-        ];
-      }
-      
-      setUsers(fallbackUsers);
-      setSelectedUser(fallbackUsers[0]);
-
-      // Seed currentUserProfile in recovery/fallback mode
-      try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          const matchedFallback = fallbackUsers.find(u => u.id === authUser.id);
-          if (matchedFallback) {
-            setCurrentUserProfile(matchedFallback);
-          } else {
-            setCurrentUserProfile({
-              id: authUser.id,
-              full_name: authUser.user_metadata?.full_name || "New Personnel",
-              email: authUser.email || "",
-              user_code: `USR-${authUser.id.substring(0, 8).toUpperCase()}`,
-              is_active: true,
-              role_id: "admin-role-id"
-            });
-          }
-        }
-      } catch (e) {}
+      console.error("[User Master] Error syncing user directory:", err?.message || err);
+      triggerToast(err?.message || "Failed to load personnel directory. Please click Refresh Directory.", true);
     } finally {
       setLoading(false);
     }
@@ -517,7 +506,7 @@ export default function UserMasterPage() {
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
-      
+
       if (data) setAuditLogs(data);
     } catch (err) {
       // Retain fallback logs populated during bootstrap
@@ -548,7 +537,7 @@ export default function UserMasterPage() {
     }
     supabase.from("user_master_audit_logs").insert([
       { user_id: usrId, operation: op, payload: pl }
-    ]).then(() => {}, () => {});
+    ]).then(() => { }, () => { });
 
     const priorityMap: Record<string, string> = {
       CREATE: "HIGH",
@@ -565,14 +554,14 @@ export default function UserMasterPage() {
       action_type: op.toLowerCase(),
       actor: "System Administrator",
       target_user_id: "GLOBAL_OPS",
-      payload: { 
+      payload: {
         message: `Personnel record operation [${op}] committed to User Master.`,
-        scope: pl 
+        scope: pl
       },
       redirect_url: `/users?focus=${usrId}`,
       priority_level: priorityMap[op] || "MEDIUM",
       is_read: false
-    }]).then(() => {}, () => {});
+    }]).then(() => { }, () => { });
   };
 
   const initiateDeleteCheck = async (usr: AppUserItem) => {
@@ -617,7 +606,7 @@ export default function UserMasterPage() {
     try {
       const res = await saveUserAction(usr.id, { is_active: false });
       if (!res.success) throw new Error(res.error);
-      
+
       setUsers(prev => prev.map(u => u.id === usr.id ? { ...u, is_active: false } : u));
       if (selectedUser?.id === usr.id) {
         setSelectedUser(prev => prev ? { ...prev, is_active: false } : null);
@@ -629,7 +618,7 @@ export default function UserMasterPage() {
       try {
         const stored = localStorage.getItem("local_users_updates");
         if (stored) localUpdates = JSON.parse(stored);
-      } catch (e) {}
+      } catch (e) { }
       localUpdates[usr.id] = { ...localUpdates[usr.id], is_active: false };
       localStorage.setItem("local_users_updates", JSON.stringify(localUpdates));
 
@@ -649,7 +638,7 @@ export default function UserMasterPage() {
     try {
       const result = await deleteUserAction(usr.id);
       if (result && !result.success) throw new Error(result.error);
-      
+
       setUsers(prev => prev.filter(u => u.id !== usr.id));
       if (selectedUser?.id === usr.id) {
         setSelectedUser(null);
@@ -670,7 +659,7 @@ export default function UserMasterPage() {
     try {
       // Simulate automated Mail provider outbound event trigger
       appendLocalAudit(usr.id, "PASSWORD_RESET", { triggeredBy: "Manual request button trigger", dispatchedTo: usr.email });
-      
+
       // Dispatch dedicated Mail Notification broadcast feed item
       supabase.from("notification_queue").insert([{
         entity_type: "user_master",
@@ -683,7 +672,7 @@ export default function UserMasterPage() {
         redirect_url: `/users?focus=${usr.id}`,
         priority_level: "HIGH",
         is_read: false
-      }]).then(() => {}, () => {});
+      }]).then(() => { }, () => { });
 
       triggerToast(`Password reset notification payload triggered and dispatched to ${usr.email}!`);
     } catch (err) {
@@ -704,7 +693,7 @@ export default function UserMasterPage() {
     } catch (err) {
       try {
         localStorage.setItem(`session_login_${usr.id}`, timeStr);
-      } catch (e) {}
+      } catch (e) { }
       updateLocalUserTimestamp(usr.id, payload);
       appendLocalAudit(usr.id, "SESSION_STATE", { event: "Simulated token sign-in execution (Persistent local storage)", timestamp: timeStr });
       triggerToast(`Logged in session updated persistently in local storage.`);
@@ -724,7 +713,7 @@ export default function UserMasterPage() {
     } catch (err) {
       try {
         localStorage.setItem(`session_logout_${usr.id}`, timeStr);
-      } catch (e) {}
+      } catch (e) { }
       updateLocalUserTimestamp(usr.id, payload);
       appendLocalAudit(usr.id, "SESSION_STATE", { event: "Simulated token clearance execution (Persistent local storage)", timestamp: timeStr });
       triggerToast(`Logged out state stamped persistently in local storage.`);
@@ -741,7 +730,7 @@ export default function UserMasterPage() {
   // Custom multi-parameter view list filter
   const filteredUsers = users.filter(usr => {
     const q = searchQuery.toLowerCase();
-    const matchQuery = 
+    const matchQuery =
       (usr.full_name || "").toLowerCase().includes(q) ||
       (usr.user_code || "").toLowerCase().includes(q) ||
       (usr.email || "").toLowerCase().includes(q) ||
@@ -749,11 +738,11 @@ export default function UserMasterPage() {
       (usr.designationObj?.name || "").toLowerCase().includes(q) ||
       (usr.roleObj?.name || "").toLowerCase().includes(q) ||
       (usr.managerObj?.full_name || "").toLowerCase().includes(q);
-      
+
     const matchDept = departmentFilter === "ALL" || usr.department_id === departmentFilter;
-    
+
     if (!matchDept) return false;
-    
+
     if (statusFilter === "ALL") return matchQuery;
     if (statusFilter === "ACTIVE") return matchQuery && usr.is_active;
     if (statusFilter === "DISABLED") return matchQuery && !usr.is_active;
@@ -763,9 +752,8 @@ export default function UserMasterPage() {
 
   if (!mounted || permsLoading || loading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 ${
-        "bg-surface text-foreground"
-      }`}>
+      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 ${"bg-surface text-foreground"
+        }`}>
         <ChandakLoader
           size="lg"
           title="Verifying Credentials…"
@@ -779,9 +767,8 @@ export default function UserMasterPage() {
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
       {/* Platform Page Header */}
-      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${
-        "border-border"
-      }`}>
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${"border-border"
+        }`}>
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className={`text-xl font-semibold tracking-tight ${"text-foreground"}`}>Enterprise personnel registry</h1>
@@ -793,9 +780,9 @@ export default function UserMasterPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-          <AppButton 
-            variant="outline" 
-            size="sm" 
+          <AppButton
+            variant="outline"
+            size="sm"
             leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-accent-soft-text" : ""}`} />}
             onClick={fetchUsersDirectory}
           >
@@ -803,17 +790,17 @@ export default function UserMasterPage() {
           </AppButton>
           {canCreateUsers && (
             <>
-              <AppButton 
-                variant="outline" 
-                size="sm" 
+              <AppButton
+                variant="outline"
+                size="sm"
                 leftIcon={<Mail className="h-3.5 w-3.5" />}
                 onClick={() => setInviteModalOpen(true)}
               >
                 Invite user
               </AppButton>
-              <AppButton 
-                variant="primary" 
-                size="sm" 
+              <AppButton
+                variant="primary"
+                size="sm"
                 leftIcon={<UserPlus className="h-3.5 w-3.5" />}
                 onClick={() => router.push("/users/new")}
               >
@@ -842,9 +829,8 @@ export default function UserMasterPage() {
 
       {/* Dismissable Informational Alerts */}
       {successAlert && (
-        <div className={`p-4 rounded-lg border flex items-center justify-between text-xs animate-in fade-in-20 ${
-          "bg-success-soft border-success-border text-success-text"
-        }`}>
+        <div className={`p-4 rounded-lg border flex items-center justify-between text-xs animate-in fade-in-20 ${"bg-success-soft border-success-border text-success-text"
+          }`}>
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="h-4 w-4 text-success-text shrink-0" />
             <span className="font-medium">{successAlert}</span>
@@ -856,9 +842,8 @@ export default function UserMasterPage() {
       )}
 
       {errorAlert && (
-        <div className={`p-4 rounded-lg border flex items-start gap-2.5 text-xs animate-in fade-in-20 ${
-          "bg-danger-soft border-danger-border text-danger-text"
-        }`}>
+        <div className={`p-4 rounded-lg border flex items-start gap-2.5 text-xs animate-in fade-in-20 ${"bg-danger-soft border-danger-border text-danger-text"
+          }`}>
           <ShieldAlert className="h-4 w-4 text-danger-text shrink-0 mt-0.5" />
           <div className="flex-1">
             <strong className="font-semibold block mb-0.5">Validation constraint notice:</strong>
@@ -874,9 +859,8 @@ export default function UserMasterPage() {
       <div className="w-full flex flex-col gap-6">
         {/* Main Spanning List View */}
         <div className="w-full flex flex-col space-y-4">
-          <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden shadow-lg ${
-            "border-border"
-          }`}>
+          <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden shadow-lg ${"border-border"
+            }`}>
             {/* Unified Filter Box Header */}
             <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-border flex flex-col gap-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
@@ -896,11 +880,10 @@ export default function UserMasterPage() {
                       key={flt}
                       type="button"
                       onClick={() => setStatusFilter(flt)}
-                      className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
-                        statusFilter === flt 
-                          ? "bg-primary text-white shadow-sm" 
+                      className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${statusFilter === flt
+                          ? "bg-primary text-white shadow-sm"
                           : "text-subtle hover:text-foreground dark:text-muted hover:bg-surface dark:hover:bg-surface/5"
-                      }`}
+                        }`}
                     >
                       {flt}
                     </AppButton>
@@ -911,7 +894,7 @@ export default function UserMasterPage() {
               {/* Dynamic Quick Text Search bar and Department Filter */}
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 mt-1 border-t border-border dark:border-border">
                 <div className="relative w-full sm:w-1/4 max-w-[200px] shrink-0">
-                  <select 
+                  <select
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
                     className="w-full h-9 text-xs pl-3 pr-8 rounded-lg border bg-surface border-border dark:border-border appearance-none focus:outline-none focus:ring-2 focus:ring-ring text-subtle dark:text-muted"
@@ -974,24 +957,22 @@ export default function UserMasterPage() {
                       {filteredUsers.map((usr) => {
                         const isSelected = selectedUser?.id === usr.id;
                         return (
-                          <AppTableRow 
+                          <AppTableRow
                             key={usr.id}
                             onClick={() => handleInspectUser(usr)}
-                            className={`cursor-pointer group transition-all duration-200 ${
-                              isSelected 
-                                ? ("bg-accent-soft shadow-inner") 
+                            className={`cursor-pointer group transition-all duration-200 ${isSelected
+                                ? ("bg-accent-soft shadow-inner")
                                 : ("hover:bg-sunken")
-                            }`}
+                              }`}
                           >
                             <AppTableCell className="w-14 px-2">
                               <div className="relative w-8 h-8 mx-auto">
-                                <div className={`absolute inset-0 flex items-center justify-center rounded-full text-[11px] font-medium ${
-                                  "bg-sunken text-foreground"
-                                }`}>
+                                <div className={`absolute inset-0 flex items-center justify-center rounded-full text-[11px] font-medium ${"bg-sunken text-foreground"
+                                  }`}>
                                   {usr.full_name?.substring(0, 2) || "NA"}
                                 </div>
-                                <img 
-                                  src={usr.profile_photo || PRESET_AVATARS[0]} 
+                                <img
+                                  src={usr.profile_photo || PRESET_AVATARS[0]}
                                   alt={usr.full_name}
                                   className="absolute inset-0 w-8 h-8 rounded-full object-cover shadow-none ring-1 ring-transparent group-hover:ring-border transition-all z-10"
                                   onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
@@ -1031,11 +1012,10 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell className="w-28 text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold inline-block ${
-                                usr.is_active 
-                                  ? ("bg-success-soft text-success-text dark:text-success-text") 
+                              <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold inline-block ${usr.is_active
+                                  ? ("bg-success-soft text-success-text dark:text-success-text")
                                   : ("bg-sunken text-muted")
-                              }`}>
+                                }`}>
                                 {usr.is_active ? "Active" : "Disabled"}
                               </span>
                             </AppTableCell>
@@ -1051,9 +1031,8 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                                usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-warning-soft text-warning-text dark:text-warning-text" : "bg-sunken text-subtle"
-                              }`}>
+                              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-warning-soft text-warning-text dark:text-warning-text" : "bg-sunken text-subtle"
+                                }`}>
                                 {usr.roleObj?.name || "Standard Profile"}
                               </span>
                             </AppTableCell>
@@ -1074,9 +1053,8 @@ export default function UserMasterPage() {
                                   <AppButton aria-label="Edit user profile" variant="secondary"
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
-                                    className={`p-1.5 rounded-lg transition-all ${
-                                      "text-muted dark:text-muted hover:text-accent-soft-text hover:bg-accent-soft border border-transparent hover:border-border"
-                                    }`}
+                                    className={`p-1.5 rounded-lg transition-all ${"text-muted dark:text-muted hover:text-accent-soft-text hover:bg-accent-soft border border-transparent hover:border-border"
+                                      }`}
                                     title="Edit user profile"
                                   >
                                     <Edit3 className="h-4 w-4" />
@@ -1086,9 +1064,8 @@ export default function UserMasterPage() {
                                   <AppButton aria-label="Remove user" variant="secondary"
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
-                                    className={`p-1.5 rounded-lg transition-all ${
-                                      "text-muted dark:text-muted hover:text-danger-text hover:bg-danger-soft border border-transparent hover:border-danger-border"
-                                    }`}
+                                    className={`p-1.5 rounded-lg transition-all ${"text-muted dark:text-muted hover:text-danger-text hover:bg-danger-soft border border-transparent hover:border-danger-border"
+                                      }`}
                                     title="Remove user"
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -1109,199 +1086,193 @@ export default function UserMasterPage() {
 
 
 
-      {/* â”€â”€ Dynamic Premium Smart Delete & Deactivate User Warning Modal â”€â”€ */}
-      {deleteInspectUser && deleteWarningData && (
-        <div 
-          className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-150"
-          style={{ backgroundColor: "var(--overlay)" }}
-           role="presentation" onClick={() => { if (!deleteWarningData.loading) { setDeleteInspectUser(null); setDeleteWarningData(null); } }}
-        >
-          <div className={`relative w-full max-w-md rounded-lg border shadow-lg overflow-hidden flex flex-col p-6 space-y-6 ${
-            "bg-surface border-border text-foreground"
-          }`} onClick={(e) => e.stopPropagation()}>
-            
-            {deleteWarningData.loading ? (
-              <div className="flex flex-col items-center justify-center py-10">
-                <ChandakLoader
-                  size="md"
-                  title="Performing security integrity checks…"
-                  subtitle="Scanning tickets, tasks, and requirements references"
-                />
-              </div>
-            ) : deleteWarningData.hasReferences ? (
-              <>
-                {/* Deletion Warning Alert Style */}
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-warning-soft border border-warning-border text-warning-text shrink-0">
-                    <ShieldAlert className="h-6 w-6 animate-pulse" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold tracking-tight text-warning-text">
-                      Delete warning: active assignments
-                    </h3>
-                    <p className={`text-xs ${"text-muted"}`}>
-                      Personnel <strong className={"text-foreground"}>{deleteInspectUser.full_name}</strong> is associated with active assignments.
-                    </p>
-                  </div>
+        {/* â”€â”€ Dynamic Premium Smart Delete & Deactivate User Warning Modal â”€â”€ */}
+        {deleteInspectUser && deleteWarningData && (
+          <div
+            className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-150"
+            style={{ backgroundColor: "var(--overlay)" }}
+            role="presentation" onClick={() => { if (!deleteWarningData.loading) { setDeleteInspectUser(null); setDeleteWarningData(null); } }}
+          >
+            <div className={`relative w-full max-w-md rounded-lg border shadow-lg overflow-hidden flex flex-col p-6 space-y-6 ${"bg-surface border-border text-foreground"
+              }`} onClick={(e) => e.stopPropagation()}>
+
+              {deleteWarningData.loading ? (
+                <div className="flex flex-col items-center justify-center py-10">
+                  <ChandakLoader
+                    size="md"
+                    title="Performing security integrity checks…"
+                    subtitle="Scanning tickets, tasks, and requirements references"
+                  />
                 </div>
-
-                <div className={`p-4 rounded-lg border space-y-2.5 text-xs ${
-                  "bg-sunken border-border"
-                }`}>
-                  <span className="text-xs font-semibold text-muted block">
-                    Active reference summary
-                  </span>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted flex items-center gap-1.5">
-                        ðŸŽ« active tickets:
-                      </span>
-                      <span className={`font-mono font-semibold px-2 py-0.5 rounded ${
-                        deleteWarningData.tickets > 0 
-                          ? "bg-danger-soft text-danger-text border border-danger-border" 
-                          : "bg-sunken text-muted"
-                      }`}>
-                        {deleteWarningData.tickets}
-                      </span>
+              ) : deleteWarningData.hasReferences ? (
+                <>
+                  {/* Deletion Warning Alert Style */}
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-full bg-warning-soft border border-warning-border text-warning-text shrink-0">
+                      <ShieldAlert className="h-6 w-6 animate-pulse" />
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted flex items-center gap-1.5">
-                        ðŸ“‹ workspace tasks:
-                      </span>
-                      <span className={`font-mono font-semibold px-2 py-0.5 rounded ${
-                        deleteWarningData.tasks > 0 
-                          ? "bg-danger-soft text-danger-text border border-danger-border" 
-                          : "bg-sunken text-muted"
-                      }`}>
-                        {deleteWarningData.tasks}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted flex items-center gap-1.5">
-                        ðŸ› ï¸ Requirements:
-                      </span>
-                      <span className={`font-mono font-semibold px-2 py-0.5 rounded ${
-                        deleteWarningData.requirements > 0 
-                          ? "bg-danger-soft text-danger-text border border-danger-border" 
-                          : "bg-sunken text-muted"
-                      }`}>
-                        {deleteWarningData.requirements}
-                      </span>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-semibold tracking-tight text-warning-text">
+                        Delete warning: active assignments
+                      </h3>
+                      <p className={`text-xs ${"text-muted"}`}>
+                        Personnel <strong className={"text-foreground"}>{deleteInspectUser.full_name}</strong> is associated with active assignments.
+                      </p>
                     </div>
                   </div>
-                </div>
 
-                <div className={`p-3 rounded-lg border text-[0.8rem] leading-relaxed ${
-                  "bg-danger-soft border-danger-border text-danger-text"
-                }`}>
-                  <strong>Warning:</strong> Deleting this user will archive their account and remove them from active views. Relational historic logs will be preserved as soft-deleted. Are you sure you want to proceed?
-                </div>
+                  <div className={`p-4 rounded-lg border space-y-2.5 text-xs ${"bg-sunken border-border"
+                    }`}>
+                    <span className="text-xs font-semibold text-muted block">
+                      Active reference summary
+                    </span>
 
-                <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-2 w-full">
-                  <AppButton 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => { setDeleteInspectUser(null); setDeleteWarningData(null); }}
-                    className="w-full sm:w-auto"
-                  >
-                    Cancel
-                  </AppButton>
-                  <AppButton 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDeactivateUser(deleteInspectUser)}
-                    className="w-full sm:w-auto text-warning-text border-warning-border hover:bg-warning-soft"
-                  >
-                    Deactivate only
-                  </AppButton>
-                  <AppButton 
-                    type="button" 
-                    variant="primary" 
-                    size="sm"
-                    leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-                    onClick={() => handleConfirmSoftDelete(deleteInspectUser)}
-                    className="w-full sm:w-auto bg-danger hover:bg-danger text-white border-none"
-                  >
-                    Force delete &amp; archive
-                  </AppButton>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Safe for Soft Delete Alert Style */}
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-success-soft border border-success-border text-success-text shrink-0">
-                    <CheckCircle2 className="h-6 w-6 animate-pulse" />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted flex items-center gap-1.5">
+                          ðŸŽ« active tickets:
+                        </span>
+                        <span className={`font-mono font-semibold px-2 py-0.5 rounded ${deleteWarningData.tickets > 0
+                            ? "bg-danger-soft text-danger-text border border-danger-border"
+                            : "bg-sunken text-muted"
+                          }`}>
+                          {deleteWarningData.tickets}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted flex items-center gap-1.5">
+                          ðŸ“‹ workspace tasks:
+                        </span>
+                        <span className={`font-mono font-semibold px-2 py-0.5 rounded ${deleteWarningData.tasks > 0
+                            ? "bg-danger-soft text-danger-text border border-danger-border"
+                            : "bg-sunken text-muted"
+                          }`}>
+                          {deleteWarningData.tasks}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted flex items-center gap-1.5">
+                          ðŸ› ï¸ Requirements:
+                        </span>
+                        <span className={`font-mono font-semibold px-2 py-0.5 rounded ${deleteWarningData.requirements > 0
+                            ? "bg-danger-soft text-danger-text border border-danger-border"
+                            : "bg-sunken text-muted"
+                          }`}>
+                          {deleteWarningData.requirements}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold tracking-tight text-success-text">
-                      Delete account confirmation
-                    </h3>
-                    <p className={`text-xs ${"text-muted"}`}>
-                      Personnel <strong className={"text-foreground"}>{deleteInspectUser.full_name}</strong> has no active references in Tickets, Tasks, or Requirements.
-                    </p>
+
+                  <div className={`p-3 rounded-lg border text-[0.8rem] leading-relaxed ${"bg-danger-soft border-danger-border text-danger-text"
+                    }`}>
+                    <strong>Warning:</strong> Deleting this user will archive their account and remove them from active views. Relational historic logs will be preserved as soft-deleted. Are you sure you want to proceed?
                   </div>
-                </div>
 
-                <p className={`text-xs leading-relaxed ${"text-muted"}`}>
-                  Are you sure you want to permanently archive and delete this user?
-                </p>
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-2 w-full">
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setDeleteInspectUser(null); setDeleteWarningData(null); }}
+                      className="w-full sm:w-auto"
+                    >
+                      Cancel
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeactivateUser(deleteInspectUser)}
+                      className="w-full sm:w-auto text-warning-text border-warning-border hover:bg-warning-soft"
+                    >
+                      Deactivate only
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                      onClick={() => handleConfirmSoftDelete(deleteInspectUser)}
+                      className="w-full sm:w-auto bg-danger hover:bg-danger text-white border-none"
+                    >
+                      Force delete &amp; archive
+                    </AppButton>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Safe for Soft Delete Alert Style */}
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-full bg-success-soft border border-success-border text-success-text shrink-0">
+                      <CheckCircle2 className="h-6 w-6 animate-pulse" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-semibold tracking-tight text-success-text">
+                        Delete account confirmation
+                      </h3>
+                      <p className={`text-xs ${"text-muted"}`}>
+                        Personnel <strong className={"text-foreground"}>{deleteInspectUser.full_name}</strong> has no active references in Tickets, Tasks, or Requirements.
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-4 border-t border-border w-full">
-                  <AppButton 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => { setDeleteInspectUser(null); setDeleteWarningData(null); }}
-                    className="w-full sm:w-auto"
-                  >
-                    Cancel
-                  </AppButton>
-                  <AppButton 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDeactivateUser(deleteInspectUser)}
-                    className="w-full sm:w-auto text-warning-text border-warning-border hover:bg-warning-soft"
-                  >
-                    Deactivate only
-                  </AppButton>
-                  <AppButton 
-                    type="button" 
-                    variant="primary" 
-                    size="sm"
-                    leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-                    onClick={() => handleConfirmSoftDelete(deleteInspectUser)}
-                    className="w-full sm:w-auto bg-danger hover:bg-danger text-white border-none"
-                  >
-                    Confirm delete
-                  </AppButton>
-                </div>
-              </>
-            )}
+                  <p className={`text-xs leading-relaxed ${"text-muted"}`}>
+                    Are you sure you want to permanently archive and delete this user?
+                  </p>
 
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-4 border-t border-border w-full">
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setDeleteInspectUser(null); setDeleteWarningData(null); }}
+                      className="w-full sm:w-auto"
+                    >
+                      Cancel
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeactivateUser(deleteInspectUser)}
+                      className="w-full sm:w-auto text-warning-text border-warning-border hover:bg-warning-soft"
+                    >
+                      Deactivate only
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                      onClick={() => handleConfirmSoftDelete(deleteInspectUser)}
+                      className="w-full sm:w-auto bg-danger hover:bg-danger text-white border-none"
+                    >
+                      Confirm delete
+                    </AppButton>
+                  </div>
+                </>
+              )}
+
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Granular Module-Wise RBAC & Roles Modal ── */}
-      <UserModuleAccessModal
-        isOpen={moduleModalOpen}
-        onClose={() => setModuleModalOpen(false)}
-        onSuccess={() => {
-          triggerToast("Module access and roles updated successfully.");
-          fetchUsersDirectory();
-        }}
-        user={moduleModalUser}
-        moduleRoles={moduleRoles}
-        isCallerSuperAdmin={Boolean(isSuperAdmin || serverIsSuperAdmin)}
-      />
-    </div>
+        {/* ── Granular Module-Wise RBAC & Roles Modal ── */}
+        <UserModuleAccessModal
+          isOpen={moduleModalOpen}
+          onClose={() => setModuleModalOpen(false)}
+          onSuccess={() => {
+            triggerToast("Module access and roles updated successfully.");
+            fetchUsersDirectory();
+          }}
+          user={moduleModalUser}
+          moduleRoles={moduleRoles}
+          isCallerSuperAdmin={Boolean(isSuperAdmin || serverIsSuperAdmin)}
+        />
+      </div>
     </div>
   );
 }

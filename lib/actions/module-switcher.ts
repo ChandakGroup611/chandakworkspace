@@ -31,7 +31,7 @@ export interface UserModulesResult {
   userEmail?: string;
 }
 
-const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET", "CHANDAK_MESSENGER"]);
+const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET"]);
 
 const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
   {
@@ -203,7 +203,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
           .limit(1)
       ]);
       hasDashboardPerms = (Array.isArray(dashPermsRes.data) && dashPermsRes.data.length > 0) ||
-                          (Array.isArray(moduleAccessRes.data) && moduleAccessRes.data.length > 0);
+        (Array.isArray(moduleAccessRes.data) && moduleAccessRes.data.length > 0);
     }
 
     // Filter modules based on user assignments and RBAC permissions (Super Admins see all active modules)
@@ -223,7 +223,6 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
         if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
         if (m.code === "CHANDAK_MEET" && !route) route = "/meet";
         if (m.code === "ORG_BUDGET" && !route) route = "/budget";
-        if (m.code === "CHANDAK_MESSENGER" && !route) route = "/messenger";
         return {
           ...m,
           route_path: route,
@@ -248,7 +247,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     try {
       const cookieStore = await cookies();
       activeModuleCookie = cookieStore.get("active_module")?.value || null;
-    } catch {}
+    } catch { }
 
     // Validate that the active cookie belongs to user's allowed modules
     const isValidActive = activeModuleCookie && allowedModules.some(m => m.code === activeModuleCookie);
@@ -264,11 +263,11 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     };
   } catch (error) {
     console.error("[module-switcher] Unexpected error in getUserAllowedModules:", error);
-    return { 
-      modules: DEFAULT_FALLBACK_MODULES, 
-      defaultModule: DEFAULT_FALLBACK_MODULES[0], 
-      activeModuleCode: "TASK_WORKFLOW", 
-      isAdmin: false 
+    return {
+      modules: DEFAULT_FALLBACK_MODULES,
+      defaultModule: DEFAULT_FALLBACK_MODULES[0],
+      activeModuleCode: "TASK_WORKFLOW",
+      isAdmin: false
     };
   }
 }
@@ -511,7 +510,7 @@ export async function assignUserModules(
 
     try {
       await supabaseAdmin.rpc("refresh_single_user_permissions_snapshot", { p_user_id: targetUserId });
-    } catch {}
+    } catch { }
 
     // Synchronize fleet_user_access if VEHICLE_DESK is included
     if (moduleCodes.includes("VEHICLE_DESK")) {
@@ -658,7 +657,7 @@ export async function assignUserDashboardAccess(
 
     try {
       await supabaseAdmin.rpc("refresh_single_user_permissions_snapshot", { p_user_id: targetUserId });
-    } catch {}
+    } catch { }
 
     return { success: true };
   } catch (err: any) {

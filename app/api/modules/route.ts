@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
     const assignedModuleIds = new Set(userAssignments.map(a => a.module_id));
     const defaultAssignment = userAssignments.find(a => a.is_default);
 
-    const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET", "CHANDAK_MESSENGER"]);
+    const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET"]);
 
     // Strict Authorization: Non-admins only see modules they are explicitly assigned
     const allowedModules = allActive

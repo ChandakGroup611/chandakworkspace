@@ -422,8 +422,16 @@ export async function fetchUsersDashboardData() {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  let user: any = null;
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+  if (authUser) {
+    user = authUser;
+  } else {
+    const { data: sessionData } = await supabase.auth.getSession();
+    user = sessionData?.session?.user || null;
+  }
+
+  if (!user) {
     throw new Error("Unauthenticated. Please log in first.");
   }
 
@@ -443,17 +451,17 @@ export async function fetchUsersDashboardData() {
   const [users, [deptRes, desigRes, roleRes, astRes, modRes, modRolesRes]] = await Promise.all([
     getVisibleUsers(user.id, isSuperAdmin),
     Promise.all([
-      supabase.from("departments").select("id, code, name").eq("is_deleted", false),
-      supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
-      supabase.from("roles").select("id, code, name").eq("is_deleted", false),
-      supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false),
-      supabase.from("modules_master").select("id, code, name, description, icon, display_order").eq("is_active", true).order("display_order", { ascending: true }),
-      supabase.from("module_roles").select("module_code, role_code, name, description, permissions").order("role_code", { ascending: true })
+      supabaseAdmin.from("departments").select("id, code, name").eq("is_deleted", false),
+      supabaseAdmin.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
+      supabaseAdmin.from("roles").select("id, code, name").eq("is_deleted", false),
+      supabaseAdmin.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false),
+      supabaseAdmin.from("modules_master").select("id, code, name, description, icon, display_order").eq("is_active", true).order("display_order", { ascending: true }),
+      supabaseAdmin.from("module_roles").select("module_code, role_code, name, description, permissions").order("role_code", { ascending: true })
     ])
   ]);
 
   return {
-    users,
+    users: users || [],
     authUser: user,
     isSuperAdmin,
     userRights,
@@ -757,7 +765,6 @@ export async function inviteUserAction(
         else if (code === "CHANDAK_MEET") roleCode = "PARTICIPANT";
         else if (code === "ORG_BUDGET") roleCode = "VIEWER";
         else if (code === "TASK_WORKFLOW") roleCode = "MEMBER";
-        else if (code === "CHANDAK_MESSENGER") roleCode = "MEMBER";
         return { module_code: code, role_code: roleCode, scope: { type: "all" } };
       });
     }

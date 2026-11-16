@@ -68,13 +68,6 @@ const MODULE_DEFINITIONS = [
     desc: "Project budgets, towers, cost heads, workings, approvals & actuals", 
     icon: Landmark, 
     defaultRole: "VIEWER" 
-  },
-  { 
-    code: "CHANDAK_MESSENGER", 
-    name: "Chandak Messenger", 
-    desc: "Enterprise direct messaging, team channels, and collaboration", 
-    icon: MessageSquare, 
-    defaultRole: "MEMBER" 
   }
 ];
 
