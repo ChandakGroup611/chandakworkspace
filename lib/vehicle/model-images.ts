@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { hasPermission } from "@/lib/permissions";
+import { can } from "@/lib/permissions/module-access";
 import { removeBackground } from "./cutout";
 import { colourKey, modelKey, paintName } from "./model-key";
 
@@ -47,6 +48,9 @@ const norm = (s?: string | null) => (s || "").toLowerCase().replace(/[^a-z0-9]+/
  */
 export async function canManageModelImages(userId: string): Promise<boolean> {
   try {
+    const allowed = await can(userId, "VEHICLE_DESK", "VEHICLES_UPDATE");
+    if (allowed) return true;
+
     for (const code of ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "FLEET_ADMIN", "VEHICLES_MANAGE", "FLEET_MANAGE"]) {
       if (await hasPermission(userId, code)) return true;
     }

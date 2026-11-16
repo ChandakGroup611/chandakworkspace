@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { hasPermission } from "@/lib/permissions";
+import { can } from "@/lib/permissions/module-access";
 import { 
   explainVehicleConcept, 
   guideVehicleWorkflow 
@@ -19,6 +20,16 @@ import type {
 // Helper: Check Fleet Desk Access
 // ============================================================================
 async function checkFleetAccess(userId: string) {
+  const allowedByModule = await can(userId, "VEHICLE_DESK", "VEHICLES_VIEW");
+  if (allowedByModule) {
+    const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
+    return {
+      allowed: true,
+      isSuperAdmin,
+      fleetAccess: null
+    };
+  }
+
   const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
   if (isSuperAdmin) {
     return {

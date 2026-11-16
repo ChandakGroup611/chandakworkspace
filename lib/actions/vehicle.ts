@@ -16,6 +16,7 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { NATIONAL_RTO_MAP, STATE_MAP, analyzeIndianPlate } from "@/components/vehicle/vehicleQuickPicks";
 import { hasPermission } from "@/lib/permissions";
+import { can } from "@/lib/permissions/module-access";
 import crypto from "crypto";
 
 async function getAuthenticatedUser() {
@@ -38,9 +39,14 @@ async function getAuthenticatedUser() {
   }
 }
 
-async function canUserViewVehicles(userId: string): Promise<boolean> {
+async function canUserViewVehicles(userId: string, vehicleId?: string): Promise<boolean> {
   try {
-    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (process.env.ANTIGRAVITY_TEST_RUNNER === "true" && userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (userId === "00000000-0000-0000-0000-000000000000") return false;
+
+    const allowed = await can(userId, "VEHICLE_DESK", "VEHICLES_VIEW", vehicleId ? { vehicle_id: vehicleId } : undefined);
+    if (allowed) return true;
+
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -68,9 +74,15 @@ async function canUserViewVehicles(userId: string): Promise<boolean> {
   }
 }
 
-async function canUserManageVehicles(userId: string): Promise<boolean> {
+async function canUserManageVehicles(userId: string, vehicleId?: string): Promise<boolean> {
   try {
-    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (process.env.ANTIGRAVITY_TEST_RUNNER === "true" && userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (userId === "00000000-0000-0000-0000-000000000000") return false;
+
+    const allowed = (await can(userId, "VEHICLE_DESK", "VEHICLES_UPDATE", vehicleId ? { vehicle_id: vehicleId } : undefined)) ||
+                    (await can(userId, "VEHICLE_DESK", "VEHICLES_CREATE"));
+    if (allowed) return true;
+
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -102,9 +114,14 @@ async function canUserManageVehicles(userId: string): Promise<boolean> {
   }
 }
 
-async function canUserManageMaintenance(userId: string): Promise<boolean> {
+async function canUserManageMaintenance(userId: string, vehicleId?: string): Promise<boolean> {
   try {
-    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (process.env.ANTIGRAVITY_TEST_RUNNER === "true" && userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (userId === "00000000-0000-0000-0000-000000000000") return false;
+
+    const allowed = await can(userId, "VEHICLE_DESK", "MAINTENANCE_MANAGE", vehicleId ? { vehicle_id: vehicleId } : undefined);
+    if (allowed) return true;
+
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -137,7 +154,12 @@ async function canUserManageMaintenance(userId: string): Promise<boolean> {
 
 async function canUserManageParts(userId: string): Promise<boolean> {
   try {
-    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (process.env.ANTIGRAVITY_TEST_RUNNER === "true" && userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (userId === "00000000-0000-0000-0000-000000000000") return false;
+
+    const allowed = await can(userId, "VEHICLE_DESK", "PARTS_VENDORS_MANAGE");
+    if (allowed) return true;
+
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -154,7 +176,12 @@ async function canUserManageParts(userId: string): Promise<boolean> {
 
 async function canUserManageVendors(userId: string): Promise<boolean> {
   try {
-    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (process.env.ANTIGRAVITY_TEST_RUNNER === "true" && userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (userId === "00000000-0000-0000-0000-000000000000") return false;
+
+    const allowed = await can(userId, "VEHICLE_DESK", "PARTS_VENDORS_MANAGE");
+    if (allowed) return true;
+
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -170,7 +197,12 @@ async function canUserManageVendors(userId: string): Promise<boolean> {
 
 async function canUserManageDrivers(userId: string): Promise<boolean> {
   try {
-    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (process.env.ANTIGRAVITY_TEST_RUNNER === "true" && userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (userId === "00000000-0000-0000-0000-000000000000") return false;
+
+    const allowed = await can(userId, "VEHICLE_DESK", "DRIVERS_MANAGE");
+    if (allowed) return true;
+
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -202,9 +234,14 @@ async function canUserManageDrivers(userId: string): Promise<boolean> {
   }
 }
 
-async function canUserManageTrips(userId: string): Promise<boolean> {
+async function canUserManageTrips(userId: string, vehicleId?: string): Promise<boolean> {
   try {
-    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (process.env.ANTIGRAVITY_TEST_RUNNER === "true" && userId === "00000000-0000-0000-0000-000000000000") return true;
+    if (userId === "00000000-0000-0000-0000-000000000000") return false;
+
+    const allowed = await can(userId, "VEHICLE_DESK", "TRIPS_DISPATCH", vehicleId ? { vehicle_id: vehicleId } : undefined);
+    if (allowed) return true;
+
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 

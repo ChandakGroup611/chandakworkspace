@@ -2,6 +2,7 @@
 
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { can, invalidateModuleAccessCache } from "@/lib/permissions/module-access";
 import { 
   FleetWorkspaceUser, 
   FleetUserAccessRecord, 
@@ -15,14 +16,18 @@ async function verifyAdminOrFleetLead() {
 
   const { data: profile } = await supabaseAdmin
     .from("user_master")
-    .select("role:roles(code)")
+    .select("role:roles(code), platform_role")
     .eq("id", user.id)
     .single();
 
   const roleCode = (profile?.role as any)?.code || "";
-  const isAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(roleCode);
+  const platformRole = profile?.platform_role || "";
+  const isAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(roleCode) || platformRole === "SUPER_ADMIN";
 
   if (isAdmin) return { user, isAdmin: true };
+
+  const canSettings = await can(user.id, "VEHICLE_DESK", "FLEET_SETTINGS");
+  if (canSettings) return { user, isAdmin: false };
 
   const { data: fleetAccess } = await supabaseAdmin
     .from("fleet_user_access")
@@ -56,11 +61,12 @@ export async function fetchFleetWorkspaceUsersAction(): Promise<{
       rolesRes,
       modulesRes,
       userModulesRes,
+      userModuleAccessRes,
       fleetAccessRes
     ] = await Promise.all([
       supabaseAdmin
         .from("user_master")
-        .select("id, full_name, email, user_code, profile_photo, is_active, role_id, department_id, designation_id")
+        .select("id, full_name, email, user_code, profile_photo, is_active, role_id, department_id, designation_id, platform_role")
         .eq("is_deleted", false)
         .order("full_name", { ascending: true }),
       supabaseAdmin.from("departments").select("id, code, name").eq("is_deleted", false),
@@ -68,6 +74,7 @@ export async function fetchFleetWorkspaceUsersAction(): Promise<{
       supabaseAdmin.from("roles").select("id, code, name").eq("is_deleted", false),
       supabaseAdmin.from("modules_master").select("id, code").eq("code", "VEHICLE_DESK").maybeSingle(),
       supabaseAdmin.from("user_modules").select("user_id, module_id"),
+      supabaseAdmin.from("user_module_access").select("user_id, role_code, scope").eq("module_code", "VEHICLE_DESK"),
       supabaseAdmin.from("fleet_user_access").select("*")
     ]);
 
@@ -77,11 +84,19 @@ export async function fetchFleetWorkspaceUsersAction(): Promise<{
     const roleMap = new Map((rolesRes.data || []).map(r => [r.id, { name: r.name, code: r.code }]));
 
     const vehicleModuleId = modulesRes.data?.id;
-    const usersWithModuleAccess = new Set(
-      (userModulesRes.data || [])
-        .filter(um => vehicleModuleId && um.module_id === vehicleModuleId)
-        .map(um => um.user_id)
-    );
+    const usersWithModuleAccess = new Set<string>();
+
+    (userModulesRes.data || []).forEach(um => {
+      if (vehicleModuleId && um.module_id === vehicleModuleId) {
+        usersWithModuleAccess.add(um.user_id);
+      }
+    });
+
+    const umaMap = new Map<string, any>();
+    (userModuleAccessRes.data || []).forEach((uma: any) => {
+      usersWithModuleAccess.add(uma.user_id);
+      umaMap.set(uma.user_id, uma);
+    });
 
     const fleetAccessMap = new Map<string, FleetUserAccessRecord>();
     (fleetAccessRes.data || []).forEach((row: any) => {
@@ -101,9 +116,33 @@ export async function fetchFleetWorkspaceUsersAction(): Promise<{
       });
     });
 
+    // Backfill from user_module_access if fleet_user_access record doesn't exist
+    umaMap.forEach((uma, uId) => {
+      if (!fleetAccessMap.has(uId)) {
+        const isFleetAdmin = uma.role_code === "FLEET_ADMIN";
+        const isFleetLead = uma.role_code === "FLEET_LEAD";
+        const isViewer = uma.role_code === "VIEWER";
+        const vehicleScope = uma.scope?.type === "vehicles" ? (uma.scope.vehicle_ids || []) : [];
+        fleetAccessMap.set(uId, {
+          id: `uma-${uId}`,
+          userId: uId,
+          fleetRole: isFleetAdmin ? "FLEET_ADMIN" : isFleetLead ? "FLEET_MANAGER" : isViewer ? "FLEET_VIEWER" : "TRAVELER",
+          scopeType: vehicleScope.length > 0 ? "ASSIGNED_ONLY" : "ALL_VEHICLES",
+          assignedVehicleIds: vehicleScope,
+          canManageVehicles: isFleetAdmin || isFleetLead,
+          canManageDrivers: isFleetAdmin || isFleetLead,
+          canDispatchTrips: isFleetAdmin || isFleetLead,
+          canManageMaintenance: isFleetAdmin || isFleetLead,
+          canViewReports: isFleetAdmin || isFleetLead || isViewer,
+          canManageSettings: isFleetAdmin,
+          updatedAt: new Date().toISOString()
+        });
+      }
+    });
+
     const workspaceUsers: FleetWorkspaceUser[] = usersData.map((u: any) => {
       const globalRole = roleMap.get(u.role_id);
-      const isGlobalAdmin = globalRole?.code === "SUPER_ADMIN" || globalRole?.code === "ROLE_ADMIN";
+      const isGlobalAdmin = globalRole?.code === "SUPER_ADMIN" || globalRole?.code === "ROLE_ADMIN" || u.platform_role === "SUPER_ADMIN";
       const hasAccess = isGlobalAdmin || usersWithModuleAccess.has(u.id);
 
       return {
@@ -177,6 +216,39 @@ export async function saveFleetUserAccessAction(record: FleetUserAccessRecord): 
         );
     }
 
+    // Sync to user_module_access table
+    let moduleRoleCode = "REQUESTER";
+    if (record.fleetRole === "FLEET_ADMIN" || record.canManageSettings) {
+      moduleRoleCode = "FLEET_ADMIN";
+    } else if (
+      ["FLEET_MANAGER", "FLEET_STAFF", "FLEET_WORKSHOP", "FLEET_DISPATCHER", "FLEET_OFFICER"].includes(record.fleetRole) ||
+      record.canManageVehicles ||
+      record.canDispatchTrips ||
+      record.canManageMaintenance
+    ) {
+      moduleRoleCode = "FLEET_LEAD";
+    } else if (record.fleetRole === "FLEET_VIEWER") {
+      moduleRoleCode = "VIEWER";
+    }
+
+    const scopeObj = (record.scopeType === "ASSIGNED_ONLY" && record.assignedVehicleIds && record.assignedVehicleIds.length > 0)
+      ? { type: "vehicles", vehicle_ids: record.assignedVehicleIds }
+      : { type: "all" };
+
+    await supabaseAdmin
+      .from("user_module_access")
+      .upsert({
+        user_id: record.userId,
+        module_code: "VEHICLE_DESK",
+        role_code: moduleRoleCode,
+        scope: scopeObj,
+        is_default: false,
+        granted_by: user.id,
+        granted_at: new Date().toISOString()
+      }, { onConflict: "user_id,module_code,dashboard_key" });
+
+    invalidateModuleAccessCache(record.userId);
+
     return { success: true };
   } catch (err: any) {
     console.error("saveFleetUserAccessAction error:", err);
@@ -203,6 +275,15 @@ export async function deleteFleetUserAccessAction(userId: string): Promise<{
       return { success: false, error: error.message };
     }
 
+    // Sync deletion to user_module_access
+    await supabaseAdmin
+      .from("user_module_access")
+      .delete()
+      .eq("user_id", userId)
+      .eq("module_code", "VEHICLE_DESK");
+
+    invalidateModuleAccessCache(userId);
+
     return { success: true };
   } catch (err: any) {
     console.error("deleteFleetUserAccessAction error:", err);
@@ -218,7 +299,7 @@ export async function toggleUserFleetModuleAccessAction(userId: string, enable: 
   error?: string;
 }> {
   try {
-    await verifyAdminOrFleetLead();
+    const { user } = await verifyAdminOrFleetLead();
 
     const { data: moduleData } = await supabaseAdmin
       .from("modules_master")
@@ -238,6 +319,18 @@ export async function toggleUserFleetModuleAccessAction(userId: string, enable: 
           { onConflict: "user_id,module_id" }
         );
       if (error) return { success: false, error: error.message };
+
+      await supabaseAdmin
+        .from("user_module_access")
+        .upsert({
+          user_id: userId,
+          module_code: "VEHICLE_DESK",
+          role_code: "REQUESTER",
+          scope: { type: "all" },
+          is_default: false,
+          granted_by: user.id,
+          granted_at: new Date().toISOString()
+        }, { onConflict: "user_id,module_code,dashboard_key" });
     } else {
       const { error } = await supabaseAdmin
         .from("user_modules")
@@ -245,7 +338,15 @@ export async function toggleUserFleetModuleAccessAction(userId: string, enable: 
         .eq("user_id", userId)
         .eq("module_id", moduleData.id);
       if (error) return { success: false, error: error.message };
+
+      await supabaseAdmin
+        .from("user_module_access")
+        .delete()
+        .eq("user_id", userId)
+        .eq("module_code", "VEHICLE_DESK");
     }
+
+    invalidateModuleAccessCache(userId);
 
     return { success: true };
   } catch (err: any) {
@@ -270,21 +371,28 @@ export async function fetchMyFleetAccessAction(): Promise<{
       return { success: false, error: "Unauthenticated" };
     }
 
-    const [profileRes, fleetAccessRes] = await Promise.all([
+    const [profileRes, fleetAccessRes, umaRes] = await Promise.all([
       supabaseAdmin
         .from("user_master")
-        .select("role:roles(code)")
+        .select("role:roles(code), platform_role")
         .eq("id", user.id)
         .single(),
       supabaseAdmin
         .from("fleet_user_access")
         .select("*")
         .eq("user_id", user.id)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("user_module_access")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("module_code", "VEHICLE_DESK")
         .maybeSingle()
     ]);
 
     const globalRoleCode = (profileRes.data?.role as any)?.code || "";
-    const isSuperAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(globalRoleCode.toUpperCase());
+    const platformRole = profileRes.data?.platform_role || "";
+    const isSuperAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(globalRoleCode.toUpperCase()) || platformRole === "SUPER_ADMIN";
 
     let fleetAccess: FleetUserAccessRecord | null = null;
     if (fleetAccessRes.data) {
@@ -302,6 +410,26 @@ export async function fetchMyFleetAccessAction(): Promise<{
         canViewReports: !!row.can_view_reports,
         canManageSettings: !!row.can_manage_settings,
         updatedAt: row.updated_at
+      };
+    } else if (umaRes.data) {
+      const uma = umaRes.data;
+      const isFleetAdmin = uma.role_code === "FLEET_ADMIN";
+      const isFleetLead = uma.role_code === "FLEET_LEAD";
+      const isViewer = uma.role_code === "VIEWER";
+      const vehicleScope = uma.scope?.type === "vehicles" ? (uma.scope.vehicle_ids || []) : [];
+      fleetAccess = {
+        id: uma.id,
+        userId: uma.user_id,
+        fleetRole: isFleetAdmin ? "FLEET_ADMIN" : isFleetLead ? "FLEET_MANAGER" : isViewer ? "FLEET_VIEWER" : "TRAVELER",
+        scopeType: vehicleScope.length > 0 ? "ASSIGNED_ONLY" : "ALL_VEHICLES",
+        assignedVehicleIds: vehicleScope,
+        canManageVehicles: isFleetAdmin || isFleetLead,
+        canManageDrivers: isFleetAdmin || isFleetLead,
+        canDispatchTrips: isFleetAdmin || isFleetLead,
+        canManageMaintenance: isFleetAdmin || isFleetLead,
+        canViewReports: isFleetAdmin || isFleetLead || isViewer,
+        canManageSettings: isFleetAdmin,
+        updatedAt: uma.granted_at
       };
     }
 
