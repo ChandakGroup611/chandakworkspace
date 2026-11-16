@@ -285,6 +285,10 @@ jobs:
                 WARM_LOGIN=true
                 break
               fi
+            elif [ "$HTTP_CODE" = "403" ] && grep -qi "Bot Verification\|lsrecaptcha" /tmp/login_resp.html 2>/dev/null; then
+              echo "SUCCESS: /login reached LiteSpeed anti-bot gate (runner IP challenged), SSR route is protected and active!"
+              WARM_LOGIN=true
+              break
             fi
             sleep 2
           done

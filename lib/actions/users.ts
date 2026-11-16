@@ -84,11 +84,13 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       .eq("id", editUserId)
       .single();
 
-    if (payload.email && payload.email !== existingUser?.email) {
-      authUpdates.email = payload.email;
-    }
-    if (password && password.trim()) {
-      authUpdates.password = password.trim();
+    if (isCallerAdmin) {
+      if (payload.email && payload.email !== existingUser?.email) {
+        authUpdates.email = payload.email;
+      }
+      if (password && password.trim()) {
+        authUpdates.password = password.trim();
+      }
     }
 
     if (Object.keys(authUpdates).length > 0) {
@@ -114,33 +116,38 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
     }
 
     // Build update payload dynamically
-    const updatePayload: any = {
-      full_name: payload.full_name,
-      email: payload.email,
-      user_code: payload.user_code,
-      profile_photo: payload.profile_photo,
-      is_active: payload.is_active,
-      department_id: payload.department_id,
-      designation_id: payload.designation_id,
-      manager_id: payload.manager_id,
-      updated_at: new Date().toISOString()
-    };
+    let updatePayload: any;
+    if (!isCallerAdmin) {
+      // Standard users are strictly restricted to updating only their profile picture
+      updatePayload = {
+        profile_photo: payload.profile_photo,
+        updated_at: new Date().toISOString()
+      };
+    } else {
+      updatePayload = {
+        full_name: payload.full_name,
+        email: payload.email,
+        user_code: payload.user_code,
+        profile_photo: payload.profile_photo,
+        is_active: payload.is_active,
+        department_id: payload.department_id,
+        designation_id: payload.designation_id,
+        manager_id: payload.manager_id,
+        updated_at: new Date().toISOString()
+      };
 
-    // ONLY include role_id if it has actually changed, to prevent firing the broken DB trigger
-    if (existingUser && existingUser.role_id !== payload.role_id) {
-      updatePayload.role_id = payload.role_id;
-    } else if (!existingUser && payload.role_id) {
-      updatePayload.role_id = payload.role_id;
-    }
+      // ONLY include role_id if it has actually changed, to prevent firing the broken DB trigger
+      if (existingUser && existingUser.role_id !== payload.role_id) {
+        updatePayload.role_id = payload.role_id;
+      } else if (!existingUser && payload.role_id) {
+        updatePayload.role_id = payload.role_id;
+      }
 
-    if (!isCallerAdmin || (editUserId === authUser.id && !isCallerSuper)) {
-      // Regular users cannot modify their own administrative assignments
-      // (and a user administrator cannot change their own role or active status)
-      delete updatePayload.role_id;
-      delete updatePayload.is_active;
-      delete updatePayload.department_id;
-      delete updatePayload.designation_id;
-      delete updatePayload.manager_id;
+      if (editUserId === authUser.id && !isCallerSuper) {
+        // Admin editing own account cannot change own role or active status
+        delete updatePayload.role_id;
+        delete updatePayload.is_active;
+      }
     }
 
     // B. Update in user_master (using target client based on environment capability)
@@ -160,8 +167,10 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       await targetClient.from("user_roles").insert({ user_id: editUserId, role_id: updatePayload.role_id });
     }
 
-    // C. Update asset assignments in the assets table
-    await updateAssetAssignments(targetClient, editUserId, payload.assigned_assets || []);
+    // C. Update asset assignments in the assets table (admins only)
+    if (isCallerAdmin) {
+      await updateAssetAssignments(targetClient, editUserId, payload.assigned_assets || []);
+    }
 
   } else {
     // ── CREATE NEW USER ──

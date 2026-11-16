@@ -371,22 +371,37 @@ export default function UserMasterPage() {
     try {
       console.log("[User Master] Initiating Global Governance Sync...");
 
+      // Purge any stale client-side caches or legacy overrides
+      try {
+        localStorage.removeItem("local_deleted_users");
+        localStorage.removeItem("local_created_users");
+        localStorage.removeItem("local_users_updates");
+        localStorage.removeItem("demo_users_cache");
+        localStorage.removeItem("mock_users");
+      } catch (e) { }
+
       let data: any = null;
       try {
-        data = await fetchUsersDashboardData();
-      } catch (actionErr: any) {
-        console.warn("[User Master] Server action fetch error, trying API fallback:", actionErr);
+        const apiRes = await fetch("/api/users", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+        });
+        if (apiRes.ok) {
+          data = await apiRes.json();
+        }
+      } catch (apiErr) {
+        console.warn("[User Master] /api/users fetch failed, trying Server Action:", apiErr);
+      }
+
+      if (!data || !data.users) {
         try {
-          const apiRes = await fetch("/api/users");
-          if (apiRes.ok) {
-            data = await apiRes.json();
-          }
-        } catch (apiErr) {
-          console.warn("[User Master] API fallback also failed:", apiErr);
+          data = await fetchUsersDashboardData();
+        } catch (actionErr: any) {
+          console.warn("[User Master] Server action fetch error, trying browser client fallback:", actionErr);
         }
       }
 
-      // If both server action and API route were unreachable, query via browser client
+      // If both API route and server action were unreachable, query via browser client
       if (!data || !data.users) {
         const { data: { user: clientAuth } } = await supabase.auth.getUser();
         if (clientAuth) {
@@ -399,8 +414,8 @@ export default function UserMasterPage() {
           data = {
             users: dbUsersRes.data || [],
             authUser: clientAuth,
-            isSuperAdmin: true,
-            userRights: { canView: true, canCreate: true, canUpdate: true, canDelete: true },
+            isSuperAdmin: false,
+            userRights: { canView: false, canCreate: false, canUpdate: false, canDelete: false },
             departments: deptsRes.data || [],
             designations: desigsRes.data || [],
             roles: rolesRes.data || [],
@@ -428,30 +443,12 @@ export default function UserMasterPage() {
       let assetsData = data.assets || [];
       setAvailableAssets(assetsData);
 
-      let localUpdates: Record<string, any> = {};
-      let localCreated: any[] = [];
-      let localDeleted: string[] = [];
-      try {
-        const storedUpdates = localStorage.getItem("local_users_updates");
-        if (storedUpdates) localUpdates = JSON.parse(storedUpdates);
-        const storedCreated = localStorage.getItem("local_created_users");
-        if (storedCreated) localCreated = JSON.parse(storedCreated);
-        const storedDeleted = localStorage.getItem("local_deleted_users");
-        if (storedDeleted) localDeleted = JSON.parse(storedDeleted);
-      } catch (e) { }
-
       const serverAdmin = typeof data.isSuperAdmin === "boolean" ? data.isSuperAdmin : isSuperAdmin;
       setServerIsSuperAdmin(serverAdmin);
       if (data.userRights) setServerUserRights(data.userRights);
 
       const rawUsers = data.users || [];
-      const cleanUsers = rawUsers.filter((usr: any) => usr.is_deleted !== true).map((usr: any) => {
-        let mergedUser = { ...usr };
-        if (localUpdates[usr.id]) {
-          mergedUser = { ...mergedUser, ...localUpdates[usr.id] };
-        }
-        return mergedUser;
-      });
+      const cleanUsers = rawUsers.filter((usr: any) => usr.is_deleted !== true);
 
       // Self-healing: If user is authenticated and not in directory, register profile
       if (authUser && authUser.email) {
@@ -477,7 +474,7 @@ export default function UserMasterPage() {
         hasPermission("USERS_VIEW") || hasPermission("USERS_CREATE") || hasPermission("USERS_UPDATE") || hasPermission("USERS_DELETE") || hasPermission("USERS_MANAGE");
 
       const visibleUsers = canViewAllUsers
-        ? [...localCreated, ...cleanUsers].filter((u: any) => !localDeleted.includes(u.id))
+        ? cleanUsers
         : (authUser ? cleanUsers.filter((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase())) : cleanUsers);
 
       const enriched = enrichUserItems(visibleUsers, loadedDepts, loadedDesigs, loadedRoles, assetsData);

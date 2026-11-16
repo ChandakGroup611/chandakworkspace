@@ -10,19 +10,19 @@ import { saveUserAction, fetchUsersDashboardData, fetchUserModulesAction, fetchU
 import { DASHBOARDS } from "@/lib/dashboards/registry";
 import { assignUserModules } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
-import { 
-  ArrowLeft, 
-  Camera, 
-  RefreshCw, 
-  Save, 
-  User, 
-  Briefcase, 
-  Shield, 
-  MonitorSmartphone, 
-  X, 
-  ChevronDown, 
-  Eye, 
-  EyeOff, 
+import {
+  ArrowLeft,
+  Camera,
+  RefreshCw,
+  Save,
+  User,
+  Briefcase,
+  Shield,
+  MonitorSmartphone,
+  X,
+  ChevronDown,
+  Eye,
+  EyeOff,
   Image as ImageIcon,
   FolderKanban,
   Car,
@@ -107,7 +107,7 @@ export default function UserFormPage() {
   const params = useParams();
   const id = params.id as string;
   const isEditingMode = id !== "new";
-  
+
   const supabase = createClient();
   const { isLight: isLightMode } = useTheme();
 
@@ -176,7 +176,7 @@ export default function UserFormPage() {
       setAvailableModules(systemModules);
 
       const rawUsers = data.users || [];
-      const managers = rawUsers.filter((u: any) => 
+      const managers = rawUsers.filter((u: any) =>
         data.roles?.find((r: any) => r.id === u.role_id)?.code !== "VIEWER" && u.is_active
       );
       setAvailableManagers(managers);
@@ -184,23 +184,20 @@ export default function UserFormPage() {
       // Check current user permissions
       const me = rawUsers.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
       const myRole = data.roles?.find((r: any) => r.id === me?.role_id);
-      // Who may create / edit user records comes from the IAM permissions (USERS_CREATE / USERS_UPDATE /
-      // USERS_MANAGE), reported by the server; no email shortcuts. `isSuperAdmin` below means "may manage
-      // this record" (the server still refuses Super Admin role changes to anyone but a Super Admin).
       const rights = (data as any).userRights || {};
       const isRealSuper = !!(data.isSuperAdmin || myRole?.code?.toUpperCase() === "SUPER_ADMIN");
-      const isSuper = isRealSuper || (isEditingMode ? !!rights.canUpdate : !!rights.canCreate);
+      const canManageUsers = isRealSuper || !!rights.canManage;
       setIsRealSuperAdmin(isRealSuper);
-      setIsSuperAdmin(isSuper);
+      setIsSuperAdmin(canManageUsers);
 
-      // Strict access control: If not Super Admin
+      // Strict access control: If not Super Admin / User Manager
       // 1. Block creating new accounts
-      if (!isSuper && !isEditingMode) {
+      if (!canManageUsers && !isEditingMode) {
         router.push("/users");
         return;
       }
-      // 2. Block editing other users' accounts
-      if (!isSuper && isEditingMode && id !== authUser.id && id !== me?.id) {
+      // 2. Block editing other users' accounts (standard users may only view/edit own profile)
+      if (!canManageUsers && isEditingMode && id !== authUser.id && id !== me?.id) {
         router.push("/users");
         return;
       }
@@ -217,11 +214,11 @@ export default function UserFormPage() {
           setFormManagerId(userToEdit.manager_id || "");
           setFormPhoto(userToEdit.profile_photo || PRESET_AVATARS[0]);
           setFormIsActive(userToEdit.is_active ?? true);
-          
+
           const userAssets = data.assets
             ? data.assets.filter((a: any) => a.assigned_user_id === userToEdit.id).map((a: any) => a.asset_tag || a.code)
             : ((userToEdit as any).assigned_assets || []);
-            
+
           setFormAssignedAssets((userAssets).join(", "));
         }
 
@@ -358,9 +355,8 @@ export default function UserFormPage() {
     }
   };
 
-  const inputStyle = `w-full h-11 px-4 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary ${
-    "bg-surface border-border dark:border-border text-foreground disabled:bg-sunken disabled:text-muted disabled:dark:text-muted"
-  }`;
+  const inputStyle = `w-full h-11 px-4 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary ${"bg-surface border-border dark:border-border text-foreground disabled:bg-sunken disabled:text-muted disabled:dark:text-muted"
+    }`;
 
   const labelStyle = `text-sm font-semibold mb-2 block text-foreground`;
 
@@ -380,9 +376,9 @@ export default function UserFormPage() {
     <div className="w-full pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 sticky -top-4 md:-top-6 z-50 bg-surface border-b border-border shadow-sm px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <AppButton aria-label="Back" 
-            variant="outline" 
-            size="icon" 
+          <AppButton aria-label="Back"
+            variant="outline"
+            size="icon"
             onClick={() => router.push("/users")}
             className="rounded-full shadow-sm !h-10 !w-10"
           >
@@ -399,9 +395,9 @@ export default function UserFormPage() {
         </div>
         <div className="flex items-center gap-3">
           {isSuperAdmin && (
-            <AppButton 
+            <AppButton
               type="button"
-              variant="outline" 
+              variant="outline"
               onClick={() => setAssignModalOpen(true)}
               className="px-4 h-10 font-semibold flex items-center gap-2 border-border bg-surface/60 dark:bg-surface text-foreground dark:text-muted-foreground hover:bg-accent-soft transition-all shadow-xs cursor-pointer"
               title="Configure and assign workspace modules"
@@ -410,15 +406,15 @@ export default function UserFormPage() {
               <span>Assign modules ({selectedModuleCodes.length})</span>
             </AppButton>
           )}
-          <AppButton 
-            variant="outline" 
+          <AppButton
+            variant="outline"
             onClick={() => router.push("/users")}
             className="px-6 h-10 font-semibold"
           >
             Cancel
           </AppButton>
-          <AppButton 
-            onClick={handleSubmit} 
+          <AppButton
+            onClick={handleSubmit}
             disabled={saving || (!isSuperAdmin && !isEditingMode)}
             className="bg-primary hover:bg-theme-btn-primary-secondary text-white px-8 h-10 gap-2 shadow-sm font-semibold"
           >
@@ -446,9 +442,9 @@ export default function UserFormPage() {
                   </p>
                 </div>
               </div>
-              <AppButton aria-label="Close" 
-                variant="ghost" 
-                size="icon-sm" 
+              <AppButton aria-label="Close"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => setAssignModalOpen(false)}
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -472,11 +468,10 @@ export default function UserFormPage() {
                 return (
                   <div
                     key={mod.id || mod.code}
-                    className={`p-4 rounded-lg border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-                      isChecked
+                    className={`p-4 rounded-lg border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isChecked
                         ? "bg-surface border-border shadow-xs"
                         : "bg-muted/20 border-border/40 opacity-60"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
@@ -510,11 +505,10 @@ export default function UserFormPage() {
                           size="sm"
                           disabled={!isSuperAdmin || isDefault}
                           onClick={() => setDefaultModuleCode(mod.code)}
-                          className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${
-                            isDefault
+                          className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${isDefault
                               ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
                               : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
-                          }`}
+                            }`}
                         >
                           <Star className={`h-3 w-3 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
                           <span>{isDefault ? "Default" : "Make Default"}</span>
@@ -545,47 +539,46 @@ export default function UserFormPage() {
                       </label>
                     </div>
 
-                      {mod.code === "DASHBOARDS" && isChecked && (
-                        <div className="w-full mt-3 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
-                          <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
-                            <span>Accessible Department Dashboards (User-Wise):</span>
-                            <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {DASHBOARDS.map((d) => {
-                              const isDashActive = selectedDashboards.includes(d.key);
-                              return (
-                                <label
-                                  key={d.key}
-                                  className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${
-                                    isDashActive
-                                      ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
-                                      : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
-                                  }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={isDashActive}
-                                    disabled={!isSuperAdmin}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedDashboards(prev => [...prev, d.key]);
-                                      } else {
-                                        setSelectedDashboards(prev => prev.filter(k => k !== d.key));
-                                      }
-                                    }}
-                                    className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
-                                  />
-                                  <div className="min-w-0">
-                                    <span className="block text-xs truncate font-semibold">{d.name}</span>
-                                    <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
-                                  </div>
-                                </label>
-                              );
-                            })}
-                          </div>
+                    {mod.code === "DASHBOARDS" && isChecked && (
+                      <div className="w-full mt-3 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
+                          <span>Accessible Department Dashboards (User-Wise):</span>
+                          <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
                         </div>
-                      )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {DASHBOARDS.map((d) => {
+                            const isDashActive = selectedDashboards.includes(d.key);
+                            return (
+                              <label
+                                key={d.key}
+                                className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${isDashActive
+                                    ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
+                                    : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
+                                  }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isDashActive}
+                                  disabled={!isSuperAdmin}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedDashboards(prev => [...prev, d.key]);
+                                    } else {
+                                      setSelectedDashboards(prev => prev.filter(k => k !== d.key));
+                                    }
+                                  }}
+                                  className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
+                                />
+                                <div className="min-w-0">
+                                  <span className="block text-xs truncate font-semibold">{d.name}</span>
+                                  <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -596,17 +589,17 @@ export default function UserFormPage() {
                 {selectedModuleCodes.length} of {availableModules.length || 3} modules enabled
               </span>
               <div className="flex items-center gap-2">
-                <AppButton 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setAssignModalOpen(false)}
                 >
                   Close
                 </AppButton>
-                <AppButton 
-                  type="button" 
-                  size="sm" 
+                <AppButton
+                  type="button"
+                  size="sm"
                   className="bg-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
                   onClick={async () => {
                     if (isEditingMode && id) {
@@ -644,508 +637,505 @@ export default function UserFormPage() {
 
       <div className="px-4 sm:px-6 lg:px-8">
 
-      {successAlert && (
-        <div className="p-4 mb-6 rounded-lg bg-success-soft border border-success-border text-success-text text-sm flex items-center justify-between animate-in fade-in duration-200">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-5 w-5 text-success-text shrink-0" />
-            <span className="font-semibold">{successAlert}</span>
+        {successAlert && (
+          <div className="p-4 mb-6 rounded-lg bg-success-soft border border-success-border text-success-text text-sm flex items-center justify-between animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 text-success-text shrink-0" />
+              <span className="font-semibold">{successAlert}</span>
+            </div>
+            <AppButton aria-label="Close" variant="ghost" size="icon-sm" onClick={() => setSuccessAlert(null)}>
+              <X className="h-4 w-4" />
+            </AppButton>
           </div>
-          <AppButton aria-label="Close" variant="ghost" size="icon-sm" onClick={() => setSuccessAlert(null)}>
-            <X className="h-4 w-4" />
-          </AppButton>
-        </div>
-      )}
+        )}
 
-      {errorAlert && (
-        <div className="p-4 mb-6 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-sm flex items-start gap-3">
-          <X className="h-5 w-5 shrink-0 mt-0.5" />
-          <p className="font-medium">{errorAlert}</p>
-        </div>
-      )}
+        {errorAlert && (
+          <div className="p-4 mb-6 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-sm flex items-start gap-3">
+            <X className="h-5 w-5 shrink-0 mt-0.5" />
+            <p className="font-medium">{errorAlert}</p>
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        
-        {/* LEFT COLUMN: Identity & Org */}
-        <div className="xl:col-span-8 space-y-8">
-          
-          {/* SECTION 1: Personal Identity */}
-          <AppCard className={`overflow-hidden transition-all border-border`}>
-            <AppCardHeader className={"bg-surface/50 pb-4"}>
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-accent-soft-text" />
-                <AppCardTitle className="text-lg">Personal identity</AppCardTitle>
-              </div>
-            </AppCardHeader>
-            <AppCardContent className="p-6 space-y-8">
-              {/* Photo Upload Row */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-border">
-                <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
-                  <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ring-4 ring-offset-2 bg-sunken text-muted ring-border ring-offset-surface`}>
-                    {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
-                      <img src={formPhoto} alt="Profile" className="w-full h-full object-cover" onError={(e) => { (e.target as any).src = '' }} />
-                    ) : (
-                      <ImageIcon className="w-12 h-12 opacity-50" />
-                    )}
-                  </div>
-                  <div className="absolute bottom-0 right-0 w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center border-[3px] border-surface shadow-sm transition-transform">
-                    <Camera className="w-4 h-4" />
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-start gap-3 flex-1">
-                  <div>
-                    <h3 className="font-semibold text-base mb-1">Profile photo</h3>
-                    <p className="text-sm text-muted-foreground max-w-sm">Upload a professional headshot. Recommended dimensions: 400x400px.</p>
-                  </div>
-                  <div className="flex items-center gap-3 w-full">
-                    <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden" />
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={photoUploading}
-                      className="shrink-0 font-medium"
-                    >
-                      {photoUploading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Camera className="h-4 w-4 mr-2" />}
-                      <span>{photoUploading ? 'Uploading...' : 'Browse Files'}</span>
-                    </AppButton>
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none ml-2">
-                      {PRESET_AVATARS.map((avatar, idx) => (
-                        <img 
-                          key={idx} src={avatar} alt="Preset" 
-                          className="w-10 h-10 rounded-full object-cover cursor-pointer shrink-0 hover:ring-2 hover:ring-ring transition-all opacity-80 hover:opacity-100" 
-                          onClick={() => setFormPhoto(avatar)} 
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-12 gap-8">
 
-              {/* Identity Inputs Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                <div>
-                  <label className={labelStyle}>Full name *</label>
-                  <input 
-                    placeholder="e.g. Sarah chen" 
-                    value={formFullName} 
-                    onChange={(e) => setFormFullName(e.target.value)} 
-                    required 
-                    disabled={!isSuperAdmin}
-                    className={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label className={labelStyle}>Corporate email *</label>
-                  <input 
-                    type="email" 
-                    placeholder="e.g. sarah.chen@company.com" 
-                    value={formEmail} 
-                    onChange={(e) => setFormEmail(e.target.value)} 
-                    required 
-                    disabled={!isSuperAdmin}
-                    className={inputStyle}
-                  />
-                </div>
-              </div>
-            </AppCardContent>
-          </AppCard>
+          {/* LEFT COLUMN: Identity & Org */}
+          <div className="xl:col-span-8 space-y-8">
 
-          {/* SECTION 2: Organization Alignment */}
-          <AppCard className={`overflow-hidden transition-all border-border`}>
-            <AppCardHeader className={"bg-surface/50 pb-4"}>
-              <div className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-warning-text" />
-                <AppCardTitle className="text-lg">Organisation alignment</AppCardTitle>
-              </div>
-            </AppCardHeader>
-            <AppCardContent className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                <div>
-                  <label className={labelStyle}>Department</label>
-                  <div className="relative">
-                    <select 
-                      value={formDeptId} 
-                      onChange={(e) => {
-                        setFormDeptId(e.target.value);
-                        setFormDesigId("");
-                      }} 
-                      disabled={!isSuperAdmin}
-                      className={`${inputStyle} appearance-none pr-10`}
-                    >
-                      <option value="">Select Department…</option>
-                      {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
-                  </div>
+            {/* SECTION 1: Personal Identity */}
+            <AppCard className={`overflow-hidden transition-all border-border`}>
+              <AppCardHeader className={"bg-surface/50 pb-4"}>
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-accent-soft-text" />
+                  <AppCardTitle className="text-lg">Personal identity</AppCardTitle>
                 </div>
-                
-                <div>
-                  <label className={labelStyle}>Designation</label>
-                  <div className="relative">
-                    <select 
-                      value={formDesigId} 
-                      onChange={(e) => setFormDesigId(e.target.value)} 
-                      disabled={!isSuperAdmin || !formDeptId}
-                      className={`${inputStyle} appearance-none pr-10`}
-                    >
-                      <option value="">{formDeptId ? "Select Designation..." : "Select Department First"}</option>
-                      {designations
-                        .filter(d => !formDeptId || d.department_id === formDeptId)
-                        .map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className={labelStyle}>Reporting manager</label>
-                  <div className="relative">
-                    <select 
-                      value={formManagerId} 
-                      onChange={(e) => setFormManagerId(e.target.value)} 
-                      disabled={!isSuperAdmin}
-                      className={`${inputStyle} appearance-none pr-10`}
-                    >
-                      <option value="">Select a Manager…</option>
-                      {availableManagers.map(mgr => <option key={mgr.id} value={mgr.id}>{mgr.full_name} ({mgr.user_code})</option>)}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Used for organizational hierarchy charts and automated workflow approvals.
-                  </p>
-                </div>
-              </div>
-            </AppCardContent>
-          </AppCard>
-
-          {/* SECTION 3: Workspace Module Entitlements */}
-          <AppCard className="overflow-hidden transition-all border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 pb-4 flex flex-row items-center justify-between border-b border-border">
-              <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-lg bg-surface text-accent-soft-text flex items-center justify-center border border-border">
-                  <Layers className="h-4 w-4" />
-                </div>
-                <div>
-                  <AppCardTitle className="text-lg">Workspace module entitlements</AppCardTitle>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Assign permitted operational modules and configure user's landing default workspace.
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-surface text-accent-soft-text dark:text-muted-foreground border border-border shrink-0">
-                {selectedModuleCodes.length} / {availableModules.length || 3} Permitted
-              </span>
-            </AppCardHeader>
-            <AppCardContent className="p-6 space-y-4">
-              {(availableModules.length > 0 ? availableModules : [
-                { id: "mod-1", code: "VEHICLE_DESK", name: "Vehicle Module", description: "Fleet master, vehicle inventory, daily trip sheets, driver roster, maintenance & parts." },
-                { id: "mod-2", code: "TASK_WORKFLOW", name: "Workspace Module", description: "Executive task tracker, sprints, ticketing/helpdesk, requirements lifecycle & AMC." },
-                { id: "mod-3", code: "DESIGN_TRACKING", name: "Design Tracking", description: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC." },
-              ]).map((mod) => {
-                const isChecked = selectedModuleCodes.includes(mod.code);
-                const isDefault = defaultModuleCode === mod.code;
-                const meta = getModuleMeta(mod.code);
-                const Icon = meta.icon;
-
-                return (
-                  <div
-                    key={mod.id || mod.code}
-                    className={`p-4 rounded-lg border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-                      isChecked
-                        ? "bg-surface border-border shadow-xs"
-                        : "bg-muted/20 border-border/40 opacity-60"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm text-foreground">
-                            {mod.name}
-                          </span>
-                          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                            {mod.code}
-                          </span>
-                          {isDefault && isChecked && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
-                              <Star className="h-3 w-3 fill-warning text-warning-text" /> Landing default
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                          {mod.description || meta.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Action Controls */}
-                    <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                      {/* Make Default Trigger */}
-                      {isChecked && (
-                        <AppButton
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={!isSuperAdmin || isDefault}
-                          onClick={() => setDefaultModuleCode(mod.code)}
-                          title={isDefault ? "Current landing default" : "Set as landing default workspace"}
-                          className={`text-xs h-8 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${
-                            isDefault
-                              ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
-                              : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
-                          }`}
-                        >
-                          <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
-                          <span className="hidden sm:inline">{isDefault ? "Default" : "Make Default"}</span>
-                        </AppButton>
+              </AppCardHeader>
+              <AppCardContent className="p-6 space-y-8">
+                {/* Photo Upload Row */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-border">
+                  <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
+                    <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ring-4 ring-offset-2 bg-sunken text-muted ring-border ring-offset-surface`}>
+                      {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
+                        <img src={formPhoto} alt="Profile" className="w-full h-full object-cover" onError={(e) => { (e.target as any).src = '' }} />
+                      ) : (
+                        <ImageIcon className="w-12 h-12 opacity-50" />
                       )}
+                    </div>
+                    <div className="absolute bottom-0 right-0 w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center border-[3px] border-surface shadow-sm transition-transform">
+                      <Camera className="w-4 h-4" />
+                    </div>
+                  </div>
 
-                      {/* Enable/Disable Toggle */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground hidden sm:inline">
-                          {isChecked ? "Enabled" : "Disabled"}
-                        </span>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            disabled={!isSuperAdmin}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                const updated = [...selectedModuleCodes, mod.code];
-                                setSelectedModuleCodes(updated);
-                                if (!defaultModuleCode) {
-                                  setDefaultModuleCode(mod.code);
-                                }
-                              } else {
-                                const updated = selectedModuleCodes.filter(c => c !== mod.code);
-                                setSelectedModuleCodes(updated);
-                                if (defaultModuleCode === mod.code && updated.length > 0) {
-                                  setDefaultModuleCode(updated[0]);
-                                }
-                              }
-                            }}
-                            className="sr-only peer"
+                  <div className="flex flex-col items-start gap-3 flex-1">
+                    <div>
+                      <h3 className="font-semibold text-base mb-1">Profile photo</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">Upload a professional headshot. Recommended dimensions: 400x400px.</p>
+                    </div>
+                    <div className="flex items-center gap-3 w-full">
+                      <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden" />
+                      <AppButton
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={photoUploading}
+                        className="shrink-0 font-medium"
+                      >
+                        {photoUploading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Camera className="h-4 w-4 mr-2" />}
+                        <span>{photoUploading ? 'Uploading...' : 'Browse Files'}</span>
+                      </AppButton>
+                      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none ml-2">
+                        {PRESET_AVATARS.map((avatar, idx) => (
+                          <img
+                            key={idx} src={avatar} alt="Preset"
+                            className="w-10 h-10 rounded-full object-cover cursor-pointer shrink-0 hover:ring-2 hover:ring-ring transition-all opacity-80 hover:opacity-100"
+                            onClick={() => setFormPhoto(avatar)}
                           />
-                          <div className="w-11 h-6 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                        </label>
+                        ))}
                       </div>
                     </div>
+                  </div>
+                </div>
 
-                    {mod.code === "DASHBOARDS" && isChecked && (
-                      <div className="w-full mt-3 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
-                        <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
-                          <span>Accessible Department Dashboards (User-Wise):</span>
-                          <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
+                {/* Identity Inputs Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div>
+                    <label className={labelStyle}>Full name *</label>
+                    <input
+                      placeholder="e.g. Sarah chen"
+                      value={formFullName}
+                      onChange={(e) => setFormFullName(e.target.value)}
+                      required
+                      disabled={!isSuperAdmin}
+                      className={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelStyle}>Corporate email *</label>
+                    <input
+                      type="email"
+                      placeholder="e.g. sarah.chen@company.com"
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      required
+                      disabled={!isSuperAdmin}
+                      className={inputStyle}
+                    />
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
+
+            {/* SECTION 2: Organization Alignment */}
+            <AppCard className={`overflow-hidden transition-all border-border`}>
+              <AppCardHeader className={"bg-surface/50 pb-4"}>
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5 text-warning-text" />
+                  <AppCardTitle className="text-lg">Organisation alignment</AppCardTitle>
+                </div>
+              </AppCardHeader>
+              <AppCardContent className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div>
+                    <label className={labelStyle}>Department</label>
+                    <div className="relative">
+                      <select
+                        value={formDeptId}
+                        onChange={(e) => {
+                          setFormDeptId(e.target.value);
+                          setFormDesigId("");
+                        }}
+                        disabled={!isSuperAdmin}
+                        className={`${inputStyle} appearance-none pr-10`}
+                      >
+                        <option value="">Select Department…</option>
+                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelStyle}>Designation</label>
+                    <div className="relative">
+                      <select
+                        value={formDesigId}
+                        onChange={(e) => setFormDesigId(e.target.value)}
+                        disabled={!isSuperAdmin || !formDeptId}
+                        className={`${inputStyle} appearance-none pr-10`}
+                      >
+                        <option value="">{formDeptId ? "Select Designation..." : "Select Department First"}</option>
+                        {designations
+                          .filter(d => !formDeptId || d.department_id === formDeptId)
+                          .map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className={labelStyle}>Reporting manager</label>
+                    <div className="relative">
+                      <select
+                        value={formManagerId}
+                        onChange={(e) => setFormManagerId(e.target.value)}
+                        disabled={!isSuperAdmin}
+                        className={`${inputStyle} appearance-none pr-10`}
+                      >
+                        <option value="">Select a Manager…</option>
+                        {availableManagers.map(mgr => <option key={mgr.id} value={mgr.id}>{mgr.full_name} ({mgr.user_code})</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Used for organizational hierarchy charts and automated workflow approvals.
+                    </p>
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
+
+            {/* SECTION 3: Workspace Module Entitlements */}
+            <AppCard className="overflow-hidden transition-all border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 pb-4 flex flex-row items-center justify-between border-b border-border">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-surface text-accent-soft-text flex items-center justify-center border border-border">
+                    <Layers className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <AppCardTitle className="text-lg">Workspace module entitlements</AppCardTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Assign permitted operational modules and configure user's landing default workspace.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-surface text-accent-soft-text dark:text-muted-foreground border border-border shrink-0">
+                  {selectedModuleCodes.length} / {availableModules.length || 3} Permitted
+                </span>
+              </AppCardHeader>
+              <AppCardContent className="p-6 space-y-4">
+                {(availableModules.length > 0 ? availableModules : [
+                  { id: "mod-1", code: "VEHICLE_DESK", name: "Vehicle Module", description: "Fleet master, vehicle inventory, daily trip sheets, driver roster, maintenance & parts." },
+                  { id: "mod-2", code: "TASK_WORKFLOW", name: "Workspace Module", description: "Executive task tracker, sprints, ticketing/helpdesk, requirements lifecycle & AMC." },
+                  { id: "mod-3", code: "DESIGN_TRACKING", name: "Design Tracking", description: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC." },
+                ]).map((mod) => {
+                  const isChecked = selectedModuleCodes.includes(mod.code);
+                  const isDefault = defaultModuleCode === mod.code;
+                  const meta = getModuleMeta(mod.code);
+                  const Icon = meta.icon;
+
+                  return (
+                    <div
+                      key={mod.id || mod.code}
+                      className={`p-4 rounded-lg border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isChecked
+                          ? "bg-surface border-border shadow-xs"
+                          : "bg-muted/20 border-border/40 opacity-60"
+                        }`}
+                    >
+                      <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
+                          <Icon className="h-5 w-5" />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {DASHBOARDS.map((d) => {
-                            const isDashActive = selectedDashboards.includes(d.key);
-                            return (
-                              <label
-                                key={d.key}
-                                className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${
-                                  isDashActive
-                                    ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
-                                    : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isDashActive}
-                                  disabled={!isSuperAdmin}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedDashboards(prev => [...prev, d.key]);
-                                    } else {
-                                      setSelectedDashboards(prev => prev.filter(k => k !== d.key));
-                                    }
-                                  }}
-                                  className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
-                                />
-                                <div className="min-w-0">
-                                  <span className="block text-xs truncate font-semibold">{d.name}</span>
-                                  <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
-                                </div>
-                              </label>
-                            );
-                          })}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm text-foreground">
+                              {mod.name}
+                            </span>
+                            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                              {mod.code}
+                            </span>
+                            {isDefault && isChecked && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
+                                <Star className="h-3 w-3 fill-warning text-warning-text" /> Landing default
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                            {mod.description || meta.description}
+                          </p>
                         </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </AppCardContent>
-          </AppCard>
 
-        </div>
+                      {/* Action Controls */}
+                      <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+                        {/* Make Default Trigger */}
+                        {isChecked && (
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={!isSuperAdmin || isDefault}
+                            onClick={() => setDefaultModuleCode(mod.code)}
+                            title={isDefault ? "Current landing default" : "Set as landing default workspace"}
+                            className={`text-xs h-8 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${isDefault
+                                ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
+                                : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
+                              }`}
+                          >
+                            <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
+                            <span className="hidden sm:inline">{isDefault ? "Default" : "Make Default"}</span>
+                          </AppButton>
+                        )}
 
-        {/* RIGHT COLUMN: Security & Hardware */}
-        <div className="xl:col-span-4 space-y-8">
+                        {/* Enable/Disable Toggle */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground hidden sm:inline">
+                            {isChecked ? "Enabled" : "Disabled"}
+                          </span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              disabled={!isSuperAdmin}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  const updated = [...selectedModuleCodes, mod.code];
+                                  setSelectedModuleCodes(updated);
+                                  if (!defaultModuleCode) {
+                                    setDefaultModuleCode(mod.code);
+                                  }
+                                } else {
+                                  const updated = selectedModuleCodes.filter(c => c !== mod.code);
+                                  setSelectedModuleCodes(updated);
+                                  if (defaultModuleCode === mod.code && updated.length > 0) {
+                                    setDefaultModuleCode(updated[0]);
+                                  }
+                                }
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                          </label>
+                        </div>
+                      </div>
 
-          {/* User Status & Code (Highlights) */}
-          <AppCard className={`overflow-hidden transition-all border-border`}>
-            <AppCardContent className="p-6 space-y-6">
-              <div>
-                <label className={labelStyle}>Account status</label>
-                <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${formIsActive ? ("bg-success-soft border-success-border") : ("bg-danger-soft border-danger-border")}`}>
-                  <span className={`font-semibold ${formIsActive ? "text-success-text dark:text-success-text" : "text-danger-text dark:text-danger-text"}`}>
-                    {formIsActive ? "Active Participant" : "Suspended"}
-                  </span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="sr-only peer" disabled={!isSuperAdmin || (!isRealSuperAdmin && isEditingMode && id === currentUserId)} />
-                    <div className="w-11 h-6 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
-                  </label>
-                </div>
-              </div>
+                      {mod.code === "DASHBOARDS" && isChecked && (
+                        <div className="w-full mt-3 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
+                            <span>Accessible Department Dashboards (User-Wise):</span>
+                            <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {DASHBOARDS.map((d) => {
+                              const isDashActive = selectedDashboards.includes(d.key);
+                              return (
+                                <label
+                                  key={d.key}
+                                  className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${isDashActive
+                                      ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
+                                      : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
+                                    }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isDashActive}
+                                    disabled={!isSuperAdmin}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedDashboards(prev => [...prev, d.key]);
+                                      } else {
+                                        setSelectedDashboards(prev => prev.filter(k => k !== d.key));
+                                      }
+                                    }}
+                                    className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
+                                  />
+                                  <div className="min-w-0">
+                                    <span className="block text-xs truncate font-semibold">{d.name}</span>
+                                    <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </AppCardContent>
+            </AppCard>
 
-              <div>
-                <label className={labelStyle}>Unique code (UIN) *</label>
-                <input 
-                  placeholder="e.g. EMP8839" 
-                  value={formUserCode} 
-                  onChange={(e) => setFormUserCode(e.target.value)} 
-                  required 
-                  disabled={!isSuperAdmin}
-                  className={`${inputStyle} font-mono uppercase text-base tracking-wide`}
-                />
-              </div>
-            </AppCardContent>
-          </AppCard>
+          </div>
 
-          {/* SECTION 3: Security Credentials */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-border transition-all border-border`}>
-            <AppCardHeader className={"bg-surface/50 pb-4"}>
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-danger-text" />
-                <AppCardTitle className="text-lg">Security settings</AppCardTitle>
-              </div>
-            </AppCardHeader>
-            <AppCardContent className="p-6 space-y-6">
-              <div>
-                <label className={labelStyle}>System role</label>
-                <div className="relative">
-                  <select 
-                    value={formRoleId} 
-                    onChange={(e) => setFormRoleId(e.target.value)} 
-                    disabled={!isSuperAdmin || (!isRealSuperAdmin && isEditingMode && id === currentUserId)}
-                    className={`${inputStyle} appearance-none pr-10 font-semibold text-accent-soft-text dark:text-accent-soft-text`}
-                  >
-                    <option value="">Select Role…</option>
-                    {roles
-                      .filter(r => 
-                        isRealSuperAdmin || 
-                        !["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(r.code?.toUpperCase()) ||
-                        r.id === formRoleId
-                      )
-                      .map(r => (
-                        <option 
-                          key={r.id} 
-                          value={r.id}
-                          disabled={!isRealSuperAdmin && ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(r.code?.toUpperCase())}
-                        >
-                          {r.name}
-                        </option>
-                      ))
-                    }
-                  </select>
-                  <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
-                </div>
-              </div>
+          {/* RIGHT COLUMN: Security & Hardware */}
+          <div className="xl:col-span-4 space-y-8">
 
-              <div className="pt-6 border-t border-border space-y-5">
-                <h4 className="text-sm font-semibold mb-2">Supabase credentials</h4>
+            {/* User Status & Code (Highlights) */}
+            <AppCard className={`overflow-hidden transition-all border-border`}>
+              <AppCardContent className="p-6 space-y-6">
                 <div>
-                  <label className="text-sm font-semibold mb-1 block text-muted-foreground">New password {isEditingMode && "(Leave empty to keep current)"}</label>
+                  <label className={labelStyle}>Account status</label>
+                  <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${formIsActive ? ("bg-success-soft border-success-border") : ("bg-danger-soft border-danger-border")}`}>
+                    <span className={`font-semibold ${formIsActive ? "text-success-text dark:text-success-text" : "text-danger-text dark:text-danger-text"}`}>
+                      {formIsActive ? "Active Participant" : "Suspended"}
+                    </span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="sr-only peer" disabled={!isSuperAdmin || (!isRealSuperAdmin && isEditingMode && id === currentUserId)} />
+                      <div className="w-11 h-6 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelStyle}>Unique code (UIN) *</label>
+                  <input
+                    placeholder="e.g. EMP8839"
+                    value={formUserCode}
+                    onChange={(e) => setFormUserCode(e.target.value)}
+                    required
+                    disabled={!isSuperAdmin}
+                    className={`${inputStyle} font-mono uppercase text-base tracking-wide`}
+                  />
+                </div>
+              </AppCardContent>
+            </AppCard>
+
+            {/* SECTION 3: Security Credentials */}
+            <AppCard className={`overflow-hidden shadow-md ring-1 ring-border transition-all border-border`}>
+              <AppCardHeader className={"bg-surface/50 pb-4"}>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-danger-text" />
+                  <AppCardTitle className="text-lg">Security settings</AppCardTitle>
+                </div>
+              </AppCardHeader>
+              <AppCardContent className="p-6 space-y-6">
+                <div>
+                  <label className={labelStyle}>System role</label>
                   <div className="relative">
-                    <input 
-                      type={showPassword ? "text" : "password"} 
-                      value={formPassword} 
-                      onChange={(e) => setFormPassword(e.target.value)} 
-                      disabled={!isSuperAdmin && id !== currentUserId}
+                    <select
+                      value={formRoleId}
+                      onChange={(e) => setFormRoleId(e.target.value)}
+                      disabled={!isSuperAdmin || (!isRealSuperAdmin && isEditingMode && id === currentUserId)}
+                      className={`${inputStyle} appearance-none pr-10 font-semibold text-accent-soft-text dark:text-accent-soft-text`}
+                    >
+                      <option value="">Select Role…</option>
+                      {roles
+                        .filter(r =>
+                          isRealSuperAdmin ||
+                          !["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(r.code?.toUpperCase()) ||
+                          r.id === formRoleId
+                        )
+                        .map(r => (
+                          <option
+                            key={r.id}
+                            value={r.id}
+                            disabled={!isRealSuperAdmin && ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(r.code?.toUpperCase())}
+                          >
+                            {r.name}
+                          </option>
+                        ))
+                      }
+                    </select>
+                    <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-border space-y-5">
+                  <h4 className="text-sm font-semibold mb-2">Supabase credentials</h4>
+                  <div>
+                    <label className="text-sm font-semibold mb-1 block text-muted-foreground">New password {isEditingMode && "(Leave empty to keep current)"}</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={formPassword}
+                        onChange={(e) => setFormPassword(e.target.value)}
+                        disabled={!isSuperAdmin}
+                        className={inputStyle}
+                        placeholder="••••••••"
+                      />
+                      <AppButton variant="secondary" type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3 text-muted-foreground hover:text-foreground">
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </AppButton>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold mb-1 block text-muted-foreground">Confirm password</label>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={formConfirmPassword}
+                      onChange={(e) => setFormConfirmPassword(e.target.value)}
+                      disabled={!isSuperAdmin}
                       className={inputStyle}
                       placeholder="••••••••"
                     />
-                    <AppButton variant="secondary" type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3 text-muted-foreground hover:text-foreground">
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </AppButton>
                   </div>
                 </div>
-                <div>
-                  <label className="text-sm font-semibold mb-1 block text-muted-foreground">Confirm password</label>
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    value={formConfirmPassword} 
-                    onChange={(e) => setFormConfirmPassword(e.target.value)} 
-                    disabled={!isSuperAdmin && id !== currentUserId}
-                    className={inputStyle}
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-            </AppCardContent>
-          </AppCard>
+              </AppCardContent>
+            </AppCard>
 
-          {/* SECTION 4: Hardware Assets */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-border transition-all border-border`}>
-            <AppCardHeader className={"bg-surface/50 pb-4"}>
-              <div className="flex items-center gap-2">
-                <MonitorSmartphone className="h-5 w-5 text-accent-soft-text" />
-                <AppCardTitle className="text-lg">Assigned assets</AppCardTitle>
-              </div>
-            </AppCardHeader>
-            <AppCardContent className="p-6">
-              <label className={labelStyle}>Linked IT hardware tags</label>
-              <div className={`min-h-[140px] p-4 rounded-lg border flex flex-col gap-3 relative bg-surface border-border`}>
-                <div className="flex flex-wrap items-center gap-2">
-                  {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
-                    <span key={idx} className="text-xs font-semibold px-3 py-1.5 flex items-center gap-2 bg-accent-soft text-theme-icon-secondary border border-border-active rounded-lg dark:bg-accent-soft dark:text-muted-foreground dark:border-border-active shadow-sm">
-                      <MonitorSmartphone className="h-3 w-3" />
-                      {tag} 
-                      <X className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" onClick={() => {
-                        const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
-                        setFormAssignedAssets(currentArr.filter(x => x !== tag).join(', '));
-                      }}/>
-                    </span>
-                  ))}
-                  {formAssignedAssets.split(',').filter(Boolean).length === 0 && (
-                    <span className="text-sm text-muted-foreground italic px-2 py-1">No assets currently assigned</span>
-                  )}
+            {/* SECTION 4: Hardware Assets */}
+            <AppCard className={`overflow-hidden shadow-md ring-1 ring-border transition-all border-border`}>
+              <AppCardHeader className={"bg-surface/50 pb-4"}>
+                <div className="flex items-center gap-2">
+                  <MonitorSmartphone className="h-5 w-5 text-accent-soft-text" />
+                  <AppCardTitle className="text-lg">Assigned assets</AppCardTitle>
                 </div>
-                
-                <div className="mt-auto pt-4 border-t border-border">
-                  <div className="relative">
-                    <select 
-                      className={`${inputStyle} appearance-none pr-10`}
-                      value=""
-                      onChange={(e) => {
-                        if (!e.target.value) return;
-                        const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
-                        if (!currentArr.includes(e.target.value)) {
-                          setFormAssignedAssets(currentArr.concat(e.target.value).join(', '));
-                        }
-                      }}
-                      disabled={!isSuperAdmin}
-                    >
-                      <option value="" disabled hidden>+ Add another asset…</option>
-                      {availableAssets.map(a => (
-                        <option key={a.id} value={a.asset_tag || a.code}>{a.asset_tag || a.code} - {a.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
+              </AppCardHeader>
+              <AppCardContent className="p-6">
+                <label className={labelStyle}>Linked IT hardware tags</label>
+                <div className={`min-h-[140px] p-4 rounded-lg border flex flex-col gap-3 relative bg-surface border-border`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
+                      <span key={idx} className="text-xs font-semibold px-3 py-1.5 flex items-center gap-2 bg-accent-soft text-theme-icon-secondary border border-border-active rounded-lg dark:bg-accent-soft dark:text-muted-foreground dark:border-border-active shadow-sm">
+                        <MonitorSmartphone className="h-3 w-3" />
+                        {tag}
+                        <X className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" onClick={() => {
+                          const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
+                          setFormAssignedAssets(currentArr.filter(x => x !== tag).join(', '));
+                        }} />
+                      </span>
+                    ))}
+                    {formAssignedAssets.split(',').filter(Boolean).length === 0 && (
+                      <span className="text-sm text-muted-foreground italic px-2 py-1">No assets currently assigned</span>
+                    )}
+                  </div>
+
+                  <div className="mt-auto pt-4 border-t border-border">
+                    <div className="relative">
+                      <select
+                        className={`${inputStyle} appearance-none pr-10`}
+                        value=""
+                        onChange={(e) => {
+                          if (!e.target.value) return;
+                          const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
+                          if (!currentArr.includes(e.target.value)) {
+                            setFormAssignedAssets(currentArr.concat(e.target.value).join(', '));
+                          }
+                        }}
+                        disabled={!isSuperAdmin}
+                      >
+                        <option value="" disabled hidden>+ Add another asset…</option>
+                        {availableAssets.map(a => (
+                          <option key={a.id} value={a.asset_tag || a.code}>{a.asset_tag || a.code} - {a.name}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </AppCardContent>
-          </AppCard>
+              </AppCardContent>
+            </AppCard>
 
-        </div>
-      </form>
+          </div>
+        </form>
       </div>
     </div>
   );
