@@ -78,14 +78,10 @@ export async function getSession() {
     console.warn("[Budget] budget_my_access error:", err);
   }
 
-  // Check if current user has Super Admin authority in Chandak Workspace
-  const isSuperJwt =
-    data.user.app_metadata?.role === "SUPER_ADMIN" ||
-    me?.is_super_admin === true;
+  // Check if current user has Super Admin authority in Chandak Workspace (from DB roles only)
+  let isSuper = me?.is_super_admin === true;
 
-  // Super-admin comes only from the database role (user_master / roles), never from user_metadata (which a user can edit on their own account) or a list of email addresses.
-  let isSuper = isSuperJwt;
-
+  // Super-admin comes only from the database role (user_master / roles), never from user_metadata or app_metadata or email lists.
   if (!isSuper) {
     try {
       const { data: um } = await sb

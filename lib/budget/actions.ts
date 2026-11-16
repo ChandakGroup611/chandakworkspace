@@ -20,11 +20,7 @@ async function getEffectiveClient() {
   const { data: { user } } = await sbUser.auth.getUser();
   if (!user) return { sb: sbUser, user: null, isSuper: false };
 
-  // Super-admin comes only from the database role (user_master / roles), never from user_metadata (which a user can edit on their own account) or a list of email addresses.
-  const isSuperMeta = user.app_metadata?.role === "SUPER_ADMIN";
-
-  if (isSuperMeta) return { sb: supabaseAdmin, user, isSuper: true };
-
+  // Super-admin comes only from the database role (user_master / roles), never from user_metadata or app_metadata or hardcoded emails.
   try {
     const { data: um } = await supabaseAdmin
       .from("user_master")

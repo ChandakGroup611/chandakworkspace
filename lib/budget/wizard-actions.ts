@@ -18,7 +18,7 @@ async function client() {
   const sbUser = await createClient();
   const { data: { user } } = await sbUser.auth.getUser();
   if (!user) return sbUser;
-  if (user.app_metadata?.role === "SUPER_ADMIN") return supabaseAdmin; // Super-admin comes only from the database role (user_master / roles), never from user_metadata (which a user can edit on their own account) or a list of email addresses.
+  // Super-admin comes only from the database role (user_master / roles), never from user_metadata or app_metadata or email lists.
   try {
     const { data: um } = await supabaseAdmin.from("user_master").select("role:roles(code)").eq("id", user.id).maybeSingle();
     const role = um?.role as { code?: string } | { code?: string }[] | null | undefined;
