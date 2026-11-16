@@ -1,5 +1,6 @@
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { hasPermission } from "@/lib/permissions";
+import { can } from "@/lib/permissions/module-access";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 export type CanonicalMeetPermissionCode =
@@ -22,6 +23,25 @@ export type MeetPermissionCode =
   | "MEET_RESCHEDULE"
   | "MEET_NOTE_MANAGE"
   | "MEET_MOM_EDIT";
+
+const MEET_MODULE_PERM_MAP: Record<MeetPermissionCode, string> = {
+  MEET_VIEW: "MEETINGS_VIEW",
+  MEET_CREATE: "MEETINGS_CREATE",
+  MEET_UPDATE: "MEETINGS_UPDATE",
+  MEET_RESCHEDULE: "MEETINGS_UPDATE",
+  MEET_DELETE: "MEETINGS_DELETE",
+  MEET_SESSION_RUN: "SESSIONS_START_RUN",
+  MEET_NOTE_MANAGE: "SESSIONS_START_RUN",
+  MEET_POINT_MANAGE: "AGENDA_ADD_POINTS",
+  MEET_TASK_MANAGE: "ACTION_ITEMS_UPDATE",
+  MEET_EXTENSION_APPROVE: "ACTION_ITEMS_ASSIGN",
+  MEET_DECISION_MANAGE: "MOM_RECORD_PUBLISH",
+  MEET_MOM_APPROVE: "MOM_RECORD_PUBLISH",
+  MEET_MOM_EDIT: "MOM_RECORD_PUBLISH",
+  MEET_MOM_PUBLISH: "MOM_RECORD_PUBLISH",
+  MEET_REPORT_VIEW: "MEETINGS_VIEW",
+  MEET_ADMIN: "MEET_SETTINGS",
+};
 
 export interface MeetAuthContext {
   meetingId?: string;
@@ -69,11 +89,28 @@ export async function requireMeet(
       ? "MEET_MOM_APPROVE"
       : (permissionCode as CanonicalMeetPermissionCode);
 
-  // 1. Check Super Admin and Meet Admin
-  const [isSuperAdmin, isMeetAdmin] = await Promise.all([
+  const modulePerm = MEET_MODULE_PERM_MAP[permissionCode] || "MEETINGS_VIEW";
+
+  // 1. Check Super Admin and Meet Admin via central Module RBAC authority
+  const [isSuperByModule, isMeetAdminByModule, isSuperLegacy, isMeetAdminLegacy] = await Promise.all([
+    can(userId, "CHANDAK_MEET", "MEET_SETTINGS"),
+    can(userId, "CHANDAK_MEET", "MEET_SETTINGS"),
     hasPermission(userId, "SUPER_ADMIN"),
     hasPermission(userId, "MEET_ADMIN"),
   ]);
+
+  // Check platform_role directly
+  const { data: um } = await supabaseAdmin
+    .from("user_master")
+    .select("platform_role, role:roles(code)")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const platformRole = um?.platform_role || "";
+  const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
+
+  const isSuperAdmin = platformRole === "SUPER_ADMIN" || ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN"].includes(roleCode || "") || isSuperLegacy;
+  const isMeetAdmin = isSuperAdmin || isMeetAdminByModule || isMeetAdminLegacy;
 
   // If action requires MEET_ADMIN (e.g. settings/masters/sla admin)
   if (context?.requireAdmin || canonicalCode === "MEET_ADMIN") {
@@ -84,10 +121,12 @@ export async function requireMeet(
     return { allowed: true, user, userId, isSuperAdmin, isMeetAdmin, roleInMeeting: "admin" };
   }
 
-  // 2. Check base MEET_* permission (Super Admin & Meet Admin bypass base permission check)
+  // 2. Check base MEET_* permission
   if (!isSuperAdmin && !isMeetAdmin) {
-    const hasPerm = await hasPermission(userId, canonicalCode);
-    if (!hasPerm) {
+    const allowedByModule = await can(userId, "CHANDAK_MEET", modulePerm);
+    const allowedByLegacy = !allowedByModule && (await hasPermission(userId, canonicalCode));
+
+    if (!allowedByModule && !allowedByLegacy) {
       await logSecurityAudit(userId, "PERMISSION_DENIED", { permissionCode, canonicalCode, context });
       throw new Error(`Forbidden: You lack the required permission (${canonicalCode}) to perform this action.`);
     }
