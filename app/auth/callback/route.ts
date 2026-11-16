@@ -28,14 +28,28 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${redirectOrigin}/login?error=${errCode}&error_description=${errDesc}`);
   }
 
-  if (code || (tokenHash && type)) {
+  // Invite / magic links can also arrive with the session in the URL fragment (#access_token=…),
+  // which a server route never sees. /auth/accept reads it in the browser, stores the session and
+  // comes back here with ?resume=1 so the same checks (active user, modules, landing page) run.
+  const resume = searchParams.get('resume') === '1';
+  if (!code && !(tokenHash && type) && !resume) {
+    const nextQs = rawNext ? `?next=${encodeURIComponent(rawNext)}` : '';
+    return NextResponse.redirect(`${redirectOrigin}/auth/accept${nextQs}`);
+  }
+
+  if (code || (tokenHash && type) || resume) {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
     
     let sessionData: any = null;
     let authError: any = null;
 
-    if (code) {
+    if (resume) {
+      // session already stored by /auth/accept
+      const { data, error } = await supabase.auth.getUser();
+      sessionData = data?.user ? { user: data.user, session: null } : null;
+      authError = error;
+    } else if (code) {
       // Exchange the auth code for a user session
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
       sessionData = data;

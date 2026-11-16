@@ -20,22 +20,16 @@ async function getEffectiveClient() {
   const { data: { user } } = await sbUser.auth.getUser();
   if (!user) return { sb: sbUser, user: null, isSuper: false };
 
-  const isSuperMeta =
-    user.app_metadata?.role === "SUPER_ADMIN" ||
-    user.user_metadata?.role === "SUPER_ADMIN";
+  // Super-admin comes only from the database role (user_master / roles), never from user_metadata (which a user can edit on their own account) or a list of email addresses.
+  const isSuperMeta = user.app_metadata?.role === "SUPER_ADMIN";
 
   if (isSuperMeta) return { sb: supabaseAdmin, user, isSuper: true };
-
-  const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com", "avinash.pise@chandakgroup.com", "avinash@gmail.com"];
-  if (user.email && adminEmails.includes(user.email.toLowerCase())) {
-    return { sb: supabaseAdmin, user, isSuper: true };
-  }
 
   try {
     const { data: um } = await supabaseAdmin
       .from("user_master")
       .select("role_id, role:roles(code)")
-      .or(`id.eq.${user.id},email.eq.${user.email || ""}`)
+      .eq("id", user.id)
       .maybeSingle();
 
     const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();

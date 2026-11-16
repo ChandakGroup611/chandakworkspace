@@ -81,18 +81,17 @@ export async function getSession() {
   // Check if current user has Super Admin authority in Chandak Workspace
   const isSuperJwt =
     data.user.app_metadata?.role === "SUPER_ADMIN" ||
-    data.user.user_metadata?.role === "SUPER_ADMIN" ||
     me?.is_super_admin === true;
 
-  const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com", "avinash.pise@chandakgroup.com", "avinash@gmail.com"];
-  let isSuper = isSuperJwt || (!!data.user.email && adminEmails.includes(data.user.email.toLowerCase()));
+  // Super-admin comes only from the database role (user_master / roles), never from user_metadata (which a user can edit on their own account) or a list of email addresses.
+  let isSuper = isSuperJwt;
 
   if (!isSuper) {
     try {
       const { data: um } = await sb
         .from("user_master")
         .select("full_name, email, role_id, role:roles(code)")
-        .or(`id.eq.${data.user.id},email.eq.${data.user.email || ""}`)
+        .eq("id", data.user.id)
         .maybeSingle();
 
       const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();

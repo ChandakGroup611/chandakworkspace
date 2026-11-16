@@ -9,7 +9,20 @@ import { queueBusinessEvent } from '@/lib/actions/notification-engine';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 
+// The person acting is always the signed-in user. Earlier, these actions trusted a `performedBy` id sent
+// from the browser and checked *that* id's permissions, so sending someone else's id (an approver's or an
+// admin's) passed approval, UAT, status and delete checks. Any id from the caller is now ignored.
+async function signedInUserId(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id ?? null;
+}
+
 export async function transitionRequirementStatus(reqId: string, newStatusId: string, performedBy: string) {
+  const signedIn = await signedInUserId();
+  if (!signedIn) return { error: 'Please sign in again.' };
+  performedBy = signedIn;
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
   if (!isAuthorized) return { error: "Unauthorized to transition requirement." };
 
@@ -52,6 +65,9 @@ export async function transitionRequirementStatus(reqId: string, newStatusId: st
 }
 
 export async function generateRequirementTask(reqId: string, taskPayload: any, performedBy: string) {
+  const signedIn = await signedInUserId();
+  if (!signedIn) return { error: 'Please sign in again.' };
+  performedBy = signedIn;
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
   if (!isAuthorized) return { error: "Unauthorized to create tasks for this requirement." };
 
@@ -115,6 +131,9 @@ export async function recalculateRequirementCompletion(reqId: string) {
 }
 
 export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL', comments: string, performedBy: string) {
+  const signedIn = await signedInUserId();
+  if (!signedIn) return { error: 'Please sign in again.' };
+  performedBy = signedIn;
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
   if (!isAuthorized) return { error: "Unauthorized to perform UAT." };
 
@@ -392,6 +411,9 @@ export async function createRequirement(payload: {
 }
 
 export async function submitRequirementAnalysis(reqId: string, payload: any, performedBy: string, action?: 'ACCEPT' | 'HOLD' | 'CANCEL' | 'SAVE') {
+  const signedIn = await signedInUserId();
+  if (!signedIn) return { error: 'Please sign in again.' };
+  performedBy = signedIn;
   const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(performedBy);
   const user = authUser?.user || { id: performedBy, email: 'system' };
   const { hasPermission } = await import('@/lib/permissions');
@@ -528,6 +550,9 @@ export async function fetchRequirementStatuses() {
 }
 
 export async function generateApprovalFlow(reqId: string, performedBy: string) {
+  const signedIn = await signedInUserId();
+  if (!signedIn) return { error: 'Please sign in again.' };
+  performedBy = signedIn;
   const { hasPermission } = await import('@/lib/permissions');
   const canManage = await hasPermission(performedBy, 'REQUIREMENTS_MANAGE');
   const isAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
@@ -565,6 +590,9 @@ export async function generateApprovalFlow(reqId: string, performedBy: string) {
 }
 
 export async function deleteRequirement(reqId: string, performedBy: string) {
+  const signedIn = await signedInUserId();
+  if (!signedIn) return { error: 'Please sign in again.' };
+  performedBy = signedIn;
   const { hasPermission } = await import('@/lib/permissions');
   const canDelete = await hasPermission(performedBy, 'REQUIREMENTS_DELETE');
   const isSuperAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
@@ -593,6 +621,9 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
 }
 
 export async function updateRequirementIntake(reqId: string, payload: any, performedBy: string) {
+  const signedIn = await signedInUserId();
+  if (!signedIn) return { error: 'Please sign in again.' };
+  performedBy = signedIn;
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
   if (!isAuthorized) return { error: 'Unauthorized to update this requirement.' };
   if (payload.priority_id !== undefined && (!payload.priority_id || (typeof payload.priority_id === 'string' && !payload.priority_id.trim()))) {
@@ -650,9 +681,8 @@ export async function fetchRequirementAnalyticsData() {
   if (!user) return [];
 
   const { hasPermission } = await import('@/lib/permissions');
-  const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com"];
-  const isSuperAdminEmail = adminEmails.includes(user.email || '');
-  const isAdmin = isSuperAdminEmail || await hasPermission(user.id, 'SUPER_ADMIN');
+  // Super-admin comes only from the database role, never from a list of email addresses.
+  const isAdmin = await hasPermission(user.id, 'SUPER_ADMIN');
 
   const { data, error } = await supabaseAdmin.from('requirements').select(`
     id, code, title, scope, approval_status, current_assignee_id, created_at, updated_at, due_date, start_date, creator_id, requester_id, custom_fields,
@@ -765,6 +795,9 @@ export async function fetchRequirement(reqId: string) {
 }
 
 export async function processApprovalAction(reqId: string, action: string, remarks: string, performedBy: string) {
+  const signedIn = await signedInUserId();
+  if (!signedIn) return { error: 'Please sign in again.' };
+  performedBy = signedIn;
   const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(performedBy);
   const user = authUser?.user || { id: performedBy, email: 'system' };
   let finalReqId = reqId;

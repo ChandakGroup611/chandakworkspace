@@ -553,6 +553,10 @@ export async function assignUserDashboardAccess(
   try {
     const { user } = await getCachedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    // Granting dashboard access is a user-administration action (it was open to any signed-in user)
+    const { hasPermission } = await import("@/lib/permissions");
+    const allowed = (await hasPermission(user.id, "SUPER_ADMIN")) || (await hasPermission(user.id, "USERS_MANAGE")) || (await hasPermission(user.id, "USERS_UPDATE"));
+    if (!allowed) return { success: false, error: "Unauthorized: only user administrators can change dashboard access." };
 
     if (dashboardKeys.length === 0) {
       await supabaseAdmin

@@ -145,14 +145,35 @@ export async function fetchStatusesByScope(scopeType: string, scopeId?: string) 
 
   // If a scope was specified but no custom statuses exist for it, fallback to global
   if (scopeId && results.length === 0) {
-    const { data: fallback } = await supabase
+    const { data: fallback, error: fbError } = await supabase
       .from("status_master")
       .select("id, name:status_name, code:status_code, scope_id, status_order")
       .eq('is_active', true)
       .eq('is_deleted', false)
       .eq('scope_type', scopeType)
       .is('scope_id', null);
+    if (fbError) console.error(`[fetchStatusesByScope] Global fallback error: ${fbError.message}`);
     results = fallback || [];
+  }
+
+  // Last resort: the organisation's statuses of this type, whatever they are scoped to. Without it the
+  // Status list was empty (and a task could not be created) whenever the statuses had been set up under a
+  // workspace id that no longer exists and no global (unscoped) statuses had been defined.
+  if (results.length === 0) {
+    const { data: anyScope, error: anyError } = await supabase
+      .from("status_master")
+      .select("id, name:status_name, code:status_code, scope_id, status_order")
+      .eq('is_active', true)
+      .eq('is_deleted', false)
+      .eq('scope_type', scopeType);
+    if (anyError) console.error(`[fetchStatusesByScope] Any-scope fallback error: ${anyError.message}`);
+    const seen = new Set<string>();
+    results = (anyScope || []).filter((st: any) => {
+      const key = String(st.code || st.name || st.id).toUpperCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   return results.sort((a, b) => (a.status_order || 0) - (b.status_order || 0));

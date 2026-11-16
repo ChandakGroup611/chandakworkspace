@@ -32,7 +32,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund || npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: Cache Next.js build cache
         uses: actions/cache@v4
@@ -104,24 +104,6 @@ jobs:
           # Upload to Domain Public HTML (Primary target for SSH and Webhook extraction)
           curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to domain public_html deploy.zip failed"
           curl -sS --connect-timeout 15 --max-time 45 --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
-          
-          # Upload to Root as fallback
-          curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/deploy.zip" || echo "FTP to root deploy.zip failed"
-
-      # Fallback Sync via FTP-Deploy-Action (Domain Public HTML)
-      - name: Sync files via FTP (Domain Public HTML)
-        timeout-minutes: 3
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        continue-on-error: true
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./upload-payload/
-          server-dir: ./domains/chandakgroup.tech/public_html/
-          protocol: ftp
-          state-name: ''
-          dangerous-clean-slate: false
 
       # Primary Extraction & Server Restart via SSH
       - name: Extract Payload and Restart Server via SSH
@@ -155,13 +137,21 @@ jobs:
               DOMAIN_ROOT="$ROOT_DIR/domains/chandakgroup.tech"
             fi
             
-            ACTIVE_VERS=($(find "$DOMAIN_ROOT/hbuilds/versions" -maxdepth 2 -type d -name "nodejs" 2>/dev/null))
-            TARGET_DIRS=(
-              "$DOMAIN_ROOT/hbuilds/current/nodejs"
-            )
-            for vdir in "${ACTIVE_VERS[@]}"; do
-              TARGET_DIRS+=("$vdir")
-            done
+            TARGET_DIRS=()
+            CURRENT_NODEJS=$(readlink -f "$DOMAIN_ROOT/hbuilds/current/nodejs" 2>/dev/null)
+            if [ -n "$CURRENT_NODEJS" ] && [ -d "$CURRENT_NODEJS" ]; then
+              TARGET_DIRS+=("$CURRENT_NODEJS")
+            elif [ -d "$DOMAIN_ROOT/hbuilds/current/nodejs" ]; then
+              TARGET_DIRS+=("$DOMAIN_ROOT/hbuilds/current/nodejs")
+            fi
+            NEWEST_VERSION_NODEJS=$(ls -td "$DOMAIN_ROOT/hbuilds/versions"/*/nodejs 2>/dev/null | head -n 1)
+            if [ -n "$NEWEST_VERSION_NODEJS" ] && [ -d "$NEWEST_VERSION_NODEJS" ]; then
+              NEWEST_REAL=$(readlink -f "$NEWEST_VERSION_NODEJS" 2>/dev/null || echo "$NEWEST_VERSION_NODEJS")
+              CURRENT_REAL=$(readlink -f "$CURRENT_NODEJS" 2>/dev/null || echo "$CURRENT_NODEJS")
+              if [ "$NEWEST_REAL" != "$CURRENT_REAL" ]; then
+                TARGET_DIRS+=("$NEWEST_VERSION_NODEJS")
+              fi
+            fi
 
             # Prevent dual-app collision by removing stray server.js from public_html
             rm -f "$DOMAIN_ROOT/public_html/server.js" "$DOMAIN_ROOT/public_html/package.json"
@@ -192,16 +182,13 @@ jobs:
                 if [ -d "$target/public" ]; then
                   cp -f "$DOMAIN_ROOT/public_html/.htaccess" "$target/public/.htaccess" 2>/dev/null || true
                 fi
-                if [ -d "$target/.next" ]; then
-                  cp -rf "$target/.next" "$DOMAIN_ROOT/public_html/" 2>/dev/null || true
+                if [ -d "$target/.next/static" ]; then
+                  mkdir -p "$DOMAIN_ROOT/public_html/_next" "$DOMAIN_ROOT/public_html/.next" "$target/_next" "$target/public/_next"
                   cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/_next/" 2>/dev/null || true
-                  cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/.next/static" 2>/dev/null || true
+                  cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/.next/" 2>/dev/null || true
                   cp -rf "$target/.next/static" "$target/_next/" 2>/dev/null || true
                   cp -rf "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
-                  for vpub in $(find "$DOMAIN_ROOT/hbuilds" -type d -name "public" 2>/dev/null); do
-                    mkdir -p "$vpub/_next"
-                    cp -rf "$target/.next/static" "$vpub/_next/" 2>/dev/null || true
-                  done
+                  rm -rf "$DOMAIN_ROOT/public_html/.next/server" "$DOMAIN_ROOT/public_html/.next/cache"
                 fi
                 if [ -f "$target/public/deploy-hook.php" ]; then
                   cp -f "$target/public/deploy-hook.php" "$DOMAIN_ROOT/public_html/deploy-hook.php" 2>/dev/null || true
@@ -211,6 +198,20 @@ jobs:
 
             # Clean up zip file after successful extraction so subsequent webhooks don't duplicate extraction
             rm -f "$ZIP_PATH" "$DOMAIN_ROOT/public_html/deploy.zip" "$DOMAIN_ROOT/deploy.zip" "$ROOT_DIR/deploy.zip"
+
+            # Keep only the 3 newest hbuilds/versions/* folders (never delete the one current points to)
+            CURRENT_TARGET_DIR=$(readlink -f "$DOMAIN_ROOT/hbuilds/current" 2>/dev/null)
+            CURRENT_VERSION_DIR=$(readlink -f "$DOMAIN_ROOT/hbuilds/current/nodejs" 2>/dev/null)
+            ALL_VERSIONS=($(ls -td "$DOMAIN_ROOT/hbuilds/versions"/* 2>/dev/null))
+            if [ "${#ALL_VERSIONS[@]}" -gt 3 ]; then
+              for old_ver in "${ALL_VERSIONS[@]:3}"; do
+                OLD_REAL=$(readlink -f "$old_ver" 2>/dev/null || echo "$old_ver")
+                if [ "$OLD_REAL" != "$CURRENT_TARGET_DIR" ] && [ "$OLD_REAL/nodejs" != "$CURRENT_VERSION_DIR" ]; then
+                  echo "Pruning old build version: $old_ver"
+                  rm -rf "$old_ver" 2>/dev/null || true
+                fi
+              done
+            fi
 
             # Force reload web server and restart passenger
             pkill -9 -u $(whoami) -f lsnode 2>/dev/null || true

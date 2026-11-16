@@ -29,10 +29,7 @@ export async function checkIsSuperAdmin(userId: string): Promise<boolean> {
 
   if (permsRes.data?.some(p => p.permission_code === 'SUPER_ADMIN')) return true;
 
-  const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com", "avinash.pise@chandakgroup.com", "avinash@gmail.com"];
-  const email = myProfile?.email || emailRes.data?.email;
-  if (email && adminEmails.includes(email.toLowerCase())) return true;
-
+  // Super-admin comes only from the database role (user_master / roles), never from user_metadata (which a user can edit on their own account) or a list of email addresses.
   return false;
 }
 
@@ -96,15 +93,7 @@ export async function getVisibleUsers(userId: string, isSuperAdminOverride?: boo
       isSuperAdmin = true;
     }
 
-    // Hardcoded fallback for known super admin emails (to match frontend PermissionsProvider)
-    if (!isSuperAdmin) {
-      const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com", "avinash.pise@chandakgroup.com", "avinash@gmail.com"];
-      const myUser = usersRes.data?.find(u => u.id === userId);
-      const email = myProfile?.email || myUser?.email;
-      if (email && adminEmails.includes(email.toLowerCase())) {
-        isSuperAdmin = true;
-      }
-    }
+    // Super-admin comes only from the database role (user_master / roles), never from user_metadata (which a user can edit on their own account) or a list of email addresses.
   }
 
   if (usersRes.error) throw usersRes.error;

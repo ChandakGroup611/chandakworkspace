@@ -3,7 +3,21 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { processEmailQueueAsync } from "./email-queue";
 
+// Email server settings hold mail-server passwords and can send mail as the company, so every
+// read / change / test here is limited to Super Admin or people with SETTINGS_MANAGE (or EMAIL_CONFIG_MANAGE).
+async function requireEmailAdmin() {
+  const { getCachedUser } = await import("@/lib/auth/cached-user");
+  const { user } = await getCachedUser();
+  if (!user) throw new Error("Please sign in again.");
+  const { hasPermission } = await import("@/lib/permissions");
+  for (const code of ["SUPER_ADMIN", "SETTINGS_MANAGE", "EMAIL_CONFIG_MANAGE"]) {
+    if (await hasPermission(user.id, code)) return user;
+  }
+  throw new Error("Unauthorized: only administrators can view or change email settings.");
+}
+
 export async function fetchSystemEmailConfig() {
+  await requireEmailAdmin();
   const { data, error } = await supabaseAdmin
     .from("system_email_config")
     .select("*")
@@ -19,6 +33,7 @@ export async function fetchSystemEmailConfig() {
 }
 
 export async function saveSystemEmailConfig(payload: any) {
+  await requireEmailAdmin();
   const { data: existing } = await supabaseAdmin.from("system_email_config").select("id").limit(1).single();
 
   if (existing?.id) {
@@ -38,6 +53,7 @@ export async function saveSystemEmailConfig(payload: any) {
 }
 
 export async function testEmailConnection(config: any) {
+  await requireEmailAdmin();
   try {
     const nodemailerRaw = await import('nodemailer');
     const nodemailer = nodemailerRaw.default || nodemailerRaw;
@@ -66,6 +82,7 @@ export async function testEmailConnection(config: any) {
 }
 
 export async function fetchEventTriggerConfig() {
+  await requireEmailAdmin();
   const { data, error } = await supabaseAdmin
     .from("notification_event_config")
     .select("*")
@@ -78,6 +95,7 @@ export async function fetchEventTriggerConfig() {
 }
 
 export async function updateEventTriggerConfig(id: string, updates: any) {
+  await requireEmailAdmin();
   const { error } = await supabaseAdmin
     .from("notification_event_config")
     .update(updates)
@@ -100,6 +118,7 @@ export async function fetchSpecificEventConfig(moduleCode: string, eventCode: st
 }
 
 export async function deleteEmailProvider(id: string) {
+  await requireEmailAdmin();
   const { error } = await supabaseAdmin.from("email_providers").delete().eq("id", id);
   if (error) throw new Error(error.message);
   return { success: true };
@@ -363,6 +382,7 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
 }
 
 export async function fetchEmailProviders() {
+  await requireEmailAdmin();
   const { data, error } = await supabaseAdmin
     .from("email_providers")
     .select("*")
@@ -376,6 +396,7 @@ export async function fetchEmailProviders() {
 }
 
 export async function saveEmailProvider(payload: any) {
+  await requireEmailAdmin();
   const { data, error } = await supabaseAdmin.from("email_providers").insert([payload]).select().single();
   if (error) throw new Error(error.message);
   
@@ -386,6 +407,7 @@ export async function saveEmailProvider(payload: any) {
 }
 
 export async function updateEmailProvider(id: string, payload: any) {
+  await requireEmailAdmin();
   const { data, error } = await supabaseAdmin.from("email_providers").update(payload).eq("id", id).select().single();
   if (error) throw new Error(error.message);
 
@@ -396,6 +418,7 @@ export async function updateEmailProvider(id: string, payload: any) {
 }
 
 export async function testProviderConnection(providerName: string, config: any) {
+  await requireEmailAdmin();
   try {
     if (providerName === "SMTP" || providerName === "Microsoft 365") {
       const nodemailerRaw = await import('nodemailer');

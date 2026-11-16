@@ -33,6 +33,44 @@ import {
 // Design Tracking Server Actions (Supabase Postgres Database Sync)
 // ==============================================================================
 
+
+// ---------- server-side access guard ----------
+// Every save / delete below runs with full database access, so this guard is what enforces the
+// Design access set on Design → Access & roles (design_user_access): the person's Design role, their
+// project scope (all projects or the assigned ones) and the capability switches. Super Admin passes.
+type DesignCap = "any" | "admin" | "masters" | "matrix" | "drawings" | "gfc" | "transmittals" | "rfis";
+const CAP_COLUMN: Record<Exclude<DesignCap, "any" | "admin">, string> = {
+  masters: "can_masters_manage", matrix: "can_matrix_edit", drawings: "can_drawings_upload",
+  gfc: "can_drawings_approve_gfc", transmittals: "can_transmittals_create", rfis: "can_rfis_manage",
+};
+const CAP_LABEL: Record<DesignCap, string> = {
+  any: "use Design Tracking", admin: "manage Design access and policies", masters: "manage Design masters",
+  matrix: "edit the design matrix", drawings: "upload or change drawings", gfc: "approve drawings for GFC",
+  transmittals: "create transmittals", rfis: "manage RFIs",
+};
+
+async function requireDesign(cap: DesignCap, projectIds?: (string | null | undefined)[] | string | null) {
+  const { getCachedUser } = await import("@/lib/auth/cached-user");
+  const { user } = await getCachedUser();
+  if (!user) throw new Error("Please sign in again.");
+  const { hasPermission } = await import("@/lib/permissions");
+  if (await hasPermission(user.id, "SUPER_ADMIN")) return user;
+
+  const { data: access } = await supabaseAdmin.from("design_user_access").select("*").eq("user_id", user.id).maybeSingle();
+  if (!access) throw new Error("You don't have access to Design Tracking. Ask a Design administrator to add you.");
+  const isDesignAdmin = String(access.design_role || "").toUpperCase() === "DESIGN_ADMIN";
+  if (cap === "admin" && !isDesignAdmin) throw new Error(`Only a Design administrator can ${CAP_LABEL.admin}.`);
+  if (!isDesignAdmin && cap !== "any" && cap !== "admin" && !access[CAP_COLUMN[cap]]) {
+    throw new Error(`Your Design access doesn't allow you to ${CAP_LABEL[cap]}.`);
+  }
+  const ids = (Array.isArray(projectIds) ? projectIds : [projectIds]).filter((x): x is string => !!x && x !== "ALL");
+  if (!isDesignAdmin && ids.length && String(access.project_access_type || "ALL").toUpperCase() === "SPECIFIC") {
+    const allowed: string[] = access.assigned_project_ids || [];
+    if (ids.some((id) => !allowed.includes(id))) throw new Error("This project is outside your assigned Design projects.");
+  }
+  return user;
+}
+
 async function getSupabase() {
   const cookieStore = await cookies();
   return createClient(cookieStore);
@@ -116,6 +154,7 @@ export async function saveProjectAction(project: ProjectMaster): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const row = {
       id: project.id,
@@ -169,6 +208,7 @@ export async function deleteProjectAction(projectId: string, reason?: string): P
   error?: string;
 }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_projects").delete().eq("id", projectId);
     if (error) {
@@ -192,6 +232,7 @@ export async function saveTowerAction(tower: TowerMaster): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("masters", tower.projectId);
     const supabase = await getSupabase();
     const row = {
       id: tower.id,
@@ -228,6 +269,7 @@ export async function deleteTowerAction(towerId: string, reason?: string): Promi
   error?: string;
 }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_towers").delete().eq("id", towerId);
     if (error) {
@@ -251,6 +293,7 @@ export async function savePackageAction(pkg: PackageMaster): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const row = {
       id: pkg.id,
@@ -276,6 +319,7 @@ export async function savePackageAction(pkg: PackageMaster): Promise<{
 
 export async function deletePackageAction(pkgId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_packages").delete().eq("id", pkgId);
     if (error) {
@@ -299,6 +343,7 @@ export async function saveSubPackageAction(subPkg: SubPackageMaster): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const row = {
       id: subPkg.id,
@@ -328,6 +373,7 @@ export async function saveSubPackageAction(subPkg: SubPackageMaster): Promise<{
 
 export async function deleteSubPackageAction(subPkgId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_sub_packages").delete().eq("id", subPkgId);
     if (error) {
@@ -351,6 +397,7 @@ export async function saveConsultantAction(consultant: ConsultantMaster | Consul
   error?: string;
 }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const row = {
       id: consultant.id,
@@ -385,6 +432,7 @@ export async function saveConsultantAction(consultant: ConsultantMaster | Consul
 
 export async function deleteConsultantAction(consultantId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_consultants").delete().eq("id", consultantId);
     if (error) {
@@ -408,6 +456,7 @@ export async function saveStatutoryAuthorityAction(authority: StatutoryAuthority
   error?: string;
 }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const row = {
       id: authority.id,
@@ -431,6 +480,7 @@ export async function saveStatutoryAuthorityAction(authority: StatutoryAuthority
 
 export async function deleteStatutoryAuthorityAction(authorityId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_statutory_authorities").delete().eq("id", authorityId);
     if (error) {
@@ -450,6 +500,7 @@ export async function saveStatutoryClearanceAction(clearance: StatutoryClearance
   error?: string;
 }> {
   try {
+    await requireDesign("matrix", clearance.projectId);
     const supabase = await getSupabase();
     const entryKey = (clearance as any).entryKey || `${clearance.projectId}__${clearance.towerId || "all"}__${clearance.authorityId}`;
     const row = {
@@ -491,6 +542,7 @@ export async function saveMatrixEntryAction(
   changedByEmail = "design.lead@chandakgroup.com"
 ): Promise<{ success: boolean; data?: PackageStatusEntry; error?: string }> {
   try {
+    await requireDesign("matrix", entry.projectId);
     const supabase = await getSupabase();
     const entryKey = entry.entryKey || `${entry.projectId}__${entry.towerId}__${entry.packageId}`;
     const row = {
@@ -533,6 +585,7 @@ export async function saveBatchMatrixEntriesAction(
   changedBy = "Design Lead"
 ): Promise<{ success: boolean; count?: number; error?: string }> {
   try {
+    await requireDesign("matrix", (entries || []).map((e) => e.projectId));
     if (!entries || entries.length === 0) return { success: true, count: 0 };
     const supabase = await getSupabase();
 
@@ -580,6 +633,7 @@ export async function saveLookAheadAction(lookAhead: LookAheadEntry): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("matrix", (lookAhead as any).projectId);
     const supabase = await getSupabase();
     const row = {
       id: lookAhead.id,
@@ -613,6 +667,7 @@ export async function saveLookAheadAction(lookAhead: LookAheadEntry): Promise<{
 
 export async function deleteLookAheadAction(lookAheadId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("matrix");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_look_aheads").delete().eq("id", lookAheadId);
     if (error) {
@@ -636,6 +691,7 @@ export async function saveDrawingAction(drawing: DrawingItem): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("drawings", (drawing as any).projectId);
     const supabase = await getSupabase();
     const row = {
       id: drawing.id,
@@ -674,6 +730,7 @@ export async function saveDrawingAction(drawing: DrawingItem): Promise<{
 
 export async function deleteDrawingAction(drawingId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("drawings");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_drawings").delete().eq("id", drawingId);
     if (error) {
@@ -693,6 +750,7 @@ export async function saveDrawingRevisionAction(revision: DrawingRevision): Prom
   error?: string;
 }> {
   try {
+    await requireDesign("drawings", (revision as any).projectId);
     const supabase = await getSupabase();
     const row = {
       id: revision.id,
@@ -728,6 +786,7 @@ export async function saveTransmittalAction(transmittal: TransmittalItem): Promi
   error?: string;
 }> {
   try {
+    await requireDesign("transmittals", (transmittal as any).projectId);
     const supabase = await getSupabase();
     const row = {
       id: transmittal.id,
@@ -763,6 +822,7 @@ export async function saveTransmittalAction(transmittal: TransmittalItem): Promi
 
 export async function deleteTransmittalAction(transmittalId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("transmittals");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_transmittals").delete().eq("id", transmittalId);
     if (error) {
@@ -782,6 +842,7 @@ export async function saveRfiAction(rfi: RfiItem): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("rfis", (rfi as any).projectId);
     const supabase = await getSupabase();
     const row = {
       id: rfi.id,
@@ -821,6 +882,7 @@ export async function saveRfiAction(rfi: RfiItem): Promise<{
 
 export async function deleteRfiAction(rfiId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("rfis");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_rfis").delete().eq("id", rfiId);
     if (error) {
@@ -840,6 +902,7 @@ export async function deleteRfiAction(rfiId: string): Promise<{ success: boolean
 
 export async function recordMatrixAuditAction(auditLog: MatrixAuditLog): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
     const row = {
       id: auditLog.id,
@@ -1130,6 +1193,7 @@ export async function saveSingleDesignRbacPolicyAction(policy: DesignRbacPolicy)
   error?: string;
 }> {
   try {
+    await requireDesign("admin");
     const row = {
       id: policy.id || `rbac-${policy.roleCode.toLowerCase()}-${(policy.projectId || "all").toLowerCase()}-${policy.module.toLowerCase()}`,
       role_code: policy.roleCode,
@@ -1161,6 +1225,7 @@ export async function saveSingleDesignRbacPolicyAction(policy: DesignRbacPolicy)
 
 export async function saveRbacPoliciesAction(policies: DesignRbacPolicy[]): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("admin");
     if (policies && policies.length > 0) {
       const rows = policies.map(p => ({
         id: p.id || `rbac-${p.roleCode.toLowerCase()}-${(p.projectId || "all").toLowerCase()}-${p.module.toLowerCase()}`,
@@ -1301,6 +1366,7 @@ export async function saveDesignUserAccessAction(payload: {
   updatedBy?: string;
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    await requireDesign("admin");
     const supabase = await getSupabase();
 
     const record = {
@@ -1362,6 +1428,7 @@ export async function saveDesignUserAccessAction(payload: {
 
 export async function deleteDesignUserAccessAction(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("admin");
     const supabase = await getSupabase();
     const { error } = await supabase.from("design_user_access").delete().eq("user_id", userId);
     if (error) {
@@ -1376,6 +1443,7 @@ export async function deleteDesignUserAccessAction(userId: string): Promise<{ su
 
 export async function toggleUserDesignModuleAccessAction(userId: string, enable: boolean): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("admin");
     const { data: moduleData } = await supabaseAdmin
       .from("modules_master")
       .select("id")
@@ -1451,6 +1519,7 @@ export async function syncDesignTrackingBundle(bundle: {
   rfis?: RfiItem[];
 }) {
   try {
+    await requireDesign("masters");
     const supabase = await getSupabase();
 
     if (bundle.projects && bundle.projects.length > 0) {
