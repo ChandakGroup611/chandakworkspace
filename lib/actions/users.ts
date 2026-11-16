@@ -440,14 +440,15 @@ export async function fetchUsersDashboardData() {
   };
   
   // Parallelize ALL network requests (Users list + metadata lists) to eliminate waterfall latency
-  const [users, [deptRes, desigRes, roleRes, astRes, modRes]] = await Promise.all([
+  const [users, [deptRes, desigRes, roleRes, astRes, modRes, modRolesRes]] = await Promise.all([
     getVisibleUsers(user.id, isSuperAdmin),
     Promise.all([
       supabase.from("departments").select("id, code, name").eq("is_deleted", false),
       supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
       supabase.from("roles").select("id, code, name").eq("is_deleted", false),
       supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false),
-      supabase.from("modules_master").select("id, code, name, description, icon, display_order").eq("is_active", true).order("display_order", { ascending: true })
+      supabase.from("modules_master").select("id, code, name, description, icon, display_order").eq("is_active", true).order("display_order", { ascending: true }),
+      supabase.from("module_roles").select("module_code, role_code, name, description, permissions").order("role_code", { ascending: true })
     ])
   ]);
 
@@ -460,7 +461,8 @@ export async function fetchUsersDashboardData() {
     designations: desigRes.data || [],
     roles: roleRes.data || [],
     assets: astRes.data || [],
-    modules: modRes.data || []
+    modules: modRes.data || [],
+    moduleRoles: modRolesRes.data || []
   };
 }
 
@@ -575,12 +577,16 @@ export async function deleteUserAction(userId: string) {
 export interface InviteUserPayload {
   email: string;
   fullName?: string;
+  userCode?: string;
   roleId?: string | null;
   departmentId?: string | null;
   designationId?: string | null;
+  managerId?: string | null;
   moduleCodes?: string[];
   defaultModuleCode?: string;
   dashboardKeys?: string[];
+  moduleAccess?: Array<{ module_code: string; role_code: string; scope?: any }>;
+  dashboardAccess?: Array<{ dashboard_key: string; role_code: string; company_ids?: number[] }>;
   redirectTo?: string;
 }
 
@@ -636,6 +642,7 @@ export async function inviteUserAction(
   const fullName = payload.fullName?.trim() || "";
   const departmentId = payload.departmentId || null;
   const designationId = payload.designationId || null;
+  const managerId = payload.managerId || null;
   const moduleCodes = payload.moduleCodes && payload.moduleCodes.length > 0 
     ? payload.moduleCodes 
     : ["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"];
@@ -715,6 +722,7 @@ export async function inviteUserAction(
   if (roleId) updatePayload.role_id = roleId;
   if (departmentId) updatePayload.department_id = departmentId;
   if (designationId) updatePayload.designation_id = designationId;
+  if (managerId) updatePayload.manager_id = managerId;
 
   const { error: dbError } = await adminClient
     .from("user_master")
@@ -737,10 +745,38 @@ export async function inviteUserAction(
     // Handled by DB triggers
   }
 
-  // 7. Configure and assign operational modules
+  // 7. Configure and assign operational module RBAC
   try {
-    const { assignUserModules } = await import("@/lib/actions/module-switcher");
-    await assignUserModules(targetUserId, moduleCodes, defaultModuleCode, payload.dashboardKeys);
+    let moduleAccessToSave = payload.moduleAccess || [];
+    if (moduleAccessToSave.length === 0 && moduleCodes.length > 0) {
+      // Generate standard fallback roles for selected module codes
+      moduleAccessToSave = moduleCodes.map(code => {
+        let roleCode = "MEMBER";
+        if (code === "VEHICLE_DESK") roleCode = "REQUESTER";
+        else if (code === "DESIGN_TRACKING") roleCode = "VIEWER";
+        else if (code === "CHANDAK_MEET") roleCode = "PARTICIPANT";
+        else if (code === "ORG_BUDGET") roleCode = "VIEWER";
+        else if (code === "TASK_WORKFLOW") roleCode = "MEMBER";
+        else if (code === "CHANDAK_MESSENGER") roleCode = "MEMBER";
+        return { module_code: code, role_code: roleCode, scope: { type: "all" } };
+      });
+    }
+
+    let dashboardAccessToSave = payload.dashboardAccess || [];
+    if (dashboardAccessToSave.length === 0 && payload.dashboardKeys && payload.dashboardKeys.length > 0) {
+      dashboardAccessToSave = payload.dashboardKeys.map(k => ({
+        dashboard_key: k,
+        role_code: "VIEWER",
+        company_ids: []
+      }));
+    }
+
+    await saveUserModuleAccessAction(
+      targetUserId,
+      moduleAccessToSave,
+      dashboardAccessToSave,
+      defaultModuleCode
+    );
   } catch (modErr) {
     console.error("[Server Action] Error assigning modules during invite:", modErr);
   }
@@ -757,6 +793,7 @@ export async function inviteUserAction(
         role_id: roleId,
         department_id: departmentId,
         designation_id: designationId,
+        manager_id: managerId,
         module_codes: moduleCodes,
         default_module: defaultModuleCode
       }
@@ -779,5 +816,121 @@ export async function fetchUserDashboardsAction(targetUserId: string): Promise<s
   noStore();
   const { fetchUserDashboardKeys } = await import("@/lib/actions/module-switcher");
   return fetchUserDashboardKeys(targetUserId);
+}
+
+/**
+ * Fetches granular module-wise roles and scopes for a specific user from user_module_access.
+ */
+export async function fetchUserModuleAccessAction(targetUserId: string) {
+  noStore();
+  const { data, error } = await getAdminClient()
+    .from("user_module_access")
+    .select("module_code, role_code, dashboard_key, scope, is_default")
+    .eq("user_id", targetUserId);
+
+  if (error) {
+    console.error("[fetchUserModuleAccessAction] Error:", error);
+    return [];
+  }
+  return data || [];
+}
+
+/**
+ * Saves granular module-wise roles and scopes for a user atomically.
+ */
+export async function saveUserModuleAccessAction(
+  targetUserId: string,
+  moduleAccess: Array<{ module_code: string; role_code: string; scope?: any; is_default?: boolean }>,
+  dashboardAccess?: Array<{ dashboard_key: string; role_code: string; company_ids?: number[] }>,
+  defaultModuleCode?: string
+) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+  if (authError || !authUser) {
+    return { success: false, error: "Unauthenticated request." };
+  }
+
+  const { hasPermission } = await import('@/lib/permissions');
+  const isCallerSuper = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  const canUpdate = isCallerSuper || 
+                    await hasPermission(authUser.id, 'USERS_MANAGE') || 
+                    await hasPermission(authUser.id, 'USERS_UPDATE') ||
+                    await hasPermission(authUser.id, 'USERS_CREATE');
+
+  if (!canUpdate) {
+    return { success: false, error: "Unauthorized: Missing USERS_UPDATE permission." };
+  }
+
+  const adminClient = getAdminClient();
+
+  // 1. Delete existing user_module_access for target user
+  await adminClient
+    .from("user_module_access")
+    .delete()
+    .eq("user_id", targetUserId);
+
+  // 2. Prepare new rows
+  const rowsToInsert: any[] = [];
+  const activeCodes: string[] = [];
+
+  for (const item of moduleAccess) {
+    activeCodes.push(item.module_code);
+    rowsToInsert.push({
+      user_id: targetUserId,
+      module_code: item.module_code,
+      role_code: item.role_code,
+      scope: item.scope || { type: "all" },
+      is_default: item.module_code === defaultModuleCode,
+      granted_by: authUser.id,
+      granted_at: new Date().toISOString()
+    });
+  }
+
+  if (dashboardAccess && dashboardAccess.length > 0) {
+    activeCodes.push("DASHBOARDS");
+    for (const d of dashboardAccess) {
+      rowsToInsert.push({
+        user_id: targetUserId,
+        module_code: "DASHBOARDS",
+        role_code: d.role_code || "VIEWER",
+        dashboard_key: d.dashboard_key,
+        scope: d.company_ids && d.company_ids.length > 0 
+          ? { type: "companies", company_ids: d.company_ids } 
+          : { type: "all" },
+        is_default: defaultModuleCode === "DASHBOARDS",
+        granted_by: authUser.id,
+        granted_at: new Date().toISOString()
+      });
+    }
+  }
+
+  if (rowsToInsert.length > 0) {
+    const { error: insertErr } = await adminClient
+      .from("user_module_access")
+      .insert(rowsToInsert);
+    if (insertErr) {
+      console.error("[saveUserModuleAccessAction] Insert error:", insertErr);
+      return { success: false, error: `Failed to save module access: ${insertErr.message}` };
+    }
+  }
+
+  // 3. Synchronize legacy tables (user_modules & dashboard_user_access) for backward compatibility
+  try {
+    const { assignUserModules } = await import("@/lib/actions/module-switcher");
+    const dashKeys = dashboardAccess ? dashboardAccess.map(d => d.dashboard_key) : [];
+    await assignUserModules(targetUserId, Array.from(new Set(activeCodes)), defaultModuleCode || "TASK_WORKFLOW", dashKeys);
+  } catch (syncErr) {
+    console.warn("[saveUserModuleAccessAction] Legacy sync warning:", syncErr);
+  }
+
+  // 4. Invalidate permission cache
+  try {
+    const { invalidateModuleAccessCache } = await import("@/lib/permissions/module-access");
+    invalidateModuleAccessCache(targetUserId);
+  } catch (e) {}
+
+  revalidatePath("/users");
+  return { success: true };
 }
 

@@ -24,6 +24,8 @@ import { saveUserAction, fetchUsersDashboardData, deleteUserAction, inviteUserAc
 import { DASHBOARDS } from "@/lib/dashboards/registry";
 import { assignUserModules } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { UserInviteWizardModal } from "@/components/users/UserInviteWizardModal";
+import { UserModuleAccessModal } from "@/components/users/UserModuleAccessModal";
 import { 
   Users, 
   UserPlus, 
@@ -218,6 +220,9 @@ export default function UserMasterPage() {
   const [successAlert, setSuccessAlert] = useState<string | null>(null);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
 
+  // Module Roles from DB
+  const [moduleRoles, setModuleRoles] = useState<any[]>([]);
+
   // Invite Modal States
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteFullName, setInviteFullName] = useState("");
@@ -380,6 +385,7 @@ export default function UserMasterPage() {
       setDepartments(loadedDepts);
       setDesignations(loadedDesigs);
       setRoles(loadedRoles);
+      setModuleRoles(data.moduleRoles || []);
 
       let assetsData = data.assets;
       setAvailableAssets(assetsData);
@@ -818,257 +824,21 @@ export default function UserMasterPage() {
         </div>
       </div>
 
-      {/* Invite Modal */}
-      {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-xl rounded-lg shadow-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-accent-soft text-primary flex items-center justify-center border border-border-active">
-                  <Mail className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Invite user to organisation
-                  </h3>
-                  <p className="text-xs text-muted">
-                    Dispatch an email invitation with predefined roles and module access permissions.
-                  </p>
-                </div>
-              </div>
-              <AppButton aria-label="Close" 
-                variant="ghost" 
-                size="icon-sm" 
-                onClick={() => setInviteModalOpen(false)}
-                className="text-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-4 overflow-y-auto flex-1">
-              {/* Basic Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold mb-1 block text-foreground">Full name</label>
-                  <AppInput 
-                    type="text" 
-                    placeholder="e.g. John doe" 
-                    value={inviteFullName} 
-                    onChange={e => setInviteFullName(e.target.value)} 
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold mb-1 block text-foreground">Email address *</label>
-                  <AppInput 
-                    type="email" 
-                    placeholder="user@example.com" 
-                    value={inviteEmail} 
-                    onChange={e => setInviteEmail(e.target.value)} 
-                  />
-                </div>
-              </div>
-
-              {/* Organization & Role */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-semibold mb-1 block text-foreground">Initial role</label>
-                  <select 
-                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
-                    value={inviteRole}
-                    onChange={e => setInviteRole(e.target.value)}
-                  >
-                    <option value="">Select role</option>
-                    {roles
-                      .filter(r => isSuperAdmin || !["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(r.code?.toUpperCase()))
-                      .map(r => (
-                        <option key={r.id} value={r.id}>{r.name}</option>
-                      ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold mb-1 block text-foreground">Department</label>
-                  <select 
-                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
-                    value={inviteDepartment}
-                    onChange={e => {
-                      setInviteDepartment(e.target.value);
-                      setInviteDesignation("");
-                    }}
-                  >
-                    <option value="">Select department</option>
-                    {departments.map(d => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold mb-1 block text-foreground">Designation</label>
-                  <select 
-                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
-                    value={inviteDesignation}
-                    onChange={e => setInviteDesignation(e.target.value)}
-                  >
-                    <option value="">Select designation</option>
-                    {designations
-                      .filter(ds => !inviteDepartment || ds.department_id === inviteDepartment)
-                      .map(ds => (
-                        <option key={ds.id} value={ds.id}>{ds.name}</option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Module Access Configuration */}
-              <div className="pt-2 border-t border-border">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div>
-                    <h4 className="text-xs font-semibold text-muted">Operational module access</h4>
-                    <p className="text-[11px] text-muted">Select modules the user will be provisioned access to upon accepting invite</p>
-                  </div>
-                  <AppBadge variant="info">Auto-Provisioned</AppBadge>
-                </div>
-
-                <div className="space-y-2">
-                  {OPERATIONAL_MODULES.map((mod) => {
-                    const isChecked = inviteSelectedModules.includes(mod.code);
-                    const isDefault = inviteDefaultModule === mod.code;
-                    const IconComp = mod.icon;
-
-                    return (
-                      <div 
-                        key={mod.code}
-                        className={`p-3 rounded-lg border transition-all flex items-center justify-between gap-3 ${
-                          isChecked 
-                            ? "bg-surface border-border-active shadow-xs" 
-                            : "bg-surface/40 border-border opacity-60 hover:opacity-100"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <input 
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setInviteSelectedModules(prev => [...prev, mod.code]);
-                              } else {
-                                if (inviteSelectedModules.length <= 1) {
-                                  triggerToast("User must have at least one module assigned.", true);
-                                  return;
-                                }
-                                const remaining = inviteSelectedModules.filter(c => c !== mod.code);
-                                setInviteSelectedModules(remaining);
-                                if (inviteDefaultModule === mod.code) {
-                                  setInviteDefaultModule(remaining[0] || "TASK_WORKFLOW");
-                                }
-                              }
-                            }}
-                            className="h-4 w-4 rounded text-primary focus:ring-ring cursor-pointer"
-                          />
-                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center border shrink-0 ${mod.color}`}>
-                            <IconComp className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                              {mod.name}
-                              {isDefault && (
-                                <span className="text-[11px] bg-accent-soft text-primary font-medium px-1.5 py-0.5 rounded border border-border-active">
-                                  Default landing
-                                </span>
-                              )}
-                            </span>
-                            <p className="text-[11px] text-muted truncate">{mod.desc}</p>
-                          </div>
-                        </div>
-
-                        {isChecked && (
-                          <button
-                            type="button"
-                            onClick={() => setInviteDefaultModule(mod.code)}
-                            className={`shrink-0 text-[11px] px-2.5 py-1 rounded-md border font-medium transition-colors ${
-                              isDefault
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-surface text-muted hover:text-foreground border-border hover:border-border-active"
-                            }`}
-                          >
-                            {isDefault ? "Default" : "Set Default"}
-                          </button>
-                        )}
-
-                        {mod.code === "DASHBOARDS" && isChecked && (
-                          <div className="mt-2 ml-4 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
-                            <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
-                              <span>Accessible Dashboards:</span>
-                              <span className="text-[10px] text-muted-foreground">{inviteSelectedDashboards.length} selected</span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {DASHBOARDS.map((d) => {
-                                const isDashActive = inviteSelectedDashboards.includes(d.key);
-                                return (
-                                  <label
-                                    key={d.key}
-                                    className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${
-                                      isDashActive
-                                        ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
-                                        : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
-                                    }`}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isDashActive}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setInviteSelectedDashboards(prev => [...prev, d.key]);
-                                        } else {
-                                          setInviteSelectedDashboards(prev => prev.filter(k => k !== d.key));
-                                        }
-                                      }}
-                                      className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
-                                    />
-                                    <div className="min-w-0">
-                                      <span className="block text-xs truncate font-semibold">{d.name}</span>
-                                      <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
-                                    </div>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-end gap-2.5">
-              <AppButton 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setInviteModalOpen(false)}
-                disabled={inviteLoading}
-              >
-                Cancel
-              </AppButton>
-              <AppButton 
-                variant="primary" 
-                size="sm"
-                onClick={handleSendInvite} 
-                disabled={inviteLoading}
-                leftIcon={<Mail className={`h-3.5 w-3.5 ${inviteLoading ? "animate-spin" : ""}`} />}
-              >
-                {inviteLoading ? "Sending Invitation..." : "Send Invitation"}
-              </AppButton>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Unified 6-Step Module-Wise RBAC Invite Wizard ── */}
+      <UserInviteWizardModal
+        isOpen={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        onSuccess={() => {
+          triggerToast("Invitation dispatched successfully with module roles and scopes.");
+          fetchUsersDirectory();
+        }}
+        departments={departments}
+        designations={designations}
+        managers={users}
+        roles={roles}
+        moduleRoles={moduleRoles}
+        isCallerSuperAdmin={Boolean(isSuperAdmin || serverIsSuperAdmin)}
+      />
 
       {/* Dismissable Informational Alerts */}
       {successAlert && (
@@ -1519,201 +1289,18 @@ export default function UserMasterPage() {
         </div>
       )}
 
-      {/* ── Assign Workspace Modules Modal ── */}
-      {moduleModalOpen && moduleModalUser && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-150"
-           role="presentation" onClick={() => { if (!moduleModalSaving) setModuleModalOpen(false); }}
-        >
-          <div 
-            className="relative w-full max-w-lg rounded-lg border border-border bg-surface shadow-lg p-6 space-y-5 text-foreground"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-surface text-accent-soft-text dark:text-muted-foreground flex items-center justify-center border border-border shrink-0">
-                  <Layers className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Assign operational modules
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Personnel: <strong>{moduleModalUser.full_name}</strong> ({moduleModalUser.email})
-                  </p>
-                </div>
-              </div>
-              <button aria-label="Close"
-                type="button"
-                onClick={() => setModuleModalOpen(false)}
-                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {moduleModalLoading ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <ChandakLoader
-                  size="md"
-                  title="Loading module entitlements…"
-                  subtitle="Fetching authorised workspace modules"
-                />
-              </div>
-            ) : (
-              <div className="space-y-4 text-xs">
-                <p className="text-xs text-muted-foreground">
-                  Select which workspace modules this user can access. Unauthorised modules will be completely hidden from their switcher and navigation.
-                </p>
-
-                {/* Module Cards */}
-                <div className="space-y-2.5">
-                  {OPERATIONAL_MODULES.map(mod => {
-                    const isSelected = modalSelectedCodes.includes(mod.code);
-                    const isDefault = modalDefaultCode === mod.code;
-                    const IconComp = mod.icon;
-
-                    return (
-                      <div
-                        key={mod.code}
-                        onClick={() => {
-                          if (isSelected) {
-                            if (modalSelectedCodes.length === 1) {
-                              triggerToast("User must have at least one active module assigned.", true);
-                              return;
-                            }
-                            const updated = modalSelectedCodes.filter(c => c !== mod.code);
-                            setModalSelectedCodes(updated);
-                            if (isDefault) {
-                              setModalDefaultCode(updated[0] || "TASK_WORKFLOW");
-                            }
-                          } else {
-                            setModalSelectedCodes([...modalSelectedCodes, mod.code]);
-                          }
-                        }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
-                        className={`p-3.5 rounded-lg border transition-all cursor-pointer flex items-start justify-between gap-3 ${
-                          isSelected 
-                            ? "bg-surface border-border shadow-xs ring-1 ring-ring" 
-                            : "bg-muted/30 border-border opacity-60 hover:opacity-100"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border ${mod.color}`}>
-                            <IconComp className="h-4 w-4" />
-                          </div>
-                          <div className="space-y-0.5 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-foreground text-xs">{mod.name}</span>
-                              {isDefault && (
-                                <span className="text-[11px] px-1.5 py-0.2 rounded bg-surface text-accent-soft-text dark:text-muted-foreground font-semibold border border-border">
-                                  Default landing
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed">{mod.desc}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                          <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all ${
-                            isSelected 
-                              ? "bg-primary border-border-active text-white shadow-2xs" 
-                              : "border-border bg-surface"
-                          }`}>
-                            {isSelected && <Check className="h-3 w-3" />}
-                          </div>
-                        </div>
-                        {mod.code === "DASHBOARDS" && isSelected && (
-                          <div className="mt-2 ml-4 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
-                              <span>Accessible Dashboards (User-Wise):</span>
-                              <span className="text-[10px] text-muted-foreground">{modalSelectedDashboards.length} selected</span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {DASHBOARDS.map((d) => {
-                                const isDashActive = modalSelectedDashboards.includes(d.key);
-                                return (
-                                  <label
-                                    key={d.key}
-                                    className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${
-                                      isDashActive
-                                        ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
-                                        : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
-                                    }`}
-                                    onClick={e => e.stopPropagation()}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isDashActive}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setModalSelectedDashboards(prev => [...prev, d.key]);
-                                        } else {
-                                          setModalSelectedDashboards(prev => prev.filter(k => k !== d.key));
-                                        }
-                                      }}
-                                      className="mt-0.5 h-3.5 w-3.5 rounded text-primary focus:ring-ring cursor-pointer"
-                                    />
-                                    <div className="min-w-0">
-                                      <span className="block text-xs truncate font-semibold">{d.name}</span>
-                                      <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
-                                    </div>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Default Landing Module Dropdown */}
-                <div className="pt-2 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <label className="text-xs font-semibold text-foreground">Default landing module:</label>
-                  <select
-                    value={modalDefaultCode}
-                    onChange={e => setModalDefaultCode(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border border-border bg-background text-foreground font-semibold text-xs focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                  >
-                    {modalSelectedCodes.map(code => (
-                      <option key={code} value={code}>
-                        {OPERATIONAL_MODULES.find(m => m.code === code)?.name || (code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : code === "DASHBOARDS" ? "Dashboards" : code === "CHANDAK_MEET" ? "Chandak Meet" : code === "ORG_BUDGET" ? "Organization Budget" : code === "CHANDAK_MESSENGER" ? "Chandak Messenger" : "Vehicle Desk")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <AppButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setModuleModalOpen(false)}
-                disabled={moduleModalSaving}
-              >
-                Cancel
-              </AppButton>
-              <AppButton
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={handleSaveModules}
-                disabled={moduleModalSaving || moduleModalLoading}
-                leftIcon={moduleModalSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                className="bg-primary hover:bg-primary-hover text-white font-semibold"
-              >
-                {moduleModalSaving ? "Saving Allocations..." : "Save Module Allocations"}
-              </AppButton>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Granular Module-Wise RBAC & Roles Modal ── */}
+      <UserModuleAccessModal
+        isOpen={moduleModalOpen}
+        onClose={() => setModuleModalOpen(false)}
+        onSuccess={() => {
+          triggerToast("Module access and roles updated successfully.");
+          fetchUsersDirectory();
+        }}
+        user={moduleModalUser}
+        moduleRoles={moduleRoles}
+        isCallerSuperAdmin={Boolean(isSuperAdmin || serverIsSuperAdmin)}
+      />
     </div>
     </div>
   );
