@@ -103,9 +103,17 @@ export async function createTask(payload: {
     const finalWorkspaceId = cleanUUID(payload.sub_workspace_id) || cleanUUID(payload.workspace_id);
 
     // Strict Access Validation:
-    // 1. Workspace membership check
+    // 1. Workspace membership check & Module RBAC TASKS_CREATE
     const { hasPermission } = await import('@/lib/permissions');
+    const { can } = await import('@/lib/permissions/module-access');
     const isSuperAdmin = await hasPermission(creatorId, 'WORKSPACES_MANAGE') || await hasPermission(creatorId, 'SUPER_ADMIN');
+
+    if (!isSuperAdmin) {
+      const canCreate = await can(creatorId, 'TASK_WORKFLOW', 'TASKS_CREATE', { workspace_id: finalWorkspaceId || undefined });
+      if (!canCreate) {
+        return { error: "Access Denied: You lack TASKS_CREATE permission in Task Workflow." };
+      }
+    }
     
     if (!isSuperAdmin && finalWorkspaceId) {
       const [memberCheck, ownerCheck] = await Promise.all([
@@ -1794,12 +1802,14 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, created_by, owner_id, workspace_id').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  // Check if current user is Super Admin
+  // Check if current user is Super Admin or has TASKS_ASSIGN
+  const effectiveWsId = workspaceId || task.workspace_id;
   const { hasPermission } = await import("@/lib/permissions");
+  const { can } = await import("@/lib/permissions/module-access");
   const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "TASKS_MANAGE");
+  const canAssignPerm = isSuperAdmin || (await can(userId, "TASK_WORKFLOW", "TASKS_ASSIGN", { workspace_id: effectiveWsId || undefined }));
 
   let isWorkspaceLeader = false;
-  const effectiveWsId = workspaceId || task.workspace_id;
   if (effectiveWsId) {
     const { data: ws } = await supabaseAdmin.from('workspaces').select('workspace_owner_id').eq('id', effectiveWsId).maybeSingle();
     if (ws?.workspace_owner_id === userId) {
@@ -1814,7 +1824,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
 
   const isTaskOwnerOrCreator = task.assigned_to === userId || task.created_by === userId || task.owner_id === userId;
 
-  if (!isSuperAdmin && !isWorkspaceLeader && !isTaskOwnerOrCreator) {
+  if (!isSuperAdmin && !canAssignPerm && !isWorkspaceLeader && !isTaskOwnerOrCreator) {
     await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
       action_attempted: 'UPDATE_ASSIGNMENT'
     }, userId);
@@ -2453,7 +2463,9 @@ export async function assignUserToTasksBatch(userId: string, assignments: { task
         const isOwner = t.assigned_to === user.id || t.created_by === user.id;
         if (!isOwner) {
           const { canManageWorkspace } = await import("@/lib/permissions");
-          const canManage = await canManageWorkspace(user.id, t.workspace_id);
+          const { can } = await import("@/lib/permissions/module-access");
+          const canAssign = await can(user.id, "TASK_WORKFLOW", "TASKS_ASSIGN", { workspace_id: t.workspace_id });
+          const canManage = canAssign || (await canManageWorkspace(user.id, t.workspace_id));
           if (!canManage) {
             return { error: `Unauthorized: You do not have permission to assign users on task ${assignment.taskId}` };
           }

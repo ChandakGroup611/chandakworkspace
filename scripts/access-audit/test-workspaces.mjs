@@ -86,6 +86,58 @@ export async function runWorkspacesAccessTest() {
     logFail('WORKSPACE_MEMBER_SELECTION_REACTIVE', 'Member selection check failed', err.message);
   }
 
+  // Test 6: TASK_WORKFLOW Module RBAC integration in permissions layer
+  try {
+    const permContent = fs.readFileSync('lib/permissions/index.ts', 'utf8');
+    assert(permContent.includes('can(userId, "TASK_WORKFLOW"'), 'hasPermission does not integrate with TASK_WORKFLOW Module RBAC');
+    assert(permContent.includes('platform_role'), 'user context query does not include platform_role check');
+    
+    const wsActionContent = fs.readFileSync('lib/actions/workspaces.ts', 'utf8');
+    assert(wsActionContent.includes('can(userId, "TASK_WORKFLOW"'), 'workspaces server actions do not integrate with TASK_WORKFLOW can() helper');
+
+    const taskActionContent = fs.readFileSync('lib/actions/tasks.ts', 'utf8');
+    assert(taskActionContent.includes('can(creatorId, \'TASK_WORKFLOW\', \'TASKS_CREATE\''), 'createTask lacks TASKS_CREATE Module RBAC check');
+    assert(taskActionContent.includes('can(userId, "TASK_WORKFLOW", "TASKS_ASSIGN"'), 'assignUserToTaskAction lacks TASKS_ASSIGN Module RBAC check');
+
+    logPass('TASK_WORKFLOW_MODULE_RBAC', 'Workspaces, tasks, and permissions layers fully integrate with TASK_WORKFLOW Module RBAC');
+  } catch (err) {
+    logFail('TASK_WORKFLOW_MODULE_RBAC', 'TASK_WORKFLOW Module RBAC check failed', err.message);
+  }
+
+  // Test 7: SLA and AMC RBAC gates
+  try {
+    const slaContent = fs.readFileSync('lib/actions/sla.ts', 'utf8');
+    assert(slaContent.includes('can(user.id, "TASK_WORKFLOW", "SLA_VIEW")'), 'fetchSLARules lacks SLA_VIEW check');
+    assert(slaContent.includes('can(user.id, "TASK_WORKFLOW", "SLA_CONFIG")'), 'saveSLARule/deleteSLARule lacks SLA_CONFIG check');
+
+    const amcContent = fs.readFileSync('lib/actions/amc.ts', 'utf8');
+    assert(amcContent.includes('AMC_MANAGE'), 'AMC actions lack AMC_MANAGE check');
+
+    logPass('SLA_AMC_RBAC_GATED', 'SLA and AMC server actions strictly gated by TASK_WORKFLOW module permissions');
+  } catch (err) {
+    logFail('SLA_AMC_RBAC_GATED', 'SLA and AMC RBAC checks failed', err.message);
+  }
+
+  // Test 8: User creation quarantine across task workflow modules
+  try {
+    const filesToScan = [
+      'app/workspaces/page.tsx',
+      'app/workspaces/WorkspacesClient.tsx',
+      'app/tasks/page.tsx',
+      'components/workspaces/WorkspaceMasterTable.tsx'
+    ];
+    for (const f of filesToScan) {
+      if (fs.existsSync(f)) {
+        const content = fs.readFileSync(f, 'utf8');
+        assert(!content.includes('createUserAction'), `Forbidden user creation trigger found in ${f}`);
+        assert(!content.includes('saveUserAction'), `Forbidden user creation trigger found in ${f}`);
+      }
+    }
+    logPass('TASK_WORKFLOW_USER_QUARANTINE', 'Zero user creation triggers in Workspaces & Tasks modules; quarantined to Administration -> Users');
+  } catch (err) {
+    logFail('TASK_WORKFLOW_USER_QUARANTINE', 'User quarantine check failed', err.message);
+  }
+
   return results;
 }
 

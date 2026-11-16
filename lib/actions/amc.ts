@@ -13,8 +13,8 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 export async function saveAMCEntity(tableName: string, payload: any, editId?: string) {
   const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
   const hasSpecificPerm = editId
-    ? (await checkServerPermission("AMC_EDIT") || await checkServerPermission("AMC_UPDATE"))
-    : await checkServerPermission("AMC_CREATE");
+    ? (await checkServerPermission("AMC_EDIT") || await checkServerPermission("AMC_UPDATE") || await checkServerPermission("AMC_MANAGE"))
+    : (await checkServerPermission("AMC_CREATE") || await checkServerPermission("AMC_MANAGE"));
 
   if (!isSuperAdmin && !hasSpecificPerm) {
     return { success: false, error: "Unauthorized: Missing AMC mutation capability." };
@@ -58,7 +58,7 @@ export async function saveAMCEntity(tableName: string, payload: any, editId?: st
 
 export async function deleteAMCEntity(tableName: string, id: string, hardDelete = false) {
   const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
-  const hasDeletePerm = await checkServerPermission("AMC_DELETE");
+  const hasDeletePerm = (await checkServerPermission("AMC_DELETE")) || (await checkServerPermission("AMC_MANAGE"));
   if (!isSuperAdmin && !hasDeletePerm) {
     return { success: false, error: "Unauthorized: Missing AMC delete capability." };
   }

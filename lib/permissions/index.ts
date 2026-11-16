@@ -22,7 +22,7 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
   const [roleRes, permRes, secondaryRolesRes] = await Promise.all([
     supabaseAdmin
       .from("user_master")
-      .select("role:roles(code), role_id, email")
+      .select("role:roles(code), role_id, email, platform_role")
       .eq("id", userId)
       .maybeSingle(),
     supabaseAdmin
@@ -35,8 +35,8 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
       .eq("user_id", userId)
   ]);
 
-  let dbRoleCode = Array.isArray(roleRes.data?.role) 
-    ? (roleRes.data?.role[0] as any)?.code 
+  let dbRoleCode = Array.isArray(roleRes.data?.role)
+    ? (roleRes.data?.role[0] as any)?.code
     : (roleRes.data?.role as any)?.code;
 
   if (!dbRoleCode && roleRes.data?.role_id) {
@@ -62,16 +62,16 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
 
   const rawPerms = permRes.data?.map(r => r.permission_code) || [];
 
-  const isSuper = allRoleCodes.some(c => {
+  const isSuper = (roleRes.data as any)?.platform_role === 'SUPER_ADMIN' || allRoleCodes.some(c => {
     const upper = c.toUpperCase();
-    return upper === 'SUPER_ADMIN' || upper === 'ROLE_ADMIN' || upper === 'ADMIN' || 
-           upper === 'SUPERADMIN' || upper === 'ROLE_SUPER_ADMIN' || upper === 'SUPER_ADMINISTRATOR';
+    return upper === 'SUPER_ADMIN' || upper === 'ROLE_ADMIN' || upper === 'ADMIN' ||
+      upper === 'SUPERADMIN' || upper === 'ROLE_SUPER_ADMIN' || upper === 'SUPER_ADMINISTRATOR';
   }) || rawPerms.includes('SUPER_ADMIN') || rawPerms.includes('SUPER_ADMIN_ACCESS') || rawPerms.includes('ALL_ACCESS');
 
   if (isSuper) {
     dbRoleCode = 'SUPER_ADMIN';
   }
-  
+
   // Expand permissions: UPDATE implies VIEW & EDIT, EDIT implies VIEW & UPDATE, DELETE implies VIEW, CREATE implies VIEW
   // NOTE: UPDATE does NOT imply CREATE, DELETE does NOT imply CREATE.
   const expanded = new Set<string>(rawPerms);
@@ -137,14 +137,14 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
   }
 
   const ctx = await getUserContext(userId);
-  
+
   if (
-    ctx.role === "SUPER_ADMIN" || 
-    ctx.role === "ROLE_ADMIN" || 
-    ctx.role === "ADMIN" || 
-    ctx.role === "SUPERADMIN" || 
-    ctx.role === "ROLE_SUPER_ADMIN" || 
-    ctx.role === "SUPER_ADMINISTRATOR" || 
+    ctx.role === "SUPER_ADMIN" ||
+    ctx.role === "ROLE_ADMIN" ||
+    ctx.role === "ADMIN" ||
+    ctx.role === "SUPERADMIN" ||
+    ctx.role === "ROLE_SUPER_ADMIN" ||
+    ctx.role === "SUPER_ADMINISTRATOR" ||
     ctx.role === "admin-role-id" ||
     ctx.perms.has("SUPER_ADMIN") ||
     ctx.perms.has("SUPER_ADMIN_ACCESS") ||
@@ -153,7 +153,20 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
     return true;
   }
 
-  // Strict IAM explicit snapshot check ONLY
+  // 1. Module RBAC for TASK_WORKFLOW
+  try {
+    const { can } = await import("@/lib/permissions/module-access");
+    let checkCode = permissionCode;
+    if (permissionCode === "TASKS_UPDATE") checkCode = "TASKS_UPDATE_CORE";
+    if (permissionCode === "AMC_EDIT" || permissionCode === "AMC_UPDATE" || permissionCode === "AMC_CREATE" || permissionCode === "AMC_DELETE") checkCode = "AMC_MANAGE";
+    if (permissionCode === "REQUIREMENTS_MANAGE") checkCode = "REQUIREMENTS_APPROVE";
+
+    if (await can(userId, "TASK_WORKFLOW", checkCode)) {
+      return true;
+    }
+  } catch {}
+
+  // 2. Strict IAM explicit snapshot check ONLY
   return ctx.perms.has(permissionCode);
 }
 
@@ -203,7 +216,7 @@ export async function canAccessTask(userId: string, taskId: string): Promise<boo
 
   if (!data) return false;
   if (data.created_by === userId || data.assigned_to === userId) return true;
-  
+
   const participants = data.participants as any[];
   if (participants?.some(a => a.user_id === userId)) return true;
 
@@ -227,14 +240,21 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
   if (
-    ctx.role === "SUPER_ADMIN" || 
-    ctx.role === "ROLE_ADMIN" || 
-    ctx.perms.has("SUPER_ADMIN") || 
+    ctx.role === "SUPER_ADMIN" ||
+    ctx.role === "ROLE_ADMIN" ||
+    ctx.perms.has("SUPER_ADMIN") ||
     ctx.perms.has("SUPER_ADMIN_ACCESS") ||
     ctx.perms.has("WORKSPACES_MANAGE")
   ) {
     return true;
   }
+
+  try {
+    const { can } = await import("@/lib/permissions/module-access");
+    if (await can(userId, "TASK_WORKFLOW", "WORKSPACES_MANAGE", { workspace_id: workspaceId })) {
+      return true;
+    }
+  } catch {}
 
   const { data } = await supabaseAdmin
     .from("workspaces")
@@ -263,14 +283,21 @@ export async function canManageWorkspace(userId: string, workspaceId: string): P
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
   if (
-    ctx.role === "SUPER_ADMIN" || 
-    ctx.role === "ROLE_ADMIN" || 
-    ctx.perms.has("SUPER_ADMIN") || 
+    ctx.role === "SUPER_ADMIN" ||
+    ctx.role === "ROLE_ADMIN" ||
+    ctx.perms.has("SUPER_ADMIN") ||
     ctx.perms.has("SUPER_ADMIN_ACCESS") ||
     ctx.perms.has("WORKSPACES_MANAGE")
   ) {
     return true;
   }
+
+  try {
+    const { can } = await import("@/lib/permissions/module-access");
+    if (await can(userId, "TASK_WORKFLOW", "WORKSPACES_MANAGE", { workspace_id: workspaceId })) {
+      return true;
+    }
+  } catch {}
 
   const { data } = await supabaseAdmin
     .from("workspaces")

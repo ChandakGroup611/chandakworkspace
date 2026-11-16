@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { getCachedUser } from "@/lib/auth/cached-user";
 
 import { hasPermission } from "@/lib/permissions";
+import { can } from "@/lib/permissions/module-access";
 import { getVisibleWorkspaces } from "@/lib/repositories/workspaces";
 import { logActivityEvent } from "@/lib/actions/tasks";
 import { LifecycleManager } from "@/lib/services/LifecycleManager";
@@ -20,6 +21,8 @@ import { formatHierarchicalWorkspaceName } from "@/lib/utils/workspace-naming";
  * Replaced by the centralized Authorization Service
  */
 async function checkServerPermission(supabase: any, userId: string, requiredPerm: string): Promise<boolean> {
+  const allowed = await can(userId, "TASK_WORKFLOW", requiredPerm);
+  if (allowed) return true;
   return hasPermission(userId, requiredPerm);
 }
 

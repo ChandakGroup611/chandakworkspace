@@ -3,11 +3,17 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { revalidatePath, unstable_noStore as noStore } from "next/cache";
+import { can } from "@/lib/permissions/module-access";
 
 export async function fetchSLARules() {
   noStore();
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const allowed = await can(user.id, "TASK_WORKFLOW", "SLA_VIEW");
+  if (!allowed) throw new Error("Unauthorized: Missing SLA_VIEW permission.");
   
   const { data, error } = await supabase
     .from("ticket_sla_policies")
@@ -25,6 +31,11 @@ export async function fetchSLARules() {
 export async function saveSLARule(payload: any) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthenticated");
+
+  const allowed = await can(user.id, "TASK_WORKFLOW", "SLA_CONFIG");
+  if (!allowed) throw new Error("Unauthorized: Missing SLA_CONFIG permission.");
   
   // Protect codes for existing rows if needed
   if (payload.id) {
@@ -62,6 +73,11 @@ export async function saveSLARule(payload: any) {
 export async function deleteSLARule(id: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthenticated");
+
+  const allowed = await can(user.id, "TASK_WORKFLOW", "SLA_CONFIG");
+  if (!allowed) throw new Error("Unauthorized: Missing SLA_CONFIG permission.");
   
   const { error } = await supabase
     .from("ticket_sla_policies")

@@ -124,7 +124,7 @@ async function loadUserModuleContext(userId: string): Promise<UserContextCache> 
     getModuleRoleRegistry(),
     supabaseAdmin
       .from("user_master")
-      .select("id, is_active, is_deleted, role_id, roles:role_id(code)")
+      .select("id, is_active, is_deleted, role_id, roles:role_id(code), platform_role")
       .eq("id", userId)
       .maybeSingle(),
     supabaseAdmin
@@ -160,9 +160,11 @@ async function loadUserModuleContext(userId: string): Promise<UserContextCache> 
     }
   }
 
-  const isSuperAdmin = roleCodes.some(c => 
-    ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN", "ROLE_ADMIN"].includes(c)
-  );
+  const isSuperAdmin = 
+    userRes.data?.platform_role === "SUPER_ADMIN" ||
+    roleCodes.some(c => 
+      ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN", "ROLE_ADMIN"].includes(c)
+    );
 
   // Build module map
   const moduleMap = new Map<string, UserModuleRole>();
