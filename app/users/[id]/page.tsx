@@ -129,12 +129,13 @@ export default function UserFormPage() {
   const [availableAssets, setAvailableAssets] = useState<any[]>([]);
   const [availableManagers, setAvailableManagers] = useState<any[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isRealSuperAdmin, setIsRealSuperAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Module Entitlements
   const [availableModules, setAvailableModules] = useState<any[]>([]);
   const [selectedModuleCodes, setSelectedModuleCodes] = useState<string[]>(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
-  const [selectedDashboards, setSelectedDashboards] = useState<string[]>(["adm", "engg"]);
+  const [selectedDashboards, setSelectedDashboards] = useState<string[]>([]);
   const [defaultModuleCode, setDefaultModuleCode] = useState<string>("TASK_WORKFLOW");
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignModalSaving, setAssignModalSaving] = useState(false);
@@ -189,7 +190,13 @@ export default function UserFormPage() {
       // Check current user permissions
       const me = rawUsers.find((u: any) => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
       const myRole = data.roles?.find((r: any) => r.id === me?.role_id);
-      const isSuper = !!(data.isSuperAdmin || myRole?.code?.toUpperCase() === "SUPER_ADMIN" || authUser.email === "avinash.pise@chandakgroup.com" || authUser.email === "avinash2@gmail.com");
+      // Who may create / edit user records comes from the IAM permissions (USERS_CREATE / USERS_UPDATE /
+      // USERS_MANAGE), reported by the server; no email shortcuts. `isSuperAdmin` below means "may manage
+      // this record" (the server still refuses Super Admin role changes to anyone but a Super Admin).
+      const rights = (data as any).userRights || {};
+      const isRealSuper = !!(data.isSuperAdmin || myRole?.code?.toUpperCase() === "SUPER_ADMIN");
+      const isSuper = isRealSuper || (isEditingMode ? !!rights.canUpdate : !!rights.canCreate);
+      setIsRealSuperAdmin(isRealSuper);
       setIsSuperAdmin(isSuper);
 
       // Strict access control: If not Super Admin
@@ -230,9 +237,7 @@ export default function UserFormPage() {
             fetchUserModulesAction(id) as any,
             fetchUserDashboardsAction(id) as any
           ]);
-          if (userDashboards && userDashboards.length > 0) {
-            setSelectedDashboards(userDashboards);
-          }
+          setSelectedDashboards(userDashboards && userDashboards.length > 0 ? userDashboards : []);
           if (userModules && userModules.length > 0) {
             const assignedCodes: string[] = userModules
               .map((m: any) => {
@@ -999,7 +1004,7 @@ export default function UserFormPage() {
                     {formIsActive ? "Active Participant" : "Suspended"}
                   </span>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="sr-only peer" disabled={!isSuperAdmin} />
+                    <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="sr-only peer" disabled={!isSuperAdmin || (!isRealSuperAdmin && isEditingMode && id === currentUserId)} />
                     <div className="w-11 h-6 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
                   </label>
                 </div>
@@ -1034,11 +1039,26 @@ export default function UserFormPage() {
                   <select 
                     value={formRoleId} 
                     onChange={(e) => setFormRoleId(e.target.value)} 
-                    disabled={!isSuperAdmin}
+                    disabled={!isSuperAdmin || (!isRealSuperAdmin && isEditingMode && id === currentUserId)}
                     className={`${inputStyle} appearance-none pr-10 font-semibold text-accent-soft-text dark:text-accent-soft-text`}
                   >
                     <option value="">Select Role…</option>
-                    {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    {roles
+                      .filter(r => 
+                        isRealSuperAdmin || 
+                        !["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(r.code?.toUpperCase()) ||
+                        r.id === formRoleId
+                      )
+                      .map(r => (
+                        <option 
+                          key={r.id} 
+                          value={r.id}
+                          disabled={!isRealSuperAdmin && ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(r.code?.toUpperCase())}
+                        >
+                          {r.name}
+                        </option>
+                      ))
+                    }
                   </select>
                   <ChevronDown className="absolute right-4 top-3 h-5 w-5 pointer-events-none text-muted-foreground" />
                 </div>

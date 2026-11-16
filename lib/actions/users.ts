@@ -30,9 +30,36 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
 
   // 2. Authorize the caller (Must be SUPER_ADMIN or have USERS_CREATE/USERS_UPDATE/USERS_MANAGE permission)
   const { hasPermission } = await import('@/lib/permissions');
-  let isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN') || 
+  // User master rules (as defined in IAM): create = USERS_CREATE, edit = USERS_UPDATE, USERS_MANAGE = both.
+  const isCallerSuper = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  let isCallerAdmin = isCallerSuper ||
                       await hasPermission(authUser.id, 'USERS_MANAGE') ||
                       (editUserId ? await hasPermission(authUser.id, 'USERS_UPDATE') : await hasPermission(authUser.id, 'USERS_CREATE'));
+
+  // Only a Super Admin may hand out a Super Admin role (otherwise USERS_UPDATE could be used to promote oneself).
+  if (!isCallerSuper && payload?.role_id) {
+    const { data: targetRole } = await getAdminClient().from("roles").select("code").eq("id", payload.role_id).maybeSingle();
+    const code = String(targetRole?.code || payload.role_id).toUpperCase();
+    if (["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(code)) {
+      const { data: current } = editUserId ? await getAdminClient().from("user_master").select("role_id").eq("id", editUserId).maybeSingle() : { data: null };
+      if (!current || current.role_id !== payload.role_id) {
+        return { success: false, error: "Unauthorized: only a Super Admin can assign the Super Admin role." };
+      }
+    }
+  }
+
+  // Self-deactivation guard: users cannot deactivate their own account
+  if (editUserId === authUser.id && payload?.is_active === false) {
+    return { success: false, error: "Unauthorized: users cannot deactivate their own account." };
+  }
+
+  // Self-role-change guard: non-super users cannot change their own role
+  if (!isCallerSuper && editUserId === authUser.id && payload?.role_id) {
+    const { data: currentSelf } = await getAdminClient().from("user_master").select("role_id").eq("id", authUser.id).maybeSingle();
+    if (currentSelf && currentSelf.role_id !== payload.role_id) {
+      return { success: false, error: "Unauthorized: users cannot modify their own assigned role." };
+    }
+  }
 
   if (!isCallerAdmin && editUserId !== authUser.id) {
     return { success: false, error: "Unauthorized: You do not have permissions to manage other user records." };
@@ -106,8 +133,9 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       updatePayload.role_id = payload.role_id;
     }
 
-    if (!isCallerAdmin) {
+    if (!isCallerAdmin || (editUserId === authUser.id && !isCallerSuper)) {
       // Regular users cannot modify their own administrative assignments
+      // (and a user administrator cannot change their own role or active status)
       delete updatePayload.role_id;
       delete updatePayload.is_active;
       delete updatePayload.department_id;
@@ -138,7 +166,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
   } else {
     // ── CREATE NEW USER ──
     if (!isCallerAdmin) {
-      return { success: false, error: "Unauthorized: Only Super Administrators can create user records." };
+      return { success: false, error: "Unauthorized: you need the 'create users' permission to add user records." };
     }
     const targetPassword = password || "DefaultWelcomePass123!";
 
@@ -401,6 +429,15 @@ export async function fetchUsersDashboardData() {
 
   const { getVisibleUsers, checkIsSuperAdmin } = await import('@/lib/repositories/users');
   const isSuperAdmin = await checkIsSuperAdmin(user.id);
+  // The signed-in person's User master rights (the same rules the save/delete/invite actions enforce)
+  const { hasPermission } = await import('@/lib/permissions');
+  const canManageUsers = isSuperAdmin || await hasPermission(user.id, 'USERS_MANAGE');
+  const userRights = {
+    canView: isSuperAdmin || canManageUsers || await hasPermission(user.id, 'USERS_VIEW') || await hasPermission(user.id, 'USERS_CREATE') || await hasPermission(user.id, 'USERS_UPDATE') || await hasPermission(user.id, 'USERS_DELETE'),
+    canCreate: canManageUsers || await hasPermission(user.id, 'USERS_CREATE'),
+    canUpdate: canManageUsers || await hasPermission(user.id, 'USERS_UPDATE'),
+    canDelete: canManageUsers || await hasPermission(user.id, 'USERS_DELETE'),
+  };
   
   // Parallelize ALL network requests (Users list + metadata lists) to eliminate waterfall latency
   const [users, [deptRes, desigRes, roleRes, astRes, modRes]] = await Promise.all([
@@ -418,6 +455,7 @@ export async function fetchUsersDashboardData() {
     users,
     authUser: user,
     isSuperAdmin,
+    userRights,
     departments: deptRes.data || [],
     designations: desigRes.data || [],
     roles: roleRes.data || [],
@@ -457,12 +495,26 @@ export async function deleteUserAction(userId: string) {
     return { success: false, error: "Unauthenticated request." };
   }
 
-  // Authorize the caller (Must be SUPER_ADMIN to delete a user)
+  // Authorize the caller (SUPER_ADMIN, USERS_DELETE or USERS_MANAGE — the rule defined in IAM)
   const { hasPermission } = await import('@/lib/permissions');
-  const isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  const isCallerSuper = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  const isCallerAdmin = isCallerSuper ||
+                        await hasPermission(authUser.id, 'USERS_DELETE') ||
+                        await hasPermission(authUser.id, 'USERS_MANAGE');
 
   if (!isCallerAdmin) {
-    return { success: false, error: "Unauthorized: Only Super Administrators can delete user records." };
+    return { success: false, error: "Unauthorized: you need the 'delete users' permission to remove user records." };
+  }
+  if (userId === authUser.id) {
+    return { success: false, error: "You cannot remove your own user record." };
+  }
+
+  // Non-super users cannot delete a Super Admin
+  if (!isCallerSuper) {
+    const isTargetSuper = await hasPermission(userId, 'SUPER_ADMIN');
+    if (isTargetSuper) {
+      return { success: false, error: "Unauthorized: only a Super Admin can delete a Super Admin account." };
+    }
   }
 
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -547,7 +599,8 @@ export async function inviteUserAction(
 
   // 2. Authorize the caller (Must be SUPER_ADMIN or have USERS_CREATE/USERS_MANAGE to invite users)
   const { hasPermission } = await import('@/lib/permissions');
-  const isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN') ||
+  const isCallerSuper = await hasPermission(authUser.id, 'SUPER_ADMIN');
+  const isCallerAdmin = isCallerSuper ||
                         await hasPermission(authUser.id, 'USERS_MANAGE') ||
                         await hasPermission(authUser.id, 'USERS_CREATE');
 
@@ -564,13 +617,23 @@ export async function inviteUserAction(
     ? { email: emailOrPayload, roleId: legacyRoleId }
     : emailOrPayload;
 
+  const roleId = payload.roleId || null;
+
+  // Only a Super Admin may hand out a Super Admin role
+  if (!isCallerSuper && roleId) {
+    const { data: targetRole } = await getAdminClient().from("roles").select("code").eq("id", roleId).maybeSingle();
+    const code = String(targetRole?.code || roleId).toUpperCase();
+    if (["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(code)) {
+      return { success: false, error: "Unauthorized: only a Super Admin can assign the Super Admin role." };
+    }
+  }
+
   const email = payload.email?.trim().toLowerCase();
   if (!email || !email.includes("@")) {
     return { success: false, error: "A valid email address is required." };
   }
 
   const fullName = payload.fullName?.trim() || "";
-  const roleId = payload.roleId || null;
   const departmentId = payload.departmentId || null;
   const designationId = payload.designationId || null;
   const moduleCodes = payload.moduleCodes && payload.moduleCodes.length > 0 
@@ -628,21 +691,8 @@ export async function inviteUserAction(
         return { success: false, error: `Invite failed: ${inviteError.message}` };
       }
     } else {
-      console.warn("[Server Action] Invite error, attempting direct user creation fallback:", inviteError.message);
-      const { data: createdAuthUser, error: createAuthError } = await adminClient.auth.admin.createUser({
-        email,
-        email_confirm: true,
-        user_metadata: {
-          full_name: fullName || email.split("@")[0],
-          invited_by: authUser.id
-        }
-      });
-      if (createdAuthUser?.user?.id) {
-        targetUserId = createdAuthUser.user.id;
-      } else {
-        console.error("[Server Action] Direct user creation fallback also failed:", createAuthError);
-        return { success: false, error: `Invite failed: ${inviteError.message}` };
-      }
+      console.error("[Server Action] Invite error:", inviteError);
+      return { success: false, error: `Invite failed: ${inviteError.message}` };
     }
   }
 

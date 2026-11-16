@@ -98,8 +98,12 @@ export async function getVisibleUsers(userId: string, isSuperAdminOverride?: boo
 
   if (usersRes.error) throw usersRes.error;
 
-  // STRICT POLICY: Only super admin can see entire user list; otherwise user can see its own profile in list only
-  if (isSuperAdmin) {
+  // Policy (as defined in IAM): Super Admin, or anyone with a user-management permission
+  // (USERS_VIEW / USERS_CREATE / USERS_UPDATE / USERS_DELETE / USERS_MANAGE), sees the whole user list;
+  // everyone else sees only their own profile.
+  const USER_ADMIN_PERMS = ['USERS_VIEW', 'USERS_CREATE', 'USERS_UPDATE', 'USERS_DELETE', 'USERS_MANAGE'];
+  const canViewAll = isSuperAdmin || !!permsRes.data?.some(p => USER_ADMIN_PERMS.includes(p.permission_code));
+  if (canViewAll) {
     return usersRes.data || [];
   }
 

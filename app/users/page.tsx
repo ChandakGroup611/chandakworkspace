@@ -186,7 +186,12 @@ export default function UserMasterPage() {
 
   // Helper to determine if current logged in user has administrative privileges
   const [serverIsSuperAdmin, setServerIsSuperAdmin] = useState<boolean | null>(null);
+  const [serverUserRights, setServerUserRights] = useState<{ canCreate?: boolean; canUpdate?: boolean; canDelete?: boolean; canView?: boolean } | null>(null);
   const isSuperAdmin = serverIsSuperAdmin ?? hasPermission("SUPER_ADMIN");
+  // Buttons follow the User master permissions set in IAM (server checks the same rules)
+  const canCreateUsers = isSuperAdmin || (serverUserRights?.canCreate ?? (hasPermission("USERS_CREATE") || hasPermission("USERS_MANAGE")));
+  const canUpdateUsers = isSuperAdmin || (serverUserRights?.canUpdate ?? (hasPermission("USERS_UPDATE") || hasPermission("USERS_MANAGE")));
+  const canDeleteUsers = isSuperAdmin || (serverUserRights?.canDelete ?? (hasPermission("USERS_DELETE") || hasPermission("USERS_MANAGE")));
 
   // Lookup selections
   const [departments, setDepartments] = useState<any[]>([]);
@@ -222,7 +227,7 @@ export default function UserMasterPage() {
   const [inviteDesignation, setInviteDesignation] = useState<string>("");
   const [inviteSelectedModules, setInviteSelectedModules] = useState<string[]>(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
   const [inviteDefaultModule, setInviteDefaultModule] = useState<string>("TASK_WORKFLOW");
-  const [inviteSelectedDashboards, setInviteSelectedDashboards] = useState<string[]>(["adm", "engg"]);
+  const [inviteSelectedDashboards, setInviteSelectedDashboards] = useState<string[]>([]);
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const handleSendInvite = async () => {
@@ -280,7 +285,7 @@ export default function UserMasterPage() {
         fetchUserModulesAction(user.id) as any,
         fetchUserDashboardsAction(user.id) as any
       ]);
-      setModalSelectedDashboards(userDashboards && userDashboards.length > 0 ? userDashboards : ["adm", "engg"]);
+      setModalSelectedDashboards(userDashboards && userDashboards.length > 0 ? userDashboards : []);
       if (userMods && userMods.length > 0) {
         const codes = userMods.map((m: any) => {
           const mod = Array.isArray(m.module) ? m.module[0] : m.module;
@@ -393,6 +398,7 @@ export default function UserMasterPage() {
 
       const serverAdmin = typeof data.isSuperAdmin === "boolean" ? data.isSuperAdmin : isSuperAdmin;
       setServerIsSuperAdmin(serverAdmin);
+      if (data.userRights) setServerUserRights(data.userRights);
 
       const rawUsers = data.users || [];
       const cleanUsers = rawUsers.filter((usr: any) => usr.is_deleted !== true).map((usr: any) => {
@@ -421,8 +427,13 @@ export default function UserMasterPage() {
         cleanUsers.push({ ...newProfile });
       }
 
-      // STRICT GOVERNANCE: Only Super Admin can see the entire user list; otherwise user can see its own profile in list only
-      const visibleUsers = serverAdmin
+      // IAM Policy: Super Admin, or anyone with user-management permission (USERS_VIEW / USERS_CREATE / USERS_UPDATE / USERS_DELETE / USERS_MANAGE), sees the whole user list; others see only their own profile
+      const rights = (data as any).userRights || {};
+      const canViewAllUsers = serverAdmin || 
+        !!rights.canView || !!rights.canCreate || !!rights.canUpdate || !!rights.canDelete ||
+        hasPermission("USERS_VIEW") || hasPermission("USERS_CREATE") || hasPermission("USERS_UPDATE") || hasPermission("USERS_DELETE") || hasPermission("USERS_MANAGE");
+
+      const visibleUsers = canViewAllUsers
         ? [...localCreated, ...cleanUsers].filter(u => !localDeleted.includes(u.id))
         : cleanUsers.filter(u => u.id === authUser.id || (authUser.email && u.email?.toLowerCase() === authUser.email.toLowerCase()));
 
@@ -784,7 +795,7 @@ export default function UserMasterPage() {
           >
             Refresh directory
           </AppButton>
-          {isSuperAdmin && (
+          {canCreateUsers && (
             <>
               <AppButton 
                 variant="outline" 
@@ -870,9 +881,11 @@ export default function UserMasterPage() {
                     onChange={e => setInviteRole(e.target.value)}
                   >
                     <option value="">Select role</option>
-                    {roles.map(r => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
-                    ))}
+                    {roles
+                      .filter(r => isSuperAdmin || !["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ROLE_SUPER_ADMIN", "SUPER_ADMINISTRATOR", "ADMIN-ROLE-ID"].includes(r.code?.toUpperCase()))
+                      .map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
                   </select>
                 </div>
 
@@ -1277,7 +1290,7 @@ export default function UserMasterPage() {
 
                             <AppTableCell className="text-right w-32 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1.5">
-                                {isSuperAdmin && (
+                                {canUpdateUsers && (
                                   <AppButton aria-label="Assign workspace modules" variant="secondary"
                                     type="button"
                                     onClick={() => handleOpenModuleModal(usr)}
@@ -1287,7 +1300,7 @@ export default function UserMasterPage() {
                                     <Layers className="h-4 w-4" />
                                   </AppButton>
                                 )}
-                                {(isSuperAdmin || usr.id === currentUserProfile?.id) && (
+                                {(canUpdateUsers || usr.id === currentUserProfile?.id) && (
                                   <AppButton aria-label="Edit user profile" variant="secondary"
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
@@ -1299,7 +1312,7 @@ export default function UserMasterPage() {
                                     <Edit3 className="h-4 w-4" />
                                   </AppButton>
                                 )}
-                                {isSuperAdmin && (
+                                {canDeleteUsers && usr.id !== currentUserProfile?.id && (
                                   <AppButton aria-label="Remove user" variant="secondary"
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
