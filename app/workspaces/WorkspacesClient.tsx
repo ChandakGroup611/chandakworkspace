@@ -985,7 +985,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         const freshIds = freshMembers.map((m: any) => m.id).filter(Boolean);
         setNewWS(prev => ({
           ...prev,
-          assigneeIds: Array.from(new Set([...prev.assigneeIds, ...freshIds]))
+          assigneeIds: freshIds
         }));
       }
     } catch (err) {
@@ -2198,25 +2198,46 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       u.email?.toLowerCase().includes(assigneeSearch.toLowerCase())
                     )
                     .map(u => {
-                      const isChecked = newWS.assigneeIds.includes(u.id);
+                      const isChecked = Array.isArray(newWS.assigneeIds) && newWS.assigneeIds.includes(u.id);
+                      const toggleThis = () => {
+                        setNewWS(prev => {
+                          const current = Array.isArray(prev.assigneeIds) ? prev.assigneeIds : [];
+                          const exists = current.includes(u.id);
+                          return {
+                            ...prev,
+                            assigneeIds: exists ? current.filter((id: string) => id !== u.id) : [...current, u.id]
+                          };
+                        });
+                      };
                       return (
-                        <label key={u.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 text-[13.5px] hover:bg-surface-hover transition-colors">
+                        <div 
+                          key={u.id} 
+                          role="button"
+                          tabIndex={0}
+                          onClick={toggleThis}
+                          onKeyDown={(e) => {
+                            if (e.key === ' ' || e.key === 'Enter') {
+                              e.preventDefault();
+                              toggleThis();
+                            }
+                          }}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-3 rounded-md p-2 text-[13.5px] transition-colors select-none",
+                            isChecked ? "bg-accent-soft text-foreground font-medium" : "hover:bg-surface-hover text-foreground"
+                          )}
+                        >
                           <input 
                             type="checkbox" 
                             checked={isChecked} 
-                            onChange={e => {
-                              const checked = e.target.checked;
-                              setNewWS(prev => ({
-                                ...prev,
-                                assigneeIds: checked
-                                  ? Array.from(new Set([...prev.assigneeIds, u.id]))
-                                  : prev.assigneeIds.filter((id: string) => id !== u.id)
-                              }));
-                            }} 
-                            className="h-4 w-4 rounded accent-theme-btn-primary cursor-pointer"
+                            onChange={() => {}} 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleThis();
+                            }}
+                            className="h-4 w-4 rounded accent-theme-btn-primary cursor-pointer pointer-events-auto"
                           />
-                          <div className="flex flex-col min-w-0">
-                            <span className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
+                          <div className="flex flex-col min-w-0 pointer-events-none">
+                            <span className="flex items-center gap-2 truncate text-[13.5px] text-foreground">
                               {u.full_name}
                             </span>
                             {(u.user_code || u.email) && (
@@ -2225,7 +2246,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                               </span>
                             )}
                           </div>
-                        </label>
+                        </div>
                       );
                     })}
                   {availableUsers.length === 0 && <p className="p-4 text-center text-[13px] text-muted">No people available.</p>}

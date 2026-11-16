@@ -608,6 +608,15 @@ export async function fetchCustomFields(workspaceId: string) {
 }
 
 export async function createCustomField(workspaceId: string, fieldName: string, fieldType: string) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) throw new Error("Unauthenticated. Please log in.");
+
+  const { canManageWorkspace, hasPermission } = await import("@/lib/permissions");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const canManage = isSuper || (await canManageWorkspace(user.id, workspaceId));
+  if (!canManage) throw new Error("Unauthorized: You do not have permission to manage custom fields in this workspace.");
+
   const fieldKey = fieldName.toLowerCase().replace(/[^a-z0-9]/g, '_');
   
   const { data, error } = await supabaseAdmin
@@ -617,7 +626,7 @@ export async function createCustomField(workspaceId: string, fieldName: string, 
       field_name: fieldName,
       field_key: fieldKey,
       field_type: fieldType,
-      created_by: null
+      created_by: user.id
     }])
     .select()
     .single();
@@ -2429,11 +2438,32 @@ export async function fetchWorkspaceTasksList(workspaceId: string) {
 
 export async function assignUserToTasksBatch(userId: string, assignments: { taskId: string; role: 'primary' | 'executor' }[]) {
   try {
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    if (!user) return { error: "Unauthenticated. Please log in." };
+
+    const { hasPermission } = await import("@/lib/permissions");
+    const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+
     for (const assignment of assignments) {
+      if (!isSuperAdmin) {
+        // Check if user is primary assignee or creator of this task, or manager of its workspace
+        const { data: t } = await supabaseAdmin.from('tasks').select('id, assigned_to, created_by, workspace_id').eq('id', assignment.taskId).maybeSingle();
+        if (!t) continue;
+        const isOwner = t.assigned_to === user.id || t.created_by === user.id;
+        if (!isOwner) {
+          const { canManageWorkspace } = await import("@/lib/permissions");
+          const canManage = await canManageWorkspace(user.id, t.workspace_id);
+          if (!canManage) {
+            return { error: `Unauthorized: You do not have permission to assign users on task ${assignment.taskId}` };
+          }
+        }
+      }
+
       if (assignment.role === 'primary') {
         const { error } = await supabaseAdmin
           .from('tasks')
-          .update({ assigned_to: userId })
+          .update({ assigned_to: userId, updated_at: new Date().toISOString() })
           .eq('id', assignment.taskId);
         if (error) console.error("Error assigning primary:", error);
       } else if (assignment.role === 'executor') {

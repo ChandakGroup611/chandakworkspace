@@ -2055,11 +2055,43 @@ export async function toggleChecklistItem(itemId: string, completed: boolean) {
 }
 
 export async function updateTaskProgress(taskId: string, progress: number) {
-  const { data: task } = await supabaseAdmin.from("tasks").select("custom_fields").eq("id", taskId).single();
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) throw new Error("Unauthenticated. Please log in.");
+
+  const { data: task, error: fetchErr } = await supabaseAdmin
+    .from("tasks")
+    .select("custom_fields, assigned_to, created_by, workspace_id")
+    .eq("id", taskId)
+    .single();
+
+  if (fetchErr || !task) throw new Error("Task not found");
+
+  const { hasPermission, canManageWorkspace } = await import("@/lib/permissions");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const isAssigned = task.assigned_to === user.id || task.created_by === user.id;
+
+  if (!isSuper && !isAssigned) {
+    const canManage = await canManageWorkspace(user.id, task.workspace_id);
+    if (!canManage) {
+      const { count } = await supabaseAdmin
+        .from("task_participants")
+        .select("*", { count: "exact", head: true })
+        .eq("task_id", taskId)
+        .eq("user_id", user.id);
+      if (!count || count === 0) {
+        throw new Error("Unauthorized: Only task assignees, participants, or workspace managers can update task progress.");
+      }
+    }
+  }
+
   const customFields = task?.custom_fields && typeof task.custom_fields === 'object' ? task.custom_fields : {};
   const { error } = await supabaseAdmin
     .from("tasks")
-    .update({ custom_fields: { ...customFields, progress_percentage: progress } })
+    .update({ 
+      custom_fields: { ...customFields, progress_percentage: progress },
+      updated_at: new Date().toISOString()
+    })
     .eq("id", taskId);
 
   if (error) throw new Error("Failed to update task progress");
@@ -2151,6 +2183,18 @@ export async function fetchSprints(workspaceId: string) {
 }
 
 export async function updateSprint(id: string, formData: any) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) throw new Error("Unauthenticated. Please log in.");
+
+  const { data: sprint, error: sprintErr } = await supabaseAdmin.from("sprints").select("workspace_id").eq("id", id).maybeSingle();
+  if (sprintErr || !sprint) throw new Error("Sprint not found");
+
+  const { hasPermission, canManageWorkspace } = await import("@/lib/permissions");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const canManage = isSuper || (await canManageWorkspace(user.id, sprint.workspace_id));
+  if (!canManage) throw new Error("Unauthorized: You do not have permission to update sprints in this workspace.");
+
   const { data, error } = await supabaseAdmin.from("sprints")
     .update({
       name: formData.name,
@@ -2195,6 +2239,19 @@ export async function fetchTaskTemplates(workspaceId: string) {
 }
 
 export async function deleteTaskTemplate(id: string) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) throw new Error("Unauthenticated. Please log in.");
+
+  const { data: template, error: tmplErr } = await supabaseAdmin.from("task_templates").select("workspace_id, created_by").eq("id", id).maybeSingle();
+  if (tmplErr || !template) throw new Error("Task template not found");
+
+  const { hasPermission, canManageWorkspace } = await import("@/lib/permissions");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const isOwner = template.created_by === user.id;
+  const canManage = isSuper || isOwner || (template.workspace_id ? await canManageWorkspace(user.id, template.workspace_id) : false);
+  if (!canManage) throw new Error("Unauthorized: You do not have permission to delete this task template.");
+
   const { error } = await supabaseAdmin.from("task_templates").delete().eq("id", id);
   if (error) throw error;
 }

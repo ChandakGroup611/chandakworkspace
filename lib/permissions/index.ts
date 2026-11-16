@@ -231,8 +231,7 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
     ctx.role === "ROLE_ADMIN" || 
     ctx.perms.has("SUPER_ADMIN") || 
     ctx.perms.has("SUPER_ADMIN_ACCESS") ||
-    ctx.perms.has("WORKSPACES_MANAGE") || 
-    ctx.perms.has("WORKSPACES_VIEW")
+    ctx.perms.has("WORKSPACES_MANAGE")
   ) {
     return true;
   }
@@ -245,7 +244,7 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
 
   if (!data) return false;
   if (data.workspace_owner_id === userId) return true;
-  if (data.visibility_settings?.public) return true;
+  if (data.visibility_settings?.public && (ctx.perms.has("WORKSPACES_VIEW") || ctx.perms.size > 0)) return true;
 
   const { count } = await supabaseAdmin
     .from("workspace_members")

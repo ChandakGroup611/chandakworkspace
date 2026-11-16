@@ -70,3 +70,4 @@ if (process.argv[1].endsWith('test-users.mjs')) {
     process.exit(hasFail ? 1 : 0);
   });
 }
+
