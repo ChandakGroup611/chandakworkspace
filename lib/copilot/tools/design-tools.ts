@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { hasPermission } from "@/lib/permissions";
+import { can } from "@/lib/permissions/module-access";
 import { 
   explainDesignConcept, 
   guideDesignWorkflow 
@@ -19,6 +20,16 @@ import type {
 // Helper: Check Design Tracking Access
 // ============================================================================
 async function checkDesignAccess(userId: string) {
+  const allowedByModule = await can(userId, "DESIGN_TRACKING", "DESIGN_PROJECTS_VIEW");
+  if (allowedByModule) {
+    const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
+    return {
+      allowed: true,
+      isSuperAdmin,
+      designAccess: null
+    };
+  }
+
   const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
   if (isSuperAdmin) {
     return {

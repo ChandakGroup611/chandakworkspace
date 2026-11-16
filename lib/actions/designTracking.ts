@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { can, invalidateModuleAccessCache } from "@/lib/permissions/module-access";
 import { cookies } from "next/headers";
 import { 
   ProjectMaster, 
@@ -49,12 +50,37 @@ const CAP_LABEL: Record<DesignCap, string> = {
   transmittals: "create transmittals", rfis: "manage RFIs",
 };
 
+const CAP_PERMISSION_MAP: Record<DesignCap, string> = {
+  any: "DESIGN_PROJECTS_VIEW",
+  admin: "DESIGN_SETTINGS",
+  masters: "DESIGN_MASTERS_MANAGE",
+  matrix: "MATRIX_EDIT",
+  drawings: "DRAWINGS_UPLOAD",
+  gfc: "DRAWINGS_APPROVE_GFC",
+  transmittals: "TRANSMITTALS_CREATE",
+  rfis: "RFIS_RAISE",
+};
+
 async function requireDesign(cap: DesignCap, projectIds?: (string | null | undefined)[] | string | null) {
   const { getCachedUser } = await import("@/lib/auth/cached-user");
   const { user } = await getCachedUser();
   if (!user) throw new Error("Please sign in again.");
   const { hasPermission } = await import("@/lib/permissions");
   if (await hasPermission(user.id, "SUPER_ADMIN")) return user;
+
+  const { can } = await import("@/lib/permissions/module-access");
+  const ids = (Array.isArray(projectIds) ? projectIds : [projectIds]).filter((x): x is string => !!x && x !== "ALL");
+  const reqPerm = CAP_PERMISSION_MAP[cap] || "DESIGN_PROJECTS_VIEW";
+
+  let allowedByModule = false;
+  if (ids.length > 0) {
+    const checks = await Promise.all(ids.map((id) => can(user.id, "DESIGN_TRACKING", reqPerm, { project_id: id })));
+    allowedByModule = checks.every(Boolean);
+  } else {
+    allowedByModule = await can(user.id, "DESIGN_TRACKING", reqPerm);
+  }
+
+  if (allowedByModule) return user;
 
   const { data: access } = await supabaseAdmin.from("design_user_access").select("*").eq("user_id", user.id).maybeSingle();
   if (!access) throw new Error("You don't have access to Design Tracking. Ask a Design administrator to add you.");
@@ -63,7 +89,6 @@ async function requireDesign(cap: DesignCap, projectIds?: (string | null | undef
   if (!isDesignAdmin && cap !== "any" && cap !== "admin" && !access[CAP_COLUMN[cap]]) {
     throw new Error(`Your Design access doesn't allow you to ${CAP_LABEL[cap]}.`);
   }
-  const ids = (Array.isArray(projectIds) ? projectIds : [projectIds]).filter((x): x is string => !!x && x !== "ALL");
   if (!isDesignAdmin && ids.length && String(access.project_access_type || "ALL").toUpperCase() === "SPECIFIC") {
     const allowed: string[] = access.assigned_project_ids || [];
     if (ids.some((id) => !allowed.includes(id))) throw new Error("This project is outside your assigned Design projects.");
@@ -99,7 +124,8 @@ export async function fetchFullDesignTrackingState() {
       rfisRes,
       auditRes,
       rbacRes,
-      userAccessRes
+      userAccessRes,
+      umaRes
     ] = await Promise.all([
       supabase.from("design_projects").select("*").order("name"),
       supabase.from("design_towers").select("*").order("tower_name"),
@@ -115,8 +141,38 @@ export async function fetchFullDesignTrackingState() {
       supabase.from("design_rfis").select("*").order("raised_date", { ascending: false }),
       supabase.from("design_matrix_audit_logs").select("*").order("timestamp", { ascending: false }).limit(150),
       supabase.from("design_rbac_policies").select("*"),
-      supabase.from("design_user_access").select("*")
+      supabase.from("design_user_access").select("*"),
+      supabase.from("user_module_access").select("user_id, role_code, scope").eq("module_code", "DESIGN_TRACKING")
     ]);
+
+    const userAccessList = [...(userAccessRes.data || [])];
+    const existingUserIds = new Set(userAccessList.map((r: any) => r.user_id));
+
+    if (umaRes.data) {
+      for (const uma of umaRes.data) {
+        if (!existingUserIds.has(uma.user_id)) {
+          const isDesignAdmin = uma.role_code === "DESIGN_ADMIN";
+          const isDesignLead = uma.role_code === "DESIGN_LEAD";
+          const isContributor = uma.role_code === "CONTRIBUTOR";
+          const projScope = uma.scope?.type === "projects" ? (uma.scope.project_ids || []) : [];
+          userAccessList.push({
+            id: `uma-${uma.user_id}`,
+            user_id: uma.user_id,
+            design_role: isDesignAdmin ? "DESIGN_ADMIN" : isDesignLead ? "DESIGN_LEAD" : isContributor ? "DESIGN_COORDINATOR" : "VIEWER",
+            project_access_type: projScope.length > 0 ? "SPECIFIC" : "ALL",
+            assigned_project_ids: projScope,
+            can_matrix_edit: isDesignAdmin || isDesignLead || isContributor,
+            can_drawings_upload: isDesignAdmin || isDesignLead || isContributor,
+            can_drawings_approve_gfc: isDesignAdmin || isDesignLead,
+            can_transmittals_create: isDesignAdmin || isDesignLead || isContributor,
+            can_rfis_manage: isDesignAdmin || isDesignLead || isContributor,
+            can_masters_manage: isDesignAdmin,
+            updated_at: new Date().toISOString(),
+            updated_by: "Module RBAC"
+          });
+        }
+      }
+    }
 
     return {
       success: true,
@@ -135,7 +191,7 @@ export async function fetchFullDesignTrackingState() {
         rfis: rfisRes.data || null,
         auditLogs: auditRes.data || null,
         rbacPolicies: rbacRes.data || null,
-        userAccessList: userAccessRes.data || null
+        userAccessList
       }
     };
   } catch (error: any) {
@@ -1272,11 +1328,12 @@ export async function fetchDesignWorkspaceUsersAction(): Promise<{
       rolesRes,
       modulesRes,
       userModulesRes,
+      userModuleAccessRes,
       designAccessRes
     ] = await Promise.all([
       supabase
         .from("user_master")
-        .select("id, full_name, email, user_code, profile_photo, is_active, role_id, department_id, designation_id")
+        .select("id, full_name, email, user_code, profile_photo, is_active, role_id, department_id, designation_id, platform_role")
         .eq("is_deleted", false)
         .order("full_name", { ascending: true }),
       supabase.from("departments").select("id, code, name").eq("is_deleted", false),
@@ -1284,6 +1341,7 @@ export async function fetchDesignWorkspaceUsersAction(): Promise<{
       supabase.from("roles").select("id, code, name").eq("is_deleted", false),
       supabase.from("modules_master").select("id, code").eq("code", "DESIGN_TRACKING").maybeSingle(),
       supabase.from("user_modules").select("user_id, module_id"),
+      supabase.from("user_module_access").select("user_id, role_code, scope").eq("module_code", "DESIGN_TRACKING"),
       supabase.from("design_user_access").select("*")
     ]);
 
@@ -1293,7 +1351,7 @@ export async function fetchDesignWorkspaceUsersAction(): Promise<{
     const roleMap = new Map((rolesRes.data || []).map(r => [r.id, { name: r.name, code: r.code }]));
     
     const designModuleId = modulesRes.data?.id;
-    const usersWithModuleAccess = new Set(
+    const usersWithModuleAccess = new Set<string>(
       (userModulesRes.data || [])
         .filter(um => designModuleId && um.module_id === designModuleId)
         .map(um => um.user_id)
@@ -1320,9 +1378,37 @@ export async function fetchDesignWorkspaceUsersAction(): Promise<{
       }
     }
 
+    if (userModuleAccessRes.data) {
+      for (const uma of userModuleAccessRes.data) {
+        usersWithModuleAccess.add(uma.user_id);
+        if (!accessMap.has(uma.user_id)) {
+          const isDesignAdmin = uma.role_code === "DESIGN_ADMIN";
+          const isDesignLead = uma.role_code === "DESIGN_LEAD";
+          const isContributor = uma.role_code === "CONTRIBUTOR";
+          const projScope = uma.scope?.type === "projects" ? (uma.scope.project_ids || []) : [];
+          accessMap.set(uma.user_id, {
+            id: `uma-${uma.user_id}`,
+            userId: uma.user_id,
+            designRole: (isDesignAdmin ? "DESIGN_ADMIN" : isDesignLead ? "DESIGN_LEAD" : isContributor ? "DESIGN_COORDINATOR" : "VIEWER") as DesignRoleCode,
+            projectAccessType: (projScope.length > 0 ? "SPECIFIC" : "ALL") as DesignProjectAccessType,
+            assignedProjectIds: projScope,
+            canMatrixEdit: isDesignAdmin || isDesignLead || isContributor,
+            canDrawingsUpload: isDesignAdmin || isDesignLead || isContributor,
+            canDrawingsApproveGfc: isDesignAdmin || isDesignLead,
+            canTransmittalsCreate: isDesignAdmin || isDesignLead || isContributor,
+            canRfisManage: isDesignAdmin || isDesignLead || isContributor,
+            canMastersManage: isDesignAdmin,
+            updatedAt: new Date().toISOString(),
+            updatedBy: "Module RBAC"
+          });
+        }
+      }
+    }
+
     const mergedUsers: DesignWorkspaceUser[] = usersData.map(u => {
       const role = u.role_id ? roleMap.get(u.role_id) : undefined;
-      const hasModule = usersWithModuleAccess.has(u.id);
+      const isGlobalAdmin = role?.code === "SUPER_ADMIN" || role?.code === "ROLE_ADMIN" || (u as any).platform_role === "SUPER_ADMIN";
+      const hasModule = isGlobalAdmin || usersWithModuleAccess.has(u.id);
       const access = accessMap.get(u.id) || null;
 
       return {
@@ -1366,7 +1452,7 @@ export async function saveDesignUserAccessAction(payload: {
   updatedBy?: string;
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    await requireDesign("admin");
+    const adminUser = await requireDesign("admin");
     const supabase = await getSupabase();
 
     const record = {
@@ -1419,6 +1505,38 @@ export async function saveDesignUserAccessAction(payload: {
       console.warn("user_modules sync note:", modErr);
     }
 
+    // Sync to user_module_access table
+    let moduleRoleCode = "VIEWER";
+    if (payload.designRole === "DESIGN_ADMIN" || payload.canMastersManage) {
+      moduleRoleCode = "DESIGN_ADMIN";
+    } else if (payload.designRole === "DESIGN_LEAD" || payload.canDrawingsApproveGfc) {
+      moduleRoleCode = "DESIGN_LEAD";
+    } else if (payload.canMatrixEdit || payload.canDrawingsUpload || payload.canTransmittalsCreate || payload.canRfisManage) {
+      moduleRoleCode = "CONTRIBUTOR";
+    }
+
+    const scopeObj = (
+      (payload.projectAccessType === "SPECIFIC" || (payload.projectAccessType as any) === "ASSIGNED_ONLY") &&
+      payload.assignedProjectIds &&
+      payload.assignedProjectIds.length > 0
+    )
+      ? { type: "projects", project_ids: payload.assignedProjectIds }
+      : { type: "all" };
+
+    await supabaseAdmin
+      .from("user_module_access")
+      .upsert({
+        user_id: payload.userId,
+        module_code: "DESIGN_TRACKING",
+        role_code: moduleRoleCode,
+        scope: scopeObj,
+        is_default: false,
+        granted_by: adminUser.id,
+        granted_at: new Date().toISOString()
+      }, { onConflict: "user_id,module_code,dashboard_key" });
+
+    invalidateModuleAccessCache(payload.userId);
+
     return { success: true, data: data || record };
   } catch (err: any) {
     console.error("saveDesignUserAccessAction error:", err);
@@ -1434,6 +1552,15 @@ export async function deleteDesignUserAccessAction(userId: string): Promise<{ su
     if (error) {
       await supabaseAdmin.from("design_user_access").delete().eq("user_id", userId);
     }
+
+    await supabaseAdmin
+      .from("user_module_access")
+      .delete()
+      .eq("user_id", userId)
+      .eq("module_code", "DESIGN_TRACKING");
+
+    invalidateModuleAccessCache(userId);
+
     return { success: true };
   } catch (err: any) {
     console.error("deleteDesignUserAccessAction error:", err);
@@ -1443,7 +1570,7 @@ export async function deleteDesignUserAccessAction(userId: string): Promise<{ su
 
 export async function toggleUserDesignModuleAccessAction(userId: string, enable: boolean): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireDesign("admin");
+    const adminUser = await requireDesign("admin");
     const { data: moduleData } = await supabaseAdmin
       .from("modules_master")
       .select("id")
@@ -1486,6 +1613,18 @@ export async function toggleUserDesignModuleAccessAction(userId: string, enable:
             updated_by: "Admin Quick Toggle"
           });
       }
+
+      await supabaseAdmin
+        .from("user_module_access")
+        .upsert({
+          user_id: userId,
+          module_code: "DESIGN_TRACKING",
+          role_code: "CONTRIBUTOR",
+          scope: { type: "all" },
+          is_default: false,
+          granted_by: adminUser.id,
+          granted_at: new Date().toISOString()
+        }, { onConflict: "user_id,module_code,dashboard_key" });
     } else {
       await supabaseAdmin
         .from("user_modules")
@@ -1497,7 +1636,15 @@ export async function toggleUserDesignModuleAccessAction(userId: string, enable:
         .from("design_user_access")
         .delete()
         .eq("user_id", userId);
+
+      await supabaseAdmin
+        .from("user_module_access")
+        .delete()
+        .eq("user_id", userId)
+        .eq("module_code", "DESIGN_TRACKING");
     }
+
+    invalidateModuleAccessCache(userId);
 
     return { success: true };
   } catch (err: any) {
