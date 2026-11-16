@@ -110,7 +110,13 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             .select("permission_code")
             .eq("user_id", data.user.id);
           const perms = snap?.map((s: any) => s.permission_code) || [];
-          const isSuper = perms.includes("WORKSPACES_MANAGE") || perms.includes("SUPER_ADMIN");
+          const { data: dbUser } = await supabase
+            .from("user_master")
+            .select("roles:role_id(code)")
+            .eq("id", data.user.id)
+            .maybeSingle();
+          const roleCode = ((dbUser?.roles as any)?.code || "").toUpperCase();
+          const isSuper = perms.includes("WORKSPACES_MANAGE") || perms.includes("SUPER_ADMIN") || ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN', 'ADMIN'].includes(roleCode);
           setCanManageAll(isSuper);
           if (isSuper) {
             const { data: allActiveUsers } = await supabase

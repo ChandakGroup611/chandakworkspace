@@ -140,7 +140,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   }, [initialData?.allUsers]);
 
   const userScope = initialData?.userScope;
-  const isSuperAdmin = roleCode === "SUPER_ADMIN" || userScope?.isSuperAdmin || hasPermission("WORKSPACES_MANAGE");
+  const isSuperAdmin = Boolean(
+    ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ADMIN', 'SUPERADMIN'].includes((roleCode || '').toUpperCase()) ||
+    userScope?.isSuperAdmin ||
+    hasPermission("SUPER_ADMIN") ||
+    hasPermission("SUPER_ADMIN_ACCESS") ||
+    hasPermission("WORKSPACES_MANAGE")
+  );
   const isManager = userScope?.isManager || (userScope?.subordinateUserIds && userScope.subordinateUserIds.length > 1);
   const managedDepts = userScope?.managedDepartments || [];
 
@@ -2164,15 +2170,22 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     onClick={(e) => {
                       e.stopPropagation();
                       const allIds = availableUsers.map(u => u.id);
-                      if (newWS.assigneeIds.length === allIds.length && allIds.length > 0) {
-                        setNewWS({...newWS, assigneeIds: []});
+                      const isAllSelected = allIds.length > 0 && allIds.every(id => (newWS.assigneeIds || []).includes(id));
+                      if (isAllSelected) {
+                        setNewWS(prev => ({
+                          ...prev,
+                          assigneeIds: (prev.assigneeIds || []).filter(id => !allIds.includes(id))
+                        }));
                       } else {
-                        setNewWS({...newWS, assigneeIds: allIds});
+                        setNewWS(prev => ({
+                          ...prev,
+                          assigneeIds: Array.from(new Set([...(prev.assigneeIds || []), ...allIds]))
+                        }));
                       }
                     }}
                     className="h-7 px-2 text-[12.5px] text-accent-soft-text"
                   >
-                    {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Clear all" : "Select all"}
+                    {availableUsers.length > 0 && availableUsers.every(u => (newWS.assigneeIds || []).includes(u.id)) ? "Clear all" : "Select all"}
                   </AppButton>
                 </div>
 
@@ -2199,28 +2212,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     )
                     .map(u => {
                       const isChecked = Array.isArray(newWS.assigneeIds) && newWS.assigneeIds.includes(u.id);
-                      const toggleThis = () => {
-                        setNewWS(prev => {
-                          const current = Array.isArray(prev.assigneeIds) ? prev.assigneeIds : [];
-                          const exists = current.includes(u.id);
-                          return {
-                            ...prev,
-                            assigneeIds: exists ? current.filter((id: string) => id !== u.id) : [...current, u.id]
-                          };
-                        });
-                      };
                       return (
-                        <div 
+                        <label 
                           key={u.id} 
-                          role="button"
-                          tabIndex={0}
-                          onClick={toggleThis}
-                          onKeyDown={(e) => {
-                            if (e.key === ' ' || e.key === 'Enter') {
-                              e.preventDefault();
-                              toggleThis();
-                            }
-                          }}
                           className={cn(
                             "flex cursor-pointer items-center gap-3 rounded-md p-2 text-[13.5px] transition-colors select-none",
                             isChecked ? "bg-accent-soft text-foreground font-medium" : "hover:bg-surface-hover text-foreground"
@@ -2229,14 +2223,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                           <input 
                             type="checkbox" 
                             checked={isChecked} 
-                            onChange={() => {}} 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleThis();
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setNewWS(prev => {
+                                const current = Array.isArray(prev.assigneeIds) ? prev.assigneeIds : [];
+                                return {
+                                  ...prev,
+                                  assigneeIds: checked
+                                    ? Array.from(new Set([...current, u.id]))
+                                    : current.filter((id: string) => id !== u.id)
+                                };
+                              });
                             }}
-                            className="h-4 w-4 rounded accent-theme-btn-primary cursor-pointer pointer-events-auto"
+                            className="h-4 w-4 rounded accent-theme-btn-primary cursor-pointer shrink-0"
                           />
-                          <div className="flex flex-col min-w-0 pointer-events-none">
+                          <div className="flex flex-col min-w-0">
                             <span className="flex items-center gap-2 truncate text-[13.5px] text-foreground">
                               {u.full_name}
                             </span>
@@ -2246,7 +2247,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                               </span>
                             )}
                           </div>
-                        </div>
+                        </label>
                       );
                     })}
                   {availableUsers.length === 0 && <p className="p-4 text-center text-[13px] text-muted">No people available.</p>}
