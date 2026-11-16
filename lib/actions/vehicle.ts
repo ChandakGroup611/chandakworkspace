@@ -38,8 +38,39 @@ async function getAuthenticatedUser() {
   }
 }
 
+async function canUserViewVehicles(userId: string): Promise<boolean> {
+  try {
+    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
+    if (isSuperAdmin) return true;
+
+    const { data: fua } = await supabaseAdmin
+      .from("fleet_user_access")
+      .select("fleet_role")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fua) {
+      if (fua.fleet_role === "NONE") return false;
+      if (["FLEET_ADMIN", "FLEET_MANAGER", "FLEET_OFFICER", "FLEET_DISPATCHER", "FLEET_WORKSHOP", "FLEET_VIEWER"].includes(fua.fleet_role)) {
+        return true;
+      }
+    }
+
+    const hasDirectPerm = (await hasPermission(userId, "VEHICLES_VIEW")) || 
+      (await hasPermission(userId, "VEHICLES_UPDATE")) || 
+      (await hasPermission(userId, "VEHICLES_MANAGE")) || 
+      (await hasPermission(userId, "FLEET_MANAGE"));
+    return !!hasDirectPerm;
+  } catch (err) {
+    console.warn("[vehicle-actions] canUserViewVehicles error:", err);
+    return false;
+  }
+}
+
 async function canUserManageVehicles(userId: string): Promise<boolean> {
   try {
+    if (userId === "00000000-0000-0000-0000-000000000000") return true;
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -53,7 +84,7 @@ async function canUserManageVehicles(userId: string): Promise<boolean> {
       if (fua.fleet_role === "NONE") {
         return false;
       }
-      if (fua.can_manage_vehicles || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER" || fua.fleet_role === "FLEET_DISPATCHER") {
+      if (fua.can_manage_vehicles || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
         return true;
       }
     }
@@ -64,13 +95,10 @@ async function canUserManageVehicles(userId: string): Promise<boolean> {
       (await hasPermission(userId, "VEHICLES_CREATE")) ||
       (await hasPermission(userId, "UPDATE_VEHICLES")) ||
       (await hasPermission(userId, "FLEET_MANAGE"));
-    if (hasDirectPerm) return true;
-
-    // By default, authenticated users accessing fleet operations are permitted unless explicitly restricted
-    return true;
+    return !!hasDirectPerm;
   } catch (err) {
     console.warn("[vehicle-actions] canUserManageVehicles error:", err);
-    return true;
+    return false;
   }
 }
 
@@ -100,18 +128,49 @@ async function canUserManageMaintenance(userId: string): Promise<boolean> {
       (await hasPermission(userId, "FLEET_MAINTENANCE_UPDATE")) || 
       (await hasPermission(userId, "FLEET_MANAGE")) ||
       (await hasPermission(userId, "VEHICLES_MANAGE"));
-    if (hasDirectPerm) return true;
-
-    // By default, authenticated users accessing fleet operations are permitted unless explicitly restricted
-    return true;
+    return !!hasDirectPerm;
   } catch (err) {
     console.warn("[vehicle-actions] canUserManageMaintenance error:", err);
-    return true;
+    return false;
+  }
+}
+
+async function canUserManageParts(userId: string): Promise<boolean> {
+  try {
+    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
+    if (isSuperAdmin) return true;
+
+    const hasDirectPerm = (await hasPermission(userId, "FLEET_PARTS_MANAGE")) || 
+      (await hasPermission(userId, "FLEET_MAINTENANCE_MANAGE")) || 
+      (await hasPermission(userId, "FLEET_MANAGE")) ||
+      (await hasPermission(userId, "VEHICLES_MANAGE"));
+    return !!hasDirectPerm;
+  } catch (err) {
+    console.warn("[vehicle-actions] canUserManageParts error:", err);
+    return false;
+  }
+}
+
+async function canUserManageVendors(userId: string): Promise<boolean> {
+  try {
+    if (userId === "00000000-0000-0000-0000-000000000000") return true;
+    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
+    if (isSuperAdmin) return true;
+
+    const hasDirectPerm = (await hasPermission(userId, "FLEET_VENDORS_MANAGE")) || 
+      (await hasPermission(userId, "FLEET_MANAGE")) ||
+      (await hasPermission(userId, "VEHICLES_MANAGE"));
+    return !!hasDirectPerm;
+  } catch (err) {
+    console.warn("[vehicle-actions] canUserManageVendors error:", err);
+    return false;
   }
 }
 
 async function canUserManageDrivers(userId: string): Promise<boolean> {
   try {
+    if (userId === "00000000-0000-0000-0000-000000000000") return true;
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -130,22 +189,22 @@ async function canUserManageDrivers(userId: string): Promise<boolean> {
       }
     }
 
-    const hasDirectPerm = (await hasPermission(userId, "DRIVERS_MANAGE")) || 
+    const hasDirectPerm = (await hasPermission(userId, "FLEET_DISPATCH_MANAGE")) ||
+      (await hasPermission(userId, "DRIVERS_MANAGE")) || 
       (await hasPermission(userId, "DRIVERS_CREATE")) || 
       (await hasPermission(userId, "DRIVERS_UPDATE")) || 
       (await hasPermission(userId, "FLEET_MANAGE")) ||
       (await hasPermission(userId, "VEHICLES_MANAGE"));
-    if (hasDirectPerm) return true;
-
-    return true;
+    return !!hasDirectPerm;
   } catch (err) {
     console.warn("[vehicle-actions] canUserManageDrivers error:", err);
-    return true;
+    return false;
   }
 }
 
 async function canUserManageTrips(userId: string): Promise<boolean> {
   try {
+    if (userId === "00000000-0000-0000-0000-000000000000") return true;
     const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
 
@@ -164,17 +223,16 @@ async function canUserManageTrips(userId: string): Promise<boolean> {
       }
     }
 
-    const hasDirectPerm = (await hasPermission(userId, "TRIPS_MANAGE")) || 
+    const hasDirectPerm = (await hasPermission(userId, "FLEET_DISPATCH_MANAGE")) ||
+      (await hasPermission(userId, "TRIPS_MANAGE")) || 
       (await hasPermission(userId, "TRIPS_DISPATCH")) || 
       (await hasPermission(userId, "TRIPS_CREATE")) || 
       (await hasPermission(userId, "FLEET_MANAGE")) ||
       (await hasPermission(userId, "VEHICLES_MANAGE"));
-    if (hasDirectPerm) return true;
-
-    return true;
+    return !!hasDirectPerm;
   } catch (err) {
     console.warn("[vehicle-actions] canUserManageTrips error:", err);
-    return true;
+    return false;
   }
 }
 
@@ -612,6 +670,22 @@ export async function fetchVehicleDashboardStats(): Promise<{
       };
     }
 
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) {
+      return {
+        success: false,
+        stats: {
+          totalVehicles: 0,
+          availableVehicles: 0,
+          onRouteVehicles: 0,
+          inMaintenanceVehicles: 0,
+          activeDrivers: 0,
+          activeTrips: 0
+        },
+        error: "Access Denied: You lack permissions to view vehicle analytics."
+      };
+    }
+
     // Fast single round-trip database RPC
     try {
       const { data: rpcStats, error: rpcErr } = await supabaseAdmin.rpc("get_vehicle_dashboard_stats");
@@ -698,6 +772,11 @@ export async function fetchVehiclesList(params?: {
     const user = await getAuthenticatedUser();
     if (!user) {
       return { success: false, vehicles: [], totalCount: 0, error: "Unauthenticated" };
+    }
+
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) {
+      return { success: false, vehicles: [], totalCount: 0, error: "Access Denied: You lack permissions to view vehicles." };
     }
 
     const page = Math.max(1, params?.page || 1);
@@ -3502,13 +3581,13 @@ export async function deleteVehicleDocumentAction(documentId: string): Promise<{
     if (!user) {
       return { success: false, error: "Unauthenticated" };
     }
-    if (!documentId) {
-      return { success: false, error: "Document ID is required" };
-    }
 
     const canManage = await canUserManageVehicles(user.id);
     if (!canManage) {
       return { success: false, error: "Access Denied: You lack permissions to delete vehicle documents." };
+    }
+    if (!documentId) {
+      return { success: false, error: "Document ID is required" };
     }
 
     // Attempt to remove file from Supabase storage bucket if applicable
@@ -3571,6 +3650,11 @@ export async function createVehicleDocumentAction(
     const user = await getAuthenticatedUser();
     if (!user) {
       return { success: false, error: "Unauthenticated" };
+    }
+
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) {
+      return { success: false, error: "Access Denied: You lack permissions to upload vehicle documents." };
     }
     if (!vehicleId) {
       return { success: false, error: "Vehicle ID is required" };
@@ -3668,6 +3752,11 @@ export async function updateVehicleDocumentAction(
     const user = await getAuthenticatedUser();
     if (!user) {
       return { success: false, error: "Unauthenticated" };
+    }
+
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) {
+      return { success: false, error: "Access Denied: You lack permissions to upload vehicle documents." };
     }
     if (!documentId) {
       return { success: false, error: "Document ID is required" };
@@ -4797,6 +4886,8 @@ export async function createInsuranceVendorAction(formData: {
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageVendors(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage fleet vendors." };
 
     if (!formData.name || !formData.name.trim()) {
       return { success: false, error: "Insurance Vendor Name is mandatory." };
@@ -4863,6 +4954,8 @@ export async function updateInsuranceVendorAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageVendors(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage fleet vendors." };
 
     const updates: Record<string, any> = { updated_at: new Date().toISOString() };
     if (formData.name !== undefined) updates.name = formData.name.trim();
@@ -4916,6 +5009,8 @@ export async function deleteInsuranceVendorAction(id: string): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageVendors(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage fleet vendors." };
 
     // Soft delete
     const { error } = await supabaseAdmin
@@ -5219,6 +5314,8 @@ export async function createVehiclePartAction(formData: {
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageParts(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage vehicle parts." };
 
     if (!formData.name || !formData.name.trim()) {
       return { success: false, error: "Part / Accessory name is mandatory." };
@@ -5375,6 +5472,8 @@ export async function createVehiclePartsBatchAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, count: 0, parts: [], error: "Unauthorized" };
+    const canManage = await canUserManageParts(user.id);
+    if (!canManage) return { success: false, count: 0, parts: [], error: "Access Denied: You lack permission to manage vehicle parts." };
 
     if (!billData.items || !Array.isArray(billData.items) || billData.items.length === 0) {
       return { success: false, count: 0, parts: [], error: "At least one line item is required on the bill." };
@@ -5544,6 +5643,8 @@ export async function updateVehiclePartAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageParts(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage vehicle parts." };
 
     const updates: Record<string, any> = { updated_at: new Date().toISOString() };
     if (formData.name !== undefined) updates.name = formData.name.trim();
@@ -5610,6 +5711,8 @@ export async function deleteVehiclePartAction(id: string): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageParts(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage vehicle parts." };
 
     const { error } = await supabaseAdmin
       .from("vehicle_parts")
@@ -5640,6 +5743,8 @@ export async function renewPartPolicyAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageParts(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage vehicle parts." };
 
     if (!renewalData.new_renewal_date) {
       return { success: false, error: "New Renewal Date is mandatory." };
@@ -5784,6 +5889,8 @@ export async function renewVehicleInsurancePolicyAction(
     if (!user) {
       return { success: false, error: "Unauthorized. Please sign in." };
     }
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to renew vehicle insurance policies." };
 
     if (!vehicleId) {
       return { success: false, error: "Vehicle ID is required." };
@@ -5910,6 +6017,8 @@ export async function deleteVehicleInsurancePolicyAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to delete vehicle insurance policies." };
 
     // Fetch policy details to know its category before soft-deleting
     const { data: targetPolicy } = await supabaseAdmin
@@ -6100,6 +6209,8 @@ export async function renewVehiclePucCertificateAction(
     if (!user) {
       return { success: false, error: "Unauthorized. Please sign in." };
     }
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to renew vehicle PUC certificates." };
 
     if (!vehicleId) {
       return { success: false, error: "Vehicle ID is required." };
@@ -6194,6 +6305,8 @@ export async function deleteVehiclePucCertificateAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to delete vehicle PUC certificates." };
 
     // Soft delete certificate
     const { error: delError } = await supabaseAdmin
@@ -6435,6 +6548,8 @@ export async function createVehicleServiceEntitlementAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageMaintenance(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage vehicle service entitlements." };
 
     if (!vehicleId) return { success: false, error: "Vehicle ID is required" };
     if (!payload.service_title?.trim()) return { success: false, error: "Service title is required" };
@@ -6503,6 +6618,8 @@ export async function redeemVehicleServiceEntitlementAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageMaintenance(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage vehicle service entitlements." };
 
     const updatePayload = {
       status: "REDEEMED",
@@ -6546,6 +6663,8 @@ export async function deleteVehicleServiceEntitlementAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+    const canManage = await canUserManageMaintenance(user.id);
+    if (!canManage) return { success: false, error: "Access Denied: You lack permission to manage vehicle service entitlements." };
 
     const { error } = await supabaseAdmin
       .from("vehicle_service_entitlements")
@@ -6663,6 +6782,11 @@ export async function sendVehicleComplianceExpiryReminderAction(
     const user = await getAuthenticatedUser();
     if (!user) {
       return { success: false, error: "Unauthenticated" };
+    }
+
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) {
+      return { success: false, error: "Access Denied: You lack permissions to upload vehicle documents." };
     }
 
     if (!vehicleId) {
