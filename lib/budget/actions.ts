@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "./supabase";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { invalidateModuleAccessCache } from "@/lib/permissions/module-access";
 import type { CustomField, Entity } from "./data";
 import { checkFormula, type FieldDef } from "./formula";
 import BudgetImporter, { type CostRow, type ImportPayload } from "./importer";
@@ -24,12 +25,12 @@ async function getEffectiveClient() {
   try {
     const { data: um } = await supabaseAdmin
       .from("user_master")
-      .select("role_id, role:roles(code)")
+      .select("role_id, role:roles(code), platform_role")
       .eq("id", user.id)
       .maybeSingle();
 
     const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
-    if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode)) {
+    if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode) || um?.platform_role === "SUPER_ADMIN") {
       return { sb: supabaseAdmin, user, isSuper: true };
     }
   } catch {}
@@ -727,7 +728,7 @@ export async function saveMember(
   m: { user_id: string; role_id: number; project_ids: number[] | null; department_ids: number[] | null; active: boolean },
   isNew: boolean
 ): Promise<Result> {
-  const { sb } = await getEffectiveClient();
+  const { sb, user } = await getEffectiveClient();
   const row = {
     ...m,
     project_ids: m.project_ids?.length ? m.project_ids : null,
@@ -738,6 +739,47 @@ export async function saveMember(
     : await sb.from("budget_members").update(row).eq("user_id", m.user_id).select("user_id");
   if (res.error) return res.error.code === "23505" ? fail("That person is already a member") : noRight(res.error);
   if (!res.data?.length) return fail("You do not have the right to manage access");
+
+  // Sync to user_module_access table
+  try {
+    let moduleRoleCode = "VIEWER";
+    if (m.role_id === 1) moduleRoleCode = "BUDGET_ADMIN";
+    else if (m.role_id === 2) moduleRoleCode = "PREPARER";
+    else if (m.role_id === 3) moduleRoleCode = "DEPT_EDITOR";
+    else if (m.role_id === 4) moduleRoleCode = "VIEWER";
+
+    let scopeObj: any = { type: "all" };
+    if (m.project_ids && m.project_ids.length > 0) {
+      scopeObj = { type: "projects", project_ids: m.project_ids };
+    } else if (m.department_ids && m.department_ids.length > 0) {
+      scopeObj = { type: "departments", department_ids: m.department_ids };
+    }
+
+    if (m.active) {
+      await supabaseAdmin
+        .from("user_module_access")
+        .upsert({
+          user_id: m.user_id,
+          module_code: "ORG_BUDGET",
+          role_code: moduleRoleCode,
+          scope: scopeObj,
+          is_default: false,
+          granted_by: user?.id,
+          granted_at: new Date().toISOString()
+        }, { onConflict: "user_id,module_code,dashboard_key" });
+    } else {
+      await supabaseAdmin
+        .from("user_module_access")
+        .delete()
+        .eq("user_id", m.user_id)
+        .eq("module_code", "ORG_BUDGET");
+    }
+
+    invalidateModuleAccessCache(m.user_id);
+  } catch (syncErr) {
+    console.warn("[saveMember] user_module_access sync note:", syncErr);
+  }
+
   refresh();
   return { ok: true };
 }
@@ -747,6 +789,19 @@ export async function removeMember(userId: string): Promise<Result> {
   const { data, error } = await sb.from("budget_members").delete().eq("user_id", userId).select("user_id");
   if (error) return noRight(error);
   if (!data?.length) return fail("You do not have the right to manage access");
+
+  try {
+    await supabaseAdmin
+      .from("user_module_access")
+      .delete()
+      .eq("user_id", userId)
+      .eq("module_code", "ORG_BUDGET");
+
+    invalidateModuleAccessCache(userId);
+  } catch (syncErr) {
+    console.warn("[removeMember] user_module_access sync note:", syncErr);
+  }
+
   refresh();
   return { ok: true };
 }

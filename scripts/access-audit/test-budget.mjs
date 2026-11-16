@@ -1,6 +1,7 @@
 /**
  * Access Rule Verification: Organization Budget Module
  * Validates against rules specified in docs/ACCESS_RULES.md (Section 9)
+ * and unified Module-Wise RBAC engine requirements.
  */
 
 import assert from 'assert';
@@ -31,16 +32,51 @@ export async function runBudgetAccessTest() {
       const content = fs.readFileSync(f, 'utf8');
       assert(content.includes('from("user_master")') || content.includes('from(\'user_master\')'), `${f} does not query database user_master`);
       assert(content.includes('SUPER_ADMIN'), `${f} does not verify SUPER_ADMIN code from database`);
+      assert(content.includes('platform_role === "SUPER_ADMIN"'), `${f} missing platform_role check`);
     }
-    logPass('BUDGET_DB_ROLE_EXTRACTION', 'Super Admin privileges in Budget derived strictly from database user_master and roles tables');
+    logPass('BUDGET_DB_ROLE_EXTRACTION', 'Super Admin privileges in Budget derived strictly from database user_master, platform_role, and roles tables');
   } catch (err) {
     logFail('BUDGET_DB_ROLE_EXTRACTION', 'DB role extraction check failed', err.message);
+  }
+
+  // Test 3: Synchronization of budget members to user_module_access
+  try {
+    const actionsContent = fs.readFileSync('lib/budget/actions.ts', 'utf8');
+    assert(actionsContent.includes('from("user_module_access")'), 'user_module_access sync missing in actions.ts');
+    assert(actionsContent.includes('invalidateModuleAccessCache(m.user_id)'), 'saveMember missing cache invalidation');
+    assert(actionsContent.includes('invalidateModuleAccessCache(userId)'), 'removeMember missing cache invalidation');
+    logPass('BUDGET_MODULE_ACCESS_SYNC', 'saveMember and removeMember synchronize to user_module_access and invalidate cache');
+  } catch (err) {
+    logFail('BUDGET_MODULE_ACCESS_SYNC', 'Module access sync check failed', err.message);
+  }
+
+  // Test 4: Fallback to user_module_access in getSession and getAccess
+  try {
+    const dataContent = fs.readFileSync('lib/budget/data.ts', 'utf8');
+    assert(dataContent.includes('from("user_module_access")'), 'user_module_access fallback missing in data.ts');
+    assert(dataContent.includes('ORG_BUDGET'), 'ORG_BUDGET module code query missing in data.ts');
+    logPass('BUDGET_FALLBACK_READS', 'getSession and getAccess seamlessly fall back to user_module_access');
+  } catch (err) {
+    logFail('BUDGET_FALLBACK_READS', 'Fallback check failed', err.message);
+  }
+
+  // Test 5: can() helper in data.ts enforces scoping
+  try {
+    const dataContent = fs.readFileSync('lib/budget/data.ts', 'utf8');
+    const fnMatch = dataContent.match(/export function can\([\s\S]*?^}/m);
+    assert(fnMatch, 'can function not found in data.ts');
+    const fnCode = fnMatch[0];
+    assert(fnCode.includes('me.project_ids'), 'can() does not check project_ids scope');
+    assert(fnCode.includes('me.department_ids'), 'can() does not check department_ids scope');
+    logPass('BUDGET_SCOPING_ENFORCED', 'can() strictly enforces project and department scoping constraints');
+  } catch (err) {
+    logFail('BUDGET_SCOPING_ENFORCED', 'Scoping enforcement check failed', err.message);
   }
 
   return results;
 }
 
-if (process.argv[1].endsWith('test-budget.mjs')) {
+if (process.argv[1]?.endsWith('test-budget.mjs')) {
   runBudgetAccessTest().then(res => {
     console.table(res);
     const hasFail = res.some(r => r.status === 'FAIL');

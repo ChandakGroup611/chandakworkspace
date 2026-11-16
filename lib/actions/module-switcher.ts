@@ -504,6 +504,30 @@ export async function assignUserModules(
       }
     }
 
+    // Synchronize budget_members if ORG_BUDGET is included
+    if (moduleCodes.includes("ORG_BUDGET")) {
+      try {
+        const { data: existingMember } = await supabaseAdmin
+          .from("budget_members")
+          .select("user_id")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+
+        if (!existingMember) {
+          await supabaseAdmin
+            .from("budget_members")
+            .insert({
+              user_id: targetUserId,
+              role_id: 4, // Management / Viewer
+              active: true,
+              added_at: new Date().toISOString()
+            });
+        }
+      } catch (budgetErr) {
+        console.warn("[assignUserModules] budget_members sync warning:", budgetErr);
+      }
+    }
+
     return { success: true };
   } catch (error: any) {
     console.error("[assignUserModules] Error:", error);

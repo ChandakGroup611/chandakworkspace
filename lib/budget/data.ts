@@ -1,5 +1,6 @@
 // Server only: reads the budget tables as the signed-in user.
 import { createClient } from "./supabase";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 // Reads for the budget screens. All calculated figures come from the database views
 // (budget_line_figures, budget_version_totals, ...), so every screen shows the same numbers.
@@ -86,15 +87,74 @@ export async function getSession() {
     try {
       const { data: um } = await sb
         .from("user_master")
-        .select("full_name, email, role_id, role:roles(code)")
+        .select("full_name, email, role_id, role:roles(code), platform_role")
         .eq("id", data.user.id)
         .maybeSingle();
 
       const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
-      if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode)) {
+      if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode) || um?.platform_role === "SUPER_ADMIN") {
         isSuper = true;
       }
     } catch {}
+  }
+
+  // Fallback to user_module_access if no budget_members row exists yet
+  if (!me && !isSuper) {
+    try {
+      const { data: uma } = await supabaseAdmin
+        .from("user_module_access")
+        .select("role_code, scope")
+        .eq("user_id", data.user.id)
+        .eq("module_code", "ORG_BUDGET")
+        .maybeSingle();
+
+      if (uma) {
+        let roleName = "Management";
+        let roleId = 4;
+        let perms: string[] = ["project.view", "budget.view", "report.view"];
+
+        if (uma.role_code === "BUDGET_ADMIN") {
+          roleName = "Administrator";
+          roleId = 1;
+          const { data: allPerms } = await sb.from("budget_permissions").select("code");
+          perms = allPerms ? allPerms.map((p: any) => p.code) : [];
+        } else if (uma.role_code === "PREPARER") {
+          roleName = "Budget preparer";
+          roleId = 2;
+          perms = ["project.view", "project.setup", "version.open", "version.approve", "budget.view", "budget.edit", "budget.import", "report.view", "report.export"];
+        } else if (uma.role_code === "DEPT_EDITOR") {
+          roleName = "Department user";
+          roleId = 3;
+          perms = ["project.view", "budget.view", "budget.edit", "cost.view", "cost.enter", "report.view"];
+        } else if (uma.role_code === "APPROVER") {
+          roleName = "Approver";
+          roleId = 2;
+          perms = ["project.view", "version.approve", "budget.view", "report.view", "report.export"];
+        }
+
+        const projIds = uma.scope?.type === "projects" ? (uma.scope.project_ids || []).map(Number) : null;
+        const deptIds = uma.scope?.type === "departments" ? (uma.scope.department_ids || []).map(Number) : null;
+
+        const { data: um } = await sb
+          .from("user_master")
+          .select("full_name, email")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        me = {
+          user_id: data.user.id,
+          role: roleName,
+          role_id: roleId,
+          permissions: perms,
+          project_ids: projIds && projIds.length > 0 ? projIds : null,
+          department_ids: deptIds && deptIds.length > 0 ? deptIds : null,
+          name: um?.full_name || data.user.user_metadata?.full_name || null,
+          email: um?.email || data.user.email || null,
+        };
+      }
+    } catch (e) {
+      console.warn("[Budget] user_module_access fallback note:", e);
+    }
   }
 
   // Super Admin: grant universal unrestricted access across all projects, versions, cost heads, and lines
@@ -373,17 +433,46 @@ export async function getCustomValues(sb: Db, fields: CustomField[], entityIds: 
 // ---------- access settings ----------
 export interface RoleRow { id: number; name: string; description: string | null; is_system: boolean; permissions: string[] }
 export async function getAccess(sb: Db) {
-  const [perms, roles, rp, members] = await Promise.all([
+  const [perms, roles, rp, members, uma] = await Promise.all([
     sb.from("budget_permissions").select("code, area, label, sort").order("sort"),
     sb.from("budget_roles").select("id, name, description, is_system").order("is_system", { ascending: false }).order("name"),
     sb.from("budget_role_permissions").select("role_id, permission"),
     sb.from("budget_members").select("user_id, role_id, project_ids, department_ids, active, added_at"),
+    supabaseAdmin.from("user_module_access").select("user_id, role_code, scope").eq("module_code", "ORG_BUDGET")
   ]);
   const rpRows = must(rp) as { role_id: number; permission: string }[];
+  const memberList = (must(members) as { user_id: string; role_id: number; project_ids: number[] | null; department_ids: number[] | null; active: boolean; added_at: string }[]);
+  const existingUserIds = new Set(memberList.map((m) => m.user_id));
+
+  // Synthesize member list from user_module_access if not in budget_members
+  if (uma.data) {
+    for (const u of uma.data) {
+      if (!existingUserIds.has(u.user_id)) {
+        let roleId = 4; // Viewer / Management
+        if (u.role_code === "BUDGET_ADMIN") roleId = 1;
+        else if (u.role_code === "PREPARER") roleId = 2;
+        else if (u.role_code === "DEPT_EDITOR") roleId = 3;
+        else if (u.role_code === "APPROVER") roleId = 2;
+
+        const projIds = u.scope?.type === "projects" ? (u.scope.project_ids || []).map(Number) : null;
+        const deptIds = u.scope?.type === "departments" ? (u.scope.department_ids || []).map(Number) : null;
+
+        memberList.push({
+          user_id: u.user_id,
+          role_id: roleId,
+          project_ids: projIds && projIds.length > 0 ? projIds : null,
+          department_ids: deptIds && deptIds.length > 0 ? deptIds : null,
+          active: true,
+          added_at: new Date().toISOString()
+        });
+      }
+    }
+  }
+
   return {
     permissions: must(perms) as { code: string; area: string; label: string; sort: number }[],
     roles: (must(roles) as Omit<RoleRow, "permissions">[]).map((r) => ({ ...r, permissions: rpRows.filter((x) => x.role_id === r.id).map((x) => x.permission) })),
-    members: must(members) as { user_id: string; role_id: number; project_ids: number[] | null; department_ids: number[] | null; active: boolean; added_at: string }[],
+    members: memberList,
   };
 }
 export async function getWorkspaceUsers(sb: Db, search?: string) {
