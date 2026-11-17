@@ -40,13 +40,21 @@ export async function checkWorkspaceUserDependencies(workspaceId: string, userId
   }
 
   const wsIdList = Array.from(targetWorkspaceIds);
+  const wsChunks: string[][] = [];
+  for (let i = 0; i < wsIdList.length; i += 100) {
+    wsChunks.push(wsIdList.slice(i, i + 100));
+  }
 
   // 2. Check Tasks in this workspace and child workspaces (only active/open tasks block member removal)
-  const { data: tasks } = await supabaseAdmin
-    .from("tasks")
-    .select("id, subject, assigned_to, workspace_id, status:status_master!tasks_status_id_fkey(status_code, is_closed, is_terminal), task_participants(user_id, participation_role)")
-    .in("workspace_id", wsIdList)
-    .eq("is_deleted", false);
+  let tasks: any[] = [];
+  for (const chunk of wsChunks) {
+    const { data: chunkTasks } = await supabaseAdmin
+      .from("tasks")
+      .select("id, subject, assigned_to, workspace_id, status:status_master!tasks_status_id_fkey(status_code, is_closed, is_terminal), task_participants(user_id, participation_role)")
+      .in("workspace_id", chunk)
+      .eq("is_deleted", false);
+    if (chunkTasks) tasks = tasks.concat(chunkTasks);
+  }
 
   // 3. Check Tickets
   const { data: tickets } = await supabaseAdmin
@@ -57,11 +65,15 @@ export async function checkWorkspaceUserDependencies(workspaceId: string, userId
   const workspaceTickets = (tickets || []).filter(t => wsIdList.includes(t.custom_fields?.workspace_id));
 
   // 4. Check Sub-Workspaces
-  const { data: subWorkspaces } = await supabaseAdmin
-    .from("workspaces")
-    .select("id, workspace_name, workspace_owner_id, workspace_members(user_id, role)")
-    .in("parent_workspace_id", wsIdList)
-    .eq("is_deleted", false);
+  let subWorkspaces: any[] = [];
+  for (const chunk of wsChunks) {
+    const { data: chunkSubs } = await supabaseAdmin
+      .from("workspaces")
+      .select("id, workspace_name, workspace_owner_id, workspace_members(user_id, role)")
+      .in("parent_workspace_id", chunk)
+      .eq("is_deleted", false);
+    if (chunkSubs) subWorkspaces = subWorkspaces.concat(chunkSubs);
+  }
 
   for (const userId of userIds) {
     const blockingItems: string[] = [];

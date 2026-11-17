@@ -34,26 +34,39 @@ export async function fetchLiveDashboardMetrics() {
     
     workspaceIds = wsMembers?.map(m => m.workspace_id) || [];
 
-    const { data: wsCreated } = await supabase
-      .from("workspaces")
-      .select("id")
-      .in("created_by", userIdsForScope)
-      .eq("is_deleted", false);
-      
-    if (wsCreated) {
-      wsCreated.forEach(w => {
-        if (!workspaceIds.includes(w.id)) workspaceIds.push(w.id);
-      });
+    const userScopeChunks: string[][] = [];
+    for (let i = 0; i < userIdsForScope.length; i += 100) {
+      userScopeChunks.push(userIdsForScope.slice(i, i + 100));
+    }
+
+    for (const uChunk of userScopeChunks) {
+      const { data: wsCreated } = await supabase
+        .from("workspaces")
+        .select("id")
+        .in("created_by", uChunk)
+        .eq("is_deleted", false);
+        
+      if (wsCreated) {
+        wsCreated.forEach(w => {
+          if (!workspaceIds.includes(w.id)) workspaceIds.push(w.id);
+        });
+      }
     }
 
     // Get tasks where user is a participant
-    const { data: taskParticipants } = await supabase
-      .from("task_participants")
-      .select("task_id, tasks!inner(id)")
-      .in("user_id", userIdsForScope)
-      .eq("tasks.is_deleted", false);
-    
-    participantTaskIds = taskParticipants?.map(p => p.task_id) || [];
+    for (const uChunk of userScopeChunks) {
+      const { data: taskParticipants } = await supabase
+        .from("task_participants")
+        .select("task_id, tasks!inner(id)")
+        .in("user_id", uChunk)
+        .eq("tasks.is_deleted", false);
+      
+      if (taskParticipants) {
+        taskParticipants.forEach(p => {
+          if (!participantTaskIds.includes(p.task_id)) participantTaskIds.push(p.task_id);
+        });
+      }
+    }
 
     // 2. Fetch scoped data
     let tasksPromise: any;
