@@ -292,7 +292,7 @@ function getBudgetRouteAction(path: string): string {
 }
 
 function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
-  // Mirrors the Budget areas (Overview · Prepare budget · Actuals · Reports). Setup and Administration are not
+  // Mirrors the Budget areas (Create budget · Overview · Prepare budget · Actuals · Reports). Setup and Administration are not
   // listed here: they appear in the Budget page header only for people with those rights.
   const p = projectId && /^\d+$/.test(projectId) ? `/budget/${projectId}` : "/budget";
   const to = (t: string) => (p === "/budget" ? `/budget/${t}` : `${p}/${t}`);
@@ -301,6 +301,8 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
       label: "Budget",
       items: [
         { label: "All projects", href: "/budget", icon: FolderKanban },
+        // Dedicated entry for typing a budget in by hand: choose a project (or make one), then the guided form.
+        { label: "Create budget", href: "/budget/create", icon: PlusCircle },
         { label: "Overview", href: to("overview"), icon: LayoutDashboard },
       ]
     },

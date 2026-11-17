@@ -1,6 +1,6 @@
 import * as D from "@/lib/budget/data";
 import { ImportPanel } from "./_components/import-panel";
-import { GuidedNewProject } from "./_components/manual";
+import Link from "next/link";
 import { loadSession } from "./_components/page-data";
 import { Shell } from "./_components/shell";
 import { MySignoffs, Portfolio } from "./_components/views";
@@ -30,8 +30,6 @@ export default async function BudgetHome({
   const { sb, me, block } = await loadSession();
   if (block || !me) return block;
   const [projects, totals] = await Promise.all([D.getProjects(sb), D.getTotals(sb)]);
-  const { data: heads } = await sb.from("budget_cost_heads").select("project_id");
-  const count = (pid: number) => (heads ?? []).filter((h) => h.project_id === pid).length;
 
   const neededTab = sp.needProject ? TAB_NAMES[sp.needProject] || sp.needProject : null;
 
@@ -40,7 +38,7 @@ export default async function BudgetHome({
       {neededTab && (
         <div className="banner info" role="status">
           <div>
-            <strong>No active project selected.</strong> Create a new project below to open <strong>{neededTab}</strong>; it takes you through the set-up step by step.
+            <strong>No project yet.</strong> <Link href="/budget/create">Create a budget</Link> first to open <strong>{neededTab}</strong>; it takes you through the set-up step by step.
           </div>
         </div>
       )}
@@ -48,14 +46,15 @@ export default async function BudgetHome({
       <section className="panel"><div className="panel-head"><h2>All projects</h2>
         <div className="row" style={{ alignItems: "center", gap: 8 }}>
           <span className="sub">Latest approved version of each project · amounts in crores</span>
-          {D.can(me, "project.create") && <a href="#new-project" className="btn-action primary">+ New project</a>}
+          {(D.can(me, "project.create") || D.can(me, "version.open")) && <Link href="/budget/create" className="btn-action primary">+ Create budget</Link>}
         </div>
       </div>
         {projects.length ? <Portfolio projects={projects} totals={totals} canManage={D.can(me, "project.setup")} /> : <p>No projects yet.</p>}
       </section>
       {D.can(me, "project.create") && <>
-        <section className="panel" id="new-project"><div className="panel-head"><h2>Start a new project</h2><span className="sub">Type everything in: project, towers, budget lines and figures. No Excel file needed.</span></div>
-          <GuidedNewProject projects={projects.map((p) => ({ id: p.id, name: p.name, heads: count(p.id) }))} />
+        <section className="panel cb-cta" id="new-project">
+          <div><h2>Create a budget</h2><p className="sub">Type everything in, step by step: project, towers, budget lines, GST and figures. No Excel file needed.</p></div>
+          <Link href="/budget/create" className="btn-action primary big">Open Create budget →</Link>
         </section>
         <details className="panel import-alt">
           <summary><b>Or create a project from an Excel workbook</b> <span className="sub">Optional: if the budget already exists as a detail budget workbook</span></summary>

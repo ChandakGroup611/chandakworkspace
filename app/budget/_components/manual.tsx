@@ -50,8 +50,9 @@ export function AddTowerForm({ projectId, count }: { projectId: number; count: n
 }
 
 // ---------- new project ----------
-/** A new project in one form: details, towers and where the cost heads come from. Opens Get started. */
-export function GuidedNewProject({ projects }: { projects: { id: number; name: string; heads: number }[] }) {
+/** A new project in one form: details, towers and where the cost heads come from. Opens Get started.
+ *  `quick` (the Create budget menu): only the basics, then straight into the Create budget form, which asks for towers itself. */
+export function GuidedNewProject({ projects, quick = false }: { projects: { id: number; name: string; heads: number }[]; quick?: boolean }) {
   const { pending, run, banner } = useAction();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -59,7 +60,7 @@ export function GuidedNewProject({ projects }: { projects: { id: number; name: s
   const [codeTouched, setCodeTouched] = useState(false);
   const [location, setLocation] = useState("");
   const [fy, setFy] = useState(4);
-  const [towers, setTowers] = useState<M.TowerInput[]>([blankTower(1)]);
+  const [towers, setTowers] = useState<M.TowerInput[]>(quick ? [] : [blankTower(1)]);
   const [copy, setCopy] = useState("");
   const autoCode = (n: string) => n.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 6);
   return (
@@ -74,17 +75,17 @@ export function GuidedNewProject({ projects }: { projects: { id: number; name: s
           <label>Financial year starts in<select value={fy} onChange={(e) => setFy(Number(e.target.value))}>{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select></label>
         </div>
       </fieldset>
-      <fieldset className="mg-step">
+      {!quick && <fieldset className="mg-step">
         <legend><span className="mg-num">2</span>Towers or wings <span className="sub">optional; skip if the project is not split by building</span></legend>
         {towers.map((t, i) => <TowerFields key={i} t={t} compact onChange={(nt) => setTowers(towers.map((x, j) => (j === i ? nt : x)))} onRemove={() => setTowers(towers.filter((_, j) => j !== i))} />)}
         <div className="row"><button type="button" className="btn-action" onClick={() => setTowers([...towers, blankTower(towers.length + 1)])}>+ Another tower</button>
           {towers.length === 0 && <span className="note">No towers: every cost is kept at project level.</span>}</div>
-      </fieldset>
+      </fieldset>}
       <fieldset className="mg-step">
-        <legend><span className="mg-num">3</span>Budget lines</legend>
+        <legend><span className="mg-num">{quick ? 2 : 3}</span>Budget lines</legend>
         <div className="mg-choice">
           <label className="radio"><input type="radio" name="np-heads" checked={copy === ""} onChange={() => setCopy("")} />
-            <span><b>Type them on the next screen</b><small>A grid with suggested lines for each department; you keep, change or delete each one.</small></span></label>
+            <span><b>{quick ? "Start blank" : "Type them on the next screen"}</b><small>{quick ? "Add lines department by department in the form; Fill suggestions gives the usual ones." : "A grid with suggested lines for each department; you keep, change or delete each one."}</small></span></label>
           {projects.filter((p) => p.heads > 0).map((p) => (
             <label key={p.id} className="radio"><input type="radio" name="np-heads" checked={copy === String(p.id)} onChange={() => setCopy(String(p.id))} />
               <span><b>Copy the {p.heads} cost heads of {p.name}</b><small>Same departments and lines, with no amounts; GST rules are copied too.</small></span></label>
@@ -92,11 +93,11 @@ export function GuidedNewProject({ projects }: { projects: { id: number; name: s
         </div>
       </fieldset>
       <div className="mg-foot">
-        <span className="note">Next you add the budget lines, open version R1 and type the figures. A checklist shows what is left.</span>
+        <span className="note">{quick ? "Next: the Create budget form opens for this project, starting with R1." : "Next you add the budget lines, open version R1 and type the figures. A checklist shows what is left."}</span>
         <button className="primary" disabled={pending} onClick={() => run(
           () => M.createProjectGuided({ name, code, location, fyStartMonth: fy, towers, copyHeadsFrom: copy ? Number(copy) : null }),
-          (r) => router.push(`/budget/${r.projectId}/start`),
-        )}>{pending ? "Creating…" : "Create project and continue"}</button>
+          (r) => router.push(`/budget/${r.projectId}/${quick ? "create" : "start"}`),
+        )}>{pending ? "Creating…" : quick ? "Create project and start budget" : "Create project and continue"}</button>
       </div>
       {banner}
     </div>

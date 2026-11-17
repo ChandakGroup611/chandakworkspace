@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import * as W from "@/lib/budget/wizard-actions";
 import { BUILDING_TYPES, RATE_BASES, fmt } from "@/lib/budget/format";
 import { useAction } from "./forms";
@@ -49,6 +49,9 @@ export function BudgetWizard(props: WizardProps) {
   }), [props]);
   const [s, setS] = useState<State>(initial);
   const [step, setStep] = useState(0);
+  const top = useRef<HTMLDivElement>(null);
+  // changing step brings the step list back into view, so a long step never leaves you at the bottom of the next one
+  const go = (i: number) => { setStep(i); top.current?.scrollIntoView({ block: "start", behavior: "smooth" }); };
   const [dept, setDept] = useState<number>(props.departments[0]?.id ?? 0);
   const [restore, setRestore] = useState<State | null>(null);
   const [saved, setSaved] = useState<number | null>(null);
@@ -158,7 +161,7 @@ export function BudgetWizard(props: WizardProps) {
   );
 
   return (
-    <div className="wz">
+    <div className="wz" ref={top}>
       {restore && <div className="banner draft" role="status"><div>You have unsaved typing from earlier on this browser.</div>
         <div className="row"><button className="btn-action primary" onClick={() => { setS(restore); setRestore(null); setDirty(true); }}>Restore it</button>
           <button className="btn-action" onClick={() => { setRestore(null); try { localStorage.removeItem(store); } catch {} }}>Discard</button></div></div>}
@@ -166,7 +169,7 @@ export function BudgetWizard(props: WizardProps) {
       <ol className="wz-steps" aria-label="Create budget steps">
         {STEPS.map((label, i) => (
           <li key={label} className={i === step ? "current" : i < step ? "done" : ""}>
-            <button type="button" onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined}>
+            <button type="button" onClick={() => go(i)} aria-current={i === step ? "step" : undefined}>
               <span className="step-badge">{problems[i].length ? "!" : i < step ? "✓" : i + 1}</span>{label}
             </button>
           </li>
@@ -311,7 +314,7 @@ export function BudgetWizard(props: WizardProps) {
         {step === 5 && <>
           <h2>Review R{number} before saving</h2>
           <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="n">Lines</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th><th className="n">Variance (a−b)</th></tr></thead><tbody>
-            {all.filter((x) => x.count).map(({ d, initial, ctc, inc, count }) => <tr key={d.id}><td><button className="link" onClick={() => { setDept(d.id); setStep(3); }}>{d.name}</button></td><td className="n">{count}</td>
+            {all.filter((x) => x.count).map(({ d, initial, ctc, inc, count }) => <tr key={d.id}><td><button className="link" onClick={() => { setDept(d.id); go(3); }}>{d.name}</button></td><td className="n">{count}</td>
               <td className="n">{fmt(initial)}</td><td className="n">{fmt(ctc)}</td><td className="n">{fmt(inc)}</td><td className="n">{fmt(ctc - inc)}</td><td className="n"><span className={initial - ctc < 0 ? "neg" : ""}>{fmt(initial - ctc)}</span></td></tr>)}
             <tr className="total"><td>Total</td><td className="n">{s.lines.length + s.gst.length}</td><td className="n">{fmt(grand.initial)}</td><td className="n">{fmt(grand.ctc)}</td><td className="n">{fmt(grand.inc)}</td><td className="n">{fmt(grand.ctc - grand.inc)}</td><td className="n">{fmt(grand.initial - grand.ctc)}</td></tr>
           </tbody></table></div>
@@ -322,9 +325,11 @@ export function BudgetWizard(props: WizardProps) {
 
         {problems[step]?.length > 0 && step < 5 && <p className="bad-text">{problems[step].slice(0, 4).join(" · ")}</p>}
         <div className="mg-foot">
-          <button className="btn-action" disabled={step === 0} onClick={() => setStep(step - 1)}>← Back</button>
-          <span className="note">Step {step + 1} of {STEPS.length}{dirty ? " · unsaved changes kept on this browser" : ""}</span>
-          {step < 5 ? <button className="primary" onClick={() => setStep(step + 1)}>Next: {STEPS[step + 1]} →</button>
+          <button className="btn-action" disabled={step === 0} onClick={() => go(step - 1)}>← Back</button>
+          <span className="note">Step {step + 1} of {STEPS.length} · CTC so far <b>{fmt(grand.ctc)} Cr</b>{dirty ? " · unsaved changes kept on this browser" : ""}</span>
+          {/* save without walking to the last step; the same checks as Review apply */}
+          {step < 5 && dirty && <button className="btn-action" disabled={pending || allProblems.length > 0} title={allProblems.length ? `Fix first: ${allProblems[0]}` : undefined} onClick={save}>{pending ? "Saving…" : "Save draft now"}</button>}
+          {step < 5 ? <button className="primary" onClick={() => go(step + 1)}>Next: {STEPS[step + 1]} →</button>
             : <button className="primary" disabled={pending || allProblems.length > 0} onClick={save}>{pending ? "Saving…" : props.draftNumber ? `Save draft R${number}` : `Create R${number} as draft`}</button>}
         </div>
         {banner}

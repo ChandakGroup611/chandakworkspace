@@ -11,7 +11,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, PlusCircle, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = { label: string; href: string; icon: React.ElementType; match: (p: string) => boolean };
@@ -61,7 +61,8 @@ function getBudgetTabs(projectId?: string | null): Tab[] {
   const is = (path: string, tabs: string[]) => tabs.some((t) => path.endsWith(`/${t}`));
   return [
     { label: "Projects", href: "/budget", icon: FolderKanban, match: (path) => path === "/budget" },
-    { label: "Overview", href: to("overview"), icon: LayoutDashboard, match: (path) => is(path, ["overview"]) },
+    // Create budget takes Overview's slot on phones (Overview stays in the menu): five tabs plus Menu is the most that fits.
+    { label: "Create", href: "/budget/create", icon: PlusCircle, match: (path) => is(path, ["create"]) },
     { label: "Prepare", href: to("entry"), icon: Layers, match: (path) => is(path, ["entry", "workings", "schedules", "import", "line"]) },
     { label: "Actuals", href: to("incurred"), icon: Wallet, match: (path) => is(path, ["incurred"]) },
     { label: "Reports", href: to("summary"), icon: LineChart, match: (path) => is(path, ["summary", "detail", "compare", "periods"]) },

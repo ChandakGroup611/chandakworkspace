@@ -115,7 +115,10 @@ export function Shell({ me, projects, project, versions, version, tab, children 
                 {area !== "overview" && <><span className="crumb-sep" aria-hidden>›</span>
                   {areaDef?.subs ? <><Link href={href(areaDef.first)}>{areaDef.label}</Link><span className="crumb-sep" aria-hidden>›</span><span className="crumb-current">{TAB_LABEL[tab] ?? tab}</span></>
                     : <span className="crumb-current">{areaDef?.label ?? TAB_LABEL[tab] ?? tab}</span>}</>}
-              </> : null}
+              </> : <>
+                {/* a budget page that is not tied to one project, such as the Create budget menu */}
+                <span className="crumb-sep" aria-hidden>›</span><span className="crumb-current">{TAB_LABEL[tab] ?? tab}</span>
+              </>}
             </nav>
             <div className="top-selectors">
               {area !== "admin" && (

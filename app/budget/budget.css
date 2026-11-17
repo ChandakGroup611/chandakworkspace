@@ -1453,3 +1453,24 @@
 .budget-app input[aria-invalid="true"] { border-color: var(--bad); background: var(--bad-soft); }
 .budget-app .btn-action.big { font-size: 15px; padding: 9px 16px; }
 .budget-app .wz-done h2 { margin-top: 0; }
+
+/* ---------- Create budget menu (/budget/create): choose a project, then the guided form ---------- */
+.budget-app .cb-head { align-items: flex-start; }
+.budget-app .cb-how { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.budget-app .cb-how li { display: flex; align-items: center; gap: 8px; color: var(--muted); max-width: 260px; }
+.budget-app .cb-how li span { flex: none; width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--b-accent-soft); color: var(--accent); font-weight: 600; font-size: 12px; }
+.budget-app .cb-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.budget-app .cb-card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.budget-app .cb-card.draft { border-color: var(--warn); }
+.budget-app .cb-card .sub { margin: 0; flex: 1; }
+.budget-app .cb-card .btn-action { margin-top: 4px; }
+.budget-app .cb-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.budget-app .cb-name { font-size: 15px; }
+.budget-app .cb-meta { color: var(--muted); font-size: 12px; }
+.budget-app .cb-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.budget-app .cb-cta h2 { margin-bottom: 4px; }
+@media (max-width: 640px) {
+  .budget-app .cb-cards { grid-template-columns: 1fr; }
+  .budget-app .cb-card .btn-action { width: 100%; justify-content: center; text-align: center; }
+  .budget-app .cb-cta .btn-action { width: 100%; text-align: center; }
+}
