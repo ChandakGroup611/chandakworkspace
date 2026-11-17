@@ -260,6 +260,7 @@ export async function acknowledgeMoM(sessionId: string, version: number = 1, com
 
 export async function getMoMVersions() {
   try {
+    await requireMeet("MEET_VIEW");
     const { data, error } = await supabaseAdmin
       .from("meet_mom_versions")
       .select(`

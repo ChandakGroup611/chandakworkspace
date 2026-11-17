@@ -214,6 +214,9 @@ export async function releaseNoShowBookings(
   roomId?: string
 ): Promise<{ success: boolean; releasedCount: number }> {
   try {
+    const { user } = await getCachedUser();
+    if (!user) return { success: false, releasedCount: 0 };
+
     const now = new Date();
     // Default 10 min grace period
     const cutoff = new Date(now.getTime() - 10 * 60000).toISOString();
@@ -456,6 +459,9 @@ export async function endEarlyFromDisplay(
   roomId: string
 ): Promise<{ success: boolean; message?: string }> {
   try {
+    const { user } = await getCachedUser();
+    if (!user) return { success: false, message: "Unauthorized: Sign-in required." };
+
     const nowIso = new Date().toISOString();
 
     // S6: End ONLY the current in-progress booking (do NOT wipe out future bookings for the room!)
@@ -497,6 +503,9 @@ export async function extendFromDisplay(
   extraMinutes: number
 ): Promise<{ success: boolean; message: string }> {
   try {
+    const { user } = await getCachedUser();
+    if (!user) return { success: false, message: "Unauthorized: Sign-in required." };
+
     const { data: current } = await supabaseAdmin
       .from("meet_room_bookings")
       .select("*")

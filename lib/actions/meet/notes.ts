@@ -532,6 +532,7 @@ export async function generateSessionSummary(sessionId: string): Promise<{
   openLoops: any[];
 }> {
   try {
+    await requireMeet("MEET_VIEW", { sessionId });
     const [sessionRes, pointsRes, tasksRes, decisionsRes, noteRes] = await Promise.all([
       supabaseAdmin
         .from("meet_sessions")

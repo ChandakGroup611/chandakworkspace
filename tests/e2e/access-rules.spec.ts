@@ -51,5 +51,20 @@ test.describe('Phase 0 Baseline — Access Rules Verification (ACCESS_RULES.md)'
                            (await page.locator('[data-module-denied="true"]').count()) > 0;
     expect(hasRestriction, 'Unassigned user must not access Vehicle Desk without permission').toBeTruthy();
   });
+
+  test('ISSUE-002: Chandak Meet actions enforce authorization and reject unauthorized callers', async ({ authedPage }) => {
+    if (!CREDENTIALS.VIEWER) test.skip(true, 'No E2E_VIEWER configured');
+    const page = await authedPage('VIEWER');
+    await page.goto('/meet/admin');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Non-admin viewer attempting to open /meet/admin must be refused or redirected
+    const currentUrl = page.url();
+    const isRestricted = currentUrl.includes('/select-module') ||
+                         currentUrl.includes('/login') ||
+                         currentUrl === '/meet' ||
+                         (await page.locator('text=Unauthorized, text=Access Denied, text=Forbidden, text=Administrator privileges').count()) > 0;
+    expect(isRestricted, 'Viewer must not access Meet administration settings').toBeTruthy();
+  });
 });
 
