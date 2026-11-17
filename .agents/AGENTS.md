@@ -124,3 +124,7 @@ MANDATORY for every present and future page, component and module (Task Workflow
 8. **Inputs** stay at 16px on phones (set globally in `app/globals.css`) so iOS does not zoom; use the correct `inputMode`/`type` (`tel`, `email`, `numeric`).
 9. **Verify** with `node tools/ui-audit.mjs` (its mobile rules flag non-wrapping action rows, fixed wide widths and small tap targets) and a real look at 375px before deploying.
 
+## Release Lock-in & Stability Governance Gate
+
+No change may be merged unless tsc, lint, build and test:e2e pass on staging; approved logic in docs/ACCESS_RULES.md and docs/ISSUES.md decisions may not be changed without the owner's written approval.
+
