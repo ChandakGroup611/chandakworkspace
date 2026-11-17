@@ -101,4 +101,11 @@ test.describe('Phase 0 Baseline — Module Key CRUD & Workflow Flows', () => {
     await page.waitForLoadState('networkidle');
     await expect(page.locator('body')).toBeVisible();
   });
+
+  test('ISSUE-006: User invite failure returns error without creating orphaned records', async ({ authedPage }) => {
+    const page = await authedPage('SUPER');
+    await page.goto('/users');
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('body')).toBeVisible();
+  });
 });

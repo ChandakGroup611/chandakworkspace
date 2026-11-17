@@ -747,12 +747,17 @@ export async function inviteUserAction(
 
   if (dbError) {
     console.error("[Server Action] DB upsert error for invite:", dbError);
+    return { success: false, error: `Database error creating user profile: ${dbError.message}` };
   }
 
   // 5. Update user_roles mapping
   if (roleId) {
     await adminClient.from("user_roles").delete().eq("user_id", targetUserId);
-    await adminClient.from("user_roles").insert({ user_id: targetUserId, role_id: roleId });
+    const { error: roleErr } = await adminClient.from("user_roles").insert({ user_id: targetUserId, role_id: roleId });
+    if (roleErr) {
+      console.error("[Server Action] Failed to assign role on invite:", roleErr);
+      return { success: false, error: `Failed to assign user role: ${roleErr.message}` };
+    }
   }
 
   // 6. Refresh permissions snapshot
