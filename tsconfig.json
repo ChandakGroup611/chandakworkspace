@@ -43,6 +43,7 @@
     "out",
     "dist",
     "_ui-kit",
-    "examples"
+    "examples",
+    "tests"
   ]
 }

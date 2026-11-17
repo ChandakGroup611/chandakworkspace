@@ -1,0 +1,197 @@
+
+> build
+> cross-env NODE_OPTIONS="--max-old-space-size=4096" next build --webpack
+
+▲ Next.js 16.4.3 (webpack)
+- Environments: .env.local
+✓ Running next.config.js took 44ms
+Warning: Custom Cache-Control headers detected for the following routes:
+  - /_next/static/(.*)
+  - /_next/image(.*)
+
+Setting a custom Cache-Control header can break Next.js development behavior.
+- Experiments (use with caution):
+  · serverActions
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+⚠ Your version of Next.js is affected by a known security vulnerability. This command is continuing after the upgrade reminder.
+Reference: https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+✓ Compiled successfully in 54s
+  Running TypeScript ...
+  Finished TypeScript in 16.5s ...
+  Collecting page data using 3 workers ...
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.production // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env.production // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env.production // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env.local // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env.production // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env.local // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env.production // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env.production // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from .env.local // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+  Generating static pages using 3 workers (0/52) ...
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 3 workers (13/52) 
+  Generating static pages using 3 workers (26/52) 
+  Generating static pages using 3 workers (39/52) 
+✓ Generating static pages using 3 workers (52/52) in 9.4s
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ○ /admin/performance
+├ ○ /admin/settings
+├ ○ /amc
+├ ○ /amc/analytics
+├ ○ /amc/reports
+├ ƒ /api/amc
+├ ƒ /api/auth/permissions
+├ ƒ /api/build-info
+├ ƒ /api/copilot/action/execute
+├ ƒ /api/copilot/chat
+├ ƒ /api/copilot/poc-stream
+├ ƒ /api/cron/fleet-compliance-audit
+├ ƒ /api/cron/process-email-queue
+├ ƒ /api/cron/tat-escalation
+├ ƒ /api/heartbeat
+├ ƒ /api/mentions
+├ ƒ /api/migration/upload
+├ ƒ /api/modules
+├ ƒ /api/perf
+├ ƒ /api/proxy-attachment/[id]
+├ ƒ /api/revalidate-iam
+├ ƒ /api/session/conflict
+├ ƒ /api/session/register
+├ ƒ /api/sla
+├ ƒ /api/users
+├ ƒ /api/vehicle/create
+├ ƒ /api/vehicle/document-content
+├ ƒ /api/vehicle/documents
+├ ƒ /api/vehicle/documents/delete
+├ ƒ /api/vehicle/documents/update
+├ ƒ /api/vehicle/documents/upload
+├ ƒ /api/vehicle/image
+├ ƒ /api/vehicle/image/cutout
+├ ƒ /api/vehicle/lookup
+├ ƒ /api/vehicle/model-image
+├ ƒ /api/vehicle/model-image/auto
+├ ƒ /api/vehicle/model-image/candidates
+├ ƒ /api/vehicle/model-image/file
+├ ƒ /api/vehicle/model-image/preview
+├ ƒ /api/vehicle/model-image/runtime/[file]
+├ ƒ /api/vehicle/model-image/segmenter
+├ ƒ /api/vehicle/model-image/source
+├ ƒ /api/vehicle/model-images
+├ ƒ /api/version
+├ ƒ /api/webhooks/event-worker
+├ ƒ /auth/[...rest]
+├ ○ /auth/accept
+├ ƒ /auth/callback
+├ ƒ /auth/direct
+├ ƒ /budget
+├ ƒ /budget/[projectId]
+├ ƒ /budget/[projectId]/[tab]
+├ ƒ /budget/[projectId]/export/[kind]
+├ ○ /budget/admin
+├ ƒ /budget/admin/[section]
+├ ƒ /budget/guide
+├ ƒ /budget/import
+├ ○ /compliance
+├ ƒ /dashboards
+├ ƒ /dashboards/[key]/[[...path]]
+├ ƒ /design/[[...slug]]
+├ ○ /iam
+├ ƒ /iam/cockpit
+├ ○ /iam/roles
+├ ○ /iam/sessions
+├ ○ /icon.svg
+├ ƒ /knowledge
+├ ○ /knowledge/articles
+├ ○ /learning
+├ ○ /learning/courses
+├ ƒ /login
+├ ○ /masters
+├ ○ /masters/companies
+├ ○ /masters/departments
+├ ○ /masters/designations
+├ ○ /masters/vendors
+├ ƒ /meet
+├ ƒ /meet/admin
+├ ƒ /meet/calendar
+├ ƒ /meet/decisions
+├ ƒ /meet/live
+├ ƒ /meet/live/[sessionId]
+├ ƒ /meet/meetings
+├ ƒ /meet/meetings/[id]
+├ ƒ /meet/meetings/new
+├ ƒ /meet/my-work
+├ ƒ /meet/notes
+├ ƒ /meet/reports
+├ ƒ /meet/sessions/[sessionId]
+├ ƒ /migration
+├ ○ /profile
+├ ƒ /rbac
+├ ○ /requirements
+├ ƒ /requirements/[id]
+├ ○ /requirements/approvals
+├ ○ /requirements/grooming
+├ ƒ /requirements/reports
+├ ƒ /rooms/[roomId]/display
+├ ○ /select-module
+├ ○ /settings
+├ ○ /settings/communication
+├ ƒ /settings/communication/logs
+├ ƒ /settings/communication/providers
+├ ƒ /settings/communication/rules
+├ ƒ /settings/communication/templates
+├ ƒ /settings/email
+├ ƒ /settings/identity
+├ ƒ /settings/notifications
+├ ƒ /share/[token]
+├ ○ /sla
+├ ○ /sla/holidays
+├ ○ /sla/rules
+├ ○ /subscription
+├ ○ /support
+├ ƒ /tasks
+├ ƒ /tasks/[taskId]
+├ ○ /tickets
+├ ƒ /tickets/[ticketId]
+├ ○ /tickets/automations
+├ ○ /tickets/dashboard
+├ ƒ /users
+├ ƒ /users/[id]
+├ ƒ /vehicle/[[...slug]]
+├ ƒ /verify-drawing/[token]
+├ ƒ /workspaces
+├ ƒ /workspaces/enrolled
+├ ○ /workspaces/reports
+├ ƒ /workspaces/tasks
+└ ƒ /workspaces/transfer-tasks
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

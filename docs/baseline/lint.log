@@ -1,0 +1,1362 @@
+
+> lint
+> npx eslint .
+
+
+D:\adios\Design_Tracking\src\components\ApprovalsReviewQueue.tsx
+  203:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  235:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  253:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  271:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  281:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  389:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  399:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\BuildingSectionMatrix.tsx
+  407:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  417:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  434:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  449:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  468:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  487:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  506:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  548:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  557:19  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  602:35  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  691:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  820:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DataEntryFormsModal.tsx
+  275:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  287:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  299:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  347:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  518:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  626:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DeleteDependencyModal.tsx
+  142:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  240:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  248:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DesignMultiSelectDropdown.tsx
+  192:7   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  248:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  258:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  283:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  377:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DesignRbacGovernance.tsx
+   784:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   794:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   816:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   824:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   840:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   856:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   869:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   892:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   961:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   971:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   981:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   997:21  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1094:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1123:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1177:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1191:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1240:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1252:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1441:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1459:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1462:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1465:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1468:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1475:19  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1576:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1579:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1645:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1652:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1752:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1759:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1779:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1780:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DesignRbacModal.tsx
+  237:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  248:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  261:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  344:17  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  375:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  392:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  409:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  426:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  443:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  451:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  470:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  480:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  487:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DesignReportsAnalytics.tsx
+   89:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  236:11  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DesignRfiTracker.tsx
+  256:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  348:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  379:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  396:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  414:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  433:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  444:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  562:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  577:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DesignStagesRoadmap.tsx
+  112:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  205:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  232:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  242:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DesignTransactionLayout.tsx
+   69:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  263:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DmsFolderPermissionsModal.tsx
+  307:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  405:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  424:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  432:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  517:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  532:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  662:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  670:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  678:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  691:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  717:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  724:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DmsFolderRepository.tsx
+  237:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  264:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  276:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  320:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  334:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  346:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  366:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  438:13  error    Use <AppTable> from @/components/ui/AppTable instead of raw <table>                                                                                                                                                                                                                      no-restricted-syntax
+  462:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  514:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  536:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  572:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  618:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  625:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  705:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  715:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  722:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  760:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  786:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\Design_Tracking\src\components\DmsSplitIndexingWizard.tsx
+  286:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  297:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  308:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  321:9   error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  375:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  382:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  393:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  435:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  457:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  584:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  590:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  636:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  647:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  657:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  664:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  688:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  760:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  793:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  858:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  865:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DrawingMarkupViewer.tsx
+   536:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   546:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   553:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   561:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   583:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   590:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   606:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   619:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   634:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   647:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   660:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   673:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   686:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   699:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   717:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   734:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1171:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1241:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1247:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1357:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1364:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1397:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1417:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1458:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1464:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\DrawingRegister.tsx
+  274:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  327:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  359:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  377:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  395:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  405:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  419:11  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  504:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  513:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  522:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  531:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  540:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\GfcHandoverView.tsx
+  111:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  119:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  187:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  214:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  230:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  240:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  256:11  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  307:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\LiaisoningTracker.tsx
+  283:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  293:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  318:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  359:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  398:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  416:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  426:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  450:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  613:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  621:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  629:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  637:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\LookAheadDashboard.tsx
+  242:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  262:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  303:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  335:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  353:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  363:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  545:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  765:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  776:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\MastersSetupView.tsx
+   295:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   320:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   332:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   398:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   409:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   445:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   459:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   500:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   507:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   533:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   544:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   569:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   606:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   656:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   667:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   685:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   947:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1012:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1019:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\ReviewApprovalModal.tsx
+  180:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\RevisionHistoryLogs.tsx
+  374:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  387:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  481:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  496:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  541:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  555:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  571:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  684:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  758:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\TenderDesignMatrix.tsx
+   690:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   702:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   713:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   724:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   734:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   745:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   808:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   837:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   856:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   874:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   897:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   908:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   922:11  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1030:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1040:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1070:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1082:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1094:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1106:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1160:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1203:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1508:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1542:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1550:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1582:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1733:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\TransmittalManager.tsx
+  207:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  290:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  320:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  339:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  358:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  369:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  387:11  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  467:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  478:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  489:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  752:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  827:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\UploadDrawingModal.tsx
+  423:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  433:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  443:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\masters\CategoryMasterView.tsx
+  184:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  192:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  253:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  309:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  317:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  356:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  436:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  459:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  492:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  499:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\masters\ConsultantMasterView.tsx
+  380:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  388:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  416:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  455:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  462:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  489:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  497:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  558:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  594:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  609:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  642:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  691:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  699:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  759:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\masters\MasterBulkImportModal.tsx
+  179:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  200:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  246:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  255:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  265:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  355:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  444:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  455:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  467:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  480:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  498:19  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  584:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  591:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\masters\ProjectMasterView.tsx
+   368:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   376:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   437:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   491:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   548:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   556:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   610:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   668:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   706:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   718:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   932:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   940:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   972:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1019:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1027:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1061:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1080:35  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1115:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1131:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1139:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1150:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1157:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\Design_Tracking\src\components\masters\SubProjectMasterView.tsx
+   350:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   358:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   381:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   440:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   487:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   495:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   569:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   607:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   619:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   634:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   788:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   796:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   827:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   874:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   882:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   916:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   935:35  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   970:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   986:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   994:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1005:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1012:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\budget\_components\admin.tsx
+   276:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   283:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   515:11   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   573:13   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   612:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   623:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   637:13   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   656:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   720:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   729:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   738:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   748:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   772:13   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   895:27   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   919:13   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   991:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1027:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1034:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1041:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1048:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1062:19   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1122:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1129:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1151:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1183:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1190:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1218:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1228:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1270:33   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1281:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1282:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1283:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1290:43   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1374:62   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1377:25   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1379:141  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1411:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1413:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\budget\_components\budget-wizard.tsx
+  155:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  163:30   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  164:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  169:13   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  197:35   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  201:19   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  204:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  210:35   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  219:38   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  224:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  234:17   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  243:17   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  244:17   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  246:39   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  266:25   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  295:17   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  300:59   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  308:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  313:35   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  314:101  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  325:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  327:23   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  328:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\budget\_components\forms.tsx
+    34:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+    42:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   124:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   127:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   152:27   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   154:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   156:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   170:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   172:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   173:23   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   221:31   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   229:17   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   230:17   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   240:35   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   255:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   339:31   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   373:38   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   415:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   431:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   464:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   497:31   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   504:17   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   505:17   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   513:35   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   520:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   533:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   549:31   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   573:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   622:31   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   627:55   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   629:72   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   633:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   634:18   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   655:13   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   656:28   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   661:33   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   678:20   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   692:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   701:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   722:13   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   725:13   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   744:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   777:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   780:11   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   785:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   872:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   884:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   898:15   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   921:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   934:7    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   938:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   956:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   968:7    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1013:109  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1036:31   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1041:50   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1045:41   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1152:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1202:9    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1217:7    error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\budget\_components\import-panel.tsx
+  103:78   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  137:33   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  142:35   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  148:35   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  159:28   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  159:123  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  178:31   error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  183:28   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  183:169  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\budget\_components\manual.tsx
+   29:20  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   43:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   80:30  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   96:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  159:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  162:31  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  181:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  190:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  191:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  194:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  243:75  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  261:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  262:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  266:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  267:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\budget\_components\masters.tsx
+   48:31  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   56:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   57:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   67:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   96:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   98:37  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  106:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  108:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  117:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  130:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  155:31  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  160:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  161:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  168:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\budget\_components\start.tsx
+  47:55  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+
+D:\adios\app\budget\_components\views.tsx
+    91:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+    99:35  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   194:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   200:47  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   231:29  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   261:29  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   464:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   534:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   547:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   609:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   623:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   630:52  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   637:51  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   665:31  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   714:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   725:35  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   734:78  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   737:35  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   744:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   749:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   790:35  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   797:35  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   803:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   813:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   819:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   867:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   875:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   920:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   935:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+   958:31  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+  1013:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+  1027:33  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>  no-restricted-syntax
+
+D:\adios\app\learning\LearningHubClient.tsx
+   85:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   97:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  109:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  149:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  166:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\login\page.tsx
+  360:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  391:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  452:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+
+D:\adios\app\meet\admin\MeetAdminClient.tsx
+   511:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   556:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   594:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   654:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   661:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   675:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   779:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   801:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   967:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   989:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1022:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1047:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1056:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1085:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1106:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1131:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1142:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1156:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1180:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1205:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1270:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1277:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1413:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1455:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1485:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1488:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1527:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1530:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1553:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1642:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1675:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1716:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1727:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1740:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1818:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1825:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1875:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\meet\calendar\MeetCalendarClient.tsx
+   57:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   63:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   73:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  109:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\meet\decisions\DecisionsClient.tsx
+  305:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  384:11  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  499:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  510:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  540:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  657:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\meet\live\[sessionId]\LiveMeetingClient.tsx
+  346:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  359:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  443:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  548:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  559:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  570:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  590:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  632:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  673:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  724:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  748:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  762:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  769:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\meet\meetings\[id]\MeetingDetailTabs.tsx
+  268:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  280:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  292:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  304:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  374:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  465:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  485:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  602:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  677:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  708:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  753:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  827:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\meet\meetings\new\CreateMeetingClientForm.tsx
+  228:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  242:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  466:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  497:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\meet\my-work\MyWorkClient.tsx
+  248:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  276:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  284:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  325:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  363:33  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  411:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  421:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  487:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  553:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  729:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\meet\notes\NotesClient.tsx
+  306:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  348:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  375:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  447:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  493:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  529:33  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  550:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  556:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  562:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  570:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  597:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  636:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  722:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  728:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  749:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  822:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  836:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  842:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\meet\reports\ReportsClient.tsx
+  159:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  223:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  265:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  284:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  324:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  390:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  443:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  497:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  565:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  600:19  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+
+D:\adios\app\meet\sessions\[sessionId]\SessionWorkspaceClient.tsx
+   563:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   574:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   656:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   759:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   875:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   982:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1061:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1117:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1205:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1306:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\requirements\[id]\page.tsx
+   732:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1087:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\requirements\approvals\page.tsx
+  375:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\requirements\page.tsx
+  423:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  438:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  439:39  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  440:39  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  492:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  493:45  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  494:45  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\rooms\[roomId]\display\RoomDisplayClient.tsx
+  195:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  253:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  260:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  319:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  338:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  352:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  358:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\select-module\page.tsx
+  287:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\share\[token]\page.tsx
+  258:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  322:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  333:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  340:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\sla\holidays\page.tsx
+  166:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  169:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  270:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\sla\page.tsx
+  162:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  263:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\tickets\page.tsx
+  261:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  275:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  279:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  310:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  360:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\app\users\[id]\page.tsx
+  678:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  707:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\app\users\page.tsx
+  1001:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\amc\AMCAllocationModal.tsx
+  137:7  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\amc\AMCRenewalModal.tsx
+  71:7  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\budget\BudgetLearningGuide.tsx
+  614:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  627:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  640:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  665:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  867:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  955:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+
+D:\adios\components\copilot\CopilotDrawer.tsx
+  355:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  453:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  555:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  563:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\dashboard\LiveDashboardWrapper.tsx
+  46:5  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\dashboard\engine\CustomizeDashboardModal.tsx
+  181:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  184:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  218:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\dashboard\engine\DashboardEngine.tsx
+  234:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  291:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\dashboard\portfolio\MyPortfolioSection.tsx
+  396:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  404:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\dashboard\portfolio\PortfolioTables.tsx
+  150:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  169:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  188:11  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  306:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\dashboard\portfolio\UserComparisonMatrix.tsx
+  199:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\dashboard\widgets\BaseWidget.tsx
+  75:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\dashboard\widgets\BottleneckRadarWidget.tsx
+  176:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\dashboard\widgets\SlaCountdownWidget.tsx
+  131:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  143:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  156:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  168:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  180:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\design\DesignLearningGuide.tsx
+  244:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  257:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  270:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  295:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  394:21  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+
+D:\adios\components\design\DesignTrackingHost.tsx
+  447:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  461:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  471:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\learning\ModuleDependencyGraph.tsx
+  111:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\learning\ModuleRenderer.tsx
+  200:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\masters\SystemMasterBulkImportModal.tsx
+  465:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  517:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  638:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  658:17  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  705:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  713:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\AIMinutesCard.tsx
+   93:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  100:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  202:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  210:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\AttendanceCard.tsx
+   93:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  132:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  142:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  152:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  162:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  186:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  209:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\CreateTaskModal.tsx
+  137:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  317:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  334:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\DraggableLiveNotesWidget.tsx
+  111:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  183:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  191:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\EndSessionModal.tsx
+  83:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\InstantCallRoomClient.tsx
+  269:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  415:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  430:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  445:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  460:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\InvitationsCard.tsx
+  181:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  192:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  203:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  214:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  235:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  287:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  306:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  342:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  348:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  366:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  393:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  399:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\MeetingNotesCard.tsx
+   83:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  121:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  145:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  157:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  163:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\QuickPointCapture.tsx
+  117:9  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\meet\RunningNotesCard.tsx
+  146:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  176:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  183:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  209:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\AttachmentPreviewModal.tsx
+  68:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\ChandakMessengerDrawer.tsx
+  234:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  245:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  254:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  324:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  332:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\ChandakMessengerTrigger.tsx
+  160:7  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\ConversationList.tsx
+  114:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  124:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  133:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  167:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  297:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\ConversationView.tsx
+   507:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   550:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   566:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   580:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   592:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   618:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   731:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   752:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   766:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   779:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   791:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   807:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   881:41  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   925:37  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   992:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1000:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1008:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1019:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1034:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1044:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1058:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1180:7   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\CreateTaskFromMessageModal.tsx
+  103:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  236:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  244:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\GroupInfoModal.tsx
+   93:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  125:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  137:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  174:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  237:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  246:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\MediaGalleryDrawer.tsx
+   82:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   93:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  104:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  161:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  215:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\MessageComposer.tsx
+  464:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  489:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  533:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  549:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  571:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  580:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  603:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  627:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  634:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  657:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  669:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  697:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  708:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  734:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  743:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  762:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  779:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  786:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\NewChatModal.tsx
+  101:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  146:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  199:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\NewGroupModal.tsx
+  129:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  201:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  280:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  287:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\messenger\SystemMessengerNotifier.tsx
+  548:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  563:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  571:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\requirements\EditRequirementModal.tsx
+  123:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\settings\IdentityProviderForm.tsx
+  117:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  196:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  213:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\settings\SettingsGallery.tsx
+  212:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\settings\UserProfileEditor.tsx
+  307:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  372:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  519:31  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  542:35  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  592:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\settings\communication\NotificationRuleBuilder.tsx
+  217:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  279:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\settings\communication\TemplateDesigner.tsx
+  526:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\tasks\TaskBackButton.tsx
+  27:5  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\tasks\TaskBoardView.tsx
+  279:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\tasks\TaskCreationWizard.tsx
+  739:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  786:23  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\tasks\TaskExecutionController.tsx
+  1199:30  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  1570:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  1588:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  1606:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  1624:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  1666:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  1720:31  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  1786:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  2035:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  2048:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  2064:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  2136:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  2178:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  2250:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  2289:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  2361:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  2376:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\tasks\TaskRealtimeChat.tsx
+  400:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  451:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  535:42  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\tickets\TicketRealtimeChat.tsx
+  415:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  466:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  550:42  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\tickets\TicketWorkspaceConsole.tsx
+  657:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  786:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\adios\components\users\UserInviteWizardModal.tsx
+  283:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\users\UserModuleAccessModal.tsx
+  214:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\vehicle\FleetDeskHost.tsx
+    475:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+    680:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+   3359:3   error    Definition for rule 'react-hooks/exhaustive-deps' was not found                                                                                                                                                                                                                          react-hooks/exhaustive-deps
+  11090:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11125:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11308:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11516:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11529:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11541:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11620:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11630:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11883:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11895:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11916:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  11944:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12060:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12074:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12690:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12716:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12768:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12781:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12797:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12813:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12829:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  12856:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13079:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13460:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13512:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13533:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13554:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13575:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13596:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13747:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  13881:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14214:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14230:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14249:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14265:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14280:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14294:17  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14426:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14464:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14793:33  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14806:33  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14819:33  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14832:33  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14973:47  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  14984:47  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  15000:41  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  15015:41  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  15036:39  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  16010:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  16037:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  16048:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  16059:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  16084:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  16780:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  16816:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  17299:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  17572:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  18101:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  18114:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  18127:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19008:31  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19043:31  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19230:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19438:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19451:31  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19463:31  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19542:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19552:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19871:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19883:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19984:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  19998:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  20850:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  20862:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  21691:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  21703:19  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23074:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23365:25  error    Use <AppTable> from @/components/ui/AppTable instead of raw <table>                                                                                                                                                                                                                      no-restricted-syntax
+  23447:39  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23459:39  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23468:41  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23501:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23509:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23522:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23535:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23553:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23569:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  23937:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  24024:35  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  24347:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  24638:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  24652:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  24912:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  24924:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  24943:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  24971:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  25424:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  25438:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  26043:31  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  26854:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  26867:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  26880:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  26893:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  26906:25  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28354:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28378:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28402:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28426:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28451:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28479:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28505:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28518:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28531:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28544:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28557:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28570:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  28583:13  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  29009:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  29017:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  29736:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  29917:51  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  29929:51  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  30123:29  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  30379:21  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  30528:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  30553:23  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  31430:27  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  32561:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  32720:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+  32838:15  error    Use <AppButton> from @/components/ui/AppButton instead of raw <button>                                                                                                                                                                                                                   no-restricted-syntax
+
+D:\adios\components\vehicle\FleetRbacGovernance.tsx
+   692:11  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   833:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   841:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   849:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   872:19  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+   907:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   923:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   939:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   955:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   971:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+   987:31  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1072:13  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1130:27  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  1192:15  error  Use <AppTable> from @/components/ui/AppTable instead of raw <table>     no-restricted-syntax
+  1368:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\vehicle\VehicleModelPictures.tsx
+   94:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  145:53  error  Definition for rule 'react-hooks/exhaustive-deps' was not found         react-hooks/exhaustive-deps
+  301:9   error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  332:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\vehicle\VehicleRender.tsx
+  138:5  error  Definition for rule 'react-hooks/exhaustive-deps' was not found  react-hooks/exhaustive-deps
+
+D:\adios\components\vehicle\VehicleShowroom.tsx
+  162:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  220:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\workspaces\EnrolledWorkspacesClient.tsx
+  139:25  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  144:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  147:29  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+D:\adios\components\workspaces\WorkspaceMasterTable.tsx
+  323:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  373:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  390:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  451:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  461:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  537:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  556:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  573:21  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  657:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  711:13  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  733:17  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  750:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  768:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  784:19  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  808:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+  817:15  error  Use <AppButton> from @/components/ui/AppButton instead of raw <button>  no-restricted-syntax
+
+✖ 1109 problems (1082 errors, 27 warnings)
+

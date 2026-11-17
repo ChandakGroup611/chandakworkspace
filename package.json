@@ -5,6 +5,7 @@
     "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=400\" next start",
     "lint": "npx eslint .",
     "deploy": "node scripts/deploy.js",
+    "test:e2e": "playwright test --config=tests/e2e/playwright.config.ts",
     "themes": "node tools/gen-themes.mjs app/styles",
     "ui:audit": "node tools/ui-audit.mjs",
     "ui:check": "node tools/ui-audit.mjs --fail"
