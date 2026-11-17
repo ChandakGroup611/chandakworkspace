@@ -412,7 +412,7 @@ export default function UserMasterPage() {
         console.warn("[User Master] /api/users fetch failed, trying Server Action:", apiErr);
       }
 
-      if (!data || !data.users) {
+      if (!data || !data.users || data.users.length === 0) {
         try {
           data = await fetchUsersDashboardData();
         } catch (actionErr: any) {
@@ -421,7 +421,7 @@ export default function UserMasterPage() {
       }
 
       // If both API route and server action were unreachable, query via browser client
-      if (!data || !data.users) {
+      if (!data || !data.users || data.users.length === 0) {
         const { data: { user: clientAuth } } = await supabase.auth.getUser();
         if (clientAuth) {
           const [dbUsersRes, deptsRes, desigsRes, rolesRes] = await Promise.all([
