@@ -451,7 +451,7 @@ export default function LoginPage() {
                   <label htmlFor="login-password" className="text-[13px] font-medium text-subtle">Password</label>
                   <button
                     type="button"
-                    onClick={() => { toast.info("To reset your password, contact IT support (it.support@chandakgroup.com)."); }}
+                    onClick={() => { toast.info("To reset your password, contact IT support (Noreply@chandakgroup.com)."); }}
                     className="text-[12.5px] font-medium text-accent-soft-text hover:underline"
                   >
                     Forgot password?
