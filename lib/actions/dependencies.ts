@@ -18,7 +18,7 @@ export interface DependencyCheckResult {
  */
 export async function checkWorkspaceUserDependencies(workspaceId: string, userIds: string[]): Promise<Record<string, DependencyCheckResult>> {
   const results: Record<string, DependencyCheckResult> = {};
-  
+
   if (!workspaceId || userIds.length === 0) return results;
 
   // 1. Fetch this workspace and all its descendant sub-workspaces
@@ -61,7 +61,7 @@ export async function checkWorkspaceUserDependencies(workspaceId: string, userId
     .from("tickets")
     .select("id, code, title, assignee_id, custom_fields")
     .eq("is_deleted", false);
-    
+
   const workspaceTickets = (tickets || []).filter(t => wsIdList.includes(t.custom_fields?.workspace_id));
 
   // 4. Check Sub-Workspaces
@@ -78,13 +78,13 @@ export async function checkWorkspaceUserDependencies(workspaceId: string, userId
   for (const userId of userIds) {
     const blockingItems: string[] = [];
     const watcherItems: string[] = [];
-    
+
     // Evaluate Tasks
     tasks?.forEach(task => {
       const statusObj: any = Array.isArray(task.status) ? task.status[0] : task.status;
-      const isClosed = statusObj?.is_closed || statusObj?.is_terminal || 
+      const isClosed = statusObj?.is_closed || statusObj?.is_terminal ||
         ['TASK COMPLETED', 'CLOSED', 'RESOLVED', 'DONE', 'CANCELLED'].includes((statusObj?.status_code || '').toUpperCase());
-      
+
       // Completed or terminal tasks do NOT block member removal
       if (isClosed) return;
 
@@ -323,7 +323,7 @@ export async function reassignAndRemoveWorkspaceUser(
  */
 export async function checkTaskUserDependencies(taskId: string, userIds: string[]): Promise<Record<string, DependencyCheckResult>> {
   const results: Record<string, DependencyCheckResult> = {};
-  
+
   if (!taskId || userIds.length === 0) return results;
 
   // 1. Check Sub-Tasks
@@ -342,7 +342,7 @@ export async function checkTaskUserDependencies(taskId: string, userIds: string[
   for (const userId of userIds) {
     const blockingItems: string[] = [];
     const watcherItems: string[] = [];
-    
+
     // Evaluate Sub-Tasks
     subTasks?.forEach(st => {
       const subTaskName = st.subject || "Untitled Sub-Task";

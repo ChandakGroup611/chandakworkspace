@@ -13,7 +13,7 @@ async function verifyAccess(requiredPermission: string) {
   if (!user) throw new Error("Unauthorized");
   const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
   if (isSuperAdmin) return true;
-  
+
   if (requiredPermission) {
     const hasAccess = await hasPermission(user.id, requiredPermission);
     if (!hasAccess) throw new Error(`Forbidden: ${requiredPermission} access required`);
@@ -142,7 +142,7 @@ export async function restoreEntity(entityType: ComplianceEntity | string, ids: 
 
   if (parentChecks[entityType]) {
     const check = parentChecks[entityType];
-    
+
     // 1. Fetch the records we are trying to restore to get their parent IDs
     const { data: recordsToRestore } = await supabaseAdmin
       .from(entityType)
@@ -152,7 +152,7 @@ export async function restoreEntity(entityType: ComplianceEntity | string, ids: 
     if (recordsToRestore && recordsToRestore.length > 0) {
       // 2. Collect unique parent IDs
       const parentIds = [...new Set(recordsToRestore.map((r: any) => r[check.foreignKey]).filter(Boolean))];
-      
+
       if (parentIds.length > 0) {
         // 3. Query the parent table to see if any of these parents are soft-deleted
         const { data: deletedParents } = await supabaseAdmin
@@ -162,9 +162,9 @@ export async function restoreEntity(entityType: ComplianceEntity | string, ids: 
           .eq('is_deleted', true);
 
         if (deletedParents && deletedParents.length > 0) {
-          return { 
-            success: false, 
-            error: `Cannot restore these ${entityType} because their parent (${check.parentName}) is in the trash. Please restore the parent first.` 
+          return {
+            success: false,
+            error: `Cannot restore these ${entityType} because their parent (${check.parentName}) is in the trash. Please restore the parent first.`
           };
         }
       }
@@ -194,12 +194,12 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
     .select('user_id, role, user:user_master(id, full_name, user_code, email)')
     .eq('workspace_id', workspaceId)
     .eq('is_deleted', false);
-  
+
   if (error) {
     console.error("Error fetching workspace stakeholders:", error);
     return [];
   }
-  
+
   return data.map(d => ({
     user_id: d.user_id,
     role: d.role,
@@ -217,12 +217,12 @@ export async function fetchTaskParticipants(taskId: string) {
 }
 
 export async function moveTasksBatchOperation(
-  taskIds: string[], 
-  targetWorkspaceId: string, 
+  taskIds: string[],
+  targetWorkspaceId: string,
   reassignments: Record<string, { newExecutive?: string; newWatchers?: string[] }>
 ) {
   await verifyAccess("SUPER_ADMIN");
-  
+
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const { data: { user } } = await supabase.auth.getUser();
@@ -234,7 +234,7 @@ export async function moveTasksBatchOperation(
     if (!task) continue;
 
     const reassignment = reassignments[taskId] || {};
-    
+
     // determine new executive
     let newExecutive = task.assigned_to;
     if (reassignment.newExecutive !== undefined) {
@@ -294,7 +294,7 @@ export async function moveTasksBatchOperation(
       content: `System: Task moved to a new workspace.`
     }]);
   }
-  
+
   revalidatePath('/compliance');
   revalidatePath('/workspaces');
   return { success: true };
