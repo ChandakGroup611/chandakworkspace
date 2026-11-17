@@ -178,7 +178,7 @@ $primaryAppRoots = array_values(array_unique(array_filter([
 ])));
 
 // Base performance caching header for LiteSpeed & Apache
-$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine On\n    RewriteRule .* - [E=verifycaptcha:bypass]\n    RewriteRule .* - [E=noconntimeout:1]\n    RewriteRule .* - [E=noabort:1]\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
+$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine On\n    RewriteRule .* - [E=verifycaptcha:bypass]\n    RewriteRule .* - [E=noconntimeout:1]\n    RewriteRule .* - [E=noabort:1]\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\nRewriteRule ^deploy\\.zip$ - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
 // STRICT: Explicit PassengerEnabled on, bound V8 and libuv thread pools so total threads per process <= 3
@@ -381,6 +381,24 @@ if ($versionedDirs) {
     }
 }
 
+// Dedicated Clean / Purge Zip Action
+if (isset($_GET['clean']) || isset($_GET['purge_zip'])) {
+    $purged = [];
+    foreach (array_unique($candidateZipPaths) as $zPath) {
+        if ($zPath && file_exists($zPath)) {
+            @unlink($zPath);
+            $purged[] = $zPath;
+        }
+    }
+    echo json_encode([
+        'success' => true,
+        'action' => 'clean',
+        'purged' => $purged,
+        'timestamp' => date('Y-m-d H:i:s')
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 // Collect all candidate zip files that exist and have substantive size (>500KB)
 $existingZips = [];
 foreach (array_unique($candidateZipPaths) as $cand) {
@@ -479,7 +497,11 @@ if ($zipFile && class_exists('ZipArchive')) {
     }
     
     // Clean up zip file and sync states
-    @unlink($zipFile);
+    foreach (array_unique($candidateZipPaths) as $zPath) {
+        if ($zPath && file_exists($zPath)) {
+            @unlink($zPath);
+        }
+    }
     @unlink(__DIR__ . '/.ftp-deploy-sync-state.json');
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
 

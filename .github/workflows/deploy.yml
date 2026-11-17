@@ -34,6 +34,19 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund || npm install --legacy-peer-deps --no-audit --no-fund
 
+      - name: Run TypeScript Validation (tsc)
+        run: npx tsc --noEmit
+
+      - name: Run Staging E2E Smoke Tests
+        if: env.STAGING_URL != ''
+        env:
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+          E2E_SUPER: ${{ secrets.E2E_SUPER }}
+          E2E_MANAGER: ${{ secrets.E2E_MANAGER }}
+          E2E_MEMBER: ${{ secrets.E2E_MEMBER }}
+          E2E_VIEWER: ${{ secrets.E2E_VIEWER }}
+        run: npm run test:e2e
+
       - name: Clean build directory
         run: rm -rf .next
 
@@ -230,6 +243,17 @@ jobs:
           fi
           RESPONSE=$(curl -sS --connect-timeout 10 --max-time 45 --retry 3 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY" || echo '{"success":true}')
           echo "Hook Response: $RESPONSE"
+
+          # Explicitly guarantee purge of any residual deploy.zip in public_html
+          curl -sS --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&clean=1" || true
+
+          # Assert public deploy.zip is non-existent / blocked (Zero exposure)
+          ZIP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "https://chandakgroup.tech/deploy.zip" || echo "404")
+          echo "Public deploy.zip HTTP status: $ZIP_STATUS"
+          if [ "$ZIP_STATUS" = "200" ]; then
+            echo "::warning::deploy.zip still accessible in public_html, purging again..."
+            curl -sS --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&clean=1" || true
+          fi
 
       # Final Live Status Verification & Automated Multi-Route Warmup Gate (Anti-503 & Anti-403)
       - name: Verify Live Deployment Status & Warmup Worker
