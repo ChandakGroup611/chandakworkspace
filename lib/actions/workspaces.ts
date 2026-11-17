@@ -1782,7 +1782,8 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
     }
 
     const { data: workspaceTasks, error: tasksError } = await query
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(300);
 
     if (tasksError) {
       console.error("[Workspaces] Error fetching tasks by workspace:", tasksError);
@@ -1812,20 +1813,39 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
       }
 
       const taskIds = workspaceTasks.map((t: any) => t.id);
-      const [checklistsData, attachmentsData, commentsData] = await Promise.all([
-        supabaseAdmin.from("task_checklists").select("task_id, is_completed").in("task_id", taskIds),
-        supabaseAdmin.from("task_attachments").select("task_id").in("task_id", taskIds),
-        supabaseAdmin.from("task_comments").select("task_id").in("task_id", taskIds)
-      ]);
+      const taskIdChunks: string[][] = [];
+      for (let i = 0; i < taskIds.length; i += 100) {
+        taskIdChunks.push(taskIds.slice(i, i + 100));
+      }
 
       const checklistMap: Record<string, any[]> = {};
-      if (checklistsData.data) checklistsData.data.forEach((c: any) => { if (!checklistMap[c.task_id]) checklistMap[c.task_id] = []; checklistMap[c.task_id].push(c); });
-
       const attachmentCountMap: Record<string, number> = {};
-      if (attachmentsData.data) attachmentsData.data.forEach((a: any) => { attachmentCountMap[a.task_id] = (attachmentCountMap[a.task_id] || 0) + 1; });
-
       const commentCountMap: Record<string, number> = {};
-      if (commentsData.data) commentsData.data.forEach((c: any) => { commentCountMap[c.task_id] = (commentCountMap[c.task_id] || 0) + 1; });
+
+      await Promise.all(taskIdChunks.map(async (chunk) => {
+        const [checklistsData, attachmentsData, commentsData] = await Promise.all([
+          supabaseAdmin.from("task_checklists").select("task_id, is_completed").in("task_id", chunk),
+          supabaseAdmin.from("task_attachments").select("task_id").in("task_id", chunk),
+          supabaseAdmin.from("task_comments").select("task_id").in("task_id", chunk)
+        ]);
+
+        if (checklistsData.data) {
+          checklistsData.data.forEach((c: any) => {
+            if (!checklistMap[c.task_id]) checklistMap[c.task_id] = [];
+            checklistMap[c.task_id].push(c);
+          });
+        }
+        if (attachmentsData.data) {
+          attachmentsData.data.forEach((a: any) => {
+            attachmentCountMap[a.task_id] = (attachmentCountMap[a.task_id] || 0) + 1;
+          });
+        }
+        if (commentsData.data) {
+          commentsData.data.forEach((c: any) => {
+            commentCountMap[c.task_id] = (commentCountMap[c.task_id] || 0) + 1;
+          });
+        }
+      }));
 
       workspaceTasks.forEach((t: any) => {
         // Fix up workspace mapping
