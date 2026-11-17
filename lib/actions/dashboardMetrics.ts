@@ -75,6 +75,7 @@ export async function fetchLiveDashboardMetrics() {
         .select(`id, task_code, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id, workspace_id`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
+        .limit(1000)
         .then(res => ({ data: res.data || [], error: res.error }));
     } else {
       const createdPromise = supabaseAdmin.from("tasks").select(`id, task_code, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id, workspace_id`).in('created_by', userIdsForScope).eq("is_deleted", false);
@@ -122,6 +123,7 @@ export async function fetchLiveDashboardMetrics() {
         .select(`id, created_at, updated_at, created_by, assigned_to, subject, status, task_id`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
+        .limit(1000)
         .then(res => ({ data: res.data || [], error: res.error }));
     } else {
       const createdSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status, task_id`).in('created_by', userIdsForScope).eq("is_deleted", false);
@@ -143,6 +145,7 @@ export async function fetchLiveDashboardMetrics() {
         .select(`id, code, created_at, updated_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
+        .limit(1000)
         .then(res => ({ data: res.data || [], error: res.error }));
     } else {
       const createdTkPromise = supabaseAdmin.from("tickets").select(`id, code, created_at, updated_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).in('creator_id', userIdsForScope).eq("is_deleted", false);
@@ -163,7 +166,8 @@ export async function fetchLiveDashboardMetrics() {
         .from("requirements")
         .select(`id, code, created_at, updated_at, creator_id, title, status_id, status_master(status_name), due_date`)
         .eq("is_deleted", false)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(1000);
     } else {
       requirementsPromise = supabaseAdmin
         .from("requirements")
@@ -179,7 +183,8 @@ export async function fetchLiveDashboardMetrics() {
         .from("workspaces")
         .select(`id, workspace_code, created_at, updated_at, workspace_name, parent_workspace_id, status_id, status_master(status_name), end_date, workspace_owner_id, created_by`)
         .eq('is_deleted', false)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
     } else {
       const idsToFetch = [...workspaceIds];
       workspacesPromise = idsToFetch.length > 0 ? supabaseAdmin
