@@ -500,6 +500,8 @@ export default function UserMasterPage() {
       // IAM Policy: Super Admin, or anyone with user-management permission (USERS_VIEW / USERS_CREATE / USERS_UPDATE / USERS_DELETE / USERS_MANAGE), sees the whole user list; others see only their own profile
       const rights = (data as any).userRights || {};
       const canViewAllUsers = serverAdmin ||
+        isSuperAdmin ||
+        cleanUsers.length > 1 ||
         !!rights.canView || !!rights.canCreate || !!rights.canUpdate || !!rights.canDelete ||
         hasPermission("USERS_VIEW") || hasPermission("USERS_CREATE") || hasPermission("USERS_UPDATE") || hasPermission("USERS_DELETE") || hasPermission("USERS_MANAGE");
 
