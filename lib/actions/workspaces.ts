@@ -2094,7 +2094,7 @@ export async function updateTaskProgress(taskId: string, progress: number) {
   const customFields = task?.custom_fields && typeof task.custom_fields === 'object' ? task.custom_fields : {};
   const { error } = await supabaseAdmin
     .from("tasks")
-    .update({ 
+    .update({
       custom_fields: { ...customFields, progress_percentage: progress },
       updated_at: new Date().toISOString()
     })
@@ -2184,7 +2184,10 @@ export async function fetchSprints(workspaceId: string) {
     .select("*")
     .in("workspace_id", hierarchyIds)
     .order("start_date", { ascending: true });
-  if (error) return [];
+  if (error) {
+    console.error("fetchSprintsHierarchy error:", error);
+    throw new Error(`Failed to fetch sprints: ${error.message}`);
+  }
   return data || [];
 }
 
@@ -2240,7 +2243,10 @@ export async function fetchTaskTemplates(workspaceId: string) {
     .select("*")
     .or(`workspace_id.eq.${workspaceId},workspace_id.is.null`)
     .order("template_name", { ascending: true });
-  if (error) return [];
+  if (error) {
+    console.error("fetchTaskTemplates error:", error);
+    throw new Error(`Failed to fetch task templates: ${error.message}`);
+  }
   return data || [];
 }
 

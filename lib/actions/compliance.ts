@@ -35,7 +35,7 @@ export async function fetchComplianceWorkspaces(isDeleted: boolean = false) {
 
   if (error) {
     console.error("Error fetching workspaces for compliance:", error);
-    return [];
+    throw new Error(`Failed to fetch compliance workspaces: ${error.message}`);
   }
   return data || [];
 }
@@ -53,7 +53,7 @@ export async function fetchComplianceTasks(isDeleted: boolean = false) {
 
   if (error) {
     console.error("Error fetching tasks for compliance:", error);
-    return [];
+    throw new Error(`Failed to fetch compliance tasks: ${error.message}`);
   }
   return data || [];
 }
@@ -68,7 +68,7 @@ export async function fetchComplianceRequirements(isDeleted: boolean = false) {
 
   if (error) {
     console.error("Error fetching requirements for compliance:", error);
-    return [];
+    throw new Error(`Failed to fetch compliance requirements: ${error.message}`);
   }
   return data || [];
 }
@@ -88,7 +88,7 @@ export async function fetchComplianceMaster(table: string, nameKey: string, code
 
   if (error) {
     console.error(`Error fetching ${table} for compliance:`, error);
-    return [];
+    throw new Error(`Failed to fetch compliance master ${table}: ${error.message}`);
   }
   return data || [];
 }

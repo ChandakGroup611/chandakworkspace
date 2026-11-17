@@ -44,7 +44,7 @@ export async function fetchRoles() {
 
   if (error) {
     console.error("[IAM] Error fetching roles:", error);
-    return [];
+    throw new Error(`Failed to fetch roles: ${error.message}`);
   }
   return data || [];
 }
@@ -61,17 +61,13 @@ export async function fetchPermissions() {
 
   if (error) {
     console.error("[IAM] Error fetching permissions:", error);
-    return [];
+    throw new Error(`Failed to fetch permissions: ${error.message}`);
   }
   return data || [];
 }
 
 export async function fetchRolePermissions(roleId: string) {
-  try {
-    await checkIAMAuthorization("IAM_VIEW");
-  } catch (err) {
-    return [];
-  }
+  await checkIAMAuthorization("IAM_VIEW");
   const supabase = supabaseAdmin;
 
   const { data, error } = await supabase
@@ -81,7 +77,7 @@ export async function fetchRolePermissions(roleId: string) {
 
   if (error) {
     console.error("[IAM] Error fetching role permissions:", error);
-    return [];
+    throw new Error(`Failed to fetch role permissions: ${error.message}`);
   }
   const perms = data.map(rp => rp.permission_id);
   return perms;
