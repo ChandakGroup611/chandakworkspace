@@ -1833,7 +1833,10 @@ export async function fetchVehiclePortalDetailsAction(
 }> {
   try {
     const user = await getAuthenticatedUser();
-    // Optional check: logged in context preferred, read-only lookup allowed
+    if (!user) return { success: false, error: "Unauthorized" };
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) return { success: false, error: "Access Denied: Insufficient permissions." };
+
     if (!plateNumber || !plateNumber.trim()) {
       return { success: false, error: "Please enter a valid vehicle registration number" };
     }
@@ -3518,6 +3521,9 @@ export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
     if (!user) {
       return { success: false, documents: [], error: "Unauthenticated" };
     }
+    const canView = await canUserViewVehicles(user.id, vehicleId);
+    if (!canView) return { success: false, documents: [], error: "Access Denied" };
+
     if (!vehicleId) {
       return { success: false, documents: [], error: "Vehicle ID is required" };
     }
@@ -3562,6 +3568,8 @@ export async function fetchVehicleDocumentContentAction(documentId: string): Pro
     if (!user) {
       return { success: false, error: "Unauthenticated: Access restricted to authorized personnel." };
     }
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) return { success: false, error: "Access Denied: Insufficient permissions to view vehicle documents." };
     if (!documentId) {
       return { success: false, error: "Document ID is required." };
     }
@@ -3919,6 +3927,8 @@ export async function fetchDriversList(): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, drivers: [], error: "Unauthorized" };
+    const canView = (await canUserViewVehicles(user.id)) || (await canUserManageDrivers(user.id));
+    if (!canView) return { success: false, drivers: [], error: "Access Denied: Insufficient permissions." };
 
     const { data, error } = await supabaseAdmin
       .from("drivers")
@@ -3945,6 +3955,8 @@ export async function fetchTripsList(): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, trips: [], error: "Unauthorized" };
+    const canView = (await canUserViewVehicles(user.id)) || (await canUserManageTrips(user.id));
+    if (!canView) return { success: false, trips: [], error: "Access Denied: Insufficient permissions." };
 
     const { data: rawTrips, error } = await supabaseAdmin
       .from("trip_plans")
@@ -4079,6 +4091,8 @@ export async function fetchMaintenanceList(): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, records: [], error: "Unauthorized" };
+    const canView = (await canUserViewVehicles(user.id)) || (await canUserManageMaintenance(user.id));
+    if (!canView) return { success: false, records: [], error: "Access Denied: Insufficient permissions." };
 
     // Use get_service_records_list RPC to strip heavy base64 payloads at the database engine level (drops payload from 10.5 MB to 100 KB)
     let rawRecords: any[] = [];
@@ -4174,6 +4188,8 @@ export async function fetchServiceAttachmentContentAction(
     if (!user) {
       return { success: false, error: "Unauthenticated: Access restricted to authorized personnel." };
     }
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) return { success: false, error: "Access Denied: Insufficient permissions to view vehicle documents." };
     if (!serviceId) {
       return { success: false, error: "Service record ID is required." };
     }
@@ -4867,6 +4883,11 @@ export async function fetchInsuranceVendorsListAction(): Promise<{
   error?: string;
 }> {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, vendors: [], error: "Unauthorized" };
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) return { success: false, vendors: [], error: "Access Denied: Insufficient permissions." };
+
     const { data, error } = await supabaseAdmin
       .from("fleet_insurance_vendors")
       .select("*")
@@ -5080,6 +5101,11 @@ export async function fetchPurchaseVendorsListAction(): Promise<{
   error?: string;
 }> {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, vendors: [], error: "Unauthorized" };
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) return { success: false, vendors: [], error: "Access Denied: Insufficient permissions." };
+
     const list: PurchaseVendorRecord[] = [];
     const seenNames = new Set<string>();
 
@@ -5252,6 +5278,11 @@ export async function fetchVehiclePartsList(filters?: {
   error?: string;
 }> {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, parts: [], error: "Unauthorized" };
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) return { success: false, parts: [], error: "Access Denied: Insufficient permissions." };
+
     let query = supabaseAdmin
       .from("vehicle_parts")
       .select("*")
@@ -5831,6 +5862,8 @@ export async function fetchVehicleInsurancePoliciesAction(vehicleId: string): Pr
     if (!user) {
       return { success: false, policies: [], error: "Unauthenticated" };
     }
+    const canView = await canUserViewVehicles(user.id, vehicleId);
+    if (!canView) return { success: false, policies: [], error: "Access Denied: Insufficient permissions." };
 
     if (!vehicleId) {
       return { success: false, policies: [], error: "Vehicle ID is required" };
@@ -6154,6 +6187,8 @@ export async function fetchVehiclePucCertificatesAction(vehicleId: string): Prom
     if (!user) {
       return { success: false, certificates: [], error: "Unauthenticated" };
     }
+    const canView = await canUserViewVehicles(user.id, vehicleId);
+    if (!canView) return { success: false, certificates: [], error: "Access Denied: Insufficient permissions." };
 
     if (!vehicleId) {
       return { success: false, certificates: [], error: "Vehicle ID is required" };
@@ -6408,6 +6443,8 @@ export async function fetchVehicleSpecificationHistoryAction(vehicleId: string):
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, history: [], error: "Unauthorized" };
+    const canView = await canUserViewVehicles(user.id, vehicleId);
+    if (!canView) return { success: false, history: [], error: "Access Denied: Insufficient permissions." };
 
     const { data, error } = await supabaseAdmin
       .from("vehicle_specification_history")
@@ -6493,6 +6530,8 @@ export async function fetchVehicleServiceEntitlementsAction(
     if (!user) {
       return { success: false, entitlements: [], error: "Unauthenticated" };
     }
+    const canView = await canUserViewVehicles(user.id, vehicleId);
+    if (!canView) return { success: false, entitlements: [], error: "Access Denied: Insufficient permissions." };
 
     if (!vehicleId) {
       return { success: false, entitlements: [], error: "Vehicle ID is required" };
@@ -6734,6 +6773,8 @@ export async function fetchVehicleUnifiedRenewalsTimelineAction(
     if (!user) {
       return { success: false, timeline: [], error: "Unauthenticated" };
     }
+    const canView = await canUserViewVehicles(user.id, vehicleId);
+    if (!canView) return { success: false, timeline: [], error: "Access Denied: Insufficient permissions." };
 
     if (!vehicleId) {
       return { success: false, timeline: [], error: "Vehicle ID is required" };
@@ -6920,6 +6961,11 @@ export async function runFleetComplianceExpiryAuditAction(): Promise<{
   error?: string;
 }> {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, auditedVehicles: 0, expiriesDetected: 0, notificationsQueued: 0, error: "Unauthorized" };
+    const canManage = await canUserManageVehicles(user.id);
+    if (!canManage) return { success: false, auditedVehicles: 0, expiriesDetected: 0, notificationsQueued: 0, error: "Access Denied: Insufficient permissions." };
+
     const { data: vehicles, error: vErr } = await supabaseAdmin
       .from("vehicles")
       .select("id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, own_insurance_vendor, own_insurance_policy_number, own_insurance_expiry_date, tp_insurance_vendor, tp_insurance_policy_number, tp_insurance_expiry_date, puc_expiry_date, fitness_expiry_date, odometer_km, owner_id");
@@ -7094,6 +7140,8 @@ export async function fetchVehicleSalesListAction(): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, sales: [], error: "Unauthorized" };
+    const canView = await canUserViewVehicles(user.id);
+    if (!canView) return { success: false, sales: [], error: "Access Denied: Insufficient permissions." };
 
     const { data, error } = await supabaseAdmin
       .from("vehicle_sales")
