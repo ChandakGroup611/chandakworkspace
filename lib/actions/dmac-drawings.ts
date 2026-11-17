@@ -283,6 +283,9 @@ export async function submitDrawingRevisionAction(params: {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to submit drawing revisions" };
+    }
 
     // 1. Fetch Drawing & Latest Revision
     const { data: drawing, error: dErr } = await supabase
@@ -434,6 +437,9 @@ export async function reviewDrawingRevisionAction(params: {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to review drawing revisions" };
+    }
 
     // 1. Insert Review Step
     await supabase.from("dmac_review_steps").insert({
@@ -552,6 +558,9 @@ export async function createMarkupCommentAction(params: {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to create markup comments" };
+    }
 
     // Compute next comment number for this revision
     const { data: existingComments } = await supabase
@@ -603,6 +612,12 @@ export async function updateMarkupCommentAction(params: {
 }) {
   try {
     const supabase = await getSupabase();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to update markup comment" };
+    }
     const updatePayload: Record<string, any> = {};
     if (params.commentText !== undefined) updatePayload.comment_text = params.commentText;
     if (params.category !== undefined) updatePayload.category = params.category;
@@ -631,6 +646,12 @@ export async function updateMarkupCommentAction(params: {
 export async function deleteMarkupCommentAction(commentId: string) {
   try {
     const supabase = await getSupabase();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to delete markup comment" };
+    }
     // Delete associated thread messages first
     await supabase.from("dmac_comment_threads").delete().eq("comment_id", commentId);
     const { error } = await supabase.from("dmac_drawing_comments").delete().eq("id", commentId);
@@ -656,6 +677,9 @@ export async function addCommentThreadReplyAction(params: {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to post thread reply" };
+    }
 
     const { data: reply, error } = await supabase
       .from("dmac_comment_threads")

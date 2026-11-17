@@ -307,13 +307,11 @@ export async function createFolderAction(params: {
     }
 
     const supabase = await getSupabase();
-    let userId: string | null = null;
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id && /^[0-9a-fA-F-]{36}$/.test(user.id)) {
-        userId = user.id;
-      }
-    } catch {}
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to create folders" };
+    }
+    const userId: string = user.id;
 
     // Resolve workspace UUID with guaranteed fallback
     let targetWsId = params.workspaceId;
@@ -809,13 +807,11 @@ export async function saveDocumentWithIndexingAction(params: {
 }): Promise<{ success: boolean; documentId?: string; error?: string }> {
   try {
     const supabase = await getSupabase();
-    let userId: string | null = null;
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id && /^[0-9a-fA-F-]{36}$/.test(user.id)) {
-        userId = user.id;
-      }
-    } catch {}
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to index documents" };
+    }
+    const userId: string = user.id;
 
     // 1. Resolve workspace UUID
     let targetWsId = params.workspaceId;
@@ -981,13 +977,11 @@ export async function lockUnlockDocumentAction(params: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await getSupabase();
-    let userId: string | null = null;
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id && /^[0-9a-fA-F-]{36}$/.test(user.id)) {
-        userId = user.id;
-      }
-    } catch {}
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to lock or unlock documents" };
+    }
+    const userId: string = user.id;
 
     if (params.action === "UNLOCK") {
       await supabaseAdmin.from("dms_document_locks").delete().eq("document_id", params.documentId);
@@ -1023,13 +1017,11 @@ export async function submitQcDecisionAction(params: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await getSupabase();
-    let userId: string | null = null;
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id && /^[0-9a-fA-F-]{36}$/.test(user.id)) {
-        userId = user.id;
-      }
-    } catch {}
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to submit QC decisions" };
+    }
+    const userId: string = user.id;
 
     const updatePayload: any = {
       status: params.status,
@@ -1178,6 +1170,9 @@ export async function saveFolderPermissionsAction(params: {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized: Authentication required to manage folder permissions" };
+    }
 
     const formattedPermissions: DmsFolderPermissionItem[] = (params.permissions || []).map((p, idx) => ({
       id: p.id || `perm-${params.folderId}-${idx}-${Date.now()}`,
@@ -1264,7 +1259,7 @@ export async function saveFolderPermissionsAction(params: {
     return { success: true };
   } catch (err: any) {
     console.error("[saveFolderPermissionsAction] Error:", err);
-    return { success: true }; // Guarantee success to UI via in-memory storage
+    return { success: false, error: err.message || "Failed to save folder permissions" };
   }
 }
 

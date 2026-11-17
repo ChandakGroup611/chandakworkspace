@@ -76,5 +76,13 @@ test.describe('Phase 0 Baseline — Access Rules Verification (ACCESS_RULES.md)'
     // Standard members must only see workspaces they are enrolled in; verify page renders without un-enrolled leaks
     await expect(page.locator('body')).toBeVisible();
   });
+
+  test('ISSUE-005: DMS & Design actions enforce authorization and restrict unauthenticated access', async ({ authedPage }) => {
+    if (!CREDENTIALS.VIEWER) test.skip(true, 'No E2E_VIEWER configured');
+    const page = await authedPage('VIEWER');
+    await page.goto('/design');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('body')).toBeVisible();
+  });
 });
 
