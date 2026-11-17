@@ -556,13 +556,20 @@ export async function updateNodeStatus(nodeId: string, nodeType: string, newStat
   if (!table) return { error: "Invalid node type for status update" };
 
   // Get current status
-  const { data: node } = await supabaseAdmin
-    .from(table)
-    .select('status_id')
+  const { data: node } = await (supabaseAdmin.from(table) as any)
+    .select(nodeType === 'SUB_TASK' ? 'status_id, task_id' : 'status_id')
     .eq('id', nodeId)
     .single();
 
   if (!node) return { error: "Node not found" };
+
+  const targetTaskId = nodeType === 'TASK' ? nodeId : (node as any).task_id;
+  if (targetTaskId) {
+    const { canAccessTask } = await import("@/lib/permissions");
+    if (!(await canAccessTask(userId, targetTaskId))) {
+      return { error: "Unauthorized: You do not have permission to update this task status." };
+    }
+  }
 
   // Update status
   const { error } = await supabaseAdmin
@@ -1151,6 +1158,11 @@ export async function createChecklistItem(taskId: string, label: string) {
     const userId = user?.id;
     if (!userId) return { error: "Unauthenticated" };
 
+    const { canAccessTask } = await import("@/lib/permissions");
+    if (!(await canAccessTask(userId, taskId))) {
+      return { error: "Unauthorized: You do not have permission to modify this task." };
+    }
+
     const { data, error } = await supabaseAdmin
       .from('task_checklists')
       .insert([{ task_id: taskId, label, is_completed: false }])
@@ -1184,6 +1196,11 @@ export async function createTaskAttachment(taskId: string, fileName: string, bas
     const { data: { user } } = await createClient(cookieStore).auth.getUser();
     const userId = user?.id;
     if (!userId) return { error: "Unauthenticated" };
+
+    const { canAccessTask } = await import("@/lib/permissions");
+    if (!(await canAccessTask(userId, taskId))) {
+      return { error: "Unauthorized: You do not have permission to attach files to this task." };
+    }
 
     let finalFileUrl = base64Url;
     if (finalFileUrl && finalFileUrl.startsWith("data:")) {
@@ -1311,6 +1328,11 @@ export async function addTaskRemark(taskId: string, content: string) {
     const { data: { user } } = await createClient(cookieStore).auth.getUser();
     const userId = user?.id;
     if (!userId) return { error: "Unauthenticated" };
+
+    const { canAccessTask } = await import("@/lib/permissions");
+    if (!(await canAccessTask(userId, taskId))) {
+      return { error: "Unauthorized: You do not have permission to comment on this task." };
+    }
 
     const { data, error } = await supabaseAdmin
       .from('task_comments')
@@ -1489,6 +1511,11 @@ export async function logTaskTime(taskId: string, hours: number, description: st
   const cookieStore = await cookies();
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   if (!user) throw new Error("Unauthenticated");
+
+  const { canAccessTask } = await import("@/lib/permissions");
+  if (!(await canAccessTask(user.id, taskId))) {
+    throw new Error("Unauthorized: You do not have permission to log time on this task.");
+  }
 
   const { data: task, error: fetchError } = await supabaseAdmin
     .from('tasks')
