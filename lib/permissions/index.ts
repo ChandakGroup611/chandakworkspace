@@ -264,7 +264,8 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
 
   if (!data) return false;
   if (data.workspace_owner_id === userId) return true;
-  if (data.visibility_settings?.public && (ctx.perms.has("WORKSPACES_VIEW") || ctx.perms.size > 0)) return true;
+  const hasWorkspacesView = ctx.perms.has("WORKSPACES_VIEW") || ctx.perms.has("WORKSPACES_MANAGE") || ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN";
+  if ((data.visibility_settings?.public === true || data.visibility_settings?.public === "true") && hasWorkspacesView) return true;
 
   const { count } = await supabaseAdmin
     .from("workspace_members")

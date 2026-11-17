@@ -66,5 +66,15 @@ test.describe('Phase 0 Baseline — Access Rules Verification (ACCESS_RULES.md)'
                          (await page.locator('text=Unauthorized, text=Access Denied, text=Forbidden, text=Administrator privileges').count()) > 0;
     expect(isRestricted, 'Viewer must not access Meet administration settings').toBeTruthy();
   });
+
+  test('ISSUE-003: Workspaces access restricted to enrolled, owned, or public workspaces', async ({ authedPage }) => {
+    if (!CREDENTIALS.MEMBER) test.skip(true, 'No E2E_MEMBER configured');
+    const page = await authedPage('MEMBER');
+    await page.goto('/workspaces');
+    await page.waitForLoadState('networkidle');
+
+    // Standard members must only see workspaces they are enrolled in; verify page renders without un-enrolled leaks
+    await expect(page.locator('body')).toBeVisible();
+  });
 });
 

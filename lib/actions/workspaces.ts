@@ -49,9 +49,12 @@ export async function fetchEnrolledWorkspaces() {
     workspaces = (allWs || []).filter(w => !w.parent_workspace_id);
     subWorkspaces = (allWs || []).filter(w => !!w.parent_workspace_id);
   } else {
-    // Fetch workspaces the user is explicitly a member of
+    // Fetch workspaces the user is explicitly a member of or owns
     const { data: wsMembers } = await supabaseAdmin.from("workspace_members").select("workspace_id").eq("user_id", user.id).eq("is_deleted", false);
     const wsIds = wsMembers?.map(m => m.workspace_id) || [];
+
+    const { data: ownedWs } = await supabaseAdmin.from("workspaces").select("id").eq("workspace_owner_id", user.id).eq("is_deleted", false);
+    (ownedWs || []).forEach(ow => { if (!wsIds.includes(ow.id)) wsIds.push(ow.id); });
 
     if (wsIds.length > 0) {
       const { data: ws } = await supabaseAdmin
