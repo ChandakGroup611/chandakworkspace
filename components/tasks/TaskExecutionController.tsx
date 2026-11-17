@@ -8,16 +8,16 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { 
-  CheckSquare, Paperclip, Users2, Activity, Play, CheckCircle2, 
+import {
+  CheckSquare, Paperclip, Users2, Activity, Play, CheckCircle2,
   XCircle, RotateCcw, Plus, Download, Loader2, Trash2, FolderPlus, Pin,
   ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink, Eye, ActivitySquare, Link as LinkIcon, MessageCircle,
   User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, ShieldAlert, Users, X, Search, Check, UserCheck,
   AlertTriangle, RefreshCw
 } from "lucide-react";
-import { 
-  getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
-  approveTask, reopenTask, createChecklistItem, 
+import {
+  getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask,
+  approveTask, reopenTask, createChecklistItem,
   createTaskAttachment, deleteTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses,
   getTaskChecklists, getTaskAttachments, executeTaskBatchOperation
 } from "@/lib/actions/tasks";
@@ -39,19 +39,19 @@ const getSafeExternalUrl = (url: string | undefined | null) => {
   return `https://${str}`;
 };
 
-const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeChat"), { 
-  ssr: false, 
-  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading realtime chat…</div> 
+const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeChat"), {
+  ssr: false,
+  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading realtime chat…</div>
 });
 
-const TaskActivityTimeline = dynamic(() => import("@/components/tasks/TaskActivityTimeline"), { 
+const TaskActivityTimeline = dynamic(() => import("@/components/tasks/TaskActivityTimeline"), {
   ssr: false,
-  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading audit timeline…</div> 
+  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading audit timeline…</div>
 });
 
-const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), { 
+const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), {
   ssr: false,
-  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading time logs…</div> 
+  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading time logs…</div>
 });
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -104,9 +104,9 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
           min-height: 140px;
         }
       `}</style>
-      <ReactQuill 
-        theme="snow" 
-        value={value} 
+      <ReactQuill
+        theme="snow"
+        value={value}
         onChange={onChange}
         readOnly={readOnly}
         placeholder={placeholder}
@@ -115,7 +115,7 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
             [{ 'header': [1, 2, 3, false] }],
             ['bold', 'italic', 'underline', 'strike'],
             [{ 'color': [] }, { 'background': [] }],
-            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
             ['clean']
           ]
         }}
@@ -135,13 +135,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [departments, setDepartments] = useState<any[]>(initialDepartments || []);
   const [loading, setLoading] = useState(!initialTask);
   const [activeTab, setActiveTab] = useState<"tags" | "links" | "checklist" | "attachments" | "chat" | "timeline" | "time">("checklist");
-  
+
   // Lazy Load States
   const [isChecklistsLoaded, setIsChecklistsLoaded] = useState(false);
   const [isAttachmentsLoaded, setIsAttachmentsLoaded] = useState(false);
   const [isCommentsLoaded, setIsCommentsLoaded] = useState(false);
   const [isLoadingTab, setIsLoadingTab] = useState(false);
-  
+
   // Input fields
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -172,7 +172,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [pendingAssignees, setPendingAssignees] = useState<string[] | null>(null);
   const [pendingPrimaryAssignee, setPendingPrimaryAssignee] = useState<string | null>(null);
   const [pendingWatchers, setPendingWatchers] = useState<string[] | null>(null);
-  
+
   // Assignee, Executor & Watcher Modal State
   const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
   const [assigneeModalTab, setAssigneeModalTab] = useState<'primary' | 'executors' | 'watchers'>('primary');
@@ -190,7 +190,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     userName: string;
     result: import("@/lib/actions/dependencies").DependencyCheckResult;
   } | null>(null);
-  
+
   const handleAcknowledgeAmendment = async () => {
     if (!task?.id) return;
     setIsAcknowledging(true);
@@ -199,7 +199,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       const { acknowledgeTaskAmendment } = await import("@/lib/actions/tasks");
       const res = await acknowledgeTaskAmendment(task.id);
       if (res.error) throw new Error(res.error);
-      
+
       triggerToast("Amendment acknowledged and task updated successfully.");
       // Refresh task details
       await loadTaskDetails(true);
@@ -213,7 +213,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [editingAssigneesList, setEditingAssigneesList] = useState<string[]>([]);
   const [isSavingAssignees, setIsSavingAssignees] = useState(false);
-  
+
   const openAssigneeModal = async (tab: 'primary' | 'executors' | 'watchers' = 'primary') => {
     setAssigneeModalTab(tab);
     setSelectedPrimaryAssignee(pendingPrimaryAssignee || task?.assigned_to || "");
@@ -223,30 +223,35 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setSelectedWatchers(currentWatcherIds);
     setStakeholderSearch("");
     setIsAssigneeModalOpen(true);
-    
+
     if (task?.workspace_id) {
       try {
         const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
         const res = await fetchWorkspaceStakeholders(task.workspace_id);
-        let finalStakeholders = res || [];
-        const isSuper = task.currentUserIsSuperAdmin || hasPermission("SUPER_ADMIN") || roleCode === "SUPER_ADMIN";
-        if (finalStakeholders.length === 0 || isSuper) {
-          const { createClient } = await import("@/utils/supabase/client");
-          const supabase = createClient();
-          const { data: allActiveUsers } = await supabase
-            .from("user_master")
-            .select("id, full_name, user_code")
-            .eq("is_active", true)
-            .eq("is_deleted", false)
-            .order("full_name");
-          if (allActiveUsers && allActiveUsers.length > 0) {
-            const existingIds = new Set(finalStakeholders.map((s: any) => s.id));
-            const extra = allActiveUsers
-              .filter(u => !existingIds.has(u.id))
-              .map(u => ({ ...u, role: 'Member', workspace_role: 'MEMBER' }));
-            finalStakeholders = [...finalStakeholders, ...extra];
+        const finalStakeholders = [...(res || [])];
+
+        // Ensure any user already assigned or watching this task remains visible in the selection list
+        const existingAssignees = [
+          task.assigned_to_user,
+          ...(task.task_assignees || []),
+          ...(task.task_watchers || [])
+        ].filter(Boolean);
+
+        if (existingAssignees.length > 0) {
+          const ids = new Set(finalStakeholders.map((s: any) => s.id));
+          for (const ea of existingAssignees) {
+            if (ea?.id && !ids.has(ea.id)) {
+              finalStakeholders.push({
+                id: ea.id,
+                full_name: ea.full_name || 'Assigned User',
+                user_code: ea.user_code || '',
+                workspace_role: 'Assignee'
+              });
+              ids.add(ea.id);
+            }
           }
         }
+
         setStakeholders(finalStakeholders);
       } catch (err) {
         console.error("[openAssigneeModal] Error fetching stakeholders:", err);
@@ -265,10 +270,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setIsAssigneeModalOpen(false);
     triggerToast("Participant changes staged! Provide remarks and save updates.");
   };
-  
+
   // Click-outside reference for Executors Edit Panel
   const assigneesRef = useRef<HTMLDivElement>(null);
-  
+
   // Transfer Feature & Advanced Scope Checking
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [transferWorkspaces, setTransferWorkspaces] = useState<any[]>([]);
@@ -276,30 +281,30 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [selectedTransferSubworkspace, setSelectedTransferSubworkspace] = useState("");
   const [transferRemarks, setTransferRemarks] = useState("");
   const [transferLoading, setTransferLoading] = useState(false);
-  
+
   const [targetStakeholders, setTargetStakeholders] = useState<any[]>([]);
   const [checkingScope, setCheckingScope] = useState(false);
   const [droppedUsers, setDroppedUsers] = useState<any[]>([]);
   const [isOwnerDropped, setIsOwnerDropped] = useState(false);
-  
+
   const [newAssigneeId, setNewAssigneeId] = useState("");
   const [newExecutors, setNewExecutors] = useState<string[]>([]);
-  
+
   const flattenedWorkspaces = useMemo(() => {
     const map = new Map(transferWorkspaces.map(w => [w.id, w]));
     const paths: any[] = [];
-    
+
     const getPath = (w: any): { pathName: string, rootId: string } => {
       let current = w;
       let pathName = w.code ? `[${w.code}] ${w.name}` : w.name;
       let rootId = w.id;
       const visited = new Set([w.id]);
-      
+
       while (current.parent_workspace_id && map.has(current.parent_workspace_id)) {
         current = map.get(current.parent_workspace_id);
         if (visited.has(current.id)) break;
         visited.add(current.id);
-        
+
         const currentName = current.code ? `[${current.code}] ${current.name}` : current.name;
         pathName = `${currentName} > ${pathName}`;
         rootId = current.id;
@@ -317,7 +322,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         original: w
       });
     });
-    
+
     paths.sort((a, b) => a.pathName.localeCompare(b.pathName));
     return paths;
   }, [transferWorkspaces]);
@@ -349,30 +354,30 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         const { fetchWorkspaceStakeholders } = await import('@/lib/actions/workspaces');
         const stakeholders = await fetchWorkspaceStakeholders(targetId);
         setTargetStakeholders(stakeholders);
-        
+
         // Compute delta
         const currentAssignee = task.assigned_to;
         const currentExecutors = task.task_assignees || [];
         const currentWatchers = task.task_watchers || [];
-        
+
         const stakeholderIds = new Set(stakeholders.map((s: any) => s.id));
-        
+
         const ownerMissing = currentAssignee && !stakeholderIds.has(currentAssignee);
         setIsOwnerDropped(!!ownerMissing);
-        
+
         const dropped: any[] = [];
         if (ownerMissing && task.assignee) dropped.push(task.assignee);
         currentExecutors.forEach((e: any) => { if (!stakeholderIds.has(e.id)) dropped.push(e); });
         currentWatchers.forEach((w: any) => { if (!stakeholderIds.has(w.id)) dropped.push(w); });
-        
+
         // Deduplicate dropped users
         const uniqueDropped = Array.from(new Map(dropped.map(item => [item.id, item])).values());
         setDroppedUsers(uniqueDropped);
-        
+
         // Reset selections
         setNewAssigneeId("");
         setNewExecutors([]);
-        
+
       } catch (err) {
         console.error(err);
       } finally {
@@ -419,7 +424,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       setTransferLoading(false);
     }
   };
-  
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (isEditingAssignees && assigneesRef.current && !assigneesRef.current.contains(event.target as Node)) {
@@ -440,7 +445,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     try {
       const details = await getTaskDetails(taskId);
       if (details?.error) throw new Error("Load Error: " + details.error);
-      
+
       setTask((prev: any) => ({
         ...details,
         checklists: prev?.checklists || [],
@@ -449,13 +454,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       setRemarksDraft("");
       // Initialize editable custom fields
       setLocalCustomFields(details.custom_fields || {});
-      
+
       const st = await getTaskStatuses();
       setStatuses(st);
-      
+
       // Default to collapsed for progressive load
       setIsHistoryCollapsed(true);
-      
+
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Failed to load task details.");
@@ -544,7 +549,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         // fallback to calling server action directly if available
         try {
           // server action invocation via import isn't possible from client; rely on API route above
-        } catch (err) {}
+        } catch (err) { }
       }
     }
     clearMentions();
@@ -599,7 +604,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       const idx = pendingChecklists.findIndex(p => `temp-${p.label}` === itemId || p.label === itemId); // Rough match if needed, but better to update the task state and let batch save handle it.
       // Actually, since pendingChecklists doesn't have an ID, we update the task state directly, and for saving we map over task.checklists that are temp.
     }
-    
+
     setEditedChecklists(prev => ({ ...prev, [itemId]: { ...prev[itemId], assignee_id } }));
     setTask((prev: any) => ({
       ...prev,
@@ -644,7 +649,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       setSaveRemarksLoading(true);
       const res = await deleteTaskAttachment(taskId, attachmentId);
       if (res.error) throw new Error(res.error);
-      
+
       // Update UI
       setTask((prev: any) => ({
         ...prev,
@@ -699,8 +704,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         });
         const att = await createTaskAttachment(taskId, file.name, dataUrl, file.size);
         if (att && att.id) {
-           attachmentIds.push(att.id);
-           newAttachments.push(att);
+          attachmentIds.push(att.id);
+          newAttachments.push(att);
         }
       }
 
@@ -715,20 +720,20 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       let finalStatusId = undefined;
       if (pendingStatus) {
-         const matchedStatus = statuses.find(s => (s.code || s.status_code) === pendingStatus);
-         if (matchedStatus) finalStatusId = matchedStatus.id;
-         else finalStatusId = pendingStatus;
+        const matchedStatus = statuses.find(s => (s.code || s.status_code) === pendingStatus);
+        if (matchedStatus) finalStatusId = matchedStatus.id;
+        else finalStatusId = pendingStatus;
       }
 
       let departmentChangeObj = undefined;
       if (pendingDepartment !== null) {
-         const matchedDept = departments.find(d => d.id === pendingDepartment);
-         departmentChangeObj = {
-            new_id: pendingDepartment,
-            new_name: matchedDept?.name || matchedDept?.code || pendingDepartment,
-            old_id: task.department_id,
-            old_name: task.department?.name || 'None'
-         };
+        const matchedDept = departments.find(d => d.id === pendingDepartment);
+        departmentChangeObj = {
+          new_id: pendingDepartment,
+          new_name: matchedDept?.name || matchedDept?.code || pendingDepartment,
+          old_id: task.department_id,
+          old_name: task.department?.name || 'None'
+        };
       }
 
       const t1 = performance.now();
@@ -748,7 +753,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       });
 
       const t2 = performance.now();
-      
+
       if (res?.error) throw new Error("Batch Save Error: " + res.error);
 
       if (pendingAssignees !== null || pendingPrimaryAssignee !== null) {
@@ -778,46 +783,46 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           const newState = { ...prev };
           // Optimistically apply the changes
           if (updatePayload && Object.keys(updatePayload).length > 0) {
-             Object.assign(newState, updatePayload);
+            Object.assign(newState, updatePayload);
           }
           if (finalStatusId) {
-             const newStatusObj = statuses.find(s => s.id === finalStatusId || s.code === finalStatusId || s.status_code === finalStatusId);
-             if (newStatusObj) newState.status = newStatusObj;
+            const newStatusObj = statuses.find(s => s.id === finalStatusId || s.code === finalStatusId || s.status_code === finalStatusId);
+            if (newStatusObj) newState.status = newStatusObj;
           }
           if (departmentChangeObj && departmentChangeObj.new_id !== undefined) {
-             newState.department_id = departmentChangeObj.new_id || null;
-             // also update the relational object so UI components that rely on it update
-             const matchedDept = departments.find(d => d.id === departmentChangeObj.new_id);
-             newState.department = matchedDept || null;
+            newState.department_id = departmentChangeObj.new_id || null;
+            // also update the relational object so UI components that rely on it update
+            const matchedDept = departments.find(d => d.id === departmentChangeObj.new_id);
+            newState.department = matchedDept || null;
           }
           // Merge new checklists
           const existingChecklists = [...(prev.checklists || [])];
-          
+
           if (res.data.checklistsUpdates && res.data.checklistsUpdates.length > 0) {
-             res.data.checklistsUpdates.forEach((upd: any) => {
-                const idx = existingChecklists.findIndex(c => c.id === upd.id);
-                if (idx !== -1) existingChecklists[idx] = upd;
-             });
+            res.data.checklistsUpdates.forEach((upd: any) => {
+              const idx = existingChecklists.findIndex(c => c.id === upd.id);
+              if (idx !== -1) existingChecklists[idx] = upd;
+            });
           }
-          
+
           if (res.data.checklistsCreates && res.data.checklistsCreates.length > 0) {
-             // Remove temporary placeholders
-             const cleanChecklists = existingChecklists.filter(c => !String(c.id).startsWith("temp-"));
-             newState.checklists = [...cleanChecklists, ...res.data.checklistsCreates];
+            // Remove temporary placeholders
+            const cleanChecklists = existingChecklists.filter(c => !String(c.id).startsWith("temp-"));
+            newState.checklists = [...cleanChecklists, ...res.data.checklistsCreates];
           } else {
-             newState.checklists = existingChecklists;
+            newState.checklists = existingChecklists;
           }
-          
+
           if (newAttachments && newAttachments.length > 0) {
-             const existingAtts = [...(prev.attachments || [])].filter(a => !a.is_temp);
-             newState.attachments = [...newAttachments, ...existingAtts];
+            const existingAtts = [...(prev.attachments || [])].filter(a => !a.is_temp);
+            newState.attachments = [...newAttachments, ...existingAtts];
           }
-          
+
           return newState;
         });
-        
+
         if (res.data.comments && res.data.comments.length > 0) {
-           setRemarksHistory(prev => [...res.data.comments, ...prev]);
+          setRemarksHistory(prev => [...res.data.comments, ...prev]);
         }
       }
 
@@ -881,12 +886,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const progressPercentage = task.progress_percentage || 0;
 
   const isFrozen = task.status?.is_closed;
-  
+
   // Allow unfreezing if the task is frozen and the user is staging a status change to an open status
   const targetStatusId = pendingStatus || currentStatusCode;
   const targetStatusObj = statuses.find(s => (s.code || s.status_code || s.id) === targetStatusId);
   const isEffectivelyFrozen = isFrozen ? (pendingStatus ? !targetStatusObj?.is_closed : true) : false;
-  
+
   const currentUid = userId || task.currentUserId;
   const isSuperAdmin = task.currentUserIsSuperAdmin || hasPermission("SUPER_ADMIN") || roleCode === "SUPER_ADMIN";
   const isTaskAssignee = (currentUid && ((task.assigned_to && task.assigned_to === currentUid) || (task.owner_id && task.owner_id === currentUid))) || task.isTaskAssignee;
@@ -907,7 +912,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   // 3. Schedule / Dates / Duration Edit: Strictly Super Admin or Primary Assignee
   const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
-  
+
   // 4. Status / Department / Directive Transitions: Super Admin, Primary Assignee, or Assigned Executors
   const isOwnerOrExecutor = isSuperAdmin || isTaskAssignee || isExecutor;
   const canEditCore = !readOnly && !effectivelyFrozenForUser && isOwnerOrExecutor;
@@ -921,12 +926,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   // 7. Delete Task: Super Admin, Primary Assignee, or explicit TASKS_DELETE permission holder
   const canDeleteTask = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || hasPermission("TASKS_DELETE")) && canDelete;
-  
+
   // 8. Reviewers, Watchers, Executives, Assignee, and Creator (tracking progress) can add remarks
   const canAddRemark = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || isExecutor || isWatcherOrReviewer || isTaskCreator);
   // Filter inherited workspace members to remove anyone explicitly assigned
   const explicitExecutors = [...(task.task_assignees || [])];
-  
+
   // Implicitly treat the Primary Assignee as an Executor
   if (task.assignee && !explicitExecutors.some((e: any) => e.id === task.assignee.id)) {
     explicitExecutors.unshift(task.assignee);
@@ -939,1223 +944,1221 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   return (
     <ExperienceProvider mode="operational">
-    <div className="space-y-6">
-      
-      {/* High-Contrast Clear Warning / Notice Banner */}
-      {error && (
-        <div role="alert" className={`p-4 rounded-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-          isReloadRequiredError(error)
-            ? 'bg-warning-soft border-warning-border text-warning-text'
-            : 'bg-danger-soft border-danger-border text-danger-text'
-        }`}>
-          <div className="flex items-start sm:items-center gap-3">
-            <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden />
-            <div>
-              <p className="text-[13.5px] font-semibold">
-                {isReloadRequiredError(error) ? 'A new version of the app is available' : 'Something went wrong'}
-              </p>
-              <p className="text-[13px] mt-0.5 leading-snug">
-                {sanitizeErrorMessage(error)}
-              </p>
+      <div className="space-y-6">
+
+        {/* High-Contrast Clear Warning / Notice Banner */}
+        {error && (
+          <div role="alert" className={`p-4 rounded-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isReloadRequiredError(error)
+              ? 'bg-warning-soft border-warning-border text-warning-text'
+              : 'bg-danger-soft border-danger-border text-danger-text'
+            }`}>
+            <div className="flex items-start sm:items-center gap-3">
+              <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden />
+              <div>
+                <p className="text-[13.5px] font-semibold">
+                  {isReloadRequiredError(error) ? 'A new version of the app is available' : 'Something went wrong'}
+                </p>
+                <p className="text-[13px] mt-0.5 leading-snug">
+                  {sanitizeErrorMessage(error)}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-            {isReloadRequiredError(error) && (
-              <AppButton 
-                variant="primary" 
+            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+              {isReloadRequiredError(error) && (
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                  leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                >
+                  Reload page
+                </AppButton>
+              )}
+              <AppButton
+                variant="secondary"
                 size="sm"
-                onClick={() => window.location.reload()} 
-                leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                onClick={() => setError(null)}
               >
-                Reload page
+                Dismiss
               </AppButton>
-            )}
-            <AppButton 
-              variant="secondary" 
-              size="sm"
-              onClick={() => setError(null)} 
-            >
-              Dismiss
-            </AppButton>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Title & Core Meta removed to avoid duplication with parent page layout */}
-      
-     
-      {/* Extended Metadata Section - Dedicated Card with Background Header */}
-      <div>
-        <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
-          <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
-            <div className="flex items-center gap-2.5">
-              <Clock className="h-4 w-4 text-muted" aria-hidden />
-              <h3 className="text-[14px] font-semibold text-heading">Schedule and people</h3>
+        {/* Title & Core Meta removed to avoid duplication with parent page layout */}
+
+
+        {/* Extended Metadata Section - Dedicated Card with Background Header */}
+        <div>
+          <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
+            <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
+              <div className="flex items-center gap-2.5">
+                <Clock className="h-4 w-4 text-muted" aria-hidden />
+                <h3 className="text-[14px] font-semibold text-heading">Schedule and people</h3>
+              </div>
+
             </div>
 
-          </div>
-          
-          <div className="p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch">
-              
-              {/* 1. Creator */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                  <User className="h-3.5 w-3.5" aria-hidden /> <span>Creator</span>
-                </span>
-                <div className="flex h-8 items-center text-[13.5px] text-foreground truncate">
-                  {task.creator?.full_name || task.created_by?.full_name || task.created_by_user?.full_name || "System"}
-                </div>
-              </div>
+            <div className="p-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch">
 
-              {/* 2. Created At */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                  <Calendar className="h-3.5 w-3.5" aria-hidden /> <span>Created at</span>
-                </span>
-                <div className="flex h-8 items-center text-[13.5px] text-foreground">
-                  {task.created_at ? formatDateTime(task.created_at) : "Unknown"}
-                </div>
-              </div>
-
-              {/* 3. Last Status */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                  <Tag className="h-3.5 w-3.5" aria-hidden /> <span>Last status</span>
-                </span>
-                <div className="flex h-8 items-center text-[13.5px] text-foreground">
-                  {task.status?.name || task.status?.status_name || "Open"}
-                </div>
-              </div>
-
-              {/* 4. Last Updated */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                  <Clock className="h-3.5 w-3.5" aria-hidden /> <span>Last updated</span>
-                </span>
-                <div className="flex h-8 items-center text-[13.5px] text-foreground">
-                  {task.updated_at ? formatDateTime(task.updated_at) : (task.created_at ? formatDateTime(task.created_at) : "Unknown")}
-                </div>
-              </div>
-
-              {/* 5. Priority */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                  <Flag className="h-3.5 w-3.5" aria-hidden /> <span>Priority</span>
-                </span>
-                <div className="flex h-8 items-center">
-                  <PriorityIndicator priority={task.priority?.name || null} className="text-[13.5px]" />
-                </div>
-              </div>
-
-              {/* 6. Duration */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                  <Hourglass className="h-3.5 w-3.5" aria-hidden /> <span>Duration</span>
-                </span>
-                <div className="flex h-8 items-center text-[13.5px] text-foreground">
-                  {canEditDates ? (
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <input
-                        type="number"
-                        aria-label="Duration in days" className="h-8 w-16 rounded-md border border-border bg-surface px-2 text-center text-[13px] tabular-nums text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
-                        onChange={(e) => {
-                          const days = parseInt(e.target.value, 10);
-                          if (!isNaN(days) && days > 0) {
-                            const currentStart = task.start_date ? task.start_date : new Date().toISOString().split('T')[0];
-                            const startDate = new Date(currentStart);
-                            startDate.setUTCDate(startDate.getUTCDate() + (days - 1));
-                            const newEndDateStr = startDate.toISOString().split('T')[0];
-                            setPendingTaskUpdates(prev => ({ 
-                              ...prev, 
-                              start_date: currentStart, 
-                              end_date: newEndDateStr 
-                            }));
-                            setTask((prev: any) => ({ 
-                              ...prev, 
-                              start_date: currentStart, 
-                              end_date: newEndDateStr 
-                            }));
-                          }
-                        }}
-                      /> <span className="text-[12.5px] text-muted">days</span>
-                    </div>
-                  ) : (
-                    <span>
-                      {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0} <span className="text-[12.5px] text-muted">days</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* 7. Start Date */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                  <CalendarDays className="h-3.5 w-3.5" aria-hidden /> <span>Start date</span> <span className="text-danger-text" aria-hidden>*</span>
-                </span>
-                <div className="flex h-8 items-center">
-                  {canEditDates ? (
-                    <input
-                      type="date"
-                      className="h-8 w-full rounded-md border border-border bg-surface px-2.5 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
-                      onChange={(e) => {
-                        const newStartDate = e.target.value;
-                        if (newStartDate && task.start_date && task.end_date) {
-                          // Keep existing duration (in days) constant
-                          const days = Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1);
-                          const sDate = new Date(newStartDate);
-                          sDate.setUTCDate(sDate.getUTCDate() + (days - 1));
-                          const newEndDateStr = sDate.toISOString().split('T')[0];
-                          setPendingTaskUpdates(prev => ({ 
-                            ...prev, 
-                            start_date: newStartDate, 
-                            end_date: newEndDateStr 
-                          }));
-                          setTask((prev: any) => ({ 
-                            ...prev, 
-                            start_date: newStartDate, 
-                            end_date: newEndDateStr 
-                          }));
-                        } else {
-                          setPendingTaskUpdates(prev => ({ ...prev, start_date: newStartDate }));
-                          setTask((prev: any) => ({ ...prev, start_date: newStartDate }));
-                        }
-                      }}
-                    />
-                  ) : (
-                    <span className="text-[13.5px] text-foreground">
-                      {task.start_date ? formatDate(task.start_date) : <span className="text-muted">Not set</span>}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* 8. Due Date */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                  <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> <span>Due date</span> <span className="text-danger-text" aria-hidden>*</span>
-                </span>
-                <div className="flex h-8 items-center">
-                  {canEditDates ? (
-                    <input
-                      type="date"
-                      className="h-8 w-full rounded-md border border-border bg-surface px-2.5 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
-                      onChange={(e) => {
-                        const newEndDate = e.target.value;
-                        if (newEndDate && task.start_date && newEndDate < task.start_date) {
-                          toast.error("Due date cannot be earlier than start date");
-                          return;
-                        }
-                        setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDate }));
-                        setTask((prev: any) => ({ ...prev, end_date: newEndDate }));
-                      }}
-                    />
-                  ) : (
-                    <span className={`text-[13.5px] ${ task.end_date && new Date(task.end_date) < new Date() ? "font-medium text-danger-text" : "text-foreground" }`}>
-                      {task.end_date ? formatDate(task.end_date) : <span className="text-muted">Not set</span>}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* 9. Primary Assignee */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <div className="flex items-center justify-between">
+                {/* 1. Creator */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
                   <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                    <ShieldCheck className="h-3.5 w-3.5" aria-hidden /> <span>Primary assignee</span>
+                    <User className="h-3.5 w-3.5" aria-hidden /> <span>Creator</span>
                   </span>
-                  { canEditAssignees && (
-                    <AppButton 
-                      variant="link" 
-                      size="sm"
-                      onClick={() => openAssigneeModal('primary')}
-                      className="text-[12.5px]"
-                    >
-                      Edit
-                    </AppButton>
-                  )}
+                  <div className="flex h-8 items-center text-[13.5px] text-foreground truncate">
+                    {task.creator?.full_name || task.created_by?.full_name || task.created_by_user?.full_name || "System"}
+                  </div>
                 </div>
-                <div className="flex h-8 items-center gap-2 overflow-hidden">
-                  {pendingPrimaryAssignee ? (
-                    (() => {
-                      const pUser = stakeholders.find(s => s.id === pendingPrimaryAssignee);
-                      return (
-                        <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
-                          <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
-                          <span className="truncate">{pUser?.full_name || "New primary assignee"} · not saved yet</span>
-                        </div>
-                      );
-                    })()
-                  ) : task.assignee ? (
-                    (() => {
-                       const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
-                       if (!a) return null;
-                       return (
-                         <>
-                           {a.profile_photo ? (
-                             <img src={a.profile_photo} alt="" className="h-6 w-6 rounded-full bg-sunken object-cover" />
-                           ) : (
-                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
-                               {a.full_name?.substring(0, 2).toUpperCase() || "U"}
-                             </div>
-                           )}
-                           <span className="truncate text-[13.5px] text-foreground">{a.full_name}</span>
-                         </>
-                       );
-                    })()
-                  ) : (
-                    <span className="text-muted">Unassigned</span>
-                  )}
-                </div>
-              </div>
 
-              {/* 10. Executors */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
-                <div className="flex items-center justify-between">
+                {/* 2. Created At */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
                   <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                    <Users className="h-3.5 w-3.5" aria-hidden /> <span>Executors</span>
-                    <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
-                      {pendingAssignees ? pendingAssignees.length : explicitExecutors.length}
-                    </span>
+                    <Calendar className="h-3.5 w-3.5" aria-hidden /> <span>Created at</span>
                   </span>
-                  { canEditAssignees && (
-                    <AppButton 
-                      variant="link" 
-                      size="sm"
-                      onClick={() => openAssigneeModal('executors')}
-                      className="text-[12.5px]"
-                    >
-                      Edit
-                    </AppButton>
-                  )}
+                  <div className="flex h-8 items-center text-[13.5px] text-foreground">
+                    {task.created_at ? formatDateTime(task.created_at) : "Unknown"}
+                  </div>
                 </div>
-                
-                <div className="flex h-8 items-center overflow-hidden text-[13.5px] text-foreground">
-                  {pendingAssignees ? (
-                    <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
-                      <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
-                      <span className="truncate">{pendingAssignees.length} {pendingAssignees.length === 1 ? "executor" : "executors"} · not saved yet</span>
-                    </div>
-                  ) : (
-                    <span className="block w-full truncate">
-                      {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-muted">None</span>}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {/* 11. Watchers (Team) */}
-              <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5 sm:col-span-2 lg:col-span-2">
-                <div className="flex items-center justify-between">
+
+                {/* 3. Last Status */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
                   <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
-                    <Eye className="h-3.5 w-3.5" aria-hidden /> <span>Watchers</span>
-                    <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
-                      {pendingWatchers ? pendingWatchers.length : explicitWatchers.length}
-                    </span>
+                    <Tag className="h-3.5 w-3.5" aria-hidden /> <span>Last status</span>
                   </span>
-                  { canEditWatchers && (
-                    <AppButton 
-                      variant="link" 
-                      size="sm"
-                      onClick={() => openAssigneeModal('watchers')}
-                      className="text-[12.5px]"
-                    >
-                      Edit
-                    </AppButton>
-                  )}
+                  <div className="flex h-8 items-center text-[13.5px] text-foreground">
+                    {task.status?.name || task.status?.status_name || "Open"}
+                  </div>
                 </div>
-                <div className="flex h-8 items-center overflow-hidden text-[13.5px] text-foreground">
-                  {pendingWatchers ? (
-                    <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
-                      <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
-                      <span className="truncate">{pendingWatchers.length} {pendingWatchers.length === 1 ? "watcher" : "watchers"} · not saved yet</span>
-                    </div>
-                  ) : (
-                    <span className="block w-full truncate">
-                      {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-muted">None</span>}
-                    </span>
-                  )}
+
+                {/* 4. Last Updated */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                  <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                    <Clock className="h-3.5 w-3.5" aria-hidden /> <span>Last updated</span>
+                  </span>
+                  <div className="flex h-8 items-center text-[13.5px] text-foreground">
+                    {task.updated_at ? formatDateTime(task.updated_at) : (task.created_at ? formatDateTime(task.created_at) : "Unknown")}
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </AppCard>
-      </div>
 
-      
-      {/* 4. Remarks and Updates Group - Dedicated Card with Background-Colored Header */}
-      <div>
-        <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
-          <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
-            <div className="flex items-center gap-2.5">
-              <MessageSquare className="h-4 w-4 text-muted" aria-hidden />
-              <h3 className="text-[14px] font-semibold text-heading">Status and remarks</h3>
-            </div>
-          </div>
-          
-          <div className="p-5 space-y-6">
-{/* Interactive Lifecycle State Transition Panel (MOVED TO TOP) */}
-      
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="space-y-1.5">
-            <label htmlFor="tec-status" className="text-[13px] font-medium text-subtle">Status</label>
-            <select
-              id="tec-status"
-              value={pendingStatus || currentStatusCode || ""}
-              disabled={readOnly || !canEditCore}
-              onChange={(e) => {
-                const newCode = e.target.value;
-                if (!newCode || newCode === currentStatusCode) {
-                  setPendingStatus(null);
-                } else {
-                  setPendingStatus(newCode);
-                }
-              }}
-              className={`h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${(readOnly || !canEditCore) ? 'cursor-not-allowed opacity-60' : ''}`}
-            >
-              <option value="" disabled>Select status</option>
-              {statuses.map(st => (
-                <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="space-y-1.5">
-            <label htmlFor="tec-dept" className="text-[13px] font-medium text-subtle">Department</label>
-            <select
-              id="tec-dept"
-              value={pendingDepartment !== null ? pendingDepartment : (task.department_id || "")}
-              disabled={readOnly || !canEditCore}
-              onChange={(e) => {
-                const newDept = e.target.value;
-                if (newDept === (task.department_id || "")) {
-                  setPendingDepartment(null);
-                } else {
-                  setPendingDepartment(newDept);
-                }
-              }}
-              className={`h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${(readOnly || !canEditCore) ? 'cursor-not-allowed opacity-60' : ''}`}
-            >
-              <option value="">No department</option>
-              {departments.map(dept => (
-                <option key={dept.id} value={dept.id}>{dept.name}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="space-y-1.5 w-full">
-            <span className="block w-full text-left text-[13px] font-medium text-subtle sm:text-right">
-              Actions
-            </span>
-            <div className="flex flex-wrap justify-start sm:justify-end gap-2 pt-0.5 w-full">
-              {currentStatusCode === "ST_OPEN" && canEditCore && (
-                <AppButton 
-                  size="sm" 
-                  variant="primary" 
-                  leftIcon={<Play className="h-4 w-4" />}
-                  disabled={actionLoading}
-                  onClick={() => handleStatusTransition("start")}
-                >
-                  Start progress
-                </AppButton>
-              )}
+                {/* 5. Priority */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                  <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                    <Flag className="h-3.5 w-3.5" aria-hidden /> <span>Priority</span>
+                  </span>
+                  <div className="flex h-8 items-center">
+                    <PriorityIndicator priority={task.priority?.name || null} className="text-[13.5px]" />
+                  </div>
+                </div>
 
-              {currentStatusCode === "ST_IN_PROGRESS" && canEditCore && (
-                <AppButton 
-                  size="sm" 
-                  variant="primary" 
-                  leftIcon={<CheckCircle2 className="h-4 w-4" />}
-                  disabled={actionLoading}
-                  onClick={() => handleStatusTransition("resolve")}
-                >
-                  Mark as resolved
-                </AppButton>
-              )}
-
-              {currentStatusCode === "ST_RESOLVED" && !readOnly && isOwner && (
-                <>
-                  <AppButton 
-                    size="sm" 
-                    variant="primary" 
-                    leftIcon={<CheckCircle2 className="h-4 w-4" />}
-                    disabled={actionLoading}
-                    onClick={() => handleStatusTransition("approve")}
-                  >
-                    Approve & close
-                  </AppButton>
-                  <AppButton 
-                    size="sm" 
-                    variant="secondary" 
-                    leftIcon={<RotateCcw className="h-4 w-4" />}
-                    disabled={actionLoading}
-                    onClick={() => handleStatusTransition("reopen")}
-                  >
-                    Reject & reopen
-                  </AppButton>
-                </>
-              )}
-
-              { !readOnly && task.status?.is_closed && (isOwner || isExecutor) && (
-                <AppButton 
-                  size="sm" 
-                  variant="outline" 
-                  leftIcon={<RotateCcw className="h-4 w-4" />}
-                  disabled={actionLoading}
-                  onClick={() => handleStatusTransition("reopen")}
-                >
-                  Reopen task
-                </AppButton>
-              )}
-              {canDeleteTask && (
-                <AppButton 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-danger-border text-danger-text hover:bg-danger-soft" 
-                  onClick={handleDeleteTask} 
-                  disabled={deleteLoading || actionLoading}
-                  leftIcon={<Trash2 className="h-4 w-4" />}
-                >
-                  Delete task
-                </AppButton>
-              )}
-
-              { canTransferTask && (
-                <AppButton 
-                  variant="secondary" 
-                  size="sm" 
-                  onClick={handleOpenTransfer} 
-                  disabled={actionLoading}
-                  leftIcon={<FolderPlus className="h-4 w-4" />}
-                >
-                  Transfer task
-                </AppButton>
-              )}
-            </div>
-            
-            {/* Transfer Modal / Inline Panel */}
-            {isTransferModalOpen && (
-              <div className="mt-4 w-full rounded-md border border-border bg-sunken p-5 text-left">
-                <h4 className="mb-4 flex items-center gap-2 border-b border-border pb-2 text-[14px] font-semibold text-heading">
-                  <FolderPlus className="h-4 w-4 text-muted" aria-hidden /> Transfer task to another workspace
-                </h4>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label htmlFor="tec-transfer-ws" className="mb-1.5 block text-[13px] font-medium text-subtle">Destination workspace <span className="text-danger-text" aria-hidden>*</span></label>
-                      <select
-                        id="tec-transfer-ws"
-                        value={selectedTransferSubworkspace || selectedTransferWorkspace}
-                        onChange={e => {
-                          const val = e.target.value;
-                          if (!val) {
-                            setSelectedTransferWorkspace("");
-                            setSelectedTransferSubworkspace("");
-                            return;
-                          }
-                          const selectedObj = flattenedWorkspaces.find(w => w.id === val);
-                          if (selectedObj) {
-                            if (selectedObj.isSub) {
-                              setSelectedTransferWorkspace(selectedObj.rootId);
-                              setSelectedTransferSubworkspace(val);
-                            } else {
-                              setSelectedTransferWorkspace(val);
-                              setSelectedTransferSubworkspace("");
+                {/* 6. Duration */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                  <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                    <Hourglass className="h-3.5 w-3.5" aria-hidden /> <span>Duration</span>
+                  </span>
+                  <div className="flex h-8 items-center text-[13.5px] text-foreground">
+                    {canEditDates ? (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <input
+                          type="number"
+                          aria-label="Duration in days" className="h-8 w-16 rounded-md border border-border bg-surface px-2 text-center text-[13px] tabular-nums text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                          value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
+                          onChange={(e) => {
+                            const days = parseInt(e.target.value, 10);
+                            if (!isNaN(days) && days > 0) {
+                              const currentStart = task.start_date ? task.start_date : new Date().toISOString().split('T')[0];
+                              const startDate = new Date(currentStart);
+                              startDate.setUTCDate(startDate.getUTCDate() + (days - 1));
+                              const newEndDateStr = startDate.toISOString().split('T')[0];
+                              setPendingTaskUpdates(prev => ({
+                                ...prev,
+                                start_date: currentStart,
+                                end_date: newEndDateStr
+                              }));
+                              setTask((prev: any) => ({
+                                ...prev,
+                                start_date: currentStart,
+                                end_date: newEndDateStr
+                              }));
                             }
-                          }
-                        }}
-                        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      >
-                        <option value="">Select a workspace</option>
-                        {flattenedWorkspaces.map(w => (
-                          <option 
-                            key={w.id} 
-                            value={w.id} 
-                            disabled={w.id === (task.sub_workspace_id || task.workspace_id)}
-                          >
-                            {w.pathName} {w.id === (task.sub_workspace_id || task.workspace_id) ? "(current)" : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {checkingScope && (
-                    <div role="status" className="flex items-center gap-2 p-2 text-[13px] text-muted">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden /> Checking who has access to that workspace…
-                    </div>
-                  )}
-
-                  {!checkingScope && droppedUsers.length > 0 && (
-                    <div className="space-y-3 rounded-md border border-warning-border bg-warning-soft p-3">
-                      <div className="text-[13px] leading-relaxed text-warning-text">
-                        <span className="mb-0.5 flex items-center gap-1 font-semibold"><XCircle className="w-3.5 h-3.5" aria-hidden /> Some people will lose access</span>
-                        These people don&apos;t have access to the destination workspace and will be removed from this task: 
-                        <strong className="block mt-1">{droppedUsers.map(u => u.full_name).join(", ")}</strong>
+                          }}
+                        /> <span className="text-[12.5px] text-muted">days</span>
                       </div>
-                      
-                      {isOwnerDropped && (
-                        <div className="rounded-md border border-border bg-surface p-3">
-                          <label htmlFor="tec-new-owner" className="mb-1.5 block text-[13px] font-medium text-subtle">New primary owner <span className="text-danger-text" aria-hidden>*</span></label>
-                          <select
-                            id="tec-new-owner"
-                            value={newAssigneeId}
-                            onChange={e => setNewAssigneeId(e.target.value)}
-                            className="h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                          >
-                            <option value="">Select a person</option>
-                            {targetStakeholders.map(s => (
-                              <option key={s.id} value={s.id}>{s.full_name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                      
-                      {true && (
-                        <div className="rounded-md border border-border bg-surface p-3 mt-2">
-                          <span className="mb-1.5 block text-[13px] font-medium text-subtle">Add executors (optional)</span>
-                          <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
-                            {targetStakeholders.map(s => (
-                              <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-[13px] text-foreground hover:bg-surface-hover">
-                                <input 
-                                  type="checkbox" 
-                                  checked={newExecutors.includes(s.id)}
-                                  onChange={e => {
-                                    if(e.target.checked) setNewExecutors([...newExecutors, s.id]);
-                                    else setNewExecutors(newExecutors.filter(id => id !== s.id));
-                                  }}
-                                  className="h-3.5 w-3.5 rounded accent-primary"
-                                />
-                                {s.full_name}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div>
-                    <label htmlFor="tec-transfer-remarks" className="mb-1.5 block text-[13px] font-medium text-subtle">Reason for transfer <span className="text-danger-text" aria-hidden>*</span></label>
-                    <textarea 
-                      id="tec-transfer-remarks"
-                      value={transferRemarks}
-                      onChange={e => setTransferRemarks(e.target.value)}
-                      className="min-h-[72px] w-full rounded-md border border-border bg-surface p-2.5 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      placeholder="Why is this task being transferred?"
-                    />
-                  </div>
-                  <div className="mt-5 flex justify-end gap-2 border-t border-border pt-4">
-                    <AppButton variant="ghost" size="sm" onClick={() => { setIsTransferModalOpen(false); setSelectedTransferWorkspace(""); setSelectedTransferSubworkspace(""); }}>Cancel</AppButton>
-                    <AppButton variant="primary" size="sm" onClick={submitTransfer} disabled={transferLoading || checkingScope} isLoading={transferLoading}>
-                      {transferLoading ? "Transferring…" : "Transfer task"}
-                    </AppButton>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {pendingStatus && (
-          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-              <span>
-                Status change to <strong className="font-semibold">{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
-              </span>
-            </div>
-            <button 
-              type="button" 
-              onClick={() => setPendingStatus(null)} 
-              className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
-            >
-              Undo
-            </button>
-          </div>
-        )}
-
-        {pendingDepartment && (
-          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-              <span>
-                Department change to <strong className="font-semibold">{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
-              </span>
-            </div>
-            <button 
-              type="button" 
-              onClick={() => setPendingDepartment(null)} 
-              className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
-            >
-              Undo
-            </button>
-          </div>
-        )}
-
-        {pendingAssignees && (
-          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-              <span>
-                Executor changes aren&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
-              </span>
-            </div>
-            <button 
-              type="button" 
-              onClick={() => setPendingAssignees(null)} 
-              className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
-            >
-              Undo
-            </button>
-          </div>
-        )}
-
-        {pendingPrimaryAssignee && (
-          <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-              <span>
-                The primary assignee change isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
-              </span>
-            </div>
-            <button 
-              type="button" 
-              onClick={() => setPendingPrimaryAssignee(null)} 
-              className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
-            >
-              Undo
-            </button>
-          </div>
-        )}
- 
-        <div className="space-y-3 rounded-md border border-border bg-surface p-4">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-[13px] font-medium text-subtle">
-              Remark <span className="text-danger-text" aria-hidden>*</span>
-            </span>
-            <span className="text-[12.5px] text-muted">Required when you save a change</span>
-          </div>
-          <RichTextEditor
-            value={remarksDraft}
-            onChange={setRemarksDraft}
-            readOnly={!canAddRemark}
-            placeholder={!canAddRemark ? "You can't add remarks to this task." : "What changed, and what happens next?"}
-          />
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[12.5px] text-muted">Last updated {task.updated_at ? formatDateTime(task.updated_at) : "—"}</span>
-            {canAddRemark && (
-              <AppButton 
-                type="button" 
-                variant="primary" 
-                size="sm" 
-                onClick={handleBatchSave} 
-                disabled={saveRemarksLoading}
-                isLoading={saveRemarksLoading}
-              >
-                {saveRemarksLoading ? "Saving…" : (pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee) ? "Save changes" : "Save remark"}
-              </AppButton>
-            )}
-          </div>
-
-          {/* Remarks History Queue */}
-          <div className="mt-3 rounded-md border border-border bg-sunken p-3 text-foreground">
-            {/* Header with toggle */}
-            <button
-              type="button"
-              onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)}
-              aria-expanded={!isHistoryCollapsed}
-              className="flex w-full select-none items-center justify-between rounded text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <span className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-muted" aria-hidden />
-                <span className="text-[13px] font-medium text-subtle">Remark history</span>
-                {remarksHistory.length > 0 && (
-                  <span className="rounded-full bg-surface px-1.5 text-[11px] font-medium tabular-nums text-subtle">
-                    {remarksHistory.length}
-                  </span>
-                )}
-              </span>
-              <span className="p-1 text-muted" aria-hidden>
-                {isHistoryCollapsed ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronUp className="h-4 w-4" />
-                )}
-              </span>
-            </button>
-
-            {/* Collapsible Content */}
-            {!isHistoryCollapsed && (
-              <div className="mt-4 space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin">
-                {remarksHistoryLoading ? (
-                  <div className="flex items-center justify-center py-6 gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted" aria-hidden />
-                    <span className="text-[13px] text-muted">Loading remarks…</span>
-                  </div>
-                ) : remarksHistory.length === 0 ? (
-                  <div className="py-6 text-center text-[13px] text-muted">
-                    No remarks yet. Remarks you add above will appear here.
-                  </div>
-                ) : (
-                  <div className="relative space-y-5 border-l border-border pl-4">
-                    {remarksHistory.map((item, index) => {
-                      const initials = (item.user?.full_name || "Unknown")
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2);
-                      
-                      return (
-                        <div key={item.id} className="relative group/item">
-                          {/* Timeline Node Point */}
-                          <div className="absolute -left-[21px] top-2 h-2.5 w-2.5 rounded-full border-2 border-sunken bg-border-active" aria-hidden />
-                          
-                          <div className="flex items-start gap-3">
-                            {/* Avatar */}
-                            {item.user?.profile_photo ? (
-                              <img 
-                                src={item.user.profile_photo} 
-                                alt={item.user.full_name} 
-                                className="h-7 w-7 rounded-full border border-border object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
-                                {initials}
-                              </div>
-                            )}
-
-                            {/* Content Block */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
-                                <span className="text-[13px] font-medium text-foreground">
-                                  {item.user?.full_name || "System"}
-                                </span>
-                                <div className="flex items-center gap-1 text-[12px] text-muted">
-                                  <Clock className="h-3 w-3" aria-hidden />
-                                  <span>{formatDateTime(item.created_at)}</span>
-                                </div>
-                              </div>
-                              
-                              <div className="break-words rounded-md border border-border bg-surface p-2.5 text-[13px] leading-relaxed text-foreground">
-                                <SafeHtml html={item.message || item.content || ""} />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-        </AppCard>
-      </div>
-
-
-      {/* 5. Utilities & Communication Group - Dedicated Card with 7 Tabs */}
-      <div>
-        <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
-          <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
-            <div className="flex items-center gap-2.5">
-              <ActivitySquare className="h-4 w-4 text-muted" aria-hidden />
-              <h3 className="text-[14px] font-semibold text-heading">Details and activity</h3>
-            </div>
-          </div>
-          
-          <div className="p-5">
-            {/* Tabs */}
-            <div role="tablist" aria-label="Task details" className="-mx-5 -mt-5 mb-2 flex flex-nowrap items-center gap-1 overflow-x-auto border-b border-border px-5 hide-scrollbar">
-              {[
-                { id: 'tags', label: 'Tags', icon: Pin },
-                { id: 'links', label: 'Links', icon: LinkIcon },
-                { id: 'checklist', label: 'Checklist', icon: CheckSquare, count: task.checklists !== undefined ? task.checklists.length : (task._meta?.checklistCount || 0) },
-                { id: 'attachments', label: 'Attachments', icon: Paperclip, count: task.attachments !== undefined ? task.attachments.length : (task._meta?.attachmentCount || 0) },
-                { id: 'chat', label: 'Chat', icon: MessageCircle },
-                { id: 'timeline', label: 'Activity', icon: ActivitySquare },
-                { id: 'time', label: 'Time logs', icon: Clock }
-              ].map(t => {
-                const isActive = activeTab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => setActiveTab(t.id as any)}
-                    className={`-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                      isActive ? "border-primary text-foreground" : "border-transparent text-muted hover:text-foreground"
-                    }`}
-                  >
-                    <t.icon className="h-3.5 w-3.5" aria-hidden />
-                    <span>{t.label}</span>
-                    {t.count !== undefined && t.count > 0 && (
-                      <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
-                        {t.count}
+                    ) : (
+                      <span>
+                        {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0} <span className="text-[12.5px] text-muted">days</span>
                       </span>
                     )}
-                  </button>
-                );
-              })}
+                  </div>
+                </div>
+
+                {/* 7. Start Date */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                  <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                    <CalendarDays className="h-3.5 w-3.5" aria-hidden /> <span>Start date</span> <span className="text-danger-text" aria-hidden>*</span>
+                  </span>
+                  <div className="flex h-8 items-center">
+                    {canEditDates ? (
+                      <input
+                        type="date"
+                        className="h-8 w-full rounded-md border border-border bg-surface px-2.5 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
+                        onChange={(e) => {
+                          const newStartDate = e.target.value;
+                          if (newStartDate && task.start_date && task.end_date) {
+                            // Keep existing duration (in days) constant
+                            const days = Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1);
+                            const sDate = new Date(newStartDate);
+                            sDate.setUTCDate(sDate.getUTCDate() + (days - 1));
+                            const newEndDateStr = sDate.toISOString().split('T')[0];
+                            setPendingTaskUpdates(prev => ({
+                              ...prev,
+                              start_date: newStartDate,
+                              end_date: newEndDateStr
+                            }));
+                            setTask((prev: any) => ({
+                              ...prev,
+                              start_date: newStartDate,
+                              end_date: newEndDateStr
+                            }));
+                          } else {
+                            setPendingTaskUpdates(prev => ({ ...prev, start_date: newStartDate }));
+                            setTask((prev: any) => ({ ...prev, start_date: newStartDate }));
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="text-[13.5px] text-foreground">
+                        {task.start_date ? formatDate(task.start_date) : <span className="text-muted">Not set</span>}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 8. Due Date */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                  <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                    <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> <span>Due date</span> <span className="text-danger-text" aria-hidden>*</span>
+                  </span>
+                  <div className="flex h-8 items-center">
+                    {canEditDates ? (
+                      <input
+                        type="date"
+                        className="h-8 w-full rounded-md border border-border bg-surface px-2.5 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
+                        onChange={(e) => {
+                          const newEndDate = e.target.value;
+                          if (newEndDate && task.start_date && newEndDate < task.start_date) {
+                            toast.error("Due date cannot be earlier than start date");
+                            return;
+                          }
+                          setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDate }));
+                          setTask((prev: any) => ({ ...prev, end_date: newEndDate }));
+                        }}
+                      />
+                    ) : (
+                      <span className={`text-[13.5px] ${task.end_date && new Date(task.end_date) < new Date() ? "font-medium text-danger-text" : "text-foreground"}`}>
+                        {task.end_date ? formatDate(task.end_date) : <span className="text-muted">Not set</span>}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 9. Primary Assignee */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                      <ShieldCheck className="h-3.5 w-3.5" aria-hidden /> <span>Primary assignee</span>
+                    </span>
+                    {canEditAssignees && (
+                      <AppButton
+                        variant="link"
+                        size="sm"
+                        onClick={() => openAssigneeModal('primary')}
+                        className="text-[12.5px]"
+                      >
+                        Edit
+                      </AppButton>
+                    )}
+                  </div>
+                  <div className="flex h-8 items-center gap-2 overflow-hidden">
+                    {pendingPrimaryAssignee ? (
+                      (() => {
+                        const pUser = stakeholders.find(s => s.id === pendingPrimaryAssignee);
+                        return (
+                          <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
+                            <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
+                            <span className="truncate">{pUser?.full_name || "New primary assignee"} · not saved yet</span>
+                          </div>
+                        );
+                      })()
+                    ) : task.assignee ? (
+                      (() => {
+                        const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                        if (!a) return null;
+                        return (
+                          <>
+                            {a.profile_photo ? (
+                              <img src={a.profile_photo} alt="" className="h-6 w-6 rounded-full bg-sunken object-cover" />
+                            ) : (
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
+                                {a.full_name?.substring(0, 2).toUpperCase() || "U"}
+                              </div>
+                            )}
+                            <span className="truncate text-[13.5px] text-foreground">{a.full_name}</span>
+                          </>
+                        );
+                      })()
+                    ) : (
+                      <span className="text-muted">Unassigned</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 10. Executors */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                      <Users className="h-3.5 w-3.5" aria-hidden /> <span>Executors</span>
+                      <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
+                        {pendingAssignees ? pendingAssignees.length : explicitExecutors.length}
+                      </span>
+                    </span>
+                    {canEditAssignees && (
+                      <AppButton
+                        variant="link"
+                        size="sm"
+                        onClick={() => openAssigneeModal('executors')}
+                        className="text-[12.5px]"
+                      >
+                        Edit
+                      </AppButton>
+                    )}
+                  </div>
+
+                  <div className="flex h-8 items-center overflow-hidden text-[13.5px] text-foreground">
+                    {pendingAssignees ? (
+                      <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
+                        <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
+                        <span className="truncate">{pendingAssignees.length} {pendingAssignees.length === 1 ? "executor" : "executors"} · not saved yet</span>
+                      </div>
+                    ) : (
+                      <span className="block w-full truncate">
+                        {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-muted">None</span>}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 11. Watchers (Team) */}
+                <div className="flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5 sm:col-span-2 lg:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                      <Eye className="h-3.5 w-3.5" aria-hidden /> <span>Watchers</span>
+                      <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
+                        {pendingWatchers ? pendingWatchers.length : explicitWatchers.length}
+                      </span>
+                    </span>
+                    {canEditWatchers && (
+                      <AppButton
+                        variant="link"
+                        size="sm"
+                        onClick={() => openAssigneeModal('watchers')}
+                        className="text-[12.5px]"
+                      >
+                        Edit
+                      </AppButton>
+                    )}
+                  </div>
+                  <div className="flex h-8 items-center overflow-hidden text-[13.5px] text-foreground">
+                    {pendingWatchers ? (
+                      <div className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
+                        <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden />
+                        <span className="truncate">{pendingWatchers.length} {pendingWatchers.length === 1 ? "watcher" : "watchers"} · not saved yet</span>
+                      </div>
+                    ) : (
+                      <span className="block w-full truncate">
+                        {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-muted">None</span>}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AppCard>
+        </div>
+
+
+        {/* 4. Remarks and Updates Group - Dedicated Card with Background-Colored Header */}
+        <div>
+          <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
+            <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
+              <div className="flex items-center gap-2.5">
+                <MessageSquare className="h-4 w-4 text-muted" aria-hidden />
+                <h3 className="text-[14px] font-semibold text-heading">Status and remarks</h3>
+              </div>
             </div>
 
-            {/* Tab Contents */}
-            <div className="pt-4">
-              {/* Tags Tab */}
-              {activeTab === 'tags' && (
-                <div className="space-y-4">
-                  <h4 className="flex items-center gap-1.5 text-[13px] font-medium text-subtle">
-                    <Pin className="h-3.5 w-3.5 text-muted" aria-hidden /> Custom fields and tags
-                  </h4>
-                  {localCustomFields && Object.keys(localCustomFields).length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {Object.entries(localCustomFields).map(([key, val]) => (
-                        <div key={key} className="space-y-1 rounded-md border border-border bg-surface p-3">
-                          <span className="text-[12.5px] capitalize text-muted">{key.replace(/_/g, ' ')}</span>
-                          <div className="text-[13.5px] text-foreground">{val ? String(val) : <span className="text-muted">Not set</span>}</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-6 text-center text-[13px] text-muted">No custom fields or tags on this task.</div>
-                  )}
-                </div>
-              )}
+            <div className="p-5 space-y-6">
+              {/* Interactive Lifecycle State Transition Panel (MOVED TO TOP) */}
 
-              {/* Link URL Tab */}
-              {activeTab === 'links' && (
-                <div className="space-y-4">
-                  <h4 className="flex items-center gap-1.5 text-[13px] font-medium text-subtle">
-                    <LinkIcon className="h-3.5 w-3.5 text-muted" aria-hidden /> Links
-                  </h4>
-                  {localCustomFields?.link_url ? (
-                    <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-surface p-3">
-                      <a 
-                        href={getSafeExternalUrl(localCustomFields.link_url)} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="flex-1 truncate text-[13px] font-medium text-accent-soft-text hover:underline"
-                        title={localCustomFields.link_url}
-                      >
-                        {localCustomFields.link_url}
-                      </a>
-                      <a 
-                        href={getSafeExternalUrl(localCustomFields.link_url)} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-hover"
-                      >
-                        Open <ExternalLink className="w-3.5 h-3.5" aria-hidden />
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="py-6 text-center text-[13px] text-muted">No links on this task.</div>
-                  )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="space-y-1.5">
+                  <label htmlFor="tec-status" className="text-[13px] font-medium text-subtle">Status</label>
+                  <select
+                    id="tec-status"
+                    value={pendingStatus || currentStatusCode || ""}
+                    disabled={readOnly || !canEditCore}
+                    onChange={(e) => {
+                      const newCode = e.target.value;
+                      if (!newCode || newCode === currentStatusCode) {
+                        setPendingStatus(null);
+                      } else {
+                        setPendingStatus(newCode);
+                      }
+                    }}
+                    className={`h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${(readOnly || !canEditCore) ? 'cursor-not-allowed opacity-60' : ''}`}
+                  >
+                    <option value="" disabled>Select status</option>
+                    {statuses.map(st => (
+                      <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
 
-              {/* Checklist Tab */}
-              {activeTab === 'checklist' && (
-                <div className="space-y-4">
-                  {!readOnly && canEditAux && (
-                    <form onSubmit={handleAddChecklist} className="flex gap-2">
-                      <AppInput
-                        placeholder="Add a checklist item…"
-                        aria-label="New checklist item"
-                        value={newChecklistLabel}
-                        onChange={e => setNewChecklistLabel(e.target.value)}
-                        className="text-xs"
-                      />
-                      <AppButton type="submit" variant="secondary" size="sm">Add</AppButton>
-                    </form>
-                  )}
-                  {task.checklists && task.checklists.length > 0 ? (
-                    <div className="space-y-2">
-                      {task.checklists.map((item: any) => (
-                        <div 
-                          key={item.id} 
-                          className="flex items-center justify-between rounded-md px-2 py-1.5 transition-colors hover:bg-surface-hover"
+                <div className="space-y-1.5">
+                  <label htmlFor="tec-dept" className="text-[13px] font-medium text-subtle">Department</label>
+                  <select
+                    id="tec-dept"
+                    value={pendingDepartment !== null ? pendingDepartment : (task.department_id || "")}
+                    disabled={readOnly || !canEditCore}
+                    onChange={(e) => {
+                      const newDept = e.target.value;
+                      if (newDept === (task.department_id || "")) {
+                        setPendingDepartment(null);
+                      } else {
+                        setPendingDepartment(newDept);
+                      }
+                    }}
+                    className={`h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${(readOnly || !canEditCore) ? 'cursor-not-allowed opacity-60' : ''}`}
+                  >
+                    <option value="">No department</option>
+                    {departments.map(dept => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5 w-full">
+                  <span className="block w-full text-left text-[13px] font-medium text-subtle sm:text-right">
+                    Actions
+                  </span>
+                  <div className="flex flex-wrap justify-start sm:justify-end gap-2 pt-0.5 w-full">
+                    {currentStatusCode === "ST_OPEN" && canEditCore && (
+                      <AppButton
+                        size="sm"
+                        variant="primary"
+                        leftIcon={<Play className="h-4 w-4" />}
+                        disabled={actionLoading}
+                        onClick={() => handleStatusTransition("start")}
+                      >
+                        Start progress
+                      </AppButton>
+                    )}
+
+                    {currentStatusCode === "ST_IN_PROGRESS" && canEditCore && (
+                      <AppButton
+                        size="sm"
+                        variant="primary"
+                        leftIcon={<CheckCircle2 className="h-4 w-4" />}
+                        disabled={actionLoading}
+                        onClick={() => handleStatusTransition("resolve")}
+                      >
+                        Mark as resolved
+                      </AppButton>
+                    )}
+
+                    {currentStatusCode === "ST_RESOLVED" && !readOnly && isOwner && (
+                      <>
+                        <AppButton
+                          size="sm"
+                          variant="primary"
+                          leftIcon={<CheckCircle2 className="h-4 w-4" />}
+                          disabled={actionLoading}
+                          onClick={() => handleStatusTransition("approve")}
                         >
-                          <div className="flex items-center gap-2.5">
-                            <input
-                              type="checkbox"
-                              checked={item.is_completed}
-                              onChange={() => canEditAux && handleToggleChecklist(item.id, item.is_completed)}
-                              disabled={readOnly || !canEditAux}
-                              className="h-4 w-4 rounded accent-accent"
-                            />
-                            <span className={`text-[13.5px] ${item.is_completed ? "line-through text-muted" : "text-foreground"}`}>
-                              {item.label}
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Users className="w-3.5 h-3.5 text-muted" aria-hidden />
+                          Approve & close
+                        </AppButton>
+                        <AppButton
+                          size="sm"
+                          variant="secondary"
+                          leftIcon={<RotateCcw className="h-4 w-4" />}
+                          disabled={actionLoading}
+                          onClick={() => handleStatusTransition("reopen")}
+                        >
+                          Reject & reopen
+                        </AppButton>
+                      </>
+                    )}
+
+                    {!readOnly && task.status?.is_closed && (isOwner || isExecutor) && (
+                      <AppButton
+                        size="sm"
+                        variant="outline"
+                        leftIcon={<RotateCcw className="h-4 w-4" />}
+                        disabled={actionLoading}
+                        onClick={() => handleStatusTransition("reopen")}
+                      >
+                        Reopen task
+                      </AppButton>
+                    )}
+                    {canDeleteTask && (
+                      <AppButton
+                        variant="outline"
+                        size="sm"
+                        className="border-danger-border text-danger-text hover:bg-danger-soft"
+                        onClick={handleDeleteTask}
+                        disabled={deleteLoading || actionLoading}
+                        leftIcon={<Trash2 className="h-4 w-4" />}
+                      >
+                        Delete task
+                      </AppButton>
+                    )}
+
+                    {canTransferTask && (
+                      <AppButton
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleOpenTransfer}
+                        disabled={actionLoading}
+                        leftIcon={<FolderPlus className="h-4 w-4" />}
+                      >
+                        Transfer task
+                      </AppButton>
+                    )}
+                  </div>
+
+                  {/* Transfer Modal / Inline Panel */}
+                  {isTransferModalOpen && (
+                    <div className="mt-4 w-full rounded-md border border-border bg-sunken p-5 text-left">
+                      <h4 className="mb-4 flex items-center gap-2 border-b border-border pb-2 text-[14px] font-semibold text-heading">
+                        <FolderPlus className="h-4 w-4 text-muted" aria-hidden /> Transfer task to another workspace
+                      </h4>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div>
+                            <label htmlFor="tec-transfer-ws" className="mb-1.5 block text-[13px] font-medium text-subtle">Destination workspace <span className="text-danger-text" aria-hidden>*</span></label>
                             <select
-                              value={item.assignee_id || ""}
-                              onChange={(e) => handleSetChecklistAssignee(item.id, e.target.value)}
-                              disabled={readOnly || !canEditAux}
-                              aria-label="Checklist item assignee"
-                              className="w-32 cursor-pointer rounded border-none bg-transparent text-[12.5px] text-subtle outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              id="tec-transfer-ws"
+                              value={selectedTransferSubworkspace || selectedTransferWorkspace}
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (!val) {
+                                  setSelectedTransferWorkspace("");
+                                  setSelectedTransferSubworkspace("");
+                                  return;
+                                }
+                                const selectedObj = flattenedWorkspaces.find(w => w.id === val);
+                                if (selectedObj) {
+                                  if (selectedObj.isSub) {
+                                    setSelectedTransferWorkspace(selectedObj.rootId);
+                                    setSelectedTransferSubworkspace(val);
+                                  } else {
+                                    setSelectedTransferWorkspace(val);
+                                    setSelectedTransferSubworkspace("");
+                                  }
+                                }
+                              }}
+                              className="h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                             >
-                              <option value="">Unassigned</option>
-                              {task.task_assignees?.map((a: any) => (
-                                <option key={a.id} value={a.id}>{a.full_name}</option>
-                              ))}
-                              {task.task_watchers?.map((w: any) => (
-                                <option key={w.id} value={w.id}>{w.full_name}</option>
-                              ))}
-                              {task.inherited_users?.map((u: any) => (
-                                <option key={u.id} value={u.id}>{u.full_name}</option>
+                              <option value="">Select a workspace</option>
+                              {flattenedWorkspaces.map(w => (
+                                <option
+                                  key={w.id}
+                                  value={w.id}
+                                  disabled={w.id === (task.sub_workspace_id || task.workspace_id)}
+                                >
+                                  {w.pathName} {w.id === (task.sub_workspace_id || task.workspace_id) ? "(current)" : ""}
+                                </option>
                               ))}
                             </select>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-6 text-center text-[13px] text-muted">No checklist items yet.</div>
-                  )}
-                </div>
-              )}
 
-              {/* Attachments Tab */}
-              {activeTab === 'attachments' && (
-                <div className="space-y-4">
-                  {!readOnly && canEditAux && (
-                    <div className="flex items-center gap-2">
-                      <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-                      <AppButton variant="secondary" size="sm" onClick={triggerFileSelect} leftIcon={<Paperclip className="w-3.5 h-3.5" />}>
-                        Upload attachment
-                      </AppButton>
-                    </div>
-                  )}
-                  {task.attachments && task.attachments.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {task.attachments.map((item: any) => {
-                        const isProxied = item.id && (item.file_url?.startsWith('storage:') || !item.file_url?.startsWith('http'));
-                        const viewUrl = isProxied 
-                          ? `/api/proxy-attachment/${item.id}` 
-                          : item.file_url;
-                        const downloadUrl = isProxied
-                          ? `/api/proxy-attachment/${item.id}?download=1`
-                          : (item.file_url ? `${item.file_url}${item.file_url.includes('?') ? '&' : '?'}download=1` : item.file_url);
+                        {checkingScope && (
+                          <div role="status" className="flex items-center gap-2 p-2 text-[13px] text-muted">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden /> Checking who has access to that workspace…
+                          </div>
+                        )}
 
-                        return (
-                          <div key={item.id} className="flex items-center justify-between rounded-md border border-border bg-surface p-3">
-                            <span className="truncate pr-2 text-[13px] font-medium text-foreground" title={item.file_name}>{item.file_name}</span>
-                            {viewUrl && (
-                              <div className="flex items-center gap-3 shrink-0">
-                                <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text hover:underline" title="View attachment">
-                                  <Eye className="w-3.5 h-3.5" /> View
-                                </a>
-                                <a href={downloadUrl} download={item.file_name || "Attachment"} className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text hover:underline" title="Download attachment">
-                                  <Download className="w-3.5 h-3.5" /> Download
-                                </a>
-                                {roleCode === 'SUPER_ADMIN' && !item.is_temp && (
-                                  <AppButton
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      handleDeleteAttachment(item.id);
-                                    }}
-                                    className="h-auto px-1 text-[12.5px] text-danger-text"
-                                    title="Delete attachment"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                                  </AppButton>
-                                )}
+                        {!checkingScope && droppedUsers.length > 0 && (
+                          <div className="space-y-3 rounded-md border border-warning-border bg-warning-soft p-3">
+                            <div className="text-[13px] leading-relaxed text-warning-text">
+                              <span className="mb-0.5 flex items-center gap-1 font-semibold"><XCircle className="w-3.5 h-3.5" aria-hidden /> Some people will lose access</span>
+                              These people don&apos;t have access to the destination workspace and will be removed from this task:
+                              <strong className="block mt-1">{droppedUsers.map(u => u.full_name).join(", ")}</strong>
+                            </div>
+
+                            {isOwnerDropped && (
+                              <div className="rounded-md border border-border bg-surface p-3">
+                                <label htmlFor="tec-new-owner" className="mb-1.5 block text-[13px] font-medium text-subtle">New primary owner <span className="text-danger-text" aria-hidden>*</span></label>
+                                <select
+                                  id="tec-new-owner"
+                                  value={newAssigneeId}
+                                  onChange={e => setNewAssigneeId(e.target.value)}
+                                  className="h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                                >
+                                  <option value="">Select a person</option>
+                                  {targetStakeholders.map(s => (
+                                    <option key={s.id} value={s.id}>{s.full_name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+
+                            {true && (
+                              <div className="rounded-md border border-border bg-surface p-3 mt-2">
+                                <span className="mb-1.5 block text-[13px] font-medium text-subtle">Add executors (optional)</span>
+                                <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
+                                  {targetStakeholders.map(s => (
+                                    <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-[13px] text-foreground hover:bg-surface-hover">
+                                      <input
+                                        type="checkbox"
+                                        checked={newExecutors.includes(s.id)}
+                                        onChange={e => {
+                                          if (e.target.checked) setNewExecutors([...newExecutors, s.id]);
+                                          else setNewExecutors(newExecutors.filter(id => id !== s.id));
+                                        }}
+                                        className="h-3.5 w-3.5 rounded accent-primary"
+                                      />
+                                      {s.full_name}
+                                    </label>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>
-                        );
-                      })}
+                        )}
+
+                        <div>
+                          <label htmlFor="tec-transfer-remarks" className="mb-1.5 block text-[13px] font-medium text-subtle">Reason for transfer <span className="text-danger-text" aria-hidden>*</span></label>
+                          <textarea
+                            id="tec-transfer-remarks"
+                            value={transferRemarks}
+                            onChange={e => setTransferRemarks(e.target.value)}
+                            className="min-h-[72px] w-full rounded-md border border-border bg-surface p-2.5 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                            placeholder="Why is this task being transferred?"
+                          />
+                        </div>
+                        <div className="mt-5 flex justify-end gap-2 border-t border-border pt-4">
+                          <AppButton variant="ghost" size="sm" onClick={() => { setIsTransferModalOpen(false); setSelectedTransferWorkspace(""); setSelectedTransferSubworkspace(""); }}>Cancel</AppButton>
+                          <AppButton variant="primary" size="sm" onClick={submitTransfer} disabled={transferLoading || checkingScope} isLoading={transferLoading}>
+                            {transferLoading ? "Transferring…" : "Transfer task"}
+                          </AppButton>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="py-6 text-center text-[13px] text-muted">No attachments yet.</div>
                   )}
+                </div>
+              </div>
+
+              {pendingStatus && (
+                <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                    <span>
+                      Status change to <strong className="font-semibold">{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPendingStatus(null)}
+                    className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
+                  >
+                    Undo
+                  </button>
                 </div>
               )}
 
-              {/* Chat Tab */}
-              {activeTab === 'chat' && <TaskRealtimeChat taskId={taskId} />}
-
-              {/* Audit Timeline Tab */}
-              {activeTab === 'timeline' && <TaskActivityTimeline taskId={taskId} />}
-
-              {/* Time Logs Tab */}
-              {activeTab === 'time' && <TaskTimeLogs taskId={taskId} onLogAdded={onUpdate} />}
-            </div>
-          </div>
-        </AppCard>
-      </div>
-
-      {/* Dedicated High-Clarity Assignee & Executor Management Modal */}
-      {isAssigneeModalOpen && (
-        <div 
-          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-150"
-           role="presentation" onClick={() => setIsAssigneeModalOpen(false)}
-        >
-          <div 
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="tec-people-title"
-            className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-lg border border-border bg-surface text-foreground shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-border px-5 py-4">
-              <div>
-                <h3 id="tec-people-title" className="text-[16px] font-semibold text-heading">Manage people</h3>
-                <p className="mt-0.5 text-[13px] text-muted">Changes are saved together with your next remark.</p>
-              </div>
-              <AppButton aria-label="Close" 
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setIsAssigneeModalOpen(false)} 
-                className="text-muted hover:text-foreground"
-                title="Close"
-              >
-                <X className="w-5 h-5" />
-              </AppButton>
-            </div>
-
-            {/* Modal Tabs */}
-            <div role="tablist" aria-label="People" className="flex gap-1 border-b border-border px-5">
-              {canEditAssignees && (
-                <>
+              {pendingDepartment && (
+                <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                    <span>
+                      Department change to <strong className="font-semibold">{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
+                    </span>
+                  </div>
                   <button
                     type="button"
-                    role="tab"
-                    aria-selected={assigneeModalTab === 'primary'}
-                    onClick={() => setAssigneeModalTab('primary')}
-                    className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${ assigneeModalTab === 'primary' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground' }`}
+                    onClick={() => setPendingDepartment(null)}
+                    className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
                   >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Primary assignee</span>
-                    {selectedPrimaryAssignee && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-                    )}
+                    Undo
                   </button>
+                </div>
+              )}
+
+              {pendingAssignees && (
+                <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                    <span>
+                      Executor changes aren&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
+                    </span>
+                  </div>
                   <button
                     type="button"
-                    role="tab"
-                    aria-selected={assigneeModalTab === 'executors'}
-                    onClick={() => setAssigneeModalTab('executors')}
-                    className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${ assigneeModalTab === 'executors' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground' }`}
+                    onClick={() => setPendingAssignees(null)}
+                    className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
                   >
-                    <Users className="w-4 h-4" />
-                    <span>Executors</span>
-                    <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
-                      {selectedExecutors.length}
+                    Undo
+                  </button>
+                </div>
+              )}
+
+              {pendingPrimaryAssignee && (
+                <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text mt-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                    <span>
+                      The primary assignee change isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPendingPrimaryAssignee(null)}
+                    className="shrink-0 whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground transition-colors hover:bg-surface-hover"
+                  >
+                    Undo
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-3 rounded-md border border-border bg-surface p-4">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-[13px] font-medium text-subtle">
+                    Remark <span className="text-danger-text" aria-hidden>*</span>
+                  </span>
+                  <span className="text-[12.5px] text-muted">Required when you save a change</span>
+                </div>
+                <RichTextEditor
+                  value={remarksDraft}
+                  onChange={setRemarksDraft}
+                  readOnly={!canAddRemark}
+                  placeholder={!canAddRemark ? "You can't add remarks to this task." : "What changed, and what happens next?"}
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[12.5px] text-muted">Last updated {task.updated_at ? formatDateTime(task.updated_at) : "—"}</span>
+                  {canAddRemark && (
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={handleBatchSave}
+                      disabled={saveRemarksLoading}
+                      isLoading={saveRemarksLoading}
+                    >
+                      {saveRemarksLoading ? "Saving…" : (pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee) ? "Save changes" : "Save remark"}
+                    </AppButton>
+                  )}
+                </div>
+
+                {/* Remarks History Queue */}
+                <div className="mt-3 rounded-md border border-border bg-sunken p-3 text-foreground">
+                  {/* Header with toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)}
+                    aria-expanded={!isHistoryCollapsed}
+                    className="flex w-full select-none items-center justify-between rounded text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-muted" aria-hidden />
+                      <span className="text-[13px] font-medium text-subtle">Remark history</span>
+                      {remarksHistory.length > 0 && (
+                        <span className="rounded-full bg-surface px-1.5 text-[11px] font-medium tabular-nums text-subtle">
+                          {remarksHistory.length}
+                        </span>
+                      )}
+                    </span>
+                    <span className="p-1 text-muted" aria-hidden>
+                      {isHistoryCollapsed ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronUp className="h-4 w-4" />
+                      )}
                     </span>
                   </button>
-                </>
-              )}
-              {canEditWatchers && (
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={assigneeModalTab === 'watchers'}
-                  onClick={() => setAssigneeModalTab('watchers')}
-                  className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${ assigneeModalTab === 'watchers' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground' }`}
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>Watchers</span>
-                  <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
-                    {selectedWatchers.length}
-                  </span>
-                </button>
-              )}
-            </div>
 
-            {/* Search Input */}
-            <div className="border-b border-border p-4">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted" aria-hidden />
-                <input
-                  type="text"
-                  placeholder="Search by name, email or department…"
-                  aria-label="Search workspace members"
-                  value={stakeholderSearch}
-                  onChange={(e) => setStakeholderSearch(e.target.value)}
-                  className="h-9 w-full rounded-md border border-border bg-surface pl-9 pr-9 text-[13.5px] text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                {stakeholderSearch && (
-                  <AppButton aria-label="Clear search" 
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => setStakeholderSearch("")}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
-                  >
-                    <X className="w-4 h-4" />
-                  </AppButton>
-                )}
+                  {/* Collapsible Content */}
+                  {!isHistoryCollapsed && (
+                    <div className="mt-4 space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin">
+                      {remarksHistoryLoading ? (
+                        <div className="flex items-center justify-center py-6 gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted" aria-hidden />
+                          <span className="text-[13px] text-muted">Loading remarks…</span>
+                        </div>
+                      ) : remarksHistory.length === 0 ? (
+                        <div className="py-6 text-center text-[13px] text-muted">
+                          No remarks yet. Remarks you add above will appear here.
+                        </div>
+                      ) : (
+                        <div className="relative space-y-5 border-l border-border pl-4">
+                          {remarksHistory.map((item, index) => {
+                            const initials = (item.user?.full_name || "Unknown")
+                              .split(" ")
+                              .map((n: string) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2);
+
+                            return (
+                              <div key={item.id} className="relative group/item">
+                                {/* Timeline Node Point */}
+                                <div className="absolute -left-[21px] top-2 h-2.5 w-2.5 rounded-full border-2 border-sunken bg-border-active" aria-hidden />
+
+                                <div className="flex items-start gap-3">
+                                  {/* Avatar */}
+                                  {item.user?.profile_photo ? (
+                                    <img
+                                      src={item.user.profile_photo}
+                                      alt={item.user.full_name}
+                                      className="h-7 w-7 rounded-full border border-border object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
+                                      {initials}
+                                    </div>
+                                  )}
+
+                                  {/* Content Block */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
+                                      <span className="text-[13px] font-medium text-foreground">
+                                        {item.user?.full_name || "System"}
+                                      </span>
+                                      <div className="flex items-center gap-1 text-[12px] text-muted">
+                                        <Clock className="h-3 w-3" aria-hidden />
+                                        <span>{formatDateTime(item.created_at)}</span>
+                                      </div>
+                                    </div>
+
+                                    <div className="break-words rounded-md border border-border bg-surface p-2.5 text-[13px] leading-relaxed text-foreground">
+                                      <SafeHtml html={item.message || item.content || ""} />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </AppCard>
+        </div>
+
+
+        {/* 5. Utilities & Communication Group - Dedicated Card with 7 Tabs */}
+        <div>
+          <AppCard className="overflow-hidden shadow-xs p-0 mb-4 border border-border">
+            <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
+              <div className="flex items-center gap-2.5">
+                <ActivitySquare className="h-4 w-4 text-muted" aria-hidden />
+                <h3 className="text-[14px] font-semibold text-heading">Details and activity</h3>
               </div>
             </div>
 
-            {/* User Selection List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[380px] scrollbar-thin">
-              {(() => {
-                const filteredStakeholders = stakeholders.filter(s => {
-                  if (!stakeholderSearch) return true;
-                  const term = stakeholderSearch.toLowerCase();
+            <div className="p-5">
+              {/* Tabs */}
+              <div role="tablist" aria-label="Task details" className="-mx-5 -mt-5 mb-2 flex flex-nowrap items-center gap-1 overflow-x-auto border-b border-border px-5 hide-scrollbar">
+                {[
+                  { id: 'tags', label: 'Tags', icon: Pin },
+                  { id: 'links', label: 'Links', icon: LinkIcon },
+                  { id: 'checklist', label: 'Checklist', icon: CheckSquare, count: task.checklists !== undefined ? task.checklists.length : (task._meta?.checklistCount || 0) },
+                  { id: 'attachments', label: 'Attachments', icon: Paperclip, count: task.attachments !== undefined ? task.attachments.length : (task._meta?.attachmentCount || 0) },
+                  { id: 'chat', label: 'Chat', icon: MessageCircle },
+                  { id: 'timeline', label: 'Activity', icon: ActivitySquare },
+                  { id: 'time', label: 'Time logs', icon: Clock }
+                ].map(t => {
+                  const isActive = activeTab === t.id;
                   return (
-                    s.full_name?.toLowerCase().includes(term) ||
-                    s.email?.toLowerCase().includes(term) ||
-                    s.department?.toLowerCase().includes(term)
+                    <button
+                      key={t.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => setActiveTab(t.id as any)}
+                      className={`-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "border-primary text-foreground" : "border-transparent text-muted hover:text-foreground"
+                        }`}
+                    >
+                      <t.icon className="h-3.5 w-3.5" aria-hidden />
+                      <span>{t.label}</span>
+                      {t.count !== undefined && t.count > 0 && (
+                        <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
+                          {t.count}
+                        </span>
+                      )}
+                    </button>
                   );
-                });
+                })}
+              </div>
 
-                if (filteredStakeholders.length === 0) {
-                  return (
-                    <div className="p-8 text-center text-[13px] text-muted">
-                      {stakeholders.length === 0 ? "Loading workspace members…" : "No one matches that search."}
-                    </div>
-                  );
-                }
-
-                if (assigneeModalTab === 'primary') {
-                  return (
-                    <div className="space-y-1.5">
-                      <div className="px-1 pb-1 text-[12.5px] text-muted">
-                        Choose the one person accountable for this task.
+              {/* Tab Contents */}
+              <div className="pt-4">
+                {/* Tags Tab */}
+                {activeTab === 'tags' && (
+                  <div className="space-y-4">
+                    <h4 className="flex items-center gap-1.5 text-[13px] font-medium text-subtle">
+                      <Pin className="h-3.5 w-3.5 text-muted" aria-hidden /> Custom fields and tags
+                    </h4>
+                    {localCustomFields && Object.keys(localCustomFields).length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {Object.entries(localCustomFields).map(([key, val]) => (
+                          <div key={key} className="space-y-1 rounded-md border border-border bg-surface p-3">
+                            <span className="text-[12.5px] capitalize text-muted">{key.replace(/_/g, ' ')}</span>
+                            <div className="text-[13.5px] text-foreground">{val ? String(val) : <span className="text-muted">Not set</span>}</div>
+                          </div>
+                        ))}
                       </div>
-                      {filteredStakeholders.map(s => {
-                        const isSelected = selectedPrimaryAssignee === s.id;
-                        return (
-                          <button
-                            type="button"
-                            key={s.id}
-                            aria-pressed={isSelected}
-                            onClick={async () => {
-                              if (checkingDependencyId) return;
-                              if (isSelected) {
-                                if (task?.id) {
-                                  setCheckingDependencyId(s.id);
-                                  try {
-                                    const { checkTaskUserDependencies } = await import("@/lib/actions/dependencies");
-                                    const deps = await checkTaskUserDependencies(task.id, [s.id]);
-                                    const result = deps[s.id];
-                                    if (result && !result.isSafe) {
-                                      setDependencyModal({ userId: s.id, userName: s.full_name, result });
-                                      return;
+                    ) : (
+                      <div className="py-6 text-center text-[13px] text-muted">No custom fields or tags on this task.</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Link URL Tab */}
+                {activeTab === 'links' && (
+                  <div className="space-y-4">
+                    <h4 className="flex items-center gap-1.5 text-[13px] font-medium text-subtle">
+                      <LinkIcon className="h-3.5 w-3.5 text-muted" aria-hidden /> Links
+                    </h4>
+                    {localCustomFields?.link_url ? (
+                      <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-surface p-3">
+                        <a
+                          href={getSafeExternalUrl(localCustomFields.link_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 truncate text-[13px] font-medium text-accent-soft-text hover:underline"
+                          title={localCustomFields.link_url}
+                        >
+                          {localCustomFields.link_url}
+                        </a>
+                        <a
+                          href={getSafeExternalUrl(localCustomFields.link_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-surface-hover"
+                        >
+                          Open <ExternalLink className="w-3.5 h-3.5" aria-hidden />
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="py-6 text-center text-[13px] text-muted">No links on this task.</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Checklist Tab */}
+                {activeTab === 'checklist' && (
+                  <div className="space-y-4">
+                    {!readOnly && canEditAux && (
+                      <form onSubmit={handleAddChecklist} className="flex gap-2">
+                        <AppInput
+                          placeholder="Add a checklist item…"
+                          aria-label="New checklist item"
+                          value={newChecklistLabel}
+                          onChange={e => setNewChecklistLabel(e.target.value)}
+                          className="text-xs"
+                        />
+                        <AppButton type="submit" variant="secondary" size="sm">Add</AppButton>
+                      </form>
+                    )}
+                    {task.checklists && task.checklists.length > 0 ? (
+                      <div className="space-y-2">
+                        {task.checklists.map((item: any) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between rounded-md px-2 py-1.5 transition-colors hover:bg-surface-hover"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <input
+                                type="checkbox"
+                                checked={item.is_completed}
+                                onChange={() => canEditAux && handleToggleChecklist(item.id, item.is_completed)}
+                                disabled={readOnly || !canEditAux}
+                                className="h-4 w-4 rounded accent-accent"
+                              />
+                              <span className={`text-[13.5px] ${item.is_completed ? "line-through text-muted" : "text-foreground"}`}>
+                                {item.label}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Users className="w-3.5 h-3.5 text-muted" aria-hidden />
+                              <select
+                                value={item.assignee_id || ""}
+                                onChange={(e) => handleSetChecklistAssignee(item.id, e.target.value)}
+                                disabled={readOnly || !canEditAux}
+                                aria-label="Checklist item assignee"
+                                className="w-32 cursor-pointer rounded border-none bg-transparent text-[12.5px] text-subtle outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              >
+                                <option value="">Unassigned</option>
+                                {task.task_assignees?.map((a: any) => (
+                                  <option key={a.id} value={a.id}>{a.full_name}</option>
+                                ))}
+                                {task.task_watchers?.map((w: any) => (
+                                  <option key={w.id} value={w.id}>{w.full_name}</option>
+                                ))}
+                                {task.inherited_users?.map((u: any) => (
+                                  <option key={u.id} value={u.id}>{u.full_name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-6 text-center text-[13px] text-muted">No checklist items yet.</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Attachments Tab */}
+                {activeTab === 'attachments' && (
+                  <div className="space-y-4">
+                    {!readOnly && canEditAux && (
+                      <div className="flex items-center gap-2">
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                        <AppButton variant="secondary" size="sm" onClick={triggerFileSelect} leftIcon={<Paperclip className="w-3.5 h-3.5" />}>
+                          Upload attachment
+                        </AppButton>
+                      </div>
+                    )}
+                    {task.attachments && task.attachments.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {task.attachments.map((item: any) => {
+                          const isProxied = item.id && (item.file_url?.startsWith('storage:') || !item.file_url?.startsWith('http'));
+                          const viewUrl = isProxied
+                            ? `/api/proxy-attachment/${item.id}`
+                            : item.file_url;
+                          const downloadUrl = isProxied
+                            ? `/api/proxy-attachment/${item.id}?download=1`
+                            : (item.file_url ? `${item.file_url}${item.file_url.includes('?') ? '&' : '?'}download=1` : item.file_url);
+
+                          return (
+                            <div key={item.id} className="flex items-center justify-between rounded-md border border-border bg-surface p-3">
+                              <span className="truncate pr-2 text-[13px] font-medium text-foreground" title={item.file_name}>{item.file_name}</span>
+                              {viewUrl && (
+                                <div className="flex items-center gap-3 shrink-0">
+                                  <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text hover:underline" title="View attachment">
+                                    <Eye className="w-3.5 h-3.5" /> View
+                                  </a>
+                                  <a href={downloadUrl} download={item.file_name || "Attachment"} className="flex items-center gap-1 text-[12.5px] font-medium text-accent-soft-text hover:underline" title="Download attachment">
+                                    <Download className="w-3.5 h-3.5" /> Download
+                                  </a>
+                                  {roleCode === 'SUPER_ADMIN' && !item.is_temp && (
+                                    <AppButton
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleDeleteAttachment(item.id);
+                                      }}
+                                      className="h-auto px-1 text-[12.5px] text-danger-text"
+                                      title="Delete attachment"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                                    </AppButton>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="py-6 text-center text-[13px] text-muted">No attachments yet.</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Chat Tab */}
+                {activeTab === 'chat' && <TaskRealtimeChat taskId={taskId} />}
+
+                {/* Audit Timeline Tab */}
+                {activeTab === 'timeline' && <TaskActivityTimeline taskId={taskId} />}
+
+                {/* Time Logs Tab */}
+                {activeTab === 'time' && <TaskTimeLogs taskId={taskId} onLogAdded={onUpdate} />}
+              </div>
+            </div>
+          </AppCard>
+        </div>
+
+        {/* Dedicated High-Clarity Assignee & Executor Management Modal */}
+        {isAssigneeModalOpen && (
+          <div
+            className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-150"
+            role="presentation" onClick={() => setIsAssigneeModalOpen(false)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="tec-people-title"
+              className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-lg border border-border bg-surface text-foreground shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                <div>
+                  <h3 id="tec-people-title" className="text-[16px] font-semibold text-heading">Manage people</h3>
+                  <p className="mt-0.5 text-[13px] text-muted">Changes are saved together with your next remark.</p>
+                </div>
+                <AppButton aria-label="Close"
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setIsAssigneeModalOpen(false)}
+                  className="text-muted hover:text-foreground"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </AppButton>
+              </div>
+
+              {/* Modal Tabs */}
+              <div role="tablist" aria-label="People" className="flex gap-1 border-b border-border px-5">
+                {canEditAssignees && (
+                  <>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={assigneeModalTab === 'primary'}
+                      onClick={() => setAssigneeModalTab('primary')}
+                      className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${assigneeModalTab === 'primary' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Primary assignee</span>
+                      {selectedPrimaryAssignee && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={assigneeModalTab === 'executors'}
+                      onClick={() => setAssigneeModalTab('executors')}
+                      className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${assigneeModalTab === 'executors' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}
+                    >
+                      <Users className="w-4 h-4" />
+                      <span>Executors</span>
+                      <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
+                        {selectedExecutors.length}
+                      </span>
+                    </button>
+                  </>
+                )}
+                {canEditWatchers && (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={assigneeModalTab === 'watchers'}
+                    onClick={() => setAssigneeModalTab('watchers')}
+                    className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${assigneeModalTab === 'watchers' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Watchers</span>
+                    <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
+                      {selectedWatchers.length}
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {/* Search Input */}
+              <div className="border-b border-border p-4">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted" aria-hidden />
+                  <input
+                    type="text"
+                    placeholder="Search by name, email or department…"
+                    aria-label="Search workspace members"
+                    value={stakeholderSearch}
+                    onChange={(e) => setStakeholderSearch(e.target.value)}
+                    className="h-9 w-full rounded-md border border-border bg-surface pl-9 pr-9 text-[13.5px] text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  {stakeholderSearch && (
+                    <AppButton aria-label="Clear search"
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => setStakeholderSearch("")}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </AppButton>
+                  )}
+                </div>
+              </div>
+
+              {/* User Selection List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[380px] scrollbar-thin">
+                {(() => {
+                  const filteredStakeholders = stakeholders.filter(s => {
+                    if (!stakeholderSearch) return true;
+                    const term = stakeholderSearch.toLowerCase();
+                    return (
+                      s.full_name?.toLowerCase().includes(term) ||
+                      s.email?.toLowerCase().includes(term) ||
+                      s.department?.toLowerCase().includes(term)
+                    );
+                  });
+
+                  if (filteredStakeholders.length === 0) {
+                    return (
+                      <div className="p-8 text-center text-[13px] text-muted">
+                        {stakeholders.length === 0 ? "Loading workspace members…" : "No one matches that search."}
+                      </div>
+                    );
+                  }
+
+                  if (assigneeModalTab === 'primary') {
+                    return (
+                      <div className="space-y-1.5">
+                        <div className="px-1 pb-1 text-[12.5px] text-muted">
+                          Choose the one person accountable for this task.
+                        </div>
+                        {filteredStakeholders.map(s => {
+                          const isSelected = selectedPrimaryAssignee === s.id;
+                          return (
+                            <button
+                              type="button"
+                              key={s.id}
+                              aria-pressed={isSelected}
+                              onClick={async () => {
+                                if (checkingDependencyId) return;
+                                if (isSelected) {
+                                  if (task?.id) {
+                                    setCheckingDependencyId(s.id);
+                                    try {
+                                      const { checkTaskUserDependencies } = await import("@/lib/actions/dependencies");
+                                      const deps = await checkTaskUserDependencies(task.id, [s.id]);
+                                      const result = deps[s.id];
+                                      if (result && !result.isSafe) {
+                                        setDependencyModal({ userId: s.id, userName: s.full_name, result });
+                                        return;
+                                      }
+                                    } catch (e) {
+                                      console.error(e);
+                                    } finally {
+                                      setCheckingDependencyId(null);
                                     }
-                                  } catch (e) {
-                                    console.error(e);
-                                  } finally {
-                                    setCheckingDependencyId(null);
                                   }
-                                }
                                   setSelectedPrimaryAssignee("");
                                   const remaining = stakeholders.filter(st => !selectedExecutors.includes(st.id)).map(st => st.id);
                                   setSelectedWatchers(remaining);
@@ -2171,47 +2174,157 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                   setSelectedWatchers(remaining);
                                 }
                               }}
-                            className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${ isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              {s.profile_photo ? (
-                                <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
-                              ) : (
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
-                                  {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                              className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover'} ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                {s.profile_photo ? (
+                                  <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
+                                ) : (
+                                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
+                                    {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
+                                    <span>{s.full_name}</span>
+                                    {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-muted" aria-label="Checking" />}
+                                    {isSelected && (
+                                      <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[11px] font-medium text-accent-soft-text">
+                                        Primary
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                                 </div>
-                              )}
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
-                                  <span>{s.full_name}</span>
-                                  {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-muted" aria-label="Checking" />}
-                                  {isSelected && (
-                                    <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[11px] font-medium text-accent-soft-text">
-                                      Primary
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                               </div>
-                            </div>
-                            <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                              isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
-                            }`}>
-                              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                }
+                              <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors ${isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
+                                }`}>
+                                {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
 
-                if (assigneeModalTab === 'executors') {
+                  if (assigneeModalTab === 'executors') {
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1 pb-1">
+                          <span className="text-[12.5px] text-muted">
+                            People who will do the work.
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <AppButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const allIds = stakeholders.map(s => s.id);
+                                setSelectedExecutors(allIds);
+                                setSelectedWatchers([]);
+                              }}
+                              className="h-auto px-1 text-[12.5px] text-accent-soft-text"
+                            >
+                              Select all
+                            </AppButton>
+                            <span className="text-xs text-muted" aria-hidden>·</span>
+                            <AppButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const newExecs = selectedPrimaryAssignee ? [selectedPrimaryAssignee] : [];
+                                setSelectedExecutors(newExecs);
+                                const remaining = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
+                                setSelectedWatchers(remaining);
+                              }}
+                              className="h-auto px-1 text-[12.5px] text-muted hover:text-foreground"
+                            >
+                              Clear all
+                            </AppButton>
+                          </div>
+                        </div>
+                        {filteredStakeholders.map(s => {
+                          const isSelected = selectedExecutors.includes(s.id);
+                          return (
+                            <button
+                              type="button"
+                              key={s.id}
+                              aria-pressed={isSelected}
+                              onClick={async () => {
+                                if (checkingDependencyId) return;
+                                let newExecs: string[];
+                                if (isSelected) {
+                                  if (task?.id) {
+                                    setCheckingDependencyId(s.id);
+                                    try {
+                                      const { checkTaskUserDependencies } = await import("@/lib/actions/dependencies");
+                                      const deps = await checkTaskUserDependencies(task.id, [s.id]);
+                                      const result = deps[s.id];
+                                      if (result && !result.isSafe) {
+                                        setDependencyModal({ userId: s.id, userName: s.full_name, result });
+                                        return;
+                                      }
+                                    } catch (e) {
+                                      console.error(e);
+                                    } finally {
+                                      setCheckingDependencyId(null);
+                                    }
+                                  }
+                                  if (s.id === selectedPrimaryAssignee) {
+                                    setSelectedPrimaryAssignee("");
+                                  }
+                                  newExecs = selectedExecutors.filter(id => id !== s.id);
+                                } else {
+                                  newExecs = [...selectedExecutors, s.id];
+                                }
+                                setSelectedExecutors(newExecs);
+                                const remaining = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
+                                setSelectedWatchers(remaining);
+                              }}
+                              className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover'} ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                {s.profile_photo ? (
+                                  <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
+                                ) : (
+                                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
+                                    {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
+                                    <span>{s.full_name}</span>
+                                    {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-muted" aria-label="Checking" />}
+                                    {s.id === selectedPrimaryAssignee && (
+                                      <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[11px] font-medium text-accent-soft-text">
+                                        Primary
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
+                                </div>
+                              </div>
+                              <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-2 transition-colors ${isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
+                                }`}>
+                                {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+
+                  // Watchers Multi-Select Tab
+                  const eligibleWatchers = filteredStakeholders.filter(s => !selectedExecutors.includes(s.id));
                   return (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between px-1 pb-1">
                         <span className="text-[12.5px] text-muted">
-                          People who will do the work.
+                          People who get updates but don&apos;t do the work.
                         </span>
                         <div className="flex items-center gap-2">
                           <AppButton
@@ -2219,9 +2332,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              const allIds = stakeholders.map(s => s.id);
-                              setSelectedExecutors(allIds);
-                              setSelectedWatchers([]);
+                              const allEligibleIds = stakeholders.filter(s => !selectedExecutors.includes(s.id)).map(s => s.id);
+                              setSelectedWatchers(allEligibleIds);
                             }}
                             className="h-auto px-1 text-[12.5px] text-accent-soft-text"
                           >
@@ -2232,294 +2344,182 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              const newExecs = selectedPrimaryAssignee ? [selectedPrimaryAssignee] : [];
-                              setSelectedExecutors(newExecs);
-                              const remaining = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
-                              setSelectedWatchers(remaining);
-                            }}
+                            onClick={() => setSelectedWatchers([])}
                             className="h-auto px-1 text-[12.5px] text-muted hover:text-foreground"
                           >
                             Clear all
                           </AppButton>
                         </div>
                       </div>
-                      {filteredStakeholders.map(s => {
-                        const isSelected = selectedExecutors.includes(s.id);
-                        return (
-                          <button
-                            type="button"
-                            key={s.id}
-                            aria-pressed={isSelected}
-                            onClick={async () => {
-                              if (checkingDependencyId) return;
-                              let newExecs: string[];
-                              if (isSelected) {
-                                if (task?.id) {
-                                  setCheckingDependencyId(s.id);
-                                  try {
-                                    const { checkTaskUserDependencies } = await import("@/lib/actions/dependencies");
-                                    const deps = await checkTaskUserDependencies(task.id, [s.id]);
-                                    const result = deps[s.id];
-                                    if (result && !result.isSafe) {
-                                      setDependencyModal({ userId: s.id, userName: s.full_name, result });
-                                      return;
-                                    }
-                                  } catch (e) {
-                                    console.error(e);
-                                  } finally {
-                                    setCheckingDependencyId(null);
-                                  }
+                      {eligibleWatchers.length === 0 ? (
+                        <div className="p-6 text-center text-[13px] text-muted">
+                          Everyone in this workspace is already an executor.
+                        </div>
+                      ) : (
+                        eligibleWatchers.map(s => {
+                          const isSelected = selectedWatchers.includes(s.id);
+                          return (
+                            <button
+                              type="button"
+                              key={s.id}
+                              aria-pressed={isSelected}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedWatchers(selectedWatchers.filter(id => id !== s.id));
+                                } else {
+                                  setSelectedWatchers([...selectedWatchers, s.id]);
                                 }
-                                if (s.id === selectedPrimaryAssignee) {
-                                  setSelectedPrimaryAssignee("");
-                                }
-                                newExecs = selectedExecutors.filter(id => id !== s.id);
-                              } else {
-                                newExecs = [...selectedExecutors, s.id];
-                              }
-                              setSelectedExecutors(newExecs);
-                              const remaining = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
-                              setSelectedWatchers(remaining);
-                            }}
-                            className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${ isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              {s.profile_photo ? (
-                                <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
-                              ) : (
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
-                                  {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                              }}
+                              className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover'}`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                {s.profile_photo ? (
+                                  <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
+                                ) : (
+                                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
+                                    {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
+                                    <span>{s.full_name}</span>
+                                  </div>
+                                  <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                                 </div>
-                              )}
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
-                                  <span>{s.full_name}</span>
-                                  {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-muted" aria-label="Checking" />}
-                                  {s.id === selectedPrimaryAssignee && (
-                                    <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[11px] font-medium text-accent-soft-text">
-                                      Primary
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                               </div>
-                            </div>
-                            <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-                              isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
-                            }`}>
-                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })}
+                              <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-2 transition-colors ${isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
+                                }`}>
+                                {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
                   );
-                }
-
-                // Watchers Multi-Select Tab
-                const eligibleWatchers = filteredStakeholders.filter(s => !selectedExecutors.includes(s.id));
-                return (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between px-1 pb-1">
-                      <span className="text-[12.5px] text-muted">
-                        People who get updates but don&apos;t do the work.
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <AppButton
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const allEligibleIds = stakeholders.filter(s => !selectedExecutors.includes(s.id)).map(s => s.id);
-                            setSelectedWatchers(allEligibleIds);
-                          }}
-                          className="h-auto px-1 text-[12.5px] text-accent-soft-text"
-                        >
-                          Select all
-                        </AppButton>
-                        <span className="text-xs text-muted" aria-hidden>·</span>
-                        <AppButton
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedWatchers([])}
-                          className="h-auto px-1 text-[12.5px] text-muted hover:text-foreground"
-                        >
-                          Clear all
-                        </AppButton>
-                      </div>
-                    </div>
-                    {eligibleWatchers.length === 0 ? (
-                      <div className="p-6 text-center text-[13px] text-muted">
-                        Everyone in this workspace is already an executor.
-                      </div>
-                    ) : (
-                      eligibleWatchers.map(s => {
-                        const isSelected = selectedWatchers.includes(s.id);
-                        return (
-                          <button
-                            type="button"
-                            key={s.id}
-                            aria-pressed={isSelected}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedWatchers(selectedWatchers.filter(id => id !== s.id));
-                              } else {
-                                setSelectedWatchers([...selectedWatchers, s.id]);
-                              }
-                            }}
-                            className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${ isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover' }`}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              {s.profile_photo ? (
-                                <img src={s.profile_photo} alt="" className="h-8 w-8 shrink-0 rounded-full bg-sunken object-cover" />
-                              ) : (
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-medium text-accent-soft-text">
-                                  {s.full_name?.substring(0, 2).toUpperCase() || "U"}
-                                </div>
-                              )}
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
-                                  <span>{s.full_name}</span>
-                                </div>
-                                <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
-                              </div>
-                            </div>
-                            <div aria-hidden className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-                              isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
-                            }`}>
-                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between gap-3 border-t border-border bg-sunken px-5 py-3">
-              <div className="min-w-0 truncate text-[12.5px] text-muted">
-                <span className="font-medium text-foreground">
-                  {selectedPrimaryAssignee ? (stakeholders.find(s => s.id === selectedPrimaryAssignee)?.full_name || "Primary selected") : "No primary assignee"}
-                </span>
-                {" · "}
-                <span>{selectedExecutors.length} {selectedExecutors.length === 1 ? "executor" : "executors"}</span>
-                {" · "}
-                <span>{selectedWatchers.length} {selectedWatchers.length === 1 ? "watcher" : "watchers"}</span>
+                })()}
               </div>
-              <div className="flex items-center gap-2">
-                <AppButton 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setIsAssigneeModalOpen(false)}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton 
-                  variant="primary" 
-                  size="sm" 
-                  onClick={handleStageAssignees}
-                >
-                  Apply
-                </AppButton>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-between gap-3 border-t border-border bg-sunken px-5 py-3">
+                <div className="min-w-0 truncate text-[12.5px] text-muted">
+                  <span className="font-medium text-foreground">
+                    {selectedPrimaryAssignee ? (stakeholders.find(s => s.id === selectedPrimaryAssignee)?.full_name || "Primary selected") : "No primary assignee"}
+                  </span>
+                  {" · "}
+                  <span>{selectedExecutors.length} {selectedExecutors.length === 1 ? "executor" : "executors"}</span>
+                  {" · "}
+                  <span>{selectedWatchers.length} {selectedWatchers.length === 1 ? "watcher" : "watchers"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AppButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAssigneeModalOpen(false)}
+                  >
+                    Cancel
+                  </AppButton>
+                  <AppButton
+                    variant="primary"
+                    size="sm"
+                    onClick={handleStageAssignees}
+                  >
+                    Apply
+                  </AppButton>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Dependency Check Modal */}
-      {dependencyModal && (
-        <div className="fixed inset-0 z-[calc(var(--z-modal)+1)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-150">
-          <div role="alertdialog" aria-modal="true" aria-labelledby="tec-dep-title" className="w-full max-w-md overflow-hidden rounded-lg border border-border bg-surface shadow-lg">
-            <div className={`border-b p-4 ${dependencyModal.result.type === 'executive' ? 'border-danger-border bg-danger-soft text-danger-text' : 'border-warning-border bg-warning-soft text-warning-text'}`}>
-              <div className="flex items-center gap-3">
-                {dependencyModal.result.type === 'executive' ? (
-                  <ShieldAlert className="w-5 h-5" aria-hidden />
-                ) : (
-                  <ShieldCheck className="w-5 h-5" aria-hidden />
-                )}
-                <h3 id="tec-dep-title" className="text-[14px] font-semibold">{dependencyModal.result.type === 'executive' ? "This person can't be removed yet" : "Remove this person?"}</h3>
+        {/* Dependency Check Modal */}
+        {dependencyModal && (
+          <div className="fixed inset-0 z-[calc(var(--z-modal)+1)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-150">
+            <div role="alertdialog" aria-modal="true" aria-labelledby="tec-dep-title" className="w-full max-w-md overflow-hidden rounded-lg border border-border bg-surface shadow-lg">
+              <div className={`border-b p-4 ${dependencyModal.result.type === 'executive' ? 'border-danger-border bg-danger-soft text-danger-text' : 'border-warning-border bg-warning-soft text-warning-text'}`}>
+                <div className="flex items-center gap-3">
+                  {dependencyModal.result.type === 'executive' ? (
+                    <ShieldAlert className="w-5 h-5" aria-hidden />
+                  ) : (
+                    <ShieldCheck className="w-5 h-5" aria-hidden />
+                  )}
+                  <h3 id="tec-dep-title" className="text-[14px] font-semibold">{dependencyModal.result.type === 'executive' ? "This person can't be removed yet" : "Remove this person?"}</h3>
+                </div>
               </div>
-            </div>
-            
-            <div className="p-5">
-              <p className="mb-3 text-[13.5px] leading-relaxed text-foreground">
-                <strong className="font-semibold">{dependencyModal.userName}</strong> still has open work on this task:
-              </p>
-              
-              <ul className="mb-4 max-h-40 space-y-1 overflow-y-auto rounded-md border border-border bg-sunken p-3 text-[13px] text-subtle">
-                {dependencyModal.result.blockingItems.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-muted" aria-hidden>•</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <div className="text-[13px] text-muted">
-                {dependencyModal.result.message}
+
+              <div className="p-5">
+                <p className="mb-3 text-[13.5px] leading-relaxed text-foreground">
+                  <strong className="font-semibold">{dependencyModal.userName}</strong> still has open work on this task:
+                </p>
+
+                <ul className="mb-4 max-h-40 space-y-1 overflow-y-auto rounded-md border border-border bg-sunken p-3 text-[13px] text-subtle">
+                  {dependencyModal.result.blockingItems.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="mt-0.5 text-muted" aria-hidden>•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="text-[13px] text-muted">
+                  {dependencyModal.result.message}
+                </div>
               </div>
-            </div>
-            
-            <div className="flex justify-end gap-2 border-t border-border bg-sunken px-4 py-3">
-              <AppButton 
-                variant={dependencyModal.result.type === 'executive' ? 'primary' : 'ghost'} 
-                size="sm"
-                onClick={() => setDependencyModal(null)}
-              >
-                {dependencyModal.result.type === 'executive' ? 'OK' : 'Keep'}
-              </AppButton>
-              {dependencyModal.result.type === 'watcher' && (
-                <AppButton 
-                  variant="destructive" 
+
+              <div className="flex justify-end gap-2 border-t border-border bg-sunken px-4 py-3">
+                <AppButton
+                  variant={dependencyModal.result.type === 'executive' ? 'primary' : 'ghost'}
                   size="sm"
-                  onClick={() => {
-                    // Safe to remove watcher
-                    if (assigneeModalTab === 'primary') {
-                      setSelectedPrimaryAssignee("");
-                    } else {
-                      setSelectedExecutors(selectedExecutors.filter(id => id !== dependencyModal.userId));
-                    }
-                    setDependencyModal(null);
-                  }}
+                  onClick={() => setDependencyModal(null)}
                 >
-                  Remove
+                  {dependencyModal.result.type === 'executive' ? 'OK' : 'Keep'}
                 </AppButton>
-              )}
+                {dependencyModal.result.type === 'watcher' && (
+                  <AppButton
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      // Safe to remove watcher
+                      if (assigneeModalTab === 'primary') {
+                        setSelectedPrimaryAssignee("");
+                      } else {
+                        setSelectedExecutors(selectedExecutors.filter(id => id !== dependencyModal.userId));
+                      }
+                      setDependencyModal(null);
+                    }}
+                  >
+                    Remove
+                  </AppButton>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Mobile Floating Action Bar for Pending Changes */}
-      {(pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee || (remarksDraft && remarksDraft.trim().length > 0)) && canAddRemark && (
-        <div className="fixed bottom-20 left-4 right-4 z-[var(--z-sticky)] flex items-center justify-between gap-3 rounded-lg border border-border bg-elevated p-3 text-foreground shadow-lg sm:hidden">
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="truncate text-[12px] font-medium text-warning-text">
-              Unsaved changes
-            </span>
-            <span className="truncate text-[13px] text-foreground">
-              {pendingStatus ? `Status: ${statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || pendingStatus}` : (pendingDepartment ? 'Department change' : (pendingAssignees ? 'Executor change' : 'Unsaved remark'))}
-            </span>
+        {/* Mobile Floating Action Bar for Pending Changes */}
+        {(pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee || (remarksDraft && remarksDraft.trim().length > 0)) && canAddRemark && (
+          <div className="fixed bottom-20 left-4 right-4 z-[var(--z-sticky)] flex items-center justify-between gap-3 rounded-lg border border-border bg-elevated p-3 text-foreground shadow-lg sm:hidden">
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="truncate text-[12px] font-medium text-warning-text">
+                Unsaved changes
+              </span>
+              <span className="truncate text-[13px] text-foreground">
+                {pendingStatus ? `Status: ${statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || pendingStatus}` : (pendingDepartment ? 'Department change' : (pendingAssignees ? 'Executor change' : 'Unsaved remark'))}
+              </span>
+            </div>
+            <AppButton
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={handleBatchSave}
+              disabled={saveRemarksLoading}
+              className="shrink-0"
+            >
+              {saveRemarksLoading ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Saving" /> : "Save"}
+            </AppButton>
           </div>
-          <AppButton
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={handleBatchSave}
-            disabled={saveRemarksLoading}
-            className="shrink-0"
-          >
-            {saveRemarksLoading ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Saving" /> : "Save"}
-          </AppButton>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </ExperienceProvider>
   );
 }
