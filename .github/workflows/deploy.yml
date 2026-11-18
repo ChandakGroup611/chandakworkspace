@@ -101,16 +101,70 @@ jobs:
           mkdir -p upload-payload
           cp deploy.zip upload-payload/
           cp public/deploy-hook.php upload-payload/
+          
+          # Generate authoritative public_html/.htaccess with PassengerAppRoot and PHP unbinding
+          cat << 'EOF' > upload-payload/.htaccess
+<IfModule LiteSpeed>
+    CacheLookup on
+    RewriteEngine On
+    RewriteRule .* - [E=verifycaptcha:bypass]
+    RewriteRule .* - [E=noconntimeout:1]
+    RewriteRule .* - [E=noabort:1]
+</IfModule>
 
-      # Upload the compiled standalone zip file and deploy-hook to Hostinger via Direct FTP (Zero Caching)
+<FilesMatch "\.php$">
+    PassengerEnabled off
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "\.(html|htm|php|json)$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        Header set CDN-Cache-Control "no-store"
+        Header set Surrogate-Control "no-store"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+RewriteEngine On
+RewriteRule ^\.builds - [F,L]
+RewriteRule ^deploy\.zip$ - [F,L]
+
+# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs
+PassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp
+PassengerEnabled on
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
+PassengerStartupFile server.js
+PassengerBaseURI /
+PassengerMaxPoolSize 1
+PassengerMaxInstancesPerApp 1
+PassengerMinInstances 1
+PassengerPoolIdleTime 300
+SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=512"
+SetEnv LSNODE_CONSOLE_LOG console.log
+SetEnv TOKIO_WORKER_THREADS 1
+SetEnv UV_THREADPOOL_SIZE 1
+SetEnv DOTENV_CONFIG_QUIET true
+EOF
+
+      # Upload the compiled standalone zip file, deploy-hook, and htaccess to Hostinger via Direct FTP (Zero Caching)
       - name: Sync files via Direct FTP
         timeout-minutes: 4
         run: |
-          echo "Syncing deploy.zip and deploy-hook.php to Hostinger via Direct FTP..."
+          echo "Syncing deploy.zip, deploy-hook.php, and .htaccess to Hostinger via Direct FTP..."
           
           # Upload to Domain Public HTML (Primary target for SSH and Webhook extraction)
           curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to domain public_html deploy.zip failed"
           curl -sS --connect-timeout 15 --max-time 45 --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
+          curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/.htaccess -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/.htaccess" || echo "FTP to domain public_html .htaccess failed"
 
       # Primary Extraction & Server Restart via SSH
       - name: Extract Payload and Restart Server via SSH
@@ -121,6 +175,8 @@ jobs:
           username: ${{ secrets.SSH_USERNAME || secrets.FTP_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD || secrets.FTP_PASSWORD }}
           port: ${{ secrets.SSH_PORT || '65002' }}
+          sync: true
+          request_pty: true
           script: |
             echo "=== SSH DEPLOY SCRIPT EXECUTION ==="
             ROOT_DIR="$(pwd)"
@@ -184,11 +240,8 @@ jobs:
                 if [ -f "$target/package.json" ]; then
                   touch "$target/package.json"
                 fi
-                # Ensure .htaccess with PassengerAppRoot exists in target and target/public so LiteSpeed routes correctly regardless of vhost docroot
-                cp -f "$DOMAIN_ROOT/public_html/.htaccess" "$target/.htaccess" 2>/dev/null || true
-                if [ -d "$target/public" ]; then
-                  cp -f "$DOMAIN_ROOT/public_html/.htaccess" "$target/public/.htaccess" 2>/dev/null || true
-                fi
+                # Explicitly delete any .htaccess inside app root to prevent dual-app collisions with public_html
+                rm -f "$target/.htaccess" "$target/public/.htaccess" 2>/dev/null || true
                 if [ -d "$target/.next/static" ]; then
                   mkdir -p "$DOMAIN_ROOT/public_html/_next" "$DOMAIN_ROOT/public_html/.next" "$target/_next" "$target/public/_next"
                   cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/_next/" 2>/dev/null || true

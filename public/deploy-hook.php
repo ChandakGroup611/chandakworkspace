@@ -108,31 +108,21 @@ function ensurePreviewProps($appRoots) {
     }
 }
 
-// Helper: Ensure .htaccess with PassengerAppRoot is present in all possible document roots
+// Helper: Ensure .htaccess with PassengerAppRoot is present ONLY in public_html, and purged from app roots
 function syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective) {
     $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
     
-    // 1. Write to public_html
+    // 1. Write exclusively to public_html/.htaccess
     @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
     @touch($domainRoot . '/public_html/.htaccess');
     
-    // 2. Write to all primary app roots and their public subdirectories
+    // 2. Remove duplicate/conflicting .htaccess from all nodejs app directories to prevent dual-app collisions
     foreach ((array)$primaryAppRoots as $targetRoot) {
         if ($targetRoot && is_dir($targetRoot)) {
-            @file_put_contents($targetRoot . '/.htaccess', $pubHtaccess);
-            @touch($targetRoot . '/.htaccess');
+            @unlink($targetRoot . '/.htaccess');
             if (is_dir($targetRoot . '/public')) {
-                @file_put_contents($targetRoot . '/public/.htaccess', $pubHtaccess);
-                @touch($targetRoot . '/public/.htaccess');
+                @unlink($targetRoot . '/public/.htaccess');
             }
-        }
-    }
-    
-    // 3. Write to all public document roots
-    foreach ((array)$publicDocRoots as $pub) {
-        if ($pub && is_dir($pub)) {
-            @file_put_contents($pub . '/.htaccess', $pubHtaccess);
-            @touch($pub . '/.htaccess');
         }
     }
 }
@@ -180,22 +170,11 @@ $primaryAppRoots = array_values(array_unique(array_filter([
 ])));
 
 // Base performance caching header for LiteSpeed & Apache
-$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine On\n    RewriteRule .* - [E=verifycaptcha:bypass]\n    RewriteRule .* - [E=noconntimeout:1]\n    RewriteRule .* - [E=noabort:1]\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\nRewriteRule ^deploy\\.zip$ - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
+$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine On\n    RewriteRule .* - [E=verifycaptcha:bypass]\n    RewriteRule .* - [E=noconntimeout:1]\n    RewriteRule .* - [E=noabort:1]\n</IfModule>\n\n<FilesMatch \"\\.php$\">\n    PassengerEnabled off\n</FilesMatch>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\nRewriteRule ^deploy\\.zip$ - [F,L]\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
 // STRICT: Explicit PassengerEnabled on, bound V8 and libuv thread pools so total threads per process <= 3
 $passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxPoolSize 1\nPassengerMaxInstancesPerApp 1\nPassengerMinInstances 1\nPassengerPoolIdleTime 300\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=512\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
-
-// Keep canonicalAppRoot and current/nodejs synchronized if one is newer
-if ($canonicalAppRoot !== $domainRoot . '/hbuilds/current/nodejs') {
-    $currBuild = $domainRoot . '/hbuilds/current/nodejs/.next/BUILD_ID';
-    $activeBuild = $canonicalAppRoot . '/.next/BUILD_ID';
-    if (file_exists($currBuild) && (!file_exists($activeBuild) || filemtime($currBuild) > filemtime($activeBuild))) {
-        recursiveCopy($domainRoot . '/hbuilds/current/nodejs', $canonicalAppRoot);
-    } else if (file_exists($activeBuild) && !file_exists($currBuild)) {
-        recursiveCopy($canonicalAppRoot, $domainRoot . '/hbuilds/current/nodejs');
-    }
-}
 
 // Determine all public-facing document roots (where LiteSpeed directly serves static chunks)
 $publicDocRoots = [
@@ -305,27 +284,7 @@ if (isset($_GET['warmup'])) {
 // Dedicated Force Restart Action
 if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     $killOut = [];
-    safeExec('pkill -9 -u $(whoami) -f lsnode 2>&1', $killOut);
-    safeExec('pkill -9 -u $(whoami) -f node 2>&1', $killOut);
-    safeExec('killall -9 node 2>&1', $killOut);
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killOut);
-    
-    $killedViaPosix = [];
-    if (function_exists('posix_kill')) {
-        $procDirs = @glob('/proc/[0-9]*');
-        if ($procDirs) {
-            foreach ($procDirs as $pDir) {
-                $pid = (int)basename($pDir);
-                if ($pid > 1 && $pid !== getmypid()) {
-                    $cmd = @file_get_contents($pDir . '/cmdline');
-                    if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false || strpos($cmd, 'lsnode') !== false)) {
-                        @posix_kill($pid, 9);
-                        $killedViaPosix[] = $pid;
-                    }
-                }
-            }
-        }
-    }
 
     // Clean up stray server.js and package.json from public_html
     @unlink($domainRoot . '/public_html/server.js');
@@ -499,24 +458,7 @@ if ($zipFile && class_exists('ZipArchive')) {
     @unlink(__DIR__ . '/.ftp-deploy-sync-state.json');
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
 
-    // Force kill old node processes so Passenger is forced to spawn a fresh worker
-    if (function_exists('posix_kill')) {
-        $procDirs = @glob('/proc/[0-9]*');
-        if ($procDirs) {
-            foreach ($procDirs as $pDir) {
-                $pid = (int)basename($pDir);
-                if ($pid > 1 && $pid !== getmypid()) {
-                    $cmd = @file_get_contents($pDir . '/cmdline');
-                    if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'server.js') !== false || strpos($cmd, 'lsnode') !== false)) {
-                        @posix_kill($pid, 9);
-                    }
-                }
-            }
-        }
-    }
-    safeExec('pkill -9 -u $(whoami) -f lsnode 2>&1', $killResults);
-    safeExec('pkill -9 -u $(whoami) -f node 2>&1', $killResults);
-    safeExec('killall -9 node 2>&1', $killResults);
+    // Signal Passenger to reload the application smoothly
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
 }
 
