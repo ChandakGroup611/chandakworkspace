@@ -8,9 +8,51 @@
  * Usage: npx tsx scripts/seed-test-users.ts
  */
 
-import { supabaseAdmin } from "../lib/supabase/service_role";
+import { createClient } from "@supabase/supabase-js";
 
-const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || "TestUser@Chandak2026!";
+// =========================================================================
+// STRICT ENVIRONMENT & SECURITY GUARD (A.2)
+// Refuse to run unless TEST_SUPABASE_URL is set AND differs from production.
+// Refuse if BASE_URL / STAGING_URL points to chandakgroup.tech.
+// Require TEST_USER_PASSWORD with no fallback default.
+// =========================================================================
+
+const TEST_SUPABASE_URL = process.env.TEST_SUPABASE_URL;
+const TEST_SERVICE_ROLE_KEY = process.env.TEST_SUPABASE_SERVICE_ROLE_KEY;
+const TEST_PASSWORD = process.env.TEST_USER_PASSWORD;
+const PROD_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+const TARGET_PORTAL = (process.env.STAGING_URL || process.env.BASE_URL || "").trim();
+
+if (!TEST_PASSWORD || TEST_PASSWORD.trim() === "") {
+  console.error("FATAL SECURITY GUARD: TEST_USER_PASSWORD environment variable is required. Default passwords strictly forbidden.");
+  process.exit(1);
+}
+
+if (!TEST_SUPABASE_URL || TEST_SUPABASE_URL.trim() === "" || !TEST_SERVICE_ROLE_KEY || TEST_SERVICE_ROLE_KEY.trim() === "") {
+  console.error("FATAL SECURITY GUARD: TEST_SUPABASE_URL and TEST_SUPABASE_SERVICE_ROLE_KEY are mandatory. Refusing to run on ambient database.");
+  process.exit(1);
+}
+
+try {
+  const testHost = new URL(TEST_SUPABASE_URL).host;
+  const prodHost = PROD_SUPABASE_URL ? new URL(PROD_SUPABASE_URL).host : "";
+  if (testHost === prodHost || testHost.includes("tkovzymkubxtpcgynkgd")) {
+    console.error(`FATAL SECURITY GUARD: TEST_SUPABASE_URL (${testHost}) matches production database! Refusing execution.`);
+    process.exit(1);
+  }
+} catch (e: any) {
+  console.error("FATAL SECURITY GUARD: Malformed TEST_SUPABASE_URL:", e.message);
+  process.exit(1);
+}
+
+if (TARGET_PORTAL.includes("chandakgroup.tech")) {
+  console.error("FATAL SECURITY GUARD: BASE_URL/STAGING_URL points to production domain 'chandakgroup.tech'! Execution blocked.");
+  process.exit(1);
+}
+
+const supabaseAdmin = createClient(TEST_SUPABASE_URL, TEST_SERVICE_ROLE_KEY.trim(), {
+  auth: { persistSession: false }
+});
 
 // Pre-defined role IDs from database
 const ROLES = {

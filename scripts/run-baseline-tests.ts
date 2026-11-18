@@ -13,8 +13,52 @@
 
 import fs from "fs";
 import path from "path";
-import { supabaseAdmin } from "../lib/supabase/service_role";
+import { execSync } from "child_process";
+import { createClient } from "@supabase/supabase-js";
 import { TestCaseContext, TestCaseResult, TestCaseRunner } from "./baseline/types";
+
+// =========================================================================
+// STRICT ENVIRONMENT & SECURITY GUARD (A.2)
+// Refuse to run unless TEST_SUPABASE_URL is set AND differs from production.
+// Refuse if BASE_URL / STAGING_URL points to chandakgroup.tech.
+// No production default anywhere.
+// =========================================================================
+
+const TEST_SUPABASE_URL = process.env.TEST_SUPABASE_URL;
+const TEST_SERVICE_ROLE_KEY = process.env.TEST_SUPABASE_SERVICE_ROLE_KEY;
+const PROD_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+const TARGET_PORTAL = (process.env.STAGING_URL || process.env.BASE_URL || "").trim();
+
+if (!TEST_SUPABASE_URL || TEST_SUPABASE_URL.trim() === "" || !TEST_SERVICE_ROLE_KEY || TEST_SERVICE_ROLE_KEY.trim() === "") {
+  console.error("FATAL SECURITY GUARD: TEST_SUPABASE_URL and TEST_SUPABASE_SERVICE_ROLE_KEY are mandatory. Refusing to run baseline on ambient database.");
+  process.exit(1);
+}
+
+try {
+  const testHost = new URL(TEST_SUPABASE_URL).host;
+  const prodHost = PROD_SUPABASE_URL ? new URL(PROD_SUPABASE_URL).host : "";
+  if (testHost === prodHost || testHost.includes("tkovzymkubxtpcgynkgd")) {
+    console.error(`FATAL SECURITY GUARD: TEST_SUPABASE_URL (${testHost}) matches production database! Refusing execution.`);
+    process.exit(1);
+  }
+} catch (e: any) {
+  console.error("FATAL SECURITY GUARD: Malformed TEST_SUPABASE_URL:", e.message);
+  process.exit(1);
+}
+
+if (!TARGET_PORTAL || TARGET_PORTAL === "") {
+  console.error("FATAL SECURITY GUARD: STAGING_URL or BASE_URL must be explicitly provided. No default permitted.");
+  process.exit(1);
+}
+
+if (TARGET_PORTAL.includes("chandakgroup.tech")) {
+  console.error("FATAL SECURITY GUARD: BASE_URL/STAGING_URL points to production domain 'chandakgroup.tech'! Execution blocked.");
+  process.exit(1);
+}
+
+export const supabaseAdmin = createClient(TEST_SUPABASE_URL, TEST_SERVICE_ROLE_KEY.trim(), {
+  auth: { persistSession: false }
+});
 
 import { taskRunners } from "./baseline/tasks";
 import { ticketRunners } from "./baseline/tickets";
@@ -81,7 +125,7 @@ async function initializeContext(): Promise<TestCaseContext> {
     supabaseAdmin.from("requirements").select("id").eq("code", "REQ-TEST-ALPHA").maybeSingle()
   ]);
 
-  const siteUrl = (process.env.STAGING_URL || process.env.BASE_URL || "https://chandakgroup.tech").replace(/\/+$/, "");
+  const siteUrl = TARGET_PORTAL.replace(/\/+$/, "");
 
   return {
     users: userMap,
@@ -168,6 +212,59 @@ async function runAll() {
 
   console.log("Generated docs/tests/BASELINE_REPORT.md");
   console.log("Generated docs/tests/KNOWN_BUGS.md");
+
+  // CI Safety Gate Evaluation
+  const isCI = process.argv.includes("--ci") || process.env.CI === "true";
+  if (isCI) {
+    console.log("\n=================================================================");
+    console.log("  CI SAFETY GATE EVALUATION");
+    console.log("=================================================================");
+
+    const knownBugsPath = path.resolve("docs/tests/KNOWN_BUGS.md");
+    const knownBugIds = new Set<string>();
+    if (fs.existsSync(knownBugsPath)) {
+      const content = fs.readFileSync(knownBugsPath, "utf8");
+      const matches = content.matchAll(/\*\*(TC-[A-Z0-9-]+)\*\*/g);
+      for (const m of matches) {
+        knownBugIds.add(m[1]);
+      }
+    }
+
+    const changesPath = path.resolve("docs/tests/CHANGES.md");
+    const approvedChangeIds = new Set<string>();
+    if (fs.existsSync(changesPath)) {
+      const content = fs.readFileSync(changesPath, "utf8");
+      const matches = content.matchAll(/(TC-[A-Z0-9-]+)/g);
+      for (const m of matches) {
+        approvedChangeIds.add(m[1]);
+      }
+    }
+
+    let commitMsg = "";
+    try {
+      commitMsg = execSync("git log -1 --format=%B", { encoding: "utf8" }).trim();
+    } catch {}
+    const hasApprovedTag = /\[approved-tc\]/i.test(commitMsg);
+
+    const unexpectedFailures = results.filter(r => {
+      if (r.status !== "FAIL") return false;
+      if (knownBugIds.has(r.tcId)) return false;
+      if (hasApprovedTag && approvedChangeIds.has(r.tcId)) return false;
+      return true;
+    });
+
+    if (unexpectedFailures.length > 0) {
+      console.error(`\n❌ CI SAFETY GATE FAILED: ${unexpectedFailures.length} REGRESSION(S) DETECTED!`);
+      for (const f of unexpectedFailures) {
+        console.error(`   - [${f.tcId}] (${f.module}) ${f.description}: ${f.notes}`);
+      }
+      console.error("\nAny previously-PASS test that fails blocks build and deploy.");
+      console.error("To update an expected result, commit message must include [approved-tc] and docs/tests/CHANGES.md must document the change.\n");
+      process.exit(1);
+    }
+
+    console.log(`✅ CI SAFETY GATE PASSED: 0 regressions detected (${passedCount} tests passed, ${failedCount} known pre-existing defects).`);
+  }
 }
 
 async function generateBaselineReport(
