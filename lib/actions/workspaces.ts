@@ -1869,11 +1869,15 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
         // Map Participants
         t.executors = [];
         t.reviewers = [];
+        t.watchers = [];
         if (t.participants) {
           t.participants.forEach((p: any) => {
             const u = userMap[p.user_id];
             if (p.participation_role === "EXECUTOR" && u) t.executors.push(u);
-            if ((p.participation_role === "REVIEWER" || p.participation_role === "WATCHER") && u) t.reviewers.push(u);
+            if ((p.participation_role === "REVIEWER" || p.participation_role === "WATCHER") && u) {
+              t.reviewers.push(u);
+              t.watchers.push(u);
+            }
           });
         }
 
@@ -2022,11 +2026,15 @@ export async function fetchAllTasks() {
       // Map Participants
       t.executors = [];
       t.reviewers = [];
+      t.watchers = [];
       if (t.participants) {
         t.participants.forEach((p: any) => {
           const u = userMap[p.user_id];
           if (p.participation_role === "EXECUTOR" && u) t.executors.push(u);
-          if ((p.participation_role === "REVIEWER" || p.participation_role === "WATCHER") && u) t.reviewers.push(u);
+          if ((p.participation_role === "REVIEWER" || p.participation_role === "WATCHER") && u) {
+            t.reviewers.push(u);
+            t.watchers.push(u);
+          }
         });
       }
 

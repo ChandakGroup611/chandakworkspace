@@ -258,6 +258,20 @@
   box-shadow: var(--shadow-md);
 }
 .recharts-tooltip-label { color: var(--text-secondary) !important; }
+
+/* Ensure the sidebar logo (both full and compact) is crisp and visible in all dark rails and dark themes */
+[data-theme="chandak-executive"] .sidebar-logo,
+[data-theme="corporate-blue"] .sidebar-logo,
+[data-theme="saffron-site"] .sidebar-logo,
+[data-theme="midnight-plum"] .sidebar-logo,
+[data-theme="graphite"] .sidebar-logo,
+[data-theme="control-room"] .sidebar-logo,
+[data-mode="dark"] .sidebar-logo,
+.dark .sidebar-logo,
+.theme-dark .sidebar-logo {
+  filter: brightness(0) invert(1) !important;
+}
+
 .recharts-tooltip-item { color: var(--text-primary) !important; }
 
 /* Status pulse for live indicators */

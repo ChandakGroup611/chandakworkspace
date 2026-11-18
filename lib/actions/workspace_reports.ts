@@ -10,7 +10,7 @@ export type ReportScope = "ALL" | "ASSIGNED_TO_ME" | "ENROLLED_TASKS";
 const APPROVED_TASK_COLUMNS = [
   "id", "task_code", "subject", "description", "custom_fields",
   "start_date", "end_date", "created_at", "updated_at",
-  "created_by", "owner_id", "workspace_id", "parent_task_id", 
+  "created_by", "assigned_to", "owner_id", "workspace_id", "parent_task_id", 
   "is_deleted"
 ];
 
@@ -92,6 +92,7 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
   if (data) {
     data.forEach((item: any) => {
       if (item.created_by) userIdsToFetch.add(item.created_by);
+      if (item.assigned_to) userIdsToFetch.add(item.assigned_to);
       if (isTask && item.assignees) {
         item.assignees.forEach((a: any) => { if (a.user_id) userIdsToFetch.add(a.user_id); });
       } else if (!isTask && item.members) {
@@ -165,9 +166,24 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
   }
 
   return filteredData.map((item: any) => {
-    // Map assigned users to string for easy display
+    // Map assigned users, executors, and watchers to strings for clear reporting
+    const assignees = item.assignees || [];
+    const primaryAssignee = usersMap[item.assigned_to]?.full_name || null;
+    
+    const executors = assignees
+      .filter((a: any) => a.role === 'EXECUTOR' && a.user?.full_name)
+      .map((a: any) => a.user.full_name);
+    const executorsString = executors.length > 0 ? executors.join(', ') : '—';
+
+    const watchers = assignees
+      .filter((a: any) => (a.role === 'WATCHER' || a.role === 'REVIEWER') && a.user?.full_name)
+      .map((a: any) => a.user.full_name);
+    const watchersString = watchers.length > 0 ? watchers.join(', ') : '—';
+
     const assignedArray = isTask ? item.assignees : item.members;
-    const assignedString = assignedArray?.map((a: any) => a.user?.full_name || "Unknown").join(", ") || "—";
+    const assignedString = isTask 
+      ? (primaryAssignee || (assignees.length > 0 ? assignees.map((a: any) => a.user?.full_name || 'Unknown').join(', ') : '—'))
+      : (assignedArray?.map((a: any) => a.user?.full_name || 'Unknown').join(', ') || '—');
 
     return {
       ...item, // R2: Spread to preserve dynamic native columns safely
@@ -186,10 +202,14 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
       department: item.department?.name || "—",
       start_date: item.start_date,
       end_date: item.end_date,
+      due_date: item.end_date,
       created_at: item.created_at,
       updated_at: item.updated_at,
       creator_name: item.creator?.full_name || "Unknown",
       assigned_to: assignedString,
+      executors: executorsString,
+      watchers: watchersString,
+      reviewers: watchersString,
       custom_fields: item.custom_fields || {}
     };
   });

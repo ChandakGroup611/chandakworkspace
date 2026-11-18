@@ -420,7 +420,7 @@ function Logo({ compact, invert }: { compact: boolean; invert: boolean }) {
     <img
       src={src}
       alt="Chandak Group"
-      className={cn("max-h-full max-w-full object-contain", invert && !compact && "brightness-0 invert")}
+      className={cn("max-h-full max-w-full object-contain sidebar-logo", invert && "brightness-0 invert")}
       onError={(e) => {
         const t = e.currentTarget;
         if (t.src.endsWith(".png")) t.src = t.src.replace(/\.png$/, ".svg");
@@ -433,8 +433,8 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const pathname = usePathname() || "/";
   const searchParams = useSearchParams();
   const { code: activeModuleCode, groups: navGroups, home: moduleHomeHref } = useModuleContext(pathname);
-  const { theme } = useTheme();
-  const darkRail = getTheme(theme).sidebarTone === "dark";
+  const { theme, mode } = useTheme();
+  const darkRail = getTheme(theme).sidebarTone === "dark" || mode === "dark";
 
   const [isCompact, setIsCompact] = useState(false);
   const [hoverOpen, setHoverOpen] = useState(false);

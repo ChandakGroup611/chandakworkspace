@@ -89,6 +89,8 @@ const INITIAL_REPORT_FIELDS: UIFieldDefinition[] = [
   { field_key: "status", display_name: "Status", data_type: "badge", is_default: true, default_width: 120 },
   { field_key: "creator_name", display_name: "Created By", data_type: "text", is_default: true, default_width: 150 },
   { field_key: "assigned_to", display_name: "Assigned To", data_type: "text", is_default: true, default_width: 180 },
+  { field_key: "executors", display_name: "Executors", data_type: "text", is_default: true, default_width: 180 },
+  { field_key: "watchers", display_name: "Watchers", data_type: "text", is_default: true, default_width: 180 },
   { field_key: "created_at", display_name: "Created At", data_type: "date", is_default: true, default_width: 120 },
   { field_key: "updated_at", display_name: "Updated At", data_type: "date", is_default: false, default_width: 120 },
   { field_key: "description", display_name: "Description", data_type: "text", is_default: false, default_width: 300 },
@@ -398,6 +400,9 @@ export default function ReportsClient() {
       case "status": return t.status !== "—" ? t.status : "—";
       case "creator_name": return t.creator_name || "—";
       case "assigned_to": return t.assigned_to || "—";
+      case "executors": return t.executors || "—";
+      case "watchers":
+      case "reviewers": return t.watchers || t.reviewers || "—";
       case "created_at": return formatDate(t.created_at);
       case "updated_at": return formatDate(t.updated_at);
       default: {
@@ -409,7 +414,12 @@ export default function ReportsClient() {
         if (val !== undefined && val !== null && val !== "") {
           if (col.data_type === "boolean") return val ? "Yes" : "No";
           if (col.data_type === "date") return formatDate(val);
-          if (typeof val === "object") return JSON.stringify(val);
+          if (Array.isArray(val)) {
+            return val.map((v: any) => typeof v === "object" ? (v?.full_name || v?.name || v?.label || JSON.stringify(v)) : String(v)).join(", ");
+          }
+          if (typeof val === "object") {
+            return val.full_name || val.name || val.label || JSON.stringify(val);
+          }
           return val;
         }
         return "—";
@@ -858,6 +868,17 @@ export default function ReportsClient() {
                               {item.assigned_to}
                             </AppTableCell>
                           );
+                          case "executors": return (
+                            <AppTableCell key={col.field_id} className="text-subtle whitespace-nowrap" title={item.executors}>
+                              {item.executors || "—"}
+                            </AppTableCell>
+                          );
+                          case "watchers":
+                          case "reviewers": return (
+                            <AppTableCell key={col.field_id} className="text-subtle whitespace-nowrap" title={item.watchers || item.reviewers}>
+                              {item.watchers || item.reviewers || "—"}
+                            </AppTableCell>
+                          );
                           case "created_at": return (
                             <AppTableCell key={col.field_id} className="text-right  text-muted whitespace-nowrap">
                               {formatDate(item.created_at)}
@@ -877,7 +898,12 @@ export default function ReportsClient() {
                             if (val === undefined || val === null || val === "") val = "—";
                             else if (col.data_type === "boolean") val = val ? "Yes" : "No";
                             else if (col.data_type === "date") val = formatDate(val);
-                            else if (typeof val === "object") val = JSON.stringify(val);
+                            else if (Array.isArray(val)) {
+                              val = val.map((v: any) => typeof v === "object" ? (v?.full_name || v?.name || v?.label || JSON.stringify(v)) : String(v)).join(", ");
+                            }
+                            else if (typeof val === "object") {
+                              val = val.full_name || val.name || val.label || JSON.stringify(val);
+                            }
                             
                             return (
                               <AppTableCell key={col.field_id} className="text-subtle">

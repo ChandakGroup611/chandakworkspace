@@ -899,3 +899,17 @@
   --control-h: 28px; --control-h-sm: 24px; --row-h: 32px;
   --cell-px: 10px; --cell-py: 5px; --font-body: 13px; --font-table: 12.5px; --gap: 8px;
 }
+
+/* Ensure the sidebar logo is crisp and visible across all dark sidebar rails and dark themes */
+[data-theme="chandak-executive"] .sidebar-logo,
+[data-theme="corporate-blue"] .sidebar-logo,
+[data-theme="saffron-site"] .sidebar-logo,
+[data-theme="midnight-plum"] .sidebar-logo,
+[data-theme="graphite"] .sidebar-logo,
+[data-theme="control-room"] .sidebar-logo,
+[data-mode="dark"] .sidebar-logo,
+.dark .sidebar-logo,
+.theme-dark .sidebar-logo {
+  filter: brightness(0) invert(1) !important;
+}
+

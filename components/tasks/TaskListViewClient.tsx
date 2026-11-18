@@ -246,6 +246,7 @@ const INITIAL_TASK_FIELDS: UIFieldDefinition[] = [
   { field_key: "duration", display_name: "Duration", data_type: "custom", is_default: false, default_width: 100 },
   { field_key: "progress", display_name: "Checklist Progress", data_type: "custom", is_default: false, default_width: 130 },
   { field_key: "executors", display_name: "Executors", data_type: "custom", is_default: false, default_width: 150 },
+  { field_key: "watchers", display_name: "Watchers", data_type: "custom", is_default: false, default_width: 150 },
   { field_key: "reviewers", display_name: "Watchers & Reviewers", data_type: "custom", is_default: false, default_width: 150 },
   { field_key: "attachments", display_name: "Attachments", data_type: "custom", is_default: false, default_width: 100 },
   { field_key: "comments", display_name: "Remarks & Comments", data_type: "custom", is_default: false, default_width: 150 },
@@ -568,11 +569,39 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         else if (key === "creator_name") val = t.creator?.full_name;
         else if (key === "title_description") val = t.title;
         else if (key === "code") val = t.code;
+        else if (key === "executors") {
+          (t.executors || []).forEach((u: any) => {
+            const name = u.full_name || u.name;
+            if (name) uniqueVals.add(String(name).trim());
+          });
+          return;
+        }
+        else if (key === "reviewers" || key === "watchers") {
+          (t.watchers || t.reviewers || t.task_watchers || []).forEach((u: any) => {
+            const name = u.full_name || u.name;
+            if (name) uniqueVals.add(String(name).trim());
+          });
+          return;
+        }
         else if (t.custom_fields && t.custom_fields[key] !== undefined) val = t.custom_fields[key];
         else val = t[key];
 
         if (val !== undefined && val !== null && val !== "") {
-          uniqueVals.add(String(val));
+          if (Array.isArray(val)) {
+            val.forEach(item => {
+              if (item && typeof item === "object") {
+                const name = item.full_name || item.name || item.label;
+                if (name) uniqueVals.add(String(name).trim());
+              } else if (item !== undefined && item !== null && item !== "") {
+                uniqueVals.add(String(item).trim());
+              }
+            });
+          } else if (typeof val === "object") {
+            const name = val.full_name || val.name || val.label;
+            if (name) uniqueVals.add(String(name).trim());
+          } else {
+            uniqueVals.add(String(val).trim());
+          }
         }
       });
 
@@ -854,6 +883,17 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         if (!col) continue;
 
         const key = col.field_key;
+        if (key === "executors") {
+          const executorNames = (t.executors || []).map((u: any) => u.full_name || u.name).filter(Boolean);
+          if (!filterVals.some(fv => executorNames.includes(fv))) return false;
+          continue;
+        }
+        if (key === "reviewers" || key === "watchers") {
+          const watcherNames = (t.watchers || t.reviewers || t.task_watchers || []).map((u: any) => u.full_name || u.name).filter(Boolean);
+          if (!filterVals.some(fv => watcherNames.includes(fv))) return false;
+          continue;
+        }
+
         let val = undefined;
         
         if (key === "department") val = t.department?.name;
@@ -872,8 +912,13 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
 
         if (val === undefined || val === null) return false;
         
-        const stringVal = String(val);
-        if (!filterVals.includes(stringVal)) return false;
+        if (Array.isArray(val)) {
+          const itemStrings = val.map(item => typeof item === "object" ? (item?.full_name || item?.name || item?.label) : String(item)).filter(Boolean);
+          if (!filterVals.some(fv => itemStrings.includes(fv))) return false;
+        } else {
+          const stringVal = String(val);
+          if (!filterVals.includes(stringVal)) return false;
+        }
       }
 
       return true;
@@ -1217,8 +1262,9 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         return `${days} day(s)`;
       }
       case "progress": return `${t.progress_percentage || 0}%`;
-      case "executors": return t.executors?.map((u: any) => u.full_name).join(", ") || "—";
-      case "reviewers": return t.reviewers?.map((u: any) => u.full_name).join(", ") || "—";
+      case "executors": return t.executors?.map((u: any) => u.full_name || u.name).join(", ") || "—";
+      case "reviewers":
+      case "watchers": return (t.watchers || t.reviewers || t.task_watchers)?.map((u: any) => u.full_name || u.name).join(", ") || "—";
       case "attachments": return t.attachmentCount ? `${t.attachmentCount} file(s)` : "—";
       case "comments": return t.commentCount ? `${t.commentCount} remark(s)` : "—";
       case "external_link": return t.custom_fields?.link_url || "—";
@@ -1239,6 +1285,12 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
         if (val !== undefined && val !== null) {
           if (col.data_type === "boolean") return val ? "Yes" : "No";
           if (col.data_type === "date") return formatDate(val);
+          if (Array.isArray(val)) {
+            return val.map((v: any) => typeof v === "object" ? (v?.full_name || v?.name || v?.label || JSON.stringify(v)) : String(v)).join(", ");
+          }
+          if (typeof val === "object") {
+            return val.full_name || val.name || val.label || JSON.stringify(val);
+          }
           return val;
         }
         return "—";
@@ -2248,12 +2300,13 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                           );
                           case "executors": return (
                             <AppTableCell className="px-3">
-                              <UserStack users={(task.executors || []).map((u: any) => ({ name: u.full_name, photo: u.profile_photo }))} />
+                              <UserStack users={(task.executors || []).map((u: any) => ({ name: u.full_name || u.name, photo: u.profile_photo }))} />
                             </AppTableCell>
                           );
-                          case "reviewers": return (
+                          case "reviewers":
+                          case "watchers": return (
                             <AppTableCell className="px-3">
-                              <UserStack users={(task.reviewers || []).map((u: any) => ({ name: u.full_name, photo: u.profile_photo }))} />
+                              <UserStack users={(task.watchers || task.reviewers || task.task_watchers || []).map((u: any) => ({ name: u.full_name || u.name, photo: u.profile_photo }))} />
                             </AppTableCell>
                           );
                           case "attachments": return (
@@ -2330,7 +2383,11 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                           );
                           default: {
                             let val = undefined;
-                            if (task.custom_fields && task.custom_fields[col.field_key] !== undefined) {
+                            if (col.field_key === "watchers") {
+                              val = (task.watchers || task.reviewers || task.task_watchers || []).map((u: any) => u.full_name || u.name).filter(Boolean).join(", ");
+                            } else if (col.field_key === "executors") {
+                              val = (task.executors || []).map((u: any) => u.full_name || u.name).filter(Boolean).join(", ");
+                            } else if (task.custom_fields && task.custom_fields[col.field_key] !== undefined) {
                               val = task.custom_fields[col.field_key];
                             } else if (task[col.field_key] !== undefined) {
                               val = task[col.field_key];
@@ -2339,6 +2396,12 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                             if (val === undefined || val === null || val === "") val = "—";
                             else if (col.data_type === "boolean") val = val ? "Yes" : "No";
                             else if (col.data_type === "date") val = formatDate(val);
+                            else if (Array.isArray(val)) {
+                              val = val.map((v: any) => typeof v === "object" ? (v?.full_name || v?.name || v?.label || JSON.stringify(v)) : String(v)).join(", ");
+                            }
+                            else if (typeof val === "object") {
+                              val = val.full_name || val.name || val.label || JSON.stringify(val);
+                            }
                             
                             return (
                               <AppTableCell className="px-3 text-subtle">
@@ -2348,7 +2411,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                   ) : col.data_type === "badge" && val !== "—" ? (
                                     <AppBadge variant="neutral">{val}</AppBadge>
                                   ) : (
-                                    val
+                                    String(val)
                                   )}
                                 </div>
                               </AppTableCell>
