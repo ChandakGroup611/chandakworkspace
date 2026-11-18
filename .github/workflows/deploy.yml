@@ -11,6 +11,16 @@ on:
       - 'scratch/**'
       - 'run_logs/**'
       - 'examples/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '.agents/**'
+      - 'ui-audit-report.*'
+      - 'scratch/**'
+      - 'run_logs/**'
+      - 'examples/**'
   workflow_dispatch:
 
 concurrency:
@@ -241,12 +251,37 @@ jobs:
           head -n 35 /tmp/knip-report.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
+  p1_tests:
+    name: "Gate 8: P1 Read-Only Baseline Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund
+
+      - name: Run Read-Only Baseline Tests Gate
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          BASE_URL: "https://chandakgroup.tech"
+        run: npx tsx scripts/run-baseline-tests.ts --ci
+
   # =========================================================================
   # STANDALONE BUILD
   # =========================================================================
   build:
     name: "Build Next.js Standalone"
-    needs: [typecheck, lint, security, access, secrets, guard, hygiene]
+    needs: [typecheck, lint, security, access, secrets, guard, hygiene, p1_tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -478,6 +513,24 @@ jobs:
           fi
 
           echo "=== VERIFICATION COMPLETE: COMMIT $EXPECTED_COMMIT IS 100% LIVE ==="
+
+      - name: Post-Deploy Read-Only Smoke Check
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          BASE_URL: "https://chandakgroup.tech"
+          OLD_TARGET: ${{ needs.deploy.outputs.old_target }}
+        run: |
+          echo "Executing Post-Deploy Read-Only Smoke Check against https://chandakgroup.tech..."
+          if ! npx tsx scripts/run-baseline-tests.ts --ci; then
+            echo "::error::Post-deploy smoke suite detected regressions! Triggering automatic rollback to $OLD_TARGET..."
+            DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}"
+            curl -sS "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&action=rollback&old=${OLD_TARGET}" || echo "Rollback trigger call failed"
+            exit 1
+          fi
+          echo "Post-deploy read-only smoke check passed cleanly."
 
       - name: Automated Post-Deploy Server Cleanup (C1)
         if: success()
