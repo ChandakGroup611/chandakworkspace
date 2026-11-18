@@ -1373,7 +1373,9 @@ export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
 async function notifyTaskRemark(taskId: string, remarkContent: string, authorId: string) {
   try {
     if (!remarkContent || !remarkContent.trim()) return;
-    const cleanRemark = remarkContent.trim();
+    const { stripHtmlToText } = await import('@/lib/email/email-renderer');
+    const cleanRemark = stripHtmlToText(remarkContent);
+    if (!cleanRemark.trim()) return;
     const snippet = cleanRemark.length > 80 ? cleanRemark.slice(0, 77) + "..." : cleanRemark;
 
     // 1. Fetch task details
@@ -1629,10 +1631,13 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
       .from('task_comments')
       .insert([{ task_id: taskId, author_id: userId, content: remark }]);
 
-    // Trigger notification for task remark
-    notifyTaskRemark(taskId, remark, userId).catch(e =>
-      console.error("[updateTaskStatusInline] Remark notification error:", e)
-    );
+    // Only notify as standalone remark if status did NOT change;
+    // if status changed, the remark is already bundled in the "Status Changed" event below
+    if (!newStatusId || newStatusId === currentTask.status_id) {
+      notifyTaskRemark(taskId, remark, userId).catch(e =>
+        console.error("[updateTaskStatusInline] Remark notification error:", e)
+      );
+    }
   }
 
   // Insert audit trail
@@ -1649,13 +1654,14 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
 
   if (newStatusId && newStatusId !== currentTask.status_id) {
     await propagateTaskDependencies(taskId);
+    const { stripHtmlToText } = await import('@/lib/email/email-renderer');
+    const cleanRemark = remark ? stripHtmlToText(remark) : "";
     queueBusinessEvent("Task", "Status Changed", {
       entity_id: taskId,
       triggering_user_id: userId,
       status: newStatusId,
       task_name: currentTask.subject,
-      remarks: remark || "",
-      remark: remark || "",
+      remarks: cleanRemark,
       assigned_to: currentTask.assigned_to,
       created_by: currentTask.created_by,
       workspace_id: currentTask.workspace_id,
@@ -1942,9 +1948,8 @@ export async function executeTaskBatchOperation(payload: {
         task_id: taskId, actor_id: userId, action: 'COMMENT', new_state: { message: remarks }
       }])
     );
-    notifyTaskRemark(taskId, remarks, userId).catch(e =>
-      console.error("[executeTaskBatchOperation] Remark notification error:", e)
-    );
+    // Remarks are bundled into the "Task Updated" business event below;
+    // do not trigger a separate "Comment Added" event to prevent duplicate email blasts.
   }
 
   if (Object.keys(updatePayload).length > 0) {
@@ -1961,15 +1966,17 @@ export async function executeTaskBatchOperation(payload: {
   revalidatePath(`/workspaces/tasks`);
 
   // Fire-and-forget: Push to async background queue
-  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id, description, priority_id, start_date, end_date').eq('id', taskId).single().then(({ data: taskData }) => {
+  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id, description, priority_id, start_date, end_date').eq('id', taskId).single().then(async ({ data: taskData }) => {
+    const { stripHtmlToText } = await import('@/lib/email/email-renderer');
+    const cleanRemarks = remarks ? stripHtmlToText(remarks) : "";
+    const cleanDesc = taskData?.description ? stripHtmlToText(taskData.description) : "";
     queueBusinessEvent("Task", "Updated", {
       entity_id: taskId,
       triggering_user_id: userId,
       status: statusChanges || taskData?.status_id || "UPDATED",
       task_name: taskData?.subject || "Task Updated",
-      description: taskData?.description || "",
-      remarks: remarks || "",
-      remark: remarks || "",
+      description: cleanDesc !== cleanRemarks ? cleanDesc : "",
+      remarks: cleanRemarks,
       assigned_to: taskData?.assigned_to,
       created_by: taskData?.created_by,
       workspace_id: taskData?.workspace_id,
@@ -2552,12 +2559,6 @@ export async function transferTask(payload: {
         content: commentMsg
       }));
       await supabaseAdmin.from('task_comments').insert(commentsData);
-
-      for (const tId of allTaskIds) {
-        notifyTaskRemark(tId, commentMsg, user.id).catch(e =>
-          console.error("[transferTask] Remark notification error:", e)
-        );
-      }
     }
 
     revalidatePath('/workspaces');

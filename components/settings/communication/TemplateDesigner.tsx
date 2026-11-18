@@ -508,17 +508,22 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
       initialRecipients = ["Workspace Owner", "Creator", "Assigned User"];
     }
 
+    const targetModule = isVeh ? "Vehicle (FleetDesk)" : (moduleFilter !== "ALL" ? moduleFilter : "Task");
+    const validEvents = getEventsForModule(targetModule);
+    const initialEvent = isVeh ? "Insurance Expiring Soon (30 Days)" : (isWs ? "Updated" : (validEvents[0] || "Created"));
+    const validRecipients = getRecipientsForModule(targetModule);
+
     setTemplates(prev => [
       {
         id: newId,
-        module: isVeh ? "Vehicle (FleetDesk)" : (moduleFilter !== "ALL" ? moduleFilter : "Task"),
-        event: isVeh ? "Insurance Expiring Soon (30 Days)" : (isWs ? "Updated" : "Updated"),
+        module: targetModule,
+        event: initialEvent,
         template_name: initialName,
         subject: initialSubject,
         html_body: initialHtml,
         is_active: true,
         is_new: true,
-        recipient_types: initialRecipients
+        recipient_types: initialRecipients.filter(r => validRecipients.includes(r))
       },
       ...prev
     ]);
@@ -657,21 +662,19 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
                 <span className="font-semibold text-muted-foreground shrink-0 mr-1">Module:</span>
                 {["ALL", ...MODULES].map((mod) => (
-                  <button
+                  <AppButton
                     key={mod}
                     type="button"
+                    variant={moduleFilter === mod ? "primary" : "secondary"}
+                    size="sm"
                     onClick={() => setModuleFilter(mod)}
-                    className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
-                      moduleFilter === mod
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
-                    }`}
+                    className="shrink-0 text-xs"
                   >
                     {mod === "ALL" ? "All Modules" : mod}
                     <span className="ml-1.5 text-[11px] font-mono font-semibold opacity-75">
                       ({mod === "ALL" ? templates.length : templates.filter(t => t.module === mod || (mod === "Vehicle (FleetDesk)" && (t.module === "Vehicle" || t.module === "Vehicle (FleetDesk)"))).length})
                     </span>
-                  </button>
+                  </AppButton>
                 ))}
               </div>
             )}
@@ -771,10 +774,16 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                     onChange={(e) => {
                       const newMod = e.target.value;
                       const validEvents = getEventsForModule(newMod);
-                      updateLocal(tpl.id, "module", newMod);
-                      if (tpl.event && !validEvents.includes(tpl.event)) {
-                        updateLocal(tpl.id, "event", validEvents[0] || "Created");
-                      }
+                      const newEvent = validEvents.includes(tpl.event) ? tpl.event : (validEvents[0] || "Created");
+                      const validRecipients = getRecipientsForModule(newMod);
+                      const currentRecipients = tpl.recipient_types || [];
+                      const filteredRecipients = currentRecipients.filter((r: string) => validRecipients.includes(r));
+                      setTemplates(prev => prev.map(t => t.id === tpl.id ? {
+                        ...t,
+                        module: newMod,
+                        event: newEvent,
+                        recipient_types: filteredRecipients.length > 0 ? filteredRecipients : [validRecipients[0] || "Creator"]
+                      } : t));
                     }}
                     className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                   >
@@ -789,13 +798,9 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                 >
-                  {(() => {
-                    const moduleEvents = getEventsForModule(tpl.module);
-                    const allOptions = (tpl.event && !moduleEvents.includes(tpl.event))
-                      ? [tpl.event, ...moduleEvents]
-                      : moduleEvents;
-                    return allOptions.map(e => <option key={e} value={e}>{e}</option>);
-                  })()}
+                  {getEventsForModule(tpl.module).map(e => (
+                    <option key={e} value={e}>{e}</option>
+                  ))}
                 </select>
               </div>
               <div className="md:col-span-3 space-y-2">
@@ -862,28 +867,32 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
 
             {/* Editor vs Preview Tab */}
             <div className="flex border-b border-border bg-sunken/40 px-4 pt-2 gap-2">
-              <button 
+              <AppButton 
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-md border-b-2 transition-colors ${
+                className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-md border-b-2 rounded-b-none transition-colors ${
                   activeTab[tpl.id] === 'code' || !activeTab[tpl.id]
                     ? 'border-primary text-primary bg-surface font-bold shadow-xs' 
                     : 'border-transparent text-muted hover:text-foreground bg-transparent'
                 }`}
               >
                 <Code2 className="w-4 h-4" /> HTML source
-              </button>
-              <button 
+              </AppButton>
+              <AppButton 
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-md border-b-2 transition-colors ${
+                className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-md border-b-2 rounded-b-none transition-colors ${
                   activeTab[tpl.id] === 'preview' 
                     ? 'border-primary text-primary bg-surface font-bold shadow-xs' 
                     : 'border-transparent text-muted hover:text-foreground bg-transparent'
                 }`}
               >
                 <Eye className="w-4 h-4" /> Live preview (dynamic)
-              </button>
+              </AppButton>
             </div>
 
             {/* Content Area */}

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { stripHtmlToText } from "@/lib/email/email-renderer";
 
 type NotificationPayload = {
   entity_id: string;
@@ -91,18 +92,10 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       }
     }
 
-    // Suppress triggering user only for collaborative actions (e.g., Comment Added, Status Changed, Updated)
-    // where the actor is already aware of their action, UNLESS the rule explicitly targets them (e.g. Creator on Created event)
-    const isCreationOrAssignmentEvent = eventName.toLowerCase().includes('create') || 
-                                        eventName.toLowerCase().includes('assign') || 
-                                        eventName.toLowerCase().includes('enrolled');
-    
-    const rulesTargetCreator = matchedRules.some(r => {
-      const types = (r.recipient_type || []) as string[];
-      return types.includes("Creator") || types.includes("Workspace Owner") || types.includes("Requester");
-    });
-
-    if (!isCreationOrAssignmentEvent && !rulesTargetCreator && payload.triggering_user_id) {
+    // Suppress triggering user for all collaborative actions (e.g., Comment Added, Status Changed, Updated, Executors Changed, Assigned).
+    // The actor who performed the action must never receive an email notifying them of their own action.
+    const isPublicTicketReceipt = moduleName === 'Ticket' && eventName.toLowerCase() === 'created';
+    if (!isPublicTicketReceipt && payload.triggering_user_id) {
       recipientUserIds.delete(payload.triggering_user_id);
     }
 
@@ -129,7 +122,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
 
     // 5. Hydrate Templates and Queue per Recipient with Secure Direct Activity Links
     const { createDirectActivityUrl, transformEmailContentLinks } = await import('@/lib/auth/direct-access');
-    const { buildEmailCardHtml, inferActionText, stripHtmlToText } = await import('@/lib/email/email-renderer');
+    const { buildEmailCardHtml, inferActionText } = await import('@/lib/email/email-renderer');
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech";
 
     let autoHydratedPayload = await autoHydratePayload(payload, moduleName);
@@ -146,7 +139,45 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       return true;
     });
 
-    const queueInserts = uniqueUsers.map(user => {
+    // 5.1 Anti-Spam / Rapid Coalescing Gate:
+    // Check if an email for this recipient regarding this entity was queued within the last 15 seconds
+    // to prevent duplicate emails from rapid multi-triggers (e.g. Task Updated + Executors Changed during same save)
+    let candidateUsers = uniqueUsers;
+    if (payload.entity_id) {
+      const fifteenSecondsAgo = new Date(Date.now() - 15000).toISOString();
+      const candidateEmails = uniqueUsers.map(u => u.email.trim().toLowerCase());
+
+      const { data: recentQueued } = await supabaseAdmin
+        .from("email_queue")
+        .select("recipient_email, subject, body_template")
+        .in("recipient_email", candidateEmails)
+        .gte("created_at", fifteenSecondsAgo);
+
+      if (recentQueued && recentQueued.length > 0) {
+        candidateUsers = uniqueUsers.filter(user => {
+          const userEmail = user.email.trim().toLowerCase();
+          const taskCode = payload.task_code || '';
+          const taskName = payload.task_name || '';
+          const entityId = payload.entity_id;
+          const alreadyQueued = recentQueued.some(q => {
+            if (q.recipient_email?.toLowerCase() !== userEmail) return false;
+            if (entityId && q.body_template?.includes(entityId)) return true;
+            if (taskCode && q.subject?.includes(taskCode)) return true;
+            if (taskName && q.subject?.includes(taskName)) return true;
+            return false;
+          });
+          if (alreadyQueued) {
+            console.log(`[NotificationEngine] Coalesced duplicate email for ${userEmail} on entity ${payload.entity_id} within 15s window.`);
+            return false;
+          }
+          return true;
+        });
+      }
+    }
+
+    if (candidateUsers.length === 0) return;
+
+    const queueInserts = candidateUsers.map(user => {
       const userDirectLink = createDirectActivityUrl(
         user.id,
         user.email,
@@ -165,7 +196,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       if (template?.subject) {
         subject = hydrateTemplate(template.subject, userHydratedPayload);
       } else {
-        const isExpiry = eventName.toLowerCase().includes('expir');
+        const isExpiry = eventName.toLowerCase().includes('expir') && moduleName !== 'Task';
         if (isExpiry && (userHydratedPayload.notification_summary || userHydratedPayload.description)) {
           subject = `${moduleName} Expiry: ${userHydratedPayload.notification_summary || userHydratedPayload.description}`;
         } else {
@@ -338,8 +369,9 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
               .limit(1)
               .maybeSingle();
             if (latestComment?.content) {
-              hydrated.remarks = latestComment.content;
-              hydrated.remark = latestComment.content;
+              const cleanContent = stripHtmlToText(latestComment.content);
+              hydrated.remarks = cleanContent;
+              hydrated.remark = cleanContent;
             }
           } catch (cErr) {}
 
@@ -356,13 +388,28 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
                 for (const log of recentLogs) {
                   const msg = log.new_state?.message || log.new_state?.remark || log.new_state?.remarks;
                   if (msg && typeof msg === 'string' && msg.trim()) {
-                    hydrated.remarks = msg.trim();
-                    hydrated.remark = msg.trim();
+                    const cleanMsg = stripHtmlToText(msg.trim());
+                    hydrated.remarks = cleanMsg;
+                    hydrated.remark = cleanMsg;
                     break;
                   }
                 }
               }
             } catch (lErr) {}
+          }
+        }
+
+        // Clean HTML tags and remove redundant description if identical to remarks
+        if (hydrated.remarks) {
+          hydrated.remarks = stripHtmlToText(String(hydrated.remarks));
+        }
+        if (hydrated.remark) {
+          hydrated.remark = stripHtmlToText(String(hydrated.remark));
+        }
+        if (hydrated.description) {
+          hydrated.description = stripHtmlToText(String(hydrated.description));
+          if (hydrated.remarks && hydrated.description.toLowerCase() === hydrated.remarks.toLowerCase()) {
+            delete hydrated.description;
           }
         }
       }
@@ -604,7 +651,7 @@ function hydrateTemplate(text: string, data: any): string {
       // Robust fallback aliases if key has alternative representation
       if (value === undefined || value === null || value === "") {
         if (key === 'remark' || key === 'remarks' || key === 'comment' || key === 'comments') {
-          value = data['remarks'] || data['remark'] || data['comment'] || data['comments'] || data['message'] || data['description'];
+          value = data['remarks'] || data['remark'] || data['comment'] || data['comments'] || data['message'];
         }
         else if (key === 'workspace_owner' || key === 'owner_name') value = data['workspace_owner'] || data['owner_name'] || data['creator_name'];
         else if (key === 'assigned_user' || key === 'assigned_to') value = data['assigned_user'] || data['assigned_to'] || data['recipient_name'];
@@ -622,7 +669,11 @@ function hydrateTemplate(text: string, data: any): string {
         else if (key === 'priority') value = data['priority'];
         else if (key === 'description') value = data['description'];
       }
-      hydrated = hydrated.replace(match, value !== undefined && value !== null ? String(value) : "");
+      let stringValue = value !== undefined && value !== null ? String(value) : "";
+      if (key === 'remark' || key === 'remarks' || key === 'comment' || key === 'comments' || key === 'task_name' || key === 'subject') {
+        stringValue = stripHtmlToText(stringValue);
+      }
+      hydrated = hydrated.replace(match, stringValue);
     });
   }
 

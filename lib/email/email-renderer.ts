@@ -140,11 +140,11 @@ export function normalizeDetailFields(
     if (value === undefined || value === null || value === '') continue;
 
     // Deduplicate synonymous fields
-    if (lowerKey === 'remark' && hasRemarks) continue;
-    if (hasRemarks && lowerKey === 'description') {
-      const cleanRaw = stripHtmlToText(String(value));
-      const cleanRemarks = stripHtmlToText(String(details.remarks));
-      if (cleanRaw === cleanRemarks) continue;
+    if ((lowerKey === 'remark' || lowerKey === 'comment' || lowerKey === 'comments') && hasRemarks) continue;
+    if (hasRemarks && (lowerKey === 'description' || lowerKey === 'message' || lowerKey === 'notification_summary')) {
+      const cleanRaw = stripHtmlToText(String(value)).trim();
+      const cleanRemarks = stripHtmlToText(String(details.remarks)).trim();
+      if (cleanRaw.toLowerCase() === cleanRemarks.toLowerCase()) continue;
     }
     if (lowerKey === 'assigned_to' && details.assigned_user) continue;
     if (lowerKey === 'created_by' && details.creator_name) continue;
