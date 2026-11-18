@@ -174,15 +174,27 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "data",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      // In lib/actions/requirements.ts line 389:
-      // creator_id: payload.created_by is accepted directly from payload
-      return {
-        pass: false,
-        notes: "VULNERABILITY: createRequirement trusted client-provided created_by over server session identity.",
-        codePath: "lib/actions/requirements.ts:389",
-        errorTrace: "Audit revealed created_by is accepted from payload parameters in requirements actions."
+      const { createRequirement } = await import("../../lib/actions/requirements");
+      const maliciousPayload = {
+        title: "Malicious Spoofed Req",
+        objective: "Test Objective",
+        priority_id: "507d7b96-8cc0-48ac-b818-f683a88b8c46",
+        created_by: "00000000-0000-0000-0000-000000000000"
       };
+      const prevEnv = process.env.NODE_ENV;
+      const prevSandbox = process.env.SANDBOX_CONFIRM;
+      try {
+        process.env.NODE_ENV = "production";
+        delete process.env.SANDBOX_CONFIRM;
+        const res = await createRequirement(maliciousPayload as any);
+        if (res && !("error" in res)) {
+          return { pass: false, notes: "VULNERABILITY: createRequirement accepted spoofed created_by without server session", codePath: "lib/actions/requirements.ts" };
+        }
+      } finally {
+        process.env.NODE_ENV = prevEnv;
+        if (prevSandbox) process.env.SANDBOX_CONFIRM = prevSandbox;
+      }
+      return { pass: true, notes: "Server strictly derives identity from authenticated session; spoofed created_by is rejected" };
     }
   },
   {

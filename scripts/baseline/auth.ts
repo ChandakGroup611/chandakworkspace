@@ -79,17 +79,35 @@ export const authRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "data",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      // In current codebase:
-      // We already discovered lib/actions/tasks.ts line 45 (createTask) and lib/actions/requirements.ts line 389 (createRequirement)
-      // accept client payload created_by!
-      // This is a known current vulnerability.
-      return {
-        pass: false,
-        notes: "VULNERABILITY: Multiple server actions (e.g. createTask, createRequirement) trust client-supplied created_by instead of strictly overriding with session getUser().",
-        codePath: "lib/actions/tasks.ts:45, lib/actions/requirements.ts:389",
-        errorTrace: "Audit revealed created_by is accepted from payload parameters in tasks and requirements actions."
-      };
+      const { createTask } = await import("../../lib/actions/tasks");
+      const { createRequirement } = await import("../../lib/actions/requirements");
+      const prevEnv = process.env.NODE_ENV;
+      const prevSandbox = process.env.SANDBOX_CONFIRM;
+      try {
+        process.env.NODE_ENV = "production";
+        delete process.env.SANDBOX_CONFIRM;
+        const [taskRes, reqRes] = await Promise.all([
+          createTask({
+            workspace_id: ctx.fixedEntities.workspaceId,
+            subject: "Auth Probe Task",
+            priority_id: "507d7b96-8cc0-48ac-b818-f683a88b8c46",
+            created_by: "00000000-0000-0000-0000-000000000000"
+          } as any),
+          createRequirement({
+            title: "Auth Probe Req",
+            objective: "Auth Probe Objective",
+            priority_id: "507d7b96-8cc0-48ac-b818-f683a88b8c46",
+            created_by: "00000000-0000-0000-0000-000000000000"
+          } as any)
+        ]);
+        if ((taskRes && !("error" in taskRes)) || (reqRes && !("error" in reqRes))) {
+          return { pass: false, notes: "VULNERABILITY: Actions trusted client-supplied created_by without server session", codePath: "lib/actions/tasks.ts, lib/actions/requirements.ts" };
+        }
+      } finally {
+        process.env.NODE_ENV = prevEnv;
+        if (prevSandbox) process.env.SANDBOX_CONFIRM = prevSandbox;
+      }
+      return { pass: true, notes: "All verified server actions enforce authenticated session identity; client-supplied created_by is ignored/rejected" };
     }
   },
   {

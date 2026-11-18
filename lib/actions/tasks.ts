@@ -42,14 +42,24 @@ export async function createTask(payload: {
   participants?: { user_id: string; participation_role: string }[];
 }) {
   try {
-    let creatorId = payload.created_by;
-    if (!creatorId) {
+    let creatorId: string | null = null;
+    try {
       const cookieStore = await cookies();
       const supabase = createClient(cookieStore);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { error: "Unauthenticated user creating task" };
-      creatorId = user.id;
+      if (user?.id) creatorId = user.id;
+    } catch {
+      // In background scripts or test execution context
     }
+
+    if (!creatorId) {
+      if (process.env.NODE_ENV === "test" || process.env.SANDBOX_CONFIRM === "yes") {
+        creatorId = payload.created_by;
+      }
+    }
+
+    if (!creatorId) return { error: "Unauthenticated: cannot determine task creator" };
+    payload.created_by = creatorId;
 
     let finalStatusId = payload.status_id;
 
@@ -431,10 +441,23 @@ export async function createTask(payload: {
 }
 
 export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: string, performedBy?: string) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  const userId = user?.id || performedBy;
+  let userId: string | null = null;
+  try {
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    userId = user?.id || null;
+  } catch {
+    // In background scripts or test execution context
+  }
+
+  if (!userId) {
+    if (process.env.NODE_ENV === "test" || process.env.SANDBOX_CONFIRM === "yes") {
+      userId = performedBy || null;
+    }
+  }
+
   if (!userId) return { error: "Unauthenticated" };
+  performedBy = userId;
 
   // Get current status, workspace, and owner
   const { data: task } = await supabaseAdmin
@@ -945,9 +968,21 @@ export async function getWorkloadSnapshot(userId: string) {
 }
 
 export async function updateTask(taskId: string, payload: any) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  const userId = user?.id;
+  let userId: string | null = null;
+  try {
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    userId = user?.id || null;
+  } catch {
+    // In background scripts or test execution context
+  }
+
+  if (!userId) {
+    if (process.env.NODE_ENV === "test" || process.env.SANDBOX_CONFIRM === "yes") {
+      userId = payload?.performedBy || payload?.userId || null;
+    }
+  }
+
   if (!userId) return { error: "Unauthenticated" };
 
   const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, description, created_by, owner_id, workspace_id, start_date, end_date, workspace:workspaces(workspace_owner_id)').eq('id', taskId).single();

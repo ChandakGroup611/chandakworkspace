@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState, useEffect, use } from "react";
+import React from "react";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -35,42 +33,35 @@ interface QrVerificationResult {
   latestApprovedRev?: string;
 }
 
-export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
-  const resolvedParams = use(params);
-  const token = resolvedParams.token;
+export default async function VerifyDrawingQrPage({ params }: VerifyPageProps) {
+  const { token } = await params;
+  const isInvalid = !token || token.includes("invalid") || token.includes("expired") || token.length < 8;
+  const isSuperseded = token.includes("old") || token.includes("r0");
 
-  const [loading, setLoading] = useState<boolean>(true);
-  const [data, setData] = useState<QrVerificationResult | null>(null);
-
-  useEffect(() => {
-    // Simulated / live verification endpoint
-    const verifyToken = async () => {
-      setLoading(true);
-      try {
-        // Mock verification response matching the token
-        setTimeout(() => {
-          const isSuperseded = token.includes("old") || token.includes("r0");
-          setData({
-            isValid: true,
-            drawingNumber: "TA-STR-F08-01",
-            title: "Tower a - 8th floor typical slab structural layout",
-            discipline: "Structural Engineering",
-            projectName: "Tower A (G+10)",
-            buildingName: "Tower A",
-            revisionNumber: isSuperseded ? "R0" : "R1",
-            status: isSuperseded ? "SUPERSEDED" : "ACTIVE_GFC",
-            gfcReleasedAt: "08 Oct 2026",
-            certifiedBy: "Lead Structural Engineer",
-            latestApprovedRev: isSuperseded ? "R1 (GFC)" : undefined,
-          });
-          setLoading(false);
-        }, 300);
-      } catch (err) {
-        setLoading(false);
+  const data: QrVerificationResult = isInvalid
+    ? {
+        isValid: false,
+        drawingNumber: "",
+        title: "",
+        discipline: "",
+        projectName: "",
+        buildingName: "",
+        revisionNumber: "",
+        status: "REJECTED"
       }
-    };
-    verifyToken();
-  }, [token]);
+    : {
+        isValid: true,
+        drawingNumber: "TA-STR-F08-01",
+        title: "Tower a - 8th floor typical slab structural layout",
+        discipline: "Structural Engineering",
+        projectName: "Tower A (G+10)",
+        buildingName: "Tower A",
+        revisionNumber: isSuperseded ? "R0" : "R1",
+        status: isSuperseded ? "SUPERSEDED" : "ACTIVE_GFC",
+        gfcReleasedAt: "08 Oct 2026",
+        certifiedBy: "Lead Structural Engineer",
+        latestApprovedRev: isSuperseded ? "R1 (GFC)" : undefined,
+      };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 antialiased">
@@ -87,12 +78,7 @@ export default function VerifyDrawingQrPage({ params }: VerifyPageProps) {
         </p>
       </div>
 
-      {loading ? (
-        <div className="w-full max-w-md bg-surface border border-border rounded-lg p-8 text-center space-y-3 shadow-lg animate-pulse">
-          <ShieldCheck className="h-10 w-10 mx-auto text-primary stroke-1" />
-          <p className="text-xs font-semibold text-muted-foreground">Verifying digital QR token with registry…</p>
-        </div>
-      ) : !data?.isValid ? (
+      {!data.isValid ? (
         <div className="w-full max-w-md bg-surface border border-danger-border rounded-lg p-6 text-center space-y-4 shadow-lg">
           <div className="h-12 w-12 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center mx-auto">
             <XCircle className="h-6 w-6" />

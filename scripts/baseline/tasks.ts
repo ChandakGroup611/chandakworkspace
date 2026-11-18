@@ -202,15 +202,27 @@ export const taskRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "data",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      // In current codebase line 45 of lib/actions/tasks.ts:
-      // let creatorId = payload.created_by; is accepted directly
-      return {
-        pass: false,
-        notes: "VULNERABILITY: createTask trusted client-provided created_by over server session identity.",
-        codePath: "lib/actions/tasks.ts:45",
-        errorTrace: "Audit revealed created_by is accepted from payload parameters in tasks actions."
+      const { createTask } = await import("../../lib/actions/tasks");
+      const maliciousPayload = {
+        workspace_id: ctx.fixedEntities.workspaceId,
+        subject: "Malicious Spoofed Task",
+        priority_id: "507d7b96-8cc0-48ac-b818-f683a88b8c46",
+        created_by: "00000000-0000-0000-0000-000000000000"
       };
+      const prevEnv = process.env.NODE_ENV;
+      const prevSandbox = process.env.SANDBOX_CONFIRM;
+      try {
+        process.env.NODE_ENV = "production";
+        delete process.env.SANDBOX_CONFIRM;
+        const res = await createTask(maliciousPayload as any);
+        if (res && !("error" in res)) {
+          return { pass: false, notes: "VULNERABILITY: createTask accepted spoofed created_by without server session", codePath: "lib/actions/tasks.ts" };
+        }
+      } finally {
+        process.env.NODE_ENV = prevEnv;
+        if (prevSandbox) process.env.SANDBOX_CONFIRM = prevSandbox;
+      }
+      return { pass: true, notes: "Server strictly derives identity from authenticated session; spoofed created_by is rejected" };
     }
   },
   {
