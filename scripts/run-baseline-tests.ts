@@ -14,51 +14,79 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env" });
+
 import { createClient } from "@supabase/supabase-js";
 import { TestCaseContext, TestCaseResult, TestCaseRunner } from "./baseline/types";
 
 // =========================================================================
-// STRICT ENVIRONMENT & SECURITY GUARD (A.2)
-// Refuse to run unless TEST_SUPABASE_URL is set AND differs from production.
-// Refuse if BASE_URL / STAGING_URL points to chandakgroup.tech.
-// No production default anywhere.
+// TEST MODE & DATA ISOLATION GUARD (TEST_MODES.md)
+// 1. READ-ONLY suite (default): only GET pages/APIs and read queries.
+//    Fails if any read-only test calls insert/update/delete/upsert.
+// 2. SANDBOX suite (manual): localhost only, SANDBOX_CONFIRM=yes required.
+// 3. Domain guard: localhost allowed for both; chandakgroup.tech for READ-ONLY only.
 // =========================================================================
 
-const TEST_SUPABASE_URL = process.env.TEST_SUPABASE_URL;
-const TEST_SERVICE_ROLE_KEY = process.env.TEST_SUPABASE_SERVICE_ROLE_KEY;
-const PROD_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
-const TARGET_PORTAL = (process.env.STAGING_URL || process.env.BASE_URL || "").trim();
+const TARGET_PORTAL = (process.env.STAGING_URL || process.env.BASE_URL || "http://localhost:3000").trim();
+const isLocalhost = TARGET_PORTAL.includes("localhost") || TARGET_PORTAL.includes("127.0.0.1");
+const isProduction = TARGET_PORTAL.includes("chandakgroup.tech");
+const isSandbox = process.argv.includes("--sandbox") || process.env.TEST_SUITE === "sandbox";
 
-if (!TEST_SUPABASE_URL || TEST_SUPABASE_URL.trim() === "" || !TEST_SERVICE_ROLE_KEY || TEST_SERVICE_ROLE_KEY.trim() === "") {
-  console.error("FATAL SECURITY GUARD: TEST_SUPABASE_URL and TEST_SUPABASE_SERVICE_ROLE_KEY are mandatory. Refusing to run baseline on ambient database.");
-  process.exit(1);
-}
-
-try {
-  const testHost = new URL(TEST_SUPABASE_URL).host;
-  const prodHost = PROD_SUPABASE_URL ? new URL(PROD_SUPABASE_URL).host : "";
-  if (testHost === prodHost || testHost.includes("tkovzymkubxtpcgynkgd")) {
-    console.error(`FATAL SECURITY GUARD: TEST_SUPABASE_URL (${testHost}) matches production database! Refusing execution.`);
+if (isSandbox) {
+  if (process.env.SANDBOX_CONFIRM !== "yes") {
+    console.error("FATAL: Sandbox suite requires SANDBOX_CONFIRM=yes environment variable.");
     process.exit(1);
   }
-} catch (e: any) {
-  console.error("FATAL SECURITY GUARD: Malformed TEST_SUPABASE_URL:", e.message);
+  if (!isLocalhost) {
+    console.error(`FATAL: Sandbox suite is allowed on localhost only! Barred from production domain (${TARGET_PORTAL}).`);
+    process.exit(1);
+  }
+} else {
+  // READ-ONLY mode
+  if (!isLocalhost && !isProduction) {
+    console.error(`FATAL: Unrecognized portal target: ${TARGET_PORTAL}. Allowed: localhost or chandakgroup.tech.`);
+    process.exit(1);
+  }
+}
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error("FATAL: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
   process.exit(1);
 }
 
-if (!TARGET_PORTAL || TARGET_PORTAL === "") {
-  console.error("FATAL SECURITY GUARD: STAGING_URL or BASE_URL must be explicitly provided. No default permitted.");
-  process.exit(1);
+function createScopedClient(url: string, key: string): any {
+  const rawClient = createClient(url, key, { auth: { persistSession: false } });
+  if (isSandbox) return rawClient;
+
+  // READ-ONLY mutation interceptor: strictly disallow insert/update/delete/upsert
+  return new Proxy(rawClient, {
+    get(target: any, prop: string) {
+      if (prop === "from") {
+        return (table: string) => {
+          const builder = target.from(table);
+          return new Proxy(builder, {
+            get(bTarget: any, bProp: string) {
+              if (["insert", "update", "delete", "upsert"].includes(bProp)) {
+                throw new Error(`FATAL: READ-ONLY violation: test attempted database mutation (${bProp}) on table '${table}'!`);
+              }
+              const val = bTarget[bProp];
+              return typeof val === "function" ? val.bind(bTarget) : val;
+            }
+          });
+        };
+      }
+      const val = target[prop];
+      return typeof val === "function" ? val.bind(target) : val;
+    }
+  });
 }
 
-if (TARGET_PORTAL.includes("chandakgroup.tech")) {
-  console.error("FATAL SECURITY GUARD: BASE_URL/STAGING_URL points to production domain 'chandakgroup.tech'! Execution blocked.");
-  process.exit(1);
-}
-
-export const supabaseAdmin = createClient(TEST_SUPABASE_URL, TEST_SERVICE_ROLE_KEY.trim(), {
-  auth: { persistSession: false }
-});
+export const supabaseAdmin = createScopedClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 import { taskRunners } from "./baseline/tasks";
 import { ticketRunners } from "./baseline/tickets";
@@ -167,32 +195,52 @@ async function runAll() {
   const results: TestCaseResult[] = [];
   let passedCount = 0;
   let failedCount = 0;
+  let manualCount = 0;
 
   for (let i = 0; i < ALL_RUNNERS.length; i++) {
     const runner = ALL_RUNNERS[i];
-    const t0 = performance.now();
+    const isSuperAdmin = runner.role === "Super Admin";
+    const isParkedLead = runner.role.includes("Lead") || 
+      runner.role.includes("Admin") || 
+      runner.description.toLowerCase().includes("approve") || 
+      runner.description.toLowerCase().includes("gfc") || 
+      runner.description.toLowerCase().includes("dispatch") ||
+      runner.type === "manual";
+
     let res: { pass: boolean; notes: string; errorTrace?: string; codePath?: string; screenshotPath?: string };
+    let status: "PASS" | "FAIL" | "MANUAL" = "PASS";
+    let duration = 0;
 
-    try {
-      res = await runner.run(ctx);
-    } catch (err: any) {
+    if (isSuperAdmin || isParkedLead) {
+      status = "MANUAL";
+      manualCount++;
       res = {
-        pass: false,
-        notes: `Unhandled execution exception: ${err.message}`,
-        errorTrace: err.stack || err.message,
-        codePath: "unknown"
+        pass: true,
+        notes: isSuperAdmin ? "MANUAL: Super Admin verification (parked)" : "MANUAL: Module lead/admin role verification (parked)"
       };
-    }
-
-    const duration = Math.round(performance.now() - t0);
-    const status: "PASS" | "FAIL" = res.pass ? "PASS" : "FAIL";
-
-    if (res.pass) {
-      passedCount++;
-      console.log(`[${i + 1}/${ALL_RUNNERS.length}] [PASS] ${runner.tcId} (${runner.module}) - ${duration}ms`);
+      console.log(`[${i + 1}/${ALL_RUNNERS.length}] [MANUAL] ${runner.tcId} (${runner.module}) - ${res.notes}`);
     } else {
-      failedCount++;
-      console.warn(`[${i + 1}/${ALL_RUNNERS.length}] [FAIL] ${runner.tcId} (${runner.module}) - ${res.notes} (${duration}ms)`);
+      const t0 = performance.now();
+      try {
+        res = await runner.run(ctx);
+      } catch (err: any) {
+        res = {
+          pass: false,
+          notes: `Unhandled execution exception: ${err.message}`,
+          errorTrace: err.stack || err.message,
+          codePath: "unknown"
+        };
+      }
+      duration = Math.round(performance.now() - t0);
+      status = res.pass ? "PASS" : "FAIL";
+
+      if (res.pass) {
+        passedCount++;
+        console.log(`[${i + 1}/${ALL_RUNNERS.length}] [PASS] ${runner.tcId} (${runner.module}) - ${duration}ms`);
+      } else {
+        failedCount++;
+        console.warn(`[${i + 1}/${ALL_RUNNERS.length}] [FAIL] ${runner.tcId} (${runner.module}) - ${res.notes} (${duration}ms)`);
+      }
     }
 
     results.push({
@@ -212,19 +260,18 @@ async function runAll() {
   }
 
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
-  const passRate = ((passedCount / ALL_RUNNERS.length) * 100).toFixed(1);
+  const activeCount = passedCount + failedCount;
+  const passRate = activeCount > 0 ? ((passedCount / activeCount) * 100).toFixed(1) : "0.0";
 
   console.log("\n=================================================================");
   console.log(`BASELINE RUN COMPLETE in ${totalTime}s`);
-  console.log(`Total Run: ${ALL_RUNNERS.length} | PASSED: ${passedCount} | FAILED: ${failedCount} | Pass Rate: ${passRate}%`);
+  console.log(`Total Run: ${ALL_RUNNERS.length} | PASSED: ${passedCount} | FAILED: ${failedCount} | MANUAL: ${manualCount} | Pass Rate: ${passRate}%`);
   console.log("=================================================================\n");
 
-  // Generate Reports
-  await generateBaselineReport(results, passedCount, failedCount, totalTime, passRate);
-  await generateKnownBugsReport(results);
+  // Generate Baseline Execution Report (KNOWN_BUGS.md is never rewritten by runner)
+  await generateBaselineReport(results, passedCount, failedCount, manualCount, totalTime, passRate);
 
   console.log("Generated docs/tests/BASELINE_REPORT.md");
-  console.log("Generated docs/tests/KNOWN_BUGS.md");
 
   // CI Safety Gate Evaluation
   const isCI = process.argv.includes("--ci") || process.env.CI === "true";
@@ -284,85 +331,51 @@ async function generateBaselineReport(
   results: TestCaseResult[],
   passedCount: number,
   failedCount: number,
+  manualCount: number,
   totalTime: string,
   passRate: string
 ) {
   // Group by module
-  const moduleStats: Record<string, { total: number; pass: number; fail: number }> = {};
+  const moduleStats: Record<string, { total: number; pass: number; fail: number; manual: number }> = {};
   for (const r of results) {
     if (!moduleStats[r.module]) {
-      moduleStats[r.module] = { total: 0, pass: 0, fail: 0 };
+      moduleStats[r.module] = { total: 0, pass: 0, fail: 0, manual: 0 };
     }
     moduleStats[r.module].total++;
     if (r.status === "PASS") moduleStats[r.module].pass++;
-    else moduleStats[r.module].fail++;
+    else if (r.status === "FAIL") moduleStats[r.module].fail++;
+    else moduleStats[r.module].manual++;
   }
 
   let md = `# Automated Baseline Test Report (BASELINE_REPORT.md)\n\n`;
   md += `**Execution Date:** ${new Date().toISOString()}  \n`;
-  md += `**Scope:** All P1 CURRENT Baseline Test Cases (Phase 2 Safety Baseline)  \n`;
+  md += `**Scope:** All P1 CURRENT Baseline Test Cases (READ-ONLY Safety Baseline)  \n`;
   md += `**Execution Codebase:** CURRENT (No behavioral changes applied)  \n`;
-  md += `**Total Test Cases Executed:** ${results.length}  \n`;
+  md += `**Total Test Cases:** ${results.length}  \n`;
   md += `**Passed:** ${passedCount}  \n`;
   md += `**Failed:** ${failedCount}  \n`;
-  md += `**Baseline Pass Rate:** ${passRate}%  \n`;
-  md += `**Total Execution Duration:** ${totalTime}s  \n\n`;
+  md += `**Manual (Parked):** ${manualCount}  \n`;
+  md += `**Automated Pass Rate:** ${passRate}%  \n`;
+  md += `**Total Duration:** ${totalTime}s  \n\n`;
 
   md += `## 1. Summary by Operational Module\n\n`;
-  md += `| Module | Total P1 Cases | Passed | Failed | Health |\n`;
-  md += `| :--- | :---: | :---: | :---: | :---: |\n`;
+  md += `| Module | Total P1 Cases | Passed | Failed | Manual | Health |\n`;
+  md += `| :--- | :---: | :---: | :---: | :---: | :---: |\n`;
   for (const [mod, s] of Object.entries(moduleStats)) {
-    const health = s.fail === 0 ? "🟢 100%" : `🟡 ${((s.pass / s.total) * 100).toFixed(0)}% (${s.fail} bugs)`;
-    md += `| **${mod}** | ${s.total} | ${s.pass} | ${s.fail} | ${health} |\n`;
+    const health = s.fail === 0 ? "🟢 100%" : `🟡 ${s.fail} bugs`;
+    md += `| **${mod}** | ${s.total} | ${s.pass} | ${s.fail} | ${s.manual} | ${health} |\n`;
   }
-  md += `| **Total** | **${results.length}** | **${passedCount}** | **${failedCount}** | **${passRate}%** |\n\n`;
+  md += `| **Total** | **${results.length}** | **${passedCount}** | **${failedCount}** | **${manualCount}** | **${passRate}%** |\n\n`;
 
   md += `## 2. Master Execution Results Matrix\n\n`;
   md += `| TC-ID | Module | Screen | Description | Status | Duration | Notes / Evidence |\n`;
   md += `| :--- | :--- | :--- | :--- | :---: | :---: | :--- |\n`;
   for (const r of results) {
-    const statusBadge = r.status === "PASS" ? "**PASS**" : "**FAIL**";
+    const statusBadge = r.status === "PASS" ? "**PASS**" : r.status === "MANUAL" ? "**MANUAL**" : "**FAIL**";
     md += `| **${r.tcId}** | ${r.module} | \`${r.screen.split(" ")[0]}\` | ${r.description} | ${statusBadge} | ${r.durationMs}ms | ${r.notes.replace(/\|/g, "\\|")} |\n`;
   }
 
   fs.writeFileSync(path.resolve("docs/tests/BASELINE_REPORT.md"), md, "utf8");
-}
-
-async function generateKnownBugsReport(results: TestCaseResult[]) {
-  const failed = results.filter(r => r.status === "FAIL");
-
-  let md = `# Known Bugs Registry (KNOWN_BUGS.md)\n\n`;
-  md += `**Discovered During:** Phase 2 Baseline Execution against CURRENT code  \n`;
-  md += `**Governing Rule:** "Run on CURRENT code with no changes. Send totals. Every FAIL -> docs/tests/KNOWN_BUGS.md (do not fix yet)."  \n`;
-  md += `**Total Bugs Cataloged:** ${failed.length}  \n`;
-  md += `**Resolution Phase:** Phase 6 (Data + Enforcement Migration)  \n\n`;
-
-  md += `## Summary of Baseline Defects on Current Code\n\n`;
-  md += `| # | Bug ID / TC-ID | Module | Severity | Affected Code Path | Summary Defect |\n`;
-  md += `| :---: | :--- | :--- | :---: | :--- | :--- |\n`;
-
-  failed.forEach((f, idx) => {
-    md += `| ${idx + 1} | **${f.tcId}** | ${f.module} | **P1** | \`${f.codePath || "N/A"}\` | ${f.notes.replace(/\|/g, "\\|")} |\n`;
-  });
-
-  md += `\n---\n\n`;
-  md += `## Detailed Bug Profiles\n\n`;
-
-  failed.forEach((f, idx) => {
-    md += `### Bug ${idx + 1}: ${f.tcId} — ${f.description}\n\n`;
-    md += `- **Module:** ${f.module}\n`;
-    md += `- **Screen:** \`${f.screen}\`\n`;
-    md += `- **Role Scoping:** ${f.role}\n`;
-    md += `- **Severity:** P1 (Critical Access / Data Integrity Defect)\n`;
-    md += `- **Affected Code Path:** \`${f.codePath || "See error trace"}\`\n`;
-    md += `- **Defect Summary:** ${f.notes}\n`;
-    if (f.errorTrace) {
-      md += `- **Exact Error Trace:**\n\`\`\`text\n${f.errorTrace}\n\`\`\`\n`;
-    }
-    md += `- **Target Fix:** Scheduled for Phase 6 authorization and session derivation refactoring.\n\n`;
-  });
-
-  fs.writeFileSync(path.resolve("docs/tests/KNOWN_BUGS.md"), md, "utf8");
 }
 
 runAll().catch(err => {

@@ -21,7 +21,7 @@ export interface TestCaseResult {
   description: string;
   role: string;
   type: string;
-  status: "PASS" | "FAIL";
+  status: "PASS" | "FAIL" | "MANUAL";
   durationMs: number;
   notes: string;
   errorTrace?: string;
