@@ -53,15 +53,19 @@ let moduleRolesCache: Map<string, ModuleRoleDef> | null = null;
 let moduleRolesCacheExpiresAt = 0;
 const ROLES_CACHE_TTL_MS = 5 * 60_000; // 5-minute TTL
 
+// Version stamp for global cache invalidation
+let globalCacheVersion = 1;
+
 // User-level context cache
 interface UserContextCache {
   isSuperAdmin: boolean;
   modules: Map<string, UserModuleRole>;
   expiresAt: number;
+  cacheVersion: number;
 }
 
 const userAccessCache = new Map<string, UserContextCache>();
-const USER_CACHE_TTL_MS = 60_000; // 1-minute TTL
+const USER_CACHE_TTL_MS = 5_000; // 5-second max memory buffer
 
 /**
  * Fetch and cache all module role definitions.
@@ -100,6 +104,7 @@ export async function getModuleRoleRegistry(): Promise<Map<string, ModuleRoleDef
  * Invalidate the module access cache for a specific user, or for all users.
  */
 export function invalidateModuleAccessCache(userId?: string): void {
+  globalCacheVersion++;
   if (userId) {
     userAccessCache.delete(userId);
   } else {
@@ -114,7 +119,7 @@ export function invalidateModuleAccessCache(userId?: string): void {
  */
 async function loadUserModuleContext(userId: string): Promise<UserContextCache> {
   const cached = userAccessCache.get(userId);
-  if (cached && cached.expiresAt > Date.now()) {
+  if (cached && cached.expiresAt > Date.now() && cached.cacheVersion === globalCacheVersion) {
     return cached;
   }
 
@@ -197,6 +202,7 @@ async function loadUserModuleContext(userId: string): Promise<UserContextCache> 
     isSuperAdmin,
     modules: moduleMap,
     expiresAt: Date.now() + USER_CACHE_TTL_MS,
+    cacheVersion: globalCacheVersion,
   };
 
   userAccessCache.set(userId, userContext);

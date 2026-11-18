@@ -125,11 +125,9 @@ export async function GET(request: NextRequest) {
         }
       }
       const roleCode = String(rawRoleCode || "").toUpperCase();
-      const userEmail = String(profile?.email || "").toLowerCase();
-      isAdmin = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ADMIN_ROLE"].includes(roleCode) ||
-        userEmail === "avinash.pise@chandakgroup.com" ||
-        userEmail === "anand@chandakgroup.com" ||
-        userEmail === "super@gmail.com";
+      const { hasPermission } = await import("@/lib/permissions");
+      const hasSuperAdminPerm = await hasPermission(targetUserId, "SUPER_ADMIN");
+      isAdmin = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN"].includes(roleCode) && hasSuperAdminPerm;
 
       // Query BOTH unified user_module_access AND legacy user_modules
       const [umaRes, legacyRes] = await Promise.all([
@@ -249,6 +247,12 @@ export async function GET(request: NextRequest) {
       isAdmin,
       userFullName: userProfile?.full_name,
       userEmail: userProfile?.email
+    }, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
     });
   } catch (err: any) {
     console.error("[API /api/modules] GET error:", err);
