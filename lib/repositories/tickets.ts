@@ -9,7 +9,7 @@ import { hasPermission } from '@/lib/permissions';
 // =========================================================================
 
 export async function getVisibleTickets(userId: string, customSelect?: string, filters?: { searchQuery?: string, status_id?: string, priority_id?: string, scope_id?: string }) {
-  const canViewAll = await hasPermission(userId, 'TICKETS_MANAGE');
+  const canViewAll = await hasPermission(userId, 'SUPER_ADMIN');
   
   const defaultSelect = `
       *,

@@ -767,16 +767,40 @@ export async function fetchTicketMetrics() {
   if (!hasAccess) throw new Error("Unauthorized");
 
   const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+  const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
 
-  // Fetch all tickets. For a huge DB, we'd do aggregates, but for now we'll fetch basic data.
-  const { data: tickets, error } = await supabaseAdmin
+  let baseQuery = supabaseAdmin
     .from('tickets')
     .select(`
       id, created_at, status_id, assignee_id, due_date, priority_id,
       assignee:user_master!assignee_id(full_name),
-      status_master(status_name, status_code)
-    `)
+      status_master(status_name, status_code, is_terminal, is_closed)
+    `, { count: 'exact' })
     .eq('is_deleted', false);
+
+  if (!isSuperAdmin) {
+    let explicitOrFilters = [
+      `creator_id.eq.${user.id}`,
+      `assignee_id.eq.${user.id}`,
+      `queue_owner_id.eq.${user.id}`
+    ];
+    const { data: subordinates } = await supabaseAdmin
+      .from('user_master')
+      .select('id')
+      .eq('manager_id', user.id)
+      .eq('is_deleted', false);
+
+    if (subordinates && subordinates.length > 0) {
+      const subIds = subordinates.map(s => s.id).join(',');
+      explicitOrFilters.push(`creator_id.in.(${subIds})`);
+      explicitOrFilters.push(`assignee_id.in.(${subIds})`);
+      explicitOrFilters.push(`queue_owner_id.in.(${subIds})`);
+    }
+
+    baseQuery = baseQuery.or(explicitOrFilters.join(','));
+  }
+
+  const { data: tickets, count: totalCount, error } = await baseQuery.limit(100);
 
   if (error || !tickets) return null;
 
@@ -790,26 +814,23 @@ export async function fetchTicketMetrics() {
   const volumeMap: Record<string, number> = {};
 
   tickets.forEach(t => {
-    const status = (t.status_master as any)?.status_name?.toLowerCase() || "";
-    const isResolved = status.includes("resolv") || status.includes("clos");
+    const sm = t.status_master as any;
+    const isResolved = sm?.is_closed === true || sm?.is_terminal === true || sm?.status_name?.toLowerCase().includes("resolv") || sm?.status_name?.toLowerCase().includes("clos");
 
     if (isResolved) {
       resolvedTickets++;
     } else {
       openTickets++;
-      // Check SLA breach
       if (t.due_date && new Date(t.due_date).getTime() < now) {
         breachedSla++;
       }
     }
 
-    // Workload
     if (!isResolved) {
       const assigneeName = (t.assignee as any)?.full_name || "Unassigned";
       workloadMap[assigneeName] = (workloadMap[assigneeName] || 0) + 1;
     }
 
-    // Volume by Day (last 7 days logic could be applied here)
     const dateStr = new Date(t.created_at).toISOString().split('T')[0];
     volumeMap[dateStr] = (volumeMap[dateStr] || 0) + 1;
   });
@@ -817,16 +838,15 @@ export async function fetchTicketMetrics() {
   const workloadData = Object.entries(workloadMap)
     .map(([name, count]) => ({ name, tickets: count }))
     .sort((a, b) => b.tickets - a.tickets)
-    .slice(0, 5); // top 5
+    .slice(0, 5);
 
-  // Sort volume by date
   const volumeData = Object.entries(volumeMap)
     .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(-7) // last 7 days with data
+    .slice(-7)
     .map(([date, count]) => ({ date, count }));
 
   return {
-    totalTickets: tickets.length,
+    totalTickets: totalCount ?? tickets.length,
     openTickets,
     resolvedTickets,
     breachedSla,

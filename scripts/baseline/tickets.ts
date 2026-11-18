@@ -9,14 +9,15 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      const { data, error } = await supabaseAdmin
-        .from("tickets")
-        .select("id, code, title, status_id, priority_id, creator_id")
-        .eq("is_deleted", false)
-        .limit(10);
-      if (error) return { pass: false, notes: `Failed querying tickets: ${error.message}`, codePath: "lib/actions/tickets.ts" };
-      return { pass: true, notes: `Ticket queue query resolved successfully with ${data.length} records` };
+      const stdUserId = ctx.users["test.ticket.standard@chandakgroup.tech"];
+      const { getVisibleTickets } = await import("../../lib/repositories/tickets");
+      const visible = await getVisibleTickets(stdUserId);
+      for (const t of visible) {
+        if (t.creator_id !== stdUserId && t.assignee_id !== stdUserId) {
+          return { pass: false, notes: `Security violation: standard user saw ticket ${t.code} owned by ${t.creator_id}`, codePath: "lib/repositories/tickets.ts" };
+        }
+      }
+      return { pass: true, notes: `Ticket queue query resolved successfully with ${visible.length} scoped records` };
     }
   },
   {
