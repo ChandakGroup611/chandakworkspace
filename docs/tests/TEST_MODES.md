@@ -1,168 +1,98 @@
-# Isolated UAT / Test Environment Setup Guide (`UAT_SETUP.md`)
+# Testing Architecture & Data Isolation Governance (`TEST_MODES.md`)
 
-This guide specifies the protocol for configuring an isolated UAT Supabase instance and running the Chandak Workspace application against it. Under permanent development governance, **test users and baseline automation must never run against the production database**.
-
----
-
-## 1. Project Inactivity Notice (Free Tier)
-
-> [!WARNING]
-> Free-tier Supabase projects automatically **pause after 7 days of inactivity**.
-> Always verify in the [Supabase Dashboard](https://supabase.com/dashboard) that the UAT project is active, and click **Resume** if paused, prior to executing seed scripts or test suites.
+This authoritative document defines the two isolated testing modes running against localhost and the live environment without an external UAT project, providing absolute data isolation and zero impact on production operations.
 
 ---
 
-## 2. Project Provisioning & Credentials
+## 1. Core Architecture: The Two Testing Modes
 
-> [!IMPORTANT]
-> The AI agent will **never** automatically provision external cloud infrastructure. The project owner must manually create the project via the Supabase dashboard.
+Testing is bifurcated into two mutually exclusive suites with distinct safety constraints:
 
-1. Log into your [Supabase Dashboard](https://supabase.com/dashboard) and click **New project**.
-2. Set the project name (e.g. `chandak-workspace-uat`).
-3. Select region: `ap-south-1` (Mumbai) to mirror production network characteristics.
-4. Record credentials from **Project Settings** → **API**:
-   - **Project URL**: `https://<uat-project-ref>.supabase.co`
-   - **anon / public key**: Client anon key
-   - **service_role key**: Secret service role JWT
-
----
-
-## 3. Schema Structure Replication (Production Schema-Only Dump)
-
-The UAT schema must accurately reflect the live database structure rather than legacy migrations.
-
-### A. Tooling & Secret Security Rules
-- **Explicit Permission Required**: Any CLI tool (`pg_dump`, `psql`, Supabase CLI) requires user confirmation before installing or executing.
-- **Zero Passwords in Commands**: Never pass plaintext passwords in shell command lines or scripts. Use environment variables (e.g. `PGPASSWORD`) or a standard `.pgpass` credential file with restricted permissions (`chmod 0600`):
-  ```text
-  # .pgpass format: hostname:port:database:username:password
-  aws-0-ap-south-1.pooler.supabase.com:5432:postgres:postgres.tkovzymkubxtpcgynkgd:[PROD_DB_PASSWORD]
-  aws-0-ap-south-1.pooler.supabase.com:5432:postgres:postgres.[UAT_PROJECT_REF]:[UAT_DB_PASSWORD]
-  ```
-
-### B. Schema-Only Export (No Data)
-Extract structural objects only:
-- Tables, foreign key constraints, and check constraints
-- Row Level Security (RLS) configurations and policies
-- Postgres functions, stored procedures, and triggers
-- Custom database enum types
-- Storage bucket configurations and storage RLS policies
-
-```bash
-# Example schema extraction using PGPASSWORD (no password in command)
-export PGPASSWORD="[PROD_DB_PASSWORD]"
-pg_dump --host="aws-0-ap-south-1.pooler.supabase.com" \
-        --port="5432" \
-        --username="postgres.tkovzymkubxtpcgynkgd" \
-        --dbname="postgres" \
-        --schema-only \
-        --no-owner \
-        --no-privileges \
-        --file="uat_schema_dump.sql"
-unset PGPASSWORD
+```mermaid
+flowchart TD
+    Run["Test Execution Trigger"] --> Decision{"Suite Mode?"}
+    
+    Decision -->|"Default (CI & Post-Deploy Smoke)"| ReadOnly["READ-ONLY Suite"]
+    Decision -->|"Manual with SANDBOX_CONFIRM=yes"| Sandbox["SANDBOX Suite"]
+    
+    ReadOnly --> RO1["GET Requests & Read Actions Only"]
+    ReadOnly --> RO2["Fails on any DB mutation or mutating action"]
+    ReadOnly --> RO3["Zero writes anywhere in DB"]
+    
+    Sandbox --> SB1["Writes bounded strictly to workspace: ZZ-TEST-SANDBOX"]
+    Sandbox --> SB2["Zero supabaseAdmin writes (App actions as test user only)"]
+    Sandbox --> SB3["Self-cleaning: Deletes all run artifacts at finish"]
 ```
 
----
+### A. READ-ONLY Suite (Default, CI & Post-Deploy)
+- **Execution Target**: PR governance, scheduled CI, and post-deploy production smoke.
+- **Allowed Actions**: `GET` HTTP requests against pages/APIs, and read-only server queries as authenticated test users.
+- **Mutation Block**: A runtime interceptor fails any test immediately if it calls `insert()`, `update()`, `delete()`, `upsert()`, or a mutating Server Action.
+- **Service Role Block**: Static pre-flight gate guarantees zero baseline files import `lib/supabase/service_role`.
 
-## 4. Reference & Master Data Migration (Strict Whitelist)
-
-Only static lookup and reference data may be transferred to UAT. **Zero live user profiles, business records, or attachments are permitted.**
-
-### Authorized Whitelist Tables
-The export script exclusively copies rows from these tables:
-1. `modules_master` — Registered workspace module codes and descriptors
-2. `roles` — System role codes and names
-3. `permissions` — Atomic permission actions
-4. `role_permissions` — System role-to-permission mappings
-5. `status_master` — Status definitions across all modules
-6. `priority_master` — Task and ticket priority configurations
-7. `departments` — Organization department master
-8. `designations` — Organization designation master
-9. `company_master` — Corporate legal entity references
-10. `email_events` / `email_templates` — Transactional email templates (branding/structure only)
-11. `number_series` / `app_settings` — System numbering configurations
-
-### Strictly Forbidden Tables (Zero Data Copied)
-`user_master`, `auth.users`, `tasks`, `tickets`, `requirements`, `vehicles`, `amc_contracts`, `meeting_rooms`, `meetings`, `budgets`, `documents`, `audit_logs`, `notifications`, `email_queue`, and all file storage objects.
+### B. SANDBOX Suite (Manual Execution Only)
+- **Execution Trigger**: `npm run test:sandbox` (Strictly requires `SANDBOX_CONFIRM=yes`).
+- **Enclosure Boundary**: All writes are permitted **exclusively** inside the dedicated workspace `ZZ-TEST-SANDBOX`.
+- **Authentic App Mutations**: No test anywhere uses `supabaseAdmin` for writes; all mutations must flow through the application's actual Server Actions or API routes under an authenticated test user session.
+- **Self-Cleaning Guarantee**: The suite tracks every entity created during the run, purges them upon completion, and reports any leftover artifacts.
+- **CI Exclusion**: The sandbox suite **never** runs in automated CI workflows.
 
 ---
 
-## 5. Run the Application Against UAT (`.env.uat`)
+## 2. Test Account Security & Role Matrix
 
-A dedicated environment configuration isolates local server execution from production.
+All test accounts reuse identities from the 28 pre-existing test accounts, with strict restrictions:
 
-### A. Create `.env.uat` (Gitignored)
-Create `.env.uat` in the repository root. This file is gitignored via the `.gitignore` rule `.env.*` and must **never** be committed.
+### A. Active vs Permanently Banned Accounts
+- **Permanently Banned**: `test.superadmin@chandakgroup.tech` remains banned. All Super Admin test cases are classified as `MANUAL` and are never executed by automated runners.
+- **Unbanned for Testing**:
+  - One `STANDARD` user per module
+  - One `noaccess` user per module
+  - `test.dash.viewer@chandakgroup.tech` (Single Dashboard Viewer)
+  - `test.dash.multi@chandakgroup.tech` (Multi Dashboard Lead)
+  - All other test accounts remain banned.
 
-```ini
-# .env.uat — Dedicated UAT Application Configuration
-NODE_ENV=development
-PORT=3000
-
-# UAT Supabase Project
-NEXT_PUBLIC_SUPABASE_URL="https://<uat-project-ref>.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="<uat-anon-key>"
-SUPABASE_SERVICE_ROLE_KEY="<uat-service-role-key>"
-DATABASE_URL="postgresql://postgres.[uat-ref]:[password]@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
-
-# Test Authentication & Security
-TEST_USER_PASSWORD="<Your-Chosen-Secure-Test-Password>"
-CRON_SECRET="<uat-cron-secret-2026>"
-
-# Email Safety Gate (Prevent outbound emails to real recipients)
-ENABLE_EMAIL_SENDING=false
-SMTP_HOST=localhost
-SMTP_PORT=1025
-```
-
-### B. Launch Script
-Start the Next.js development server strictly isolated to `.env.uat`:
-
-```bash
-npm run dev:uat
-```
+### B. Account Safeguards
+1. **Identification**: Test accounts carry `is_test_user = true` (additive column on `user_master`).
+2. **Credential Security**: Credentials derive exclusively from `TEST_USER_PASSWORD` (configured in GitHub Secrets and local environment; never committed or hard-coded).
+3. **Strict Scoping**: Module access for test accounts is scoped **exclusively** to `ZZ-TEST-SANDBOX` (`scope_type = 'SPECIFIC'`, `scope_ids = ['ZZ-TEST-SANDBOX']`). They hold zero access to real client workspaces, projects, or live operational records.
 
 ---
 
-## 6. Active Host Verification (`/api/version`)
+## 3. Strict Production Data Isolation (Zero Contamination)
 
-To prevent accidental execution against production, the application endpoint `/api/version` exposes the connected Supabase hostname:
+To guarantee that real business operations, analytics, and metrics remain pristine:
 
-```json
-{
-  "status": "online",
-  "serverBootTime": "2026-11-18T18:00:00.000Z",
-  "version": "2.4.0",
-  "commit": "abc12345",
-  "supabaseHost": "<uat-project-ref>.supabase.co",
-  "timestamp": 1763488800000
-}
-```
-
-### Baseline Runner Verification Gate
-Prior to executing tests, the test runner queries `${STAGING_URL}/api/version`:
-1. It validates `response.supabaseHost`.
-2. If `response.supabaseHost === "tkovzymkubxtpcgynkgd.supabase.co"`, it immediately exits with `FATAL SECURITY GUARD: Target application is connected to production database!`.
-3. It proceeds only when `response.supabaseHost` matches the hostname of `TEST_SUPABASE_URL`.
+1. **Record Tagging**: Any record generated within the sandbox workspace carries `is_test = true`.
+2. **Analytical Exclusion**:
+   - Executive Dashboards, KPI cards, and trend charts filter out `is_test = true` records and `is_test_user` accounts.
+   - Global search, My Work views, and CSV/Excel exports strictly exclude `is_test = true` entities.
+   - SLA tracking and TAT escalation cron jobs explicitly ignore test records.
+3. **Notification Firewall**:
+   - Zero outbound emails or web-push notifications are delivered to `test.*@chandakgroup.tech` addresses.
+   - Actions performed by test accounts cannot trigger notifications to real users.
 
 ---
 
-## 7. Execution Sequence
+## 4. Remediation & Transition Plan for Earlier Run Artifacts
 
-Once the UAT instance is seeded and the app is running:
+The live database audit identified the following fixed test artifacts:
+- **Tasks**: `TSK-TEST-ALPHA` (`cab68c35-...`), `SUB-TEST-ALPHA` (`2f962064-...`)
+- **Tickets**: `TCK-TEST-ALPHA` (`5ad65aee-...`)
+- **Requirements**: `REQ-TEST-ALPHA` (`79b6e53b-...`)
+- **Real Records Affected**: **0** (confirmed by SELECT audit).
 
-```bash
-# 1. Start application with UAT configuration
-npm run dev:uat
+### Transition Strategy (Awaiting Project Owner OK)
+1. Initialize the dedicated sandbox workspace `ZZ-TEST-SANDBOX`.
+2. Re-parent and link the fixed entities (`TSK-TEST-ALPHA`, `SUB-TEST-ALPHA`, `TCK-TEST-ALPHA`, `REQ-TEST-ALPHA`) to `ZZ-TEST-SANDBOX` with `is_test = true`.
+3. Retain them as persistent fixtures for manual sandbox validation.
+4. Execute no update or migration until explicit user confirmation is received.
 
-# 2. In a separate terminal, seed the 28 test users and fixed test entities
-export TEST_SUPABASE_URL="https://<uat-project-ref>.supabase.co"
-export TEST_SUPABASE_SERVICE_ROLE_KEY="<uat-service-role-key>"
-export TEST_USER_PASSWORD="<Your-Chosen-Secure-Test-Password>"
-export STAGING_URL="http://localhost:3000"
+---
 
-npx tsx scripts/seed-test-users.ts
+## 5. Test Status Classification
 
-# 3. Execute baseline test suite
-npm run test:baseline
-```
+Per governance rules, test cases in [TEST_CASES.md](file:///d:/adios/docs/tests/TEST_CASES.md) and reports are classified as:
+- **PASS**: Real assertion succeeded against the app in the appropriate suite.
+- **FAIL**: Real assertion failed; defect recorded in [KNOWN_BUGS.md](file:///d:/adios/docs/tests/KNOWN_BUGS.md).
+- **MANUAL**: Test requires Super Admin privileges, physical multi-party workflows, or external third-party interaction. **Never counted as PASS in automated summaries.**
