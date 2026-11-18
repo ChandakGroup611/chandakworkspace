@@ -439,3 +439,38 @@ A prompt without technical enforcement is insufficient.
 A successful deployment without source-version verification is insufficient.
 
 Do not prioritize coding speed over correctness, security, traceability and stability.
+
+## 22. CHANGE TIERS & FAST-PATH GOVERNANCE
+
+To reduce change and deploy cycles from 1–2 hours to ~15 minutes while maintaining uncompromised safety gates, development tasks must be classified into tiers:
+
+### 1. SMALL TIER
+- **Qualifying Changes**: Copy/text updates, CSS visual styling, single-screen layout adjustments with ZERO business logic or database changes.
+- **Required Verification**:
+  1. `npx tsc --noEmit` (clean type validation).
+  2. Targeted ESLint on changed files only (`npx eslint <changed files>`).
+  3. Visual responsive verification at 375px (phone) and 1440px (desktop).
+- **Exemptions**: No registry or documentation updates (`ACCESS_RULES.md`, `ISSUES.md`).
+
+### 2. MEDIUM TIER
+- **Qualifying Changes**: Logic within a single module (e.g. Task Workflow, Vehicle Desk, AMC, Budgets), new queries, filter adjustments, or API handler updates.
+- **Required Verification**:
+  1. All SMALL tier gates (`tsc`, targeted `eslint`, mobile & desktop visual checks).
+  2. The specific module's test suite (e.g. `node scripts/access-audit/test-<module>.mjs` or targeted module E2E spec).
+- **Mandatory Approval Trigger**: Any change involving permissions, authentication, IAM, RBAC matrix, or data schema migrations is ALWAYS classified as **MEDIUM or higher** and MANDATORILY requires explicit user approval before implementation.
+
+### 3. RELEASE TIER (Merge to `main` for Production)
+- **Qualifying Changes**: Any PR merging from `develop` into `main` for deployment to production.
+- **Required Verification**: Full 21-point Governance Protocol:
+  1. Full TypeScript validation (`npx tsc --noEmit`).
+  2. Full project lint (`npm run lint`).
+  3. Clean production build (`npm run build`).
+  4. Staging E2E smoke tests (`npm run test:e2e`).
+  5. Security audit (`npm audit`).
+  6. Documentation and registries (`ACCESS_RULES.md`, `ISSUES.md`, changelog) updated ONCE during the release window.
+
+### 4. BRANCHING & MERGE WINDOWS
+- All development commits are made on branch `develop`.
+- Exactly ONE PR `develop` → `main` is opened per release cycle.
+- Scheduled merge windows: **13:00 IST** and **19:00 IST**.
+- Direct pushes to `main` are strictly prohibited except for an approved emergency hotfix.

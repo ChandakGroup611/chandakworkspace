@@ -6,6 +6,28 @@ The 21-point Governance Protocol in [.agents/rules/release_governance.md](file:/
 Every task lifecycle strictly requires:
 `INSPECT → BASELINE → ANALYZE IMPACT → PLAN → IMPLEMENT → SYNCHRONIZE DEPENDENCIES → TEST → REGRESSION TEST → REVIEW SOURCE → BUILD → VERIFY RELEASE → DEPLOY IF APPROVED → VERIFY DEPLOYMENT → REPORT EVIDENCE`.
 
+## Change Tiers & Streamlined Fast-Path Governance
+
+To maintain rigorous quality without slowing down delivery, development tasks follow tiered governance:
+
+- **SMALL** (Copy, visual styling, CSS, single screen, zero logic changes):
+  - **Verification**: `npx tsc --noEmit` + ESLint on changed files only (`npx eslint <changed files>`).
+  - **Visual Check**: One responsive check of the modified screen at 375px (mobile) and 1440px (desktop).
+  - **Exemptions**: No registry or documentation updates required (`ACCESS_RULES.md`, `ISSUES.md`, etc. stay untouched).
+- **MEDIUM** (Logic in one module, query/filter updates, non-breaking workflows):
+  - **Verification**: All **SMALL** gates + that specific module's test suite (e.g. `node scripts/access-audit/test-<module>.mjs` or targeted module E2E spec).
+  - **Mandatory Approval Trigger**: Any permission, authentication, IAM, RBAC matrix, or data schema change is ALWAYS classified as **MEDIUM or higher** and MANDATORILY requires explicit user approval before implementation.
+- **RELEASE** (Merge to `main` / Production Deployment):
+  - **Full Protocol**: Full `npx tsc --noEmit`, full repository lint, production build (`npm run build`), full `test:e2e` suite, dependency security audit (`npm audit`).
+  - **Documentation**: Registries, `ACCESS_RULES.md`, `ISSUES.md`, and changelog updated ONCE during the release window.
+  - All 21 points in `release_governance.md` strictly apply at the RELEASE tier.
+
+## Branching & Release Cadence
+- **Branch**: All changes are committed to branch `develop`.
+- **Pull Requests**: Open exactly ONE PR (`develop` → `main`) per release.
+- **Merge Windows**: The project owner reviews and merges PRs at **13:00 IST** and **19:00 IST**.
+- **No Direct Pushes to Main**: Direct pushes to `main` are strictly prohibited, except for an explicitly approved emergency hotfix.
+
 ## Strict Logic and Schema Verification
 
 You will ALWAYS double-check the logic of the fields, database columns, and code paths you are modifying. Before pushing code or making definitive statements, you must verify against the live schema or active codebase to ensure what you are doing is absolutely correct and not based on assumptions.

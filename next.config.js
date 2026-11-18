@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  typescript: {
+    // Next.js type checking during build is disabled to avoid redundant compilation
+    // because `npx tsc --noEmit` already gates every CI workflow before `next build` starts.
+    ignoreBuildErrors: true,
+  },
   turbopack: {},
   // Vehicle photo background removal (lib/vehicle/cutout.ts) runs a WebAssembly model on the server.
   // Keep these packages out of the bundle and ship the .wasm files with the standalone build.

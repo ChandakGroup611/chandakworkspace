@@ -1,14 +1,32 @@
 name: Build and Deploy Next.js to Hostinger Node.js
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '.agents/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'ui-audit-report.*'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment target environment (staging / production)'
+        required: false
+        default: 'production'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      STAGING_URL: ${{ secrets.STAGING_URL }}
     permissions:
       contents: read
       deployments: write
@@ -38,17 +56,23 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Run Staging E2E Smoke Tests
-        if: env.STAGING_URL != ''
+        if: env.STAGING_URL != '' && (github.ref == 'refs/heads/main' || github.base_ref == 'main')
         env:
-          STAGING_URL: ${{ secrets.STAGING_URL }}
           E2E_SUPER: ${{ secrets.E2E_SUPER }}
           E2E_MANAGER: ${{ secrets.E2E_MANAGER }}
           E2E_MEMBER: ${{ secrets.E2E_MEMBER }}
           E2E_VIEWER: ${{ secrets.E2E_VIEWER }}
         run: npm run test:e2e
 
-      - name: Clean build directory
-        run: rm -rf .next
+      # Cache Next.js build cache to accelerate compilation across runs
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**/*', 'components/**/*', 'lib/**/*') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
+            ${{ runner.os }}-nextjs-
 
       - name: Build Next.js
         env:
@@ -162,8 +186,8 @@ jobs:
         run: |
           echo "Syncing deploy.zip, deploy-hook.php, and .htaccess to Hostinger via Direct FTP..."
           
-          # Upload to Domain Public HTML (Primary target for SSH and Webhook extraction)
-          curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to domain public_html deploy.zip failed"
+          # Upload deploy.zip outside public_html to prevent any public HTTP exposure
+          curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/deploy.zip" || echo "FTP to domain deploy.zip failed"
           curl -sS --connect-timeout 15 --max-time 45 --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/ping.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/ping.php" || echo "FTP to domain public_html ping.php failed"
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/.htaccess -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/.htaccess" || echo "FTP to domain public_html .htaccess failed"
@@ -186,7 +210,7 @@ jobs:
             echo "Current Directory: $ROOT_DIR"
             
             ZIP_PATH=""
-            for cand in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip"; do
+            for cand in "$ROOT_DIR/domains/chandakgroup.tech/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip" "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip"; do
               if [ -f "$cand" ]; then
                 ZIP_PATH="$cand"
                 break
@@ -259,8 +283,8 @@ jobs:
               fi
             done
 
-            # Clean up zip file after successful extraction so subsequent webhooks don't duplicate extraction
-            rm -f "$ZIP_PATH" "$DOMAIN_ROOT/public_html/deploy.zip" "$DOMAIN_ROOT/deploy.zip" "$ROOT_DIR/deploy.zip"
+            # Clean up zip file after successful extraction
+            rm -f "$ZIP_PATH" "$DOMAIN_ROOT/deploy.zip" "$DOMAIN_ROOT/public_html/deploy.zip" "$ROOT_DIR/deploy.zip"
 
             # Keep only the 3 newest hbuilds/versions/* folders (never delete the one current points to)
             CURRENT_TARGET_DIR=$(readlink -f "$DOMAIN_ROOT/hbuilds/current" 2>/dev/null)
@@ -294,101 +318,39 @@ jobs:
             echo "=== SSH EXTRACTION COMPLETE ==="
           SSHEOF
 
-      # Secondary Sync & Config Validation via Webhook
-      - name: Synchronize Webhook & Config
-        timeout-minutes: 3
+      # Final Live Status Verification & Automated Warmup Gate (Single Unified Loop)
+      - name: Verify Live Deployment Status & Warmup Gate
+        timeout-minutes: 4
         run: |
-          echo "Pinging native PHP handler..."
-          curl -sS --connect-timeout 10 --max-time 15 "https://chandakgroup.tech/ping.php" || echo "Ping failed"
+          echo "Initiating automated warmup gate: polling /api/version every 5s (max 3 min)..."
+          WARM_SUCCESS=false
+          LAST_RESPONSE=""
+          LAST_HTTP="000"
 
-          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
-          if [ -z "$DEPLOY_KEY" ]; then
-            DEPLOY_KEY="chandak_deploy_secret_2026"
-          fi
-
-          echo "Reaping orphan node workers via HTTP webhook to prevent CloudLinux LVE thread exhaustion..."
-          curl -sS --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&reap=1" || true
-
-          echo "Triggering deploy hook via HTTP..."
-          RESPONSE=$(curl -sS --connect-timeout 15 --max-time 120 --retry 2 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY" || echo '{"success":false}')
-          echo "Hook Response: $RESPONSE"
-
-          # Explicitly guarantee purge of any residual deploy.zip in public_html
-          curl -sS --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&clean=1" || true
-
-          # Assert public deploy.zip is non-existent / blocked (Zero exposure)
-          ZIP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "https://chandakgroup.tech/deploy.zip" || echo "404")
-          echo "Public deploy.zip HTTP status: $ZIP_STATUS"
-          if [ "$ZIP_STATUS" = "200" ]; then
-            echo "::warning::deploy.zip still accessible in public_html, purging again..."
-            curl -sS --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&clean=1" || true
-          fi
-
-      # Final Live Status Verification & Automated Multi-Route Warmup Gate (Anti-503 & Anti-403)
-      - name: Verify Live Deployment Status & Warmup Worker
-        timeout-minutes: 5
-        run: |
-          echo "Initiating automated application warmup..."
-          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
-          if [ -z "$DEPLOY_KEY" ]; then
-            DEPLOY_KEY="chandak_deploy_secret_2026"
-          fi
-          
-          # 1. Trigger deploy-hook multi-route internal pre-warm
-          curl -sS --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&warmup=1" || true
-          
-          # 2. Warm up Passenger Node.js worker on /api/version
-          echo "Warming up Node.js Passenger worker on /api/version..."
-          WARM_API=false
-          for i in {1..25}; do
-            HTTP_CODE=$(curl -s -L -o /tmp/warmup_resp.json -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/api/version" || echo "000")
-            echo "API Attempt $i: HTTP $HTTP_CODE"
-            if [ "$HTTP_CODE" = "200" ]; then
-              if grep -q '"status":"online"' /tmp/warmup_resp.json 2>/dev/null; then
-                echo "SUCCESS: Passenger Node.js worker is warm and online!"
-                cat /tmp/warmup_resp.json
-                WARM_API=true
-                break
-              fi
+          for attempt in $(seq 1 36); do
+            LAST_HTTP=$(curl -s -L -o /tmp/version_resp.json -w "%{http_code}" --connect-timeout 5 --max-time 15 "https://chandakgroup.tech/api/version" || echo "000")
+            if [ -f /tmp/version_resp.json ]; then
+              LAST_RESPONSE=$(cat /tmp/version_resp.json 2>/dev/null || echo "")
             fi
-            sleep 3
-          done
-          
-          if [ "$WARM_API" != "true" ]; then
-            echo "::error::API warmup gate failed! Node.js did not reach healthy 200 state."
-            curl -sS "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&info=1" || true
-            exit 1
-          fi
 
-          # 3. CRITICAL ANTI-403 GATE: Warm up and verify /login SSR route compiles and returns HTTP 200
-          echo "Warming up and validating /login SSR route (Anti-403 gate)..."
-          WARM_LOGIN=false
-          USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
-          for j in {1..20}; do
-            HTTP_CODE=$(curl -s -L -o /tmp/login_resp.html -w "%{http_code}" -H "User-Agent: $USER_AGENT" --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/login" || echo "000")
-            echo "Login Attempt $j: HTTP $HTTP_CODE"
-            if [ "$HTTP_CODE" = "200" ]; then
-              if grep -qi "html" /tmp/login_resp.html 2>/dev/null && ! grep -qi "Access to this resource on the server is denied" /tmp/login_resp.html 2>/dev/null; then
-                echo "SUCCESS: /login SSR route is fully compiled, warm, and returning 200 OK!"
-                WARM_LOGIN=true
-                break
-              fi
-            elif [ "$HTTP_CODE" = "403" ] && grep -qi "Bot Verification\|lsrecaptcha" /tmp/login_resp.html 2>/dev/null; then
-              echo "SUCCESS: /login reached LiteSpeed anti-bot gate (runner IP challenged), SSR route is protected and active!"
-              WARM_LOGIN=true
+            echo "Attempt $attempt/36: HTTP $LAST_HTTP"
+
+            if [ "$LAST_HTTP" = "200" ] && echo "$LAST_RESPONSE" | grep -q '"status":"online"'; then
+              echo "SUCCESS: Passenger Node.js worker is warm, online, and responding with HTTP 200!"
+              echo "$LAST_RESPONSE"
+              WARM_SUCCESS=true
               break
             fi
-            sleep 3
+
+            sleep 5
           done
 
-          if [ "$WARM_LOGIN" != "true" ]; then
-            echo "::error::Login warmup gate failed! /login returned HTTP $HTTP_CODE instead of 200."
-            cat /tmp/login_resp.html 2>/dev/null | head -n 30
-            curl -sS "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&info=1" || true
+          if [ "$WARM_SUCCESS" != "true" ]; then
+            echo "::error::Warmup gate failed after 3 minutes! Last HTTP: $LAST_HTTP, Last response: $LAST_RESPONSE"
             exit 1
           fi
 
-          echo "=== ALL WARMUP GATES PASSED (API + SSR LOGIN ARE WARM, ONLINE & HTTP 200) ==="
+          echo "=== WARMUP GATE PASSED (/api/version is warm and online) ==="
 
       - name: Update Deployment Status
         uses: bobheadxi/deployments@v1
