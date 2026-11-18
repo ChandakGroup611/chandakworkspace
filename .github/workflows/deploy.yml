@@ -101,6 +101,7 @@ jobs:
           mkdir -p upload-payload
           cp deploy.zip upload-payload/
           cp public/deploy-hook.php upload-payload/
+          cp public/ping.php upload-payload/
           
           # Generate bootstrap public_html/.htaccess allowing native PHP deploy-hook execution
           cat << 'HTACCESS_EOF' > upload-payload/.htaccess
@@ -148,6 +149,7 @@ jobs:
           # Upload to Domain Public HTML (Primary target for SSH and Webhook extraction)
           curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to domain public_html deploy.zip failed"
           curl -sS --connect-timeout 15 --max-time 45 --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
+          curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/ping.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/ping.php" || echo "FTP to domain public_html ping.php failed"
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/.htaccess -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/.htaccess" || echo "FTP to domain public_html .htaccess failed"
 
       # Primary Extraction & Server Restart via SSH
@@ -269,14 +271,17 @@ jobs:
 
       # Secondary Sync & Config Validation via Webhook
       - name: Synchronize Webhook & Config
-        timeout-minutes: 2
+        timeout-minutes: 3
         run: |
+          echo "Pinging native PHP handler..."
+          curl -sS --connect-timeout 10 --max-time 15 "https://chandakgroup.tech/ping.php" || echo "Ping failed"
+
           echo "Triggering deploy hook via HTTP..."
           DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
           if [ -z "$DEPLOY_KEY" ]; then
             DEPLOY_KEY="chandak_deploy_secret_2026"
           fi
-          RESPONSE=$(curl -sS --connect-timeout 10 --max-time 45 --retry 3 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY" || echo '{"success":true}')
+          RESPONSE=$(curl -sS --connect-timeout 15 --max-time 120 --retry 2 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY" || echo '{"success":false}')
           echo "Hook Response: $RESPONSE"
 
           # Explicitly guarantee purge of any residual deploy.zip in public_html

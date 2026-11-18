@@ -154,7 +154,9 @@ if (strpos(__DIR__, 'hbuilds/versions') !== false) {
     }
 }
 if (!$activeVersionDir && $versionedDirs) {
-    usort($versionedDirs, fn($a, $b) => filemtime($b) - filemtime($a));
+    usort($versionedDirs, function($a, $b) {
+        return filemtime($b) - filemtime($a);
+    });
     $activeVersionDir = $versionedDirs[0];
 }
 
@@ -184,12 +186,6 @@ $publicDocRoots = [
     __DIR__,
 ];
 $publicDocRoots = array_values(array_unique(array_filter($publicDocRoots, 'is_dir')));
-
-// Ensure preview-props.json is present in .next/server so Next.js never crashes with ENOENT
-ensurePreviewProps($primaryAppRoots);
-
-// Ensure .htaccess with PassengerAppRoot is present in all possible document roots
-syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective);
 
 // Diagnostic / Info Mode
 if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isset($_GET['logs'])) {
