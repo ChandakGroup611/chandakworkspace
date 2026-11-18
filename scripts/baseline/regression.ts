@@ -176,6 +176,7 @@ export const regressionRunners: TestCaseRunner[] = [
     description: "Priority badge in /workspaces/tasks row updates inline instantly without opening full edit modal",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const taskId = ctx.fixedEntities.taskId;

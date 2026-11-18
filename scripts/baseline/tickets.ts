@@ -26,6 +26,7 @@ export const ticketRunners: TestCaseRunner[] = [
     description: "STANDARD user creates support ticket with code and creator registration",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.ticket.standard@chandakgroup.tech"];
@@ -51,6 +52,7 @@ export const ticketRunners: TestCaseRunner[] = [
     description: "Ticket creator / assigned agent edits priority inline",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const ticketId = ctx.fixedEntities.ticketId;
@@ -90,6 +92,7 @@ export const ticketRunners: TestCaseRunner[] = [
     description: "Support agent updates status with resolution notes",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const ticketId = ctx.fixedEntities.ticketId;

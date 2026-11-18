@@ -26,6 +26,7 @@ export const taskRunners: TestCaseRunner[] = [
     description: "Super Admin creates workspace with unique code and registered owner",
     role: "Super Admin",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
@@ -52,6 +53,7 @@ export const taskRunners: TestCaseRunner[] = [
     description: "STANDARD user creates task in enrolled workspace",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
@@ -78,6 +80,7 @@ export const taskRunners: TestCaseRunner[] = [
     description: "Task assignee updates priority inline",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const taskId = ctx.fixedEntities.taskId;
@@ -227,6 +230,7 @@ export const taskRunners: TestCaseRunner[] = [
     description: "Subtask 3 levels deep inline priority update persists",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const subtaskId = ctx.fixedEntities.subtaskId;

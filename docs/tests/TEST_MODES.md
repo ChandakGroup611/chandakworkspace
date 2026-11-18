@@ -96,10 +96,25 @@ To guarantee that real business operations, analytics, and metrics remain pristi
 2. **Analytical Exclusion**:
    - Executive Dashboards, KPI cards, and trend charts filter out `is_test = true` records and `is_test_user` accounts.
    - Global search, My Work views, and CSV/Excel exports strictly exclude `is_test = true` entities.
-   - SLA tracking and TAT escalation cron jobs explicitly ignore test records.
+   - All 3 scheduled cron jobs explicitly ignore test records:
+     1. `/api/cron/fleet-compliance-audit` (Daily vehicle fitness/insurance/PUC audits)
+     2. `/api/cron/tat-escalation` (Task SLA tracking, overdue escalations & reminders)
+     3. `/api/cron/process-email-queue` (Batched email notification delivery)
 3. **Notification Firewall**:
    - Zero outbound emails or web-push notifications are delivered to `test.*@chandakgroup.tech` addresses.
    - Actions performed by test accounts cannot trigger notifications to real users.
+
+4. **Production Cron Security & Scheduling**:
+   - All 3 active cron endpoints require `Authorization: Bearer <CRON_SECRET>`:
+     * `/api/cron/fleet-compliance-audit`
+     * `/api/cron/tat-escalation`
+     * `/api/cron/process-email-queue`
+   - Hostinger/cPanel cron commands:
+     ```bash
+     curl -s -X POST https://chandakgroup.tech/api/cron/fleet-compliance-audit -H "Authorization: Bearer $CRON_SECRET"
+     curl -s -X POST https://chandakgroup.tech/api/cron/tat-escalation -H "Authorization: Bearer $CRON_SECRET"
+     curl -s -X POST https://chandakgroup.tech/api/cron/process-email-queue -H "Authorization: Bearer $CRON_SECRET"
+     ```
 
 ---
 

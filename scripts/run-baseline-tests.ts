@@ -182,11 +182,15 @@ async function runAll() {
     }
   }
 
+  const suiteRunners = isSandbox 
+    ? ALL_RUNNERS.filter(r => r.suite === "sandbox") 
+    : ALL_RUNNERS.filter(r => r.suite !== "sandbox");
+
   const startTime = Date.now();
   console.log("=================================================================");
-  console.log("  CHANDAK WORKSPACE — P1 CURRENT BASELINE AUTOMATION RUNNER");
+  console.log(`  CHANDAK WORKSPACE — P1 CURRENT BASELINE (${isSandbox ? "SANDBOX SUITE" : "READ-ONLY SUITE"})`);
   console.log("=================================================================");
-  console.log(`Total P1 CURRENT test cases to execute: ${ALL_RUNNERS.length}`);
+  console.log(`Total P1 CURRENT test cases to execute: ${suiteRunners.length} (Master catalog: ${ALL_RUNNERS.length})`);
 
   const ctx = await initializeContext();
   console.log(`Resolved ${Object.keys(ctx.users).length} test users in context.`);
@@ -197,11 +201,14 @@ async function runAll() {
   let failedCount = 0;
   let manualCount = 0;
 
-  for (let i = 0; i < ALL_RUNNERS.length; i++) {
-    const runner = ALL_RUNNERS[i];
-    const isSuperAdmin = runner.role === "Super Admin";
-    const isParkedLead = runner.role.includes("Lead") || 
-      runner.role.includes("Admin") || 
+  for (let i = 0; i < suiteRunners.length; i++) {
+    const runner = suiteRunners[i];
+    const roleUpper = (runner.role || "").toUpperCase();
+    const isSuperAdmin = roleUpper === "SUPER ADMIN";
+    const isParkedLead = roleUpper.includes("LEAD") || 
+      roleUpper.includes("ADMIN") || 
+      roleUpper.includes("ORGANIZER") || 
+      roleUpper.includes("MANAGER") || 
       runner.description.toLowerCase().includes("approve") || 
       runner.description.toLowerCase().includes("gfc") || 
       runner.description.toLowerCase().includes("dispatch") ||
@@ -218,7 +225,7 @@ async function runAll() {
         pass: true,
         notes: isSuperAdmin ? "MANUAL: Super Admin verification (parked)" : "MANUAL: Module lead/admin role verification (parked)"
       };
-      console.log(`[${i + 1}/${ALL_RUNNERS.length}] [MANUAL] ${runner.tcId} (${runner.module}) - ${res.notes}`);
+      console.log(`[${i + 1}/${suiteRunners.length}] [MANUAL] ${runner.tcId} (${runner.module}) - ${res.notes}`);
     } else {
       const t0 = performance.now();
       try {
@@ -236,10 +243,10 @@ async function runAll() {
 
       if (res.pass) {
         passedCount++;
-        console.log(`[${i + 1}/${ALL_RUNNERS.length}] [PASS] ${runner.tcId} (${runner.module}) - ${duration}ms`);
+        console.log(`[${i + 1}/${suiteRunners.length}] [PASS] ${runner.tcId} (${runner.module}) - ${duration}ms`);
       } else {
         failedCount++;
-        console.warn(`[${i + 1}/${ALL_RUNNERS.length}] [FAIL] ${runner.tcId} (${runner.module}) - ${res.notes} (${duration}ms)`);
+        console.warn(`[${i + 1}/${suiteRunners.length}] [FAIL] ${runner.tcId} (${runner.module}) - ${res.notes} (${duration}ms)`);
       }
     }
 
@@ -265,7 +272,7 @@ async function runAll() {
 
   console.log("\n=================================================================");
   console.log(`BASELINE RUN COMPLETE in ${totalTime}s`);
-  console.log(`Total Run: ${ALL_RUNNERS.length} | PASSED: ${passedCount} | FAILED: ${failedCount} | MANUAL: ${manualCount} | Pass Rate: ${passRate}%`);
+  console.log(`Total Run: ${results.length} | PASSED: ${passedCount} | FAILED: ${failedCount} | MANUAL: ${manualCount} | Pass Rate: ${passRate}%`);
   console.log("=================================================================\n");
 
   // Generate Baseline Execution Report (KNOWN_BUGS.md is never rewritten by runner)

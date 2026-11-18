@@ -29,6 +29,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     description: "FLEET_ADMIN registers vehicle with RC and insurance compliance documents",
     role: "FLEET_ADMIN",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const adminId = ctx.users["test.vehicle.admin@chandakgroup.tech"];
@@ -50,6 +51,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     description: "FLEET_ADMIN updates vehicle specifications and assigns driver from driver master",
     role: "FLEET_ADMIN",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const adminId = ctx.users["test.vehicle.admin@chandakgroup.tech"];

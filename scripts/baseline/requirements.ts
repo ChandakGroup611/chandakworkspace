@@ -26,6 +26,7 @@ export const requirementRunners: TestCaseRunner[] = [
     description: "STANDARD user creates draft requirement specification",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.req.standard@chandakgroup.tech"];
@@ -51,6 +52,7 @@ export const requirementRunners: TestCaseRunner[] = [
     description: "Author updates priority inline on draft requirement",
     role: "STANDARD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const reqId = ctx.fixedEntities.reqId;
@@ -90,6 +92,7 @@ export const requirementRunners: TestCaseRunner[] = [
     description: "Approval signoff workflow records approver ID and timestamp",
     role: "Super Admin",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];

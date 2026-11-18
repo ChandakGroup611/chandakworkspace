@@ -36,6 +36,7 @@ export interface TestCaseRunner {
   description: string;
   role: string;
   type: string;
+  suite?: "readonly" | "sandbox";
   run: (ctx: TestCaseContext) => Promise<{
     pass: boolean;
     notes: string;

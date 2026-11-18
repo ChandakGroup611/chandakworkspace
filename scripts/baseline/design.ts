@@ -30,6 +30,7 @@ export const designRunners: TestCaseRunner[] = [
     description: "DESIGN_LEAD can register drawing record and revision entry",
     role: "DESIGN_LEAD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const leadId = ctx.users["test.design.lead@chandakgroup.tech"];
@@ -51,6 +52,7 @@ export const designRunners: TestCaseRunner[] = [
     description: "DESIGN_LEAD updates drawing lookahead planned dates and remarks",
     role: "DESIGN_LEAD",
     type: "functional",
+    suite: "sandbox",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
       const leadId = ctx.users["test.design.lead@chandakgroup.tech"];
