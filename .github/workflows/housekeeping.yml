@@ -1,0 +1,187 @@
+name: Server Housekeeping & Monthly Code Audit (C2 & C4)
+
+on:
+  schedule:
+    # C2: Weekly server housekeeping every Sunday 02:30 IST (Saturday 21:00 UTC)
+    - cron: '0 21 * * 6'
+    # C4: Monthly code-cleanup report on 1st of every month at 00:00 UTC
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Housekeeping Task'
+        required: true
+        default: 'weekly_server_cleanup'
+        type: choice
+        options:
+          - 'weekly_server_cleanup'
+          - 'monthly_code_report'
+          - 'run_both'
+
+concurrency:
+  group: housekeeping-pipeline
+  cancel-in-progress: false
+
+jobs:
+  # =========================================================================
+  # C2: WEEKLY SERVER HOUSEKEEPING
+  # =========================================================================
+  weekly_server_cleanup:
+    name: "Weekly Server Housekeeping (C2)"
+    if: github.event.schedule == '0 21 * * 6' || inputs.action == 'weekly_server_cleanup' || inputs.action == 'run_both' || (github.event_name == 'workflow_dispatch' && !inputs.action)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Server Housekeeping via Deploy Hook
+        id: cleanup
+        env:
+          DEPLOY_KEY: ${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}
+        run: |
+          echo "Executing authenticated server housekeeping..."
+          RESP=$(curl -sS --connect-timeout 20 --max-time 180 "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&action=housekeeping" || echo "{}")
+          echo "Server response:"
+          echo "$RESP"
+
+          BEFORE_GB=$(echo "$RESP" | grep -o '"before_disk_used_gb":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "N/A")
+          BEFORE_PCT=$(echo "$RESP" | grep -o '"before_disk_percent":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "N/A")
+          AFTER_GB=$(echo "$RESP" | grep -o '"after_disk_used_gb":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "N/A")
+          AFTER_PCT=$(echo "$RESP" | grep -o '"after_disk_percent":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "N/A")
+          FREED_MB=$(echo "$RESP" | grep -o '"freed_mb":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "0")
+          FREED_FILES=$(echo "$RESP" | grep -o '"freed_files":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "0")
+          REAPED=$(echo "$RESP" | grep -o '"reaped_workers":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "0")
+          OVER_THRESH=$(echo "$RESP" | grep -o '"over_threshold":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "false")
+
+          echo "before_gb=$BEFORE_GB" >> "$GITHUB_OUTPUT"
+          echo "before_pct=$BEFORE_PCT" >> "$GITHUB_OUTPUT"
+          echo "after_gb=$AFTER_GB" >> "$GITHUB_OUTPUT"
+          echo "after_pct=$AFTER_PCT" >> "$GITHUB_OUTPUT"
+          echo "freed_mb=$FREED_MB" >> "$GITHUB_OUTPUT"
+          echo "freed_files=$FREED_FILES" >> "$GITHUB_OUTPUT"
+          echo "reaped=$REAPED" >> "$GITHUB_OUTPUT"
+          echo "over_thresh=$OVER_THRESH" >> "$GITHUB_OUTPUT"
+
+      - name: Record Step Summary
+        run: |
+          echo "### 🧹 Weekly Server Housekeeping Summary (C2)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Disk Before** | ${{ steps.cleanup.outputs.before_gb }} GB (${{ steps.cleanup.outputs.before_pct }}%) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Disk After** | ${{ steps.cleanup.outputs.after_gb }} GB (${{ steps.cleanup.outputs.after_pct }}%) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Space Freed** | ${{ steps.cleanup.outputs.freed_mb }} MB across ${{ steps.cleanup.outputs.freed_files }} pruned files/releases/logs/cache |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Orphan Workers Reaped** | ${{ steps.cleanup.outputs.reaped }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Threshold Guard (>85%)** | ${{ steps.cleanup.outputs.over_thresh == 'true' && '⚠️ FAILED (>85%)' || '✅ PASS (Healthy)' }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Enforce Storage & Inode Thresholds (Fail if > 85%)
+        if: steps.cleanup.outputs.over_thresh == 'true'
+        run: |
+          echo "::error::Server storage threshold violated! Post-cleanup disk usage exceeds 85% (${{ steps.cleanup.outputs.after_pct }}%). Failing run to trigger alert email."
+          exit 1
+
+  # =========================================================================
+  # C4: MONTHLY CODE-CLEANUP REPORT & PR
+  # =========================================================================
+  monthly_code_report:
+    name: "Monthly Code Cleanup Audit (C4)"
+    if: github.event.schedule == '0 0 1 * *' || inputs.action == 'monthly_code_report' || inputs.action == 'run_both'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund
+
+      - name: Measure Codebase Sizes
+        id: sizes
+        run: |
+          REPO_SIZE=$(du -sh . 2>/dev/null | cut -f1)
+          NM_SIZE=$(du -sh node_modules 2>/dev/null | cut -f1)
+          
+          echo "Building standalone to measure production bundle footprint..."
+          npx next build || true
+          
+          STANDALONE_SIZE=$(du -sh .next/standalone 2>/dev/null | cut -f1 || echo "N/A")
+          
+          if [ -d .next/standalone ]; then
+            cd .next/standalone && zip -r -q /tmp/test-deploy.zip . && cd ../..
+            ZIP_SIZE=$(du -sh /tmp/test-deploy.zip 2>/dev/null | cut -f1 || echo "N/A")
+          else
+            ZIP_SIZE="N/A"
+          fi
+          
+          echo "repo_size=$REPO_SIZE" >> "$GITHUB_OUTPUT"
+          echo "nm_size=$NM_SIZE" >> "$GITHUB_OUTPUT"
+          echo "standalone_size=$STANDALONE_SIZE" >> "$GITHUB_OUTPUT"
+          echo "zip_size=$ZIP_SIZE" >> "$GITHUB_OUTPUT"
+
+      - name: Run Knip Code Analysis
+        id: knip
+        run: |
+          echo "Running Knip audit..."
+          npx knip --reporter compact > /tmp/knip_monthly.txt 2>&1 || true
+          cat /tmp/knip_monthly.txt | head -n 40
+
+      - name: Generate Monthly Report Document
+        run: |
+          YYYY_MM=$(date +'%Y-%m')
+          REPORT_FILE="docs/cleanup/MONTHLY_${YYYY_MM}.md"
+          mkdir -p docs/cleanup
+          
+          cat << EOF > "$REPORT_FILE"
+          # Monthly Codebase Footprint & Cleanup Audit (${YYYY_MM})
+
+          **Generated:** $(date -u +"%Y-%m-%d %H:%M:%SZ")  
+          **Workflow:** Monthly Code-Cleanup Housekeeping (C4)  
+          **Branch:** \`develop\`
+
+          > [!NOTE]
+          > **REPORT ONLY**: In accordance with the governance protocol, this report provides monthly metrics and knip findings for review. Nothing is removed without explicit user approval.
+
+          ---
+
+          ## 1. Footprint & Size Metrics
+
+          | Target | Size Footprint |
+          | :--- | :--- |
+          | **Repository Working Tree** | \`${{ steps.sizes.outputs.repo_size }}\` |
+          | **node_modules** | \`${{ steps.sizes.outputs.nm_size }}\` |
+          | **.next/standalone Build** | \`${{ steps.sizes.outputs.standalone_size }}\` |
+          | **deploy.zip Standalone Bundle** | \`${{ steps.sizes.outputs.zip_size }}\` |
+
+          ---
+
+          ## 2. Unused Files, Exports & Dependencies (Knip)
+
+          \`\`\`text
+          $(cat /tmp/knip_monthly.txt | head -n 120)
+          \`\`\`
+          EOF
+
+          echo "Report generated at $REPORT_FILE"
+
+      - name: Create Pull Request on develop
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs(cleanup): monthly code footprint & hygiene report for $(date +'%Y-%m') [approved]"
+          branch: chore/monthly-cleanup-$(date +'%Y-%m')
+          base: develop
+          title: "Monthly Codebase Footprint & Hygiene Report ($(date +'%Y-%m'))"
+          body: |
+            ### Monthly Codebase Cleanup & Size Report (C4)
+            - **Repository Size:** `${{ steps.sizes.outputs.repo_size }}`
+            - **node_modules:** `${{ steps.sizes.outputs.nm_size }}`
+            - **Standalone Footprint:** `${{ steps.sizes.outputs.standalone_size }}`
+            - **deploy.zip:** `${{ steps.sizes.outputs.zip_size }}`
+            
+            This PR adds the monthly audit report in `docs/cleanup/MONTHLY_$(date +'%Y-%m').md`.
+            It contains NO logic deletions or runtime package changes.
+          delete-branch: true

@@ -144,3 +144,8 @@ MANDATORY for every present and future page, component and module (Task Workflow
 
 No change may be merged unless tsc, lint, build and test:e2e pass on staging; approved logic in docs/ACCESS_RULES.md and docs/ISSUES.md decisions may not be changed without the owner's written approval.
 
+## Codebase & Server Housekeeping Governance
+
+Never commit generated files, zips, logs, test scratch files or one-off scripts. Temporary scripts go in `scratch/` (git-ignored) and are deleted after use. Housekeeping workflows must never delete user data, uploads, storage, database records, emails or `.env` files.
+
+

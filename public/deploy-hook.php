@@ -341,6 +341,208 @@ if (isset($_GET['action']) && $_GET['action'] === 'rollback') {
     exit;
 }
 
+// Helper: Truncate single log file exceeding 50 MB to its last 10 MB
+function truncateLogIfOversized($path, $maxBytes = 52428800, $keepBytes = 10485760) {
+    if (!file_exists($path) || filesize($path) <= $maxBytes) return 0;
+    $initialSize = filesize($path);
+    $fp = @fopen($path, 'r+');
+    if (!$fp) return 0;
+    @fseek($fp, -$keepBytes, SEEK_END);
+    $tail = @fread($fp, $keepBytes);
+    @ftruncate($fp, 0);
+    @rewind($fp);
+    @fwrite($fp, $tail);
+    @fclose($fp);
+    return max(0, $initialSize - $keepBytes);
+}
+
+// Dedicated Post-Deploy Cleanup Action (C1)
+if (isset($_GET['action']) && $_GET['action'] === 'post_deploy_cleanup') {
+    $freedBytes = 0;
+    $freedFiles = 0;
+
+    // 1. Delete deploy.zip and any *.zip in public_html and domain root
+    $zipCandidates = array_unique(array_merge(
+        (array)glob($domainRoot . '/*.zip'),
+        (array)glob($domainRoot . '/public_html/*.zip'),
+        (array)glob($domainRoot . '/hbuilds/*.zip'),
+        ['/home/u859582759/deploy.zip']
+    ));
+    foreach ($zipCandidates as $z) {
+        if ($z && file_exists($z)) {
+            $freedBytes += (int)@filesize($z);
+            if (@unlink($z)) $freedFiles++;
+        }
+    }
+
+    // 2. Keep only 3 newest releases in hbuilds/releases/ (never the live one), delete older
+    $liveTarget = is_link($canonicalAppRoot) ? @readlink($canonicalAppRoot) : $canonicalAppRoot;
+    $liveReal = $liveTarget ? @realpath($liveTarget) : '';
+    $releasesBase = $domainRoot . '/hbuilds/releases';
+    $releases = glob($releasesBase . '/*');
+    if ($releases && count($releases) > 3) {
+        usort($releases, function($a, $b) { return filemtime($b) - filemtime($a); });
+        for ($i = 3; $i < count($releases); $i++) {
+            $rPath = $releases[$i];
+            if (is_dir($rPath) && @realpath($rPath) !== $liveReal) {
+                recursiveRemove($rPath);
+                $freedFiles++;
+            }
+        }
+    }
+
+    // 3. Delete logs older than 7 days; truncate single log above 50 MB to last 10 MB
+    $sevenDaysAgo = time() - (7 * 86400);
+    $allLogs = array_unique(array_merge(
+        (array)glob($domainRoot . '/*.log'),
+        (array)glob($canonicalAppRoot . '/*.log'),
+        (array)glob($domainRoot . '/hbuilds/*/*.log')
+    ));
+    foreach ($allLogs as $lg) {
+        if ($lg && file_exists($lg)) {
+            if (filemtime($lg) < $sevenDaysAgo) {
+                $freedBytes += (int)@filesize($lg);
+                if (@unlink($lg)) $freedFiles++;
+            } else {
+                $freedBytes += truncateLogIfOversized($lg);
+            }
+        }
+    }
+
+    // 4. Reap orphan node/lsnode processes
+    $reaped = reapOrphanProcesses();
+
+    // 5. Gather current disk metrics
+    $totalDisk = @disk_total_space($domainRoot) ?: 1;
+    $freeDisk = @disk_free_space($domainRoot) ?: 0;
+    $usedDisk = max(0, $totalDisk - $freeDisk);
+    $usedPercent = round(($usedDisk / $totalDisk) * 100, 1);
+
+    echo json_encode([
+        'success' => true,
+        'action' => 'post_deploy_cleanup',
+        'disk_used_human' => round($usedDisk / (1024 * 1024 * 1024), 2) . ' GB (' . $usedPercent . '%)',
+        'disk_used_percent' => $usedPercent,
+        'freed_mb' => round($freedBytes / (1024 * 1024), 2),
+        'freed_files' => $freedFiles,
+        'reaped_workers' => count($reaped),
+        'timestamp' => date('Y-m-d H:i:s')
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// Dedicated Weekly Housekeeping Action (C2)
+if (isset($_GET['action']) && $_GET['action'] === 'housekeeping') {
+    $beforeTotal = @disk_total_space($domainRoot) ?: 1;
+    $beforeFree = @disk_free_space($domainRoot) ?: 0;
+    $beforeUsed = max(0, $beforeTotal - $beforeFree);
+    $beforeUsedPercent = round(($beforeUsed / $beforeTotal) * 100, 1);
+
+    $freedBytes = 0;
+    $freedFiles = 0;
+
+    // Run all C1 tasks (zips, stale releases, logs, orphan workers)
+    $zipCandidates = array_unique(array_merge(
+        (array)glob($domainRoot . '/*.zip'),
+        (array)glob($domainRoot . '/public_html/*.zip'),
+        (array)glob($domainRoot . '/hbuilds/*.zip'),
+        ['/home/u859582759/deploy.zip']
+    ));
+    foreach ($zipCandidates as $z) {
+        if ($z && file_exists($z)) {
+            $freedBytes += (int)@filesize($z);
+            if (@unlink($z)) $freedFiles++;
+        }
+    }
+
+    $liveTarget = is_link($canonicalAppRoot) ? @readlink($canonicalAppRoot) : $canonicalAppRoot;
+    $liveReal = $liveTarget ? @realpath($liveTarget) : '';
+    $releases = glob($domainRoot . '/hbuilds/releases/*');
+    if ($releases && count($releases) > 3) {
+        usort($releases, function($a, $b) { return filemtime($b) - filemtime($a); });
+        for ($i = 3; $i < count($releases); $i++) {
+            $rPath = $releases[$i];
+            if (is_dir($rPath) && @realpath($rPath) !== $liveReal) {
+                recursiveRemove($rPath);
+                $freedFiles++;
+            }
+        }
+    }
+
+    $sevenDaysAgo = time() - (7 * 86400);
+    $allLogs = array_unique(array_merge(
+        (array)glob($domainRoot . '/*.log'),
+        (array)glob($canonicalAppRoot . '/*.log'),
+        (array)glob($domainRoot . '/hbuilds/*/*.log')
+    ));
+    foreach ($allLogs as $lg) {
+        if ($lg && file_exists($lg)) {
+            if (filemtime($lg) < $sevenDaysAgo) {
+                $freedBytes += (int)@filesize($lg);
+                if (@unlink($lg)) $freedFiles++;
+            } else {
+                $freedBytes += truncateLogIfOversized($lg);
+            }
+        }
+    }
+
+    // Weekly Housekeeping: Clear ~/.npm/_cacache
+    $npmCache = '/home/u859582759/.npm/_cacache';
+    if (is_dir($npmCache)) {
+        recursiveRemove($npmCache);
+        @mkdir($npmCache, 0755, true);
+    }
+
+    // Weekly Housekeeping: Clear stale ~/.cache (preserving any active runtime cache)
+    $userCache = '/home/u859582759/.cache';
+    if (is_dir($userCache)) {
+        $cItems = glob($userCache . '/*');
+        foreach ($cItems as $ci) {
+            if (is_dir($ci) && basename($ci) !== 'next-server') {
+                recursiveRemove($ci);
+            }
+        }
+    }
+
+    // Weekly Housekeeping: Clear ~/tmp files older than 7 days
+    $tmpDir = '/home/u859582759/tmp';
+    if (is_dir($tmpDir)) {
+        $tmpFiles = glob($tmpDir . '/*');
+        foreach ($tmpFiles as $tf) {
+            if (file_exists($tf) && filemtime($tf) < $sevenDaysAgo) {
+                if (is_dir($tf)) recursiveRemove($tf);
+                else @unlink($tf);
+            }
+        }
+    }
+
+    $reaped = reapOrphanProcesses();
+
+    // After stats
+    $afterTotal = @disk_total_space($domainRoot) ?: 1;
+    $afterFree = @disk_free_space($domainRoot) ?: 0;
+    $afterUsed = max(0, $afterTotal - $afterFree);
+    $afterUsedPercent = round(($afterUsed / $afterTotal) * 100, 1);
+
+    // Check 85% threshold
+    $overThreshold = ($afterUsedPercent > 85.0);
+
+    echo json_encode([
+        'success' => true,
+        'action' => 'housekeeping',
+        'before_disk_used_gb' => round($beforeUsed / (1024 * 1024 * 1024), 2),
+        'before_disk_percent' => $beforeUsedPercent,
+        'after_disk_used_gb' => round($afterUsed / (1024 * 1024 * 1024), 2),
+        'after_disk_percent' => $afterUsedPercent,
+        'freed_mb' => round($freedBytes / (1024 * 1024), 2),
+        'freed_files' => $freedFiles,
+        'reaped_workers' => count($reaped),
+        'over_threshold' => $overThreshold,
+        'timestamp' => date('Y-m-d H:i:s')
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 // Dedicated Force Restart Action
 if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     $killedViaPosix = reapOrphanProcesses();

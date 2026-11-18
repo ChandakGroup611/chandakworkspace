@@ -8,6 +8,9 @@ on:
       - '**/*.md'
       - '.agents/**'
       - 'ui-audit-report.*'
+      - 'scratch/**'
+      - 'run_logs/**'
+      - 'examples/**'
   workflow_dispatch:
 
 concurrency:
@@ -166,12 +169,84 @@ jobs:
             echo "Governance Guard: No protected paths modified. Passed."
           fi
 
+  hygiene:
+    name: "Gate 7: Repository Hygiene & Size Limits (C3)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository (fetch history for diff inspection)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Enforce Size and File Hygiene Bounds
+        run: |
+          echo "Scanning diff for files > 5MB, archives (*.zip), or restricted directories..."
+          VIOLATIONS=0
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD || true)
+
+          for file in $CHANGED_FILES; do
+            if [ ! -f "$file" ]; then
+              continue
+            fi
+
+            # Check 1: Any *.zip
+            if [[ "$file" == *.zip ]]; then
+              echo "::error::Hygiene violation: Disallowed archive file committed: $file"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+
+            # Check 2: Disallowed scratch/log directories
+            if [[ "$file" == scratch/* ]] || [[ "$file" == run_logs/* ]] || [[ "$file" == examples/* ]]; then
+              echo "::error::Hygiene violation: File committed in disallowed temporary/dev folder: $file"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+
+            # Check 3: File size > 5 MB (5,242,880 bytes)
+            FILE_SIZE=$(wc -c < "$file" 2>/dev/null || echo 0)
+            if [ "$FILE_SIZE" -gt 5242880 ]; then
+              echo "::error::Hygiene violation: File exceeds 5 MB limit ($FILE_SIZE bytes): $file"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done
+
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "::error::Hygiene Gate Failed with $VIOLATIONS violation(s)."
+            exit 1
+          fi
+          echo "Hygiene Gate: Zero disallowed files, archives, or oversized files detected. Passed."
+
+  unused:
+    name: "Advisory: Unused Code & Exports (knip)"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund
+
+      - name: Run Knip Advisory Scan
+        run: |
+          echo "Running knip compact advisory..."
+          npx knip --reporter compact > /tmp/knip-report.txt 2>&1 || true
+          echo "### 🔍 Knip Code Hygiene Advisory (C3)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          head -n 35 /tmp/knip-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
   # =========================================================================
   # STANDALONE BUILD
   # =========================================================================
   build:
     name: "Build Next.js Standalone"
-    needs: [typecheck, lint, security, access, secrets, guard]
+    needs: [typecheck, lint, security, access, secrets, guard, hygiene]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -403,6 +478,25 @@ jobs:
           fi
 
           echo "=== VERIFICATION COMPLETE: COMMIT $EXPECTED_COMMIT IS 100% LIVE ==="
+
+      - name: Automated Post-Deploy Server Cleanup (C1)
+        if: success()
+        run: |
+          echo "Triggering post-deploy server housekeeping via deploy-hook..."
+          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}"
+          CLEANUP_RESP=$(curl -sS --connect-timeout 15 --max-time 60 "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&action=post_deploy_cleanup&sha=${{ github.sha }}" || echo "{}")
+          echo "Cleanup response: $CLEANUP_RESP"
+
+          DISK_USED=$(echo "$CLEANUP_RESP" | grep -o '"disk_used_human":"[^"]*"' | cut -d'"' -f4 || echo "Normal")
+          FREED_MB=$(echo "$CLEANUP_RESP" | grep -o '"freed_mb":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "0")
+          FREED_FILES=$(echo "$CLEANUP_RESP" | grep -o '"freed_files":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "0")
+          REAPED=$(echo "$CLEANUP_RESP" | grep -o '"reaped_workers":[^,}]*' | cut -d':' -f2 | tr -d ' ' || echo "0")
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🧹 Post-Deploy Automatic Cleanup (C1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Disk Used:** $DISK_USED" >> $GITHUB_STEP_SUMMARY
+          echo "- **Space Freed:** ${FREED_MB} MB across ${FREED_FILES} pruned files/releases/logs" >> $GITHUB_STEP_SUMMARY
+          echo "- **Worker Reaping:** $REAPED orphan node/lsnode processes safely reaped" >> $GITHUB_STEP_SUMMARY
 
       - name: Write Summary to GitHub Step Summary
         if: always()

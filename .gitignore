@@ -36,15 +36,19 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-
+# generated, scratch, archives & audit artifacts (C3)
+.vercel/
 .vercel
 /vehicle/
 ~$*
 *.zip
 /_ui-kit/
+ui-audit-report.*
 /ui-audit-report.md
 /ui-audit-report.json
+run_logs/
+scratch/
+coverage/
 # vehicle photo cut-outs and model (regenerated on demand)
 /.cache/
 /supabase/backups/
