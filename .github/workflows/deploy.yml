@@ -103,24 +103,11 @@ jobs:
           cp public/deploy-hook.php upload-payload/
           cp public/ping.php upload-payload/
           
-          # Generate bootstrap public_html/.htaccess allowing native PHP deploy-hook execution
+          # Generate authoritative public_html/.htaccess with PassengerAppRoot
           cat << 'HTACCESS_EOF' > upload-payload/.htaccess
           <IfModule LiteSpeed>
               CacheLookup on
-              RewriteEngine On
-              RewriteRule .* - [E=verifycaptcha:off]
-              RewriteRule .* - [E=noconntimeout:1]
-              RewriteRule .* - [E=noabort:1]
           </IfModule>
-
-          RewriteEngine On
-          RewriteRule .* - [E=verifycaptcha:off]
-          RewriteRule ^\.builds - [F,L]
-          RewriteRule ^deploy\.zip$ - [F,L]
-
-          # CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER routed or rewritten
-          RewriteCond %{REQUEST_URI} \.php$ [NC]
-          RewriteRule .* - [L]
 
           <IfModule mod_headers.c>
               <FilesMatch "\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$">
@@ -135,9 +122,29 @@ jobs:
               </FilesMatch>
           </IfModule>
 
+          RewriteEngine On
+          RewriteRule ^\.builds - [F,L]
+          RewriteRule ^deploy\.zip$ - [F,L]
+
           # CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js
           RewriteCond %{REQUEST_FILENAME} -f
           RewriteRule ^ - [L]
+
+          PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs
+          PassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp
+          PassengerAppType node
+          PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
+          PassengerStartupFile server.js
+          PassengerBaseURI /
+          PassengerMaxPoolSize 1
+          PassengerMaxInstancesPerApp 1
+          PassengerMinInstances 1
+          PassengerPoolIdleTime 300
+          SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=384"
+          SetEnv LSNODE_CONSOLE_LOG console.log
+          SetEnv TOKIO_WORKER_THREADS 1
+          SetEnv UV_THREADPOOL_SIZE 1
+          SetEnv DOTENV_CONFIG_QUIET true
           HTACCESS_EOF
 
       # Upload the compiled standalone zip file, deploy-hook, and htaccess to Hostinger via Direct FTP (Zero Caching)
@@ -152,17 +159,20 @@ jobs:
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/ping.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/ping.php" || echo "FTP to domain public_html ping.php failed"
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/.htaccess -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/.htaccess" || echo "FTP to domain public_html .htaccess failed"
 
-      # Primary Extraction & Server Restart via SSH
+      # Primary Extraction & Server Restart via OpenSSH (with sshpass)
       - name: Extract Payload and Restart Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
         continue-on-error: true
-        with:
-          host: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.SSH_USERNAME || secrets.FTP_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD || secrets.FTP_PASSWORD }}
-          port: ${{ secrets.SSH_PORT || '65002' }}
-          script: |
-            echo "=== SSH DEPLOY SCRIPT EXECUTION ==="
+        run: |
+          echo "=== SSH DEPLOY SCRIPT EXECUTION ==="
+          sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+          
+          SSH_USER="${{ secrets.SSH_USERNAME || secrets.FTP_USERNAME }}"
+          SSH_PASS="${{ secrets.SSH_PASSWORD || secrets.FTP_PASSWORD }}"
+          SSH_HOST="${{ secrets.FTP_SERVER }}"
+          SSH_PORT="${{ secrets.SSH_PORT || '65002' }}"
+
+          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=25 -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "bash -s" << 'SSHEOF' || echo "SSH execution encountered an error"
+            echo "=== REMOTE SSH EXECUTION STARTED ==="
             ROOT_DIR="$(pwd)"
             echo "Current Directory: $ROOT_DIR"
             
@@ -268,6 +278,7 @@ jobs:
             
             rm -f "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
             echo "=== SSH EXTRACTION COMPLETE ==="
+          SSHEOF
 
       # Secondary Sync & Config Validation via Webhook
       - name: Synchronize Webhook & Config
