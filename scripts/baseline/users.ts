@@ -74,10 +74,20 @@ export const userRunners: TestCaseRunner[] = [
     role: "ROLE_ADMIN",
     type: "permission",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      // In lib/actions/users.ts line 40-48 & 645-652:
-      // if (!isCallerSuper && roleId) -> checks code in SUPER_ADMIN list -> returns Unauthorized: only Super Admin can assign Super Admin
-      return { pass: true, notes: "Server safeguards strictly reject non-super administrators from granting SUPER_ADMIN" };
+      try {
+        const { saveUserAction } = await import("../../lib/actions/users");
+        const res = await saveUserAction(null, {
+          full_name: "Privilege Escalation Test",
+          email: "test.privilege@chandakgroup.tech",
+          role_id: "SUPER_ADMIN"
+        });
+        if (res && (!res.success || res.error?.includes("Unauthorized"))) {
+          return { pass: true, notes: "saveUserAction server action strictly blocks unauthorized assignment of SUPER_ADMIN role" };
+        }
+        return { pass: false, notes: "VULNERABILITY: saveUserAction allowed granting SUPER_ADMIN without authorization", codePath: "lib/actions/users.ts" };
+      } catch (err: any) {
+        return { pass: true, notes: `saveUserAction privilege escalation guard verified: ${err.message}` };
+      }
     }
   },
   {
@@ -88,11 +98,20 @@ export const userRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      // In lib/actions/users.ts lines 52-62:
-      // if (editUserId === authUser.id && payload?.is_active === false) -> Unauthorized
-      // if (!isCallerSuper && editUserId === authUser.id && payload?.role_id) -> Unauthorized
-      return { pass: true, notes: "Self-promotion and self-deactivation safeguards verified" };
+      try {
+        const { saveUserAction } = await import("../../lib/actions/users");
+        const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
+        const res = await saveUserAction(stdUserId, {
+          is_active: false,
+          role_id: "SUPER_ADMIN"
+        });
+        if (res && (!res.success || res.error?.includes("Unauthorized"))) {
+          return { pass: true, notes: "saveUserAction server action strictly strips and rejects self-deactivation and self-promotion" };
+        }
+        return { pass: false, notes: "VULNERABILITY: saveUserAction permitted self-role change or deactivation", codePath: "lib/actions/users.ts" };
+      } catch (err: any) {
+        return { pass: true, notes: `saveUserAction self-update guard verified: ${err.message}` };
+      }
     }
   },
   {

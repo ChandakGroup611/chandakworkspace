@@ -73,10 +73,9 @@ export const dashboardRunners: TestCaseRunner[] = [
     screen: "app/dashboards/page.tsx (route: /dashboards)",
     description: "KPI summary cards, charts, and trends render cleanly for authorized ticked dashboard",
     role: "STANDARD",
-    type: "functional",
+    type: "UI",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      return { pass: true, notes: "Executive dashboard charts and KPI analytics render cleanly" };
+      return { pass: false, status: "NOT_AUTOMATED", notes: "NOT_AUTOMATED: Interactive KPI cards & trends render requires Playwright browser check" };
     }
   },
   {
@@ -85,10 +84,9 @@ export const dashboardRunners: TestCaseRunner[] = [
     screen: "app/dashboards/page.tsx (route: /dashboards)",
     description: "User scoped strictly to Company A sees strictly Company A accounting ledger activity",
     role: "STANDARD",
-    type: "data",
+    type: "UI",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      return { pass: true, notes: "Financial ledger queries strictly bounded by company scope" };
+      return { pass: false, status: "NOT_AUTOMATED", notes: "NOT_AUTOMATED: Visual company scoped ledger rendering requires Playwright browser check" };
     }
   },
   {
@@ -97,10 +95,9 @@ export const dashboardRunners: TestCaseRunner[] = [
     screen: "app/dashboards/page.tsx (route: /dashboards)",
     description: "Drilldown drawer displays row-level transaction vouchers on KPI card interaction",
     role: "STANDARD",
-    type: "functional",
+    type: "UI",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      return { pass: true, notes: "Transaction ledger drilldown drawer verified" };
+      return { pass: false, status: "NOT_AUTOMATED", notes: "NOT_AUTOMATED: Interactive drilldown drawer interaction requires Playwright browser check" };
     }
   },
   {

@@ -200,6 +200,7 @@ async function runAll() {
   let passedCount = 0;
   let failedCount = 0;
   let manualCount = 0;
+  let notAutomatedCount = 0;
 
   for (let i = 0; i < suiteRunners.length; i++) {
     const runner = suiteRunners[i];
@@ -214,8 +215,8 @@ async function runAll() {
       runner.description.toLowerCase().includes("dispatch") ||
       runner.type === "manual";
 
-    let res: { pass: boolean; notes: string; errorTrace?: string; codePath?: string; screenshotPath?: string };
-    let status: "PASS" | "FAIL" | "MANUAL" = "PASS";
+    let res: { pass: boolean; notes: string; status?: "PASS" | "FAIL" | "MANUAL" | "NOT_AUTOMATED"; errorTrace?: string; codePath?: string; screenshotPath?: string };
+    let status: "PASS" | "FAIL" | "MANUAL" | "NOT_AUTOMATED" = "PASS";
     let duration = 0;
 
     if (isSuperAdmin || isParkedLead) {
@@ -226,6 +227,14 @@ async function runAll() {
         notes: isSuperAdmin ? "MANUAL: Super Admin verification (parked)" : "MANUAL: Module lead/admin role verification (parked)"
       };
       console.log(`[${i + 1}/${suiteRunners.length}] [MANUAL] ${runner.tcId} (${runner.module}) - ${res.notes}`);
+    } else if (runner.type === "UI" || runner.type === "not_automated") {
+      status = "NOT_AUTOMATED";
+      notAutomatedCount++;
+      res = {
+        pass: false,
+        notes: "NOT_AUTOMATED: Interactive UI/visual case requires Playwright browser verification (unverified)"
+      };
+      console.log(`[${i + 1}/${suiteRunners.length}] [NOT_AUTOMATED] ${runner.tcId} (${runner.module}) - ${runner.description}`);
     } else {
       const t0 = performance.now();
       try {
@@ -239,9 +248,12 @@ async function runAll() {
         };
       }
       duration = Math.round(performance.now() - t0);
-      status = res.pass ? "PASS" : "FAIL";
+      status = res.status || (res.pass ? "PASS" : "FAIL");
 
-      if (res.pass) {
+      if (status === "NOT_AUTOMATED") {
+        notAutomatedCount++;
+        console.log(`[${i + 1}/${suiteRunners.length}] [NOT_AUTOMATED] ${runner.tcId} (${runner.module}) - ${res.notes}`);
+      } else if (res.pass) {
         passedCount++;
         console.log(`[${i + 1}/${suiteRunners.length}] [PASS] ${runner.tcId} (${runner.module}) - ${duration}ms`);
       } else {
@@ -272,11 +284,11 @@ async function runAll() {
 
   console.log("\n=================================================================");
   console.log(`BASELINE RUN COMPLETE in ${totalTime}s`);
-  console.log(`Total Run: ${results.length} | PASSED: ${passedCount} | FAILED: ${failedCount} | MANUAL: ${manualCount} | Pass Rate: ${passRate}%`);
+  console.log(`Total Run: ${results.length} | PASSED: ${passedCount} | FAILED: ${failedCount} | MANUAL: ${manualCount} | NOT_AUTOMATED: ${notAutomatedCount} | Pass Rate: ${passRate}%`);
   console.log("=================================================================\n");
 
   // Generate Baseline Execution Report (KNOWN_BUGS.md is never rewritten by runner)
-  await generateBaselineReport(results, passedCount, failedCount, manualCount, totalTime, passRate);
+  await generateBaselineReport(results, passedCount, failedCount, manualCount, notAutomatedCount, totalTime, passRate);
 
   console.log("Generated docs/tests/BASELINE_REPORT.md");
 
@@ -339,46 +351,49 @@ async function generateBaselineReport(
   passedCount: number,
   failedCount: number,
   manualCount: number,
+  notAutomatedCount: number,
   totalTime: string,
   passRate: string
 ) {
   // Group by module
-  const moduleStats: Record<string, { total: number; pass: number; fail: number; manual: number }> = {};
+  const moduleStats: Record<string, { total: number; pass: number; fail: number; manual: number; notAutomated: number }> = {};
   for (const r of results) {
     if (!moduleStats[r.module]) {
-      moduleStats[r.module] = { total: 0, pass: 0, fail: 0, manual: 0 };
+      moduleStats[r.module] = { total: 0, pass: 0, fail: 0, manual: 0, notAutomated: 0 };
     }
     moduleStats[r.module].total++;
     if (r.status === "PASS") moduleStats[r.module].pass++;
     else if (r.status === "FAIL") moduleStats[r.module].fail++;
-    else moduleStats[r.module].manual++;
+    else if (r.status === "MANUAL") moduleStats[r.module].manual++;
+    else moduleStats[r.module].notAutomated++;
   }
 
   let md = `# Automated Baseline Test Report (BASELINE_REPORT.md)\n\n`;
   md += `**Execution Date:** ${new Date().toISOString()}  \n`;
   md += `**Scope:** All P1 CURRENT Baseline Test Cases (READ-ONLY Safety Baseline)  \n`;
   md += `**Execution Codebase:** CURRENT (No behavioral changes applied)  \n`;
-  md += `**Total Test Cases:** ${results.length}  \n`;
+  md += `**Total Test Cases in Suite:** ${results.length}  \n`;
   md += `**Passed:** ${passedCount}  \n`;
   md += `**Failed:** ${failedCount}  \n`;
   md += `**Manual (Parked):** ${manualCount}  \n`;
+  md += `**Not Automated (UI/Interactive):** ${notAutomatedCount}  \n`;
   md += `**Automated Pass Rate:** ${passRate}%  \n`;
   md += `**Total Duration:** ${totalTime}s  \n\n`;
 
   md += `## 1. Summary by Operational Module\n\n`;
-  md += `| Module | Total P1 Cases | Passed | Failed | Manual | Health |\n`;
-  md += `| :--- | :---: | :---: | :---: | :---: | :---: |\n`;
+  md += `| Module | Total P1 Cases | Passed | Failed | Manual | Not Automated | Health |\n`;
+  md += `| :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n`;
   for (const [mod, s] of Object.entries(moduleStats)) {
     const health = s.fail === 0 ? "🟢 100%" : `🟡 ${s.fail} bugs`;
-    md += `| **${mod}** | ${s.total} | ${s.pass} | ${s.fail} | ${s.manual} | ${health} |\n`;
+    md += `| **${mod}** | ${s.total} | ${s.pass} | ${s.fail} | ${s.manual} | ${s.notAutomated} | ${health} |\n`;
   }
-  md += `| **Total** | **${results.length}** | **${passedCount}** | **${failedCount}** | **${manualCount}** | **${passRate}%** |\n\n`;
+  md += `| **Total** | **${results.length}** | **${passedCount}** | **${failedCount}** | **${manualCount}** | **${notAutomatedCount}** | **${passRate}%** |\n\n`;
 
   md += `## 2. Master Execution Results Matrix\n\n`;
   md += `| TC-ID | Module | Screen | Description | Status | Duration | Notes / Evidence |\n`;
   md += `| :--- | :--- | :--- | :--- | :---: | :---: | :--- |\n`;
   for (const r of results) {
-    const statusBadge = r.status === "PASS" ? "**PASS**" : r.status === "MANUAL" ? "**MANUAL**" : "**FAIL**";
+    const statusBadge = r.status === "PASS" ? "**PASS**" : r.status === "MANUAL" ? "**MANUAL**" : r.status === "NOT_AUTOMATED" ? "**NOT_AUTOMATED**" : "**FAIL**";
     md += `| **${r.tcId}** | ${r.module} | \`${r.screen.split(" ")[0]}\` | ${r.description} | ${statusBadge} | ${r.durationMs}ms | ${r.notes.replace(/\|/g, "\\|")} |\n`;
   }
 

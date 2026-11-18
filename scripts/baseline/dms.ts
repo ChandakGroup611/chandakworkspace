@@ -86,10 +86,9 @@ export const dmsRunners: TestCaseRunner[] = [
     screen: "app/design/[[...slug]]/page.tsx (route: /design/dms)",
     description: "DMS document row provides both View (preview) and Download options",
     role: "STANDARD",
-    type: "functional",
+    type: "UI",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      return { pass: true, notes: "DMS file repository conforms to View & Download compliance" };
+      return { pass: false, status: "NOT_AUTOMATED", notes: "NOT_AUTOMATED: Interactive DMS document row View & Download requires Playwright browser check" };
     }
   },
   {

@@ -21,11 +21,9 @@ export const iamRunners: TestCaseRunner[] = [
     screen: "app/iam/page.tsx (route: /iam)",
     description: "Super Administrator role is rendered read-only; checkboxes disabled; delete button absent",
     role: "Super Admin",
-    type: "permission",
+    type: "UI",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      // In IAM matrix UI, Super Admin role cannot be modified or deleted
-      return { pass: true, notes: "Super Administrator role is locked and protected from deletion or permission stripping" };
+      return { pass: false, status: "NOT_AUTOMATED", notes: "NOT_AUTOMATED: Visual read-only role rendering requires Playwright browser check" };
     }
   },
   {

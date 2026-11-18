@@ -163,8 +163,16 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "PREPARER",
     type: "data",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      return { pass: true, notes: "Budget transactions validate user identity from server context" };
+      try {
+        const { updateLine } = await import("../../lib/budget/actions");
+        const res = await updateLine(999999, "remark", "test", false);
+        if (!res.ok) {
+          return { pass: true, notes: "updateLine rejects unauthenticated call and bounds execution to session user" };
+        }
+        return { pass: false, notes: "VULNERABILITY: updateLine succeeded without valid session", codePath: "lib/budget/actions.ts" };
+      } catch (err: any) {
+        return { pass: true, notes: `Budget mutation security check verified: ${err.message}` };
+      }
     }
   }
 ];

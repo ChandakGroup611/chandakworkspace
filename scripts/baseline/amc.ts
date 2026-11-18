@@ -104,10 +104,9 @@ export const amcRunners: TestCaseRunner[] = [
     screen: "app/amc/page.tsx (route: /amc)",
     description: "AMC agreement PDF provides both View (preview) and Download triggers",
     role: "STANDARD",
-    type: "functional",
+    type: "UI",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
-      return { pass: true, notes: "AMC agreement attachments satisfy View & Download compliance" };
+      return { pass: false, status: "NOT_AUTOMATED", notes: "NOT_AUTOMATED: Interactive AMC agreement PDF View & Download requires Playwright browser check" };
     }
   },
   {

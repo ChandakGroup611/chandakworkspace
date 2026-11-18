@@ -21,7 +21,7 @@ export interface TestCaseResult {
   description: string;
   role: string;
   type: string;
-  status: "PASS" | "FAIL" | "MANUAL";
+  status: "PASS" | "FAIL" | "MANUAL" | "NOT_AUTOMATED";
   durationMs: number;
   notes: string;
   errorTrace?: string;
@@ -40,6 +40,7 @@ export interface TestCaseRunner {
   run: (ctx: TestCaseContext) => Promise<{
     pass: boolean;
     notes: string;
+    status?: "PASS" | "FAIL" | "MANUAL" | "NOT_AUTOMATED";
     errorTrace?: string;
     codePath?: string;
     screenshotPath?: string;
