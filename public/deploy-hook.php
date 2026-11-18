@@ -108,6 +108,30 @@ function ensurePreviewProps($appRoots) {
     }
 }
 
+// Helper: Reap orphan node and lsnode processes using POSIX signals to prevent hitting CloudLinux LVE NPROC limits
+function reapOrphanProcesses() {
+    $killed = [];
+    if (!function_exists('posix_kill')) {
+        return $killed;
+    }
+    $myPid = getmypid();
+    $procDirs = @glob('/proc/[0-9]*');
+    if ($procDirs) {
+        foreach ($procDirs as $pDir) {
+            $pid = (int)basename($pDir);
+            if ($pid > 1 && $pid !== $myPid) {
+                $cmd = @file_get_contents($pDir . '/cmdline');
+                if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'lsnode') !== false || strpos($cmd, 'server.js') !== false)) {
+                    if (@posix_kill($pid, 9)) {
+                        $killed[] = $pid;
+                    }
+                }
+            }
+        }
+    }
+    return $killed;
+}
+
 // Helper: Ensure .htaccess with PassengerAppRoot is present ONLY in public_html, and purged from app roots
 function syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective) {
     $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
@@ -261,6 +285,19 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     exit;
 }
 
+// Dedicated Process Reap Action: proactively kill orphan workers to free CloudLinux LVE limits
+if (isset($_GET['reap']) || isset($_GET['kill_orphans'])) {
+    $reaped = reapOrphanProcesses();
+    echo json_encode([
+        'success' => true,
+        'action' => 'reap',
+        'reaped_count' => count($reaped),
+        'reaped_pids' => $reaped,
+        'timestamp' => date('Y-m-d H:i:s')
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 // Dedicated Warmup Action: pre-warm Passenger worker and required runtime files
 if (isset($_GET['warmup'])) {
     ensurePreviewProps($primaryAppRoots);
@@ -279,6 +316,7 @@ if (isset($_GET['warmup'])) {
 
 // Dedicated Force Restart Action
 if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
+    $killedViaPosix = reapOrphanProcesses();
     $killOut = [];
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killOut);
 
@@ -454,7 +492,8 @@ if ($zipFile && class_exists('ZipArchive')) {
     @unlink(__DIR__ . '/.ftp-deploy-sync-state.json');
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
 
-    // Signal Passenger to reload the application smoothly
+    // Reap orphan processes and signal Passenger to reload the application smoothly
+    $killResults = reapOrphanProcesses();
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
 }
 

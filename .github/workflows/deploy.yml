@@ -107,7 +107,15 @@ jobs:
           cat << 'HTACCESS_EOF' > upload-payload/.htaccess
           <IfModule LiteSpeed>
               CacheLookup on
+              RewriteEngine On
+              RewriteRule .* - [E=verifycaptcha:off]
+              RewriteRule .* - [E=noconntimeout:1]
+              RewriteRule .* - [E=noabort:1]
           </IfModule>
+
+          <FilesMatch "\.php$">
+              PassengerEnabled off
+          </FilesMatch>
 
           <IfModule mod_headers.c>
               <FilesMatch "\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$">
@@ -132,13 +140,14 @@ jobs:
 
           PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs
           PassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp
+          PassengerEnabled on
           PassengerAppType node
           PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
           PassengerStartupFile server.js
           PassengerBaseURI /
           PassengerMaxPoolSize 1
           PassengerMaxInstancesPerApp 1
-          PassengerMinInstances 1
+          PassengerMinInstances 0
           PassengerPoolIdleTime 300
           SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=384"
           SetEnv LSNODE_CONSOLE_LOG console.log
@@ -267,6 +276,11 @@ jobs:
               done
             fi
 
+            # Orphan Process Cleanup: Reap orphan workers before restarting Passenger
+            pkill -9 -u $(whoami) -f lsnode 2>/dev/null || true
+            pkill -9 -u $(whoami) -f node 2>/dev/null || true
+            killall -9 node 2>/dev/null || true
+
             # Signal passenger restart cleanly via restart triggers
             mkdir -p "$DOMAIN_ROOT/hbuilds/current/nodejs/tmp"
             touch "$DOMAIN_ROOT/hbuilds/current/nodejs/tmp/restart.txt"
@@ -287,11 +301,15 @@ jobs:
           echo "Pinging native PHP handler..."
           curl -sS --connect-timeout 10 --max-time 15 "https://chandakgroup.tech/ping.php" || echo "Ping failed"
 
-          echo "Triggering deploy hook via HTTP..."
           DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
           if [ -z "$DEPLOY_KEY" ]; then
             DEPLOY_KEY="chandak_deploy_secret_2026"
           fi
+
+          echo "Reaping orphan node workers via HTTP webhook to prevent CloudLinux LVE thread exhaustion..."
+          curl -sS --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&reap=1" || true
+
+          echo "Triggering deploy hook via HTTP..."
           RESPONSE=$(curl -sS --connect-timeout 15 --max-time 120 --retry 2 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY" || echo '{"success":false}')
           echo "Hook Response: $RESPONSE"
 
