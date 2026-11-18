@@ -107,15 +107,19 @@ jobs:
           <IfModule LiteSpeed>
               CacheLookup on
               RewriteEngine On
-              RewriteRule .* - [E=verifycaptcha:drop]
+              RewriteRule .* - [E=verifycaptcha:off]
               RewriteRule .* - [E=noconntimeout:1]
               RewriteRule .* - [E=noabort:1]
           </IfModule>
 
           RewriteEngine On
-          RewriteRule .* - [E=verifycaptcha:drop]
+          RewriteRule .* - [E=verifycaptcha:off]
           RewriteRule ^\.builds - [F,L]
           RewriteRule ^deploy\.zip$ - [F,L]
+
+          # CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER routed or rewritten
+          RewriteCond %{REQUEST_URI} \.php$ [NC]
+          RewriteRule .* - [L]
 
           <IfModule mod_headers.c>
               <FilesMatch "\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$">
@@ -133,12 +137,6 @@ jobs:
           # CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js
           RewriteCond %{REQUEST_FILENAME} -f
           RewriteRule ^ - [L]
-
-          # CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER routed to Passenger
-          <FilesMatch "\.php$">
-              PassengerEnabled off
-              RewriteRule .* - [L]
-          </FilesMatch>
           HTACCESS_EOF
 
       # Upload the compiled standalone zip file, deploy-hook, and htaccess to Hostinger via Direct FTP (Zero Caching)
