@@ -1,40 +1,43 @@
 # Testing Architecture & Data Isolation Governance (`TEST_MODES.md`)
 
-This authoritative document defines the two isolated testing modes running against localhost and the live environment without an external UAT project, providing absolute data isolation and zero impact on production operations.
+This authoritative document defines the two isolated testing modes running against localhost (`.env.local`) and the live environment without an external UAT project, providing absolute data isolation and zero impact on production operations.
 
 ---
 
 ## 1. Core Architecture: The Two Testing Modes
 
-Testing is bifurcated into two mutually exclusive suites with distinct safety constraints:
+Testing is bifurcated into two mutually exclusive suites with distinct safety boundaries:
 
 ```mermaid
 flowchart TD
     Run["Test Execution Trigger"] --> Decision{"Suite Mode?"}
     
-    Decision -->|"Default (CI & Post-Deploy Smoke)"| ReadOnly["READ-ONLY Suite"]
-    Decision -->|"Manual with SANDBOX_CONFIRM=yes"| Sandbox["SANDBOX Suite"]
+    Decision -->|"Default (Pre-Deploy Localhost & Post-Deploy Smoke)"| ReadOnly["READ-ONLY Suite"]
+    Decision -->|"Manual (Localhost Only, SANDBOX_CONFIRM=yes)"| Sandbox["SANDBOX Suite"]
     
     ReadOnly --> RO1["GET Requests & Read Actions Only"]
-    ReadOnly --> RO2["Fails on any DB mutation or mutating action"]
-    ReadOnly --> RO3["Zero writes anywhere in DB"]
+    ReadOnly --> RO2["Hard Mutation Check: Fails if insert/update/delete/upsert called"]
+    ReadOnly --> RO3["Domain Guard: Allowed on localhost and chandakgroup.tech"]
     
     Sandbox --> SB1["Writes bounded strictly to workspace: ZZ-TEST-SANDBOX"]
     Sandbox --> SB2["Zero supabaseAdmin writes (App actions as test user only)"]
-    Sandbox --> SB3["Self-cleaning: Deletes all run artifacts at finish"]
+    Sandbox --> SB3["Self-cleaning: Deletes all run artifacts at finish (leftovers = 0)"]
+    Sandbox --> SB4["Domain Guard: Localhost only, never chandakgroup.tech"]
 ```
 
-### A. READ-ONLY Suite (Default, CI & Post-Deploy)
-- **Execution Target**: PR governance, scheduled CI, and post-deploy production smoke.
-- **Allowed Actions**: `GET` HTTP requests against pages/APIs, and read-only server queries as authenticated test users.
-- **Mutation Block**: A runtime interceptor fails any test immediately if it calls `insert()`, `update()`, `delete()`, `upsert()`, or a mutating Server Action.
+### A. READ-ONLY Suite (Default, Pre-Deploy & Post-Deploy Smoke)
+- **Execution Target**: Localhost verification before every deploy, automated CI safety gate (post-approval), and production smoke verification on `https://chandakgroup.tech`.
+- **Allowed Operations**: `GET` HTTP requests against pages/APIs, and read-only queries as authenticated test users.
+- **Mutation Guard**: A runtime assertion fails the run immediately if any read-only test calls `insert()`, `update()`, `delete()`, `upsert()`, or a mutating Server Action.
+- **Domain Guard**: Permitted on `http://localhost:3000` and `https://chandakgroup.tech`.
 - **Service Role Block**: Static pre-flight gate guarantees zero baseline files import `lib/supabase/service_role`.
 
-### B. SANDBOX Suite (Manual Execution Only)
-- **Execution Trigger**: `npm run test:sandbox` (Strictly requires `SANDBOX_CONFIRM=yes`).
-- **Enclosure Boundary**: All writes are permitted **exclusively** inside the dedicated workspace `ZZ-TEST-SANDBOX`.
-- **Authentic App Mutations**: No test anywhere uses `supabaseAdmin` for writes; all mutations must flow through the application's actual Server Actions or API routes under an authenticated test user session.
-- **Self-Cleaning Guarantee**: The suite tracks every entity created during the run, purges them upon completion, and reports any leftover artifacts.
+### B. SANDBOX Suite (Manual Localhost Only)
+- **Execution Trigger**: `npm run test:sandbox` (Strictly requires environment variable `SANDBOX_CONFIRM=yes`).
+- **Domain Guard**: Localhost only (`http://localhost:3000`). Strictly barred from running against `https://chandakgroup.tech`.
+- **Enclosure Boundary**: All mutations are permitted **exclusively** inside the dedicated test workspace `ZZ-TEST-SANDBOX`.
+- **Authentic App Mutations**: Zero tests use `supabaseAdmin` for writes; all mutations must flow through the application's actual Server Actions or API routes under an authenticated test user session.
+- **Self-Cleaning Guarantee**: The suite registers every entity created during the run, purges them upon completion, and reports any leftover artifacts (must report leftovers = 0).
 - **CI Exclusion**: The sandbox suite **never** runs in automated CI workflows.
 
 ---
@@ -43,16 +46,42 @@ flowchart TD
 
 All test accounts reuse identities from the 28 pre-existing test accounts, with strict restrictions:
 
-### A. Active vs Permanently Banned Accounts
-- **Permanently Banned**: `test.superadmin@chandakgroup.tech` remains banned. All Super Admin test cases are classified as `MANUAL` and are never executed by automated runners.
-- **Unbanned for Testing**:
-  - One `STANDARD` user per module
-  - One `noaccess` user per module
-  - `test.dash.viewer@chandakgroup.tech` (Single Dashboard Viewer)
-  - `test.dash.multi@chandakgroup.tech` (Multi Dashboard Lead)
-  - All other test accounts remain banned.
+### A. Active Accounts (18 Total)
+- **STANDARD Users (1 per module)**:
+  - `test.task.standard@chandakgroup.tech`
+  - `test.ticket.standard@chandakgroup.tech`
+  - `test.req.standard@chandakgroup.tech`
+  - `test.design.viewer@chandakgroup.tech`
+  - `test.vehicle.traveler@chandakgroup.tech`
+  - `test.meet.attendee@chandakgroup.tech`
+  - `test.budget.viewer@chandakgroup.tech`
+  - `test.amc.standard@chandakgroup.tech`
+- **No-Access Users (1 per module)**:
+  - `test.task.noaccess@chandakgroup.tech`
+  - `test.ticket.noaccess@chandakgroup.tech`
+  - `test.req.noaccess@chandakgroup.tech`
+  - `test.design.noaccess@chandakgroup.tech`
+  - `test.vehicle.noaccess@chandakgroup.tech`
+  - `test.meet.noaccess@chandakgroup.tech`
+  - `test.budget.noaccess@chandakgroup.tech`
+  - `test.amc.noaccess@chandakgroup.tech`
+  - `test.dash.noaccess@chandakgroup.tech`
+- **Dashboard Viewers**:
+  - `test.dash.viewer@chandakgroup.tech` (IT Dashboard Only)
+  - `test.dash.multi@chandakgroup.tech` (IT + Engineering Dashboards)
 
-### B. Account Safeguards
+### B. Permanently Banned Accounts (9 Total)
+- `test.superadmin@chandakgroup.tech` — **PERMANENTLY BANNED**. There is zero Super Admin test account. All Super Admin test cases are classified as `MANUAL`.
+- `test.task.manager@chandakgroup.tech`
+- `test.ticket.lead@chandakgroup.tech`
+- `test.req.lead@chandakgroup.tech`
+- `test.design.lead@chandakgroup.tech`
+- `test.vehicle.admin@chandakgroup.tech`
+- `test.meet.organizer@chandakgroup.tech`
+- `test.budget.admin@chandakgroup.tech`
+- `test.amc.admin@chandakgroup.tech`
+
+### C. Account Safeguards
 1. **Identification**: Test accounts carry `is_test_user = true` (additive column on `user_master`).
 2. **Credential Security**: Credentials derive exclusively from `TEST_USER_PASSWORD` (configured in GitHub Secrets and local environment; never committed or hard-coded).
 3. **Strict Scoping**: Module access for test accounts is scoped **exclusively** to `ZZ-TEST-SANDBOX` (`scope_type = 'SPECIFIC'`, `scope_ids = ['ZZ-TEST-SANDBOX']`). They hold zero access to real client workspaces, projects, or live operational records.
@@ -90,9 +119,34 @@ The live database audit identified the following fixed test artifacts:
 
 ---
 
-## 5. Test Status Classification
+## 5. Standard Workflow for Every Code Change
 
-Per governance rules, test cases in [TEST_CASES.md](file:///d:/adios/docs/tests/TEST_CASES.md) and reports are classified as:
-- **PASS**: Real assertion succeeded against the app in the appropriate suite.
-- **FAIL**: Real assertion failed; defect recorded in [KNOWN_BUGS.md](file:///d:/adios/docs/tests/KNOWN_BUGS.md).
-- **MANUAL**: Test requires Super Admin privileges, physical multi-party workflows, or external third-party interaction. **Never counted as PASS in automated summaries.**
+Every modification follows a 4-step gate before reaching production:
+
+1. **Step 5.1: Pre-Deploy Localhost READ-ONLY Suite**:
+   - Start localhost with `-H localhost` (`npm run dev -- -H localhost` or `npm run build && npm run start`).
+   - Run READ-ONLY suite against `http://localhost:3000`. Must pass 100%.
+2. **Step 5.2: Pre-Deploy Localhost SANDBOX Suite** (If mutation affected):
+   - If the change modifies create, edit, delete, approve, or priority logic, run `npm run test:sandbox` on localhost with `SANDBOX_CONFIRM=yes`.
+   - Must pass 100% and report leftover entities = 0.
+3. **Step 5.3: Commit & Push to `develop`**:
+   - Commit changes on `develop`. Fast-forward merge to `main` and deploy **strictly when owner says "deploy"**.
+4. **Step 5.4: Post-Deploy Production READ-ONLY Smoke**:
+   - Probe `https://chandakgroup.tech`:
+     * `/api/version` returns commit = deployed SHA.
+     * `serverBootTime` is newer than deploy trigger time.
+     * `/login` latency < 3.0s.
+     * Module pages open with valid content.
+     * No-access test user denied.
+
+---
+
+## 6. CI Safety Gate & Known Bugs Governance
+
+- **CI Scope**: The CI pipeline executes the **READ-ONLY suite only**. The SANDBOX suite never runs in CI.
+- **Known Bugs Registry**: `docs/tests/KNOWN_BUGS.md` is an authoritative, hand-approved committed list. The automated runner **never** rewrites it.
+- **Regression Lock**: Any unexpected failure on a test not listed in `KNOWN_BUGS.md` halts the build and blocks deployment.
+- **Test Case Classification**:
+  - **PASS**: Real assertion passed against the app.
+  - **FAIL**: Real assertion failed; cataloged in `KNOWN_BUGS.md`.
+  - **MANUAL**: Requires Super Admin rights, multi-party physical flow, or third-party interaction. **Never reported as PASS.**
