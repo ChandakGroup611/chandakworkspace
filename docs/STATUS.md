@@ -8,7 +8,7 @@
 | **0.1** | WP0 | Check CRON_SECRET on Hostinger env and GitHub secrets | — | — | TC-XMOD-003 | PENDING_USER_SECRET |
 | **0.2** | WP0 | deploy.yml: pull_request trigger, P1 gate, smoke with auto-rollback | `6bee8c12` | — | TC-REGR-010 | DONE |
 | **0.3** | WP0 | Initialize docs/STATUS.md master programme registry | `pending` | — | — | DONE |
-| **1.1** | WP1 | Remove TASK_WORKFLOW wildcard & legacy code mappings in hasPermission | — | — | TC-TASK-006, TC-AMC-009 | TODO |
+| **1.1** | WP1 | Remove TASK_WORKFLOW wildcard & legacy code mappings in hasPermission | `pending` | — | TC-AMC-008, TC-TASK-006 | DONE |
 | **1.2** | WP1 | Enforce owner/assignee/creator/executor checks on updateTask & priority | — | — | TC-TASK-006, TC-TASK-007 | TODO |
 | **1.3** | WP1 | Remove WORKSPACES_MANAGE from isSuperAdmin checks across actions | — | — | TC-TASK-001, TC-TASK-014 | TODO |
 | **1.4** | WP1 | Restrict deleteTask strictly to Super Admin, workspace/task owner | — | — | TC-TASK-007 | TODO |

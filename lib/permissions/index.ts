@@ -64,9 +64,8 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
 
   const isSuper = allRoleCodes.some(c => {
     const upper = c.toUpperCase();
-    return upper === 'SUPER_ADMIN' || upper === 'ROLE_ADMIN' || upper === 'ADMIN' ||
-      upper === 'SUPERADMIN' || upper === 'ROLE_SUPER_ADMIN' || upper === 'SUPER_ADMINISTRATOR';
-  }) || rawPerms.includes('SUPER_ADMIN') || rawPerms.includes('SUPER_ADMIN_ACCESS') || rawPerms.includes('ALL_ACCESS');
+    return upper === 'SUPER_ADMIN' || upper === 'ROLE_SUPER_ADMIN';
+  }) || rawPerms.includes('SUPER_ADMIN') || rawPerms.includes('SUPER_ADMIN_ACCESS');
 
   if (isSuper) {
     dbRoleCode = 'SUPER_ADMIN';
@@ -140,33 +139,14 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
 
   if (
     ctx.role === "SUPER_ADMIN" ||
-    ctx.role === "ROLE_ADMIN" ||
-    ctx.role === "ADMIN" ||
-    ctx.role === "SUPERADMIN" ||
     ctx.role === "ROLE_SUPER_ADMIN" ||
-    ctx.role === "SUPER_ADMINISTRATOR" ||
-    ctx.role === "admin-role-id" ||
     ctx.perms.has("SUPER_ADMIN") ||
-    ctx.perms.has("SUPER_ADMIN_ACCESS") ||
-    ctx.perms.has("ALL_ACCESS")
+    ctx.perms.has("SUPER_ADMIN_ACCESS")
   ) {
     return true;
   }
 
-  // 1. Module RBAC for TASK_WORKFLOW
-  try {
-    const { can } = await import("@/lib/permissions/module-access");
-    let checkCode = permissionCode;
-    if (permissionCode === "TASKS_UPDATE") checkCode = "TASKS_UPDATE_CORE";
-    if (permissionCode === "AMC_EDIT" || permissionCode === "AMC_UPDATE" || permissionCode === "AMC_CREATE" || permissionCode === "AMC_DELETE") checkCode = "AMC_MANAGE";
-    if (permissionCode === "REQUIREMENTS_MANAGE") checkCode = "REQUIREMENTS_APPROVE";
-
-    if (await can(userId, "TASK_WORKFLOW", checkCode)) {
-      return true;
-    }
-  } catch { }
-
-  // 2. Strict IAM explicit snapshot check ONLY
+  // Strict IAM explicit snapshot check ONLY (Until WP7, hasPermission = explicit IAM snapshot + SUPER_ADMIN only)
   return ctx.perms.has(permissionCode);
 }
 
@@ -176,7 +156,7 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
 export async function canAccessTicket(userId: string, ticketId: string): Promise<boolean> {
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN" || ctx.perms.has("SUPER_ADMIN")) return true;
+  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_SUPER_ADMIN" || ctx.perms.has("SUPER_ADMIN")) return true;
 
   const { data } = await supabaseAdmin
     .from("tickets")
@@ -206,7 +186,7 @@ export async function canAccessTicket(userId: string, ticketId: string): Promise
 export async function canAccessTask(userId: string, taskId: string): Promise<boolean> {
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN" || ctx.perms.has("SUPER_ADMIN") || ctx.perms.has("TASKS_MANAGE")) return true;
+  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_SUPER_ADMIN" || ctx.perms.has("SUPER_ADMIN") || ctx.perms.has("TASKS_MANAGE")) return true;
 
   const { data } = await supabaseAdmin
     .from("tasks")
@@ -241,7 +221,7 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
   const ctx = await getUserContext(userId);
   if (
     ctx.role === "SUPER_ADMIN" ||
-    ctx.role === "ROLE_ADMIN" ||
+    ctx.role === "ROLE_SUPER_ADMIN" ||
     ctx.perms.has("SUPER_ADMIN") ||
     ctx.perms.has("SUPER_ADMIN_ACCESS") ||
     ctx.perms.has("WORKSPACES_MANAGE")
@@ -264,7 +244,7 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
 
   if (!data) return false;
   if (data.workspace_owner_id === userId) return true;
-  const hasWorkspacesView = ctx.perms.has("WORKSPACES_VIEW") || ctx.perms.has("WORKSPACES_MANAGE") || ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN";
+  const hasWorkspacesView = ctx.perms.has("WORKSPACES_VIEW") || ctx.perms.has("WORKSPACES_MANAGE") || ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_SUPER_ADMIN";
   if ((data.visibility_settings?.public === true || data.visibility_settings?.public === "true") && hasWorkspacesView) return true;
 
   const { count } = await supabaseAdmin
@@ -285,7 +265,7 @@ export async function canManageWorkspace(userId: string, workspaceId: string): P
   const ctx = await getUserContext(userId);
   if (
     ctx.role === "SUPER_ADMIN" ||
-    ctx.role === "ROLE_ADMIN" ||
+    ctx.role === "ROLE_SUPER_ADMIN" ||
     ctx.perms.has("SUPER_ADMIN") ||
     ctx.perms.has("SUPER_ADMIN_ACCESS") ||
     ctx.perms.has("WORKSPACES_MANAGE")

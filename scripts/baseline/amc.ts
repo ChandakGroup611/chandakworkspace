@@ -58,6 +58,13 @@ export const amcRunners: TestCaseRunner[] = [
       if (isSuper || hasAmcManage) {
         return { pass: false, notes: "Standard employee holds unauthorized AMC management privilege", codePath: "lib/permissions/index.ts" };
       }
+      const taskStdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
+      if (taskStdUserId) {
+        const hasAmcViaTask = await hasPermission(taskStdUserId, "AMC_MANAGE");
+        if (hasAmcViaTask) {
+          return { pass: false, notes: "Cross-module leak: Task user holds AMC_MANAGE via legacy mapping", codePath: "lib/permissions/index.ts" };
+        }
+      }
       return { pass: true, notes: "AMC contract mutation correctly restricted to administrators" };
     }
   },
