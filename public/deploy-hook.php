@@ -168,8 +168,10 @@ if (!$activeVersionDir && $versionedDirs) {
     $activeVersionDir = $versionedDirs[0];
 }
 
-// Canonical application root is the active version directory if it exists, otherwise current/nodejs
-$canonicalAppRoot = $activeVersionDir ?: ($domainRoot . '/hbuilds/current/nodejs');
+// Canonical application root is always current/nodejs when present, fallback to active version
+$canonicalAppRoot = (is_dir($domainRoot . '/hbuilds/current/nodejs'))
+    ? ($domainRoot . '/hbuilds/current/nodejs')
+    : ($activeVersionDir ?: ($domainRoot . '/hbuilds/current/nodejs'));
 
 // All app roots that must be kept in sync so LiteSpeed finds the app regardless of vhost mapping
 $primaryAppRoots = array_values(array_unique(array_filter([
@@ -182,7 +184,7 @@ $htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine O
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
 // STRICT: Explicit PassengerEnabled on, bound V8 and libuv thread pools so total threads per process <= 3
-$passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxPoolSize 1\nPassengerMaxInstancesPerApp 1\nPassengerMinInstances 1\nPassengerPoolIdleTime 300\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=384\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
+$passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxPoolSize 1\nPassengerMaxInstancesPerApp 1\nPassengerMinInstances 1\nPassengerPoolIdleTime 300\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=512\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
 
 // Keep canonicalAppRoot and current/nodejs synchronized if one is newer
 if ($canonicalAppRoot !== $domainRoot . '/hbuilds/current/nodejs') {
@@ -284,21 +286,13 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     exit;
 }
 
-// Dedicated Warmup Action: pre-warm Passenger worker so human users never encounter cold-start 503 or 403
+// Dedicated Warmup Action: pre-warm Passenger worker and required runtime files
 if (isset($_GET['warmup'])) {
     ensurePreviewProps($primaryAppRoots);
-    $ctx = stream_context_create([
-        'http' => [
-            'timeout' => 15,
-            'ignore_errors' => true,
-            'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) DeployHook-Warmup\r\n"
-        ]
-    ]);
-    @file_get_contents('http://127.0.0.1:3000/api/version', false, $ctx);
-    @file_get_contents('https://chandakgroup.tech/api/version', false, $ctx);
-    @file_get_contents('http://127.0.0.1:3000/login', false, $ctx);
-    @file_get_contents('https://chandakgroup.tech/login', false, $ctx);
-    @file_get_contents('https://chandakgroup.tech/', false, $ctx);
+    foreach ($primaryAppRoots as $target) {
+        @mkdir($target . '/tmp', 0755, true);
+        @touch($target . '/tmp/restart.txt');
+    }
     echo json_encode([
         'success' => true,
         'action' => 'warmup',

@@ -78,7 +78,7 @@ jobs:
           UV_THREADPOOL_SIZE=1
           TOKIO_WORKER_THREADS=1
           DOTENV_CONFIG_QUIET=true
-          NODE_OPTIONS=--v8-pool-size=1 --max-old-space-size=384
+          NODE_OPTIONS=--v8-pool-size=1 --max-old-space-size=512
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -220,13 +220,13 @@ jobs:
               done
             fi
 
-            # Force reload web server and restart passenger
-            pkill -9 -u $(whoami) -f lsnode 2>/dev/null || true
-            pkill -9 -u $(whoami) -f node 2>/dev/null || true
-            killall -9 node 2>/dev/null || true
-            passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
+            # Signal passenger restart cleanly via restart triggers
             mkdir -p "$DOMAIN_ROOT/hbuilds/current/nodejs/tmp"
             touch "$DOMAIN_ROOT/hbuilds/current/nodejs/tmp/restart.txt"
+            if [ -f "$DOMAIN_ROOT/hbuilds/current/nodejs/server.js" ]; then
+              touch "$DOMAIN_ROOT/hbuilds/current/nodejs/server.js"
+            fi
+            passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
             touch "$DOMAIN_ROOT/public_html/.htaccess" 2>/dev/null || true
             
             rm -f "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
@@ -257,7 +257,7 @@ jobs:
 
       # Final Live Status Verification & Automated Multi-Route Warmup Gate (Anti-503 & Anti-403)
       - name: Verify Live Deployment Status & Warmup Worker
-        timeout-minutes: 4
+        timeout-minutes: 5
         run: |
           echo "Initiating automated application warmup..."
           DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
@@ -266,22 +266,23 @@ jobs:
           fi
           
           # 1. Trigger deploy-hook multi-route internal pre-warm
-          curl -sS --connect-timeout 10 --max-time 45 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&warmup=1" || true
+          curl -sS --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&warmup=1" || true
           
           # 2. Warm up Passenger Node.js worker on /api/version
           echo "Warming up Node.js Passenger worker on /api/version..."
           WARM_API=false
-          for i in {1..20}; do
-            HTTP_CODE=$(curl -s -o /tmp/warmup_resp.json -w "%{http_code}" --connect-timeout 5 --max-time 10 "https://chandakgroup.tech/api/version" || echo "000")
+          for i in {1..25}; do
+            HTTP_CODE=$(curl -s -L -o /tmp/warmup_resp.json -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/api/version" || echo "000")
             echo "API Attempt $i: HTTP $HTTP_CODE"
             if [ "$HTTP_CODE" = "200" ]; then
               if grep -q '"status":"online"' /tmp/warmup_resp.json 2>/dev/null; then
                 echo "SUCCESS: Passenger Node.js worker is warm and online!"
+                cat /tmp/warmup_resp.json
                 WARM_API=true
                 break
               fi
             fi
-            sleep 2
+            sleep 3
           done
           
           if [ "$WARM_API" != "true" ]; then
@@ -294,8 +295,8 @@ jobs:
           echo "Warming up and validating /login SSR route (Anti-403 gate)..."
           WARM_LOGIN=false
           USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
-          for j in {1..15}; do
-            HTTP_CODE=$(curl -s -o /tmp/login_resp.html -w "%{http_code}" -H "User-Agent: $USER_AGENT" --connect-timeout 8 --max-time 15 "https://chandakgroup.tech/login" || echo "000")
+          for j in {1..20}; do
+            HTTP_CODE=$(curl -s -L -o /tmp/login_resp.html -w "%{http_code}" -H "User-Agent: $USER_AGENT" --connect-timeout 10 --max-time 30 "https://chandakgroup.tech/login" || echo "000")
             echo "Login Attempt $j: HTTP $HTTP_CODE"
             if [ "$HTTP_CODE" = "200" ]; then
               if grep -qi "html" /tmp/login_resp.html 2>/dev/null && ! grep -qi "Access to this resource on the server is denied" /tmp/login_resp.html 2>/dev/null; then
@@ -308,7 +309,7 @@ jobs:
               WARM_LOGIN=true
               break
             fi
-            sleep 2
+            sleep 3
           done
 
           if [ "$WARM_LOGIN" != "true" ]; then

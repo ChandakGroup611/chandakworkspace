@@ -8,6 +8,11 @@ const GATE_EXEMPT = /^\/(select-module|login|register|auth\/|api\/|profile|setti
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Health checks and deployment probes: respond immediately without Supabase session roundtrip
+  if (pathname === "/api/version" || pathname === "/api/health" || pathname === "/deploy-hook.php") {
+    return NextResponse.next();
+  }
+
   // Dashboard engine calls and files: the /dashboards route checks the session itself (and refreshes
   // its cookies), so skip the extra Supabase round trip here.
   if (/^\/dashboards\/[^/]+\/(api|static|healthz)(\/|$)/.test(pathname)) {
