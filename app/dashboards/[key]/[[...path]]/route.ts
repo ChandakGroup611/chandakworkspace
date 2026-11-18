@@ -138,7 +138,11 @@ async function handle(req: NextRequest, ctx: Ctx) {
     if (!access.perms.includes("view")) {
       return deny(api, 403, `You don't have access to the ${def.name} dashboard. Ask your portal administrator.`);
     }
-    headers.set("x-portal-auth", signDashboardToken(def, { id: user.id, email: user.email, name: user.name }, access));
+    try {
+      headers.set("x-portal-auth", signDashboardToken(def, { id: user.id, email: user.email, name: user.name }, access));
+    } catch (err: any) {
+      return deny(api, 503, err.message || "DASHBOARD_PROXY_SECRET is missing. Please set DASHBOARD_PROXY_SECRET in GitHub Secrets and Hostinger environment.");
+    }
   }
 
   // Only safe path segments reach the engine.

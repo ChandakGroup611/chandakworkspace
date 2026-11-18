@@ -28,72 +28,79 @@ const ISSUER = "chandakgroup-portal";
 export async function getDashboardAccess(userId: string, def: DashboardDef): Promise<DashboardAccess> {
   const { can, getModuleRole } = await import("@/lib/permissions/module-access");
 
-  // 1. Central Module RBAC check
-  const moduleRole = await getModuleRole(userId, "DASHBOARDS", def.key);
-  const canViewByModule = await can(userId, "DASHBOARDS", "VIEW", { dashboard_key: def.key });
-
-  if (moduleRole && (canViewByModule || moduleRole.permissions.includes("VIEW"))) {
-    const perms: DashboardPermission[] = [];
-    const rolePerms = moduleRole.permissions.map(p => p.toUpperCase());
-
-    if (rolePerms.includes("VIEW") || canViewByModule) perms.push("view");
-    if (rolePerms.includes("DETAILS") || canViewByModule) perms.push("details");
-    if (rolePerms.includes("EXPORT")) perms.push("export");
-    if (rolePerms.includes("SCHEDULE")) perms.push("schedule");
-    if (rolePerms.includes("CHAT")) perms.push("chat");
-    if (rolePerms.includes("ADMIN")) perms.push("admin");
-
-    // Super Admin check
-    const { data: um } = await supabaseAdmin
-      .from("user_master")
-      .select("role:roles(code)")
-      .eq("id", userId)
-      .maybeSingle();
-
-    const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
-    const isSuperAdmin = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN", "ROLE_ADMIN"].includes(roleCode || "");
-
-    if (isSuperAdmin) {
-      return {
-        perms: ["view", "details", "export", "schedule", "chat", "admin"],
-        companies: null, // all companies
-      };
-    }
-
-    if (!perms.includes("view")) return { perms: [], companies: [] };
-
-    const companies = (moduleRole.scope?.type === "companies" && Array.isArray(moduleRole.scope.company_ids))
-      ? moduleRole.scope.company_ids.map(Number).filter(Number.isFinite)
-      : null;
-
-    return { perms, companies };
-  }
-
-  // 2. Legacy fallback to dashboard_user_access and hasPermission
-  const manage = await hasPermission(userId, `${def.permissionPrefix}_MANAGE`);
-
-  const { data } = await supabaseAdmin
-    .from("dashboard_user_access")
-    .select("company_ids")
-    .eq("user_id", userId)
-    .eq("dashboard_key", def.key)
+  // 1. Super Admin check: strictly SUPER_ADMIN / ROLE_SUPER_ADMIN (remove plain ADMIN / ROLE_ADMIN)
+  const { data: um } = await supabaseAdmin
+    .from("user_master")
+    .select("role:roles(code)")
+    .eq("id", userId)
     .maybeSingle();
 
-  const hasDirectRow = !!data;
-  const perms: DashboardPermission[] = [];
+  const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
+  const isSuperAdminRole = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN"].includes(roleCode || "");
+  const isSuperAdmin = isSuperAdminRole && (await hasPermission(userId, "SUPER_ADMIN"));
+
+  if (isSuperAdmin) {
+    return {
+      perms: ["view", "details", "export", "schedule", "chat", "admin"],
+      companies: null, // all companies
+    };
+  }
+
+  // 2. User-wise dashboard access check:
+  // A non-Super-Admin sees a dashboard ONLY if it is ticked for that user (user-wise dashboard access,
+  // i.e. the same source the sidebar and Users → Assign modules use).
+  // Role permissions (DASH_*_VIEW/EXPORT/…) only decide the ACTIONS inside a ticked dashboard, never add extra dashboards.
+  const [legacyRes, umaRes] = await Promise.all([
+    supabaseAdmin
+      .from("dashboard_user_access")
+      .select("company_ids")
+      .eq("user_id", userId)
+      .eq("dashboard_key", def.key)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("user_module_access")
+      .select("role_code, scope")
+      .eq("user_id", userId)
+      .eq("module_code", "DASHBOARDS")
+      .eq("dashboard_key", def.key)
+      .maybeSingle()
+  ]);
+
+  const isTicked = Boolean(legacyRes.data || umaRes.data);
+  if (!isTicked) {
+    // Unticked dashboard: strictly forbidden regardless of role permissions
+    return { perms: [], companies: [] };
+  }
+
+  // 3. User has this dashboard ticked. Now evaluate permitted actions inside this dashboard.
+  const moduleRole = await getModuleRole(userId, "DASHBOARDS", def.key);
+  const canViewByModule = await can(userId, "DASHBOARDS", "VIEW", { dashboard_key: def.key });
+  const rolePerms = moduleRole ? moduleRole.permissions.map(p => p.toUpperCase()) : [];
+
+  const manage = await hasPermission(userId, `${def.permissionPrefix}_MANAGE`);
+
+  const perms: DashboardPermission[] = ["view"]; // Base view permission granted by user-wise tick
+  if (rolePerms.includes("DETAILS") || canViewByModule) perms.push("details");
+
   for (const p of DASHBOARD_PERMISSIONS) {
-    if (manage || (await hasPermission(userId, `${def.permissionPrefix}_${PERM_SUFFIX[p]}`))) {
+    if (p === "view" || perms.includes(p)) continue;
+    const permSuffix = PERM_SUFFIX[p];
+    const hasRolePerm = rolePerms.includes(permSuffix) || (await hasPermission(userId, `${def.permissionPrefix}_${permSuffix}`));
+    if (manage || hasRolePerm) {
       perms.push(p);
-    } else if (hasDirectRow && (p === "view" || p === "details" || p === "export" || p === "chat" || p === "schedule")) {
+    } else if (legacyRes.data && (p === "details" || p === "export" || p === "chat" || p === "schedule")) {
       perms.push(p);
     }
   }
 
-  // Every other permission is meaningless without view.
-  if (!perms.includes("view")) return { perms: [], companies: [] };
+  // 4. Resolve company scoping for the ticked dashboard
+  let companies: number[] | null = null;
+  if (moduleRole && moduleRole.scope?.type === "companies" && Array.isArray(moduleRole.scope.company_ids)) {
+    companies = moduleRole.scope.company_ids.map(Number).filter(Number.isFinite);
+  } else if (legacyRes.data?.company_ids && Array.isArray(legacyRes.data.company_ids)) {
+    companies = legacyRes.data.company_ids.map(Number).filter(Number.isFinite);
+  }
 
-  const raw = (data as { company_ids: number[] | null } | null)?.company_ids;
-  const companies = Array.isArray(raw) ? raw.map(Number).filter(Number.isFinite) : null;
   return { perms, companies };
 }
 
@@ -111,10 +118,11 @@ export function signDashboardToken(
   user: { id: string; email: string; name: string },
   access: DashboardAccess
 ): string {
-  const defaultSecret = "5b904ff89ab72ef697f76c5e14aea5b5b3a8c2859f1e9b7b043cbbd2c362c8966859339a008833047caa9deb3260a98c";
-  const secret = (process.env.DASHBOARD_PROXY_SECRET || defaultSecret).trim();
+  const secret = (process.env.DASHBOARD_PROXY_SECRET || "").trim();
   if (secret.length < 32) {
-    throw new Error("DASHBOARD_PROXY_SECRET is not set (needs at least 32 characters).");
+    throw new Error(
+      "DASHBOARD_PROXY_SECRET is not set (needs at least 32 characters). Please configure the DASHBOARD_PROXY_SECRET secret in GitHub Secrets and Hostinger environment."
+    );
   }
   const now = Math.floor(Date.now() / 1000);
   const b64 = (v: string | Buffer) => Buffer.from(v).toString("base64url");
