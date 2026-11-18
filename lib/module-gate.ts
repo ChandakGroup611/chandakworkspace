@@ -46,7 +46,7 @@ export function isDeepLink(next?: string | null): next is string {
 
 /** Browser-side helpers (no-ops on the server). */
 export function markModuleChosen() {
-  if (typeof document !== "undefined") document.cookie = `${MODULE_CHOSEN_COOKIE}=1; path=/; SameSite=Lax`;
+  if (typeof document !== "undefined") document.cookie = `${MODULE_CHOSEN_COOKIE}=1; path=/; max-age=2592000; SameSite=Lax`;
 }
 export function clearModuleChosen() {
   if (typeof document !== "undefined") document.cookie = `${MODULE_CHOSEN_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;

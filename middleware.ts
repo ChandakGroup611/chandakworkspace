@@ -35,7 +35,9 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const moduleChosen = request.cookies.get(MODULE_CHOSEN_COOKIE)?.value === "1";
+  const activeModule = request.cookies.get("active_module")?.value;
+  const hasActiveModule = Boolean(activeModule && ["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS", "CHANDAK_MEET", "ORG_BUDGET"].includes(activeModule));
+  const moduleChosen = request.cookies.get(MODULE_CHOSEN_COOKIE)?.value === "1" || hasActiveModule;
 
   // If user is authenticated and trying to access login/register, redirect to active module or workspaces
   if (user && isAuthPage) {

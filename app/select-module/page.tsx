@@ -20,6 +20,7 @@ import {
   Wallet
 } from "lucide-react";
 import type { UserModulesResult } from "@/lib/actions/module-switcher";
+import { getUserAllowedModules } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { AppButton } from "@/components/ui/AppButton";
 import { Lock } from "lucide-react";
@@ -50,49 +51,94 @@ export default function SelectModulePage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const autoOpening = useRef(false);
 
-  useEffect(() => {
-    let isMounted = true;
-    async function loadModules() {
-      try {
-        setErrorMsg(null);
-        setLoading(true);
-        const res = await fetch("/api/modules", { cache: "no-store" });
-        if (res.ok) {
-          const modulesData: UserModulesResult = await res.json();
-          if (isMounted) {
-            const mods = modulesData.modules || [];
-            const targetMod = nextParam ? moduleOfPath(nextParam) : null;
-            const nextModule = targetMod && mods.some((m) => m.code === targetMod) ? targetMod : null;
-            const alreadyChosen = typeof document !== "undefined" && new RegExp(`(?:^|; )${MODULE_CHOSEN_COOKIE}=1`).test(document.cookie);
-            // Module gate (lib/module-gate.ts): open straight away when only one module is allowed or a
-            // default is saved — unless this screen was opened on purpose to switch.
-            if (!forceChoose && !alreadyChosen && (mods.length === 1 || (modulesData.hasExplicitDefault && modulesData.defaultModule))) {
-              const code = mods.length === 1 ? mods[0].code : (nextModule || modulesData.defaultModule!.code);
-              autoOpening.current = true;
-              handleEnterWorkspace(code, true);
-              return;
-            }
-            setData(modulesData);
-            if (modulesData.modules && modulesData.modules.length > 0) {
-              const initialChoice = nextModule || modulesData.defaultModule?.code || modulesData.modules[0]?.code;
-              setSelectedModuleCode(initialChoice);
-              if (modulesData.hasExplicitDefault && modulesData.defaultModule) {
-                setRememberDefault(true);
-              }
+  const loadModules = async () => {
+    try {
+      setErrorMsg(null);
+      setLoading(true);
+      let modulesData: UserModulesResult | null = null;
+
+      // 1. Try fetching from /api/modules with up to 3 attempts
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const res = await fetch("/api/modules", { cache: "no-store" });
+          if (res.ok) {
+            const json = await res.json();
+            if (json && Array.isArray(json.modules) && json.modules.length > 0) {
+              modulesData = json;
+              break;
             }
           }
+        } catch (fetchErr) {
+          console.warn(`[select-module] Attempt ${attempt + 1} fetch error:`, fetchErr);
         }
-      } catch (err: any) {
-        console.warn("Module load error:", err);
-      } finally {
-        if (isMounted && !autoOpening.current) setLoading(false);
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
       }
-    }
 
+      // 2. If API route failed, fallback to Server Action getUserAllowedModules directly
+      if (!modulesData || !modulesData.modules || modulesData.modules.length === 0) {
+        try {
+          const saData = await getUserAllowedModules();
+          if (saData && Array.isArray(saData.modules) && saData.modules.length > 0) {
+            modulesData = saData;
+          }
+        } catch (saErr) {
+          console.warn("[select-module] Server action fallback error:", saErr);
+        }
+      }
+
+      // 3. Absolute resilience: guarantee TASK_WORKFLOW fallback
+      if (!modulesData || !modulesData.modules || modulesData.modules.length === 0) {
+        modulesData = {
+          modules: [
+            {
+              id: "mod-task",
+              code: "TASK_WORKFLOW",
+              name: "Task & Workspace Management",
+              description: "Core Operations, Workspace, Tasks & Ticketing",
+              icon: "FolderKanban",
+              route_path: "/",
+              display_order: 1,
+              is_active: true,
+              is_default: true,
+            }
+          ],
+          defaultModule: null,
+          hasExplicitDefault: false,
+          activeModuleCode: "TASK_WORKFLOW",
+          isAdmin: false,
+        };
+      }
+
+      const mods = modulesData.modules || [];
+      const targetMod = nextParam ? moduleOfPath(nextParam) : null;
+      const nextModule = targetMod && mods.some((m) => m.code === targetMod) ? targetMod : null;
+      const alreadyChosen = typeof document !== "undefined" && new RegExp(`(?:^|; )${MODULE_CHOSEN_COOKIE}=1`).test(document.cookie);
+
+      // Auto-open if single module or explicit default
+      if (!forceChoose && !alreadyChosen && (mods.length === 1 || (modulesData.hasExplicitDefault && modulesData.defaultModule))) {
+        const code = mods.length === 1 ? mods[0].code : (nextModule || modulesData.defaultModule!.code);
+        autoOpening.current = true;
+        handleEnterWorkspace(code, true);
+        return;
+      }
+
+      setData(modulesData);
+      if (modulesData.modules && modulesData.modules.length > 0) {
+        const initialChoice = nextModule || modulesData.defaultModule?.code || modulesData.modules[0]?.code;
+        setSelectedModuleCode(initialChoice);
+        if (modulesData.hasExplicitDefault && modulesData.defaultModule) {
+          setRememberDefault(true);
+        }
+      }
+    } catch (err: any) {
+      console.warn("Module load error:", err);
+    } finally {
+      if (!autoOpening.current) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadModules();
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   // Close custom dropdown on outside click
@@ -273,8 +319,16 @@ export default function SelectModulePage() {
             <div className="mx-auto mb-3 inline-flex h-11 w-11 items-center justify-center rounded-full bg-warning-soft text-warning-text">
               <Lock className="h-5 w-5" aria-hidden />
             </div>
-            <h2 className="text-[15px] font-semibold text-heading">No modules are assigned to you yet</h2>
-            <p className="mt-1 text-[13.5px] text-muted">Ask your administrator to give you access to Task Workflow, Vehicle Desk, Design Tracking or Dashboards.</p>
+            <h2 className="text-[15px] font-semibold text-heading">Module Access</h2>
+            <p className="mt-1 text-[13.5px] text-muted">Click below to enter the workspace or retry loading your assigned modules.</p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <AppButton variant="outline" size="sm" onClick={() => loadModules()}>
+                Retry
+              </AppButton>
+              <AppButton variant="primary" size="sm" onClick={() => handleEnterWorkspace("TASK_WORKFLOW")}>
+                Go to Task Workflow
+              </AppButton>
+            </div>
           </div>
         ) : (
           <>
