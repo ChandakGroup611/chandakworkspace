@@ -66,7 +66,19 @@ export async function getTemplates() {
 
   // 3. Map Rules into templates
   const enrichedTemplates = (templates || []).map((t: any) => {
-    const matchingRule = (rules || []).find(r => r.module === t.module && r.event === t.event);
+    const tMod = (t.module || '').trim().toLowerCase();
+    const tEv = (t.event || '').trim().toLowerCase();
+
+    const matchingRule = (rules || []).find(r => {
+      const rMod = (r.module || '').trim().toLowerCase();
+      const rEv = (r.event || '').trim().toLowerCase();
+      if (rMod !== tMod) return false;
+      if (rEv === tEv) return true;
+      // Companion fallback for Created / Assigned
+      if ((tEv === 'assigned' || tEv === 'created') && (rEv === 'assigned' || rEv === 'created')) return true;
+      return false;
+    });
+
     return {
       ...t,
       recipient_types: matchingRule ? matchingRule.recipient_type || [] : []
@@ -108,31 +120,43 @@ export async function saveTemplateAndRules(payload: any, editId?: string) {
 
   if (tplRes.error) return { success: false, error: tplRes.error.message };
 
-  // 2. Upsert notification_rule
-  const { data: existingRule } = await supabaseAdmin
-    .from("notification_rules")
-    .select("id")
-    .eq("module", templatePayload.module)
-    .eq("event", templatePayload.event)
-    .single();
+  // 2. Upsert notification_rule (synchronizing companion events such as Created and Assigned)
+  const modLower = (templatePayload.module || '').toLowerCase();
+  const ev = templatePayload.event || '';
+  const eventsToSync: string[] = [ev];
 
-  if (existingRule) {
-    await supabaseAdmin
+  if ((modLower === 'task' || modLower === 'workspace') && (ev === 'Assigned' || ev === 'Created')) {
+    eventsToSync.push('Assigned', 'Created');
+  }
+
+  const uniqueEvents = Array.from(new Set(eventsToSync));
+  for (const targetEvent of uniqueEvents) {
+    const { data: matchedRules } = await supabaseAdmin
       .from("notification_rules")
-      .update({ 
-        recipient_type: recipient_types || [],
-        updated_at: new Date().toISOString() 
-      })
-      .eq("id", existingRule.id);
-  } else {
-    await supabaseAdmin
-      .from("notification_rules")
-      .insert({
-        module: templatePayload.module,
-        event: templatePayload.event,
-        recipient_type: recipient_types || [],
-        is_active: true
-      });
+      .select("id")
+      .ilike("module", templatePayload.module)
+      .ilike("event", targetEvent);
+
+    if (matchedRules && matchedRules.length > 0) {
+      for (const rule of matchedRules) {
+        await supabaseAdmin
+          .from("notification_rules")
+          .update({ 
+            recipient_type: recipient_types || [],
+            updated_at: nowIso 
+          })
+          .eq("id", rule.id);
+      }
+    } else {
+      await supabaseAdmin
+        .from("notification_rules")
+        .insert({
+          module: templatePayload.module,
+          event: targetEvent,
+          recipient_type: recipient_types || [],
+          is_active: true
+        });
+    }
   }
 
   revalidatePath("/settings/communication/templates");

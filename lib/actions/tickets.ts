@@ -710,7 +710,8 @@ export async function createEnterpriseTicket(payload: any) {
           `You have been assigned to Ticket ${ticket.code}.`,
           `/tickets/${ticket.id}`,
           'TICKET',
-          'ASSIGNED'
+          'ASSIGNED',
+          { _disableEmail: true }
         ).catch((e: any) => console.error("In-app notification failed:", e));
 
         await queueBusinessEvent("Ticket", "Assigned", {
@@ -730,7 +731,8 @@ export async function createEnterpriseTicket(payload: any) {
           `New ticket ${ticket.code} arrived in your queue.`,
           `/tickets/${ticket.id}`,
           'TICKET',
-          'QUEUED'
+          'QUEUED',
+          { _disableEmail: true }
         ).catch((e: any) => console.error("In-app notification failed:", e));
 
         await queueBusinessEvent("Ticket", "Assigned", {

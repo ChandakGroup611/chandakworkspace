@@ -120,18 +120,99 @@ export const VEHICLE_EVENTS = [
   "Comment Added"
 ];
 
-const EVENTS = [
-  // Vehicle & Fleet Expiry Events (Statutory Compliance)
-  ...VEHICLE_EVENTS,
+export function getEventsForModule(moduleName?: string): string[] {
+  const mod = (moduleName || "").toLowerCase();
+  if (mod.includes("vehicle") || mod.includes("fleet")) {
+    return VEHICLE_EVENTS;
+  }
+  if (mod.includes("task")) {
+    return [
+      "Assigned",
+      "Created",
+      "Comment Added",
+      "Status Changed",
+      "Priority Changed",
+      "Due Date Changed",
+      "Executors Changed",
+      "Watchers Changed",
+      "Updated",
+      "Completed",
+      "Closed"
+    ];
+  }
+  if (mod.includes("workspace")) {
+    return [
+      "Created",
+      "Assigned",
+      "Member Added",
+      "Updated",
+      "Archived"
+    ];
+  }
+  if (mod.includes("ticket")) {
+    return [
+      "Created",
+      "Assigned",
+      "Comment Added",
+      "Status Changed",
+      "Priority Changed",
+      "Updated",
+      "Resolved",
+      "Closed"
+    ];
+  }
+  if (mod.includes("requirement")) {
+    return [
+      "Created",
+      "Assigned",
+      "Approval Requested",
+      "Sign-Off Requested",
+      "Approved",
+      "Signed Off",
+      "Rejected",
+      "Comment Added",
+      "Updated",
+      "Completed"
+    ];
+  }
+  if (mod.includes("amc")) {
+    return [
+      "Created",
+      "Updated",
+      "Contract Expiring",
+      "Contract Renewed",
+      "Payment Received",
+      "Payment Overdue"
+    ];
+  }
+  if (mod.includes("sla")) {
+    return [
+      "SLA Warning",
+      "SLA Breached"
+    ];
+  }
+  return [
+    "Created",
+    "Assigned",
+    "Comment Added",
+    "Status Changed",
+    "Priority Changed",
+    "Updated",
+    "Completed",
+    "Closed"
+  ];
+}
 
+const EVENTS = [
   // General Lifecycle
   "Created", 
+  "Assigned",
+  "Assigned (Primary)", 
   "Updated", 
   "Deleted/Archived",
   "Transferred",
   
   // Assignment & Team
-  "Assigned (Primary)", 
   "Reassigned",
   "Executors Changed",
   "Watchers Changed",
@@ -167,6 +248,9 @@ const EVENTS = [
   "Contract Expiring",
   "Contract Renewed",
   
+  // Vehicle Specific
+  ...VEHICLE_EVENTS,
+
   // IAM / Identity Specific
   "User Onboarded",
   "Role Changed",
@@ -684,7 +768,14 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                 ) : (
                   <select 
                     value={tpl.module || ''}
-                    onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
+                    onChange={(e) => {
+                      const newMod = e.target.value;
+                      const validEvents = getEventsForModule(newMod);
+                      updateLocal(tpl.id, "module", newMod);
+                      if (tpl.event && !validEvents.includes(tpl.event)) {
+                        updateLocal(tpl.id, "event", validEvents[0] || "Created");
+                      }
+                    }}
                     className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                   >
                     {MODULES.map(m => <option key={m} value={m}>{m}</option>)}
@@ -698,7 +789,13 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                 >
-                  {(isVeh ? VEHICLE_EVENTS : EVENTS).map(e => <option key={e} value={e}>{e}</option>)}
+                  {(() => {
+                    const moduleEvents = getEventsForModule(tpl.module);
+                    const allOptions = (tpl.event && !moduleEvents.includes(tpl.event))
+                      ? [tpl.event, ...moduleEvents]
+                      : moduleEvents;
+                    return allOptions.map(e => <option key={e} value={e}>{e}</option>);
+                  })()}
                 </select>
               </div>
               <div className="md:col-span-3 space-y-2">

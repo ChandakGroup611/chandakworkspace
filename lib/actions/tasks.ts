@@ -1431,7 +1431,7 @@ async function notifyTaskRemark(taskId: string, remarkContent: string, authorId:
     const taskLink = `/tasks/${taskId}`;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech';
 
-    // 4. Dispatch in-app and email notifications
+    // 4. Dispatch in-app notifications (email disabled here to prevent duplicate delivery; email routing is handled by queueBusinessEvent below)
     for (const recipientId of recipientIds) {
       try {
         await dispatchNotification(
@@ -1445,10 +1445,10 @@ async function notifyTaskRemark(taskId: string, remarkContent: string, authorId:
             task_name: task.subject,
             task_code: task.task_code || '',
             remarks: cleanRemark,
-            remark: cleanRemark,
             creator_name: authorName,
             status: statusName,
-            link: `${siteUrl}${taskLink}`
+            link: `${siteUrl}${taskLink}`,
+            _disableEmail: true
           }
         );
       } catch (err) {
@@ -1463,8 +1463,6 @@ async function notifyTaskRemark(taskId: string, remarkContent: string, authorId:
       task_name: task.subject,
       task_code: task.task_code || '',
       remarks: cleanRemark,
-      remark: cleanRemark,
-      description: cleanRemark,
       status: statusName || "UPDATED",
       assigned_to: task.assigned_to,
       created_by: task.created_by,

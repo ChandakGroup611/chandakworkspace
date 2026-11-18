@@ -131,24 +131,46 @@ export function normalizeDetailFields(
   }
 
   const fields: EmailDetailField[] = [];
+  const seenLabels = new Set<string>();
+  const hasRemarks = Boolean(details.remarks && String(details.remarks).trim());
+
   for (const [key, value] of Object.entries(details)) {
     const lowerKey = key.toLowerCase();
     if (EXCLUDED_KEYS.has(lowerKey)) continue;
     if (value === undefined || value === null || value === '') continue;
 
+    // Deduplicate synonymous fields
+    if (lowerKey === 'remark' && hasRemarks) continue;
+    if (hasRemarks && lowerKey === 'description') {
+      const cleanRaw = stripHtmlToText(String(value));
+      const cleanRemarks = stripHtmlToText(String(details.remarks));
+      if (cleanRaw === cleanRemarks) continue;
+    }
+    if (lowerKey === 'assigned_to' && details.assigned_user) continue;
+    if (lowerKey === 'created_by' && details.creator_name) continue;
+    if (lowerKey === 'end_date' && details.due_date) continue;
+    if (lowerKey === 'workspace_id' && details.workspace_name) continue;
+    if (lowerKey === 'parent_workspace' && details.parent_workspace_name) continue;
+    if (lowerKey === 'task_title' && details.task_name) continue;
+
+    const label = formatFieldLabel(key);
+    if (seenLabels.has(label.toLowerCase())) continue;
+
     // Handle nested objects/arrays gracefully
     if (typeof value === 'object') {
       if (Array.isArray(value)) {
         if (value.length === 0) continue;
+        seenLabels.add(label.toLowerCase());
         fields.push({
-          label: formatFieldLabel(key),
+          label,
           value: value.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join(', ')
         });
       } else {
         // Flat inner properties if simple
         if (value.name || value.full_name || value.title || value.code) {
+          seenLabels.add(label.toLowerCase());
           fields.push({
-            label: formatFieldLabel(key),
+            label,
             value: String(value.full_name || value.name || value.title || value.code)
           });
         }
@@ -156,8 +178,9 @@ export function normalizeDetailFields(
       continue;
     }
 
+    seenLabels.add(label.toLowerCase());
     fields.push({
-      label: formatFieldLabel(key),
+      label,
       value: String(value).trim()
     });
   }
@@ -225,11 +248,14 @@ export function buildEmailCardHtml(options: EmailCardOptions): string {
   if (normalizedFields.length > 0) {
     fieldsHtml = `
       <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
-        ${normalizedFields.map(f => `
+        ${normalizedFields.map(f => {
+          const cleanVal = stripHtmlToText(String(f.value));
+          return `
           <p style="margin: 6px 0; font-size: 14px; line-height: 1.5; color: #334155; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-            <strong style="color: #0f172a; font-weight: 600;">${escapeHtml(f.label)}:</strong> ${escapeHtml(String(f.value))}
+            <strong style="color: #0f172a; font-weight: 600;">${escapeHtml(f.label)}:</strong> ${escapeHtml(cleanVal)}
           </p>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
     `;
   }
@@ -252,9 +278,9 @@ export function buildEmailCardHtml(options: EmailCardOptions): string {
   let descriptionHtml = '';
   if (description && description.trim()) {
     descriptionHtml = `
-      <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-        ${escapeHtml(description)}
-      </p>
+      <div style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        ${renderSafeHtmlOrText(description)}
+      </div>
     `;
   }
 
@@ -364,7 +390,7 @@ export function convertPlainTextToHtmlCard(options: {
 /**
  * Escapes HTML characters to prevent XSS in email bodies
  */
-function escapeHtml(str: string): string {
+export function escapeHtml(str: string): string {
   if (!str) return '';
   return String(str)
     .replace(/&/g, '&amp;')
@@ -372,4 +398,41 @@ function escapeHtml(str: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+/**
+ * Strips HTML tags and entities to produce clean plain text for email details and subjects
+ */
+export function stripHtmlToText(html: string): string {
+  if (!html) return '';
+  return String(html)
+    .replace(/<br\s*[\/]?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&#039;/gi, "'")
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n+/g, '\n')
+    .trim();
+}
+
+/**
+ * Renders HTML content safely for email descriptions, removing harmful scripts/styles while preserving safe markup
+ */
+export function renderSafeHtmlOrText(content: string): string {
+  if (!content) return '';
+  const trimmed = String(content).trim();
+  const hasHtml = /<[a-z][\s\S]*>/i.test(trimmed);
+  if (hasHtml) {
+    return trimmed
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/&nbsp;/gi, ' ');
+  }
+  return escapeHtml(trimmed);
 }

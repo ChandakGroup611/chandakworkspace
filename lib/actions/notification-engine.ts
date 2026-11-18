@@ -129,7 +129,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
 
     // 5. Hydrate Templates and Queue per Recipient with Secure Direct Activity Links
     const { createDirectActivityUrl, transformEmailContentLinks } = await import('@/lib/auth/direct-access');
-    const { buildEmailCardHtml, inferActionText } = await import('@/lib/email/email-renderer');
+    const { buildEmailCardHtml, inferActionText, stripHtmlToText } = await import('@/lib/email/email-renderer');
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech";
 
     let autoHydratedPayload = await autoHydratePayload(payload, moduleName);
@@ -137,7 +137,16 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     const validUsers = users.filter(u => u.email && u.email.trim());
     if (validUsers.length === 0) return;
 
-    const queueInserts = validUsers.map(user => {
+    // Deduplicate valid recipients by lowercase email
+    const seenEmails = new Set<string>();
+    const uniqueUsers = validUsers.filter(u => {
+      const emailLower = u.email.trim().toLowerCase();
+      if (seenEmails.has(emailLower)) return false;
+      seenEmails.add(emailLower);
+      return true;
+    });
+
+    const queueInserts = uniqueUsers.map(user => {
       const userDirectLink = createDirectActivityUrl(
         user.id,
         user.email,
@@ -156,18 +165,24 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       if (template?.subject) {
         subject = hydrateTemplate(template.subject, userHydratedPayload);
       } else {
-        if (userHydratedPayload.notification_summary || userHydratedPayload.description) {
+        const isExpiry = eventName.toLowerCase().includes('expir');
+        if (isExpiry && (userHydratedPayload.notification_summary || userHydratedPayload.description)) {
           subject = `${moduleName} Expiry: ${userHydratedPayload.notification_summary || userHydratedPayload.description}`;
         } else {
           const itemLabel = userHydratedPayload.task_name || 
+                            userHydratedPayload.task_code || 
                             userHydratedPayload.ticket_title || 
+                            userHydratedPayload.ticket_code || 
                             userHydratedPayload.workspace_name || 
                             userHydratedPayload.req_name || 
                             userHydratedPayload.ticket_no || 
+                            userHydratedPayload.registration_number || 
                             moduleName;
           subject = `${moduleName} ${eventName}: ${itemLabel}`;
         }
       }
+
+      subject = stripHtmlToText(subject);
 
       let finalHtmlBody: string;
       if (template?.html_body && template.html_body.trim()) {
@@ -179,7 +194,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
         
         finalHtmlBody = buildEmailCardHtml({
           title: cardTitle,
-          description: userHydratedPayload.description || userHydratedPayload.notification_summary,
+          description: userHydratedPayload.remarks || userHydratedPayload.description || userHydratedPayload.notification_summary,
           details: userHydratedPayload,
           actionUrl: userDirectLink,
           actionText
