@@ -354,6 +354,44 @@ async function upsertUser(spec: SeedUserSpec): Promise<string> {
     await supabaseAdmin.from("user_modules").insert(userModuleRows);
   }
 
+  // Upsert user_module_access
+  await supabaseAdmin.from("user_module_access").delete().eq("user_id", userId);
+  const umaRows: any[] = [];
+  for (const modCode of spec.modules) {
+    let roleCode = "MEMBER";
+    if (spec.globalRoleId === ROLES.SUPER_ADMIN || spec.globalRoleId === ROLES.ROLE_ADMIN) {
+      roleCode = modCode === "TASK_WORKFLOW" ? "WORKSPACE_ADMIN" : "ADMIN";
+    } else if (spec.globalRoleId === ROLES.ROLE_MANAGER) {
+      roleCode = "MANAGER";
+    }
+    umaRows.push({
+      user_id: userId,
+      module_code: modCode,
+      role_code: roleCode,
+      scope: { type: "all" },
+      is_default: umaRows.length === 0,
+      granted_at: new Date().toISOString()
+    });
+  }
+
+  if (spec.dashboards && spec.dashboards.length > 0) {
+    for (const dKey of spec.dashboards) {
+      umaRows.push({
+        user_id: userId,
+        module_code: "DASHBOARDS",
+        role_code: "VIEWER",
+        dashboard_key: dKey,
+        scope: { type: "all" },
+        is_default: false,
+        granted_at: new Date().toISOString()
+      });
+    }
+  }
+
+  if (umaRows.length > 0) {
+    await supabaseAdmin.from("user_module_access").insert(umaRows);
+  }
+
   // Synchronize domain access tables
   if (spec.fleetRole) {
     await supabaseAdmin.from("fleet_user_access").upsert({
@@ -373,10 +411,9 @@ async function upsertUser(spec: SeedUserSpec): Promise<string> {
       design_role: spec.designRole,
       project_access_type: spec.projectScope && spec.projectScope.length > 0 ? "SPECIFIC" : "ALL",
       assigned_project_ids: spec.projectScope || [],
-      can_view_matrix: true,
-      can_edit_matrix: spec.designRole === "DESIGN_ADMIN" || spec.designRole === "DESIGN_LEAD",
-      can_upload_drawings: spec.designRole === "DESIGN_ADMIN" || spec.designRole === "DESIGN_LEAD",
-      can_approve_gfc: spec.designRole === "DESIGN_ADMIN" || spec.designRole === "DESIGN_LEAD",
+      can_matrix_edit: spec.designRole === "DESIGN_ADMIN" || spec.designRole === "DESIGN_LEAD",
+      can_drawings_upload: spec.designRole === "DESIGN_ADMIN" || spec.designRole === "DESIGN_LEAD",
+      can_drawings_approve_gfc: spec.designRole === "DESIGN_ADMIN" || spec.designRole === "DESIGN_LEAD",
       updated_at: new Date().toISOString()
     }, { onConflict: "user_id" });
   }
@@ -395,9 +432,6 @@ async function upsertUser(spec: SeedUserSpec): Promise<string> {
     const dashRows = spec.dashboards.map(key => ({
       user_id: userId,
       dashboard_key: key,
-      can_view: true,
-      can_export: spec.globalRoleId === ROLES.SUPER_ADMIN,
-      can_drilldown: true,
       created_at: new Date().toISOString()
     }));
     if (dashRows.length > 0) {
