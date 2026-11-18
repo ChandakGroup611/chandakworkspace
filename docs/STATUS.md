@@ -8,10 +8,10 @@
 | **0.1** | WP0 | Check CRON_SECRET on Hostinger env and GitHub secrets | — | — | TC-XMOD-003 | PENDING_USER_SECRET |
 | **0.2** | WP0 | deploy.yml: pull_request trigger, P1 gate, smoke with auto-rollback | `6bee8c12` | — | TC-REGR-010 | DONE |
 | **0.3** | WP0 | Initialize docs/STATUS.md master programme registry | `pending` | — | — | DONE |
-| **1.1** | WP1 | Remove TASK_WORKFLOW wildcard & legacy code mappings in hasPermission | `pending` | — | TC-AMC-008, TC-TASK-006 | DONE |
-| **1.2** | WP1 | Enforce owner/assignee/creator/executor checks on updateTask & priority | — | — | TC-TASK-006, TC-TASK-007 | TODO |
-| **1.3** | WP1 | Remove WORKSPACES_MANAGE from isSuperAdmin checks across actions | — | — | TC-TASK-001, TC-TASK-014 | TODO |
-| **1.4** | WP1 | Restrict deleteTask strictly to Super Admin, workspace/task owner | — | — | TC-TASK-007 | TODO |
+| **1.1** | WP1 | Remove TASK_WORKFLOW wildcard & legacy code mappings in hasPermission | `2dd03866` | — | TC-AMC-008, TC-TASK-006 | DONE |
+| **1.2** | WP1 | Enforce owner/assignee/creator/executor checks on updateTask & priority | `pending` | — | TC-TASK-006 | DONE |
+| **1.3** | WP1 | Remove WORKSPACES_MANAGE from isSuperAdmin checks across actions | `pending` | — | TC-TASK-001, TC-TASK-014 | DONE |
+| **1.4** | WP1 | Restrict deleteTask strictly to Super Admin, workspace/task owner | `pending` | — | TC-TASK-007 | DONE |
 | **1.5** | WP1 | Tickets dashboard: scope to caller's visible tickets, count/aggregate | — | — | TC-TCK-001, TC-TCK-012 | TODO |
 | **1.6** | WP1 | Enforce canAccessTicket / canAccessTask on chats and comments | — | — | TC-TCK-005, TC-TASK-006 | TODO |
 | **1.7** | WP1 | Single source for dashboards visibility (sidebar, /dashboards, [key]) | — | — | TC-DASH-001, TC-REGR-013 | TODO |

@@ -106,7 +106,7 @@ export async function createTask(payload: {
     // 1. Workspace membership check & Module RBAC TASKS_CREATE
     const { hasPermission } = await import('@/lib/permissions');
     const { can } = await import('@/lib/permissions/module-access');
-    const isSuperAdmin = await hasPermission(creatorId, 'WORKSPACES_MANAGE') || await hasPermission(creatorId, 'SUPER_ADMIN');
+    const isSuperAdmin = await hasPermission(creatorId, 'SUPER_ADMIN');
 
     if (!isSuperAdmin) {
       const canCreate = await can(creatorId, 'TASK_WORKFLOW', 'TASKS_CREATE', { workspace_id: finalWorkspaceId || undefined });
@@ -628,7 +628,7 @@ export async function createCustomField(workspaceId: string, fieldName: string, 
   if (!user) throw new Error("Unauthenticated. Please log in.");
 
   const { canManageWorkspace, hasPermission } = await import("@/lib/permissions");
-  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN");
   const canManage = isSuper || (await canManageWorkspace(user.id, workspaceId));
   if (!canManage) throw new Error("Unauthorized: You do not have permission to manage custom fields in this workspace.");
 
@@ -989,9 +989,7 @@ export async function updateTask(taskId: string, payload: any) {
         let isAuthorizedAdmin = false;
         try {
           const permissionsModule = await import('@/lib/permissions');
-          isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") ||
-            await permissionsModule.hasPermission(userId, "TASKS_UPDATE") ||
-            await permissionsModule.hasPermission(userId, "TASKS_MANAGE");
+          isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN");
         } catch (e) {
           console.warn("[updateTask] Permission check failed", e);
         }
@@ -1036,6 +1034,11 @@ export async function updateTask(taskId: string, payload: any) {
 
   // Sanitize empty date/UUID strings to NULL to avoid DB syntax errors
   const updatePayload = { ...payload };
+  delete updatePayload.created_by;
+  delete updatePayload.owner_id;
+  delete updatePayload.workspace_id;
+  delete updatePayload.is_deleted;
+  delete updatePayload.id;
   const cleanField = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
 
   if (updatePayload.start_date !== undefined) {
@@ -1133,17 +1136,19 @@ export async function deleteTask(taskId: string) {
     if (!userId) return { error: "Unauthenticated" };
 
     const { hasPermission } = await import('@/lib/permissions');
-    const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "WORKSPACES_MANAGE");
-    const isWorkspaceOwner = (task.workspace as any)?.workspace_owner_id === userId;
+    const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
+    const wsOwnerId = Array.isArray(task.workspace) ? (task.workspace[0] as any)?.workspace_owner_id : (task.workspace as any)?.workspace_owner_id;
+    const isWorkspaceOwner = wsOwnerId === userId;
+    const isTaskOwner = task.assigned_to === userId || task.created_by === userId || (task as any).owner_id === userId;
     const canDeletePerm = await hasPermission(userId, "TASKS_DELETE");
 
-    const canDelete = isSuperAdmin || isWorkspaceOwner || canDeletePerm;
+    const canDelete = isSuperAdmin || isWorkspaceOwner || (isTaskOwner && canDeletePerm);
 
     if (!canDelete) {
       await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
         action_attempted: 'DELETE_TASK'
       }, userId);
-      return { error: "You do not have permission to delete this task. Only Workspace Owners and Authorized Admins can delete." };
+      return { error: "You do not have permission to delete this task. Only Super Admins, Workspace Owners, or Task Owners with delete permissions can delete." };
     }
 
     // Check for dependencies before deleting
@@ -1570,7 +1575,7 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
   if (newStatusId && newStatusId !== currentTask.status_id) {
     if (currentTask.assigned_to !== userId) {
       const { checkServerPermission } = await import("@/lib/permissions");
-      const isSuperAdmin = await checkServerPermission("SUPER_ADMIN") || await checkServerPermission("WORKSPACES_MANAGE");
+      const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
 
       if (!isSuperAdmin) {
         const { data: participant } = await supabaseAdmin
@@ -1837,30 +1842,64 @@ export async function executeTaskBatchOperation(payload: {
 
   const { taskId, updates, statusChanges, departmentChange, checklistCreates, checklistUpdates, remarks, attachmentIds } = payload;
 
-  if (statusChanges || (departmentChange && departmentChange.new_id !== undefined)) {
-    const { data: currentTask } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
-    if (currentTask && currentTask.assigned_to !== userId) {
-      const { checkServerPermission } = await import("@/lib/permissions");
-      const isSuperAdmin = await checkServerPermission("SUPER_ADMIN") || await checkServerPermission("WORKSPACES_MANAGE");
+  const { data: currentTask } = await supabaseAdmin
+    .from('tasks')
+    .select('assigned_to, owner_id, created_by, workspace_id, workspace:workspaces(workspace_owner_id)')
+    .eq('id', taskId)
+    .single();
 
-      if (!isSuperAdmin) {
-        const { data: participant } = await supabaseAdmin
-          .from('task_participants')
-          .select('participation_role')
-          .eq('task_id', taskId)
-          .eq('user_id', userId)
-          .maybeSingle();
+  if (!currentTask) return { error: "Task not found" };
 
-        if (!participant || participant.participation_role !== 'EXECUTOR') {
-          return { error: "Only the owner, superadmin, or an executive can change the status or department." };
-        }
+  const { checkServerPermission } = await import("@/lib/permissions");
+  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+  const isTaskOwner = currentTask.assigned_to === userId || currentTask.owner_id === userId || currentTask.created_by === userId;
+
+  let canEdit = isSuperAdmin || isTaskOwner;
+  if (!canEdit) {
+    const wsOwnerId = Array.isArray(currentTask.workspace) ? (currentTask.workspace[0] as any)?.workspace_owner_id : (currentTask.workspace as any)?.workspace_owner_id;
+    if (wsOwnerId === userId) {
+      canEdit = true;
+    } else if (currentTask.workspace_id) {
+      const { data: member } = await supabaseAdmin
+        .from('workspace_members')
+        .select('role')
+        .eq('workspace_id', currentTask.workspace_id)
+        .eq('user_id', userId)
+        .eq('is_deleted', false)
+        .maybeSingle();
+      if (member && (member.role === 'manager' || member.role === 'owner' || member.role === 'WORKSPACE_MANAGER' || member.role === 'WORKSPACE_OWNER')) {
+        canEdit = true;
+      }
+    }
+
+    if (!canEdit) {
+      const { data: participant } = await supabaseAdmin
+        .from('task_participants')
+        .select('participation_role')
+        .eq('task_id', taskId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (participant && (participant.participation_role === 'EXECUTOR' || participant.participation_role === 'PRIMARY')) {
+        canEdit = true;
       }
     }
   }
 
+  if (!canEdit) {
+    return { error: "You do not have permission to edit this task. Only the Task Owner/Creator/Assignee, Assigned Executives, Workspace Leaders, or Super Admins can edit." };
+  }
+
   const tCore0 = performance.now();
-  // Update Task Core
-  const updatePayload = { ...updates };
+  // Update Task Core - Whitelist editable fields (ignore created_by, owner_id, workspace_id, is_deleted, ids)
+  const allowedFields = ['subject', 'description', 'priority_id', 'department_id', 'start_date', 'end_date', 'estimated_hours', 'custom_fields', 'sprint_id'];
+  const updatePayload: Record<string, any> = {};
+  if (updates && typeof updates === 'object') {
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) {
+        updatePayload[key] = updates[key];
+      }
+    }
+  }
   if (statusChanges) {
     updatePayload.status_id = statusChanges;
   }
@@ -2657,7 +2696,7 @@ export async function assignUserToTasksBatch(userId: string, assignments: { task
     if (!user) return { error: "Unauthenticated. Please log in." };
 
     const { hasPermission } = await import("@/lib/permissions");
-    const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+    const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
 
     for (const assignment of assignments) {
       if (!isSuperAdmin) {

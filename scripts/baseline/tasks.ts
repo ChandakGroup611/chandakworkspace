@@ -109,12 +109,17 @@ export const taskRunners: TestCaseRunner[] = [
       const isSpectator = task?.assigned_to !== spectatorId && task?.created_by !== spectatorId;
       if (!isSpectator) return { pass: false, notes: "Spectator user is accidentally assigned to task", codePath: "scripts/seed-test-users.ts" };
       
-      // Attempt priority mutation via permission check
+      // Attempt priority mutation via permission check & action check
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(spectatorId, "SUPER_ADMIN");
       const canEdit = isSuper || task?.assigned_to === spectatorId || task?.created_by === spectatorId;
       if (canEdit) {
         return { pass: false, notes: "Security violation: spectator permitted to modify task priority", codePath: "lib/actions/tasks.ts" };
+      }
+      const { updateTask } = await import("../../lib/actions/tasks");
+      const updateRes = await updateTask(taskId, { priority_id: "507d7b96-8cc0-48ac-b818-f683a88b8c46" });
+      if (updateRes && !(updateRes as any).error) {
+        return { pass: false, notes: "Security violation: spectator permitted to modify task priority via server action", codePath: "lib/actions/tasks.ts" };
       }
       return { pass: true, notes: "Spectator inline priority modification correctly rejected" };
     }
@@ -140,8 +145,13 @@ export const taskRunners: TestCaseRunner[] = [
       const isOwner = member?.role === "owner";
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
+      const { deleteTask } = await import("../../lib/actions/tasks");
+      const delRes = await deleteTask(ctx.fixedEntities.taskId);
+      if (delRes && !(delRes as any).error) {
+        return { pass: false, notes: "Security violation: unauthorized caller permitted to delete task", codePath: "lib/actions/tasks.ts" };
+      }
       if (!isSuper && !isOwner) {
-        return { pass: true, notes: "Standard member is properly restricted from deleting workspace" };
+        return { pass: true, notes: "Standard member is properly restricted from deleting workspace and task" };
       }
       return { pass: false, notes: "Standard member has unauthorized workspace deletion rights", codePath: "lib/actions/workspaces.ts" };
     }
