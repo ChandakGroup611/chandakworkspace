@@ -1,0 +1,60 @@
+# Master Programme Tracking & Status (STATUS.md)
+
+**Master Programme Governance:** Autonomous Delivery & Verification  
+**Branch Cadence:** Develop -> Main (Automated Safety Gates & Smoke Verification)  
+
+| Issue / Item | WP | Summary | Commit (Develop) | Prod Commit | Associated TC-IDs | Status |
+| :--- | :---: | :--- | :---: | :---: | :---: | :---: |
+| **0.1** | WP0 | Check CRON_SECRET on Hostinger env and GitHub secrets | — | — | TC-XMOD-003 | PENDING_USER_SECRET |
+| **0.2** | WP0 | deploy.yml: pull_request trigger, P1 gate, smoke with auto-rollback | `6bee8c12` | — | TC-REGR-010 | DONE |
+| **0.3** | WP0 | Initialize docs/STATUS.md master programme registry | `pending` | — | — | DONE |
+| **1.1** | WP1 | Remove TASK_WORKFLOW wildcard & legacy code mappings in hasPermission | — | — | TC-TASK-006, TC-AMC-009 | TODO |
+| **1.2** | WP1 | Enforce owner/assignee/creator/executor checks on updateTask & priority | — | — | TC-TASK-006, TC-TASK-007 | TODO |
+| **1.3** | WP1 | Remove WORKSPACES_MANAGE from isSuperAdmin checks across actions | — | — | TC-TASK-001, TC-TASK-014 | TODO |
+| **1.4** | WP1 | Restrict deleteTask strictly to Super Admin, workspace/task owner | — | — | TC-TASK-007 | TODO |
+| **1.5** | WP1 | Tickets dashboard: scope to caller's visible tickets, count/aggregate | — | — | TC-TCK-001, TC-TCK-012 | TODO |
+| **1.6** | WP1 | Enforce canAccessTicket / canAccessTask on chats and comments | — | — | TC-TCK-005, TC-TASK-006 | TODO |
+| **1.7** | WP1 | Single source for dashboards visibility (sidebar, /dashboards, [key]) | — | — | TC-DASH-001, TC-REGR-013 | TODO |
+| **1.8** | WP1 | createTask & all server actions: derive created_by from session | — | — | TC-TASK-015, TC-REQ-015, TC-AUTH-006 | TODO |
+| **1.9** | WP1 | Immediate cache invalidation on access revoke / version stamp | — | — | TC-AUTH-003, TC-AUTH-004 | TODO |
+| **2.1** | WP2 | Subtask creation from task page: workspace binding and error handling | — | — | TC-TASK-004 | TODO |
+| **2.2** | WP2 | Single changeTaskStatus function with R1, R2, status_master checks | — | — | TC-TASK-002, TC-TASK-006 | TODO |
+| **2.3** | WP2 | Reopen task (R1) with active is_reopen/open status & error toasts | — | — | TC-TASK-006 | TODO |
+| **2.4** | WP2 | Task page action buttons aligned with existing statuses (D1) | — | — | TC-TASK-002 | TODO |
+| **2.5** | WP2 | Whitelist editable task fields; ignore ids/owner/workspace in payload | — | — | TC-TASK-006, TC-TASK-015 | TODO |
+| **2.6** | WP2 | Active, non-deleted, scope-bounded status lists in D4 order | — | — | TC-REGR-002 | TODO |
+| **2.7** | WP2 | Single default status per scope; remove self-heal inserts | — | — | TC-TCK-003, TC-TASK-003 | TODO |
+| **2.8** | WP2 | Data cleanup: fix inactive/deleted status pointers with backup | — | — | TC-TASK-002 | TODO |
+| **3.1** | WP3 | D6 auto-UAT rules and reopen requirement sync on sub-100% completion | — | — | TC-REQ-003 | TODO |
+| **3.2** | WP3 | UAT PASS: single active closed requirement status; atomic status update | — | — | TC-REQ-005 | TODO |
+| **3.3** | WP3 | UAT FAIL dialog: selectively reopen user-ticked tasks | — | — | TC-REQ-005 | TODO |
+| **3.4** | WP3 | Single-function status transitions for tickets and requirements | — | — | TC-TCK-004, TC-REQ-004 | TODO |
+| **3.5** | WP3 | Data audit: tickets/requirements status consistency report | — | — | TC-TCK-001, TC-REQ-001 | TODO |
+| **4.1** | WP4 | Atomic email queue claiming with SKIP LOCKED and backoff intervals | — | — | TC-MAIL-008 | TODO |
+| **4.2** | WP4 | Asia/Kolkata date handling (todayIST, toISTDateString, isOverdue) | — | — | TC-TASK-005, TC-TCK-005 | TODO |
+| **4.3** | WP4 | TAT escalation using working days & holiday calendar (D9) | — | — | TC-XMOD-003 | TODO |
+| **4.4** | WP4 | 1000-row cap: server pagination and count aggregates | — | — | TC-TASK-001, TC-TCK-001 | TODO |
+| **4.5** | WP4 | createTask duplicate prevention returning existing task ID | — | — | TC-TASK-003 | TODO |
+| **4.6** | WP4 | Status change notification emails format human-readable status names | — | — | TC-MAIL-002 | TODO |
+| **5.1** | WP5 | Unified soft delete via LifecycleManager.moveToTrash | — | — | TC-TASK-007, TC-TCK-007 | TODO |
+| **5.2** | WP5 | Batch restore via LifecycleManager.restoreFromTrash with parent checks | — | — | TC-REGR-004 | TODO |
+| **5.3** | WP5 | Purge: Super Admin typed confirmation and child cascade check | — | — | TC-TASK-007 | TODO |
+| **5.4** | WP5 | Trash UI with search, metadata columns, and pagination | — | — | TC-TASK-007 | TODO |
+| **5.5** | WP5 | Add tickets and module-scoped Trash views | — | — | TC-TCK-007 | TODO |
+| **5.6** | WP5 | Trash orphan report & repair active batches with backup | — | — | TC-TASK-007 | TODO |
+| **6.1** | WP6 | Convert remaining hollow baseline runners to real assertions | — | — | TC-AUTH-001 to TC-REGR-013 | TODO |
+| **6.2** | WP6 | KNOWN_BUGS.md hand-maintained gate synchronization | — | — | All | TODO |
+| **6.3** | WP6 | Super Admin release verification checklist | — | — | TC-TASK-001, TC-USER-003 | TODO |
+| **7.1** | WP7 | Access inventory: routes, actions, and current permission checks | — | — | TC-XMOD-004 | TODO |
+| **7.2** | WP7 | Module roles matrix & permissions schema | — | — | TC-IAM-001 to TC-IAM-008 | TODO |
+| **7.3** | WP7 | Grandfather dry-run and role/scope mapping migration | — | — | All Users | TODO |
+| **7.4** | WP7 | Server-side authorize wrapper (defineAction) & useModuleAccess | — | — | All Modules | TODO |
+| **7.5** | WP7 | Invite & edit user UI: module role, scope, and dashboard selector | — | — | TC-USER-004 | TODO |
+| **7.6** | WP7 | Module-scoped IAM Cockpit: single module roles, STANDARD undeletable | — | — | TC-IAM-001 to TC-IAM-008 | TODO |
+| **7.7** | WP7 | Module-scoped email templates & event triggers with module_code | — | — | TC-MAIL-001 to TC-MAIL-008 | TODO |
+| **7.8** | WP7 | Module-scoped masters, statuses, priorities, number series | — | — | TC-MSTR-001 to TC-MSTR-008 | TODO |
+| **7.9** | WP7 | CI governance checks: ESLint module rules and scripts/check-access | — | — | All | TODO |
+| **7.10** | WP7 | Read-only Access Matrix inspection screen in Settings | — | — | TC-IAM-001 | TODO |
+| **7.11** | WP7 | Governance update in .agents/AGENTS.md & module deployment train | — | — | All Modules | TODO |
+| **8.1** | WP8 | Standardize components: ActivityTimeline, SavedFilters, States, Back | — | — | All Modules | TODO |
+| **8.2** | WP8 | Build gaps: My Work, Approval Inbox, inline edit, Request Access | — | — | All Modules | TODO |
