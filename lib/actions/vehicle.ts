@@ -19,7 +19,7 @@ import { hasPermission } from "@/lib/permissions";
 import { can } from "@/lib/permissions/module-access";
 import crypto from "crypto";
 
-async function getAuthenticatedUser() {
+export async function getAuthenticatedUser() {
   if (process.env.ANTIGRAVITY_TEST_RUNNER === "true") {
     return { id: "00000000-0000-0000-0000-000000000000", email: "test-runner@system.local", role: "authenticated" } as any;
   }
@@ -74,7 +74,7 @@ async function canUserViewVehicles(userId: string, vehicleId?: string): Promise<
   }
 }
 
-async function canUserManageVehicles(userId: string, vehicleId?: string): Promise<boolean> {
+export async function canUserManageVehicles(userId: string, vehicleId?: string): Promise<boolean> {
   try {
     if (process.env.ANTIGRAVITY_TEST_RUNNER === "true" && userId === "00000000-0000-0000-0000-000000000000") return true;
     if (userId === "00000000-0000-0000-0000-000000000000") return false;
