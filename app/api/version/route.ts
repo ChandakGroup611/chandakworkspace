@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 const SERVER_BOOT_TIME = new Date().toISOString();
+const COMMIT_SHA = process.env.GIT_COMMIT || process.env.NEXT_PUBLIC_GIT_COMMIT || 'unknown';
 
 export async function GET() {
   return NextResponse.json(
@@ -8,6 +9,7 @@ export async function GET() {
       status: 'online',
       serverBootTime: SERVER_BOOT_TIME,
       version: '2.4.0',
+      commit: COMMIT_SHA,
       timestamp: Date.now()
     },
     {

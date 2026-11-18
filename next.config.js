@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  env: {
+    GIT_COMMIT: process.env.GIT_COMMIT || process.env.NEXT_PUBLIC_GIT_COMMIT || '',
+  },
   typescript: {
     // Next.js type checking during build is disabled to avoid redundant compilation
     // because `npx tsc --noEmit` already gates every CI workflow before `next build` starts.

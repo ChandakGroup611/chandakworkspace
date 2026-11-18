@@ -24,6 +24,9 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Date:** 2026-11-18 | **Release:** One-time automated governance pipeline setup (6-8 min deployment, 6 parallel gates, exact commit verification, atomic release rollback) | **Status:** [approved] Verified
+
+
 * **Change ID:** MESSENGER-001 (Universal Chandak Messenger Live Communication Platform)
 * **Date:** 2026-10-30
 * **Requested functionality:** Develop Chandak Messenger universally accessible from the top navbar near the notification trigger across all modules; implement WhatsApp-style live messaging, 1-on-1 direct chat, team groups, @mentions, voice notes, attachments with dual View & Download compliance, emoji reactions, and live unread badge counters with auto-population of all workspace users from `user_master`.

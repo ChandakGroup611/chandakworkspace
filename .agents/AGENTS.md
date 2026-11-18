@@ -6,21 +6,15 @@ The 21-point Governance Protocol in [.agents/rules/release_governance.md](file:/
 Every task lifecycle strictly requires:
 `INSPECT → BASELINE → ANALYZE IMPACT → PLAN → IMPLEMENT → SYNCHRONIZE DEPENDENCIES → TEST → REGRESSION TEST → REVIEW SOURCE → BUILD → VERIFY RELEASE → DEPLOY IF APPROVED → VERIFY DEPLOYMENT → REPORT EVIDENCE`.
 
-## Change Tiers & Streamlined Fast-Path Governance
+## How Changes Flow & Automated Governance Gates
 
-To maintain rigorous quality without slowing down delivery, development tasks follow tiered governance:
-
-- **SMALL** (Copy, visual styling, CSS, single screen, zero logic changes):
-  - **Verification**: `npx tsc --noEmit` + ESLint on changed files only (`npx eslint <changed files>`).
-  - **Visual Check**: One responsive check of the modified screen at 375px (mobile) and 1440px (desktop).
-  - **Exemptions**: No registry or documentation updates required (`ACCESS_RULES.md`, `ISSUES.md`, etc. stay untouched).
-- **MEDIUM** (Logic in one module, query/filter updates, non-breaking workflows):
-  - **Verification**: All **SMALL** gates + that specific module's test suite (e.g. `node scripts/access-audit/test-<module>.mjs` or targeted module E2E spec).
-  - **Mandatory Approval Trigger**: Any permission, authentication, IAM, RBAC matrix, or data schema change is ALWAYS classified as **MEDIUM or higher** and MANDATORILY requires explicit user approval before implementation.
-- **RELEASE** (Merge to `main` / Production Deployment):
-  - **Full Protocol**: Full `npx tsc --noEmit`, full repository lint, production build (`npm run build`), full `test:e2e` suite, dependency security audit (`npm audit`).
-  - **Documentation**: Registries, `ACCESS_RULES.md`, `ISSUES.md`, and changelog updated ONCE during the release window.
-  - All 21 points in `release_governance.md` strictly apply at the RELEASE tier.
+- **The automated gates ARE the release checklist**: Do not repeat them manually before every push.
+- **Before committing**: The agent only reads the affected code path, makes the smallest change, runs `npx tsc --noEmit` and `npx eslint <changed files>`, and checks the changed screen in the browser (375px mobile and 1440px desktop).
+- **Mandatory Approval Trigger**: Any change touching permissions (`lib/permissions/**`), authentication/users (`lib/actions/iam.ts`, `lib/actions/users.ts`), routing guard (`middleware.ts`), database migrations (`supabase/migrations/**`), or CI workflows (`.github/workflows/**`) REQUIRES explicit user approval beforehand. Once approved, the commit message MUST include `[approved]`.
+- **Branching & Deploy Cadence**: Commit to `develop`. Merge `develop` → `main` when the user says "deploy" (fast-forward), which triggers the production pipeline.
+- **Pipeline Reporting**: After pushing, wait for the run (max 10 min), then report in ≤ 8 lines: `PASS` + commit live, or `FAIL` + failing gate + last 30 log lines. Never "monitor" beyond that. If `FAIL`, fix on `develop` and repeat.
+- **Hotfixes**: Follow the identical pipeline and gates — nothing skips the gates.
+- **Changelog**: The pipeline summary is the authoritative record; append one line per release to `docs/CHANGELOG.md`.
 
 ## Branching & Release Cadence
 - **Branch**: All changes are committed to branch `develop`.

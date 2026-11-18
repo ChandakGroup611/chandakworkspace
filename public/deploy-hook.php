@@ -314,6 +314,33 @@ if (isset($_GET['warmup'])) {
     exit;
 }
 
+// Dedicated Rollback Action
+if (isset($_GET['action']) && $_GET['action'] === 'rollback') {
+    $oldTarget = isset($_GET['old']) ? trim($_GET['old']) : '';
+    $rollbackSuccess = false;
+    if ($oldTarget && is_dir($oldTarget)) {
+        $liveNodejs = $domainRoot . '/hbuilds/current/nodejs';
+        if (is_link($liveNodejs)) {
+            @unlink($liveNodejs);
+            @symlink($oldTarget, $liveNodejs);
+        } else {
+            recursiveCopy($oldTarget, $liveNodejs);
+        }
+        @mkdir($liveNodejs . '/tmp', 0755, true);
+        @touch($liveNodejs . '/tmp/restart.txt');
+        $reaped = reapOrphanProcesses();
+        safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1');
+        $rollbackSuccess = true;
+    }
+    echo json_encode([
+        'success' => $rollbackSuccess,
+        'action' => 'rollback',
+        'target' => $oldTarget,
+        'timestamp' => date('Y-m-d H:i:s')
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 // Dedicated Force Restart Action
 if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
     $killedViaPosix = reapOrphanProcesses();
@@ -491,6 +518,39 @@ if ($zipFile && class_exists('ZipArchive')) {
     }
     @unlink(__DIR__ . '/.ftp-deploy-sync-state.json');
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
+
+    // Archive release directory and prune older releases (keep 3 newest)
+    $requestedSha = isset($_GET['sha']) ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_GET['sha']) : '';
+    if (!empty($requestedSha)) {
+        $releasesBase = $domainRoot . '/hbuilds/releases';
+        @mkdir($releasesBase, 0755, true);
+        $releaseTarget = $releasesBase . '/' . $requestedSha;
+        if (!is_dir($releaseTarget)) {
+            recursiveCopy($canonicalAppRoot, $releaseTarget);
+        }
+        $allReleases = glob($releasesBase . '/*');
+        if ($allReleases && count($allReleases) > 3) {
+            usort($allReleases, function($a, $b) { return filemtime($b) - filemtime($a); });
+            for ($i = 3; $i < count($allReleases); $i++) {
+                if (is_dir($allReleases[$i])) {
+                    recursiveRemove($allReleases[$i]);
+                }
+            }
+        }
+    }
+
+    // Prune old logs older than 7 days
+    $candidateLogs = array_merge(
+        (array)glob($domainRoot . '/*.log'),
+        (array)glob($canonicalAppRoot . '/*.log'),
+        (array)glob($domainRoot . '/hbuilds/*/*.log')
+    );
+    $sevenDaysAgo = time() - (7 * 86400);
+    foreach ($candidateLogs as $cLog) {
+        if ($cLog && file_exists($cLog) && filemtime($cLog) < $sevenDaysAgo) {
+            @unlink($cLog);
+        }
+    }
 
     // Reap orphan processes and signal Passenger to reload the application smoothly
     $killResults = reapOrphanProcesses();
