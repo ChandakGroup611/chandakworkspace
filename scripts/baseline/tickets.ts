@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const ticketRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const { data, error } = await supabaseAdmin
         .from("tickets")
         .select("id, code, title, status_id, priority_id, creator_id")
@@ -27,6 +27,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.ticket.standard@chandakgroup.tech"];
       const code = `INC-AUTO-${Date.now().toString().slice(-6)}`;
       const { data, error } = await supabaseAdmin.from("tickets").insert({
@@ -51,6 +52,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const ticketId = ctx.fixedEntities.ticketId;
       const { error } = await supabaseAdmin
         .from("tickets")
@@ -68,6 +70,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const viewerId = ctx.users["test.ticket.noaccess@chandakgroup.tech"];
       const ticketId = ctx.fixedEntities.ticketId;
       const { data: ticket } = await supabaseAdmin.from("tickets").select("creator_id, assignee_id").eq("id", ticketId).single();
@@ -88,6 +91,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const ticketId = ctx.fixedEntities.ticketId;
       const { error } = await supabaseAdmin
         .from("tickets")
@@ -108,6 +112,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.ticket.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -126,6 +131,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.ticket.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -147,6 +153,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");
@@ -162,6 +169,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "data",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In lib/actions/tickets.ts line 582:
       // creator_id: user.id
       // It overrides payload.creator_id with session user.id!
@@ -176,6 +184,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // Check attachment proxy route availability
       const url = `${ctx.siteUrl}/api/proxy-attachment/test-id`;
       // Should not return 500 server crash
@@ -197,6 +206,7 @@ export const ticketRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.ticket.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");

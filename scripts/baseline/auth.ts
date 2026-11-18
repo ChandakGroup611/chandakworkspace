@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 import { createClient } from "@supabase/supabase-js";
 
 export const authRunners: TestCaseRunner[] = [
@@ -11,6 +10,7 @@ export const authRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
       const client = createClient(url, anonKey);
@@ -33,6 +33,7 @@ export const authRunners: TestCaseRunner[] = [
     role: "no access",
     type: "UI",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
       const client = createClient(url, anonKey);
@@ -54,6 +55,7 @@ export const authRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Session cookies and PermissionsProvider refresh smoothly" };
     }
   },
@@ -65,6 +67,7 @@ export const authRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Sign-out endpoint cleanses active session and cookies" };
     }
   },
@@ -76,6 +79,7 @@ export const authRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "data",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In current codebase:
       // We already discovered lib/actions/tasks.ts line 45 (createTask) and lib/actions/requirements.ts line 389 (createRequirement)
       // accept client payload created_by!
@@ -96,6 +100,7 @@ export const authRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.vehicle.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")

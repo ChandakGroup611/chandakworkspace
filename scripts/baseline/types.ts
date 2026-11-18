@@ -1,4 +1,8 @@
+import { SupabaseClient } from "@supabase/supabase-js";
+
 export interface TestCaseContext {
+  client: SupabaseClient;
+  supabaseAdmin: SupabaseClient; // alias for test client
   users: Record<string, string>; // email -> id
   fixedEntities: {
     workspaceId: string;

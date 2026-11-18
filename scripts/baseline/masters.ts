@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const masterRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const masterRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       try {
         const [companies, depts, desigs, vendors] = await Promise.all([
           supabaseAdmin.from("companies").select("id, name").limit(5),
@@ -34,6 +34,7 @@ export const masterRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const code = `DEPT-AUTO-${Date.now().toString().slice(-4)}`;
       const { data, error } = await supabaseAdmin.from("departments").insert({
         name: `[TEST-AUTO] Dept ${code}`,
@@ -54,6 +55,7 @@ export const masterRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Department updates preserve foreign key linkages" };
     }
   },
@@ -65,6 +67,7 @@ export const masterRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Referential integrity safeguards block deleting departments with assigned staff" };
     }
   },
@@ -76,6 +79,7 @@ export const masterRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -94,6 +98,7 @@ export const masterRunners: TestCaseRunner[] = [
     role: "FLEET_ADMIN",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Vehicle-specific masters isolated from platform organization masters" };
     }
   }

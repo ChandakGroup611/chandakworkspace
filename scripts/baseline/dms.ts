@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const dmsRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // Query dms folders
       try {
         const { data } = await supabaseAdmin.from("dms_folders").select("id, name, parent_id").limit(5);
@@ -27,6 +27,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // Check dms_documents table or repository
       try {
         const { data } = await supabaseAdmin.from("dms_documents").select("id").limit(1);
@@ -44,6 +45,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "DMS revision history and metadata editing enabled for authorized editors" };
     }
   },
@@ -55,6 +57,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "DESIGN_LEAD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Quality control review workflow logs reviewer identity and decision" };
     }
   },
@@ -66,6 +69,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -84,6 +88,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "DMS file repository conforms to View & Download compliance" };
     }
   },
@@ -95,6 +100,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.design.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -115,6 +121,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/share/invalid-token-123`;
       try {
         const res = await fetch(url);
@@ -135,6 +142,7 @@ export const dmsRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");

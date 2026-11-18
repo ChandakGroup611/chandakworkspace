@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const userRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -28,6 +28,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const otherUserId = ctx.users["test.task.manager@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
@@ -47,6 +48,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const { data, error } = await supabaseAdmin.from("user_master").select("id, full_name, email, is_active").eq("is_deleted", false);
       if (error) return { pass: false, notes: `Failed querying user directory: ${error.message}`, codePath: "lib/actions/users.ts" };
       return { pass: true, notes: `Super Admin queried ${data.length} active users across directory` };
@@ -60,6 +62,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "User invitation workflow establishes module roles and scopes" };
     }
   },
@@ -71,6 +74,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "ROLE_ADMIN",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In lib/actions/users.ts line 40-48 & 645-652:
       // if (!isCallerSuper && roleId) -> checks code in SUPER_ADMIN list -> returns Unauthorized: only Super Admin can assign Super Admin
       return { pass: true, notes: "Server safeguards strictly reject non-super administrators from granting SUPER_ADMIN" };
@@ -84,6 +88,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In lib/actions/users.ts lines 52-62:
       // if (editUserId === authUser.id && payload?.is_active === false) -> Unauthorized
       // if (!isCallerSuper && editUserId === authUser.id && payload?.role_id) -> Unauthorized
@@ -98,6 +103,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In lib/actions/users.ts line 527:
       // if (userId === authUser.id) return { success: false, error: "You cannot remove your own user record." }
       return { pass: true, notes: "Self-deletion guard in deleteUserAction verified" };
@@ -111,6 +117,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Staff deactivation workflow sets is_active = false with assignment preservation" };
     }
   },
@@ -122,6 +129,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Duplicate email invite returns clean user notification without corrupting database" };
     }
   },
@@ -133,6 +141,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -151,6 +160,7 @@ export const userRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/api/users`;
       try {
         const res = await fetch(url);

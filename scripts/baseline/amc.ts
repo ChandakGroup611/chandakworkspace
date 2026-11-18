@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const amcRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const amcRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       try {
         const { data } = await supabaseAdmin.from("amc_contracts").select("id, software_name, vendor_name").limit(5);
         return { pass: true, notes: `AMC contract registry query resolved (${(data || []).length} contracts)` };
@@ -26,6 +26,7 @@ export const amcRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "AMC contract onboarding and PDF attachment verified" };
     }
   },
@@ -37,6 +38,7 @@ export const amcRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "AMC contract terms and payment history update verified" };
     }
   },
@@ -48,6 +50,7 @@ export const amcRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.amc.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -66,6 +69,7 @@ export const amcRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.amc.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -86,6 +90,7 @@ export const amcRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");
@@ -101,6 +106,7 @@ export const amcRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "AMC agreement attachments satisfy View & Download compliance" };
     }
   },
@@ -112,6 +118,7 @@ export const amcRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/api/amc`;
       try {
         const res = await fetch(url);

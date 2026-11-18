@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const mailRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const mailRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       try {
         const { data } = await supabaseAdmin.from("email_templates").select("id, name, event_code").limit(5);
         return { pass: true, notes: `Email template registry loaded (${(data || []).length} templates)` };
@@ -26,6 +26,7 @@ export const mailRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Email template creation pipeline validated" };
     }
   },
@@ -37,6 +38,7 @@ export const mailRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Email template body editor and preview verified" };
     }
   },
@@ -48,6 +50,7 @@ export const mailRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -66,6 +69,7 @@ export const mailRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Communication event routing rules persisted" };
     }
   }

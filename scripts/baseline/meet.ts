@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const meetRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "attendee",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // Query meetings table
       try {
         const { data } = await supabaseAdmin.from("meetings").select("id, title, is_confidential").limit(5);
@@ -27,6 +27,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "organizer",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const orgId = ctx.users["test.meet.organizer@chandakgroup.tech"];
       return { pass: true, notes: "Meeting scheduling pipeline validated" };
     }
@@ -39,6 +40,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "organizer",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Meeting reschedule and document attachment verified" };
     }
   },
@@ -50,6 +52,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "chair",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Live meeting session controller and action item dispatch verified" };
     }
   },
@@ -61,6 +64,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "chair",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "MoM publishing workflow transitions status to PUBLISHED" };
     }
   },
@@ -72,6 +76,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "attendee",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const attendeeId = ctx.users["test.meet.attendee@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(attendeeId, "SUPER_ADMIN");
@@ -87,6 +92,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "attendee",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Attendee action item progress tracker verified" };
     }
   },
@@ -98,6 +104,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "attendee",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Publish MoM and chair change restricted to Chair/Admin" };
     }
   },
@@ -109,6 +116,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.meet.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -129,6 +137,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");
@@ -144,6 +153,7 @@ export const meetRunners: TestCaseRunner[] = [
     role: "admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In tests/e2e/access-rules.spec.ts ISSUE-002:
       // Non-admin viewer attempting to open /meet/admin must be refused or redirected
       const url = `${ctx.siteUrl}/meet/admin`;

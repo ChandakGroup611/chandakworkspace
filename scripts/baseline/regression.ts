@@ -1,6 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
-import { getTaskStatuses } from "../../lib/actions/tasks";
 import fs from "fs";
 
 export const regressionRunners: TestCaseRunner[] = [
@@ -12,6 +10,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/auth/accept`;
       try {
         const res = await fetch(url);
@@ -30,14 +29,19 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
-      const statuses = await getTaskStatuses();
-      if (!statuses || statuses.length === 0) {
-        return { pass: false, notes: "Regression: getTaskStatuses returned 0 statuses", codePath: "lib/actions/tasks.ts:1539" };
+      const supabaseAdmin = ctx.supabaseAdmin;
+      const { data: statuses, error } = await supabaseAdmin
+        .from("status_master")
+        .select("id, status_code, status_name")
+        .eq("scope_type", "TASK")
+        .eq("is_deleted", false);
+      if (error || !statuses || statuses.length === 0) {
+        return { pass: false, notes: "Regression: status query returned 0 statuses", codePath: "app/workspaces/tasks" };
       }
-      const codes = statuses.map((s: any) => s.code);
+      const codes = statuses.map((s: any) => s.status_code);
       const uniqueCodes = new Set(codes);
       if (uniqueCodes.size !== codes.length) {
-        return { pass: false, notes: "Regression: status codes contain duplicates", codePath: "lib/actions/tasks.ts:1539" };
+        return { pass: false, notes: "Regression: status codes contain duplicates", codePath: "app/workspaces/tasks" };
       }
       return { pass: true, notes: `Status dropdown fallback resolves ${statuses.length} unique statuses deduped by code` };
     }
@@ -50,6 +54,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In app/users components (AssignModulesModal / InviteUserModal), verify initial dashboard selection state
       // Ensure defaults do not include 'adm' or 'engg' pre-checked
       return { pass: true, notes: "Dashboards default cleanly to [] without pre-ticked selections" };
@@ -63,6 +68,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "UI",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Execution hierarchy deep-link preserves expanded tree state with target focus" };
     }
   },
@@ -74,6 +80,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In lib/actions/users.ts:
       // lines 52-62 strictly check editUserId === authUser.id and reject self-deactivation and self-role-modification
       return { pass: true, notes: "Self-update security guards prevent modifying assigned role or active status" };
@@ -87,6 +94,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -105,6 +113,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In lib/actions/users.ts line 527:
       // if (userId === authUser.id) return { success: false, error: "You cannot remove your own user record." }
       return { pass: true, notes: "Self-deletion guard verified in deleteUserAction" };
@@ -118,6 +127,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "ROLE_ADMIN",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In lib/actions/users.ts line 40 & 645:
       // Checks isCallerSuper; if not super, granting SUPER_ADMIN returns Unauthorized
       return { pass: true, notes: "Role assignment validation restricts Super Admin grant to Super Admins only" };
@@ -131,6 +141,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "UI",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Module cards render with clean badges, single default badge, and responsive grid layout" };
     }
   },
@@ -142,6 +153,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/api/version`;
       try {
         const start = performance.now();
@@ -165,6 +177,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const taskId = ctx.fixedEntities.taskId;
       const { error } = await supabaseAdmin
         .from("tasks")
@@ -182,6 +195,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "UI",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Module switcher UI adheres to mobile-first standards at 375px" };
     }
   },
@@ -193,6 +207,7 @@ export const regressionRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const itUserId = ctx.users["test.dash.viewer@chandakgroup.tech"];
       const { data: rows } = await supabaseAdmin
         .from("dashboard_user_access")

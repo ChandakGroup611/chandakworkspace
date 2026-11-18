@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const vehicleRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "TRAVELER",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const travelerId = ctx.users["test.vehicle.traveler@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("fleet_user_access")
@@ -30,6 +30,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "FLEET_ADMIN",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const adminId = ctx.users["test.vehicle.admin@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("fleet_user_access")
@@ -50,6 +51,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "FLEET_ADMIN",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const adminId = ctx.users["test.vehicle.admin@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("fleet_user_access")
@@ -70,6 +72,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "TRAVELER",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // Check trip requisitions table
       try {
         const { data } = await supabaseAdmin.from("vehicle_trips").select("id").limit(1);
@@ -87,6 +90,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "TRAVELER",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const travelerId = ctx.users["test.vehicle.traveler@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("fleet_user_access")
@@ -107,6 +111,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.vehicle.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -127,6 +132,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");
@@ -142,6 +148,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "FLEET_ADMIN",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Compliance documents adhere to View & Download standard" };
     }
   },
@@ -153,6 +160,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "TRAVELER",
     type: "data",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Vehicle trip requests bind requester to server auth session" };
     }
   },
@@ -164,6 +172,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/api/vehicle/create`;
       try {
         const res = await fetch(url, {
@@ -186,6 +195,7 @@ export const vehicleRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/api/vehicle/documents?vehicleId=dummy`;
       try {
         const res = await fetch(url);

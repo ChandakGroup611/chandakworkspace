@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const designRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "VIEWER",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const viewerId = ctx.users["test.design.viewer@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("design_user_access")
@@ -31,6 +31,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "DESIGN_LEAD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const leadId = ctx.users["test.design.lead@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("design_user_access")
@@ -51,6 +52,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "DESIGN_LEAD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const leadId = ctx.users["test.design.lead@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("design_user_access")
@@ -71,6 +73,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "DESIGN_ADMIN",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const adminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("design_user_access")
@@ -91,6 +94,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "VIEWER",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const viewerId = ctx.users["test.design.viewer@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("design_user_access")
@@ -111,6 +115,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "VIEWER",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const viewerId = ctx.users["test.design.viewer@chandakgroup.tech"];
       const { data: access } = await supabaseAdmin
         .from("design_user_access")
@@ -131,6 +136,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.design.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -151,6 +157,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");
@@ -166,6 +173,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "DESIGN_LEAD",
     type: "data",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In designTracking actions, verify whether revision uploads derive uploader from session
       return { pass: true, notes: "Design revision uploads validate uploader identity from server context" };
     }
@@ -178,11 +186,12 @@ export const designRunners: TestCaseRunner[] = [
     role: "VIEWER",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // Verify storage bucket exists
       const { data: buckets } = await supabaseAdmin.storage.listBuckets();
       const hasDesignBucket = (buckets || []).some(b => b.name.includes("design") || b.name.includes("drawings") || b.name.includes("dms"));
       if (!hasDesignBucket) {
-        return { pass: false, notes: "Design drawing storage bucket not configured", codePath: "lib/supabase/service_role.ts" };
+        return { pass: false, notes: "Design drawing storage bucket not configured", codePath: "lib/supabase/storage.ts" };
       }
       return { pass: true, notes: "Drawing document repository conforms to View & Download compliance" };
     }
@@ -195,6 +204,7 @@ export const designRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/verify-drawing/invalid-token-xyz`;
       try {
         const res = await fetch(url);

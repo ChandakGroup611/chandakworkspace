@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const dashboardRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const dashboardRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const multiId = ctx.users["test.dash.multi@chandakgroup.tech"];
       const { data: rows } = await supabaseAdmin
         .from("dashboard_user_access")
@@ -34,6 +34,7 @@ export const dashboardRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const itUserId = ctx.users["test.dash.viewer@chandakgroup.tech"];
       const { data: rows } = await supabaseAdmin
         .from("dashboard_user_access")
@@ -54,6 +55,7 @@ export const dashboardRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessId = ctx.users["test.dash.noaccess@chandakgroup.tech"];
       const { data: rows } = await supabaseAdmin
         .from("dashboard_user_access")
@@ -73,6 +75,7 @@ export const dashboardRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Executive dashboard charts and KPI analytics render cleanly" };
     }
   },
@@ -84,6 +87,7 @@ export const dashboardRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "data",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Financial ledger queries strictly bounded by company scope" };
     }
   },
@@ -95,6 +99,7 @@ export const dashboardRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Transaction ledger drilldown drawer verified" };
     }
   },
@@ -106,6 +111,7 @@ export const dashboardRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");

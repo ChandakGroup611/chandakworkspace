@@ -128,6 +128,8 @@ async function initializeContext(): Promise<TestCaseContext> {
   const siteUrl = TARGET_PORTAL.replace(/\/+$/, "");
 
   return {
+    client: supabaseAdmin,
+    supabaseAdmin,
     users: userMap,
     fixedEntities: {
       workspaceId: wsRes.data?.id || "",
@@ -141,6 +143,17 @@ async function initializeContext(): Promise<TestCaseContext> {
 }
 
 async function runAll() {
+  // Pre-flight security guard: verify zero baseline files import production service_role
+  const baselineDir = path.resolve(__dirname, "baseline");
+  const baselineFiles = fs.readdirSync(baselineDir).filter(f => f.endsWith(".ts"));
+  for (const f of baselineFiles) {
+    const code = fs.readFileSync(path.join(baselineDir, f), "utf8");
+    if (code.includes("lib/supabase/service_role") || /import.*service_role/i.test(code)) {
+      console.error(`FATAL SECURITY GUARD: scripts/baseline/${f} imports production service_role! All test runners must exclusively use ctx.client.`);
+      process.exit(1);
+    }
+  }
+
   const startTime = Date.now();
   console.log("=================================================================");
   console.log("  CHANDAK WORKSPACE — P1 CURRENT BASELINE AUTOMATION RUNNER");

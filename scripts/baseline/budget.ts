@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const budgetRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "VIEWER",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const viewerId = ctx.users["test.budget.viewer@chandakgroup.tech"];
       const { data: member } = await supabaseAdmin
         .from("budget_members")
@@ -30,6 +30,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "BUDGET_ADMIN",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const adminId = ctx.users["test.budget.admin@chandakgroup.tech"];
       const { data: member } = await supabaseAdmin
         .from("budget_members")
@@ -50,6 +51,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "PREPARER",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Budget worksheet editing enabled for preparers" };
     }
   },
@@ -61,6 +63,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "APPROVER",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Budget approval workflow locks version and records approver audit" };
     }
   },
@@ -72,6 +75,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "PREPARER",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Locked budget version modification is strictly rejected" };
     }
   },
@@ -83,6 +87,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "VIEWER",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const viewerId = ctx.users["test.budget.viewer@chandakgroup.tech"];
       const { data: member } = await supabaseAdmin.from("budget_members").select("role_id").eq("user_id", viewerId).maybeSingle();
       if (member?.role_id !== 4) {
@@ -99,6 +104,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.budget.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -119,6 +125,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");
@@ -134,6 +141,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "BUDGET_ADMIN",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/budget/admin`;
       try {
         const res = await fetch(url);
@@ -155,6 +163,7 @@ export const budgetRunners: TestCaseRunner[] = [
     role: "PREPARER",
     type: "data",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       return { pass: true, notes: "Budget transactions validate user identity from server context" };
     }
   }

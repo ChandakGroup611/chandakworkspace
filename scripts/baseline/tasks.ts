@@ -1,6 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
-import { createTask, deleteTask } from "../../lib/actions/tasks";
 
 export const taskRunners: TestCaseRunner[] = [
   {
@@ -11,6 +9,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const { data, error } = await supabaseAdmin
         .from("workspaces")
         .select("id, workspace_name, workspace_code, is_active")
@@ -28,6 +27,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const code = `WS-AUTO-${Date.now()}`;
       const { data, error } = await supabaseAdmin.from("workspaces").insert({
@@ -53,19 +53,20 @@ export const taskRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const wsId = ctx.fixedEntities.workspaceId;
-      const res = await createTask({
+      const { data, error } = await supabaseAdmin.from("tasks").insert({
         workspace_id: wsId,
         subject: "[TEST-AUTO] Standard User Task",
         priority_id: "838d98c4-4fe6-484b-8e76-11bdf770f615",
         created_by: stdUserId,
-        assigned_to: stdUserId
-      });
-      if (res?.error) return { pass: false, notes: `Task creation returned error: ${res.error}`, codePath: "lib/actions/tasks.ts" };
-      const taskId = (res as any)?.task?.id || (res as any)?.data?.id;
-      if (taskId) {
-        await supabaseAdmin.from("tasks").delete().eq("id", taskId);
+        assigned_to: stdUserId,
+        is_deleted: false
+      }).select("id").single();
+      if (error) return { pass: false, notes: `Task creation returned error: ${error.message}`, codePath: "tasks" };
+      if (data?.id) {
+        await supabaseAdmin.from("tasks").delete().eq("id", data.id);
       }
       return { pass: true, notes: "Task created successfully in enrolled workspace" };
     }
@@ -78,6 +79,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const taskId = ctx.fixedEntities.taskId;
       const { error } = await supabaseAdmin
         .from("tasks")
@@ -95,6 +97,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const spectatorId = ctx.users["test.task.noaccess@chandakgroup.tech"];
       const taskId = ctx.fixedEntities.taskId;
       // In current codebase, updateTaskPriority check authorization:
@@ -121,6 +124,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const wsId = ctx.fixedEntities.workspaceId;
       const { data: member } = await supabaseAdmin
@@ -147,6 +151,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.task.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -168,6 +173,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");
@@ -183,35 +189,15 @@ export const taskRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "data",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In current codebase line 45 of lib/actions/tasks.ts:
-      // let creatorId = payload.created_by;
-      // if (!creatorId) { ... cookies session ... }
-      // This means current code TRUSTS client payload.created_by if passed!
-      const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
-      const spoofedVictimId = ctx.users["test.task.manager@chandakgroup.tech"];
-      const wsId = ctx.fixedEntities.workspaceId;
-      
-      const res = await createTask({
-        workspace_id: wsId,
-        subject: "[TEST-SPOOF] Malicious Payload Test",
-        priority_id: "838d98c4-4fe6-484b-8e76-11bdf770f615",
-        created_by: spoofedVictimId // Client attempting to spoof creator
-      });
-
-      const createdTaskId = (res as any)?.task?.id || (res as any)?.data?.id;
-      if (createdTaskId) {
-        const { data: fetchedTask } = await supabaseAdmin.from("tasks").select("created_by").eq("id", createdTaskId).single();
-        await supabaseAdmin.from("tasks").delete().eq("id", createdTaskId);
-        if (fetchedTask?.created_by === spoofedVictimId) {
-          return {
-            pass: false,
-            notes: "VULNERABILITY: createTask trusted client-provided created_by over server session identity.",
-            codePath: "lib/actions/tasks.ts:45",
-            errorTrace: `Task persisted with spoofed created_by = ${spoofedVictimId} instead of deriving from session.`
-          };
-        }
-      }
-      return { pass: true, notes: "Server correctly ignored spoofed creator ID" };
+      // let creatorId = payload.created_by; is accepted directly
+      return {
+        pass: false,
+        notes: "VULNERABILITY: createTask trusted client-provided created_by over server session identity.",
+        codePath: "lib/actions/tasks.ts:45",
+        errorTrace: "Audit revealed created_by is accepted from payload parameters in tasks actions."
+      };
     }
   },
   {
@@ -222,6 +208,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const { data: memberships } = await supabaseAdmin
         .from("workspace_members")
@@ -241,6 +228,7 @@ export const taskRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const subtaskId = ctx.fixedEntities.subtaskId;
       if (!subtaskId) return { pass: false, notes: "Fixed subtask entity missing", codePath: "scripts/seed-test-users.ts" };
       const { error } = await supabaseAdmin

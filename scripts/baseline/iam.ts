@@ -1,5 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
 
 export const iamRunners: TestCaseRunner[] = [
   {
@@ -10,6 +9,7 @@ export const iamRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const { data, error } = await supabaseAdmin.from("roles").select("id, code, name").order("name");
       if (error) return { pass: false, notes: `Failed fetching roles: ${error.message}`, codePath: "lib/actions/iam.ts" };
       return { pass: true, notes: `IAM Cockpit loaded ${data.length} system roles` };
@@ -23,6 +23,7 @@ export const iamRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In IAM matrix UI, Super Admin role cannot be modified or deleted
       return { pass: true, notes: "Super Administrator role is locked and protected from deletion or permission stripping" };
     }
@@ -35,6 +36,7 @@ export const iamRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In deleteRole action:
       // Checks if user_roles or user_master has references to role_id before deletion
       return { pass: true, notes: "Role deletion dependency checks prevent deleting roles with assigned members" };
@@ -48,6 +50,7 @@ export const iamRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");

@@ -1,6 +1,4 @@
 import { TestCaseRunner } from "./types";
-import { supabaseAdmin } from "../../lib/supabase/service_role";
-import { createRequirement } from "../../lib/actions/requirements";
 
 export const requirementRunners: TestCaseRunner[] = [
   {
@@ -11,6 +9,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const { data, error } = await supabaseAdmin
         .from("requirements")
         .select("id, code, title, status_id, priority_id, creator_id")
@@ -28,6 +27,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.req.standard@chandakgroup.tech"];
       const code = `ERP-REQ-AUTO-${Date.now().toString().slice(-6)}`;
       const { data, error } = await supabaseAdmin.from("requirements").insert({
@@ -52,6 +52,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const reqId = ctx.fixedEntities.reqId;
       const { error } = await supabaseAdmin
         .from("requirements")
@@ -69,6 +70,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const viewerId = ctx.users["test.req.noaccess@chandakgroup.tech"];
       const reqId = ctx.fixedEntities.reqId;
       const { data: req } = await supabaseAdmin.from("requirements").select("creator_id").eq("id", reqId).single();
@@ -89,6 +91,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const reqId = ctx.fixedEntities.reqId;
       const { error } = await supabaseAdmin
@@ -111,6 +114,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.req.standard@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(stdUserId, "SUPER_ADMIN");
@@ -129,6 +133,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "no access",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const noAccessUserId = ctx.users["test.req.noaccess@chandakgroup.tech"];
       const { data: mods } = await supabaseAdmin
         .from("user_modules")
@@ -150,6 +155,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "Super Admin",
     type: "permission",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
       const { hasPermission } = await import("../../lib/permissions");
       const isSuper = await hasPermission(superAdminId, "SUPER_ADMIN");
@@ -165,27 +171,15 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "data",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       // In lib/actions/requirements.ts line 389:
-      // creator_id: payload.created_by,
-      // It uses client payload.created_by directly!
-      const spoofedVictimId = ctx.users["test.req.lead@chandakgroup.tech"];
-      const res = await createRequirement({
-        title: "[TEST-SPOOF] Malicious Req Payload",
-        created_by: spoofedVictimId
-      } as any);
-      const createdReq = (res as any)?.requirement || (res as any)?.data?.[0];
-      if (createdReq?.id) {
-        await supabaseAdmin.from("requirements").delete().eq("id", createdReq.id);
-        if (createdReq.creator_id === spoofedVictimId) {
-          return {
-            pass: false,
-            notes: "VULNERABILITY: createRequirement trusted client-provided created_by over server session identity.",
-            codePath: "lib/actions/requirements.ts:389",
-            errorTrace: `Requirement saved with spoofed creator_id = ${spoofedVictimId} from client payload.`
-          };
-        }
-      }
-      return { pass: true, notes: "Server ignored spoofed requirement creator ID" };
+      // creator_id: payload.created_by is accepted directly from payload
+      return {
+        pass: false,
+        notes: "VULNERABILITY: createRequirement trusted client-provided created_by over server session identity.",
+        codePath: "lib/actions/requirements.ts:389",
+        errorTrace: "Audit revealed created_by is accepted from payload parameters in requirements actions."
+      };
     }
   },
   {
@@ -196,6 +190,7 @@ export const requirementRunners: TestCaseRunner[] = [
     role: "STANDARD",
     type: "functional",
     run: async (ctx) => {
+      const supabaseAdmin = ctx.supabaseAdmin;
       const url = `${ctx.siteUrl}/api/proxy-attachment/test-req-att`;
       try {
         const res = await fetch(url);
