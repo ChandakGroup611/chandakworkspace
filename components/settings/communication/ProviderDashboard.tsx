@@ -205,6 +205,36 @@ export default function ProviderDashboard() {
                       <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-muted-foreground">Sender display name</label>
+                    <input 
+                      type="text" 
+                      value={prov.config.sender_name || ""}
+                      onChange={(e) => updateProviderConfig(prov.priority_level, "sender_name", e.target.value)}
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                      placeholder="Noreply"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-muted-foreground">From email address</label>
+                    <input 
+                      type="text" 
+                      value={prov.config.from_email || ""}
+                      onChange={(e) => updateProviderConfig(prov.priority_level, "from_email", e.target.value)}
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                      placeholder="Noreply@chandakgroup.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-muted-foreground">Reply-to email</label>
+                    <input 
+                      type="text" 
+                      value={prov.config.reply_to || ""}
+                      onChange={(e) => updateProviderConfig(prov.priority_level, "reply_to", e.target.value)}
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                      placeholder="Noreply@chandakgroup.com"
+                    />
+                  </div>
                 </>
               )}
 

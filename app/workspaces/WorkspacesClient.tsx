@@ -9,14 +9,14 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { 
-  FolderKanban, Users, Activity, Plus, Send, 
+import {
+  FolderKanban, Users, Activity, Plus, Send,
   Layers, GitMerge, ChevronDown, Building2, Calendar, Target,
   Loader2, ShieldAlert, Sparkles, ShieldCheck, Search, Filter,
   X, Check, ChevronsDownUp, ChevronsUpDown, UserCheck, RefreshCw, Globe, FileSpreadsheet
 } from "lucide-react";
-import { 
-  fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem, 
+import {
+  fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem,
   fetchWorkspaceStakeholders, createWorkspace, fetchCompanies, fetchPriorities,
   updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData, fetchHierarchyChildren,
   searchHierarchyDeep, fetchAllHierarchyBranches, type HierarchyFilterOptions
@@ -103,7 +103,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const filterPopoverRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterPopoverRef.current && !filterPopoverRef.current.contains(event.target as Node)) {
@@ -117,7 +117,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showFilters]);
-  
+
   const searchParams = useSearchParams();
   useEffect(() => {
     const createParam = searchParams?.get("create");
@@ -185,7 +185,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   useEffect(() => {
     let isCancelled = false;
     const hasActiveFilters = !!(
-      debouncedSearchQuery.trim() || 
+      debouncedSearchQuery.trim() ||
       (filters.workspaceIds && filters.workspaceIds.length > 0) ||
       filters.workspaceId ||
       (filters.subWorkspaceIds && filters.subWorkspaceIds.length > 0) ||
@@ -193,12 +193,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       (filters.companyIds && filters.companyIds.length > 0) ||
       filters.companyId ||
       (filters.statusIds && filters.statusIds.length > 0) ||
-      filters.statusId || 
+      filters.statusId ||
       (filters.priorityIds && filters.priorityIds.length > 0) ||
-      filters.priorityId || 
+      filters.priorityId ||
       (filters.assigneeIds && filters.assigneeIds.length > 0) ||
-      filters.assigneeId || 
-      filters.myTasksOnly || 
+      filters.assigneeId ||
+      filters.myTasksOnly ||
       (filters.entityTypes && filters.entityTypes.length > 0) ||
       (filters.entityType && filters.entityType !== 'ALL')
     );
@@ -246,6 +246,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     savedFilters,
     activeSavedFilterId,
     saveCurrentFilter,
+    updateSavedFilter,
     applySavedFilter,
     deleteSavedFilter
   } = useSavedFilters<{ searchQuery: string, filters: HierarchyFilterOptions }>("chandak_workspaces", currentUser?.id || null, (payload) => {
@@ -275,7 +276,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       myTasksOnly: !!pf.myTasksOnly
     });
     if (payload.searchQuery || Object.values(pf).some(v => v !== '' && v !== false && v !== 'ALL' && (!Array.isArray(v) || v.length > 0))) {
-        setShowFilters(true);
+      setShowFilters(true);
     }
   });
 
@@ -316,7 +317,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           myTasksOnly: !!pf.myTasksOnly
         });
         if (payload.searchQuery || Object.values(pf).some(v => v !== '' && v !== false && v !== 'ALL' && (!Array.isArray(v) || v.length > 0))) {
-           setShowFilters(true);
+          setShowFilters(true);
         }
       },
       () => {
@@ -443,7 +444,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     const parentWsIds = filters.workspaceIds && filters.workspaceIds.length > 0
       ? filters.workspaceIds
       : (filters.workspaceId ? [filters.workspaceId] : []);
-    
+
     const filteredSubs = parentWsIds.length > 0
       ? allSubs.filter((w: any) => parentWsIds.includes(w.parent_workspace_id))
       : allSubs;
@@ -522,7 +523,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       try {
         const saved = localStorage.getItem('workspace_auto_collapse');
         if (saved !== null) return JSON.parse(saved);
-      } catch (e) {}
+      } catch (e) { }
     }
     return false; // Default false: keep branches open on list page basis
   });
@@ -530,7 +531,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   useEffect(() => {
     try {
       localStorage.setItem('workspace_auto_collapse', JSON.stringify(autoCollapse));
-    } catch (e) {}
+    } catch (e) { }
   }, [autoCollapse]);
 
   useEffect(() => {
@@ -541,7 +542,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ _action: 'mark_read', taskId: initialTaskId })
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [initialTaskId]);
 
@@ -561,25 +562,34 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const restoreHierarchyParam = searchParams?.get('restoreHierarchy');
 
   useEffect(() => {
+    const isExplicitRestore = Boolean(workspaceParam || restoreHierarchyParam);
     let targetId = workspaceParam;
     let savedExpanded: Record<string, boolean> | null = null;
     let savedLastActive: string | null = null;
 
-    if (typeof window !== 'undefined') {
+    if (isExplicitRestore && typeof window !== 'undefined') {
       try {
         const raw = sessionStorage.getItem('chandak_hierarchy_expanded_nodes');
         if (raw) savedExpanded = JSON.parse(raw);
         savedLastActive = sessionStorage.getItem('chandak_hierarchy_last_active_id');
-      } catch (e) {}
+      } catch (e) { }
     }
 
-    if (!targetId && (restoreHierarchyParam || savedLastActive)) {
+    if (!targetId && restoreHierarchyParam) {
       targetId = savedLastActive || null;
     }
 
     if (targetId && workspaces.length > 0) {
       if (autoExpandedPathsRef.current.has(targetId)) return;
       autoExpandedPathsRef.current.add(targetId);
+
+      // Clean up one-time restoration keys so subsequent regular page refreshes/menu switches don't re-maximize
+      if (typeof window !== 'undefined' && restoreHierarchyParam) {
+        try {
+          sessionStorage.removeItem('chandak_hierarchy_expanded_nodes');
+          sessionStorage.removeItem('chandak_hierarchy_last_active_id');
+        } catch (e) { }
+      }
 
       // Build parent path from target up to root
       const path: string[] = [targetId];
@@ -593,7 +603,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           break;
         }
       }
-      
+
       // Expand all nodes in the path and merge any saved expanded nodes
       setExpandedNodes(prev => {
         const next = { ...prev, ...(savedExpanded || {}) };
@@ -622,19 +632,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       // Fetch children for all ancestors sequentially to construct the tree
       const loadTreePath = async () => {
         const orderedPath = [...path].reverse(); // from root to leaf
-        
+
         for (const nodeId of orderedPath) {
           try {
             const children = await fetchHierarchyChildren(nodeId, 'WORKSPACE');
-            
+
             setMasterHierarchy(prev => {
               const insertChildren = (tree: any[]): any[] => {
                 return tree.map(item => {
                   if (item.id === nodeId) {
-                    return { 
-                      ...item, 
-                      children: HierarchyStateManager.mergePrefetchedChildren(item.children, children), 
-                      childrenFetched: true 
+                    return {
+                      ...item,
+                      children: HierarchyStateManager.mergePrefetchedChildren(item.children, children),
+                      childrenFetched: true
                     };
                   }
                   if (item.children && item.children.length > 0) {
@@ -649,13 +659,28 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             console.error(`Failed to prefetch children for path node ${nodeId}:`, err);
           }
         }
+        // Clean URL query params after one-time hierarchy restoration
+        if (typeof window !== 'undefined' && (restoreHierarchyParam || workspaceParam)) {
+          try {
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('restoreHierarchy');
+            cleanUrl.searchParams.delete('workspace');
+            window.history.replaceState({}, '', cleanUrl.pathname + (cleanUrl.searchParams.toString() ? `?${cleanUrl.searchParams.toString()}` : ''));
+          } catch (e) { }
+        }
       };
-      
+
       loadTreePath();
-    } else if (!workspaceParam && !restoreHierarchyParam && !savedLastActive && mounted) {
-      // Clear expansion state only if no target or restoration state is requested
+    } else if (!isExplicitRestore && mounted) {
+      // Clear expansion state on normal navigation or page refresh
       setExpandedNodes({});
       autoExpandedPathsRef.current.clear();
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.removeItem('chandak_hierarchy_expanded_nodes');
+          sessionStorage.removeItem('chandak_hierarchy_last_active_id');
+        } catch (e) { }
+      }
     }
   }, [workspaceParam, restoreHierarchyParam, workspaces, autoCollapse, mounted]);
 
@@ -696,9 +721,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const renderWorkspaceTree = (nodes: any[], depth = 0) => {
     return nodes.map(w => (
       <React.Fragment key={w.id}>
-        <AppButton variant="secondary" 
+        <AppButton variant="secondary"
           onClick={() => setActiveWorkspace(workspaces.find(orig => orig.id === w.id))}
-          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${ isLightMode ? (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-border/50' : 'hover:bg-surface border-border/50') : (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-border' : 'hover:theme-card-structural /5 border-border') }`}
+          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${isLightMode ? (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-border/50' : 'hover:bg-surface border-border/50') : (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-border' : 'hover:theme-card-structural /5 border-border')}`}
           style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
         >
           <div className="flex items-center gap-2">
@@ -712,7 +737,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     ));
   };
 
-  
+
   const [wsModalMode, setWsModalMode] = useState<'ROOT' | 'SUB' | 'EDIT' | 'SHARE' | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [drawerTask, setDrawerTask] = useState<any>(null);
@@ -722,23 +747,24 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(() => {
-    if (typeof window !== 'undefined') {
+    // Only restore if explicit restoreHierarchy parameter exists in the URL
+    if (typeof window !== 'undefined' && window.location.search.includes('restoreHierarchy')) {
       try {
         const saved = sessionStorage.getItem('chandak_hierarchy_expanded_nodes');
         if (saved) return JSON.parse(saved);
-      } catch (e) {}
+      } catch (e) { }
     }
     return {};
   });
-  
-  const [newWS, setNewWS] = useState({ 
-    name: "", 
-    code: "", 
-    description: "", 
-    company_id: "", 
+
+  const [newWS, setNewWS] = useState({
+    name: "",
+    code: "",
+    description: "",
+    company_id: "",
     parent_workspace_id: "",
     assigneeIds: [] as string[],
-    start_date: "", 
+    start_date: "",
     end_date: "",
     is_public: false
   });
@@ -757,7 +783,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     return null;
   };
 
-  const parentWorkspace = newWS.parent_workspace_id 
+  const parentWorkspace = newWS.parent_workspace_id
     ? (workspaces.find(w => w.id === newWS.parent_workspace_id) || findNodeInHierarchy(masterHierarchy, newWS.parent_workspace_id))
     : null;
 
@@ -797,7 +823,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const { data: workspaceData, mutate: mutateWorkspaceData } = useSWR(
     activeWorkspace?.id ? [activeWorkspace.id, 'workspace_data'] : null,
     fetcher,
-    { 
+    {
       fallbackData: { tasks: initialData?.prefetchTasks || [], stakeholders: initialData?.prefetchStakeholders || [] },
       revalidateOnFocus: false,
       dedupingInterval: 60000,
@@ -839,20 +865,20 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         parent_workspace_id: newWS.parent_workspace_id || null,
         visibility_settings: { public: newWS.is_public }
       };
-      
+
       let data: any;
       if (editWSId) {
         data = await updateWorkspace(editWSId, payload);
         if (data?.error) throw new Error(data.error);
-        
+
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
         triggerToast("Workspace updated");
-        
+
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
         if (selectedCompany) data.company = selectedCompany;
-        
+
         const updatedList = workspaces.map(w => w.id === editWSId ? data : w);
         setWorkspaces(updatedList);
         setActiveWorkspace(data);
@@ -871,19 +897,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       } else {
         data = await createWorkspace(payload);
         if (data?.error) throw new Error(data.error);
-        
+
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
         triggerToast("Workspace created");
-        
+
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
         if (selectedCompany) data.company = selectedCompany;
-        
+
         setWorkspaces([data, ...workspaces]);
         setActiveWorkspace(data);
       }
-      
+
       // Refresh the execution hierarchy tree to show the newly created workspace
       if (!editWSId) {
         setMasterHierarchy(curr => {
@@ -921,9 +947,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           setMasterHierarchy(curr => {
             const insertChildren = (tree: any[]): any[] => tree.map(node => {
               if (node.id === parentWsId) {
-                return { 
-                  ...node, 
-                  children: HierarchyStateManager.mergePrefetchedChildren(node.children, children), 
+                return {
+                  ...node,
+                  children: HierarchyStateManager.mergePrefetchedChildren(node.children, children),
                   childrenFetched: true,
                   subworkspace_count: Math.max(node.subworkspace_count || 0, children.filter((c: any) => c.type === 'SUB_WORKSPACE').length)
                 };
@@ -937,15 +963,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           console.error("Failed to refresh hierarchy children for parent workspace", e);
         }
       }
-      
-      setNewWS({ 
-        name: "", 
-        code: "", 
-        description: "", 
-        company_id: "", 
+
+      setNewWS({
+        name: "",
+        code: "",
+        description: "",
+        company_id: "",
         parent_workspace_id: "",
         assigneeIds: [],
-        start_date: "", 
+        start_date: "",
         end_date: "",
         is_public: false
       });
@@ -954,8 +980,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     } catch (err: any) {
       console.warn("[Workspace Creation] Intercepted:", err.message || err);
       if (err.message && err.message.includes("was not found on the server")) {
-         window.location.reload();
-         return;
+        window.location.reload();
+        return;
       }
       triggerErrorToast("Couldn't save the workspace: " + (err.message || err.details || "please try again."));
     } finally {
@@ -1013,7 +1039,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     try {
       const res = await deleteWorkspace(id) as any;
       if (res?.error) throw new Error(res.error);
-      
+
       const updatedList = workspaces.filter(w => w.id !== id);
       setWorkspaces(updatedList);
       triggerToast("Workspace deleted");
@@ -1022,7 +1048,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       } else {
         setActiveWorkspace(null);
       }
-      
+
       // Optimistically remove from tree and update parent counts
       setMasterHierarchy(curr => {
         const nodeToDelete = findNodeInHierarchy(curr, id);
@@ -1072,14 +1098,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     try {
       const res = await deleteTask(nodeId);
       if (res?.error) throw new Error(res.error);
-      
+
       triggerToast("Task deleted");
-      
+
       // Optimistically remove from tree and bubble task count downwards
       setMasterHierarchy(prev => {
         const nodeToDelete = findNodeInHierarchy(prev, nodeId);
         const parentId = nodeToDelete?.parent_workspace_id || nodeToDelete?.parent_task_id;
-        
+
         let bubbled = prev;
         if (parentId) {
           const result = HierarchyStateManager.bubbleTaskCount(prev, parentId, -1);
@@ -1094,7 +1120,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             return n;
           });
         };
-        
+
         return removeNode(bubbled);
       });
 
@@ -1108,31 +1134,31 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   // Intent-Driven Hover Prefetching
   const prefetchCache = useRef<Set<string>>(new Set());
-  
+
   const handlePrefetchNode = async (node: any) => {
     // Only prefetch if it hasn't been fetched, isn't currently loading, and hasn't been prefetched already
     if (node.childrenFetched || loading || prefetchCache.current.has(node.id)) return;
-    
+
     // Only prefetch if we know it actually has children
-    const hasItems = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE' 
+    const hasItems = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE'
       ? ((node.subworkspace_count || 0) > 0 || (node.total_hierarchy_task_count || 0) > 0)
       : (node.children && node.children.length > 0);
-      
+
     if (!hasItems) return;
 
     prefetchCache.current.add(node.id);
-    
+
     try {
       const children = await fetchHierarchyChildren(node.id, node.type);
-      
+
       // Inject children silently without expanding
       const insertChildren = (tree: any[]): any[] => {
         return tree.map(item => {
           if (item.id === node.id) {
-            return { 
-              ...item, 
-              children: HierarchyStateManager.mergePrefetchedChildren(item.children, children), 
-              childrenFetched: true 
+            return {
+              ...item,
+              children: HierarchyStateManager.mergePrefetchedChildren(item.children, children),
+              childrenFetched: true
             };
           }
           if (item.children && item.children.length > 0) {
@@ -1154,11 +1180,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       if (data && 'error' in data) {
         throw new Error((data as any).error);
       }
-      
+
       // Close modal immediately for instant UI feedback
       setIsCreatingTask(false);
       triggerToast("Task created");
-      
+
       // Optimistically insert to list for instant update
       setTasks(prev => [{ ...data, isOptimistic: true }, ...prev]);
 
@@ -1178,14 +1204,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           setMasterHierarchy(curr => {
             // W5.1: Bubble the count recursively via HierarchyStateManager
             const { nodes: bubbledNodes } = HierarchyStateManager.bubbleTaskCount(curr, targetParentId, 1);
-            
+
             // W5.2: Inject fetched children using intelligent merge
             const insertChildren = (tree: any[]): any[] => tree.map(node => {
               if (node.id === targetParentId) {
                 const merged = HierarchyStateManager.mergePrefetchedChildren(node.children, children);
-                return { 
-                  ...node, 
-                  children: merged, 
+                return {
+                  ...node,
+                  children: merged,
                   childrenFetched: true,
                   child_task_count: Math.max(node.child_task_count || 0, merged.length)
                 };
@@ -1201,21 +1227,20 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           console.error("Failed to refresh hierarchy children for parent task", e);
         }
       }
-      } catch (err: any) {
-        console.warn("[Task Creation] Intercepted:", err.message || err);
-        if (err.message && err.message.includes("was not found on the server")) {
-           window.location.reload();
-           return;
-        }
-        triggerErrorToast("Couldn't create the task: " + (err.message || err.details || "please try again."));
+    } catch (err: any) {
+      console.warn("[Task Creation] Intercepted:", err.message || err);
+      if (err.message && err.message.includes("was not found on the server")) {
+        window.location.reload();
+        return;
       }
+      triggerErrorToast("Couldn't create the task: " + (err.message || err.details || "please try again."));
+    }
   };
 
   if (!mounted || permsLoading || loading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 ${
-        "bg-surface text-foreground"
-      }`}>
+      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 ${"bg-surface text-foreground"
+        }`}>
         <ChandakLoader
           size="lg"
           title="Loading workspaces…"
@@ -1227,9 +1252,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   if (!hasPermission("WORKSPACES_VIEW")) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        "bg-surface text-foreground"
-      }`}>
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${"bg-surface text-foreground"
+        }`}>
         <div className="rounded-full bg-warning-soft p-3 text-warning-text">
           <ShieldAlert className="h-6 w-6" aria-hidden />
         </div>
@@ -1293,7 +1317,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     <span className="text-[14px] font-semibold text-heading">Filters</span>
                     <div className="flex items-center gap-2">
                       {activeFilterCount > 0 && (
-                        <button 
+                        <button
                           type="button"
                           onClick={clearFilters}
                           className="text-[12.5px] font-medium text-accent-soft-text hover:underline"
@@ -1301,7 +1325,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                           Reset all
                         </button>
                       )}
-                      <button 
+                      <button
                         type="button"
                         aria-label="Close filters"
                         onClick={() => setShowFilters(false)}
@@ -1463,16 +1487,18 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               onSaveCurrent={handleSaveCurrentFilter}
               onApplyFilter={applyFilter}
               onDeleteFilter={deleteSavedFilter}
+              onUpdateFilter={updateSavedFilter}
+              currentPayload={{ searchQuery: debouncedSearchQuery, filters }}
               align="end"
             />
-            
+
             <AppButton
               variant="primary"
               leftIcon={<Plus className="h-4 w-4" />}
               onClick={() => {
                 setNewWS({
-                  name: "", 
-                  code: "", 
+                  name: "",
+                  code: "",
                   description: "",
                   assigneeIds: [],
                   start_date: "",
@@ -1836,165 +1862,165 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       {/* Full Width Master Table Layout */}
       {workspaces.length > 0 ? (
         <div className="w-full flex flex-col pb-8">
-            
-            {/* Hierarchical Task Matrix */}
-            <div className="theme-card-structural flex flex-col">
-              <div className="flex flex-col justify-between gap-2.5 border-b border-border px-3 py-2.5 sm:flex-row sm:items-center">
-                <div className="inline-flex gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="View">
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={activeView === 'HIERARCHY'}
-                    onClick={() => setActiveView('HIERARCHY')}
-                    className={cn(SEG_BTN, activeView === 'HIERARCHY' ? SEG_ON : SEG_OFF)}
-                  >
-                    <GitMerge className="h-3.5 w-3.5" aria-hidden />
-                    Hierarchy
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={activeView === 'SPRINTS'}
-                    onClick={() => setActiveView('SPRINTS')}
-                    className={cn(SEG_BTN, activeView === 'SPRINTS' ? SEG_ON : SEG_OFF)}
-                  >
-                    <Calendar className="h-3.5 w-3.5" aria-hidden />
-                    Sprint planning
-                  </button>
-                </div>
 
-                {activeView === 'HIERARCHY' && (
-                  <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-                    <label className="flex cursor-pointer items-center gap-2 text-[13px] text-subtle">
-                      <input
-                        type="checkbox"
-                        checked={autoCollapse}
-                        onChange={e => setAutoCollapse(e.target.checked)}
-                        className="h-4 w-4"
-                      />
-                      <span className="whitespace-nowrap">Collapse other branches</span>
-                    </label>
-                    <div className="flex items-center gap-0.5">
-                      <div className="mx-1 h-5 w-px bg-border" aria-hidden></div>
-                      <AppButton
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={handleExpandAllBranches}
-                        disabled={isExpandingAll}
-                        className="text-muted hover:text-foreground"
-                        title="Expand all"
-                        aria-label="Expand all branches"
-                      >
-                        {isExpandingAll ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <ChevronsUpDown className="h-4 w-4" />
-                        )}
-                      </AppButton>
+          {/* Hierarchical Task Matrix */}
+          <div className="theme-card-structural flex flex-col">
+            <div className="flex flex-col justify-between gap-2.5 border-b border-border px-3 py-2.5 sm:flex-row sm:items-center">
+              <div className="inline-flex gap-0.5 rounded-lg border border-border bg-sunken p-0.5" role="radiogroup" aria-label="View">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={activeView === 'HIERARCHY'}
+                  onClick={() => setActiveView('HIERARCHY')}
+                  className={cn(SEG_BTN, activeView === 'HIERARCHY' ? SEG_ON : SEG_OFF)}
+                >
+                  <GitMerge className="h-3.5 w-3.5" aria-hidden />
+                  Hierarchy
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={activeView === 'SPRINTS'}
+                  onClick={() => setActiveView('SPRINTS')}
+                  className={cn(SEG_BTN, activeView === 'SPRINTS' ? SEG_ON : SEG_OFF)}
+                >
+                  <Calendar className="h-3.5 w-3.5" aria-hidden />
+                  Sprint planning
+                </button>
+              </div>
 
-                      <AppButton
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={handleCollapseAllBranches}
-                        className="text-muted hover:text-foreground"
-                        title="Collapse all"
-                        aria-label="Collapse all branches"
-                      >
-                        <ChevronsDownUp className="h-4 w-4" />
-                      </AppButton>
-                    </div>
+              {activeView === 'HIERARCHY' && (
+                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                  <label className="flex cursor-pointer items-center gap-2 text-[13px] text-subtle">
+                    <input
+                      type="checkbox"
+                      checked={autoCollapse}
+                      onChange={e => setAutoCollapse(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    <span className="whitespace-nowrap">Collapse other branches</span>
+                  </label>
+                  <div className="flex items-center gap-0.5">
+                    <div className="mx-1 h-5 w-px bg-border" aria-hidden></div>
+                    <AppButton
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={handleExpandAllBranches}
+                      disabled={isExpandingAll}
+                      className="text-muted hover:text-foreground"
+                      title="Expand all"
+                      aria-label="Expand all branches"
+                    >
+                      {isExpandingAll ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ChevronsUpDown className="h-4 w-4" />
+                      )}
+                    </AppButton>
+
+                    <AppButton
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={handleCollapseAllBranches}
+                      className="text-muted hover:text-foreground"
+                      title="Collapse all"
+                      aria-label="Collapse all branches"
+                    >
+                      <ChevronsDownUp className="h-4 w-4" />
+                    </AppButton>
                   </div>
-                )}
-              </div>
-
-              {activeView === 'HIERARCHY' ? (
-                <div className="w-full">
-              <WorkspaceMasterTable 
-                hierarchy={masterHierarchy} 
-                expandedNodes={expandedNodes}
-                setExpandedNodes={setExpandedNodes}
-                autoCollapse={autoCollapse}
-                forceExpandAll={!!(debouncedSearchQuery.trim() || activeFilterCount > 0)}
-                searchQuery={debouncedSearchQuery}
-                isLightMode={isLightMode}
-                taskStatuses={initialData?.taskStatuses || []}
-                allUsers={allUsers}
-                onlineUsers={onlineUsers}
-                presenceMap={presenceMap}
-                onOpenTask={(taskNode) => setDrawerTask(taskNode)}
-                onOpenWorkspace={(node) => openEditWorkspace(node)}
-                onShareNode={(node) => {
-                  if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
-                    openEditWorkspace(node, 'SHARE');
-                  } else {
-                    setDrawerTask(node);
-                  }
-                }}
-                onCreateSubWorkspace={(node) => {
-                  setNewWS({
-                    name: "", 
-                    code: "", 
-                    description: "",
-                    assigneeIds: [],
-                    start_date: "",
-                    end_date: "",
-                    is_public: false,
-                    parent_workspace_id: node.id,
-                    company_id: node.company_id || workspaces.find(w => w.id === node.id)?.company_id || ""
-                  });
-                  setWsModalMode('SUB');
-                }}
-                onCreateTask={(node) => {
-                  if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
-                    setCreatingTaskWorkspaceId(node.id);
-                    setCreatingTaskParentId(null);
-                  } else {
-                    setCreatingTaskWorkspaceId(node.workspace_id);
-                    setCreatingTaskParentId(node.id);
-                  }
-                  setCreatingTaskInitialName("");
-                  setIsCreatingTask(true);
-                }}
-                onDeleteNode={(node) => {
-                  if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
-                    handleDeleteWorkspace(node.id);
-                  } else {
-                    handleDeleteWorkspaceTask(node.id);
-                  }
-                }}
-                onPrefetchNode={handlePrefetchNode}
-                onExpandNode={async (node) => {
-                  try {
-                    const children = await fetchHierarchyChildren(node.id, node.type);
-                    // Add the children to the correct node in masterHierarchy
-                    const insertChildren = (tree: any[]): any[] => {
-                      return tree.map(item => {
-                        if (item.id === node.id) {
-                          return { 
-                            ...item, 
-                            children: HierarchyStateManager.mergePrefetchedChildren(item.children, children), 
-                            childrenFetched: true 
-                          };
-                        }
-                        if (item.children && item.children.length > 0) {
-                          return { ...item, children: insertChildren(item.children) };
-                        }
-                        return item;
-                      });
-                    };
-                    setMasterHierarchy(prev => insertChildren(prev));
-                  } catch (e) {
-                    console.error("Failed to fetch children", e);
-                  }
-                }}
-              />
-              </div>
-              ) : (
-                <div className="w-full min-h-[600px] overflow-hidden">
-                  <SprintBoard workspaceId={activeWorkspace?.id || workspaces[0]?.id} currentUser={currentUser} />
                 </div>
               )}
             </div>
+
+            {activeView === 'HIERARCHY' ? (
+              <div className="w-full">
+                <WorkspaceMasterTable
+                  hierarchy={masterHierarchy}
+                  expandedNodes={expandedNodes}
+                  setExpandedNodes={setExpandedNodes}
+                  autoCollapse={autoCollapse}
+                  forceExpandAll={!!(debouncedSearchQuery.trim() || activeFilterCount > 0)}
+                  searchQuery={debouncedSearchQuery}
+                  isLightMode={isLightMode}
+                  taskStatuses={initialData?.taskStatuses || []}
+                  allUsers={allUsers}
+                  onlineUsers={onlineUsers}
+                  presenceMap={presenceMap}
+                  onOpenTask={(taskNode) => router.push(`/tasks/${taskNode.id}`)}
+                  onOpenWorkspace={(node) => openEditWorkspace(node)}
+                  onShareNode={(node) => {
+                    if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
+                      openEditWorkspace(node, 'SHARE');
+                    } else {
+                      router.push(`/tasks/${node.id}`);
+                    }
+                  }}
+                  onCreateSubWorkspace={(node) => {
+                    setNewWS({
+                      name: "",
+                      code: "",
+                      description: "",
+                      assigneeIds: [],
+                      start_date: "",
+                      end_date: "",
+                      is_public: false,
+                      parent_workspace_id: node.id,
+                      company_id: node.company_id || workspaces.find(w => w.id === node.id)?.company_id || ""
+                    });
+                    setWsModalMode('SUB');
+                  }}
+                  onCreateTask={(node) => {
+                    if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
+                      setCreatingTaskWorkspaceId(node.id);
+                      setCreatingTaskParentId(null);
+                    } else {
+                      setCreatingTaskWorkspaceId(node.workspace_id);
+                      setCreatingTaskParentId(node.id);
+                    }
+                    setCreatingTaskInitialName("");
+                    setIsCreatingTask(true);
+                  }}
+                  onDeleteNode={(node) => {
+                    if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
+                      handleDeleteWorkspace(node.id);
+                    } else {
+                      handleDeleteWorkspaceTask(node.id);
+                    }
+                  }}
+                  onPrefetchNode={handlePrefetchNode}
+                  onExpandNode={async (node) => {
+                    try {
+                      const children = await fetchHierarchyChildren(node.id, node.type);
+                      // Add the children to the correct node in masterHierarchy
+                      const insertChildren = (tree: any[]): any[] => {
+                        return tree.map(item => {
+                          if (item.id === node.id) {
+                            return {
+                              ...item,
+                              children: HierarchyStateManager.mergePrefetchedChildren(item.children, children),
+                              childrenFetched: true
+                            };
+                          }
+                          if (item.children && item.children.length > 0) {
+                            return { ...item, children: insertChildren(item.children) };
+                          }
+                          return item;
+                        });
+                      };
+                      setMasterHierarchy(prev => insertChildren(prev));
+                    } catch (e) {
+                      console.error("Failed to fetch children", e);
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-full min-h-[600px] overflow-hidden">
+                <SprintBoard workspaceId={activeWorkspace?.id || workspaces[0]?.id} currentUser={currentUser} />
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="theme-card-structural">
@@ -2046,111 +2072,111 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 </div>
               </div>
             )}
-            
+
             {/* Section 1: Workspace Identity */}
             {wsModalMode !== 'SHARE' && (
               <>
                 <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-border pb-2">
-                <Building2 className="h-4 w-4 text-muted" aria-hidden />
-                <h3 className={SECTION_TITLE}>Details</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-5">
-                <div className="space-y-1.5">
-                  <label className={FIELD_LABEL}>Company <span className="text-danger-text" aria-hidden>*</span></label>
-                  <select 
-                    className="h-9 w-full px-3 text-[13.5px]"
-                    value={newWS.company_id}
-                    onChange={e => setNewWS({...newWS, company_id: e.target.value})}
-                  >
-                    <option value="" disabled>Select a company</option>
-                    {companies.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
-                  </select>
-                </div>
-              </div>
+                  <div className="flex items-center gap-2 border-b border-border pb-2">
+                    <Building2 className="h-4 w-4 text-muted" aria-hidden />
+                    <h3 className={SECTION_TITLE}>Details</h3>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className={FIELD_LABEL}>{wsModalMode === 'SUB' || !!newWS.parent_workspace_id ? "Sub-workspace Name" : "Workspace Name"} <span className="text-danger-text" aria-hidden>*</span></label>
-                  <AppInput placeholder={wsModalMode === 'SUB' || !!newWS.parent_workspace_id ? "e.g. CRM, Sales, Marketing" : "e.g. Q4 Platform Migration"} value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className="h-9 text-[13.5px]" />
-                  {(() => {
-                    const isSub = wsModalMode === 'SUB' || !!newWS.parent_workspace_id;
-                    const pNode = isSub ? workspaces.find(w => w.id === newWS.parent_workspace_id) : null;
-                    const pName = pNode?.name || pNode?.workspace_name || "";
-                    const preview = (isSub && pName && newWS.name?.trim())
-                      ? formatHierarchicalWorkspaceName(newWS.name, pName)
-                      : null;
-                    if (!preview) return null;
-                    return (
-                      <p className="text-[12px] text-muted">
-                        Hierarchy preview: <strong className="text-foreground font-medium">{preview}</strong>
-                      </p>
-                    );
-                  })()}
-                </div>
-                <div className="space-y-1.5">
-                  <label className={FIELD_LABEL}>Code</label>
-                  <AppInput disabled placeholder="Generated when you save" value={editWSId ? (newWS.code || "") : "Generated when you save"} className="h-9 text-[13.5px]" />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 gap-5">
+                    <div className="space-y-1.5">
+                      <label className={FIELD_LABEL}>Company <span className="text-danger-text" aria-hidden>*</span></label>
+                      <select
+                        className="h-9 w-full px-3 text-[13.5px]"
+                        value={newWS.company_id}
+                        onChange={e => setNewWS({ ...newWS, company_id: e.target.value })}
+                      >
+                        <option value="" disabled>Select a company</option>
+                        {companies.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
+                      </select>
+                    </div>
+                  </div>
 
-              {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
-                <div className="grid grid-cols-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <label className={FIELD_LABEL}>{wsModalMode === 'SUB' || !!newWS.parent_workspace_id ? "Sub-workspace Name" : "Workspace Name"} <span className="text-danger-text" aria-hidden>*</span></label>
+                      <AppInput placeholder={wsModalMode === 'SUB' || !!newWS.parent_workspace_id ? "e.g. CRM, Sales, Marketing" : "e.g. Q4 Platform Migration"} value={newWS.name || ""} onChange={e => setNewWS({ ...newWS, name: e.target.value })} className="h-9 text-[13.5px]" />
+                      {(() => {
+                        const isSub = wsModalMode === 'SUB' || !!newWS.parent_workspace_id;
+                        const pNode = isSub ? workspaces.find(w => w.id === newWS.parent_workspace_id) : null;
+                        const pName = pNode?.name || pNode?.workspace_name || "";
+                        const preview = (isSub && pName && newWS.name?.trim())
+                          ? formatHierarchicalWorkspaceName(newWS.name, pName)
+                          : null;
+                        if (!preview) return null;
+                        return (
+                          <p className="text-[12px] text-muted">
+                            Hierarchy preview: <strong className="text-foreground font-medium">{preview}</strong>
+                          </p>
+                        );
+                      })()}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className={FIELD_LABEL}>Code</label>
+                      <AppInput disabled placeholder="Generated when you save" value={editWSId ? (newWS.code || "") : "Generated when you save"} className="h-9 text-[13.5px]" />
+                    </div>
+                  </div>
+
+                  {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
+                    <div className="grid grid-cols-1">
+                      <div className="space-y-1.5">
+                        <label className={FIELD_LABEL}>Parent workspace</label>
+                        <select
+                          className="h-9 w-full px-3 text-[13.5px]"
+                          value={newWS.parent_workspace_id}
+                          onChange={e => {
+                            const parentId = e.target.value;
+                            const parent = workspaces.find(w => w.id === parentId);
+                            setNewWS({
+                              ...newWS,
+                              parent_workspace_id: parentId,
+                              ...(parent?.company_id ? { company_id: parent.company_id } : {})
+                            });
+                          }}
+                        >
+                          <option value="" disabled>Select a parent workspace</option>
+                          {workspaces.filter(w => w.id !== editWSId).map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Section 2: Timeline & Objectives */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 border-b border-border pb-2">
+                    <Target className="h-4 w-4 text-muted" aria-hidden />
+                    <h3 className={SECTION_TITLE}>Timeline and objective</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <label className={FIELD_LABEL}>Start date</label>
+                      {/* ui-audit-ignore-next-line html-date-input */}
+                      <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({ ...newWS, start_date: e.target.value })} className="h-9 text-[13.5px]" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className={FIELD_LABEL}>Target end date</label>
+                      {/* ui-audit-ignore-next-line html-date-input */}
+                      <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({ ...newWS, end_date: e.target.value })} className="h-9 text-[13.5px]" />
+                    </div>
+                  </div>
+
                   <div className="space-y-1.5">
-                    <label className={FIELD_LABEL}>Parent workspace</label>
-                    <select 
-                      className="h-9 w-full px-3 text-[13.5px]"
-                      value={newWS.parent_workspace_id}
-                      onChange={e => {
-                        const parentId = e.target.value;
-                        const parent = workspaces.find(w => w.id === parentId);
-                        setNewWS({
-                          ...newWS, 
-                          parent_workspace_id: parentId,
-                          ...(parent?.company_id ? { company_id: parent.company_id } : {})
-                        });
-                      }}
-                    >
-                      <option value="" disabled>Select a parent workspace</option>
-                      {workspaces.filter(w => w.id !== editWSId).map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
-                    </select>
+                    <label className={FIELD_LABEL}>Objective</label>
+                    <textarea
+                      className="min-h-24 w-full resize-y px-3 py-2 text-[13.5px]"
+                      placeholder="What this workspace should achieve, and any constraints"
+                      value={newWS.description}
+                      onChange={e => setNewWS({ ...newWS, description: e.target.value })}
+                    />
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Section 2: Timeline & Objectives */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-border pb-2">
-                <Target className="h-4 w-4 text-muted" aria-hidden />
-                <h3 className={SECTION_TITLE}>Timeline and objective</h3>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className={FIELD_LABEL}>Start date</label>
-                  {/* ui-audit-ignore-next-line html-date-input */}
-                  <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className="h-9 text-[13.5px]" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className={FIELD_LABEL}>Target end date</label>
-                  {/* ui-audit-ignore-next-line html-date-input */}
-                  <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className="h-9 text-[13.5px]" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className={FIELD_LABEL}>Objective</label>
-                <textarea
-                  className="min-h-24 w-full resize-y px-3 py-2 text-[13.5px]"
-                  placeholder="What this workspace should achieve, and any constraints"
-                  value={newWS.description}
-                  onChange={e => setNewWS({...newWS, description: e.target.value})}
-                />
-              </div>
-            </div>
-            </>
+              </>
             )}
 
             {/* Section 3: Access & Security */}
@@ -2163,10 +2189,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className={FIELD_LABEL}>Members</label>
-                  <AppButton 
-                    variant="ghost" 
+                  <AppButton
+                    variant="ghost"
                     size="sm"
-                    type="button" 
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       const allIds = availableUsers.map(u => u.id);
@@ -2195,8 +2221,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     type="search"
                     aria-label="Search people"
                     placeholder="Search people"
-                    value={assigneeSearch} 
-                    onChange={e => setAssigneeSearch(e.target.value)} 
+                    value={assigneeSearch}
+                    onChange={e => setAssigneeSearch(e.target.value)}
                     onClick={e => e.stopPropagation()}
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
                     className="h-9 w-full pl-8 pr-3 text-[13.5px]"
@@ -2205,24 +2231,24 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
                 <div className="max-h-[220px] overflow-y-auto rounded-md border border-border bg-surface p-1">
                   {availableUsers
-                    .filter(u => 
-                      u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || 
+                    .filter(u =>
+                      u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
                       u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
                       u.email?.toLowerCase().includes(assigneeSearch.toLowerCase())
                     )
                     .map(u => {
                       const isChecked = Array.isArray(newWS.assigneeIds) && newWS.assigneeIds.includes(u.id);
                       return (
-                        <label 
-                          key={u.id} 
+                        <label
+                          key={u.id}
                           className={cn(
                             "flex cursor-pointer items-center gap-3 rounded-md p-2 text-[13.5px] transition-colors select-none",
                             isChecked ? "bg-accent-soft text-foreground font-medium" : "hover:bg-surface-hover text-foreground"
                           )}
                         >
-                          <input 
-                            type="checkbox" 
-                            checked={isChecked} 
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
                             onChange={(e) => {
                               const checked = e.target.checked;
                               setNewWS(prev => {
@@ -2255,19 +2281,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
 
               <div className={cn("flex items-start gap-3 rounded-md border p-3 transition-colors", newWS.is_public ? "border-border-active bg-accent-soft" : "border-border bg-surface")}>
-                <input 
-                  type="checkbox" 
-                  id="is_public" 
-                  checked={newWS.is_public} 
+                <input
+                  type="checkbox"
+                  id="is_public"
+                  checked={newWS.is_public}
                   onChange={e => {
                     const checked = e.target.checked;
                     if (checked) {
                       const allUserIds = availableUsers.map(u => u.id);
-                      setNewWS({...newWS, is_public: true, assigneeIds: allUserIds});
+                      setNewWS({ ...newWS, is_public: true, assigneeIds: allUserIds });
                     } else {
-                      setNewWS({...newWS, is_public: false});
+                      setNewWS({ ...newWS, is_public: false });
                     }
-                  }} 
+                  }}
                   className="mt-0.5 h-4 w-4 cursor-pointer"
                 />
                 <label htmlFor="is_public" className="cursor-pointer flex flex-col">
@@ -2278,7 +2304,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             </div>
 
           </div>
-          
+
           <div className="flex justify-end gap-2 border-t border-border px-6 py-3">
             <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting}>Cancel</AppButton>
             <AppButton variant="primary" onClick={handleCreateWorkspace} disabled={isSubmitting} isLoading={isSubmitting}>
@@ -2289,8 +2315,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       </SidePeekDrawer>
 
       {isCreatingTask && (activeWorkspace || workspaces.length > 0) && (
-        <TaskCreationWizard 
-          workspaceId={creatingTaskWorkspaceId || activeWorkspace?.id || workspaces[0]?.id} 
+        <TaskCreationWizard
+          workspaceId={creatingTaskWorkspaceId || activeWorkspace?.id || workspaces[0]?.id}
           initialParentTaskId={creatingTaskParentId || undefined}
           initialTaskName={creatingTaskInitialName}
           onClose={() => {
@@ -2302,10 +2328,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           onSuccess={async (newTask: any) => {
             const wsId = creatingTaskWorkspaceId || activeWorkspace?.id || workspaces[0]?.id;
             const parentId = creatingTaskParentId;
-            await handleTaskWizardSuccess({ 
-              ...newTask, 
-              workspace_id: wsId, 
-              parent_task_id: newTask.parent_task_id || parentId || null 
+            await handleTaskWizardSuccess({
+              ...newTask,
+              workspace_id: wsId,
+              parent_task_id: newTask.parent_task_id || parentId || null
             });
             setCreatingTaskWorkspaceId(null);
             setCreatingTaskParentId(null);
@@ -2328,9 +2354,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       )}
 
       {drawerTask && (
-        <TaskDetailDrawer 
-          task={drawerTask} 
-          onClose={() => setDrawerTask(null)} 
+        <TaskDetailDrawer
+          task={drawerTask}
+          onClose={() => setDrawerTask(null)}
         />
       )}
 

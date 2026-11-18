@@ -366,6 +366,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
     savedFilters,
     activeSavedFilterId,
     saveCurrentFilter,
+    updateSavedFilter,
     applySavedFilter,
     deleteSavedFilter,
     setActiveSavedFilterId
@@ -1517,6 +1518,27 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               onSaveCurrent={handleSaveCurrentFilter}
               onApplyFilter={applyFilter}
               onDeleteFilter={deleteSavedFilter}
+              onUpdateFilter={updateSavedFilter}
+              currentPayload={{
+                scope,
+                hierarchyScope,
+                selectedDepartmentName,
+                selectedDepartmentNames,
+                query,
+                columnFilters,
+                kpiFilter,
+                selectedWorkspaceId,
+                selectedWorkspaceIds,
+                selectedSubWorkspaceIds,
+                selectedStatus,
+                selectedStatuses,
+                selectedPriority,
+                selectedPriorities,
+                selectedAssigneeIds,
+                showEscalatedOnly,
+                dateFrom,
+                dateTo
+              }}
             />
 
           </div>

@@ -171,6 +171,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
     savedFilters,
     activeSavedFilterId,
     saveCurrentFilter,
+    updateSavedFilter,
     applySavedFilter,
     deleteSavedFilter
   } = useSavedFilters<ReqFilterPayload>("chandak_reqs", currentUserId, (payload) => {
@@ -477,6 +478,15 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                 onSaveCurrent={handleSaveCurrentFilter}
                 onApplyFilter={applyFilter}
                 onDeleteFilter={deleteSavedFilter}
+                onUpdateFilter={updateSavedFilter}
+                currentPayload={{
+                  scope,
+                  query,
+                  selectedStatus,
+                  selectedPriority,
+                  dateFrom,
+                  dateTo
+                }}
               />
             </div>
 

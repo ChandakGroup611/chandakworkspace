@@ -13,8 +13,9 @@ import {
   XCircle, RotateCcw, Plus, Download, Loader2, Trash2, FolderPlus, Pin,
   ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink, Eye, ActivitySquare, Link as LinkIcon, MessageCircle,
   User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, ShieldAlert, Users, X, Search, Check, UserCheck,
-  AlertTriangle, RefreshCw
+  AlertTriangle, RefreshCw, GitFork
 } from "lucide-react";
+import Link from "next/link";
 import {
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask,
   approveTask, reopenTask, createChecklistItem,
@@ -47,6 +48,11 @@ const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeCh
 const TaskActivityTimeline = dynamic(() => import("@/components/tasks/TaskActivityTimeline"), {
   ssr: false,
   loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading audit timeline…</div>
+});
+
+const TaskCreationWizard = dynamic(() => import("@/components/tasks/TaskCreationWizard"), {
+  ssr: false,
+  loading: () => <ChandakLoader />
 });
 
 const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), {
@@ -134,7 +140,66 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
   const [departments, setDepartments] = useState<any[]>(initialDepartments || []);
   const [loading, setLoading] = useState(!initialTask);
-  const [activeTab, setActiveTab] = useState<"tags" | "links" | "checklist" | "attachments" | "chat" | "timeline" | "time">("checklist");
+  const [activeTab, setActiveTab] = useState<"subtasks" | "tags" | "links" | "checklist" | "attachments" | "chat" | "timeline" | "time">(() => {
+    return (initialTask?.subtasks && initialTask.subtasks.length > 0) ? "subtasks" : "checklist";
+  });
+
+  // Subtask management
+  const [subtasks, setSubtasks] = useState<any[]>(initialTask?.subtasks || []);
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [updatingSubtaskId, setUpdatingSubtaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (task?.subtasks) {
+      setSubtasks(task.subtasks);
+    }
+  }, [task?.subtasks]);
+
+  const handleSubtaskStatusChange = async (subtaskId: string, newStatusId: string) => {
+    setUpdatingSubtaskId(subtaskId);
+    try {
+      const { updateTaskStatusInline } = await import("@/lib/actions/tasks");
+      const res = await updateTaskStatusInline(subtaskId, newStatusId, "Status updated from parent task details view");
+      if (res && res.error) {
+        toast.error(res.error);
+      } else {
+        toast.success("Subtask status updated");
+        const targetStatusObj = (initialStatuses || statuses || []).find((s: any) => s.id === newStatusId);
+        setSubtasks(prev => prev.map(st => st.id === subtaskId ? {
+          ...st,
+          status_id: newStatusId,
+          status: targetStatusObj ? {
+            id: targetStatusObj.id,
+            name: targetStatusObj.status_name || targetStatusObj.name,
+            code: targetStatusObj.status_code || targetStatusObj.code,
+            color: targetStatusObj.status_color || targetStatusObj.color
+          } : st.status
+        } : st));
+        if (onUpdate) onUpdate();
+      }
+    } catch (err: any) {
+      toast.error("Failed to update status: " + (err.message || "Unknown error"));
+    } finally {
+      setUpdatingSubtaskId(null);
+    }
+  };
+
+  const handleSubtaskCreated = async (newSubtask: any) => {
+    setIsAddingSubtask(false);
+    toast.success("Subtask created successfully");
+    try {
+      const fresh = await getTaskDetails(taskId);
+      if (fresh && !fresh.error && fresh.subtasks) {
+        setSubtasks(fresh.subtasks);
+      } else if (newSubtask) {
+        setSubtasks(prev => [...prev, newSubtask]);
+      }
+    } catch (e) {
+      if (newSubtask) setSubtasks(prev => [...prev, newSubtask]);
+    }
+    router.refresh();
+    if (onUpdate) onUpdate();
+  };
 
   // Lazy Load States
   const [isChecklistsLoaded, setIsChecklistsLoaded] = useState(false);
@@ -1777,6 +1842,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {/* Tabs */}
               <div role="tablist" aria-label="Task details" className="-mx-5 -mt-5 mb-2 flex flex-nowrap items-center gap-1 overflow-x-auto border-b border-border px-5 hide-scrollbar">
                 {[
+                  { id: 'subtasks', label: 'Subtasks', icon: GitFork, count: subtasks.length },
                   { id: 'tags', label: 'Tags', icon: Pin },
                   { id: 'links', label: 'Links', icon: LinkIcon },
                   { id: 'checklist', label: 'Checklist', icon: CheckSquare, count: task.checklists !== undefined ? task.checklists.length : (task._meta?.checklistCount || 0) },
@@ -1810,6 +1876,134 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
               {/* Tab Contents */}
               <div className="pt-4">
+                {/* Subtasks Tab */}
+                {activeTab === 'subtasks' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GitFork className="h-4 w-4 text-muted" aria-hidden />
+                        <h4 className="text-[13px] font-medium text-subtle">
+                          Related Subtasks ({subtasks.length})
+                        </h4>
+                      </div>
+                      {!readOnly && (
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsAddingSubtask(true)}
+                          className="h-8 gap-1.5 text-xs text-foreground"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add subtask
+                        </AppButton>
+                      )}
+                    </div>
+
+                    {subtasks.length > 0 ? (
+                      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+                        <div className="divide-y divide-border">
+                          {subtasks.map((st: any) => {
+                            const statusColor = st.status?.color || '#94a3b8';
+                            const isUpdating = updatingSubtaskId === st.id;
+
+                            return (
+                              <div
+                                key={st.id}
+                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 hover:bg-sunken/40 transition-colors"
+                              >
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-sunken border border-border text-foreground">
+                                      {st.task_code || "STK"}
+                                    </span>
+                                    <Link
+                                      href={`/tasks/${st.id}`}
+                                      className="text-[13.5px] font-semibold text-foreground hover:text-primary hover:underline transition-colors truncate"
+                                      title={st.subject}
+                                    >
+                                      {st.subject}
+                                    </Link>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-xs text-muted flex-wrap">
+                                    {st.assignee && (
+                                      <span className="flex items-center gap-1.5">
+                                        <User className="h-3.5 w-3.5 text-muted" />
+                                        <span className="text-foreground font-medium">{st.assignee.full_name}</span>
+                                      </span>
+                                    )}
+                                    {st.end_date && (
+                                      <span className="flex items-center gap-1">
+                                        <Calendar className="h-3.5 w-3.5 text-muted" />
+                                        <span>Due {st.end_date}</span>
+                                      </span>
+                                    )}
+                                    {st.priority?.name && (
+                                      <span className="flex items-center gap-1">
+                                        <Flag className="h-3 w-3" style={{ color: st.priority.color || '#94a3b8' }} />
+                                        <span>{st.priority.name}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                                  {/* Status quick select / update */}
+                                  <div className="relative inline-flex items-center">
+                                    <select
+                                      aria-label={`Update status for subtask ${st.subject}`}
+                                      value={st.status_id || ""}
+                                      disabled={readOnly || isUpdating}
+                                      onChange={(e) => handleSubtaskStatusChange(st.id, e.target.value)}
+                                      className="h-8 rounded-md border border-border bg-surface pl-2.5 pr-7 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary cursor-pointer disabled:opacity-60 transition-colors"
+                                      style={{ borderLeftWidth: '3px', borderLeftColor: statusColor }}
+                                    >
+                                      {(initialStatuses || statuses || []).map((s: any) => (
+                                        <option key={s.id} value={s.id}>
+                                          {s.status_name || s.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {isUpdating && (
+                                      <Loader2 className="absolute right-2 h-3 w-3 animate-spin text-muted pointer-events-none" />
+                                    )}
+                                  </div>
+
+                                  <Link
+                                    href={`/tasks/${st.id}`}
+                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border bg-surface text-muted hover:text-foreground hover:bg-sunken transition-colors"
+                                    title="Open subtask"
+                                  >
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                  </Link>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-border bg-sunken/40 p-8 text-center space-y-2">
+                        <GitFork className="h-8 w-8 text-muted mx-auto stroke-1" aria-hidden />
+                        <p className="text-[13px] font-medium text-foreground">No subtasks found</p>
+                        <p className="text-xs text-muted max-w-sm mx-auto">
+                          Break down this task into smaller related subtasks with independent assignees and target due dates.
+                        </p>
+                        {!readOnly && (
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsAddingSubtask(true)}
+                            className="mt-3 gap-1.5 text-xs text-foreground"
+                          >
+                            <Plus className="h-3.5 w-3.5" /> Create first subtask
+                          </AppButton>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Tags Tab */}
                 {activeTab === 'tags' && (
                   <div className="space-y-4">
@@ -2518,6 +2712,15 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {saveRemarksLoading ? <Loader2 className="w-4 h-4 animate-spin" aria-label="Saving" /> : "Save"}
             </AppButton>
           </div>
+        )}
+        {/* Subtask Creation Wizard */}
+        {isAddingSubtask && (
+          <TaskCreationWizard
+            workspaceId={task?.workspace_id || ""}
+            initialParentTaskId={task?.id}
+            onClose={() => setIsAddingSubtask(false)}
+            onSuccess={handleSubtaskCreated}
+          />
         )}
       </div>
     </ExperienceProvider>

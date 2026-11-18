@@ -676,6 +676,7 @@ export async function getTaskDetails(taskId: string) {
       { count: checklistCount },
       { count: attachmentCount },
       { data: participants },
+      { data: subtasksRaw },
       permissionsModule
     ] = await Promise.all([
       supabaseAdmin.from('tasks').select(`
@@ -688,6 +689,20 @@ export async function getTaskDetails(taskId: string) {
       supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
       supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
       supabaseAdmin.from('task_participants').select('user_id, participation_role').eq('task_id', taskId),
+      supabaseAdmin.from('tasks').select(`
+        id,
+        task_code,
+        subject,
+        status_id,
+        priority_id,
+        start_date,
+        end_date,
+        assigned_to,
+        created_by,
+        created_at,
+        status:status_master(id, name:status_name, code:status_code, color:status_color, is_closed),
+        priority:priority_master(id, name:priority_name, color:priority_color)
+      `).eq('parent_task_id', taskId).eq('is_deleted', false).order('created_at', { ascending: true }),
       userId ? import('@/lib/permissions').catch(() => null) : Promise.resolve(null)
     ]);
     const t1 = performance.now(); console.log(`[getTaskDetails] Parallel fetch took ${(t1 - t0).toFixed(2)}ms`);
@@ -762,6 +777,12 @@ export async function getTaskDetails(taskId: string) {
     if (task.assigned_to) uniqueUserIds.add(task.assigned_to);
     if (participants) participants.forEach(p => uniqueUserIds.add(p.user_id));
     wsMembers.forEach(m => uniqueUserIds.add(m.user_id));
+    if (subtasksRaw) {
+      subtasksRaw.forEach((st: any) => {
+        if (st.assigned_to) uniqueUserIds.add(st.assigned_to);
+        if (st.created_by) uniqueUserIds.add(st.created_by);
+      });
+    }
 
     let usersMap = new Map<string, any>();
     if (uniqueUserIds.size > 0) {
@@ -815,9 +836,15 @@ export async function getTaskDetails(taskId: string) {
       return u ? { ...u, workspace_role: m.role } : null;
     }).filter(Boolean);
 
+    task.subtasks = (subtasksRaw || []).map((st: any) => ({
+      ...st,
+      assignee: st.assigned_to ? usersMap.get(st.assigned_to) || null : null
+    }));
+
     task._meta = {
       checklistCount: checklistCount || 0,
-      attachmentCount: attachmentCount || 0
+      attachmentCount: attachmentCount || 0,
+      subtaskCount: (subtasksRaw || []).length
     };
 
     const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId;
@@ -923,7 +950,7 @@ export async function updateTask(taskId: string, payload: any) {
   const userId = user?.id;
   if (!userId) return { error: "Unauthenticated" };
 
-  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by, owner_id, workspace_id, start_date, end_date, workspace:workspaces(workspace_owner_id)').eq('id', taskId).single();
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, description, created_by, owner_id, workspace_id, start_date, end_date, workspace:workspaces(workspace_owner_id)').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
   const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId || task.created_by === userId;
@@ -1064,6 +1091,26 @@ export async function updateTask(taskId: string, payload: any) {
       old_value: { title: oldTitle },
       new_value: { title: newTitle },
       performed_by: userId
+    });
+  }
+
+  const newDesc = payload.description;
+  const oldDesc = task.description;
+  if (newDesc !== undefined && oldDesc !== newDesc) {
+    await supabaseAdmin.from('activity_events').insert({
+      module_type: 'TASK',
+      record_id: taskId,
+      event_type: 'DESCRIPTION',
+      old_value: { description: oldDesc || '' },
+      new_value: { description: newDesc || '' },
+      performed_by: userId
+    });
+    await supabaseAdmin.from('task_activity_logs').insert({
+      task_id: taskId,
+      actor_id: userId,
+      action: 'DESCRIPTION_UPDATE',
+      old_state: { description: oldDesc || '' },
+      new_state: { description: newDesc || '' }
     });
   }
 
@@ -1322,6 +1369,118 @@ export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
   }
 }
 
+// Helper: Notify task stakeholders when a remark is added or updated
+async function notifyTaskRemark(taskId: string, remarkContent: string, authorId: string) {
+  try {
+    if (!remarkContent || !remarkContent.trim()) return;
+    const cleanRemark = remarkContent.trim();
+    const snippet = cleanRemark.length > 80 ? cleanRemark.slice(0, 77) + "..." : cleanRemark;
+
+    // 1. Fetch task details
+    const { data: task } = await supabaseAdmin
+      .from('tasks')
+      .select('id, subject, task_code, assigned_to, created_by, workspace_id, status:status_master(status_name)')
+      .eq('id', taskId)
+      .maybeSingle();
+
+    if (!task) return;
+
+    // 2. Fetch author profile
+    const { data: authorUser } = await supabaseAdmin
+      .from('user_master')
+      .select('full_name, email')
+      .eq('id', authorId)
+      .maybeSingle();
+
+    const authorName = authorUser?.full_name || 'A team member';
+
+    // 3. Collect recipients (excluding the author)
+    const recipientIds = new Set<string>();
+    if (task.assigned_to) recipientIds.add(task.assigned_to);
+    if (task.created_by) recipientIds.add(task.created_by);
+
+    // Fetch task participants (executors and watchers)
+    const { data: participants } = await supabaseAdmin
+      .from('task_participants')
+      .select('user_id')
+      .eq('task_id', taskId);
+
+    if (participants) {
+      participants.forEach(p => {
+        if (p.user_id) recipientIds.add(p.user_id);
+      });
+    }
+
+    // Fetch task watchers
+    const { data: watchers } = await supabaseAdmin
+      .from('task_watchers')
+      .select('user_id')
+      .eq('task_id', taskId)
+      .eq('is_deleted', false);
+
+    if (watchers) {
+      watchers.forEach(w => {
+        if (w.user_id) recipientIds.add(w.user_id);
+      });
+    }
+
+    // Exclude author from self-notification
+    recipientIds.delete(authorId);
+
+    const statusName = (task.status as any)?.status_name || '';
+    const taskLink = `/tasks/${taskId}`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech';
+
+    // 4. Dispatch in-app and email notifications
+    for (const recipientId of recipientIds) {
+      try {
+        await dispatchNotification(
+          recipientId,
+          "New Task Remark",
+          `${authorName} added a remark on "${task.subject}": "${snippet}"`,
+          taskLink,
+          'TASK',
+          'COMMENT_ADDED',
+          {
+            task_name: task.subject,
+            task_code: task.task_code || '',
+            remarks: cleanRemark,
+            remark: cleanRemark,
+            creator_name: authorName,
+            status: statusName,
+            link: `${siteUrl}${taskLink}`
+          }
+        );
+      } catch (err) {
+        console.warn(`[notifyTaskRemark] Failed to dispatch notification to ${recipientId}:`, err);
+      }
+    }
+
+    // 5. Queue business event for notification rules & templates
+    const eventPayload = {
+      entity_id: taskId,
+      triggering_user_id: authorId,
+      task_name: task.subject,
+      task_code: task.task_code || '',
+      remarks: cleanRemark,
+      remark: cleanRemark,
+      description: cleanRemark,
+      status: statusName || "UPDATED",
+      assigned_to: task.assigned_to,
+      created_by: task.created_by,
+      workspace_id: task.workspace_id,
+      creator_name: authorName,
+      link: `${siteUrl}${taskLink}`
+    };
+
+    queueBusinessEvent("Task", "Comment Added", eventPayload).catch(e =>
+      console.warn("[notifyTaskRemark] Comment Added queueBusinessEvent error:", e)
+    );
+  } catch (error) {
+    console.error("[notifyTaskRemark] Unhandled error:", error);
+  }
+}
+
 export async function addTaskRemark(taskId: string, content: string) {
   try {
     const cookieStore = await cookies();
@@ -1353,6 +1512,11 @@ export async function addTaskRemark(taskId: string, content: string) {
       } catch (logErr) {
         console.warn("[addTaskRemark] Log error:", logErr);
       }
+
+      // Trigger notification for task remark
+      notifyTaskRemark(taskId, content, userId).catch(e =>
+        console.error("[addTaskRemark] Notification error:", e)
+      );
 
       try {
         const { data: user } = await supabaseAdmin.from('user_master').select('full_name, profile_photo').eq('id', userId).single();
@@ -1466,6 +1630,11 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
     await supabaseAdmin
       .from('task_comments')
       .insert([{ task_id: taskId, author_id: userId, content: remark }]);
+
+    // Trigger notification for task remark
+    notifyTaskRemark(taskId, remark, userId).catch(e =>
+      console.error("[updateTaskStatusInline] Remark notification error:", e)
+    );
   }
 
   // Insert audit trail
@@ -1774,6 +1943,9 @@ export async function executeTaskBatchOperation(payload: {
       supabaseAdmin.from('task_activity_logs').insert([{
         task_id: taskId, actor_id: userId, action: 'COMMENT', new_state: { message: remarks }
       }])
+    );
+    notifyTaskRemark(taskId, remarks, userId).catch(e =>
+      console.error("[executeTaskBatchOperation] Remark notification error:", e)
     );
   }
 
@@ -2382,6 +2554,12 @@ export async function transferTask(payload: {
         content: commentMsg
       }));
       await supabaseAdmin.from('task_comments').insert(commentsData);
+
+      for (const tId of allTaskIds) {
+        notifyTaskRemark(tId, commentMsg, user.id).catch(e =>
+          console.error("[transferTask] Remark notification error:", e)
+        );
+      }
     }
 
     revalidatePath('/workspaces');

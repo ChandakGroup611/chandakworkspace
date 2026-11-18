@@ -164,7 +164,10 @@ async function dispatchEmail(item: any, provider: any) {
     }
 
     const transporter = nodemailer.createTransport(transportConfig);
-    const senderEmail = provider.config.username || provider.config.smtp_username || "no-reply@chandakgroup.com";
+    const authUser = provider.config.username || provider.config.smtp_username;
+    const configuredFrom = provider.config.from_email || provider.config.sender_email || "Noreply@chandakgroup.com";
+    const senderName = provider.config.sender_name || provider.config.from_name || "Noreply";
+    const replyToEmail = provider.config.reply_to || "Noreply@chandakgroup.com";
     
     const hasHtml = item.html_body || (item.body_template && (item.body_template.includes('<p') || item.body_template.includes('<div') || item.body_template.includes('<html') || item.body_template.includes('<table') || item.body_template.includes('<body')));
     
@@ -183,15 +186,37 @@ async function dispatchEmail(item: any, provider: any) {
       ? item.body_template 
       : (item.subject || "System Notification");
 
-    await transporter.sendMail({
-      from: `"Chandak Workspace" <${senderEmail}>`,
-      to: item.recipient_email,
-      subject: item.subject || "System Notification",
-      text: textContent,
-      html: htmlContent
-    });
-    
-    return true;
+    try {
+      await transporter.sendMail({
+        from: `"${senderName}" <${configuredFrom}>`,
+        replyTo: replyToEmail,
+        to: item.recipient_email,
+        subject: item.subject || "System Notification",
+        text: textContent,
+        html: htmlContent
+      });
+      return true;
+    } catch (sendErr: any) {
+      // If Microsoft Exchange rejects with SendAsDenied (554 5.2.252 because the authenticated user has not been granted SendAs permissions for Noreply@chandakgroup.com in M365),
+      // fallback to the authenticated sender with "Noreply" display name and replyTo so mail delivery succeeds
+      if (
+        authUser && 
+        configuredFrom.toLowerCase() !== authUser.toLowerCase() && 
+        (sendErr?.message?.includes('SendAsDenied') || sendErr?.message?.includes('554') || sendErr?.code === 'EENVELOPE')
+      ) {
+        console.warn(`[dispatchEmail] SendAsDenied for ${configuredFrom}. Falling back to authenticated sender ${authUser} with "${senderName}" display name & replyTo.`);
+        await transporter.sendMail({
+          from: `"${senderName}" <${authUser}>`,
+          replyTo: replyToEmail,
+          to: item.recipient_email,
+          subject: item.subject || "System Notification",
+          text: textContent,
+          html: htmlContent
+        });
+        return true;
+      }
+      throw sendErr;
+    }
   } else {
     throw new Error(`Provider ${provider.provider_name} API integration is not yet implemented.`);
   }

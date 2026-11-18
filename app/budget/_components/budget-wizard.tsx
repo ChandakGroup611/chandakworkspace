@@ -60,11 +60,11 @@ export function BudgetWizard(props: WizardProps) {
 
   // unsaved copy in this browser (a convenience only; the database is the record)
   useEffect(() => {
-    try { const raw = localStorage.getItem(store); if (raw) setRestore(JSON.parse(raw)); } catch {}
+    try { const raw = localStorage.getItem(store); if (raw) setRestore(JSON.parse(raw)); } catch { }
   }, [store]);
   useEffect(() => {
     if (!dirty) return;
-    try { localStorage.setItem(store, JSON.stringify(s)); } catch {}
+    try { localStorage.setItem(store, JSON.stringify(s)); } catch { }
   }, [s, dirty, store]);
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => { if (dirty && saved == null) { e.preventDefault(); e.returnValue = ""; } };
@@ -99,16 +99,16 @@ export function BudgetWizard(props: WizardProps) {
     [!/^\d{4}-\d{2}-\d{2}$/.test(s.asOn) ? "Choose the as-on date" : ""],
     [...AREA_INPUTS.filter(([k]) => bad(s.areas[k] ?? "")).map(([, l]) => `${l} must be a number`), ...s.commitments.filter((c) => c.name.trim() && bad(c.area)).map((c) => `${c.name}: area must be a number`)],
     s.towers.flatMap((t, i) => [!t.name.trim() ? `Tower ${i + 1} needs a name` : "", bad(t.carpet_area) || bad(t.eng_area) ? `${t.name}: areas must be numbers` : "",
-      s.towers.findIndex((x) => x.name.trim().toLowerCase() === t.name.trim().toLowerCase()) !== i ? `"${t.name}" is typed twice` : ""]),
+    s.towers.findIndex((x) => x.name.trim().toLowerCase() === t.name.trim().toLowerCase()) !== i ? `"${t.name}" is typed twice` : ""]),
     s.lines.flatMap((l) => {
       const nm = `${props.departments.find((d) => d.id === l.departmentId)?.name ?? ""} · ${l.category || "line without a name"}`;
       return [!l.category.trim() ? `${nm}: type a category` : "", bad(l.initial) ? `${nm}: Initial is not an amount` : "",
-        l.method === "amount" && bad(l.ctc) ? `${nm}: CTC is not an amount` : "", l.method === "rate" && (!n(l.rate) || !l.basis) ? `${nm}: type the rate and choose its area` : "",
-        l.incurred != null && bad(l.incurred) ? `${nm}: cost incurred is not an amount` : "",
-        l.tower && !s.towers.some((t) => t.name.trim().toLowerCase() === l.tower.toLowerCase()) ? `${nm}: tower ${l.tower} is not in the towers list` : ""];
+      l.method === "amount" && bad(l.ctc) ? `${nm}: CTC is not an amount` : "", l.method === "rate" && (!n(l.rate) || !l.basis) ? `${nm}: type the rate and choose its area` : "",
+      l.incurred != null && bad(l.incurred) ? `${nm}: cost incurred is not an amount` : "",
+      l.tower && !s.towers.some((t) => t.name.trim().toLowerCase() === l.tower.toLowerCase()) ? `${nm}: tower ${l.tower} is not in the towers list` : ""];
     }),
     s.gst.flatMap((g) => [!g.category.trim() ? "A GST line needs a name" : "", !(n(g.rate) > 0 && n(g.rate) <= 100) || !(n(g.share) > 0 && n(g.share) <= 100) ? `${g.category}: GST % and share % must be between 0 and 100` : "",
-      !g.base.length ? `${g.category}: choose the lines it is charged on` : ""]),
+    !g.base.length ? `${g.category}: choose the lines it is charged on` : ""]),
     [],
   ].map((x) => x.filter(Boolean));
   const allProblems = problems.flat();
@@ -140,7 +140,7 @@ export function BudgetWizard(props: WizardProps) {
       asOn: s.asOn, reason: s.reason, areas: s.areas, commitments: s.commitments, towers: s.towers, removed: s.removed, deptRemarks: s.deptRemarks,
       lines: s.lines.map(({ prevCtc: _p, incurredNow: _i, ...l }) => l), gst: s.gst,
     }),
-    (r) => { setSaved(r.versionNumber); setDirty(false); try { localStorage.removeItem(store); } catch {} },
+    (r) => { setSaved(r.versionNumber); setDirty(false); try { localStorage.removeItem(store); } catch { } },
   );
 
   const cur = props.departments.find((d) => d.id === dept) ?? props.departments[0];
@@ -164,7 +164,7 @@ export function BudgetWizard(props: WizardProps) {
     <div className="wz" ref={top}>
       {restore && <div className="banner draft" role="status"><div>You have unsaved typing from earlier on this browser.</div>
         <div className="row"><button className="btn-action primary" onClick={() => { setS(restore); setRestore(null); setDirty(true); }}>Restore it</button>
-          <button className="btn-action" onClick={() => { setRestore(null); try { localStorage.removeItem(store); } catch {} }}>Discard</button></div></div>}
+          <button className="btn-action" onClick={() => { setRestore(null); try { localStorage.removeItem(store); } catch { } }}>Discard</button></div></div>}
 
       <ol className="wz-steps" aria-label="Create budget steps">
         {STEPS.map((label, i) => (
@@ -192,7 +192,7 @@ export function BudgetWizard(props: WizardProps) {
           <p className="sub">The areas of the workbook header. Rates per sq ft and PSF figures use them.</p>
           <div className="wz-areas">
             {AREA_INPUTS.map(([k, label, unit]) => (
-              <label key={k}>{label} ({unit})<input className="amt" inputMode="decimal" value={s.areas[k] ?? ""} aria-invalid={bad(s.areas[k] ?? "")}
+              <label key={k}>{label} ({unit})<input type="text" className="amt" inputMode="decimal" value={s.areas[k] ?? ""} aria-invalid={bad(s.areas[k] ?? "")}
                 onChange={(e) => up((x) => ({ ...x, areas: { ...x.areas, [k]: e.target.value } }))} /></label>
             ))}
           </div>
@@ -250,29 +250,31 @@ export function BudgetWizard(props: WizardProps) {
                 <th className="label">Category *</th><th className="label-sm">Sub-category</th>{towerOpts.length > 0 && <th>Tower</th>}
                 <th className="n">Initial (a)</th><th>CTC set as</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th><th className="n">Variance (a−b)</th><th className="label-sm">Remark</th><th></th>
               </tr></thead><tbody>
-                {curLines.map((l) => {
-                  const ctc = ctcOf(l), inc = incOf(l);
-                  return <tr key={l.key} className={moved(l) && !l.remark.trim() ? "flag" : ""}>
-                    <td><input type="text" value={l.category} onChange={(e) => setLine(l.key, { category: e.target.value })} placeholder="e.g. Civil Contractor" aria-invalid={!l.category.trim()} /></td>
-                    <td><input type="text" value={l.subCategory} onChange={(e) => setLine(l.key, { subCategory: e.target.value })} /></td>
-                    {towerOpts.length > 0 && <td><select value={l.tower} onChange={(e) => setLine(l.key, { tower: e.target.value })}><option value="">Whole project</option>{towerOpts.map((t) => <option key={t.name} value={t.name.trim()}>{t.name}</option>)}</select></td>}
-                    <td className="n"><input className="amt" inputMode="decimal" value={l.initial} aria-invalid={bad(l.initial)} onChange={(e) => setLine(l.key, { initial: e.target.value })} placeholder="0.00" /></td>
-                    <td><select value={l.method} onChange={(e) => setLine(l.key, { method: e.target.value as "amount" | "rate" })}><option value="amount">Amount</option><option value="rate">₹ per sq ft</option></select>
-                      {l.method === "rate" && <div className="wz-rate"><input className="amt" inputMode="decimal" value={l.rate} placeholder="₹/sft" onChange={(e) => setLine(l.key, { rate: e.target.value })} />
-                        <select value={l.basis} onChange={(e) => setLine(l.key, { basis: e.target.value })}>{RATE_BASES.map(([k, lab]) => <option key={k} value={k}>× {lab}</option>)}</select></div>}</td>
-                    <td className="n">{l.method === "amount" ? <input className="amt" inputMode="decimal" value={l.ctc} aria-invalid={bad(l.ctc)} placeholder={l.initial || "= Initial"} onChange={(e) => setLine(l.key, { ctc: e.target.value })} /> : <b>{fmt(ctc)}</b>}
-                      {l.prevCtc != null && <small className={moved(l) ? "warn-text" : "sub"} title={`R${props.baseNumber} CTC`}>was {fmt(l.prevCtc)}</small>}</td>
-                    <td className="n"><input className="amt" inputMode="decimal" value={l.incurred ?? (l.incurredNow ? String(+l.incurredNow.toFixed(7)) : "")} placeholder="0.00" aria-invalid={l.incurred != null && bad(l.incurred)} onChange={(e) => setLine(l.key, { incurred: e.target.value })} /></td>
-                    <td className="n"><span className={ctc - inc < 0 ? "neg" : ""}>{fmt(ctc - inc)}</span></td>
-                    <td className="n"><span className={n(l.initial) - ctc < 0 ? "neg" : ""}>{fmt(n(l.initial) - ctc)}</span></td>
-                    <td><input type="text" className="rem" value={l.remark} placeholder={moved(l) ? "Remark needed: CTC moved >10%" : ""} onChange={(e) => setLine(l.key, { remark: e.target.value })} /></td>
-                    <td><button className="btn-action danger" aria-label={`Remove ${l.category}`} onClick={() => removeLine(l)}>×</button></td>
-                  </tr>;
-                })}
-                {curLines.length === 0 && <tr><td colSpan={11} className="sub">No lines in {cur.name}. Use Fill suggestions or + Line, or leave it empty if this department has no budget.</td></tr>}
-                {(() => { const t = deptTotals(cur.id); return <tr className="total"><td colSpan={towerOpts.length > 0 ? 3 : 2}>Total {cur.name}{s.gst.some((g) => g.departmentId === cur.id) ? " (with its GST lines)" : ""}</td>
-                  <td className="n">{fmt(t.initial)}</td><td></td><td className="n">{fmt(t.ctc)}</td><td className="n">{fmt(t.inc)}</td><td className="n">{fmt(t.ctc - t.inc)}</td><td className="n">{fmt(t.initial - t.ctc)}</td><td colSpan={2}></td></tr>; })()}
-              </tbody></table></div>
+                  {curLines.map((l) => {
+                    const ctc = ctcOf(l), inc = incOf(l);
+                    return <tr key={l.key} className={moved(l) && !l.remark.trim() ? "flag" : ""}>
+                      <td><input type="text" value={l.category} onChange={(e) => setLine(l.key, { category: e.target.value })} placeholder="e.g. Civil Contractor" aria-invalid={!l.category.trim()} /></td>
+                      <td><input type="text" value={l.subCategory} onChange={(e) => setLine(l.key, { subCategory: e.target.value })} /></td>
+                      {towerOpts.length > 0 && <td><select value={l.tower} onChange={(e) => setLine(l.key, { tower: e.target.value })}><option value="">Whole project</option>{towerOpts.map((t) => <option key={t.name} value={t.name.trim()}>{t.name}</option>)}</select></td>}
+                      <td className="n"><input className="amt" inputMode="decimal" value={l.initial} aria-invalid={bad(l.initial)} onChange={(e) => setLine(l.key, { initial: e.target.value })} placeholder="0.00" /></td>
+                      <td><select value={l.method} onChange={(e) => setLine(l.key, { method: e.target.value as "amount" | "rate" })}><option value="amount">Amount</option><option value="rate">₹ per sq ft</option></select>
+                        {l.method === "rate" && <div className="wz-rate"><input className="amt" inputMode="decimal" value={l.rate} placeholder="₹/sft" onChange={(e) => setLine(l.key, { rate: e.target.value })} />
+                          <select value={l.basis} onChange={(e) => setLine(l.key, { basis: e.target.value })}>{RATE_BASES.map(([k, lab]) => <option key={k} value={k}>× {lab}</option>)}</select></div>}</td>
+                      <td className="n">{l.method === "amount" ? <input className="amt" inputMode="decimal" value={l.ctc} aria-invalid={bad(l.ctc)} placeholder={l.initial || "= Initial"} onChange={(e) => setLine(l.key, { ctc: e.target.value })} /> : <b>{fmt(ctc)}</b>}
+                        {l.prevCtc != null && <small className={moved(l) ? "warn-text" : "sub"} title={`R${props.baseNumber} CTC`}>was {fmt(l.prevCtc)}</small>}</td>
+                      <td className="n"><input className="amt" inputMode="decimal" value={l.incurred ?? (l.incurredNow ? String(+l.incurredNow.toFixed(7)) : "")} placeholder="0.00" aria-invalid={l.incurred != null && bad(l.incurred)} onChange={(e) => setLine(l.key, { incurred: e.target.value })} /></td>
+                      <td className="n"><span className={ctc - inc < 0 ? "neg" : ""}>{fmt(ctc - inc)}</span></td>
+                      <td className="n"><span className={n(l.initial) - ctc < 0 ? "neg" : ""}>{fmt(n(l.initial) - ctc)}</span></td>
+                      <td><input type="text" className="rem" value={l.remark} placeholder={moved(l) ? "Remark needed: CTC moved >10%" : ""} onChange={(e) => setLine(l.key, { remark: e.target.value })} /></td>
+                      <td><button className="btn-action danger" aria-label={`Remove ${l.category}`} onClick={() => removeLine(l)}>×</button></td>
+                    </tr>;
+                  })}
+                  {curLines.length === 0 && <tr><td colSpan={11} className="sub">No lines in {cur.name}. Use Fill suggestions or + Line, or leave it empty if this department has no budget.</td></tr>}
+                  {(() => {
+                    const t = deptTotals(cur.id); return <tr className="total"><td colSpan={towerOpts.length > 0 ? 3 : 2}>Total {cur.name}{s.gst.some((g) => g.departmentId === cur.id) ? " (with its GST lines)" : ""}</td>
+                      <td className="n">{fmt(t.initial)}</td><td></td><td className="n">{fmt(t.ctc)}</td><td className="n">{fmt(t.inc)}</td><td className="n">{fmt(t.ctc - t.inc)}</td><td className="n">{fmt(t.initial - t.ctc)}</td><td colSpan={2}></td></tr>;
+                  })()}
+                </tbody></table></div>
               <label className="wz-remark">Department remark (shown on the Detail report)
                 <input type="text" value={s.deptRemarks[String(cur.id)] ?? ""} onChange={(e) => up((x) => ({ ...x, deptRemarks: { ...x.deptRemarks, [String(cur.id)]: e.target.value } }))} /></label>
             </div>
@@ -299,11 +301,13 @@ export function BudgetWizard(props: WizardProps) {
               </div>
               <details open={!g.base.length}><summary>Charged on {g.base.length} line(s) · CTC {fmt(gstOf(g, "ctc"))} Cr</summary>
                 <div className="wz-base">
-                  {props.departments.map((x) => { const ls = s.lines.filter((l) => l.departmentId === x.id && l.category.trim()); if (!ls.length) return null; return (
-                    <fieldset key={x.id}><legend>{x.name} <button type="button" className="link" onClick={() => set({ base: [...new Set([...g.base, ...ls.map((l) => l.key)])] })}>all</button></legend>
-                      {ls.map((l) => <label key={l.key} className="check"><input type="checkbox" checked={g.base.includes(l.key)} onChange={(e) => set({ base: e.target.checked ? [...g.base, l.key] : g.base.filter((b) => b !== l.key) })} />
-                        {l.category}{l.subCategory ? ` · ${l.subCategory}` : ""}{l.tower ? ` · ${l.tower}` : ""}</label>)}
-                    </fieldset>); })}
+                  {props.departments.map((x) => {
+                    const ls = s.lines.filter((l) => l.departmentId === x.id && l.category.trim()); if (!ls.length) return null; return (
+                      <fieldset key={x.id}><legend>{x.name} <button type="button" className="link" onClick={() => set({ base: [...new Set([...g.base, ...ls.map((l) => l.key)])] })}>all</button></legend>
+                        {ls.map((l) => <label key={l.key} className="check"><input type="checkbox" checked={g.base.includes(l.key)} onChange={(e) => set({ base: e.target.checked ? [...g.base, l.key] : g.base.filter((b) => b !== l.key) })} />
+                          {l.category}{l.subCategory ? ` · ${l.subCategory}` : ""}{l.tower ? ` · ${l.tower}` : ""}</label>)}
+                      </fieldset>);
+                  })}
                 </div></details>
               {d && <p className="note">Shown under {d.name} on the Detail report.</p>}
             </div>;

@@ -134,7 +134,6 @@ export function WorkspaceMasterTable({
             if (s.id !== id) next[s.id] = false;
           });
           next[id] = true;
-          saveHierarchySessionState(id, next);
           return next;
         });
         return;
@@ -143,7 +142,6 @@ export function WorkspaceMasterTable({
     
     setExpandedNodes(prev => {
       const next = { ...prev, [id]: !prev[id] };
-      saveHierarchySessionState(id, next);
       return next;
     });
   };
@@ -475,17 +473,18 @@ export function WorkspaceMasterTable({
             "flex items-center justify-end gap-1 self-stretch whitespace-nowrap px-2 py-1 pr-3",
             isMenuOpen ? "z-[3]" : "z-[1]"
           )}>
-            {isTask && onOpenTask && (
+            {isTask && (
               <AppButton 
                 variant="ghost"
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onOpenTask(node);
+                  saveHierarchySessionState(node.id);
+                  router.push(`/tasks/${node.id}`);
                 }}
                 className="h-7 w-7 p-0 text-muted hover:bg-sunken hover:text-foreground"
-                title="Quick view"
-                aria-label={`Quick view ${node.subject || node.name || "task"}`}
+                title={node.type === 'SUB_TASK' ? "View sub-task" : "View task"}
+                aria-label={`View ${node.subject || node.name || "task"}`}
               >
                 <Eye className="h-4 w-4" />
               </AppButton>
@@ -533,6 +532,22 @@ export function WorkspaceMasterTable({
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                 >
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMenu(null);
+                      saveHierarchySessionState(node.id);
+                      if (isWorkspaceType) router.push(`/workspaces/tasks?workspaceId=${node.id}`);
+                      else router.push(`/tasks/${node.id}`);
+                    }}
+                    role="menuitem"
+                    className={MENU_ITEM}
+                  >
+                    <Eye className="h-4 w-4 text-muted" aria-hidden />
+                    <span>{isWorkspaceType ? 'Open task list' : (node.type === 'SUB_TASK' ? 'View sub-task' : 'View task')}</span>
+                  </button>
                   {canEditNode && (
                     <button
                       type="button"
@@ -540,15 +555,18 @@ export function WorkspaceMasterTable({
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveMenu(null);
-                        if (isWorkspaceType) onOpenWorkspace(node);
-                        else if (onOpenTask) onOpenTask(node);
-                        else router.push(`/tasks/${node.id}`);
+                        if (isWorkspaceType) {
+                          onOpenWorkspace(node);
+                        } else {
+                          saveHierarchySessionState(node.id);
+                          router.push(`/tasks/${node.id}`);
+                        }
                       }}
                       role="menuitem"
                       className={MENU_ITEM}
                     >
                       <Edit2 className="h-4 w-4 text-muted" aria-hidden />
-                      <span>{isWorkspaceType ? 'Edit workspace' : 'Edit task'}</span>
+                      <span>{isWorkspaceType ? 'Edit workspace' : (node.type === 'SUB_TASK' ? 'Edit sub-task' : 'Edit task')}</span>
                     </button>
                   )}
 
@@ -736,15 +754,15 @@ export function WorkspaceMasterTable({
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveMenu(null);
+                    saveHierarchySessionState(node.id);
                     if (isWorkspaceType) router.push(`/workspaces/tasks?workspaceId=${node.id}`);
-                    else if (onOpenTask) onOpenTask(node);
                     else router.push(`/tasks/${node.id}`);
                   }}
                   role="menuitem"
                   className={MENU_ITEM}
                 >
                   <Eye className="h-4 w-4 text-muted" aria-hidden />
-                  <span>Open</span>
+                  <span>{isWorkspaceType ? 'Open task list' : (node.type === 'SUB_TASK' ? 'View sub-task' : 'View task')}</span>
                 </button>
                 {canEditNode && (
                   <button
@@ -753,15 +771,18 @@ export function WorkspaceMasterTable({
                     onClick={(e) => {
                       e.stopPropagation();
                       setActiveMenu(null);
-                      if (isWorkspaceType) onOpenWorkspace(node);
-                      else if (onOpenTask) onOpenTask(node);
-                      else router.push(`/tasks/${node.id}`);
+                      if (isWorkspaceType) {
+                        onOpenWorkspace(node);
+                      } else {
+                        saveHierarchySessionState(node.id);
+                        router.push(`/tasks/${node.id}`);
+                      }
                     }}
                     role="menuitem"
                   className={MENU_ITEM}
                   >
                     <Edit2 className="h-4 w-4 text-muted" aria-hidden />
-                    <span>{isWorkspaceType ? 'Edit workspace' : 'Edit task'}</span>
+                    <span>{isWorkspaceType ? 'Edit workspace' : (node.type === 'SUB_TASK' ? 'Edit sub-task' : 'Edit task')}</span>
                   </button>
                 )}
                 {onShareNode && canShare && (

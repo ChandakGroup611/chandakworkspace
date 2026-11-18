@@ -45,6 +45,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
       case 'CHECKLIST_UPDATE': return <CheckSquare className="h-4 w-4 text-success" />;
       case 'COMMENT': return <MessageSquare className="h-4 w-4 text-theme-icon" />;
       case 'EDIT': return <Edit className="h-4 w-4 text-warning" />;
+      case 'DESCRIPTION_UPDATE': return <Edit className="h-4 w-4 text-warning" />;
       case 'CREATE': return <Activity className="h-4 w-4 text-theme-icon" />;
       case 'DELETE': return <AlertCircle className="h-4 w-4 text-danger" />;
       case 'RESTORE': return <Activity className="h-4 w-4 text-success" />;
@@ -81,6 +82,8 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
         return 'restored the task';
       case 'UPDATE':
         return 'updated the task details';
+      case 'DESCRIPTION_UPDATE':
+        return 'updated the task description';
       case 'ASSIGNMENT_CHANGE':
         return `changed the Executors to: ${log.new_state?.executors_text || 'Unknown'}`;
       default:

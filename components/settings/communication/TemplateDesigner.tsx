@@ -32,6 +32,56 @@ export const VEHICLE_RECIPIENT_OPTIONS = [
   "Department Admin"
 ];
 
+export function getRecipientsForModule(moduleName?: string): string[] {
+  const mod = (moduleName || "").toLowerCase();
+  if (mod.includes("vehicle") || mod.includes("fleet")) {
+    return VEHICLE_RECIPIENT_OPTIONS;
+  }
+  if (mod.includes("task")) {
+    return [
+      "Creator",
+      "Assigned User",
+      "Executors",
+      "Watchers",
+      "Workspace Owner",
+      "Specific Approver"
+    ];
+  }
+  if (mod.includes("workspace")) {
+    return [
+      "Workspace Owner",
+      "Creator",
+      "Watchers",
+      "Department Admin"
+    ];
+  }
+  if (mod.includes("ticket")) {
+    return [
+      "Creator",
+      "Requester",
+      "Assigned User",
+      "Department Admin",
+      "Watchers"
+    ];
+  }
+  if (mod.includes("requirement") || mod.includes("approval")) {
+    return [
+      "Creator",
+      "Requester",
+      "Specific Approver",
+      "Assigned User",
+      "Department Admin"
+    ];
+  }
+  return [
+    "Creator",
+    "Assigned User",
+    "Watchers",
+    "Department Admin",
+    "Specific Approver"
+  ];
+}
+
 const MODULES = [
   "Task", 
   "Workspace", 
@@ -666,7 +716,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               <div className="md:col-span-3 space-y-2 mt-2">
                 <label className="text-sm font-semibold text-muted">Target recipients (dynamic)</label>
                 <div className="flex flex-wrap gap-3">
-                  {(isVeh ? VEHICLE_RECIPIENT_OPTIONS : RECIPIENT_OPTIONS).map(opt => (
+                  {getRecipientsForModule(tpl.module).map(opt => (
                     <label key={opt} className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-border rounded-md bg-background hover:border-primary transition-colors select-none">
                       <input 
                         type="checkbox"
@@ -714,19 +764,29 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
             </div>
 
             {/* Editor vs Preview Tab */}
-            <div className="flex border-b border-border bg-background">
-              <AppButton 
+            <div className="flex border-b border-border bg-sunken/40 px-4 pt-2 gap-2">
+              <button 
+                type="button"
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'code' ? 'border-primary text-accent-soft-text theme-card-structural ' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-md border-b-2 transition-colors ${
+                  activeTab[tpl.id] === 'code' || !activeTab[tpl.id]
+                    ? 'border-primary text-primary bg-surface font-bold shadow-xs' 
+                    : 'border-transparent text-muted hover:text-foreground bg-transparent'
+                }`}
               >
                 <Code2 className="w-4 h-4" /> HTML source
-              </AppButton>
-              <AppButton 
+              </button>
+              <button 
+                type="button"
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'preview' ? 'border-primary text-accent-soft-text theme-card-structural ' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-md border-b-2 transition-colors ${
+                  activeTab[tpl.id] === 'preview' 
+                    ? 'border-primary text-primary bg-surface font-bold shadow-xs' 
+                    : 'border-transparent text-muted hover:text-foreground bg-transparent'
+                }`}
               >
                 <Eye className="w-4 h-4" /> Live preview (dynamic)
-              </AppButton>
+              </button>
             </div>
 
             {/* Content Area */}
@@ -761,23 +821,30 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               </label>
 
               <div className="flex items-center gap-3">
-                <AppButton aria-label="Delete" onClick={(e) => handleDelete(tpl.id, e)} className="text-muted hover:text-danger-text transition-colors mr-2">
+                <AppButton 
+                  aria-label="Delete template" 
+                  variant="ghost" 
+                  onClick={(e) => handleDelete(tpl.id, e)} 
+                  className="text-muted hover:text-danger-text hover:bg-danger-soft transition-colors mr-2"
+                >
                   <Trash2 className="w-4 h-4" />
                 </AppButton>
                 <AppButton 
+                  variant="ghost"
                   onClick={() => {
                     if (tpl?.is_new) {
                       setTemplates(prev => prev.filter(t => t.id !== editingTemplateId));
                     }
                     setEditingTemplateId(null);
                   }}
-                  className="bg-transparent hover:bg-surface text-muted px-4 py-1.5 rounded text-sm font-semibold transition-colors"
+                  className="text-muted hover:text-foreground hover:bg-surface px-4 py-1.5 rounded text-sm font-semibold transition-colors"
                 >
                   Cancel
                 </AppButton>
                 <AppButton 
+                  variant="primary"
                   onClick={() => handleSave(tpl)}
-                  className="flex items-center gap-2 bg-primary hover:opacity-90/90 text-primary-foreground px-6 py-1.5 rounded text-sm font-semibold transition-colors shadow-lg shadow-theme-btn-primary/20"
+                  className="flex items-center gap-2 px-6 py-1.5 rounded text-sm font-semibold shadow-xs"
                 >
                   <Save className="w-4 h-4" /> Save template
                 </AppButton>

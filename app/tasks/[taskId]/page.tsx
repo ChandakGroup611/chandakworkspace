@@ -3,6 +3,7 @@ import { ArrowLeft, MessageCircle, ClipboardList, Type, AlignLeft, ShieldAlert }
 import { TaskBackButton } from "@/components/tasks/TaskBackButton";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import { EditableTaskTitle } from "@/components/tasks/EditableTaskTitle";
+import { EditableTaskDescription } from "@/components/tasks/EditableTaskDescription";
 import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/tasks";
 import { notFound } from "next/navigation";
 import SafeHtml from "@/components/ui/SafeHtml";
@@ -90,31 +91,19 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
       </header>
 
       <div className="space-y-5">
-        {(task.description || typeof task.custom_fields?.progress_percentage === 'number') && (
-          <AppCard className="space-y-4 border border-border bg-surface p-5 shadow-xs">
-            {task.description && (
-              <section>
-                <h2 className="mb-2 flex items-center gap-1.5 text-[13px] font-medium text-subtle">
-                  <AlignLeft className="h-4 w-4 text-muted" aria-hidden /> Description
-                </h2>
-                <SafeHtml
-                  className="prose prose-sm w-full max-w-full whitespace-pre-wrap rounded-md border border-border bg-sunken p-4 text-[13.5px] leading-relaxed text-foreground dark:prose-invert"
-                  html={task.description}
-                />
-              </section>
-            )}
+        <AppCard className="space-y-4 border border-border bg-surface p-5 shadow-xs">
+          <EditableTaskDescription task={task} readOnly={effectiveReadOnly || !canEditTitle} />
 
-            {typeof task.custom_fields?.progress_percentage === 'number' && (
-              <div className="flex items-center gap-3">
-                <span className="text-[12.5px] text-muted">Subtask progress</span>
-                <div className="h-1.5 w-64 max-w-full overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={task.custom_fields.progress_percentage} aria-valuemin={0} aria-valuemax={100} aria-label="Subtask progress">
-                  <div className="h-full rounded-full bg-success transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
-                </div>
-                <span className="text-[12.5px] font-medium tabular-nums text-foreground">{task.custom_fields.progress_percentage}%</span>
+          {typeof task.custom_fields?.progress_percentage === 'number' && (
+            <div className="flex items-center gap-3 border-t border-border pt-3">
+              <span className="text-[12.5px] text-muted">Subtask progress</span>
+              <div className="h-1.5 w-64 max-w-full overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={task.custom_fields.progress_percentage} aria-valuemin={0} aria-valuemax={100} aria-label="Subtask progress">
+                <div className="h-full rounded-full bg-success transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
               </div>
-            )}
-          </AppCard>
-        )}
+              <span className="text-[12.5px] font-medium tabular-nums text-foreground">{task.custom_fields.progress_percentage}%</span>
+            </div>
+          )}
+        </AppCard>
 
         <div className="w-full">
           {isFrozen && (

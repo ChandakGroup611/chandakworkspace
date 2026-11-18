@@ -69,6 +69,32 @@ export function useSavedFilters<T>(
     if (onSuccess) onSuccess(newFilter);
   };
 
+  const updateSavedFilter = (
+    id: string,
+    updates: { name?: string; payload?: T },
+    onSuccess?: (filter: SavedFilter<T>) => void
+  ) => {
+    let targetFilter: SavedFilter<T> | null = null;
+    const updated = savedFilters.map(f => {
+      if (f.id === id) {
+        targetFilter = {
+          ...f,
+          name: updates.name !== undefined ? updates.name.trim() : f.name,
+          payload: updates.payload !== undefined ? updates.payload : f.payload
+        };
+        return targetFilter;
+      }
+      return f;
+    });
+
+    setSavedFilters(updated);
+    if (currentUserId) {
+      localStorage.setItem(`${storageKeyPrefix}_${currentUserId}`, JSON.stringify(updated));
+    }
+    toast.success("Saved filter updated successfully!");
+    if (onSuccess && targetFilter) onSuccess(targetFilter);
+  };
+
   const applySavedFilter = (
     filter: SavedFilter<T>, 
     onApply: (payload: T) => void,
@@ -103,6 +129,7 @@ export function useSavedFilters<T>(
     savedFilters,
     activeSavedFilterId,
     saveCurrentFilter,
+    updateSavedFilter,
     applySavedFilter,
     deleteSavedFilter,
     setActiveSavedFilterId
