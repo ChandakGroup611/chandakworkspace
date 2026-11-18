@@ -24,6 +24,7 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Date:** 2026-11-19 | **Release:** Security hardening: CRON_SECRET auth on all cron routes (A.4), vehicle create session check (A.3), scoped test modes & is_test isolation (A.2) | **Commit:** `182dee80` | **Status:** PASS (Verified Live)
 * **Date:** 2026-11-18 | **Release:** One-time automated governance pipeline setup (6-8 min deployment, 6 parallel gates, exact commit verification, atomic release rollback) | **Status:** [approved] Verified
 
 
