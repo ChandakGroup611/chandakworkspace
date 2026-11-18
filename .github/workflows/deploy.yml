@@ -102,7 +102,7 @@ jobs:
           cp deploy.zip upload-payload/
           cp public/deploy-hook.php upload-payload/
           
-          # Generate authoritative public_html/.htaccess with PassengerAppRoot and PHP unbinding
+          # Generate bootstrap public_html/.htaccess allowing native PHP deploy-hook execution
           cat << 'HTACCESS_EOF' > upload-payload/.htaccess
           <IfModule LiteSpeed>
               CacheLookup on
@@ -133,23 +133,6 @@ jobs:
           # CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js
           RewriteCond %{REQUEST_FILENAME} -f
           RewriteRule ^ - [L]
-
-          PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs
-          PassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp
-          PassengerEnabled on
-          PassengerAppType node
-          PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
-          PassengerStartupFile server.js
-          PassengerBaseURI /
-          PassengerMaxPoolSize 1
-          PassengerMaxInstancesPerApp 1
-          PassengerMinInstances 0
-          PassengerPoolIdleTime 300
-          SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=512"
-          SetEnv LSNODE_CONSOLE_LOG console.log
-          SetEnv TOKIO_WORKER_THREADS 1
-          SetEnv UV_THREADPOOL_SIZE 1
-          SetEnv DOTENV_CONFIG_QUIET true
 
           # CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER routed to Passenger
           <FilesMatch "\.php$">
