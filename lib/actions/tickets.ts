@@ -32,6 +32,11 @@ export async function fetchTicketComments(ticketId: string, limit = 20, offset =
     throw new Error("Unauthorized: Missing TICKETS_VIEW capability.");
   }
 
+  const { canAccessTicket } = await import("@/lib/permissions");
+  if (!(await canAccessTicket(user.id, ticketId))) {
+    throw new Error("Unauthorized: You do not have access to this ticket.");
+  }
+
   const { data, error } = await supabase
     .from("ticket_comments")
     .select(`
@@ -104,6 +109,11 @@ export async function fetchTicketAuditLogs(ticketId: string, limit = 20, offset 
   const hasAccess = await checkServerPermission(supabase, user.id, "TICKETS_VIEW");
   if (!hasAccess) {
     throw new Error("Unauthorized: Missing TICKETS_VIEW capability.");
+  }
+
+  const { canAccessTicket } = await import("@/lib/permissions");
+  if (!(await canAccessTicket(user.id, ticketId))) {
+    throw new Error("Unauthorized: You do not have access to this ticket.");
   }
 
   const { data, error } = await supabase

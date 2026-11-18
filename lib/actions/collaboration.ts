@@ -28,6 +28,11 @@ export async function addTicketRemark(ticketId: string, content: string) {
   const hasAccess = await hasPermission(user.id, "TICKETS_UPDATE");
   if (!hasAccess) throw new Error("Unauthorized: Missing TICKETS_UPDATE capability.");
 
+  const { canAccessTicket } = await import("@/lib/permissions");
+  if (!(await canAccessTicket(user.id, ticketId))) {
+    throw new Error("Unauthorized: You do not have access to this ticket.");
+  }
+
   // Insert remark
   const { data: remark, error } = await supabaseAdmin
     .from("ticket_comments")
@@ -146,6 +151,11 @@ export async function addTicketChatMessage(ticketId: string, content: string, at
 
   const hasAccess = await hasPermission(user.id, "TICKETS_VIEW"); // Assuming VIEW is enough to chat
   if (!hasAccess) throw new Error("Unauthorized.");
+
+  const { canAccessTicket } = await import("@/lib/permissions");
+  if (!(await canAccessTicket(user.id, ticketId))) {
+    throw new Error("Unauthorized: You do not have access to this ticket.");
+  }
 
   const payload: any = {
     ticket_id: ticketId,

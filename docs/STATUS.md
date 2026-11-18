@@ -12,8 +12,8 @@
 | **1.2** | WP1 | Enforce owner/assignee/creator/executor checks on updateTask & priority | `927164ba` | — | TC-TASK-006 | DONE |
 | **1.3** | WP1 | Remove WORKSPACES_MANAGE from isSuperAdmin checks across actions | `6cd2d5b8` | — | TC-TASK-001, TC-TASK-014 | DONE |
 | **1.4** | WP1 | Restrict deleteTask strictly to Super Admin, workspace/task owner | `927164ba` | — | TC-TASK-007 | DONE |
-| **1.5** | WP1 | Tickets dashboard: scope to caller's visible tickets, count/aggregate | `pending` | — | TC-TCK-001, TC-TCK-012 | DONE |
-| **1.6** | WP1 | Enforce canAccessTicket / canAccessTask on chats and comments | — | — | TC-TCK-005, TC-TASK-006 | TODO |
+| **1.5** | WP1 | Tickets dashboard: scope to caller's visible tickets, count/aggregate | `4ca9e4be` | — | TC-TCK-001, TC-TCK-012 | DONE |
+| **1.6** | WP1 | Enforce canAccessTicket / canAccessTask on chats and comments | `pending` | — | TC-TCK-005, TC-TASK-006 | DONE |
 | **1.7** | WP1 | Single source for dashboards visibility (sidebar, /dashboards, [key]) | — | — | TC-DASH-001, TC-REGR-013 | TODO |
 | **1.8** | WP1 | createTask & all server actions: derive created_by from session | — | — | TC-TASK-015, TC-REQ-015, TC-AUTH-006 | TODO |
 | **1.9** | WP1 | Immediate cache invalidation on access revoke / version stamp | — | — | TC-AUTH-003, TC-AUTH-004 | TODO |

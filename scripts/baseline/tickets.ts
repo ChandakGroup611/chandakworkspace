@@ -79,11 +79,16 @@ export const ticketRunners: TestCaseRunner[] = [
       const { data: ticket } = await supabaseAdmin.from("tickets").select("creator_id, assignee_id").eq("id", ticketId).single();
       const isViewer = ticket?.creator_id !== viewerId && ticket?.assignee_id !== viewerId;
       if (!isViewer) return { pass: false, notes: "Viewer is assigned or created the ticket", codePath: "scripts/seed-test-users.ts" };
-      const { hasPermission } = await import("../../lib/permissions");
+      const { hasPermission, canAccessTicket } = await import("../../lib/permissions");
       const isSuper = await hasPermission(viewerId, "SUPER_ADMIN");
       const canEdit = isSuper || ticket?.creator_id === viewerId || ticket?.assignee_id === viewerId;
       if (canEdit) return { pass: false, notes: "Security violation: unauthorized viewer permitted to edit ticket priority", codePath: "lib/actions/tickets.ts" };
-      return { pass: true, notes: "Read-only viewer correctly blocked from priority mutation" };
+
+      const hasTicketAccess = await canAccessTicket(viewerId, ticketId);
+      if (hasTicketAccess) {
+        return { pass: false, notes: "Security violation: outsider granted canAccessTicket access", codePath: "lib/permissions/index.ts" };
+      }
+      return { pass: true, notes: "Read-only viewer blocked from priority mutation and ticket chat" };
     }
   },
   {

@@ -1337,6 +1337,15 @@ export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
   try {
     if (!taskId || taskId === "new") return [];
 
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    if (!user) return [];
+
+    const { canAccessTask } = await import("@/lib/permissions");
+    if (!(await canAccessTask(user.id, taskId))) {
+      return [];
+    }
+
     const { data: comments, error } = await supabaseAdmin
       .from('task_comments')
       .select('*')
