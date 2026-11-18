@@ -468,79 +468,78 @@ export default function UserFormPage() {
                 return (
                   <div
                     key={mod.id || mod.code}
-                    className={`p-4 rounded-lg border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isChecked
+                    className={`p-4 rounded-lg border transition-all flex flex-col items-stretch gap-3 ${isChecked
                         ? "bg-surface border-border shadow-xs"
                         : "bg-muted/20 border-border/40 opacity-60"
                       }`}
                   >
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm text-foreground">
-                            {mod.name}
-                          </span>
-                          <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                            {mod.code}
-                          </span>
-                          {isDefault && isChecked && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
-                              <Star className="h-2.5 w-2.5 fill-warning text-warning-text" /> Landing default
-                            </span>
-                          )}
+                    <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+                      <div className="flex items-start gap-3 flex-1 min-w-[200px]">
+                        <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
+                          <Icon className="h-4 w-4" />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {mod.description || meta.description}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm text-foreground">
+                              {mod.name}
+                            </span>
+                            {mod.code ? (
+                              <span className="text-[11px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground bg-surface">
+                                {mod.code}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {mod.description || meta.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2.5 self-end sm:self-center shrink-0">
-                      {isChecked && (
-                        <AppButton
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={!isSuperAdmin || isDefault}
-                          onClick={() => setDefaultModuleCode(mod.code)}
-                          className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${isDefault
-                              ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
-                              : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
-                            }`}
-                        >
-                          <Star className={`h-3 w-3 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
-                          <span>{isDefault ? "Default" : "Make Default"}</span>
-                        </AppButton>
-                      )}
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        {isChecked && (
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={!isSuperAdmin || isDefault}
+                            onClick={() => setDefaultModuleCode(mod.code)}
+                            className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${isDefault
+                                ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
+                                : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
+                              }`}
+                          >
+                            <Star className={`h-3 w-3 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
+                            <span>{isDefault ? "Default" : "Make Default"}</span>
+                          </AppButton>
+                        )}
 
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          disabled={!isSuperAdmin}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              const updated = [...selectedModuleCodes, mod.code];
-                              setSelectedModuleCodes(updated);
-                              if (!defaultModuleCode) setDefaultModuleCode(mod.code);
-                            } else {
-                              const updated = selectedModuleCodes.filter(c => c !== mod.code);
-                              setSelectedModuleCodes(updated);
-                              if (defaultModuleCode === mod.code && updated.length > 0) {
-                                setDefaultModuleCode(updated[0]);
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            disabled={!isSuperAdmin}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                const updated = [...selectedModuleCodes, mod.code];
+                                setSelectedModuleCodes(updated);
+                                if (!defaultModuleCode) setDefaultModuleCode(mod.code);
+                              } else {
+                                const updated = selectedModuleCodes.filter(c => c !== mod.code);
+                                setSelectedModuleCodes(updated);
+                                if (defaultModuleCode === mod.code && updated.length > 0) {
+                                  setDefaultModuleCode(updated[0]);
+                                }
                               }
-                            }
-                          }}
-                          className="sr-only peer"
-                        />
-                        <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
+                            }}
+                            className="sr-only peer"
+                          />
+                          <div className="w-10 h-5 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
                     </div>
 
                     {mod.code === "DASHBOARDS" && isChecked && (
-                      <div className="w-full mt-3 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
+                      <div className="w-full mt-1 pt-3 border-t border-border space-y-2 bg-surface/50 rounded-lg p-2.5">
                         <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
                           <span>Accessible Department Dashboards (User-Wise):</span>
                           <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
@@ -845,90 +844,89 @@ export default function UserFormPage() {
                   return (
                     <div
                       key={mod.id || mod.code}
-                      className={`p-4 rounded-lg border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isChecked
+                      className={`p-4 rounded-lg border transition-all flex flex-col items-stretch gap-3 ${isChecked
                           ? "bg-surface border-border shadow-xs"
                           : "bg-muted/20 border-border/40 opacity-60"
                         }`}
                     >
-                      <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-sm text-foreground">
-                              {mod.name}
-                            </span>
-                            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                              {mod.code}
-                            </span>
-                            {isDefault && isChecked && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning-soft text-warning-text border border-warning-border">
-                                <Star className="h-3 w-3 fill-warning text-warning-text" /> Landing default
-                              </span>
-                            )}
+                      <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+                        <div className="flex items-start gap-3.5 flex-1 min-w-[200px]">
+                          <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
+                            <Icon className="h-5 w-5" />
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                            {mod.description || meta.description}
-                          </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-sm text-foreground">
+                                {mod.name}
+                              </span>
+                              {mod.code ? (
+                                <span className="text-[11px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground bg-surface">
+                                  {mod.code}
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                              {mod.description || meta.description}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Action Controls */}
-                      <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                        {/* Make Default Trigger */}
-                        {isChecked && (
-                          <AppButton
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            disabled={!isSuperAdmin || isDefault}
-                            onClick={() => setDefaultModuleCode(mod.code)}
-                            title={isDefault ? "Current landing default" : "Set as landing default workspace"}
-                            className={`text-xs h-8 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${isDefault
-                                ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
-                                : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
-                              }`}
-                          >
-                            <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
-                            <span className="hidden sm:inline">{isDefault ? "Default" : "Make Default"}</span>
-                          </AppButton>
-                        )}
+                        {/* Action Controls */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          {/* Make Default Trigger */}
+                          {isChecked && (
+                            <AppButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              disabled={!isSuperAdmin || isDefault}
+                              onClick={() => setDefaultModuleCode(mod.code)}
+                              title={isDefault ? "Current landing default" : "Set as landing default workspace"}
+                              className={`text-xs h-8 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${isDefault
+                                  ? "bg-warning-soft text-warning-text border-warning-border font-semibold cursor-default"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
+                                }`}
+                            >
+                              <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-warning text-warning-text" : ""}`} />
+                              <span>{isDefault ? "Default" : "Make Default"}</span>
+                            </AppButton>
+                          )}
 
-                        {/* Enable/Disable Toggle */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground hidden sm:inline">
-                            {isChecked ? "Enabled" : "Disabled"}
-                          </span>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              disabled={!isSuperAdmin}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  const updated = [...selectedModuleCodes, mod.code];
-                                  setSelectedModuleCodes(updated);
-                                  if (!defaultModuleCode) {
-                                    setDefaultModuleCode(mod.code);
+                          {/* Enable/Disable Toggle */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground hidden sm:inline">
+                              {isChecked ? "Enabled" : "Disabled"}
+                            </span>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                disabled={!isSuperAdmin}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    const updated = [...selectedModuleCodes, mod.code];
+                                    setSelectedModuleCodes(updated);
+                                    if (!defaultModuleCode) {
+                                      setDefaultModuleCode(mod.code);
+                                    }
+                                  } else {
+                                    const updated = selectedModuleCodes.filter(c => c !== mod.code);
+                                    setSelectedModuleCodes(updated);
+                                    if (defaultModuleCode === mod.code && updated.length > 0) {
+                                      setDefaultModuleCode(updated[0]);
+                                    }
                                   }
-                                } else {
-                                  const updated = selectedModuleCodes.filter(c => c !== mod.code);
-                                  setSelectedModuleCodes(updated);
-                                  if (defaultModuleCode === mod.code && updated.length > 0) {
-                                    setDefaultModuleCode(updated[0]);
-                                  }
-                                }
-                              }}
-                              className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                          </label>
+                                }}
+                                className="sr-only peer"
+                              />
+                              <div className="w-11 h-6 bg-sunken peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                          </div>
                         </div>
                       </div>
 
                       {mod.code === "DASHBOARDS" && isChecked && (
-                        <div className="w-full mt-3 pl-4 border-l-2 border-amber-500/40 space-y-2 py-2 bg-surface/50 rounded-r-lg p-2.5">
+                        <div className="w-full mt-1 pt-3 border-t border-border space-y-2 bg-surface/50 rounded-lg p-2.5">
                           <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
                             <span>Accessible Department Dashboards (User-Wise):</span>
                             <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
