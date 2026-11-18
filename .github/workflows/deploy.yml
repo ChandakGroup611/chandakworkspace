@@ -104,59 +104,59 @@ jobs:
           
           # Generate authoritative public_html/.htaccess with PassengerAppRoot and PHP unbinding
           cat << 'HTACCESS_EOF' > upload-payload/.htaccess
-<IfModule LiteSpeed>
-    CacheLookup on
-    RewriteEngine On
-    RewriteRule .* - [E=verifycaptcha:drop]
-    RewriteRule .* - [E=noconntimeout:1]
-    RewriteRule .* - [E=noabort:1]
-</IfModule>
+          <IfModule LiteSpeed>
+              CacheLookup on
+              RewriteEngine On
+              RewriteRule .* - [E=verifycaptcha:drop]
+              RewriteRule .* - [E=noconntimeout:1]
+              RewriteRule .* - [E=noabort:1]
+          </IfModule>
 
-RewriteEngine On
-RewriteRule .* - [E=verifycaptcha:drop]
-RewriteRule ^\.builds - [F,L]
-RewriteRule ^deploy\.zip$ - [F,L]
+          RewriteEngine On
+          RewriteRule .* - [E=verifycaptcha:drop]
+          RewriteRule ^\.builds - [F,L]
+          RewriteRule ^deploy\.zip$ - [F,L]
 
-<IfModule mod_headers.c>
-    <FilesMatch "\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$">
-        Header set Cache-Control "public, max-age=31536000, immutable"
-    </FilesMatch>
-    <FilesMatch "\.(html|htm|php|json)$">
-        Header set Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
-        Header set CDN-Cache-Control "no-store"
-        Header set Surrogate-Control "no-store"
-        Header set Pragma "no-cache"
-        Header set Expires "0"
-    </FilesMatch>
-</IfModule>
+          <IfModule mod_headers.c>
+              <FilesMatch "\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$">
+                  Header set Cache-Control "public, max-age=31536000, immutable"
+              </FilesMatch>
+              <FilesMatch "\.(html|htm|php|json)$">
+                  Header set Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+                  Header set CDN-Cache-Control "no-store"
+                  Header set Surrogate-Control "no-store"
+                  Header set Pragma "no-cache"
+                  Header set Expires "0"
+              </FilesMatch>
+          </IfModule>
 
-# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteRule ^ - [L]
+          # CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js
+          RewriteCond %{REQUEST_FILENAME} -f
+          RewriteRule ^ - [L]
 
-PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs
-PassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp
-PassengerEnabled on
-PassengerAppType node
-PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
-PassengerStartupFile server.js
-PassengerBaseURI /
-PassengerMaxPoolSize 1
-PassengerMaxInstancesPerApp 1
-PassengerMinInstances 0
-PassengerPoolIdleTime 300
-SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=512"
-SetEnv LSNODE_CONSOLE_LOG console.log
-SetEnv TOKIO_WORKER_THREADS 1
-SetEnv UV_THREADPOOL_SIZE 1
-SetEnv DOTENV_CONFIG_QUIET true
+          PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs
+          PassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp
+          PassengerEnabled on
+          PassengerAppType node
+          PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
+          PassengerStartupFile server.js
+          PassengerBaseURI /
+          PassengerMaxPoolSize 1
+          PassengerMaxInstancesPerApp 1
+          PassengerMinInstances 0
+          PassengerPoolIdleTime 300
+          SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=512"
+          SetEnv LSNODE_CONSOLE_LOG console.log
+          SetEnv TOKIO_WORKER_THREADS 1
+          SetEnv UV_THREADPOOL_SIZE 1
+          SetEnv DOTENV_CONFIG_QUIET true
 
-# CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER routed to Passenger
-<FilesMatch "\.php$">
-    PassengerEnabled off
-    RewriteRule .* - [L]
-</FilesMatch>
-HTACCESS_EOF
+          # CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER routed to Passenger
+          <FilesMatch "\.php$">
+              PassengerEnabled off
+              RewriteRule .* - [L]
+          </FilesMatch>
+          HTACCESS_EOF
 
       # Upload the compiled standalone zip file, deploy-hook, and htaccess to Hostinger via Direct FTP (Zero Caching)
       - name: Sync files via Direct FTP
@@ -178,7 +178,7 @@ HTACCESS_EOF
           username: ${{ secrets.SSH_USERNAME || secrets.FTP_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD || secrets.FTP_PASSWORD }}
           port: ${{ secrets.SSH_PORT || '65002' }}
-        script: |
+          script: |
             echo "=== SSH DEPLOY SCRIPT EXECUTION ==="
             ROOT_DIR="$(pwd)"
             echo "Current Directory: $ROOT_DIR"
