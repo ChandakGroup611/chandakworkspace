@@ -4,13 +4,22 @@ import { logActivityEvent } from '@/lib/actions/tasks';
 
 export const dynamic = 'force-dynamic'; // Static generation bypass
 
+function verifyCronAuth(request: Request): boolean {
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || !authHeader) return false;
+  return authHeader === `Bearer ${cronSecret}`;
+}
+
 export async function GET(request: Request) {
+  if (!verifyCronAuth(request)) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: missing or invalid authorization header' },
+      { status: 401 }
+    );
+  }
+
   try {
-    // Basic auth check if needed (e.g., verifying Vercel Cron Secret)
-    // const authHeader = request.headers.get('authorization');
-    // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    //   return new NextResponse('Unauthorized', { status: 401 });
-    // }
 
     // 1. Fetch pending requirements that might be overdue
     // SLA is 7 days for requirements from creation if not closed or approved
@@ -82,4 +91,8 @@ export async function GET(request: Request) {
     console.error("TAT Escalation Cron Error:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
+}
+
+export async function POST(request: Request) {
+  return GET(request);
 }
