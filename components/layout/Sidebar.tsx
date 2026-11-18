@@ -493,12 +493,12 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   }, [pathname]);
 
   /* ---------- permissions (unchanged from v1) ---------- */
-  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
+  const { hasPermission, roleCode, loading: permsLoading, tickedDashboards = [] } = usePermissions();
   const { canReadModule, hasAnyFleetAccess } = useFleetPermissions();
 
   const isSuperAdmin = useMemo(() => {
     const code = (roleCode || "").toUpperCase();
-    return ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN_ROLE", "ROLE_ADMIN", "ADMIN"].includes(code) || hasPermission("SUPER_ADMIN");
+    return ["SUPER_ADMIN", "ROLE_SUPER_ADMIN"].includes(code) || hasPermission("SUPER_ADMIN");
   }, [roleCode, hasPermission]);
 
   const visibleNavTree = useMemo(() => {
@@ -510,6 +510,12 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
               if (item.fleetModule) return canReadModule(item.fleetModule) ? item : null;
               if (item.href === "/vehicle" && !hasAnyFleetAccess) return null;
               return item;
+            }
+            if (activeModuleCode === "DASHBOARDS") {
+              if (item.href === "/dashboards") return item;
+              const dashKey = item.href.replace("/dashboards/", "");
+              if (isSuperAdmin || tickedDashboards.includes(dashKey)) return item;
+              return null;
             }
             if (!item.subItems) {
               if (isSuperAdmin || !item.permission || permsLoading) return item;
@@ -524,7 +530,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
         return items.length ? { ...group, items } : null;
       })
       .filter(Boolean) as NavGroup[];
-  }, [navGroups, activeModuleCode, canReadModule, hasAnyFleetAccess, isSuperAdmin, hasPermission, permsLoading]);
+  }, [navGroups, activeModuleCode, canReadModule, hasAnyFleetAccess, isSuperAdmin, hasPermission, permsLoading, tickedDashboards]);
 
   const renderNav = (compact: boolean) => (
     <nav aria-label="Main navigation" className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-24 pt-1 md:pb-4">

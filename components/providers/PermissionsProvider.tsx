@@ -67,6 +67,7 @@ interface PermissionsContextValue {
   hasPermission: (permissionCode: string) => boolean;
   hasAnyPermission: (permissionCodes: string[]) => boolean;
   userId: string | null;
+  tickedDashboards: string[];
 }
 
 const PermissionsContext = createContext<PermissionsContextValue | undefined>(undefined);
@@ -76,6 +77,7 @@ interface UnifiedAuthData {
   profile: ProfileData | null;
   permissions: string[];
   roleCode: string | null;
+  tickedDashboards: string[];
 }
 
   const queryClient = useQueryClient();
@@ -128,6 +130,7 @@ interface UnifiedAuthData {
       let secondaryRoles: any[] = [];
       let snapshotPerms: string[] = [];
       let isSuperAdminFromServer = false;
+      let tickedDashboards: string[] = [];
 
       try {
         // PHASE 5: REAL-TIME PERMISSIONS RESOLUTION via version-independent REST route
@@ -138,6 +141,7 @@ interface UnifiedAuthData {
           secondaryRoles = json.secondaryRoles || [];
           snapshotPerms = json.snapshotPerms || [];
           isSuperAdminFromServer = !!json.isSuperAdmin;
+          tickedDashboards = json.tickedDashboards || [];
         } else {
           // Fallback to Server Action if REST returns non-200
           const serverRes = await fetchServerPermissions();
@@ -145,6 +149,7 @@ interface UnifiedAuthData {
           secondaryRoles = serverRes.secondaryRoles || [];
           snapshotPerms = serverRes.snapshotPerms || [];
           isSuperAdminFromServer = !!serverRes.isSuperAdmin;
+          tickedDashboards = (serverRes as any).tickedDashboards || [];
         }
       } catch (e: any) {
         console.warn("[PermissionsProvider] Fetch permissions error, using fallback:", e);
@@ -154,6 +159,7 @@ interface UnifiedAuthData {
           secondaryRoles = serverRes.secondaryRoles || [];
           snapshotPerms = serverRes.snapshotPerms || [];
           isSuperAdminFromServer = !!serverRes.isSuperAdmin;
+          tickedDashboards = (serverRes as any).tickedDashboards || [];
         } catch {
           // Both failed, proceed with client session fallback
         }
@@ -199,14 +205,14 @@ interface UnifiedAuthData {
       }
 
       if (!profileData && !clientUser) {
-        return { profile: null, permissions: [], roleCode: null };
+        return { profile: null, permissions: [], roleCode: null, tickedDashboards: [] };
       }
 
       // Safety net: if they somehow bypassed the server layout and are deleted
       if (profileData?.is_deleted) {
         supabase.auth.signOut();
         if (typeof window !== 'undefined') window.location.href = '/login?error=account-deleted';
-        return { profile: null, permissions: [], roleCode: null };
+        return { profile: null, permissions: [], roleCode: null, tickedDashboards: [] };
       }
 
       let primaryRole = profileData?.role;
@@ -272,7 +278,7 @@ interface UnifiedAuthData {
         created_at: profileData?.created_at
       };
 
-      return { profile, permissions: perms, roleCode: finalRoleCode };
+      return { profile, permissions: perms, roleCode: finalRoleCode, tickedDashboards };
     },
     staleTime: 300000, // 5 minutes fresh cache
     gcTime: 600000,    // 10 minutes garbage collection
@@ -284,6 +290,7 @@ interface UnifiedAuthData {
   const profile = data?.profile || null;
   const permissions = data?.permissions || [];
   const roleCode = data?.roleCode || null;
+  const tickedDashboards = data?.tickedDashboards || [];
 
   const hasPermission = useCallback((permissionCode: string) => {
     if (loading) return false;
@@ -304,7 +311,8 @@ interface UnifiedAuthData {
     loading,
     hasPermission,
     hasAnyPermission,
-    userId: profile?.id || null
+    userId: profile?.id || null,
+    tickedDashboards
   };
 
   return (

@@ -84,14 +84,34 @@ export async function GET(request: NextRequest) {
 
     const allCodes = [primaryCode, ...secondaryCodes].filter(Boolean).map(c => c.toUpperCase());
     const isSuperAdmin = allCodes.some(c => 
-      c === "SUPER_ADMIN" || c === "ROLE_ADMIN" || c === "ADMIN" || c === "SUPERADMIN" || c === "ROLE_SUPER_ADMIN" || c === "SUPER_ADMINISTRATOR"
+      c === "SUPER_ADMIN" || c === "ROLE_SUPER_ADMIN"
     ) || snapshotPerms.includes("SUPER_ADMIN") || snapshotPerms.includes("SUPER_ADMIN_ACCESS");
+
+    const [umaRes, legacyRes] = await Promise.all([
+      supabaseAdmin
+        .from("user_module_access")
+        .select("dashboard_key")
+        .eq("user_id", user.id)
+        .eq("module_code", "DASHBOARDS")
+        .not("dashboard_key", "is", null),
+      supabaseAdmin
+        .from("dashboard_user_access")
+        .select("dashboard_key")
+        .eq("user_id", user.id)
+        .not("dashboard_key", "is", null)
+    ]);
+
+    const tickedDashboards = Array.from(new Set([
+      ...(umaRes.data || []).map((d: any) => d.dashboard_key),
+      ...(legacyRes.data || []).map((d: any) => d.dashboard_key)
+    ].filter(Boolean)));
 
     return NextResponse.json({
       profileData: profileData || null,
       secondaryRoles: secondaryRolesRes.data || [],
       snapshotPerms,
-      isSuperAdmin
+      isSuperAdmin,
+      tickedDashboards
     });
   } catch (err: any) {
     console.error("[/api/auth/permissions] Error:", err);
