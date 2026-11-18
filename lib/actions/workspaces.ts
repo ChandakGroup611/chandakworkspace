@@ -734,6 +734,49 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
   return [];
 }
 
+/**
+ * Resolves the parent task ancestors and workspace for a given task ID,
+ * enabling hierarchical branch restoration and focus on return.
+ */
+export async function fetchTaskHierarchyAncestors(taskId: string): Promise<{
+  ancestorTaskIds: string[];
+  workspaceId: string | null;
+}> {
+  try {
+    const ancestorTaskIds: string[] = [];
+    let currentId: string | null = taskId;
+    let wsId: string | null = null;
+    let depth = 0;
+
+    while (currentId && depth < 10) {
+      depth++;
+      const { data: task, error }: any = await supabaseAdmin
+        .from('tasks')
+        .select('id, parent_task_id, workspace_id')
+        .eq('id', currentId)
+        .maybeSingle();
+
+      if (error || !task) break;
+
+      if (!wsId && task.workspace_id) {
+        wsId = task.workspace_id;
+      }
+
+      if (task.parent_task_id) {
+        ancestorTaskIds.unshift(task.parent_task_id);
+        currentId = task.parent_task_id;
+      } else {
+        break;
+      }
+    }
+
+    return { ancestorTaskIds, workspaceId: wsId };
+  } catch (err) {
+    console.error('[fetchTaskHierarchyAncestors] Error:', err);
+    return { ancestorTaskIds: [], workspaceId: null };
+  }
+}
+
 export interface HierarchyFilterOptions {
   entityType?: 'ALL' | 'WORKSPACES' | 'SUB_WORKSPACES' | 'TASKS';
   entityTypes?: ('WORKSPACES' | 'SUB_WORKSPACES' | 'TASKS')[];

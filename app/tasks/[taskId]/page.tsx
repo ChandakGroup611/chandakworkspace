@@ -66,7 +66,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
           />
           <span aria-hidden className="text-muted">/</span>
           <Link
-            href={`/workspaces${(task.sub_workspace_id || task.workspace_id) ? `?workspace=${task.sub_workspace_id || task.workspace_id}&restoreHierarchy=true` : '?restoreHierarchy=true'}`}
+            href={`/workspaces?${new URLSearchParams({
+              ...((task.sub_workspace_id || task.workspace_id) ? { workspace: String(task.sub_workspace_id || task.workspace_id) } : {}),
+              restoreHierarchy: "true",
+              focus: String(task.id)
+            }).toString()}`}
             className="font-medium text-muted transition-colors hover:text-foreground"
           >
             Execution hierarchy

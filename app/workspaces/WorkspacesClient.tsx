@@ -19,6 +19,7 @@ import {
   fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem,
   fetchWorkspaceStakeholders, createWorkspace, fetchCompanies, fetchPriorities,
   updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData, fetchHierarchyChildren,
+  fetchTaskHierarchyAncestors,
   searchHierarchyDeep, fetchAllHierarchyBranches, type HierarchyFilterOptions
 } from "@/lib/actions/workspaces";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -558,11 +559,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   // Auto-expand hierarchy path to prefetched workspace or restored hierarchy state
   const autoExpandedPathsRef = useRef<Set<string>>(new Set());
+  const restoredThisMount = useRef(false);
   const workspaceParam = searchParams?.get('workspace');
   const restoreHierarchyParam = searchParams?.get('restoreHierarchy');
+  const focusParam = searchParams?.get('focus');
 
   useEffect(() => {
-    const isExplicitRestore = Boolean(workspaceParam || restoreHierarchyParam);
+    const isExplicitRestore = Boolean(workspaceParam || restoreHierarchyParam || focusParam);
     let targetId = workspaceParam;
     let savedExpanded: Record<string, boolean> | null = null;
     let savedLastActive: string | null = null;
@@ -579,100 +582,159 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       targetId = savedLastActive || null;
     }
 
-    if (targetId && workspaces.length > 0) {
-      if (autoExpandedPathsRef.current.has(targetId)) return;
-      autoExpandedPathsRef.current.add(targetId);
-
-      // Clean up one-time restoration keys so subsequent regular page refreshes/menu switches don't re-maximize
-      if (typeof window !== 'undefined' && restoreHierarchyParam) {
+    const runRestoration = async () => {
+      let ancestorTaskIds: string[] = [];
+      if (focusParam) {
         try {
-          sessionStorage.removeItem('chandak_hierarchy_expanded_nodes');
-          sessionStorage.removeItem('chandak_hierarchy_last_active_id');
-        } catch (e) { }
-      }
-
-      // Build parent path from target up to root
-      const path: string[] = [targetId];
-      let currentId = targetId;
-      while (currentId) {
-        const current = workspaces.find(w => w.id === currentId);
-        if (current && current.parent_workspace_id) {
-          path.push(current.parent_workspace_id);
-          currentId = current.parent_workspace_id;
-        } else {
-          break;
+          const res = await fetchTaskHierarchyAncestors(focusParam);
+          ancestorTaskIds = res.ancestorTaskIds || [];
+          if (!targetId && res.workspaceId) {
+            targetId = res.workspaceId;
+          }
+        } catch (fErr) {
+          console.error("Failed to fetch ancestors for focus task:", fErr);
         }
       }
 
-      // Expand all nodes in the path and merge any saved expanded nodes
-      setExpandedNodes(prev => {
-        const next = { ...prev, ...(savedExpanded || {}) };
-        if (autoCollapse) {
-          path.forEach(nodeId => {
-            const current = workspaces.find(w => w.id === nodeId);
-            if (current) {
-              const parentId = current.parent_workspace_id;
-              // Collapse all sibling workspaces at the same level except those in path
-              const siblings = workspaces.filter(w => w.parent_workspace_id === parentId);
-              siblings.forEach(s => {
-                if (s.id !== nodeId && !path.includes(s.id)) {
-                  next[s.id] = false;
-                }
-              });
-            }
+      if (targetId && workspaces.length > 0) {
+        const pathKey = `${targetId}:${focusParam || ''}`;
+        if (autoExpandedPathsRef.current.has(pathKey)) return;
+        autoExpandedPathsRef.current.add(pathKey);
+        restoredThisMount.current = true;
+
+        // Clean up one-time restoration keys so subsequent regular page refreshes/menu switches don't re-maximize
+        if (typeof window !== 'undefined' && restoreHierarchyParam) {
+          try {
+            sessionStorage.removeItem('chandak_hierarchy_expanded_nodes');
+            sessionStorage.removeItem('chandak_hierarchy_last_active_id');
+          } catch (e) { }
+        }
+
+        // Build parent path from target up to root
+        const path: string[] = [targetId];
+        let currentId = targetId;
+        while (currentId) {
+          const current = workspaces.find(w => w.id === currentId);
+          if (current && current.parent_workspace_id) {
+            path.push(current.parent_workspace_id);
+            currentId = current.parent_workspace_id;
+          } else {
+            break;
+          }
+        }
+
+        // Expand all nodes in the workspace path, ancestor tasks, and merge any saved expanded nodes
+        setExpandedNodes(prev => {
+          const next = { ...prev, ...(savedExpanded || {}) };
+          if (autoCollapse) {
+            path.forEach(nodeId => {
+              const current = workspaces.find(w => w.id === nodeId);
+              if (current) {
+                const parentId = current.parent_workspace_id;
+                // Collapse all sibling workspaces at the same level except those in path
+                const siblings = workspaces.filter(w => w.parent_workspace_id === parentId);
+                siblings.forEach(s => {
+                  if (s.id !== nodeId && !path.includes(s.id)) {
+                    next[s.id] = false;
+                  }
+                });
+              }
+            });
+          }
+          // Ensure the workspace expansion path itself is set to true
+          path.forEach(id => {
+            next[id] = true;
           });
-        }
-        // Ensure the expansion path itself is set to true
-        path.forEach(id => {
-          next[id] = true;
+          // Ensure all ancestor task IDs of the focused task are expanded
+          ancestorTaskIds.forEach(id => {
+            next[id] = true;
+          });
+          return next;
         });
-        return next;
-      });
 
-      // Fetch children for all ancestors sequentially to construct the tree
-      const loadTreePath = async () => {
-        const orderedPath = [...path].reverse(); // from root to leaf
+        // Helper to insert children at any level of the hierarchy tree
+        const insertChildrenRecursive = (tree: any[], parentNodeId: string, newChildren: any[]): any[] => {
+          return tree.map(item => {
+            if (item.id === parentNodeId) {
+              return {
+                ...item,
+                children: HierarchyStateManager.mergePrefetchedChildren(item.children, newChildren),
+                childrenFetched: true
+              };
+            }
+            if (item.children && item.children.length > 0) {
+              return { ...item, children: insertChildrenRecursive(item.children, parentNodeId, newChildren) };
+            }
+            return item;
+          });
+        };
 
+        // Fetch children for all workspace ancestors sequentially to construct the tree
+        const orderedPath = [...path].reverse(); // from root to leaf workspace
         for (const nodeId of orderedPath) {
           try {
             const children = await fetchHierarchyChildren(nodeId, 'WORKSPACE');
-
-            setMasterHierarchy(prev => {
-              const insertChildren = (tree: any[]): any[] => {
-                return tree.map(item => {
-                  if (item.id === nodeId) {
-                    return {
-                      ...item,
-                      children: HierarchyStateManager.mergePrefetchedChildren(item.children, children),
-                      childrenFetched: true
-                    };
-                  }
-                  if (item.children && item.children.length > 0) {
-                    return { ...item, children: insertChildren(item.children) };
-                  }
-                  return item;
-                });
-              };
-              return insertChildren(prev);
-            });
+            setMasterHierarchy(prev => insertChildrenRecursive(prev, nodeId, children));
           } catch (err) {
             console.error(`Failed to prefetch children for path node ${nodeId}:`, err);
           }
         }
+
+        // Fetch children for ancestor tasks sequentially so subtask branches are loaded
+        for (const taskId of ancestorTaskIds) {
+          try {
+            const taskChildren = await fetchHierarchyChildren(taskId, 'TASK');
+            setMasterHierarchy(prev => insertChildrenRecursive(prev, taskId, taskChildren));
+          } catch (tErr) {
+            console.error(`Failed to prefetch children for ancestor task ${taskId}:`, tErr);
+          }
+        }
+
+        // Highlight and scroll focused task into view (block: 'center') and highlight for 2 s
+        if (focusParam && typeof window !== 'undefined') {
+          const attemptScrollAndHighlight = (attemptsLeft: number) => {
+            const targetEl = document.querySelector(`[data-node-id="${focusParam}"]`) as HTMLElement | null;
+            if (targetEl) {
+              targetEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+              targetEl.classList.add('ring-2', 'ring-primary', 'bg-accent-soft/70', 'transition-all', 'duration-500');
+              setTimeout(() => {
+                targetEl.classList.remove('ring-2', 'ring-primary', 'bg-accent-soft/70');
+              }, 2000);
+            } else if (attemptsLeft > 0) {
+              setTimeout(() => attemptScrollAndHighlight(attemptsLeft - 1), 250);
+            }
+          };
+          setTimeout(() => attemptScrollAndHighlight(6), 250);
+        }
+
         // Clean URL query params after one-time hierarchy restoration
-        if (typeof window !== 'undefined' && (restoreHierarchyParam || workspaceParam)) {
+        if (typeof window !== 'undefined' && (restoreHierarchyParam || workspaceParam || focusParam)) {
           try {
             const cleanUrl = new URL(window.location.href);
             cleanUrl.searchParams.delete('restoreHierarchy');
             cleanUrl.searchParams.delete('workspace');
+            cleanUrl.searchParams.delete('focus');
             window.history.replaceState({}, '', cleanUrl.pathname + (cleanUrl.searchParams.toString() ? `?${cleanUrl.searchParams.toString()}` : ''));
           } catch (e) { }
         }
-      };
+      } else if (!isExplicitRestore && mounted) {
+        if (restoredThisMount.current) return;
+        // Clear expansion state on normal navigation or page refresh
+        setExpandedNodes({});
+        autoExpandedPathsRef.current.clear();
+        if (typeof window !== 'undefined') {
+          try {
+            sessionStorage.removeItem('chandak_hierarchy_expanded_nodes');
+            sessionStorage.removeItem('chandak_hierarchy_last_active_id');
+          } catch (e) { }
+        }
+      }
+    };
 
-      loadTreePath();
-    } else if (!isExplicitRestore && mounted) {
-      // Clear expansion state on normal navigation or page refresh
+    if (isExplicitRestore) {
+      runRestoration();
+    } else if (mounted) {
+      if (restoredThisMount.current) return;
       setExpandedNodes({});
       autoExpandedPathsRef.current.clear();
       if (typeof window !== 'undefined') {
@@ -682,7 +744,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         } catch (e) { }
       }
     }
-  }, [workspaceParam, restoreHierarchyParam, workspaces, autoCollapse, mounted]);
+  }, [workspaceParam, restoreHierarchyParam, focusParam, workspaces, autoCollapse, mounted]);
 
   // Real-time presence tracking via server-side heartbeat
   const allUserIds = useMemo(

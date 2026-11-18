@@ -288,6 +288,7 @@ export function WorkspaceMasterTable({
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
+        data-node-id={node.id}
         data-matched={node.isMatched ? "true" : undefined}
         className={cn(
           "group relative grid min-h-[46px] cursor-pointer select-none items-center border-b border-border transition-colors hover:bg-surface-hover",
@@ -666,6 +667,7 @@ export function WorkspaceMasterTable({
     return (
       <div 
         key={node.id}
+        data-node-id={node.id}
         className={cn("theme-card-structural mb-2 select-none p-3 transition-[border-color] hover:border-border-active", isMenuOpen ? "relative z-[3]" : "relative z-[1]")}
         style={{ marginLeft: `${Math.min(depth * 14, 42)}px` }}
       >
