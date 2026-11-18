@@ -6,7 +6,7 @@ export async function getVisibleWorkspaces(userId: string, isSuperAdmin?: boolea
   console.time(`[PROFILER] getVisibleWorkspaces_TOTAL_${tId}`);
   try {
   // 1. Super Admin bypass (cache leveraged in hasPermission)
-  const canManageAll = isSuperAdmin !== undefined ? isSuperAdmin : (await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "WORKSPACES_MANAGE"));
+  const canManageAll = isSuperAdmin !== undefined ? isSuperAdmin : await hasPermission(userId, "SUPER_ADMIN");
   
   if (canManageAll) {
     const { data: visibleWorkspaces, error } = await supabaseAdmin

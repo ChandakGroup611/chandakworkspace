@@ -72,7 +72,7 @@ export async function fetchLivePortfolioData(): Promise<PortfolioMetricsResponse
 
   try {
     const { hasPermission } = await import("@/lib/permissions");
-    const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "WORKSPACES_MANAGE");
+    const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
 
     // Fetch active users from user_master
     const { data: usersData, error: usersError } = await supabaseAdmin

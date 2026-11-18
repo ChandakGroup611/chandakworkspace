@@ -14,8 +14,8 @@ import { confirmAction } from "@/components/ui/feedback/confirm";
 export default function TemplateManager({ workspaceId, onClose }: { workspaceId: string, onClose: () => void }) {
   const { isLight: isLightMode } = useTheme();
   const { hasPermission, roleCode } = usePermissions();
-  const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
-  const canCreate = roleCode === "SUPER_ADMIN" || hasPermission("WORKSPACES_MANAGE") || hasPermission("TASKS_CREATE");
+  const canDelete = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_SUPER_ADMIN" || hasPermission("TASKS_DELETE");
+  const canCreate = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_SUPER_ADMIN" || hasPermission("TASKS_CREATE");
 
   const [templates, setTemplates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);

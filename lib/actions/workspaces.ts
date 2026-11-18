@@ -36,7 +36,7 @@ export async function fetchEnrolledWorkspaces() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthenticated");
 
-  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN");
 
   let workspaces: any[] = [];
   let subWorkspaces: any[] = [];
@@ -2145,7 +2145,7 @@ export async function updateTaskProgress(taskId: string, progress: number) {
   if (fetchErr || !task) throw new Error("Task not found");
 
   const { hasPermission, canManageWorkspace } = await import("@/lib/permissions");
-  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN");
   const isAssigned = task.assigned_to === user.id || task.created_by === user.id;
 
   if (!isSuper && !isAssigned) {
@@ -2271,7 +2271,7 @@ export async function updateSprint(id: string, formData: any) {
   if (sprintErr || !sprint) throw new Error("Sprint not found");
 
   const { hasPermission, canManageWorkspace } = await import("@/lib/permissions");
-  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN");
   const canManage = isSuper || (await canManageWorkspace(user.id, sprint.workspace_id));
   if (!canManage) throw new Error("Unauthorized: You do not have permission to update sprints in this workspace.");
 
@@ -2330,7 +2330,7 @@ export async function deleteTaskTemplate(id: string) {
   if (tmplErr || !template) throw new Error("Task template not found");
 
   const { hasPermission, canManageWorkspace } = await import("@/lib/permissions");
-  const isSuper = await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const isSuper = await hasPermission(user.id, "SUPER_ADMIN");
   const isOwner = template.created_by === user.id;
   const canManage = isSuper || isOwner || (template.workspace_id ? await canManageWorkspace(user.id, template.workspace_id) : false);
   if (!canManage) throw new Error("Unauthorized: You do not have permission to delete this task template.");

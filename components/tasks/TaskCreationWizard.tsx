@@ -116,7 +116,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             .eq("id", data.user.id)
             .maybeSingle();
           const roleCode = ((dbUser?.roles as any)?.code || "").toUpperCase();
-          const isSuper = perms.includes("WORKSPACES_MANAGE") || perms.includes("SUPER_ADMIN") || ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN', 'ADMIN'].includes(roleCode);
+          const isSuper = perms.includes("SUPER_ADMIN") || ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN'].includes(roleCode);
           setCanManageAll(isSuper);
         }
       });

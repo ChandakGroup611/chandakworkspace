@@ -259,13 +259,13 @@ export function WorkspaceMasterTable({
 
     const isSuperAdminUser = hasPermission('SUPER_ADMIN') || 
                              hasPermission('SUPER_ADMIN_ACCESS') || 
-                             ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ADMIN', 'SUPERADMIN'].includes((roleCode || '').toUpperCase());
+                             ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN'].includes((roleCode || '').toUpperCase());
 
-    const canCreateWs = isSuperAdminUser || isWorkspaceOwner || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE');
-    const canCreateTsk = isSuperAdminUser || isWorkspaceOwner || isTaskOwner || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE');
-    const canEditNode = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || (isWorkspaceOwner && hasPermission('TASKS_MANAGE'))));
-    const canShare = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || isWorkspaceOwner || hasPermission('TASKS_UPDATE') || hasPermission('TASKS_MANAGE')));
-    const canDelete = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE')) : ((isTaskOwner || isWorkspaceOwner) && hasPermission('TASKS_DELETE')));
+    const canCreateWs = isSuperAdminUser || isWorkspaceOwner || hasPermission('WORKSPACES_CREATE');
+    const canCreateTsk = isSuperAdminUser || isWorkspaceOwner || isTaskOwner || hasPermission('TASKS_CREATE');
+    const canEditNode = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE')) : (isTaskOwner || isWorkspaceOwner));
+    const canShare = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE')) : (isTaskOwner || isWorkspaceOwner));
+    const canDelete = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_DELETE')) : ((isTaskOwner || isWorkspaceOwner) && hasPermission('TASKS_DELETE')));
 
     const isMenuOpen = activeMenu === node.id;
 
@@ -656,13 +656,13 @@ export function WorkspaceMasterTable({
 
     const isSuperAdminUser = hasPermission('SUPER_ADMIN') || 
                              hasPermission('SUPER_ADMIN_ACCESS') || 
-                             ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ADMIN', 'SUPERADMIN'].includes((roleCode || '').toUpperCase());
+                             ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN'].includes((roleCode || '').toUpperCase());
 
-    const canCreateWs = isSuperAdminUser || isWorkspaceOwner || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE');
-    const canCreateTsk = isSuperAdminUser || isWorkspaceOwner || isTaskOwner || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE');
-    const canEditNode = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || (isWorkspaceOwner && hasPermission('TASKS_MANAGE'))));
-    const canShare = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || isWorkspaceOwner || hasPermission('TASKS_UPDATE') || hasPermission('TASKS_MANAGE')));
-    const canDelete = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE')) : ((isTaskOwner || isWorkspaceOwner) && hasPermission('TASKS_DELETE')));
+    const canCreateWs = isSuperAdminUser || isWorkspaceOwner || hasPermission('WORKSPACES_CREATE');
+    const canCreateTsk = isSuperAdminUser || isWorkspaceOwner || isTaskOwner || hasPermission('TASKS_CREATE');
+    const canEditNode = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE')) : (isTaskOwner || isWorkspaceOwner));
+    const canShare = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE')) : (isTaskOwner || isWorkspaceOwner));
+    const canDelete = isSuperAdminUser || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_DELETE')) : ((isTaskOwner || isWorkspaceOwner) && hasPermission('TASKS_DELETE')));
 
     return (
       <div 

@@ -20,9 +20,9 @@ const LABEL = "text-[13px] font-medium text-subtle";
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { isLight: isLightMode } = useTheme();
   const { hasPermission, roleCode, userId } = usePermissions();
-  const isSuperAdmin = roleCode === "SUPER_ADMIN";
+  const isSuperAdmin = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_SUPER_ADMIN";
   const effectiveUserId = userId || currentUser?.id;
-  const canManageSprints = isSuperAdmin || hasPermission("WORKSPACES_MANAGE") || currentUser?.isWorkspaceOwner;
+  const canManageSprints = isSuperAdmin || currentUser?.isWorkspaceOwner;
 
   const [sprints, setSprints] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);

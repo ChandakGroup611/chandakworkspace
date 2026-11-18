@@ -283,7 +283,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
-  const isSuperAdmin = roleCode === "SUPER_ADMIN" || userScope?.isSuperAdmin || hasPermission("WORKSPACES_MANAGE");
+  const isSuperAdmin = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_SUPER_ADMIN" || userScope?.isSuperAdmin;
   const isManager = userScope?.isManager || (userScope?.subordinateUserIds && userScope.subordinateUserIds.length > 1);
   const managedDepts = userScope?.managedDepartments || [];
   const canDelete = isSuperAdmin || hasPermission("TASKS_DELETE");
