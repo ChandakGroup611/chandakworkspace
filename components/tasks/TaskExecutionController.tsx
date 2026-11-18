@@ -130,7 +130,23 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
   );
 };
 
-export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments, readOnly = false }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[]; readOnly?: boolean }) {
+export default function TaskExecutionController({
+  taskId,
+  onUpdate,
+  initialTask,
+  initialStatuses,
+  initialDepartments,
+  initialPriorities,
+  readOnly = false
+}: {
+  taskId: string;
+  onUpdate?: () => void;
+  initialTask?: any;
+  initialStatuses?: any[];
+  initialDepartments?: any[];
+  initialPriorities?: any[];
+  readOnly?: boolean;
+}) {
   const { isLight: isLightMode } = useTheme();
 
   const router = useRouter();
@@ -139,6 +155,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [task, setTask] = useState<any>(initialTask || null);
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
   const [departments, setDepartments] = useState<any[]>(initialDepartments || []);
+  const [prioritiesList, setPrioritiesList] = useState<any[]>(initialPriorities || []);
+  const [isUpdatingPriority, setIsUpdatingPriority] = useState(false);
   const [loading, setLoading] = useState(!initialTask);
   const [activeTab, setActiveTab] = useState<"subtasks" | "tags" | "links" | "checklist" | "attachments" | "chat" | "timeline" | "time">(() => {
     return (initialTask?.subtasks && initialTask.subtasks.length > 0) ? "subtasks" : "checklist";
@@ -154,6 +172,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       setSubtasks(task.subtasks);
     }
   }, [task?.subtasks]);
+
+  useEffect(() => {
+    if (initialPriorities && initialPriorities.length > 0) {
+      setPrioritiesList(initialPriorities);
+    } else {
+      import("@/lib/actions/workspaces").then(m => m.fetchPriorities()).then(p => {
+        if (p && p.length > 0) setPrioritiesList(p);
+      }).catch(console.error);
+    }
+  }, [initialPriorities]);
 
   const handleSubtaskStatusChange = async (subtaskId: string, newStatusId: string) => {
     setUpdatingSubtaskId(subtaskId);
@@ -978,6 +1006,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   // 3. Schedule / Dates / Duration Edit: Strictly Super Admin or Primary Assignee
   const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
 
+  // Priority Edit: Super Admin, task owner/assignee/creator, or TASKS_UPDATE/TASKS_MANAGE, not frozen
+  const canEditPriority = !readOnly && !effectivelyFrozenForUser && (
+    isSuperAdmin ||
+    isTaskAssignee ||
+    isTaskCreator ||
+    Boolean(task.owner_id && task.owner_id === currentUid) ||
+    hasPermission("TASKS_UPDATE") ||
+    hasPermission("TASKS_MANAGE")
+  );
+
   // 4. Status / Department / Directive Transitions: Super Admin, Primary Assignee, or Assigned Executors
   const isOwnerOrExecutor = isSuperAdmin || isTaskAssignee || isExecutor;
   const canEditCore = !readOnly && !effectivelyFrozenForUser && isOwnerOrExecutor;
@@ -1113,7 +1151,47 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <Flag className="h-3.5 w-3.5" aria-hidden /> <span>Priority</span>
                   </span>
                   <div className="flex h-8 items-center">
-                    <PriorityIndicator priority={task.priority?.name || null} className="text-[13.5px]" />
+                    {canEditPriority && prioritiesList.length > 0 ? (
+                      <select
+                        aria-label="Task Priority"
+                        disabled={isUpdatingPriority}
+                        value={task.priority_id || task.priority?.id || ""}
+                        onChange={async (e) => {
+                          const newPrioId = e.target.value;
+                          if (!newPrioId || newPrioId === (task.priority_id || task.priority?.id)) return;
+                          setIsUpdatingPriority(true);
+                          try {
+                            const { updateTask } = await import("@/lib/actions/tasks");
+                            const res = await updateTask(task.id, { priority_id: newPrioId });
+                            if (res && (res as any).error) {
+                              toast.error((res as any).error);
+                            } else {
+                              const matchingPrio = prioritiesList.find(p => p.id === newPrioId);
+                              setTask((prev: any) => ({
+                                ...prev,
+                                priority_id: newPrioId,
+                                priority: matchingPrio ? { ...prev.priority, id: matchingPrio.id, name: matchingPrio.name } : prev.priority
+                              }));
+                              toast.success("Task priority updated successfully.");
+                              if (onUpdate) onUpdate();
+                            }
+                          } catch (err: any) {
+                            toast.error(err.message || "Failed to update priority.");
+                          } finally {
+                            setIsUpdatingPriority(false);
+                          }
+                        }}
+                        className="h-8 w-full rounded-md border border-border bg-surface px-2 text-[13px] font-medium text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                      >
+                        {prioritiesList.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name || p.priority_name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <PriorityIndicator priority={task.priority?.name || null} className="text-[13.5px]" />
+                    )}
                   </div>
                 </div>
 

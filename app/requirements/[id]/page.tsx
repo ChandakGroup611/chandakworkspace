@@ -747,7 +747,40 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <dl className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px]">
               <div className="flex items-center gap-1.5">
                 <dt className="text-muted">Priority</dt>
-                <dd><PriorityIndicator priority={requirement.priority?.name || requirement.priority?.priority_name || null} className="text-[13px]" /></dd>
+                <dd>
+                  {isEditable && masters.priority_master?.length > 0 ? (
+                    <select
+                      aria-label="Requirement Priority"
+                      value={requirement.priority_id || requirement.priority?.id || ""}
+                      onChange={async (e) => {
+                        const newPrioId = e.target.value;
+                        if (!newPrioId) return;
+                        try {
+                          const { updateRequirementIntake } = await import("@/lib/actions/requirements");
+                          const { data: { user } } = await supabase.auth.getUser();
+                          const res = await updateRequirementIntake(requirement.id, { priority_id: newPrioId }, user?.id || "");
+                          if (res && (res as any).error) {
+                            toast.error((res as any).error);
+                          } else {
+                            toast.success("Requirement priority updated successfully.");
+                            await loadData();
+                          }
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to update priority.");
+                        }
+                      }}
+                      className="h-6 rounded border border-border bg-surface px-1.5 text-[12px] font-medium text-foreground outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                    >
+                      {masters.priority_master.map((p: any) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name || p.priority_name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <PriorityIndicator priority={requirement.priority?.name || requirement.priority?.priority_name || null} className="text-[13px]" />
+                  )}
+                </dd>
               </div>
               <div className="flex items-center gap-1.5">
                 <dt className="text-muted">Raised</dt>

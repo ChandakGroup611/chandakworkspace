@@ -136,7 +136,33 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{ticketData.id}</span>
               <StatusBadge status={ticketData.statusObj?.name || null} />
-              {ticketData.priorityObj?.name && <PriorityIndicator priority={ticketData.priorityObj.name} className="text-[12.5px] text-subtle" />}
+              {canEditTicket && priorities.length > 0 ? (
+                <select
+                  aria-label="Ticket Priority"
+                  value={ticketData.priority_id || ticketData.priorityObj?.id || ""}
+                  onChange={async (e) => {
+                    const newPrioId = e.target.value;
+                    if (!newPrioId) return;
+                    try {
+                      const { updateTicketDetails } = await import("@/lib/actions/tickets");
+                      await updateTicketDetails(ticketData.dbId, { priority_id: newPrioId });
+                      toast.success("Ticket priority updated successfully.");
+                      fetchData();
+                    } catch (err: any) {
+                      toast.error("Failed to update priority: " + err.message);
+                    }
+                  }}
+                  className="h-7 rounded-md border border-border bg-surface px-2 text-[12px] font-medium text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                >
+                  {priorities.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name || p.priority_name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                ticketData.priorityObj?.name && <PriorityIndicator priority={ticketData.priorityObj.name} className="text-[12.5px] text-subtle" />
+              )}
               {canEditTicket && (
                 <div className="ml-auto flex gap-2">
                   {!isEditing ? (

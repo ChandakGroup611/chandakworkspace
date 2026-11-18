@@ -24,11 +24,16 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
   let task;
   let statuses: any[] = [];
   let departments: any[] = [];
+  let priorities: any[] = [];
 
   try {
-    task = await getTaskDetails(taskId);
-    statuses = await getTaskStatuses();
-    departments = await getDepartments();
+    const { fetchPriorities } = await import("@/lib/actions/workspaces");
+    [task, statuses, departments, priorities] = await Promise.all([
+      getTaskDetails(taskId),
+      getTaskStatuses(),
+      getDepartments(),
+      fetchPriorities()
+    ]);
   } catch (error) {
     task = null;
   }
@@ -121,7 +126,14 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
               </div>
             </div>
           )}
-          <TaskExecutionController taskId={taskId} initialTask={task} initialStatuses={statuses} initialDepartments={departments} readOnly={effectiveReadOnly} />
+          <TaskExecutionController
+            taskId={taskId}
+            initialTask={task}
+            initialStatuses={statuses}
+            initialDepartments={departments}
+            initialPriorities={priorities}
+            readOnly={effectiveReadOnly}
+          />
         </div>
       </div>
     </div>

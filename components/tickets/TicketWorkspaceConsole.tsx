@@ -427,9 +427,29 @@ export function TicketWorkspaceConsole({
                <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
                  <Clock className="w-4 h-4 text-theme-icon" /> Timeline & meta
                </h3>
-               <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getPriorityColor()}`}>
-                 {ticket.priorityObj?.name || "STANDARD"}
-               </span>
+               {canEditFields && priorities.length > 0 ? (
+                 <select
+                   aria-label="Ticket Priority"
+                   value={ticket.priority_id || ticket.priorityObj?.id || ""}
+                   onChange={async (e) => {
+                     const newPrioId = e.target.value;
+                     if (!newPrioId) return;
+                     await executeFieldUpdate({ priority_id: newPrioId });
+                     toast.success("Priority updated.");
+                   }}
+                   className="h-6 rounded border border-border bg-surface px-1.5 text-[11px] font-semibold text-foreground outline-none focus:border-theme-btn-primary cursor-pointer"
+                 >
+                   {priorities.map((p: any) => (
+                     <option key={p.id} value={p.id}>
+                       {p.name || p.priority_name}
+                     </option>
+                   ))}
+                 </select>
+               ) : (
+                 <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getPriorityColor()}`}>
+                   {ticket.priorityObj?.name || "STANDARD"}
+                 </span>
+               )}
             </div>
             
             <div className="p-6 grid grid-cols-2 gap-4">
