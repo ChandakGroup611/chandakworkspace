@@ -275,7 +275,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
           BASE_URL: "https://chandakgroup.tech"
-        run: npx tsx scripts/run-baseline-tests.ts --ci
+        run: |
+          npx tsx scripts/seed-test-users.ts
+          npx tsx scripts/run-baseline-tests.ts --ci
 
   # =========================================================================
   # STANDALONE BUILD
