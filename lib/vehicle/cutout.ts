@@ -35,6 +35,8 @@ const UA = "ChandakWorkspace/1.0 (https://chandakgroup.tech; vehicle inventory t
 
 let sessionPromise: Promise<any> | null = null;
 let queue: Promise<unknown> = Promise.resolve(); // one image at a time keeps memory flat
+let queuedCount = 0; // bounded queue depth <= 2 to protect Hostinger memory
+const MAX_QUEUED = 2;
 const inflight = new Map<string, Promise<Buffer>>();
 const memory = new Map<string, Buffer>(); // small in-memory cache, in case no folder is writable
 const MEMORY_MAX = 300;
@@ -166,17 +168,25 @@ export async function getCutout(src: string, waitMs = 20000): Promise<Buffer> {
 
   let job = inflight.get(key);
   if (!job) {
+    if (queuedCount >= MAX_QUEUED) {
+      throw new CutoutPending();
+    }
+    queuedCount++;
     job = queue.then(async () => {
-      const res = await fetch(src, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20000) });
-      if (!res.ok) throw new Error(`image fetch failed: HTTP ${res.status}`);
-      const len = Number(res.headers.get("content-length") || 0);
-      if (len > MAX_BYTES) throw new Error("image too large");
-      const buf = Buffer.from(await res.arrayBuffer());
-      if (buf.length > MAX_BYTES) throw new Error("image too large");
-      const out = await removeBackground(buf);
-      remember(key, out);
-      if (file) await fs.writeFile(file, out).catch(() => undefined);
-      return out;
+      try {
+        const res = await fetch(src, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20000) });
+        if (!res.ok) throw new Error(`image fetch failed: HTTP ${res.status}`);
+        const len = Number(res.headers.get("content-length") || 0);
+        if (len > MAX_BYTES) throw new Error("image too large");
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length > MAX_BYTES) throw new Error("image too large");
+        const out = await removeBackground(buf);
+        remember(key, out);
+        if (file) await fs.writeFile(file, out).catch(() => undefined);
+        return out;
+      } finally {
+        queuedCount = Math.max(0, queuedCount - 1);
+      }
     });
     inflight.set(key, job);
     queue = job.catch(() => undefined);

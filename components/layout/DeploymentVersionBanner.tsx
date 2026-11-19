@@ -10,8 +10,11 @@ export default function DeploymentVersionBanner() {
 
   useEffect(() => {
     let isMounted = true;
+    let lastCheckedAt = Date.now();
 
     const checkVersion = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      lastCheckedAt = Date.now();
       try {
         const res = await fetch('/api/version', {
           cache: 'no-store',
@@ -30,9 +33,14 @@ export default function DeploymentVersionBanner() {
     };
 
     checkVersion();
-    const interval = setInterval(checkVersion, 60000);
+    // R1: Check every 10 min, paused when hidden
+    const interval = setInterval(checkVersion, 600000);
 
-    const handleFocus = () => checkVersion();
+    const handleFocus = () => {
+      if (Date.now() - lastCheckedAt >= 600000) {
+        checkVersion();
+      }
+    };
     window.addEventListener('focus', handleFocus);
 
     return () => {

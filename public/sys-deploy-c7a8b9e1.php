@@ -208,6 +208,21 @@ function reapOrphanProcesses() {
     return $killed;
 }
 
+// R5: Count active node/lsnode processes before and after release deployment
+function countNodeProcesses() {
+    $count = 0;
+    $procDirs = @glob('/proc/[0-9]*');
+    if ($procDirs) {
+        foreach ($procDirs as $pDir) {
+            $cmd = @file_get_contents($pDir . '/cmdline');
+            if ($cmd && (strpos($cmd, 'node') !== false || strpos($cmd, 'lsnode') !== false || strpos($cmd, 'server.js') !== false)) {
+                $count++;
+            }
+        }
+    }
+    return $count;
+}
+
 // Helper: Ensure .htaccess with PassengerAppRoot is synchronized across ALL docroots to prevent LiteSpeed static fallback 403 Forbidden
 function syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective) {
     $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
@@ -622,6 +637,13 @@ if (count($existingZips) > 1) {
 $extractionResults = [];
 $killResults = [];
 
+// R5: Lower CPU and I/O priority during extraction to prevent CPU/IO spikes on Hostinger
+if (function_exists('proc_nice')) {
+    @proc_nice(10);
+}
+@exec('ionice -c 3 -p ' . getmypid() . ' 2>&1');
+$nodeCountBefore = countNodeProcesses();
+
 if ($zipFile && class_exists('ZipArchive')) {
     foreach ($primaryAppRoots as $target) {
         if (!is_dir($target)) {
@@ -729,6 +751,8 @@ if ($zipFile && class_exists('ZipArchive')) {
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
 }
 
+$nodeCountAfter = countNodeProcesses();
+
 // 1. Sync .htaccess with PassengerAppRoot to ALL roots
 syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective);
 
@@ -762,6 +786,9 @@ echo json_encode([
     'success' => true,
     'zip_found' => ($zipFile !== null),
     'zip_path' => $zipFile,
+    'node_count_before' => $nodeCountBefore,
+    'node_count_after' => $nodeCountAfter,
+    'reaped_count' => count($killResults),
     'results' => $extractionResults,
     'timestamp' => date('Y-m-d H:i:s')
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);

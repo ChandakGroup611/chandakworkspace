@@ -139,25 +139,8 @@ export async function processEmailQueueAsync() {
       }
     }
 
-    // 4. If there are more pending items ready for processing, trigger recursively in background
-    const { count: rawPendingCount } = await supabaseAdmin
-      .from("email_queue")
-      .select("*", { count: 'exact', head: true })
-      .eq("is_sent", false)
-      .in("status", ["PENDING", "RETRY"])
-      .or(`next_retry_at.is.null,next_retry_at.lte.${new Date().toISOString()}`)
-      .lt("attempts", 5);
-
-    const pendingCount = rawPendingCount || 0;
-      
-    if (pendingCount > 0) {
-      const timer = setTimeout(() => {
-        processEmailQueueAsync().catch(console.error);
-      }, 2000);
-      if (timer && typeof timer.unref === 'function') {
-        timer.unref();
-      }
-    }
+    // R4: No self-rescheduling setTimeout loop. Process once per event; 
+    // the 15-minute cron (/api/cron/process-email-queue) handles scheduled retries cleanly.
   } catch (error: any) {
     console.error("[Queue Processor] Fatal Error:", error);
   }

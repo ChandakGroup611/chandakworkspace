@@ -47,9 +47,54 @@ const API_METHOD_CONTRACT: Record<string, string[]> = {
   "/api/webhooks/event-worker": ["POST"]
 };
 
+// R6: In-memory sliding window rate limiter per IP to block bot flood and brute-force
+const ipRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+let lastRateLimitCleanup = Date.now();
+
+function isRateLimited(key: string, limit: number, windowMs: number): boolean {
+  const now = Date.now();
+  if (now - lastRateLimitCleanup > 60_000) {
+    lastRateLimitCleanup = now;
+    for (const [k, v] of ipRateLimitMap.entries()) {
+      if (now > v.resetAt) ipRateLimitMap.delete(k);
+    }
+  }
+
+  const record = ipRateLimitMap.get(key);
+  if (!record || now > record.resetAt) {
+    ipRateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+
+  if (record.count >= limit) {
+    return true;
+  }
+
+  record.count++;
+  return false;
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const method = request.method.toUpperCase();
+  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
+
+  // R6: Rate limit /login (max 15/min per IP) and /api/* (max 120/min per IP)
+  if (pathname === "/login" && method === "POST") {
+    if (isRateLimited(`login:${clientIp}`, 15, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please wait 1 minute before retrying." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+  } else if (pathname.startsWith("/api/") && !pathname.startsWith("/api/version") && !pathname.startsWith("/api/heartbeat")) {
+    if (isRateLimited(`api:${clientIp}`, 120, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please slow down." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+  }
 
   // E3 Method Contract: Enforce 405 JSON on exact API routes
   if (API_METHOD_CONTRACT[pathname]) {
@@ -82,8 +127,32 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // Health checks and deployment probes: respond immediately without Supabase session roundtrip
-  if (pathname === "/api/version" || pathname === "/api/health" || pathname === "/sys-deploy-c7a8b9e1.php") {
+  // R1: Skip Supabase getUser round trip for health, heartbeat, session endpoints, static assets, and RSC prefetch requests
+  if (
+    pathname === "/api/version" || 
+    pathname === "/api/health" || 
+    pathname === "/api/heartbeat" ||
+    pathname.startsWith("/api/session/") ||
+    pathname === "/sys-deploy-c7a8b9e1.php"
+  ) {
+    return NextResponse.next();
+  }
+
+  // Skip round trip for static assets, robots, favicon
+  if (
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    /\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2|ico|css|js|txt|xml|map)$/i.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
+
+  // Skip round trip for RSC prefetch requests (Next.js Link prefetch)
+  const isPrefetch = request.headers.get("next-router-prefetch") === "1" ||
+                     request.headers.get("purpose") === "prefetch" ||
+                     request.headers.get("x-purpose") === "prefetch";
+  if (isPrefetch) {
     return NextResponse.next();
   }
 

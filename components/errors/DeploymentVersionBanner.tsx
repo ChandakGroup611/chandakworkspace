@@ -10,23 +10,21 @@ export function DeploymentVersionBanner() {
 
   useEffect(() => {
     let isMounted = true;
+    let lastCheckedAt = Date.now();
 
-    // Fetch initial version from /api/version
-    fetch("/api/version", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (isMounted && data?.commit) {
-          setCurrentCommit(data.commit);
-        }
-      })
-      .catch(() => {});
+    const checkVersion = () => {
+      // R1: Pause when tab is hidden to eliminate background CPU/network load
+      if (typeof document !== "undefined" && document.hidden) return;
 
-    // Periodic poll every 5 minutes (300,000 ms)
-    const interval = setInterval(() => {
+      lastCheckedAt = Date.now();
       fetch("/api/version", { cache: "no-store" })
         .then((res) => res.json())
         .then((data) => {
           if (!isMounted) return;
+          if (!currentCommit && data?.commit) {
+            setCurrentCommit(data.commit);
+            return;
+          }
           if (currentCommit && data?.commit && data.commit !== currentCommit) {
             setNewVersionAvailable(true);
             if (!isAutoReloading.current) {
@@ -40,11 +38,26 @@ export function DeploymentVersionBanner() {
           }
         })
         .catch(() => {});
-    }, 300000);
+    };
+
+    // Initial check on mount
+    checkVersion();
+
+    // R1: Periodic poll every 10 minutes (600,000 ms), paused when tab is hidden
+    const interval = setInterval(checkVersion, 600000);
+
+    // Check on window focus only if at least 10 minutes have elapsed since last check
+    const handleFocus = () => {
+      if (Date.now() - lastCheckedAt >= 600000) {
+        checkVersion();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
     };
   }, [currentCommit]);
 

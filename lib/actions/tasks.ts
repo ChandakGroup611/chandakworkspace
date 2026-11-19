@@ -2051,15 +2051,23 @@ export async function executeTaskBatchOperation(payload: {
 
   // Atomic Assignment & Watcher updates within batch operation
   const effectiveWs = payload.workspaceId || currentTask.workspace_id;
+  const notifiedUserIds = new Set<string>();
+
   if (payload.assignees !== undefined || payload.primaryAssigneeId !== undefined) {
     const assigneesList = payload.assignees !== undefined ? payload.assignees : [];
     const assignRes = await updateTaskAssignees(taskId, effectiveWs, assigneesList, payload.primaryAssigneeId ?? undefined);
     if (assignRes?.error) return { error: assignRes.error };
+    if (assignRes?.notifiedUserIds) {
+      assignRes.notifiedUserIds.forEach((id: string) => notifiedUserIds.add(id));
+    }
   }
 
   if (payload.watchers !== undefined) {
     const watchRes = await updateTaskWatchers(taskId, effectiveWs, payload.watchers);
     if (watchRes?.error) return { error: watchRes.error };
+    if (watchRes?.notifiedUserIds) {
+      watchRes.notifiedUserIds.forEach((id: string) => notifiedUserIds.add(id));
+    }
   }
 
   // Purge the cache for this task to ensure Next.js auto-refresh works on production
@@ -2076,6 +2084,7 @@ export async function executeTaskBatchOperation(payload: {
       queueBusinessEvent("Task", "Updated", {
         entity_id: taskId,
         triggering_user_id: userId,
+        exclude_user_ids: Array.from(notifiedUserIds),
         status: statusChanges || taskData?.status_id || "UPDATED",
         task_name: taskData?.subject || "Task Updated",
         description: cleanDesc !== cleanRemarks ? cleanDesc : "",
@@ -2273,9 +2282,15 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     }).catch(e => console.error("[updateTaskAssignees] Task Assigned push failed", e));
   }
 
+  const notifiedUserIds: string[] = [];
+  if (primaryChanged && finalPrimaryId) {
+    notifiedUserIds.push(finalPrimaryId);
+  }
+
   // Notify ONLY newly added executors (excluding the primary assignee)
   newlyAddedExecutorIds.forEach(execId => {
     if (execId !== finalPrimaryId) {
+      notifiedUserIds.push(execId);
       dispatchNotification(
         execId,
         'Task Executor Assignment',
@@ -2288,7 +2303,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     }
   });
 
-  return { success: true };
+  return { success: true, notifiedUserIds };
 }
 
 export async function updateTaskWatchers(taskId: string, workspaceId: string, watchers: string[]) {
@@ -2407,7 +2422,7 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
     }
   }
 
-  return { success: true };
+  return { success: true, notifiedUserIds: newlyAddedWatcherIds };
 }
 
 export async function moveTasksInBulk(payload: {

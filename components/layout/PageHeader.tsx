@@ -30,7 +30,7 @@ export function PageHeader({ title, description, icon, badge, actions, breadcrum
             <ol className="flex flex-wrap items-center gap-1 text-[12.5px] text-muted">
               {breadcrumbs.map((c, i) => (
                 <li key={`${c.label}-${i}`} className="flex items-center gap-1">
-                  {c.href ? <Link href={c.href} className="hover:text-foreground hover:underline">{c.label}</Link> : <span aria-current="page">{c.label}</span>}
+                  {c.href ? <Link href={c.href} prefetch={false} className="hover:text-foreground hover:underline">{c.label}</Link> : <span aria-current="page">{c.label}</span>}
                   {i < breadcrumbs.length - 1 && <ChevronRight className="h-3 w-3 opacity-60" aria-hidden />}
                 </li>
               ))}

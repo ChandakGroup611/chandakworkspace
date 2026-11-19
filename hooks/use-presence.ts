@@ -157,6 +157,9 @@ export function usePresence(userIds: string[]): Map<string, PresenceInfo> {
     if (userIds.length === 0) return;
 
     const interval = setInterval(() => {
+      // R1: Pause when tab is hidden to eliminate background CPU load
+      if (typeof document !== "undefined" && document.hidden) return;
+
       setPresenceMap((prev) => {
         const next = new Map(prev);
         let changed = false;

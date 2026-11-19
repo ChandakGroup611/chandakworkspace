@@ -98,6 +98,11 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       recipientUserIds.delete(payload.triggering_user_id);
     }
 
+    // Exclude users who were already directly notified in the same operation (e.g. newly added watchers/executors)
+    if (payload.exclude_user_ids && Array.isArray(payload.exclude_user_ids)) {
+      payload.exclude_user_ids.forEach((id: string) => recipientUserIds.delete(id));
+    }
+
     if (recipientUserIds.size === 0) return;
 
     // 4. Resolve exact email addresses
@@ -299,14 +304,29 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
         await supabaseAdmin.from("notification_queue").insert(inAppNotifications);
 
         if (moduleName === 'Task' && payload.entity_id) {
-          const taskNotifs = candidateUsers.map(user => ({
-            user_id: user.id,
-            title: `Task ${eventName}: ${itemLabel}`,
-            message: notifMessage,
-            link: payload.link || `/tasks/${payload.entity_id}`,
-            is_read: false
-          }));
-          await supabaseAdmin.from("task_notifications").insert(taskNotifs);
+          const sixtySecondsAgo = new Date(Date.now() - 60000).toISOString();
+          const targetTaskLink = payload.link || `/tasks/${payload.entity_id}`;
+          const candidateIds = candidateUsers.map(u => u.id);
+          const { data: recentNotifs } = await supabaseAdmin
+            .from("task_notifications")
+            .select("user_id")
+            .in("user_id", candidateIds)
+            .ilike("link", `%${payload.entity_id}%`)
+            .gte("created_at", sixtySecondsAgo);
+
+          const alreadyNotifiedUserIds = new Set((recentNotifs || []).map((rn: any) => rn.user_id));
+          const eligibleTaskUsers = candidateUsers.filter(u => !alreadyNotifiedUserIds.has(u.id));
+
+          if (eligibleTaskUsers.length > 0) {
+            const taskNotifs = eligibleTaskUsers.map(user => ({
+              user_id: user.id,
+              title: `Task ${eventName}: ${itemLabel}`,
+              message: notifMessage,
+              link: targetTaskLink,
+              is_read: false
+            }));
+            await supabaseAdmin.from("task_notifications").insert(taskNotifs);
+          }
         }
       } catch (inAppErr) {
         console.error("[NotificationEngine] Failed to insert in-app notifications:", inAppErr);

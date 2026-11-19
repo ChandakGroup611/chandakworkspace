@@ -43,9 +43,9 @@ export default function PerformanceCommandCenter() {
   useEffect(() => {
     if (!canView) return; // Prevent polling if not authorized
     
-    // Production Safe Mode: Reduced polling interval to 10s to minimize server action overhead.
-    // (Was 2s = 30 calls/min per admin user. Now 6 calls/min.)
+    // R1: Production Safe Mode: 30s interval, paused when tab is hidden
     const interval = setInterval(async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
       setMetrics([...queryStore.getMetrics()]);
       setViolations([...budgetManager.getViolations()]);
       setActiveChannels(websocketStore.getActiveCount());
@@ -59,7 +59,7 @@ export default function PerformanceCommandCenter() {
       
       // Pull passive governance metrics
       setGovMetrics(performanceGovernor.getMetrics());
-    }, 10000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [canView]);
 

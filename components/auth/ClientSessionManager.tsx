@@ -17,7 +17,8 @@ import { useRouter } from "next/navigation";
 // 6. Multi-device / Concurrent login protection via Realtime active_sessions
 // =========================================================================
 
-const HEARTBEAT_INTERVAL_MS = 60_000; // 60 seconds
+// R1: Consolidated production heartbeat: 5 minutes (300,000 ms), paused when tab is hidden
+const HEARTBEAT_INTERVAL_MS = 300_000; // 5 minutes (reduced from 60s per WP-R R1)
 const SESSION_IDLE_LIMIT_MS = 5 * 60 * 1000; // 5 minutes — matches Navbar timeout
 const BROADCAST_CHANNEL_NAME = "adios_session_heartbeat";
 const ACTIVITY_BROADCAST_THROTTLE_MS = 10_000; // 10s throttle to protect main thread

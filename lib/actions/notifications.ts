@@ -137,42 +137,53 @@ export async function dispatchNotification(
   // 1. Insert into DB (In-App Queue)
   let notif: any = null;
   if (isInAppEnabled) {
-    const { data: insertedNotif, error: notifError } = await supabaseAdmin.from("task_notifications").insert([{
-      user_id: userId,
-      title,
-      message,
-      link,
-      is_read: false
-    }]).select().single();
-    if (notifError) console.error("Error inserting task_notification:", notifError);
-    notif = insertedNotif;
+    const sixtySecondsAgo = new Date(Date.now() - 60000).toISOString();
+    const { data: recentExisting } = await supabaseAdmin
+      .from("task_notifications")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("title", title)
+      .gte("created_at", sixtySecondsAgo)
+      .limit(1);
 
-    // Also insert into global notification queue for realtime stream consumers
-    try {
-      const isWorkspace = link?.includes('workspaces') && !link?.includes('task=');
-      const isTicket = link?.includes('tickets');
-      const entityType = isWorkspace ? 'workspace' : (isTicket ? 'ticket' : 'task');
-      const moduleType = isWorkspace ? 'workspaces' : (isTicket ? 'tickets' : 'tasks');
+    if (!recentExisting || recentExisting.length === 0) {
+      const { data: insertedNotif, error: notifError } = await supabaseAdmin.from("task_notifications").insert([{
+        user_id: userId,
+        title,
+        message,
+        link,
+        is_read: false
+      }]).select().single();
+      if (notifError) console.error("Error inserting task_notification:", notifError);
+      notif = insertedNotif;
 
-      await supabaseAdmin.from('notification_queue').insert([{
-        target_user_id: userId,
-        recipient_id: userId,
-        entity_type: entityType,
-        entity_id: extractedEntityId,
-        module: moduleType,
-        action_type: eventCode?.toLowerCase() || 'notification',
-        actor: 'System',
-        redirect_url: link || null,
-        priority_level: eventCode === 'CRITICAL' ? 'CRITICAL' : 'MEDIUM',
-        is_read: false,
-        payload: { 
-          id: notif?.id || null,
-          title,
-          message 
-        }
-      }]);
-    } catch (e) {
-      console.error('Failed to insert into notification_queue', e);
+      // Also insert into global notification queue for realtime stream consumers
+      try {
+        const isWorkspace = link?.includes('workspaces') && !link?.includes('task=');
+        const isTicket = link?.includes('tickets');
+        const entityType = isWorkspace ? 'workspace' : (isTicket ? 'ticket' : 'task');
+        const moduleType = isWorkspace ? 'workspaces' : (isTicket ? 'tickets' : 'tasks');
+
+        await supabaseAdmin.from('notification_queue').insert([{
+          target_user_id: userId,
+          recipient_id: userId,
+          entity_type: entityType,
+          entity_id: extractedEntityId,
+          module: moduleType,
+          action_type: eventCode?.toLowerCase() || 'notification',
+          actor: 'System',
+          redirect_url: link || null,
+          priority_level: eventCode === 'CRITICAL' ? 'CRITICAL' : 'MEDIUM',
+          is_read: false,
+          payload: { 
+            id: notif?.id || null,
+            title,
+            message 
+          }
+        }]);
+      } catch (e) {
+        console.error('Failed to insert into notification_queue', e);
+      }
     }
   }
 

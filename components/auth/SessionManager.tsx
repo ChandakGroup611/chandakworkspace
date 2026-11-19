@@ -98,33 +98,8 @@ export function SessionManager() {
     };
   }, [isAuthRoute]);
 
-  // Handle Heartbeat
-  useEffect(() => {
-    if (isAuthRoute || !userId || !sessionToken) return;
-
-    const updateHeartbeat = async () => {
-      try {
-        await supabase
-          .from("active_sessions")
-          .upsert({
-            user_id: userId,
-            session_token: sessionToken,
-            last_active_at: new Date().toISOString()
-          }, { onConflict: "user_id" });
-      } catch (e) {
-        console.error("Failed to ping heartbeat", e);
-      }
-    };
-
-    // Initial ping
-    updateHeartbeat();
-
-    heartbeatIntervalRef.current = setInterval(updateHeartbeat, HEARTBEAT_INTERVAL);
-
-    return () => {
-      if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
-    };
-  }, [isAuthRoute, userId, sessionToken, supabase]);
+  // R1: Heartbeat handled authoritatively by ClientSessionManager every 5 min.
+  // Duplicate interval removed to reduce database write load and avoid double-pings.
 
   // Listen to concurrent session logins via Realtime
   useEffect(() => {

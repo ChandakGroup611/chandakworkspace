@@ -16,11 +16,12 @@ export function SlaCountdownWidget({ metrics = [], onDrillDown }: SlaCountdownWi
   const [currentTime, setCurrentTime] = useState<number>(() => Date.now());
   const [activeTab, setActiveTab] = useState<"all" | "critical" | "urgent" | "warning" | "breached">("all");
 
-  // Keep a live 1-second interval to update remaining timers in real-time
+  // Update timers every 10 seconds, paused when tab is hidden
   useEffect(() => {
     const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       setCurrentTime(Date.now());
-    }, 1000);
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 

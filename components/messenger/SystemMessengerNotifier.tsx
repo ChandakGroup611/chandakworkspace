@@ -473,12 +473,13 @@ export function SystemMessengerNotifier() {
     window.addEventListener("online", handleReconnection);
     document.addEventListener("visibilitychange", handleReconnection);
 
-    // Keep-alive heartbeat: checks every 20 seconds to prevent Chrome sleeping tab disconnection
+    // R1: Keep-alive heartbeat: checks every 60 seconds (paused when tab is hidden)
     const heartbeatInterval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       if (!isConnected && !isCleanedUp) {
         setupChannel();
       }
-    }, 20000);
+    }, 60000);
 
     return () => {
       isCleanedUp = true;

@@ -117,6 +117,7 @@ export function TicketWorkspaceConsole({
   useEffect(() => {
     if (!ticket?.created_at) return;
     const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       const statusCode = ticket.statusObj?.code || "";
       if (statusCode === "ST_RESOLVED" || statusCode === "ST_CLOSED") {
         setSlaStatus("MET");
@@ -154,7 +155,7 @@ export function TicketWorkspaceConsole({
           setSlaTimeRemaining(`${diffMins}m remaining`);
         }
       }
-    }, 1000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [ticket, ticket?.priorityObj]);
 

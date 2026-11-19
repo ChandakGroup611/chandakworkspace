@@ -555,6 +555,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                   <div className="relative flex items-center">
                     <Link
                       href={item.href}
+                      prefetch={false}
                       title={compact ? item.label : undefined}
                       aria-label={compact ? item.label : undefined}
                       aria-current={showSelf ? "page" : undefined}
@@ -600,6 +601,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                           <li key={sub.href}>
                             <Link
                               href={sub.href}
+                              prefetch={false}
                               aria-current={on ? "page" : undefined}
                               onClick={() => onCloseMobile?.()}
                               className={cn(
@@ -672,7 +674,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
         </button>
 
         <div className={cn("flex shrink-0 flex-col gap-3", showFull ? "px-3 pb-3 pt-4" : "items-center px-2 pb-2 pt-4")}>
-          <Link href={moduleHomeHref} aria-label="Chandak Workspace home" className={cn("flex items-center", showFull ? "h-11 px-1" : "h-9 w-9 justify-center")}>
+          <Link href={moduleHomeHref} prefetch={false} aria-label="Chandak Workspace home" className={cn("flex items-center", showFull ? "h-11 px-1" : "h-9 w-9 justify-center")}>
             <Logo compact={!showFull} invert={darkRail} />
           </Link>
           <ModuleSwitcher isCompact={!showFull} />

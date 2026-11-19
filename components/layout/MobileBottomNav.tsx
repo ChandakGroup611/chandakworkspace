@@ -116,7 +116,7 @@ export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu
           const on = t.match(pathname);
           const Icon = t.icon;
           return (
-            <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "font-semibold text-accent-soft-text" : "text-muted hover:text-foreground")}>
+            <Link key={t.href} href={t.href} prefetch={false} aria-current={on ? "page" : undefined} className={cn(item, on ? "font-semibold text-accent-soft-text" : "text-muted hover:text-foreground")}>
               <span className={cn("inline-flex h-7 w-12 items-center justify-center rounded-full", on && "bg-accent-soft")}>
                 <Icon className="h-5 w-5" aria-hidden />
               </span>

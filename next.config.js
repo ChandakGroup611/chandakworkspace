@@ -30,6 +30,10 @@ const nextConfig = {
   generateBuildId: async () => {
     return process.env.GIT_COMMIT || process.env.NEXT_PUBLIC_GIT_COMMIT || 'production';
   },
+  // R3: Disable on-the-fly image optimization to eliminate Sharp/libvips CPU spikes on Hostinger
+  images: {
+    unoptimized: true,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '30mb',

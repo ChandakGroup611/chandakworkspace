@@ -189,7 +189,7 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
           {isLight ? <Moon className="h-4 w-4" aria-hidden /> : <Sun className="h-4 w-4" aria-hidden />}
         </button>
         <div className="hidden sm:contents"><ThemeMenu /></div>
-        <Link href="/settings" aria-label="Design gallery" title="Design gallery" className={cn(iconBtn, "hidden sm:inline-flex")}>
+        <Link href="/settings" prefetch={false} aria-label="Design gallery" title="Design gallery" className={cn(iconBtn, "hidden sm:inline-flex")}>
           <Settings className="h-4 w-4" aria-hidden />
         </Link>
         <RealtimeNotificationsDrawer />
@@ -227,13 +227,13 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
                 <div className="truncate text-[13px] font-semibold">{profile?.full_name || "User"}</div>
                 <div className="truncate text-[12px] text-muted">{profile?.email}</div>
               </div>
-              <Link href="/profile" className="mt-1 flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-surface-hover">
+              <Link href="/profile" prefetch={false} className="mt-1 flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-surface-hover">
                 <User className="h-4 w-4 text-muted" aria-hidden /> Profile & preferences
               </Link>
               <button type="button" onClick={toggleMode} className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] hover:bg-surface-hover sm:hidden">
                 {isLight ? <Moon className="h-4 w-4 text-muted" aria-hidden /> : <Sun className="h-4 w-4 text-muted" aria-hidden />} {isLight ? "Dark mode" : "Light mode"}
               </button>
-              <Link href="/settings" className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-surface-hover sm:hidden">
+              <Link href="/settings" prefetch={false} className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-surface-hover sm:hidden">
                 <Settings className="h-4 w-4 text-muted" aria-hidden /> Themes & design gallery
               </Link>
               <button
