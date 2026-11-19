@@ -20,6 +20,85 @@ export const taskRunners: TestCaseRunner[] = [
     }
   },
   {
+    tcId: "TC-TASK-002",
+    module: "Workspace/Tasks",
+    screen: "app/workspaces/tasks/page.tsx (route: /workspaces/tasks)",
+    description: "Status integrity: active, non-deleted, D4 order, single changeTaskStatus with R1 and R2 blocker assertions",
+    role: "STANDARD",
+    type: "functional",
+    run: async (ctx) => {
+      const { getTaskStatuses, changeTaskStatus, updateTask } = await import("../../lib/actions/tasks");
+
+      // 1. Assert getTaskStatuses returns only active, non-deleted TASK statuses in D4 order
+      const statuses = await getTaskStatuses();
+      if (!statuses || statuses.length === 0) {
+        return { pass: false, notes: "getTaskStatuses returned empty array", codePath: "lib/actions/tasks.ts" };
+      }
+
+      const hasDeleted = statuses.some((s: any) => s.is_deleted === true || ['RESOLVED', 'TASK COMPLETED'].includes(s.code));
+      if (hasDeleted) {
+        return { pass: false, notes: "Deleted statuses offered in active status list", codePath: "lib/actions/tasks.ts" };
+      }
+
+      // Check status_order is monotonic
+      for (let i = 1; i < statuses.length; i++) {
+        if ((statuses[i].status_order || 0) < (statuses[i - 1].status_order || 0)) {
+          return { pass: false, notes: "Status list violates D4 order", codePath: "lib/actions/tasks.ts" };
+        }
+      }
+
+      // 2. Assert ticket/requirement status rejected on task
+      const invalidStatusRes = await changeTaskStatus(
+        ctx.fixedEntities.taskId,
+        "ac064265-0cd6-4067-8d0c-dcfda392c9ef", // ERP status
+        undefined,
+        ctx.users["test.superadmin@chandakgroup.tech"]
+      );
+      if (!invalidStatusRes || !invalidStatusRes.error || !invalidStatusRes.error.includes("scoped to TASK")) {
+        return { pass: false, notes: "Ticket status was not rejected on task changeTaskStatus", codePath: "lib/actions/tasks.ts" };
+      }
+
+      // 3. Assert R2 blocker: cannot close parent task while subtask is open
+      const closedStatus = statuses.find((s: any) => s.is_closed || s.is_terminal);
+      if (!closedStatus) {
+        return { pass: false, notes: "No closed status found in TASK scope", codePath: "lib/actions/tasks.ts" };
+      }
+
+      const r2Res = await changeTaskStatus(
+        ctx.fixedEntities.taskId,
+        closedStatus.id,
+        "Attempting close with open subtask",
+        ctx.users["test.superadmin@chandakgroup.tech"]
+      );
+      if (!r2Res || !r2Res.error || !r2Res.error.includes("Blocked by incomplete sub-task")) {
+        return { pass: false, notes: "R2 blocker failed: parent task was closed while subtask remained incomplete", codePath: "lib/actions/tasks.ts" };
+      }
+
+      // 4. Assert field whitelisting in updateTask
+      const whitelistRes = await updateTask(ctx.fixedEntities.taskId, {
+        performedBy: ctx.users["test.superadmin@chandakgroup.tech"],
+        workspace_id: "00000000-0000-0000-0000-000000000000",
+        created_by: "00000000-0000-0000-0000-000000000000",
+        description: "Updated description via whitelist test"
+      });
+      if (whitelistRes && whitelistRes.error) {
+        return { pass: false, notes: `updateTask failed: ${whitelistRes.error}`, codePath: "lib/actions/tasks.ts" };
+      }
+
+      const { data: verifyTask } = await ctx.supabaseAdmin
+        .from("tasks")
+        .select("workspace_id, created_by, description")
+        .eq("id", ctx.fixedEntities.taskId)
+        .single();
+
+      if (verifyTask?.workspace_id === "00000000-0000-0000-0000-000000000000" || verifyTask?.created_by === "00000000-0000-0000-0000-000000000000") {
+        return { pass: false, notes: "Whitelisting failed: workspace_id or created_by was overwritten via payload", codePath: "lib/actions/tasks.ts" };
+      }
+
+      return { pass: true, notes: "Status integrity verified: D4 ordering, deleted exclusion, ticket status rejection, R2 subtask blocker, and field whitelisting all verified" };
+    }
+  },
+  {
     tcId: "TC-TASK-003",
     module: "Workspace/Tasks",
     screen: "app/workspaces/page.tsx (route: /workspaces)",

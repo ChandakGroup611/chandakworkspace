@@ -11,6 +11,8 @@
  * Usage: npm run test:baseline (or npx tsx scripts/run-baseline-tests.ts)
  */
 
+process.env.NODE_ENV = process.env.NODE_ENV || "test";
+
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";

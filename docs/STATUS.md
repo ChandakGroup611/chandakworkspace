@@ -19,13 +19,13 @@
 | **1.8** | WP1 | createTask & all server actions: derive created_by from session | `ffa1a52d` | — | TC-TASK-015, TC-REQ-015, TC-AUTH-006 | DONE |
 | **1.9** | WP1 | Immediate cache invalidation on access revoke / version stamp | `2b29a002` | — | TC-AUTH-003, TC-AUTH-004 | DONE |
 | **2.1** | WP2 | Subtask creation from task page: workspace binding and error handling | `5d36b6c8` | — | TC-TASK-004 | DONE |
-| **2.2** | WP2 | Single changeTaskStatus function with R1, R2, status_master checks | — | — | TC-TASK-002, TC-TASK-006 | TODO |
-| **2.3** | WP2 | Reopen task (R1) with active is_reopen/open status & error toasts | — | — | TC-TASK-006 | TODO |
-| **2.4** | WP2 | Task page action buttons aligned with existing statuses (D1) | — | — | TC-TASK-002 | TODO |
-| **2.5** | WP2 | Whitelist editable task fields; ignore ids/owner/workspace in payload | — | — | TC-TASK-006, TC-TASK-015 | TODO |
-| **2.6** | WP2 | Active, non-deleted, scope-bounded status lists in D4 order | — | — | TC-REGR-002 | TODO |
-| **2.7** | WP2 | Single default status per scope; remove self-heal inserts | — | — | TC-TCK-003, TC-TASK-003 | TODO |
-| **2.8** | WP2 | Data cleanup: fix inactive/deleted status pointers with backup | — | — | TC-TASK-002 | TODO |
+| **2.2** | WP2 | Single changeTaskStatus function with R1, R2, status_master checks | `pending` | — | TC-TASK-002, TC-TASK-006 | DONE |
+| **2.3** | WP2 | Reopen task (R1) with active is_reopen/open status & error toasts | `pending` | — | TC-TASK-006 | DONE |
+| **2.4** | WP2 | Task page action buttons aligned with existing statuses (D1) | `pending` | — | TC-TASK-002 | DONE |
+| **2.5** | WP2 | Whitelist editable task fields; ignore ids/owner/workspace in payload | `pending` | — | TC-TASK-006, TC-TASK-015 | DONE |
+| **2.6** | WP2 | Active, non-deleted, scope-bounded status lists in D4 order | `pending` | — | TC-REGR-002 | DONE |
+| **2.7** | WP2 | Single default status per scope; remove self-heal inserts | `pending` | — | TC-TCK-003, TC-TASK-003 | DONE |
+| **2.8** | WP2 | Data cleanup: fix inactive/deleted status pointers with backup | `pending` | — | TC-TASK-002 | DONE |
 | **3.1** | WP3 | D6 auto-UAT rules and reopen requirement sync on sub-100% completion | — | — | TC-REQ-003 | TODO |
 | **3.2** | WP3 | UAT PASS: single active closed requirement status; atomic status update | — | — | TC-REQ-005 | TODO |
 | **3.3** | WP3 | UAT FAIL dialog: selectively reopen user-ticked tasks | — | — | TC-REQ-005 | TODO |

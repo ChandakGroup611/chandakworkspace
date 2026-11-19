@@ -464,60 +464,59 @@ export async function createEnterpriseTicket(payload: any) {
     }
   }
 
-  const dbScopeType = payload.scope_type === 'ERP/SOFTWARE' ? 'ERP' : payload.scope_type;
+  const dbScopeType = payload.scope_type === 'ERP/SOFTWARE' ? 'ERP' : (payload.scope_type || 'ERP');
 
-  // Fetch 'NEW' or 'CONVERTED_TO_REQ' or fallback initial status from status_master
-  const targetStatusCode = isRequirement ? 'CONVERTED_TO_REQ' : 'NEW';
+  // Single default status resolution (Item 2.7 / Decision D5)
   let newState: { id: string } | null = null;
-
-  const { data: matchedStates } = await supabaseAdmin
-    .from('status_master')
-    .select('id')
-    .eq('status_code', targetStatusCode)
-    .or(`scope_type.eq.${dbScopeType},scope_type.eq.GLOBAL,scope_type.is.null`)
-    .limit(1);
-
-  if (matchedStates && matchedStates.length > 0) {
-    newState = matchedStates[0];
-  } else {
-    // Multi-tier fallback: search for 'OPEN', 'NEW', 'ACTIVE' or any valid status
-    const { data: altStates } = await supabaseAdmin
+  if (isRequirement) {
+    const { data: reqStatus } = await supabaseAdmin
       .from('status_master')
       .select('id')
-      .in('status_code', ['OPEN', 'NEW', 'ACTIVE', 'SUBMITTED', 'PENDING'])
-      .limit(1);
+      .eq('status_code', 'CONVERTED_TO_REQ')
+      .eq('is_active', true)
+      .eq('is_deleted', false)
+      .maybeSingle();
 
-    if (altStates && altStates.length > 0) {
-      newState = altStates[0];
+    if (!reqStatus) {
+      return { error: "Status 'CONVERTED_TO_REQ' is not configured or active." };
+    }
+    newState = reqStatus;
+  } else {
+    // Look up the single default status for the ticket's scope
+    const { data: defaultStatus } = await supabaseAdmin
+      .from('status_master')
+      .select('id, is_closed, is_terminal')
+      .eq('scope_type', dbScopeType)
+      .eq('is_default', true)
+      .eq('is_active', true)
+      .eq('is_deleted', false)
+      .maybeSingle();
+
+    if (defaultStatus && !defaultStatus.is_closed && !defaultStatus.is_terminal) {
+      newState = defaultStatus;
     } else {
-      // Fallback to any active status
-      const { data: anyState } = await supabaseAdmin
+      // Fallback: search for active initial status by code ('OPEN', 'NEW') strictly in scope
+      const { data: namedStatus } = await supabaseAdmin
         .from('status_master')
         .select('id')
+        .eq('scope_type', dbScopeType)
+        .in('status_code', ['OPEN', 'NEW'])
         .eq('is_active', true)
-        .limit(1);
+        .eq('is_deleted', false)
+        .order('status_order', { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
-      if (anyState && anyState.length > 0) {
-        newState = anyState[0];
+      if (namedStatus) {
+        newState = namedStatus;
+      } else {
+        return { error: `No active default status configured for scope '${dbScopeType}'.` };
       }
     }
   }
 
-  // Self-heal: auto-provision a default status if status_master has no matching entries
   if (!newState) {
-    const { data: createdStatus } = await supabaseAdmin
-      .from('status_master')
-      .insert({
-        status_name: isRequirement ? 'Converted to Requirement' : 'New Ticket',
-        status_code: targetStatusCode,
-        scope_type: dbScopeType || 'GLOBAL',
-        is_active: true,
-        is_closed: false,
-        status_order: 1
-      })
-      .select('id')
-      .single();
-    if (createdStatus) newState = createdStatus;
+    return { error: `No active status configured for ticket creation under scope '${dbScopeType}'.` };
   }
 
   // Fallback for priority_id if strictly scoped priorities are missing (prevents 23502 NOT NULL)

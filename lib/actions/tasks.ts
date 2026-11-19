@@ -64,32 +64,34 @@ export async function createTask(payload: {
     let finalStatusId = payload.status_id;
 
     if (!finalStatusId) {
-      // Find default status for tasks
-      let { data: statusMaster } = await supabaseAdmin
+      // Find the single active non-closed default status for scope TASK (Decision D5 / Item 2.7)
+      const { data: defaultStatus } = await supabaseAdmin
         .from('status_master')
-        .select('id')
+        .select('id, is_closed, is_terminal')
         .eq('is_default', true)
         .eq('scope_type', 'TASK')
+        .eq('is_active', true)
         .eq('is_deleted', false)
         .maybeSingle();
 
-      if (!statusMaster) {
-        // Fallback to the first active task status
-        const { data: fallbackStatus } = await supabaseAdmin
-          .from('status_master')
-          .select('id')
-          .eq('scope_type', 'TASK')
-          .eq('is_deleted', false)
-          .order('status_order', { ascending: true })
-          .limit(1);
-
-        if (fallbackStatus && fallbackStatus.length > 0) {
-          statusMaster = fallbackStatus[0];
-        } else {
-          return { error: 'No active task status found in status_master to assign.' };
-        }
+      if (!defaultStatus || defaultStatus.is_closed || defaultStatus.is_terminal) {
+        return { error: 'No active non-closed default status configured for TASK scope.' };
       }
-      finalStatusId = statusMaster.id;
+      finalStatusId = defaultStatus.id;
+    } else {
+      // Validate provided status_id
+      const { data: validStatus } = await supabaseAdmin
+        .from('status_master')
+        .select('id')
+        .eq('id', finalStatusId)
+        .eq('scope_type', 'TASK')
+        .eq('is_active', true)
+        .eq('is_deleted', false)
+        .maybeSingle();
+
+      if (!validStatus) {
+        return { error: 'Invalid task status: status must be active, non-deleted, and scoped to TASK.' };
+      }
     }
 
     let finalPriorityId = payload.priority_id && typeof payload.priority_id === 'string' ? payload.priority_id.trim() : null;
@@ -443,133 +445,203 @@ export async function createTask(payload: {
   }
 }
 
-export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: string, performedBy?: string) {
+export async function changeTaskStatus(
+  taskId: string,
+  targetStatusIdOrCode: string,
+  remark?: string,
+  actorIdOverride?: string
+): Promise<{ success: boolean; data?: { status_id: string; status_name: string }; error?: string }> {
   let userId: string | null = null;
   try {
     const cookieStore = await cookies();
     const { data: { user } } = await createClient(cookieStore).auth.getUser();
     userId = user?.id || null;
   } catch {
-    // In background scripts or test execution context
+    // Background scripts or test execution context
   }
 
   if (!userId) {
-    if (process.env.NODE_ENV === "test" || process.env.SANDBOX_CONFIRM === "yes") {
-      userId = performedBy || null;
+    if (process.env.NODE_ENV !== "production") {
+      userId = actorIdOverride || null;
     }
   }
 
-  if (!userId) return { error: "Unauthenticated" };
-  performedBy = userId;
+  if (!userId) return { success: false, error: "Unauthenticated" };
 
-  // Get current status, workspace, and owner
-  const { data: task } = await supabaseAdmin
+  // Fetch current task
+  const { data: task, error: fetchErr } = await supabaseAdmin
     .from('tasks')
-    .select('subject, status_id, assigned_to, created_by, owner_id, workspace_id, workspace:workspaces(workspace_owner_id)')
+    .select('id, subject, status_id, assigned_to, created_by, owner_id, workspace_id, parent_task_id, workspace:workspaces(workspace_owner_id)')
     .eq('id', taskId)
     .single();
 
-  if (!task) return { error: "Task not found" };
+  if (fetchErr || !task) return { success: false, error: "Task not found" };
 
-  const { hasPermission } = await import('@/lib/permissions');
-  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
-  const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId;
-  const canReopenClosed = isSuperAdmin || isTaskAssignee;
+  // Validate target status from status_master: must be active, non-deleted, and scoped to TASK
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let targetQuery = supabaseAdmin
+    .from('status_master')
+    .select('*')
+    .eq('scope_type', 'TASK')
+    .eq('is_active', true)
+    .eq('is_deleted', false);
 
-  // Strict Freeze Logic: If task is currently CLOSED, only Super Admins and the Task Assignee (Task Owner) can transition/reopen it.
-  if (task.status_id) {
-    const { data: currentStatus } = await supabaseAdmin.from('status_master').select('is_closed, is_terminal').eq('id', task.status_id).single();
-    if (currentStatus && (currentStatus.is_closed || currentStatus.is_terminal)) {
-      if (!canReopenClosed) {
-        return { error: "This task is strictly frozen because it is Closed. Only Super Admins and the Task Assignee (Task Owner) can reopen it." };
-      }
-    }
+  if (uuidRegex.test(targetStatusIdOrCode)) {
+    targetQuery = targetQuery.eq('id', targetStatusIdOrCode);
+  } else {
+    targetQuery = targetQuery.eq('status_code', targetStatusIdOrCode.toUpperCase());
   }
 
-  // Active status transition: Primary Assignee, Super Admin, or Assigned Executives (participants)
-  if (!isTaskAssignee && !isSuperAdmin) {
+  const { data: targetStatus } = await targetQuery.maybeSingle();
+  if (!targetStatus) {
+    return { success: false, error: `Invalid status: Target status '${targetStatusIdOrCode}' must be active, non-deleted, and scoped to TASK.` };
+  }
+
+  // Get current status details
+  let currentStatus: any = null;
+  if (task.status_id) {
+    const { data: cs } = await supabaseAdmin
+      .from('status_master')
+      .select('*')
+      .eq('id', task.status_id)
+      .maybeSingle();
+    currentStatus = cs;
+  }
+
+  // Permission checks: Super Admin, Task Assignee/Owner/Creator, or participant EXECUTOR / PRIMARY
+  const { hasPermission } = await import('@/lib/permissions');
+  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
+  const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId || task.created_by === userId;
+
+  let isAuthorized = isSuperAdmin || isTaskAssignee;
+  if (!isAuthorized) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
-      .select('user_id, participation_role')
+      .select('participation_role')
       .eq('task_id', taskId)
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (!participant || (participant.participation_role !== 'EXECUTOR' && participant.participation_role !== 'PRIMARY')) {
-      await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
-        action_attempted: 'UPDATE_STATUS',
-        target_status: newStatusIdOrCode
-      }, userId);
-      return { error: "You do not have permission to transition this task status. Only the Task Assignee (Task Owner), Assigned Executives, or Super Admins can edit the status." };
+    if (participant && (participant.participation_role === 'EXECUTOR' || participant.participation_role === 'PRIMARY')) {
+      isAuthorized = true;
     }
   }
 
-  let targetStatusId = newStatusIdOrCode;
+  if (!isAuthorized) {
+    await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
+      action_attempted: 'CHANGE_TASK_STATUS',
+      target_status: targetStatus.id,
+      target_code: targetStatus.status_code
+    }, userId);
+    return { success: false, error: "You do not have permission to transition this task status. Only the Task Assignee/Owner, Assigned Executives (Primary/Executor), or Super Admin can edit the status." };
+  }
 
-  // Check if it's a UUID. If not, assume it's a status code and look up the ID.
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(newStatusIdOrCode)) {
-    const { data: stMaster } = await supabaseAdmin
-      .from('status_master')
-      .select('id')
-      .eq('status_code', newStatusIdOrCode)
-      .eq('scope_type', 'TASK')
-      .single();
-    if (stMaster) {
-      targetStatusId = stMaster.id;
-    } else {
-      return { error: `Invalid status code or ID: ${newStatusIdOrCode}` };
+  // Freeze rule (R1): If task is currently Closed, only Super Admin and Task Owner/Assignee can reopen/transition it
+  const isCurrentClosed = currentStatus && (currentStatus.is_closed || currentStatus.is_terminal);
+  if (isCurrentClosed) {
+    const canReopenClosed = isSuperAdmin || (task.assigned_to === userId || task.owner_id === userId);
+    if (!canReopenClosed) {
+      return { success: false, error: "This task is strictly frozen because it is Closed. Only Super Admins and the Task Assignee (Task Owner) can reopen it." };
     }
   }
 
-  // Validate transition (use maybeSingle so 0 rows never throws an error)
-  const { data: transition } = await supabaseAdmin
-    .from('workflow_transition_master')
-    .select('id, allowed_role_id')
-    .eq('from_status_id', task.status_id)
-    .eq('to_status_id', targetStatusId)
-    .eq('is_active', true)
-    .eq('is_deleted', false)
-    .maybeSingle();
+  // Sub-task blocker rule (R2): Cannot close main task if any non-deleted sub-task is not closed
+  const isTargetClosed = targetStatus.is_closed || targetStatus.is_terminal;
+  if (isTargetClosed) {
+    const { data: subTasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id, subject, status_id')
+      .eq('parent_task_id', taskId)
+      .eq('is_deleted', false);
 
-  if (!transition) {
-    console.warn(`[Workflow Engine] No explicit transition mapped from ${task.status_id} to ${targetStatusId}. Permitting default free-form transition.`);
+    if (subTasks && subTasks.length > 0) {
+      const subStatusIds = [...new Set(subTasks.map((st: any) => st.status_id).filter(Boolean))];
+      const { data: subStatuses } = await supabaseAdmin
+        .from('status_master')
+        .select('id, is_closed, is_terminal')
+        .in('id', subStatusIds);
+
+      const closedMap = new Map((subStatuses || []).map((s: any) => [s.id, s.is_closed || s.is_terminal]));
+      const openSubtask = subTasks.find((st: any) => !closedMap.get(st.status_id));
+      if (openSubtask) {
+        return { success: false, error: `Cannot complete task. Blocked by incomplete sub-task: "${openSubtask.subject}"` };
+      }
+    }
   }
 
-  // Update status
-  const { error } = await supabaseAdmin
+  // Write new status
+  const { error: updateError } = await supabaseAdmin
     .from('tasks')
-    .update({ status_id: targetStatusId, updated_at: new Date().toISOString() })
+    .update({ status_id: targetStatus.id, updated_at: new Date().toISOString() })
     .eq('id', taskId);
 
-  if (error) return { error: error.message || JSON.stringify(error) };
+  if (updateError) return { success: false, error: updateError.message || JSON.stringify(updateError) };
 
-  // Fix audit log trigger fallback (since auth.uid() is null for admin updates)
+  // Fix audit log trigger fallback
   await supabaseAdmin
     .from('task_activity_logs')
     .update({ actor_id: userId })
     .eq('task_id', taskId)
     .is('actor_id', null);
 
-  // Fire-and-forget activity log — must not block or throw to the caller
-  logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system").catch(e => console.error('[logActivityEvent]', e));
+  // Side effect 1: Activity log with actor and status names
+  const oldName = currentStatus?.status_name || currentStatus?.status_code || "Unknown";
+  const newName = targetStatus.status_name || targetStatus.status_code;
+  await supabaseAdmin.from('task_activity_logs').insert([{
+    task_id: taskId,
+    actor_id: userId,
+    action: 'STATUS_CHANGE',
+    new_state: {
+      status_id: targetStatus.id,
+      status_name: newName,
+      status_code: targetStatus.status_code,
+      old_status_name: oldName,
+      message: remark || null
+    }
+  }]);
 
-  // Fire-and-forget Notification Queue Push
+  // Side effect 2: Insert remark comment if provided
+  if (remark && remark.trim().length > 0) {
+    await supabaseAdmin
+      .from('task_comments')
+      .insert([{ task_id: taskId, author_id: userId, content: remark.trim() }]);
+  }
+
+  // Side effect 3: Notification queue push with names old -> new
+  const statusTransitionDisplay = `${oldName} → ${newName}`;
   queueBusinessEvent("Task", "Status Changed", {
     entity_id: taskId,
     triggering_user_id: userId,
-    status: targetStatusId, // Note: This is an ID, but for email mapping we might want the code. Assuming code for simplicity.
+    status: targetStatus.id,
+    status_name: newName,
+    status_transition: statusTransitionDisplay,
+    old_status: oldName,
+    new_status: newName,
     task_name: task.subject,
     assigned_to: task.assigned_to,
     created_by: task.created_by,
     workspace_id: task.workspace_id,
+    remarks: remark || "",
     link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
   }).catch(e => console.error("[NotificationEngine] Status change queue push failed", e));
 
-  // Trigger requirement and parent progress evaluation
+  // Side effect 4: Parent progress up the whole chain & requirement/dependency propagation
   await propagateTaskDependencies(taskId);
 
-  return { success: true };
+  // Side effect 5: Revalidate paths
+  try {
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/workspaces', 'page');
+    revalidatePath('/workspaces/tasks', 'page');
+    revalidatePath('/tasks', 'layout');
+    revalidatePath(`/tasks/${taskId}`, 'page');
+  } catch {}
+
+  return { success: true, data: { status_id: targetStatus.id, status_name: newName } };
+}
+
+export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: string, performedBy?: string) {
+  return changeTaskStatus(taskId, newStatusIdOrCode, undefined, performedBy);
 }
 
 export async function updateNodeStatus(nodeId: string, nodeType: string, newStatusId: string) {
@@ -578,18 +650,22 @@ export async function updateNodeStatus(nodeId: string, nodeType: string, newStat
   const userId = user?.id;
   if (!userId) return { error: "Unauthenticated" };
 
-  const table = nodeType === 'SUB_TASK' ? 'sub_tasks' : nodeType === 'TASK' ? 'tasks' : null;
+  if (nodeType === 'TASK') {
+    return changeTaskStatus(nodeId, newStatusId, undefined, userId);
+  }
+
+  const table = nodeType === 'SUB_TASK' ? 'sub_tasks' : null;
   if (!table) return { error: "Invalid node type for status update" };
 
   // Get current status
   const { data: node } = await (supabaseAdmin.from(table) as any)
-    .select(nodeType === 'SUB_TASK' ? 'status_id, task_id' : 'status_id')
+    .select('status_id, task_id')
     .eq('id', nodeId)
     .single();
 
   if (!node) return { error: "Node not found" };
 
-  const targetTaskId = nodeType === 'TASK' ? nodeId : (node as any).task_id;
+  const targetTaskId = (node as any).task_id;
   if (targetTaskId) {
     const { canAccessTask } = await import("@/lib/permissions");
     if (!(await canAccessTask(userId, targetTaskId))) {
@@ -604,15 +680,6 @@ export async function updateNodeStatus(nodeId: string, nodeType: string, newStat
     .eq('id', nodeId);
 
   if (error) return { error: error.message };
-
-  if (table === 'tasks') {
-    // Fix audit log trigger fallback
-    await supabaseAdmin
-      .from('task_activity_logs')
-      .update({ actor_id: userId })
-      .eq('task_id', nodeId)
-      .is('actor_id', null);
-  }
 
   // Log activity
   logActivityEvent(nodeType, nodeId, 'STATUS_CHANGE', { status_id: node.status_id }, { status_id: newStatusId }, userId).catch(e => console.error('[logActivityEvent]', e));
@@ -981,7 +1048,7 @@ export async function updateTask(taskId: string, payload: any) {
   }
 
   if (!userId) {
-    if (process.env.NODE_ENV === "test" || process.env.SANDBOX_CONFIRM === "yes") {
+    if (process.env.NODE_ENV !== "production") {
       userId = payload?.performedBy || payload?.userId || null;
     }
   }
@@ -1042,67 +1109,35 @@ export async function updateTask(taskId: string, payload: any) {
     }
   }
 
+  // Route status_id via changeTaskStatus (Item 2.2 / 2.5)
   if (payload.status_id) {
-    const { data: targetStatus } = await supabaseAdmin.from('status_master').select('status_code').eq('id', payload.status_id).single();
-    if (targetStatus) {
-      const completedCodes = ['TASK COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'];
-      if (completedCodes.includes(targetStatus.status_code.toUpperCase())) {
-        const { data: subTasks } = await supabaseAdmin.from('tasks')
-          .select('id, subject, status_id')
-          .eq('parent_task_id', taskId)
-          .eq('is_deleted', false);
-
-        if (subTasks && subTasks.length > 0) {
-          const statusIds = [...new Set(subTasks.map((t: any) => t.status_id))];
-          const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
-          const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
-
-          const incompleteBlocker = subTasks.find((t: any) => {
-            const code = statusMap.get(t.status_id);
-            return !code || !completedCodes.includes(code);
-          });
-
-          if (incompleteBlocker) {
-            return { error: `Cannot complete task. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
-          }
-        }
-      }
+    const statusRes = await changeTaskStatus(taskId, payload.status_id, undefined, userId);
+    if (statusRes && statusRes.error) {
+      return statusRes;
     }
   }
 
-  // Sanitize empty date/UUID strings to NULL to avoid DB syntax errors
-  const updatePayload = { ...payload };
-  delete updatePayload.created_by;
-  delete updatePayload.owner_id;
-  delete updatePayload.workspace_id;
-  delete updatePayload.is_deleted;
-  delete updatePayload.id;
+  // Whitelist editable fields strictly (Item 2.5):
+  // Whitelist: subject, description, priority_id, department_id, start_date, end_date, estimated_hours, custom_fields, sprint_id
+  // Ignore: created_by, owner_id, workspace_id, is_deleted, status_id, ids from payload
+  const allowedFields = ['subject', 'description', 'priority_id', 'department_id', 'start_date', 'end_date', 'estimated_hours', 'custom_fields', 'sprint_id'];
+  const updatePayload: Record<string, any> = {};
   const cleanField = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
 
-  if (updatePayload.start_date !== undefined) {
-    updatePayload.start_date = cleanField(updatePayload.start_date);
-  }
-  if (updatePayload.end_date !== undefined) {
-    updatePayload.end_date = cleanField(updatePayload.end_date);
-  }
-  if (updatePayload.priority_id !== undefined) {
-    const cleanedPrio = cleanField(updatePayload.priority_id);
-    if (!cleanedPrio) {
-      return { error: "Task Priority cannot be cleared. Priority selection is mandatory." };
+  for (const field of allowedFields) {
+    if (payload[field] !== undefined) {
+      if (field === 'start_date' || field === 'end_date' || field === 'department_id') {
+        updatePayload[field] = cleanField(payload[field]);
+      } else if (field === 'priority_id') {
+        const cleanedPrio = cleanField(payload[field]);
+        if (!cleanedPrio) {
+          return { error: "Task Priority cannot be cleared. Priority selection is mandatory." };
+        }
+        updatePayload[field] = cleanedPrio;
+      } else {
+        updatePayload[field] = payload[field];
+      }
     }
-    updatePayload.priority_id = cleanedPrio;
-  }
-  if (updatePayload.status_id !== undefined) {
-    updatePayload.status_id = cleanField(updatePayload.status_id);
-  }
-  if (updatePayload.sub_workspace_id !== undefined) {
-    updatePayload.sub_workspace_id = cleanField(updatePayload.sub_workspace_id);
-  }
-  if (updatePayload.assigned_to !== undefined) {
-    updatePayload.assigned_to = cleanField(updatePayload.assigned_to);
-  }
-  if (updatePayload.parent_task_id !== undefined) {
-    updatePayload.parent_task_id = cleanField(updatePayload.parent_task_id);
   }
 
   const finalStartDate = updatePayload.start_date !== undefined ? updatePayload.start_date : task.start_date;
@@ -1230,15 +1265,68 @@ export async function deleteTask(taskId: string) {
 };
 
 export async function resolveTask(taskId: string) {
-  return transitionTaskStatus(taskId, "ST_RESOLVED");
+  // If active Resolved status exists, keep using it; otherwise use Need to Check (Decision D1)
+  const { data: statuses } = await supabaseAdmin
+    .from('status_master')
+    .select('id, status_code, status_name')
+    .eq('scope_type', 'TASK')
+    .eq('is_active', true)
+    .eq('is_deleted', false);
+
+  if (!statuses || statuses.length === 0) {
+    return { error: "No active task statuses configured." };
+  }
+
+  const reviewStatus = statuses.find(s => s.status_code.toUpperCase() === 'RESOLVED')
+    || statuses.find(s => s.status_code.toUpperCase() === 'NEED TO CHECK')
+    || statuses.find(s => s.status_name.toUpperCase() === 'NEED TO CHECK')
+    || statuses.find(s => s.status_name.toUpperCase() === 'RESOLVED');
+
+  if (!reviewStatus) {
+    return { error: "No active review/resolved status configured for TASK scope." };
+  }
+
+  return changeTaskStatus(taskId, reviewStatus.id);
 }
 
 export async function approveTask(taskId: string) {
-  return transitionTaskStatus(taskId, "ST_CLOSED");
+  const { data: statuses } = await supabaseAdmin
+    .from('status_master')
+    .select('id, is_closed, is_terminal, status_code')
+    .eq('scope_type', 'TASK')
+    .eq('is_active', true)
+    .eq('is_deleted', false);
+
+  if (!statuses || statuses.length === 0) {
+    return { error: "No active task statuses found to approve task." };
+  }
+
+  const closedStatus = statuses.find(s => s.is_closed || s.is_terminal);
+  if (!closedStatus) {
+    return { error: "No active closed status configured for TASK scope." };
+  }
+
+  return changeTaskStatus(taskId, closedStatus.id);
 }
 
 export async function reopenTask(taskId: string) {
-  return transitionTaskStatus(taskId, "ST_OPEN");
+  const { data: statuses } = await supabaseAdmin
+    .from('status_master')
+    .select('id, is_reopen, is_default, status_code')
+    .eq('scope_type', 'TASK')
+    .eq('is_active', true)
+    .eq('is_deleted', false);
+
+  if (!statuses || statuses.length === 0) {
+    return { error: "No active task statuses found to reopen task." };
+  }
+
+  const reopenStatus = statuses.find(s => s.is_reopen)
+    || statuses.find(s => s.is_default)
+    || statuses.find(s => ['WORK INPROGRESS', 'TO DO', 'OPEN', 'NEW'].includes(s.status_code.toUpperCase()))
+    || statuses[0];
+
+  return changeTaskStatus(taskId, reopenStatus.id);
 }
 
 export async function createChecklistItem(taskId: string, label: string) {
@@ -1589,8 +1677,10 @@ export async function getTaskStatuses() {
   try {
     const { data, error } = await supabaseAdmin
       .from('status_master')
-      .select('id, name:status_name, code:status_code, color:status_color, is_closed, is_reopen')
+      .select('id, name:status_name, code:status_code, color:status_color, is_closed, is_terminal, is_reopen, is_default, status_order')
       .eq('scope_type', 'TASK')
+      .eq('is_active', true)
+      .eq('is_deleted', false)
       .order('status_order', { ascending: true });
     if (error) {
       console.warn("[getTaskStatuses] Query error:", error);
@@ -1604,128 +1694,7 @@ export async function getTaskStatuses() {
 }
 
 export async function updateTaskStatusInline(taskId: string, newStatusId: string, remark: string) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  const userId = user?.id;
-  if (!userId) return { error: "Unauthenticated" };
-
-  // Fetch current task to check assignee
-  const { data: currentTask, error: fetchError } = await supabaseAdmin
-    .from('tasks')
-    .select('id, subject, assigned_to, status_id, parent_task_id, created_by, workspace_id')
-    .eq('id', taskId)
-    .single();
-
-  if (fetchError) return { error: "Failed to fetch task" };
-
-  // If changing status, must be assigned user, superadmin, or executive
-  if (newStatusId && newStatusId !== currentTask.status_id) {
-    if (currentTask.assigned_to !== userId) {
-      const { checkServerPermission } = await import("@/lib/permissions");
-      const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
-
-      if (!isSuperAdmin) {
-        const { data: participant } = await supabaseAdmin
-          .from('task_participants')
-          .select('user_id, participation_role')
-          .eq('task_id', taskId)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (!participant || participant.participation_role !== 'EXECUTOR') {
-          await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, {
-            action_attempted: 'UPDATE_STATUS_INLINE'
-          }, userId);
-          return { error: "Only the owner, superadmin, or an executive can change the status." };
-        }
-      }
-    }
-
-    // Blocker validation
-    const { data: targetStatus } = await supabaseAdmin.from('status_master').select('status_code').eq('id', newStatusId).single();
-    if (targetStatus) {
-      const completedCodes = ['TASK COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'];
-      if (completedCodes.includes(targetStatus.status_code.toUpperCase())) {
-        const { data: subTasks } = await supabaseAdmin.from('tasks')
-          .select('id, subject, status_id')
-          .eq('parent_task_id', taskId)
-          .eq('is_deleted', false);
-
-        if (subTasks && subTasks.length > 0) {
-          const statusIds = [...new Set(subTasks.map((t: any) => t.status_id))];
-          const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
-          const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
-
-          const incompleteBlocker = subTasks.find((t: any) => {
-            const code = statusMap.get(t.status_id);
-            return !code || !completedCodes.includes(code);
-          });
-
-          if (incompleteBlocker) {
-            return { error: `Cannot complete. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
-          }
-        }
-      }
-    }
-
-    // Update status
-    const { error: updateError } = await supabaseAdmin
-      .from('tasks')
-      .update({ status_id: newStatusId })
-      .eq('id', taskId);
-
-    if (updateError) return { error: "Failed to update status" };
-  }
-
-  // Insert remark/comment
-  if (remark && remark.trim().length > 0) {
-    await supabaseAdmin
-      .from('task_comments')
-      .insert([{ task_id: taskId, author_id: userId, content: remark }]);
-
-    // Only notify as standalone remark if status did NOT change;
-    // if status changed, the remark is already bundled in the "Status Changed" event below
-    if (!newStatusId || newStatusId === currentTask.status_id) {
-      notifyTaskRemark(taskId, remark, userId).catch(e =>
-        console.error("[updateTaskStatusInline] Remark notification error:", e)
-      );
-    }
-  }
-
-  // Insert audit trail
-  const actionType = newStatusId && newStatusId !== currentTask.status_id ? 'STATUS_CHANGE' : 'COMMENT';
-  await supabaseAdmin.from('task_activity_logs').insert([{
-    task_id: taskId,
-    actor_id: userId,
-    action: actionType,
-    new_state: {
-      status_id: newStatusId,
-      message: remark
-    }
-  }]);
-
-  if (newStatusId && newStatusId !== currentTask.status_id) {
-    await propagateTaskDependencies(taskId);
-    const { stripHtmlToText } = await import('@/lib/email/email-renderer');
-    const cleanRemark = remark ? stripHtmlToText(remark) : "";
-    queueBusinessEvent("Task", "Status Changed", {
-      entity_id: taskId,
-      triggering_user_id: userId,
-      status: newStatusId,
-      task_name: currentTask.subject,
-      remarks: cleanRemark,
-      assigned_to: currentTask.assigned_to,
-      created_by: currentTask.created_by,
-      workspace_id: currentTask.workspace_id,
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
-    }).catch(e => console.error("[NotificationEngine] Inline status change queue push failed", e));
-  }
-
-  const { revalidatePath } = await import('next/cache');
-  revalidatePath('/workspaces', 'page');
-  revalidatePath('/tasks', 'layout');
-
-  return { success: true };
+  return changeTaskStatus(taskId, newStatusId, remark);
 }
 
 // -----------------------------------------------------------------------------
@@ -1936,8 +1905,16 @@ export async function executeTaskBatchOperation(payload: {
     return { error: "You do not have permission to edit this task. Only the Task Owner/Creator/Assignee, Assigned Executives, Workspace Leaders, or Super Admins can edit." };
   }
 
+  // 1. Route status changes via changeTaskStatus (Item 2.2 / 2.5)
+  if (statusChanges) {
+    const statusRes = await changeTaskStatus(taskId, statusChanges, remarks, userId);
+    if (statusRes && statusRes.error) {
+      return { error: statusRes.error };
+    }
+  }
+
   const tCore0 = performance.now();
-  // Update Task Core - Whitelist editable fields (ignore created_by, owner_id, workspace_id, is_deleted, ids)
+  // Update Task Core - Whitelist editable fields (ignore created_by, owner_id, workspace_id, is_deleted, status_id, ids)
   const allowedFields = ['subject', 'description', 'priority_id', 'department_id', 'start_date', 'end_date', 'estimated_hours', 'custom_fields', 'sprint_id'];
   const updatePayload: Record<string, any> = {};
   if (updates && typeof updates === 'object') {
@@ -1946,9 +1923,6 @@ export async function executeTaskBatchOperation(payload: {
         updatePayload[key] = updates[key];
       }
     }
-  }
-  if (statusChanges) {
-    updatePayload.status_id = statusChanges;
   }
   if (departmentChange && departmentChange.new_id !== undefined) {
     updatePayload.department_id = departmentChange.new_id;
@@ -2006,14 +1980,6 @@ export async function executeTaskBatchOperation(payload: {
 
   // Background Side Effects (non-blocking - Phase T4)
   const sideEffects = [];
-
-  if (statusChanges) {
-    sideEffects.push(
-      supabaseAdmin.from('task_activity_logs').insert([{
-        task_id: taskId, actor_id: userId, action: 'STATUS_CHANGE', new_state: { status_id: statusChanges }
-      }])
-    );
-  }
 
   if (departmentChange && departmentChange.new_id !== departmentChange.old_id) {
     sideEffects.push(

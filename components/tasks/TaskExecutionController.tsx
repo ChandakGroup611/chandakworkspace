@@ -668,32 +668,61 @@ export default function TaskExecutionController({
 
 
   const handleStatusTransition = async (action: "start" | "resolve" | "approve" | "reopen") => {
-    if (action === "start") {
-      setPendingStatus("ST_IN_PROGRESS");
-    } else if (action === "resolve") {
-      setPendingStatus("ST_RESOLVED");
-    } else if (action === "approve") {
-      setActionLoading(true);
-      try {
+    setActionLoading(true);
+    setError(null);
+    try {
+      if (action === "start") {
+        const inProgressStatus = statuses.find((s: any) => (s.is_active !== false) && !s.is_deleted && ((s.code || s.status_code || '').toUpperCase().includes('INPROGRESS') || (s.code || s.status_code || '').toUpperCase().includes('IN PROGRESS') || (s.name || s.status_name || '').toUpperCase().includes('IN PROGRESS')));
+        if (!inProgressStatus) {
+          toast.error("No active In Progress status configured.");
+          setError("No active In Progress status configured.");
+          return;
+        }
+        const { changeTaskStatus } = await import("@/lib/actions/tasks");
+        const res = await changeTaskStatus(taskId, inProgressStatus.id);
+        if (res && res.error) {
+          toast.error(res.error);
+          setError(res.error);
+          return;
+        }
+        toast.success("Task progress started");
+        await loadTaskDetails(true);
+      } else if (action === "resolve") {
+        const { resolveTask } = await import("@/lib/actions/tasks");
+        const res = await resolveTask(taskId);
+        if (res && res.error) {
+          toast.error(res.error);
+          setError(res.error);
+          return;
+        }
+        toast.success("Task marked for review");
+        await loadTaskDetails(true);
+      } else if (action === "approve") {
         const { approveTask } = await import("@/lib/actions/tasks");
-        await approveTask(taskId);
+        const res = await approveTask(taskId);
+        if (res && res.error) {
+          toast.error(res.error);
+          setError(res.error);
+          return;
+        }
+        toast.success("Task approved & closed");
         await loadTaskDetails(true);
-      } catch (e: any) {
-        setError(e.message || "Failed to approve task.");
-      } finally {
-        setActionLoading(false);
-      }
-    } else if (action === "reopen") {
-      setActionLoading(true);
-      try {
+      } else if (action === "reopen") {
         const { reopenTask } = await import("@/lib/actions/tasks");
-        await reopenTask(taskId);
+        const res = await reopenTask(taskId);
+        if (res && res.error) {
+          toast.error(res.error);
+          setError(res.error);
+          return;
+        }
+        toast.success("Task reopened");
         await loadTaskDetails(true);
-      } catch (e: any) {
-        setError(e.message || "Failed to reopen task.");
-      } finally {
-        setActionLoading(false);
       }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to transition task status.");
+      setError(e.message || "Failed to transition task status.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -1023,14 +1052,12 @@ export default function TaskExecutionController({
   // 3. Schedule / Dates / Duration Edit: Strictly Super Admin or Primary Assignee
   const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
 
-  // Priority Edit: Super Admin, task owner/assignee/creator, or TASKS_UPDATE/TASKS_MANAGE, not frozen
+  // Priority Edit: Super Admin, task owner/assignee/creator, not frozen (mirrors server authorization)
   const canEditPriority = !readOnly && !effectivelyFrozenForUser && (
     isSuperAdmin ||
     isTaskAssignee ||
     isTaskCreator ||
-    Boolean(task.owner_id && task.owner_id === currentUid) ||
-    hasPermission("TASKS_UPDATE") ||
-    hasPermission("TASKS_MANAGE")
+    Boolean(task.owner_id && task.owner_id === currentUid)
   );
 
   // 4. Status / Department / Directive Transitions: Super Admin, Primary Assignee, or Assigned Executors
@@ -1044,8 +1071,23 @@ export default function TaskExecutionController({
   // 6. Transfer Task: Strictly Super Admin or Primary Assignee
   const canTransferTask = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
 
-  // 7. Delete Task: Super Admin, Primary Assignee, or explicit TASKS_DELETE permission holder
-  const canDeleteTask = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || hasPermission("TASKS_DELETE")) && canDelete;
+  // 7. Delete Task: Super Admin, workspace owner, or task owner (mirrors server deleteTask check)
+  const canDeleteTask = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || Boolean(task.workspace?.workspace_owner_id && task.workspace.workspace_owner_id === currentUid)) && canDelete;
+
+  // Status stage calculations (Decision D1, D2, D3)
+  const isClosedTask = Boolean(task.status?.is_closed || task.status?.is_terminal);
+  const curCode = (task.status?.code || task.status?.status_code || currentStatusCode || '').toUpperCase();
+  const curName = (task.status?.name || task.status?.status_name || '').toUpperCase();
+
+  const isReviewStage = !isClosedTask && (curCode === 'NEED TO CHECK' || curName === 'NEED TO CHECK' || curCode === 'RESOLVED' || curCode === 'ST_RESOLVED' || curName === 'RESOLVED');
+  const isInProgressStage = !isClosedTask && !isReviewStage && (curCode.includes('INPROGRESS') || curCode.includes('IN PROGRESS') || curCode === 'ST_IN_PROGRESS' || curName.includes('IN PROGRESS'));
+  const isOpenStage = !isClosedTask && !isReviewStage && !isInProgressStage;
+
+  const hasActiveInProgress = statuses.some((s: any) => (s.is_active !== false) && !s.is_deleted && ((s.code || s.status_code || '').toUpperCase().includes('INPROGRESS') || (s.code || s.status_code || '').toUpperCase().includes('IN PROGRESS') || (s.name || s.status_name || '').toUpperCase().includes('IN PROGRESS')));
+  const hasActiveResolved = statuses.some((s: any) => (s.is_active !== false) && !s.is_deleted && ((s.code || s.status_code || '').toUpperCase() === 'RESOLVED' || (s.name || s.status_name || '').toUpperCase() === 'RESOLVED'));
+  const hasActiveNeedToCheck = statuses.some((s: any) => (s.is_active !== false) && !s.is_deleted && ((s.code || s.status_code || '').toUpperCase() === 'NEED TO CHECK' || (s.name || s.status_name || '').toUpperCase() === 'NEED TO CHECK'));
+  const hasActiveReview = hasActiveResolved || hasActiveNeedToCheck;
+  const hasActiveClosed = statuses.some((s: any) => (s.is_active !== false) && !s.is_deleted && (s.is_closed || s.is_terminal));
 
   // 8. Reviewers, Watchers, Executives, Assignee, and Creator (tracking progress) can add remarks
   const canAddRemark = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || isExecutor || isWatcherOrReviewer || isTaskCreator);
@@ -1515,7 +1557,7 @@ export default function TaskExecutionController({
                     Actions
                   </span>
                   <div className="flex flex-wrap justify-start sm:justify-end gap-2 pt-0.5 w-full">
-                    {currentStatusCode === "ST_OPEN" && canEditCore && (
+                    {isOpenStage && canEditCore && hasActiveInProgress && (
                       <AppButton
                         size="sm"
                         variant="primary"
@@ -1527,7 +1569,7 @@ export default function TaskExecutionController({
                       </AppButton>
                     )}
 
-                    {currentStatusCode === "ST_IN_PROGRESS" && canEditCore && (
+                    {isInProgressStage && canEditCore && hasActiveReview && (
                       <AppButton
                         size="sm"
                         variant="primary"
@@ -1535,21 +1577,23 @@ export default function TaskExecutionController({
                         disabled={actionLoading}
                         onClick={() => handleStatusTransition("resolve")}
                       >
-                        Mark as resolved
+                        {hasActiveResolved ? "Mark as resolved" : "Mark for review"}
                       </AppButton>
                     )}
 
-                    {currentStatusCode === "ST_RESOLVED" && !readOnly && isOwner && (
+                    {isReviewStage && !readOnly && isOwner && (
                       <>
-                        <AppButton
-                          size="sm"
-                          variant="primary"
-                          leftIcon={<CheckCircle2 className="h-4 w-4" />}
-                          disabled={actionLoading}
-                          onClick={() => handleStatusTransition("approve")}
-                        >
-                          Approve & close
-                        </AppButton>
+                        {hasActiveClosed && (
+                          <AppButton
+                            size="sm"
+                            variant="primary"
+                            leftIcon={<CheckCircle2 className="h-4 w-4" />}
+                            disabled={actionLoading}
+                            onClick={() => handleStatusTransition("approve")}
+                          >
+                            Approve & close
+                          </AppButton>
+                        )}
                         <AppButton
                           size="sm"
                           variant="secondary"
@@ -1562,7 +1606,7 @@ export default function TaskExecutionController({
                       </>
                     )}
 
-                    {!readOnly && task.status?.is_closed && (isOwner || isExecutor) && (
+                    {!readOnly && isClosedTask && isOwner && (
                       <AppButton
                         size="sm"
                         variant="outline"
