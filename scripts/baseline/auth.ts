@@ -13,7 +13,7 @@ export const authRunners: TestCaseRunner[] = [
       const supabaseAdmin = ctx.supabaseAdmin;
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      const client = createClient(url, anonKey);
+      const client = createClient(url, anonKey, { realtime: { transport: (globalThis as any).WebSocket } });
       const password = process.env.TEST_USER_PASSWORD || "TestUser@Chandak2026!";
       const { data, error } = await client.auth.signInWithPassword({
         email: "test.task.standard@chandakgroup.tech",
@@ -36,7 +36,7 @@ export const authRunners: TestCaseRunner[] = [
       const supabaseAdmin = ctx.supabaseAdmin;
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      const client = createClient(url, anonKey);
+      const client = createClient(url, anonKey, { realtime: { transport: (globalThis as any).WebSocket } });
       const { error } = await client.auth.signInWithPassword({
         email: "test.nonexistent@chandakgroup.tech",
         password: "WrongPassword999!"

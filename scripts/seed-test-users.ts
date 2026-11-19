@@ -50,8 +50,14 @@ if (TARGET_PORTAL.includes("chandakgroup.tech")) {
   process.exit(1);
 }
 
+// Polyfill WebSocket for headless/CI runtimes (e.g. Node 20) where native WebSocket is absent
+if (typeof (globalThis as any).WebSocket === "undefined") {
+  (globalThis as any).WebSocket = class DummyWebSocket {};
+}
+
 const supabaseAdmin = createClient(TEST_SUPABASE_URL, TEST_SERVICE_ROLE_KEY.trim(), {
-  auth: { persistSession: false }
+  auth: { persistSession: false },
+  realtime: { transport: (globalThis as any).WebSocket }
 });
 
 // Pre-defined role IDs from database

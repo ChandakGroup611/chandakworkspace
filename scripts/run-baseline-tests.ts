@@ -13,6 +13,35 @@
 
 (process.env as any).NODE_ENV = process.env.NODE_ENV || "test";
 
+// Polyfill WebSocket for headless/CI runtimes (e.g. Node 20) where native WebSocket is absent
+if (typeof (globalThis as any).WebSocket === "undefined") {
+  (globalThis as any).WebSocket = class DummyWebSocket {
+    static readonly CONNECTING = 0;
+    static readonly OPEN = 1;
+    static readonly CLOSING = 2;
+    static readonly CLOSED = 3;
+    readonly CONNECTING = 0;
+    readonly OPEN = 1;
+    readonly CLOSING = 2;
+    readonly CLOSED = 3;
+    binaryType = "blob";
+    bufferedAmount = 0;
+    extensions = "";
+    protocol = "";
+    readyState = 3;
+    url = "";
+    onclose = null;
+    onerror = null;
+    onmessage = null;
+    onopen = null;
+    close() {}
+    send() {}
+    addEventListener() {}
+    removeEventListener() {}
+    dispatchEvent() { return false; }
+  };
+}
+
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -62,7 +91,10 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
 }
 
 function createScopedClient(url: string, key: string): any {
-  const rawClient = createClient(url, key, { auth: { persistSession: false } });
+  const rawClient = createClient(url, key, {
+    auth: { persistSession: false },
+    realtime: { transport: (globalThis as any).WebSocket },
+  });
   if (isSandbox) return rawClient;
 
   // READ-ONLY mutation interceptor: strictly disallow insert/update/delete/upsert
