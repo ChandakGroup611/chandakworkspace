@@ -132,20 +132,32 @@ function reapOrphanProcesses() {
     return $killed;
 }
 
-// Helper: Ensure .htaccess with PassengerAppRoot is present ONLY in public_html, and purged from app roots
+// Helper: Ensure .htaccess with PassengerAppRoot is synchronized across ALL docroots to prevent LiteSpeed static fallback 403 Forbidden
 function syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective) {
     $pubHtaccess = $htaccessHeader . "PassengerAppRoot " . $canonicalAppRoot . "\nPassengerRestartDir " . $canonicalAppRoot . "/tmp\n" . $passengerDirective;
     
-    // 1. Write exclusively to public_html/.htaccess
+    // 1. Write authoritative .htaccess to public_html/.htaccess
     @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
     @touch($domainRoot . '/public_html/.htaccess');
     
-    // 2. Remove duplicate/conflicting .htaccess from all nodejs app directories to prevent dual-app collisions
-    foreach ((array)$primaryAppRoots as $targetRoot) {
+    // 2. Synchronize across all primary app directories and public/ folders to prevent LiteSpeed static fallback 403
+    $targets = array_unique(array_filter(array_merge(
+        (array)$primaryAppRoots,
+        (array)$publicDocRoots,
+        [
+            $canonicalAppRoot,
+            $canonicalAppRoot . '/public',
+            $domainRoot . '/hbuilds/current/nodejs',
+            $domainRoot . '/hbuilds/current/nodejs/public'
+        ]
+    )));
+    foreach ($targets as $targetRoot) {
         if ($targetRoot && is_dir($targetRoot)) {
-            @unlink($targetRoot . '/.htaccess');
+            @file_put_contents($targetRoot . '/.htaccess', $pubHtaccess);
+            @touch($targetRoot . '/.htaccess');
             if (is_dir($targetRoot . '/public')) {
-                @unlink($targetRoot . '/public/.htaccess');
+                @file_put_contents($targetRoot . '/public/.htaccess', $pubHtaccess);
+                @touch($targetRoot . '/public/.htaccess');
             }
         }
     }
@@ -196,11 +208,11 @@ $primaryAppRoots = array_values(array_unique(array_filter([
 ])));
 
 // Base performance caching header for LiteSpeed & Apache
-$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine On\n    RewriteRule .* - [E=verifycaptcha:off]\n    RewriteRule .* - [E=noconntimeout:1]\n    RewriteRule .* - [E=noabort:1]\n</IfModule>\n\nRewriteEngine On\nRewriteRule .* - [E=verifycaptcha:off]\nRewriteRule ^\\.builds - [F,L]\nRewriteRule ^deploy\\.zip$ - [F,L]\n\n# CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER by Passenger\nRewriteCond %{REQUEST_URI} \\.php$ [NC]\nRewriteRule .* - [L]\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
+$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine On\n    RewriteRule .* - [E=verifycaptcha:bypass]\n    RewriteRule .* - [E=noconntimeout:1]\n    RewriteRule .* - [E=noabort:1]\n</IfModule>\n\nRewriteEngine On\nRewriteRule .* - [E=verifycaptcha:bypass]\nRewriteRule ^\\.builds - [F,L]\nRewriteRule ^deploy\\.zip$ - [F,L]\n\n# CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER by Passenger\nRewriteCond %{REQUEST_URI} \\.php$ [NC]\nRewriteRule .* - [L]\n\n<FilesMatch \"\\.php$\">\n    PassengerEnabled off\n</FilesMatch>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
 // STRICT: Explicit PassengerEnabled on, bound V8 and libuv thread pools so total threads per process <= 3
-$passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxPoolSize 1\nPassengerMaxInstancesPerApp 1\nPassengerMinInstances 0\nPassengerPoolIdleTime 300\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=512\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
+$passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxPoolSize 1\nPassengerMaxInstancesPerApp 1\nPassengerMinInstances 1\nPassengerPoolIdleTime 0\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=512\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
 
 // Determine all public-facing document roots (where LiteSpeed directly serves static chunks)
 $publicDocRoots = [

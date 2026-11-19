@@ -367,10 +367,19 @@ jobs:
           <IfModule LiteSpeed>
               CacheLookup on
               RewriteEngine On
-              RewriteRule .* - [E=verifycaptcha:off]
+              RewriteRule .* - [E=verifycaptcha:bypass]
               RewriteRule .* - [E=noconntimeout:1]
               RewriteRule .* - [E=noabort:1]
           </IfModule>
+
+          RewriteEngine On
+          RewriteRule .* - [E=verifycaptcha:bypass]
+          RewriteRule ^\.builds - [F,L]
+          RewriteRule ^deploy\.zip$ - [F,L]
+
+          # CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER by Passenger
+          RewriteCond %{REQUEST_URI} \.php$ [NC]
+          RewriteRule .* - [L]
 
           <FilesMatch "\.php$">
               PassengerEnabled off
@@ -389,10 +398,6 @@ jobs:
               </FilesMatch>
           </IfModule>
 
-          RewriteEngine On
-          RewriteRule ^\.builds - [F,L]
-          RewriteRule ^deploy\.zip$ - [F,L]
-
           # CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js
           RewriteCond %{REQUEST_FILENAME} -f
           RewriteRule ^ - [L]
@@ -406,9 +411,9 @@ jobs:
           PassengerBaseURI /
           PassengerMaxPoolSize 1
           PassengerMaxInstancesPerApp 1
-          PassengerMinInstances 0
-          PassengerPoolIdleTime 300
-          SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=384"
+          PassengerMinInstances 1
+          PassengerPoolIdleTime 0
+          SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=512"
           SetEnv LSNODE_CONSOLE_LOG console.log
           SetEnv TOKIO_WORKER_THREADS 1
           SetEnv UV_THREADPOOL_SIZE 1
