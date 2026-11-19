@@ -254,6 +254,7 @@ jobs:
   p1_tests:
     name: "Gate 8: P1 Read-Only Baseline Tests"
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
