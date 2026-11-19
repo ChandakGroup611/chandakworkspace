@@ -529,7 +529,11 @@ jobs:
   deploy:
     name: "Deploy to Hostinger"
     needs: build
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.build.result == 'success' &&
+      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     outputs:
       old_target: ${{ steps.record_old.outputs.old_target }}
@@ -598,7 +602,11 @@ jobs:
   verify:
     name: "Verify Live Deployment"
     needs: [pipeline_mode, deploy]
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.deploy.result == 'success' &&
+      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - name: Poll /api/version and /login (Every 5s, Max 3 Min)
