@@ -151,7 +151,7 @@ export const budgetRunners: TestCaseRunner[] = [
             return { pass: false, notes: "VULNERABILITY: /budget/admin accessible without authentication", codePath: "app/budget/admin/page.tsx" };
           }
         }
-      } catch {}
+      } catch { }
       return { pass: true, notes: "/budget/admin correctly guards cost head and financial year masters" };
     }
   },

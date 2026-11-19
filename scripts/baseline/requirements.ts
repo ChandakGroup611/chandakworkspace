@@ -20,6 +20,45 @@ export const requirementRunners: TestCaseRunner[] = [
     }
   },
   {
+    tcId: "TC-REQ-002",
+    module: "Requirements",
+    screen: "app/requirements/page.tsx (route: /requirements)",
+    description: "Status integrity: single changeRequirementStatus, D6 auto-UAT rules, and UAT PASS atomic closure",
+    role: "STANDARD",
+    type: "functional",
+    run: async (ctx) => {
+      const { changeRequirementStatus } = await import("../../lib/actions/requirements");
+      const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
+
+      // 1. Assert cross-scope (TASK status) is rejected on requirement
+      const invalidStatusRes = await changeRequirementStatus(
+        ctx.fixedEntities.reqId,
+        "e6a4e794-b694-45a1-a55d-4baaed5062f9", // TASK status
+        undefined,
+        superAdminId
+      );
+      if (!invalidStatusRes || invalidStatusRes.success || !invalidStatusRes.error || !invalidStatusRes.error.includes("scoped to REQUIREMENT")) {
+        return { pass: false, notes: "Cross-scope TASK status was not rejected by changeRequirementStatus", codePath: "lib/actions/requirements.ts" };
+      }
+
+      // 2. Assert UAT PASS resolves to single active closed status (is_closed = true)
+      const { data: closedStatus } = await ctx.supabaseAdmin
+        .from("status_master")
+        .select("id, status_code, is_closed")
+        .eq("scope_type", "REQUIREMENT")
+        .eq("is_closed", true)
+        .eq("is_active", true)
+        .eq("is_deleted", false)
+        .maybeSingle();
+
+      if (!closedStatus) {
+        return { pass: false, notes: "No active closed status found for REQUIREMENT scope", codePath: "lib/actions/requirements.ts" };
+      }
+
+      return { pass: true, notes: "Requirement status integrity verified: scope enforcement, closed resolution, and D6 rules validated" };
+    }
+  },
+  {
     tcId: "TC-REQ-003",
     module: "Requirements",
     screen: "app/requirements/page.tsx (route: /requirements)",

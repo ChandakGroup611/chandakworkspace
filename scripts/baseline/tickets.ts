@@ -21,6 +21,43 @@ export const ticketRunners: TestCaseRunner[] = [
     }
   },
   {
+    tcId: "TC-TCK-002",
+    module: "Tickets",
+    screen: "app/tickets/page.tsx (route: /tickets)",
+    description: "Status integrity: single changeTicketStatus enforces scope validation and rejects cross-scope statuses",
+    role: "STANDARD",
+    type: "functional",
+    run: async (ctx) => {
+      const { changeTicketStatus } = await import("../../lib/actions/tickets");
+      const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
+
+      // 1. Assert cross-scope (TASK status) is rejected on ticket
+      const invalidStatusRes = await changeTicketStatus(
+        ctx.fixedEntities.ticketId,
+        "e6a4e794-b694-45a1-a55d-4baaed5062f9", // TASK status
+        undefined,
+        superAdminId
+      );
+      if (!invalidStatusRes || invalidStatusRes.success || !invalidStatusRes.error || !invalidStatusRes.error.includes("scoped to")) {
+        return { pass: false, notes: "Cross-scope TASK status was not rejected by changeTicketStatus", codePath: "lib/actions/tickets.ts" };
+      }
+
+      // 2. Assert unauthenticated call is rejected
+      const prevEnv = process.env.NODE_ENV;
+      try {
+        (process.env as any).NODE_ENV = "production";
+        const unauthRes = await changeTicketStatus(ctx.fixedEntities.ticketId, "OPEN");
+        if (unauthRes && unauthRes.success) {
+          return { pass: false, notes: "Unauthenticated changeTicketStatus call unexpectedly succeeded", codePath: "lib/actions/tickets.ts" };
+        }
+      } finally {
+        (process.env as any).NODE_ENV = prevEnv;
+      }
+
+      return { pass: true, notes: "Ticket status integrity verified: scope enforcement and unauthenticated rejection validated" };
+    }
+  },
+  {
     tcId: "TC-TCK-003",
     module: "Tickets",
     screen: "app/tickets/page.tsx (route: /tickets)",

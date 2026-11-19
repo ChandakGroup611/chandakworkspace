@@ -40,7 +40,7 @@ export const crossRunners: TestCaseRunner[] = [
       ];
       for (const ep of cronEndpoints) {
         try {
-          const res = await fetch(`${ctx.siteUrl}${ep}`);
+          const res = await fetch(`${ctx.siteUrl}${ep}`, { signal: AbortSignal.timeout(2000) });
           if (res.status === 200) {
             return {
               pass: false,

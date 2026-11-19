@@ -92,6 +92,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   const [amendmentFile, setAmendmentFile] = useState<File | null>(null);
   const [uatComment, setUatComment] = useState("");
   const [submittingUat, setSubmittingUat] = useState(false);
+  const [showUatFailDialog, setShowUatFailDialog] = useState(false);
+  const [selectedReopenTaskIds, setSelectedReopenTaskIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     objective: "",
     requirement_reason: "",
@@ -393,14 +395,17 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const handleUAT = async (result: 'PASS' | 'FAIL') => {
+  const handleUAT = async (result: 'PASS' | 'FAIL', tasksToReopen?: string[]) => {
     if (result === 'FAIL' && !uatComment.trim()) return toast.warning("Please provide a reason for failing UAT.");
     setSubmittingUat(true);
     try {
       const { handleRequirementUAT } = await import("@/lib/actions/requirements");
-      await handleRequirementUAT(reqId as string, result, uatComment, currentUserId);
+      const res = await handleRequirementUAT(reqId as string, result, uatComment, currentUserId, tasksToReopen);
+      if (res && (res as any).error) throw new Error((res as any).error);
       toast.success(`UAT ${result === 'PASS' ? 'Approved' : 'Failed'} Successfully`);
       setUatComment("");
+      setShowUatFailDialog(false);
+      setSelectedReopenTaskIds([]);
       loadData();
     } catch (e: any) {
       toast.error(sanitizeErrorMessage(e));
@@ -977,6 +982,86 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         </DialogContent>
       </Dialog>
 
+      {/* UAT FAIL & SELECTIVE TASK REOPEN DIALOG (Item 3.3 & Decision D6) */}
+      <Dialog open={showUatFailDialog} onOpenChange={setShowUatFailDialog}>
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-danger">
+              <XCircle className="w-5 h-5 text-danger" />
+              Fail UAT & Select Tasks to Reopen
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="mb-1.5 block text-[13px] font-medium text-subtle">
+                Feedback & Rejection Reason <span className="text-danger" aria-hidden>*</span>
+              </label>
+              <textarea
+                className="w-full bg-surface border border-border rounded-xl p-3 text-sm text-foreground focus:outline-none focus:border-primary min-h-[90px]"
+                placeholder="Describe the defect or reason for UAT failure (Required)…"
+                value={uatComment}
+                onChange={e => setUatComment(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[13px] font-medium text-subtle">
+                Tasks to Reopen (Decision D6: none pre-selected)
+              </label>
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {linkedTasks.length === 0 ? (
+                  <p className="text-xs text-muted">No linked tasks found for this requirement.</p>
+                ) : (
+                  linkedTasks.map((item: any) => {
+                    const task = item.task || item;
+                    const taskId = task.id || item.task_id;
+                    const isSelected = selectedReopenTaskIds.includes(taskId);
+                    return (
+                      <label
+                        key={taskId}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          isSelected ? 'border-primary bg-primary/5' : 'border-border bg-surface hover:bg-elevated'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 rounded border-border text-primary focus:ring-primary h-4 w-4"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedReopenTaskIds(prev => [...prev, taskId]);
+                            } else {
+                              setSelectedReopenTaskIds(prev => prev.filter(id => id !== taskId));
+                            }
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{task.subject || "Untitled Task"}</p>
+                          <p className="text-xs text-muted">Current Status: {task.status?.name || "Unknown"}</p>
+                        </div>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="px-6 py-4 bg-surface border-t border-border">
+            <AppButton variant="ghost" onClick={() => setShowUatFailDialog(false)}>Cancel</AppButton>
+            <AppButton
+              variant="destructive"
+              disabled={!uatComment.trim() || submittingUat}
+              isLoading={submittingUat}
+              onClick={() => handleUAT('FAIL', selectedReopenTaskIds)}
+              leftIcon={<XCircle className="w-4 h-4" />}
+            >
+              {selectedReopenTaskIds.length > 0
+                ? `Fail UAT & Reopen (${selectedReopenTaskIds.length} tasks)`
+                : "Fail UAT (No tasks reopened)"}
+            </AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showWorkspaceSelector} onOpenChange={setShowWorkspaceSelector}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           <DialogHeader className="px-6 py-4 border-b border-border">
@@ -1412,7 +1497,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     Approve & close requirement
                   </AppButton>
                   <AppButton 
-                    onClick={() => handleUAT('FAIL')}
+                    onClick={() => { setSelectedReopenTaskIds([]); setShowUatFailDialog(true); }}
                     disabled={submittingUat}
                     isLoading={submittingUat}
                     variant="destructive"

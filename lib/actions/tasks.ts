@@ -1766,18 +1766,35 @@ export async function propagateTaskDependencies(taskId: string) {
       .eq('task_id', taskId);
 
     if (reqTasks && reqTasks.length > 0) {
-      const { recalculateRequirementCompletion } = await import('@/lib/actions/requirements');
+      const { recalculateRequirementCompletion, changeRequirementStatus } = await import('@/lib/actions/requirements');
 
       for (const reqTask of reqTasks) {
         await recalculateRequirementCompletion(reqTask.requirement_id);
 
-        const { data: req } = await supabaseAdmin.from('requirements').select('custom_fields, status_id').eq('id', reqTask.requirement_id).single();
-        const completion_percentage = (req?.custom_fields as any)?.completion_percentage || 0;
-        if (req && completion_percentage === 100) {
-          const { data: uatStatus } = await supabaseAdmin.from('status_master').select('id').eq('status_code', 'REQ_UAT').eq('scope_type', 'REQUIREMENT').maybeSingle();
-          if (uatStatus && req.status_id !== uatStatus.id) {
-            await supabaseAdmin.from('requirements').update({ status_id: uatStatus.id }).eq('id', reqTask.requirement_id);
-            await logActivityEvent('REQUIREMENT', reqTask.requirement_id, 'STATUS_CHANGE', { status_id: req.status_id }, { status_id: uatStatus.id, auto_transition: true }, 'system');
+        const { data: req } = await supabaseAdmin
+          .from('requirements')
+          .select('id, custom_fields, status_id, status:status_master(status_code, is_closed, is_terminal)')
+          .eq('id', reqTask.requirement_id)
+          .single();
+
+        if (!req) continue;
+
+        const completion_percentage = (req.custom_fields as any)?.completion_percentage || 0;
+        const currentStatusCode = (req.status as any)?.status_code || '';
+        const isClosedOrTerminal = (req.status as any)?.is_closed || (req.status as any)?.is_terminal;
+
+        // D6 Rule: Auto-move requirement to UAT only from development-type statuses, never from approved/released/closed
+        const isDevelopmentStatus = ['REQ_DEVELOPMENT', 'REQ_PLANNING', 'REQ_ANALYSIS', 'REQ_REGISTRATION', 'REQ_PENDING'].includes(currentStatusCode);
+        const isApprovedOrReleasedOrClosed = isClosedOrTerminal || ['REQ_APPROVED', 'REQ_DEPLOYED', 'REQ_CLOSED'].includes(currentStatusCode);
+
+        if (completion_percentage === 100) {
+          if (isDevelopmentStatus && !isApprovedOrReleasedOrClosed && currentStatusCode !== 'REQ_UAT') {
+            await changeRequirementStatus(reqTask.requirement_id, 'REQ_UAT', 'Auto-moved to UAT on 100% completion of linked tasks', 'system');
+          }
+        } else if (completion_percentage < 100) {
+          // D6 Rule: When a task is reopened with completion < 100%, requirement moves back to development status
+          if (currentStatusCode === 'REQ_UAT') {
+            await changeRequirementStatus(reqTask.requirement_id, 'REQ_DEVELOPMENT', 'Moved back to Development: linked task was reopened and completion dropped below 100%', 'system');
           }
         }
       }

@@ -11,7 +11,7 @@
  * Usage: npm run test:baseline (or npx tsx scripts/run-baseline-tests.ts)
  */
 
-process.env.NODE_ENV = process.env.NODE_ENV || "test";
+(process.env as any).NODE_ENV = process.env.NODE_ENV || "test";
 
 import fs from "fs";
 import path from "path";
@@ -184,8 +184,8 @@ async function runAll() {
     }
   }
 
-  const suiteRunners = isSandbox 
-    ? ALL_RUNNERS.filter(r => r.suite === "sandbox") 
+  const suiteRunners = isSandbox
+    ? ALL_RUNNERS.filter(r => r.suite === "sandbox")
     : ALL_RUNNERS.filter(r => r.suite !== "sandbox");
 
   const startTime = Date.now();
@@ -208,12 +208,12 @@ async function runAll() {
     const runner = suiteRunners[i];
     const roleUpper = (runner.role || "").toUpperCase();
     const isSuperAdmin = roleUpper === "SUPER ADMIN";
-    const isParkedLead = roleUpper.includes("LEAD") || 
-      roleUpper.includes("ADMIN") || 
-      roleUpper.includes("ORGANIZER") || 
-      roleUpper.includes("MANAGER") || 
-      runner.description.toLowerCase().includes("approve") || 
-      runner.description.toLowerCase().includes("gfc") || 
+    const isParkedLead = roleUpper.includes("LEAD") ||
+      roleUpper.includes("ADMIN") ||
+      roleUpper.includes("ORGANIZER") ||
+      roleUpper.includes("MANAGER") ||
+      runner.description.toLowerCase().includes("approve") ||
+      runner.description.toLowerCase().includes("gfc") ||
       runner.description.toLowerCase().includes("dispatch") ||
       runner.type === "manual";
 
@@ -324,7 +324,7 @@ async function runAll() {
     let commitMsg = "";
     try {
       commitMsg = execSync("git log -1 --format=%B", { encoding: "utf8" }).trim();
-    } catch {}
+    } catch { }
     const hasApprovedTag = /\[approved-tc\]/i.test(commitMsg);
 
     const unexpectedFailures = results.filter(r => {

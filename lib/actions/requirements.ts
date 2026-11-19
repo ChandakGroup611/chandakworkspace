@@ -23,49 +23,143 @@ async function signedInUserId(): Promise<string | null> {
   }
 }
 
-export async function transitionRequirementStatus(reqId: string, newStatusId: string, performedBy: string) {
-  const signedIn = await signedInUserId();
-  if (!signedIn) return { error: 'Please sign in again.' };
-  performedBy = signedIn;
-  const isAuthorized = await canModifyRequirement(reqId, performedBy);
-  if (!isAuthorized) return { error: "Unauthorized to transition requirement." };
+/**
+ * Item 3.4: Single-function status transition pattern for requirements matching changeTaskStatus
+ */
+export async function changeRequirementStatus(
+  reqId: string,
+  targetStatusIdOrCode: string,
+  remark?: string,
+  actorIdOverride?: string
+): Promise<{ success: boolean; data?: { status_id: string; status_name: string; approval_status?: string }; error?: string }> {
+  let userId = await signedInUserId();
+  if (!userId) {
+    if (process.env.NODE_ENV !== "production") {
+      userId = actorIdOverride || null;
+    }
+  }
+  if (!userId) return { success: false, error: "Unauthenticated" };
 
-  const { data: req } = await supabaseAdmin
+  const { data: req, error: fetchErr } = await supabaseAdmin
     .from('requirements')
-    .select('status_id')
+    .select('id, code, title, status_id, approval_status, creator_id, owner_id, current_assignee_id')
     .eq('id', reqId)
     .single();
 
-  if (!req) return { error: "Requirement not found" };
+  if (fetchErr || !req) return { success: false, error: "Requirement not found" };
 
-  const { data: transition } = await supabaseAdmin
-    .from('workflow_transition_master')
+  // Validate target status from status_master: must be active, non-deleted, and scoped to REQUIREMENT
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let targetQuery = supabaseAdmin
+    .from('status_master')
     .select('*')
-    .eq('from_status_id', req.status_id)
-    .eq('to_status_id', newStatusId)
+    .eq('scope_type', 'REQUIREMENT')
     .eq('is_active', true)
-    .maybeSingle();
+    .eq('is_deleted', false);
 
-  if (!transition) return { error: "Invalid workflow transition." };
-
-  // Check roles if required
-  if (transition.allowed_role_id) {
-    const { data: roleCheck } = await supabaseAdmin
-      .from('user_roles')
-      .select('id')
-      .eq('user_id', performedBy)
-      .eq('role_id', transition.allowed_role_id)
-      .single();
-    if (!roleCheck) return { error: "Not authorized for this specific transition role." };
+  if (uuidRegex.test(targetStatusIdOrCode)) {
+    targetQuery = targetQuery.eq('id', targetStatusIdOrCode);
+  } else {
+    targetQuery = targetQuery.eq('status_code', targetStatusIdOrCode.toUpperCase());
   }
 
-  await supabaseAdmin
+  const { data: targetStatus } = await targetQuery.maybeSingle();
+  if (!targetStatus) {
+    return { success: false, error: `Invalid status: Target status '${targetStatusIdOrCode}' must be active, non-deleted, and scoped to REQUIREMENT.` };
+  }
+
+  // Authorization check
+  const { hasPermission } = await import('@/lib/permissions');
+  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
+  const isOwnerOrCreator = req.creator_id === userId || req.owner_id === userId || req.current_assignee_id === userId;
+  const isAuthorized = isSuperAdmin || isOwnerOrCreator || (await canModifyRequirement(reqId, userId));
+
+  if (!isAuthorized) {
+    return { success: false, error: "Unauthorized: You do not have permission to transition this requirement status." };
+  }
+
+  // Fetch current status details
+  let oldName = "Unknown";
+  if (req.status_id) {
+    const { data: oldS } = await supabaseAdmin
+      .from('status_master')
+      .select('status_name')
+      .eq('id', req.status_id)
+      .maybeSingle();
+    if (oldS?.status_name) oldName = oldS.status_name;
+  }
+  const newName = targetStatus.status_name;
+
+  // Item 3.2: Synchronize approval_status with target status
+  let newApprovalStatus = req.approval_status;
+  const isClosedOrTerminal = targetStatus.is_closed || targetStatus.is_terminal || targetStatus.status_code === 'REQ_CLOSED';
+  if (isClosedOrTerminal) {
+    newApprovalStatus = 'Ready to Put to Use';
+  } else if (targetStatus.status_code === 'REQ_APPROVED') {
+    newApprovalStatus = 'Approved';
+  } else if (targetStatus.status_code === 'REQ_REJECTED') {
+    newApprovalStatus = 'Rejected';
+  } else if (targetStatus.status_code === 'REQ_DEVELOPMENT') {
+    newApprovalStatus = 'In Progress';
+  } else if (targetStatus.status_code === 'REQ_UAT') {
+    newApprovalStatus = 'Pending UAT';
+  }
+
+  const updatePayload: Record<string, any> = {
+    status_id: targetStatus.id,
+    approval_status: newApprovalStatus,
+    updated_at: new Date().toISOString()
+  };
+
+  if (isClosedOrTerminal) {
+    updatePayload.actual_completion_date = new Date().toISOString();
+  }
+
+  const { error: updateError } = await supabaseAdmin
     .from('requirements')
-    .update({ status_id: newStatusId, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq('id', reqId);
 
-  await logActivityEvent('REQUIREMENT', reqId, 'STATUS_CHANGE', { status_id: req.status_id }, { status_id: newStatusId }, performedBy);
-  revalidatePath(`/requirements/${reqId}`);
+  if (updateError) {
+    return { success: false, error: updateError.message || JSON.stringify(updateError) };
+  }
+
+  // Activity log
+  await logActivityEvent('REQUIREMENT', reqId, 'STATUS_CHANGE', { status_id: req.status_id, old_status_name: oldName }, { status_id: targetStatus.id, status_name: newName, approval_status: newApprovalStatus, remark: remark || null }, userId);
+
+  // Notification queue push
+  if (req.creator_id && req.creator_id !== userId) {
+    await supabaseAdmin.from('notification_queue').insert([{
+      recipient_id: req.creator_id,
+      payload: {
+        type: 'REQUIREMENT_STATUS_CHANGED',
+        message: `Requirement ${req.code} status changed from ${oldName} to ${newName}.`,
+        requirement_id: reqId,
+        old_status: oldName,
+        new_status: newName
+      },
+      is_read: false
+    }]);
+  }
+
+  // Revalidate cache
+  try {
+    revalidatePath('/requirements');
+    revalidatePath(`/requirements/${reqId}`);
+  } catch {}
+
+  return {
+    success: true,
+    data: {
+      status_id: targetStatus.id,
+      status_name: newName,
+      approval_status: newApprovalStatus
+    }
+  };
+}
+
+export async function transitionRequirementStatus(reqId: string, newStatusId: string, performedBy?: string) {
+  return changeRequirementStatus(reqId, newStatusId, undefined, performedBy);
 }
 
 export async function generateRequirementTask(reqId: string, taskPayload: any, performedBy: string) {
@@ -134,92 +228,89 @@ export async function recalculateRequirementCompletion(reqId: string) {
   await supabaseAdmin.from('requirements').update({ custom_fields: customFields }).eq('id', reqId);
 }
 
-export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL', comments: string, performedBy: string) {
-  const signedIn = await signedInUserId();
-  if (!signedIn) return { error: 'Please sign in again.' };
-  performedBy = signedIn;
-  const isAuthorized = await canModifyRequirement(reqId, performedBy);
-  if (!isAuthorized) return { error: "Unauthorized to perform UAT." };
+export async function handleRequirementUAT(
+  reqId: string,
+  result: 'PASS' | 'FAIL',
+  comments: string,
+  performedBy?: string,
+  tasksToReopen?: string[]
+): Promise<{ success: boolean; error?: string }> {
+  let userId = await signedInUserId();
+  if (!userId) {
+    if (process.env.NODE_ENV !== "production") {
+      userId = performedBy || null;
+    }
+  }
+  if (!userId) return { success: false, error: 'Please sign in again.' };
+
+  const isAuthorized = await canModifyRequirement(reqId, userId);
+  if (!isAuthorized) return { success: false, error: "Unauthorized to perform UAT." };
 
   if (result === 'PASS') {
-    // Look up closed/completed state
-    const { data: closedState } = await supabaseAdmin
+    // Item 3.2: Requirement moves to single active closed status (is_closed = true, never code name);
+    // requirement status and approval_status change together in one transaction.
+    const { data: closedStatus } = await supabaseAdmin
       .from('status_master')
-      .select('id')
-      .or('status_code.eq.REQ_CLOSED,status_code.eq.CLOSED,status_code.eq.REQ_DEPLOYED')
+      .select('id, status_code, status_name')
       .eq('scope_type', 'REQUIREMENT')
+      .eq('is_closed', true)
+      .eq('is_active', true)
+      .eq('is_deleted', false)
       .maybeSingle();
-    
-    const updateData: any = { approval_status: 'Ready to Put to Use' };
-    if (closedState) {
-      updateData.status_id = closedState.id;
+
+    if (!closedStatus) {
+      return { success: false, error: "Configuration Error: No active closed status found for scope REQUIREMENT." };
     }
-    
-    await supabaseAdmin.from('requirements').update(updateData).eq('id', reqId);
-    
-    await logActivityEvent('REQUIREMENT', reqId, 'UAT_PASS', null, { comments }, performedBy);
+
+    const res = await changeRequirementStatus(reqId, closedStatus.id, comments || 'UAT Approved', userId);
+    if (!res.success) return res;
+
+    await logActivityEvent('REQUIREMENT', reqId, 'UAT_PASS', null, { comments }, userId);
+    return { success: true };
   } else {
-    // FAIL -> Reopen cascade
-    let reopenStateId: string | null = null;
-    const { data: reopenState } = await supabaseAdmin
+    // Item 3.3 & Decision D6:
+    // User ticks which tasks to reopen (none pre-ticked);
+    // each selected task is reopened through changeTaskStatus; un-ticked tasks keep their status.
+    const { data: reopenReqStatus } = await supabaseAdmin
       .from('status_master')
-      .select('id')
-      .eq('is_reopen', true)
+      .select('id, status_code, status_name')
       .eq('scope_type', 'REQUIREMENT')
+      .eq('is_reopen', true)
+      .eq('is_active', true)
+      .eq('is_deleted', false)
       .maybeSingle();
-      
-    if (reopenState) {
-      reopenStateId = reopenState.id;
-    } else {
-      const { data: fallbackReqReopen } = await supabaseAdmin
-        .from('status_master')
-        .select('id')
-        .in('status_code', ['REQ_DEVELOPMENT', 'REQ_PLANNING', 'REQ_PENDING'])
-        .eq('scope_type', 'REQUIREMENT')
-        .limit(1)
-        .maybeSingle();
-      if (fallbackReqReopen) reopenStateId = fallbackReqReopen.id;
-    }
 
-    if (reopenStateId) {
-      await supabaseAdmin.from('requirements').update({ status_id: reopenStateId }).eq('id', reqId);
-    }
+    const targetReqStatusId = reopenReqStatus?.id || 'da9fe118-3eaf-49f2-b713-fb39934f2459'; // REQ_DEVELOPMENT fallback
+    const res = await changeRequirementStatus(reqId, targetReqStatusId, `UAT Failed: ${comments}`, userId);
+    if (!res.success) return res;
 
-    // Cascade reopen to all linked tasks
-    const { data: links } = await supabaseAdmin.from('requirement_tasks').select('task_id').eq('requirement_id', reqId);
-    if (links && links.length > 0) {
-      const taskIds = links.map(l => l.task_id);
-      let taskReopenStateId: string | null = null;
-      const { data: taskReopenState } = await supabaseAdmin
+    // Reopen ONLY the user-ticked tasks through changeTaskStatus
+    if (tasksToReopen && tasksToReopen.length > 0) {
+      const { changeTaskStatus } = await import('@/lib/actions/tasks');
+      // Look up task reopen status (is_reopen = true in TASK scope)
+      const { data: taskReopenStatus } = await supabaseAdmin
         .from('status_master')
-        .select('id')
-        .eq('is_reopen', true)
+        .select('id, status_code')
         .eq('scope_type', 'TASK')
+        .eq('is_reopen', true)
+        .eq('is_active', true)
+        .eq('is_deleted', false)
         .maybeSingle();
 
-      if (taskReopenState) {
-        taskReopenStateId = taskReopenState.id;
-      } else {
-        const { data: fallbackTaskReopen } = await supabaseAdmin
-          .from('status_master')
-          .select('id')
-          .in('status_code', ['WORK INPROGRESS', 'TO DO', 'NEW'])
-          .eq('scope_type', 'TASK')
-          .limit(1)
-          .maybeSingle();
-        if (fallbackTaskReopen) taskReopenStateId = fallbackTaskReopen.id;
-      }
+      const taskTargetStatus = taskReopenStatus?.id || 'WORK INPROGRESS';
 
-      if (taskReopenStateId) {
-        await supabaseAdmin.from('tasks').update({ status_id: taskReopenStateId }).in('id', taskIds);
+      for (const tId of tasksToReopen) {
+        const reopenRes = await changeTaskStatus(tId, taskTargetStatus, `Reopened via Requirement UAT Fail: ${comments}`, userId);
+        if (reopenRes && !reopenRes.success) {
+          console.warn(`[handleRequirementUAT] Task ${tId} reopen notice:`, reopenRes.error);
+        }
       }
     }
 
-    await logActivityEvent('REQUIREMENT', reqId, 'UAT_FAIL', null, { comments }, performedBy);
-    await recalculateRequirementCompletion(reqId); // Should drop back since tasks are reopened
+    await logActivityEvent('REQUIREMENT', reqId, 'UAT_FAIL', null, { comments, reopened_tasks: tasksToReopen || [] }, userId);
+    await recalculateRequirementCompletion(reqId);
+    return { success: true };
   }
-
-  revalidatePath(`/requirements/${reqId}`);
 }
 
 export async function fetchRequirements(workspaceId?: string | null) {

@@ -66,3 +66,42 @@
   WHERE s.id = b.id;
   ```
 
+---
+
+## 2026-11-19: Master Programme WP3 (Item 3.5 & Decision D3, D6)
+
+### 4. Ticket Defunct Status Remediation
+- **What:** Remediated 3 ERP tickets (`INC-712996387`, `INC-711001785`, `INC-940960149`) that referenced an unregistered status ID (`122114fb-f0eb-416f-9ae9-92a182913764`) to point to the canonical active ERP default status `ac064265-0cd6-4067-8d0c-dcfda392c9ef` (`OPEN`).
+- **Why:** Restores referential integrity between `tickets` and `status_master`.
+- **Affected Row Count:** 3 rows in `tickets`.
+- **Backup Table:** `public.backup_tickets_wp3_20261119` (3 rows).
+- **Migration Script:** `supabase/migrations/20261119110000_wp3_tickets_requirements_integrity.sql`
+- **How to Undo:**
+  Run `supabase/migrations/20261119110000_wp3_tickets_requirements_integrity_down.sql` section 2:
+  ```sql
+  UPDATE public.tickets t
+  SET status_id = b.status_id, updated_at = NOW()
+  FROM public.backup_tickets_wp3_20261119 b
+  WHERE t.id = b.id;
+  ```
+
+---
+
+### 5. Requirement Status & Approval Status Synchronization
+- **What:** Reconciled 4 requirements whose `approval_status` contradicted their `status_id`:
+  - `ERP-REQ-2026-000010` & `INF-REQ-2026-000001`: approval_status was `'Approved'` while status was `'Requirement Registration'`. Updated `status_id` to `fc9894ae-cf69-4ccf-89aa-f421ad327e10` (`REQ_APPROVED`).
+  - `ERP-REQ-2026-000012` & `ERP-REQ-2026-000013`: approval_status was `'Closed'` while status was `'Requirement Registration'`. Updated `status_id` to `411ec061-72a9-41dc-923a-0002788f3229` (`REQ_CLOSED`).
+- **Why:** Enforces invariant that requirement status and approval status do not contradict each other.
+- **Affected Row Count:** 4 rows in `requirements`.
+- **Backup Table:** `public.backup_requirements_wp3_20261119` (4 rows).
+- **Migration Script:** `supabase/migrations/20261119110000_wp3_tickets_requirements_integrity.sql`
+- **How to Undo:**
+  Run `supabase/migrations/20261119110000_wp3_tickets_requirements_integrity_down.sql` section 1:
+  ```sql
+  UPDATE public.requirements r
+  SET status_id = b.status_id, updated_at = NOW()
+  FROM public.backup_requirements_wp3_20261119 b
+  WHERE r.id = b.id;
+  ```
+
+
