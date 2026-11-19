@@ -639,9 +639,14 @@ $killResults = [];
 
 // R5: Lower CPU and I/O priority during extraction to prevent CPU/IO spikes on Hostinger
 if (function_exists('proc_nice')) {
-    @proc_nice(10);
+    $disabled = array_map('trim', explode(',', (string)ini_get('disable_functions')));
+    if (!in_array('proc_nice', $disabled)) {
+        try {
+            @proc_nice(10);
+        } catch (\Throwable $t) {}
+    }
 }
-@exec('ionice -c 3 -p ' . getmypid() . ' 2>&1');
+safeExec('ionice -c 3 -p ' . getmypid() . ' 2>&1');
 $nodeCountBefore = countNodeProcesses();
 
 if ($zipFile && class_exists('ZipArchive')) {

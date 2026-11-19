@@ -442,6 +442,7 @@ jobs:
         with:
           name: deploy-payload
           path: upload-payload/
+          include-hidden-files: true
           retention-days: 1
 
   # =========================================================================
@@ -495,7 +496,7 @@ jobs:
           TS=$(date +%s)
           SIG=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$DEPLOY_KEY" | sed 's/^.* //')
           echo "Triggering release extraction, atomic link switch, and Passenger restart for SHA ${{ github.sha }}..."
-          RESPONSE=$(curl -sS --connect-timeout 15 --max-time 180 \
+          RESPONSE=$(curl -sS -L --connect-timeout 15 --max-time 180 \
             -H "X-Deploy-Key: ${DEPLOY_KEY}" \
             -H "X-Deploy-Timestamp: ${TS}" \
             -H "X-Deploy-Signature: ${SIG}" \

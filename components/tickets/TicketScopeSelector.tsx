@@ -89,7 +89,7 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full px-4">
         {dbScopes.map((scope) => {
           const Icon = getIcon(scope.code);
-          
+
           return (
             <AppButton
               key={scope.id}
@@ -103,7 +103,7 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
                   <div className={`h-12 w-12 rounded-xl flex items-center justify-center bg-accent-soft text-theme-icon group-hover:bg-theme-btn-primary group-hover:text-theme-btn-primary-text transition-colors duration-200 border border-border/40`}>
                     <Icon className="h-6 w-6 transition-colors duration-200" />
                   </div>
-                  
+
                   <div className="space-y-1 flex-1">
                     <h3 className="text-base font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors">
                       {scope.name}
@@ -122,7 +122,7 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
           );
         })}
       </div>
-      
+
       {onDiscard && (
         <div className="mt-6 pt-4 border-t border-border w-full flex justify-center">
           <AppButton variant="outline" type="button" onClick={onDiscard} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger px-6">
