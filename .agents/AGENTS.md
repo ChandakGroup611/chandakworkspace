@@ -62,6 +62,7 @@ NEVER deploy a change without first checking its global impact.
 
 ## Strict UI-to-Backend RBAC & Ownership Symmetry
 
+- **Module-Wise Authorization Governance**: Permissions are module-wise only. Never add global or inline checks. New rule → follow MASTER PROGRAMME decisions or log it; never invent one.
 - **Zero Permissive Fallbacks**: Never use loose composite variables (e.g. `canEditCore`, `hasGenericPerm`) to control buttons that perform specific ownership-restricted mutations.
 - **Strict Matrix Mirroring**: Every UI mutation trigger (Edit buttons, status dropdowns, date pickers, delete actions, modals) MUST strictly mirror the exact server-side authorization check (e.g. only Primary Assignee or Super Admin can edit Primary Assignee/Executors).
 - **No Reliance on Backend-Only Rejection**: If a user does not have permission to execute an action on the backend, the corresponding UI trigger / button MUST be hidden or disabled. Spectators, reviewers, and standard users (`ROLE_AGENT`) must NEVER see edit triggers for entities they do not own.

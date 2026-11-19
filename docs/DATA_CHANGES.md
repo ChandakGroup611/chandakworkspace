@@ -146,3 +146,23 @@
 
 
 
+
+---
+
+## 2026-11-19: Master Programme WP7 (Item 7.7)
+
+### 1. Email Templates Module Code Addition & Backfill
+- **What:**
+  - Added additive `module_code text` column to `email_templates`.
+  - Backfilled `module_code` deterministically based on existing `module` names (`TASK_WORKFLOW`, `VEHICLE_DESK`, `GENERAL`).
+  - Created performance index `idx_email_templates_module_code` on `(module_code, event)`.
+- **Why:** Scopes email template management, triggers, and test-send strictly per module as required by Master Programme WP7.7.
+- **Affected Row Count:** 14 rows in `email_templates`.
+- **Backup Table:** `public.backup_email_templates_20261119` (14 rows).
+- **Migration Script:** `supabase/migrations/20261119140000_wp7_email_templates_module_code.sql`
+- **How to Undo:**
+  Run `supabase/migrations/20261119140000_wp7_email_templates_module_code_down.sql`:
+  ```sql
+  DROP INDEX IF EXISTS idx_email_templates_module_code;
+  ALTER TABLE email_templates DROP COLUMN IF EXISTS module_code;
+  ```

@@ -293,10 +293,10 @@ export async function deleteRole(roleId: string) {
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
 
-  // Check if system role
-  const { data: role } = await supabase.from("roles").select("is_system").eq("id", roleId).single();
-  if (role?.is_system) {
-    throw new Error("System critical roles cannot be deleted.");
+  // Check if system or standard role
+  const { data: role } = await supabase.from("roles").select("code, is_system").eq("id", roleId).maybeSingle();
+  if (role?.is_system || role?.code === "SUPER_ADMIN" || role?.code === "ROLE_SUPER_ADMIN" || role?.code === "STANDARD" || role?.code === "ROLE_AGENT" || role?.code?.includes("STANDARD")) {
+    throw new Error("STANDARD and system critical roles cannot be deleted.");
   }
 
   const { error } = await supabase
@@ -483,4 +483,31 @@ export async function killSession(sessionId: string) {
   }
 
   revalidatePath("/iam/sessions");
+}
+
+export async function fetchAccessMatrixData() {
+  const supabase = supabaseAdmin;
+  const [rolesRes, usersRes] = await Promise.all([
+    supabase
+      .from("module_roles")
+      .select("module_code, role_code, name, description, permissions")
+      .order("module_code")
+      .order("role_code"),
+    supabase
+      .from("user_master")
+      .select("id, email, first_name, last_name, is_active, role:roles(code)")
+      .eq("is_deleted", false)
+      .order("email")
+  ]);
+
+  return {
+    moduleRoles: rolesRes.data || [],
+    users: (usersRes.data || []).map((u: any) => ({
+      id: u.id,
+      email: u.email,
+      name: [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email,
+      is_active: u.is_active,
+      roleCode: Array.isArray(u.role) ? u.role[0]?.code : u.role?.code
+    }))
+  };
 }
