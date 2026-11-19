@@ -43,9 +43,9 @@
 | **5.4** | WP5 | Trash UI with search, metadata columns, and pagination | `a16e357d` | — | TC-TASK-007 | DONE |
 | **5.5** | WP5 | Add tickets and module-scoped Trash views | `a16e357d` | — | TC-TCK-007 | DONE |
 | **5.6** | WP5 | Trash orphan report & repair active batches with backup | `a16e357d` | — | TC-TASK-007 | DONE |
-| **6.1** | WP6 | Real baseline assertions per module: 77 PASS, 0 FAIL, 50 MANUAL, 10 NOT_AUTOMATED | `pending` | — | TC-TASK-001 to TC-REGR-013 | DONE |
-| **6.2** | WP6 | Hand-maintained KNOWN_BUGS.md gate synchronization (0 active defects) | `pending` | — | All | DONE |
-| **6.3** | WP6 | 10-line Super Admin release verification checklist in SUPERADMIN_RELEASE_CHECKLIST.md | `pending` | — | TC-TASK-001, TC-USER-003 | DONE |
+| **6.1** | WP6 | Real baseline assertions per module: 77 PASS, 0 FAIL, 50 MANUAL, 10 NOT_AUTOMATED | `0abfaa8b` | — | TC-TASK-001 to TC-REGR-013 | DONE |
+| **6.2** | WP6 | Hand-maintained KNOWN_BUGS.md gate synchronization (0 active defects) | `0abfaa8b` | — | All | DONE |
+| **6.3** | WP6 | 10-line Super Admin release verification checklist in SUPERADMIN_RELEASE_CHECKLIST.md | `0abfaa8b` | — | TC-TASK-001, TC-USER-003 | DONE |
 | **7.1** | WP7 | Access inventory: routes, actions, and current permission checks | — | — | TC-XMOD-004 | TODO |
 | **7.2** | WP7 | Module roles matrix & permissions schema | — | — | TC-IAM-001 to TC-IAM-008 | TODO |
 | **7.3** | WP7 | Grandfather dry-run and role/scope mapping migration | — | — | All Users | TODO |
