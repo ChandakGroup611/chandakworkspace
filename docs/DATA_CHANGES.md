@@ -121,4 +121,28 @@
 - **How to Undo:**
   Run `supabase/migrations/20261119120000_wp4_reliability_and_concurrency_down.sql`.
 
+---
+
+## 2026-11-19: Master Programme WP5 (Item 5.6 - Trash Orphan Batch & Legacy Record Repair)
+
+### 7. Trash Orphan Batch & Legacy Soft-Deleted Rows Remediation
+- **What:**
+  - Backed up orphan delete batch and legacy soft-deleted rows missing `delete_batch_id`.
+  - Marked phantom orphan batch `91741c85-c3ea-4082-9a12-16848060ad27` (whose root workspace was missing) as `PURGED`.
+  - Updated trigger `validate_task_assignment()` to restrict validation exclusively to active tasks (`NEW.is_deleted = false AND NEW.assigned_to IS NOT NULL`), preventing false assignment violations on soft-deleted tasks.
+  - Inserted canonical tracking batches in `public.delete_batches` for legacy soft-deleted tasks, requirements, users, and statuses.
+  - Associated 33 legacy deleted tasks, 11 requirements, 11 users, and 2 statuses with their respective tracking batches and backfilled `deleted_at`.
+- **Why:** Cleans up orphaned active batches, ensures all soft-deleted records have valid batch IDs for tracking, restore, and purge operations in the Trash Data module, and prevents trigger exceptions on soft-deleted tasks.
+- **Affected Row Count:** 1 batch in `delete_batches`, 33 rows in `tasks`, 11 rows in `requirements`, 11 rows in `user_master`, 2 rows in `status_master`.
+- **Backup Tables:**
+  - `public.backup_delete_batches_20261119` (1 row)
+  - `public.backup_tasks_trash_20261119` (33 rows)
+  - `public.backup_requirements_trash_20261119` (11 rows)
+  - `public.backup_user_master_trash_20261119` (11 rows)
+  - `public.backup_status_master_trash_20261119` (2 rows)
+- **Migration Script:** `supabase/migrations/20261119130000_wp5_trash_orphan_repair.sql`
+- **How to Undo:**
+  Run `supabase/migrations/20261119130000_wp5_trash_orphan_repair_down.sql`.
+
+
 

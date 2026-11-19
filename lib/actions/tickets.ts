@@ -1187,3 +1187,46 @@ export async function fetchSingleTicketDetails(ticketId: string) {
 
   return data;
 }
+
+export async function deleteTicket(ticketId: string, reason?: string) {
+  let userId: string | null = null;
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(cookieStore);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (!authError && user) {
+      userId = user.id;
+    }
+  } catch {
+    // Called outside request scope (e.g. test runner)
+  }
+
+  if (!userId) {
+    return { error: "Unauthenticated. Please log in first." };
+  }
+
+  const { hasPermission } = await import('@/lib/permissions');
+  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
+  const canDeletePerm = await hasPermission(userId, "TICKETS_DELETE");
+
+  const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+  const { data: ticket } = await supabaseAdmin
+    .from('tickets')
+    .select('id, creator_id, assignee_id, queue_owner_id')
+    .eq('id', ticketId)
+    .single();
+
+  if (!ticket) return { error: "Ticket not found." };
+
+  const isOwner = ticket.creator_id === userId || ticket.queue_owner_id === userId;
+  if (!isSuperAdmin && !canDeletePerm && !isOwner) {
+    return { error: "Unauthorized: Only Super Admins, ticket owners, or users with TICKETS_DELETE permission can delete tickets." };
+  }
+
+  const { LifecycleManager } = await import('@/lib/services/LifecycleManager');
+  const { success, batchId, error: lmError } = await LifecycleManager.moveToTrash('TICKET', ticketId, userId, reason || "User requested ticket deletion");
+  if (!success) return { error: lmError || "Failed to delete ticket." };
+
+  revalidatePath('/tickets');
+  return { success: true, batchId };
+}

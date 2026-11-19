@@ -1259,9 +1259,10 @@ export async function deleteTask(taskId: string) {
       return { error: "Cannot delete this task because it contains active sub-tasks." };
     }
 
-    // Soft delete the task instead of hard deleting it and its related records
-    const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
-    if (error) return { error: error.message };
+    // Soft delete the task and cascade to sub-tasks via LifecycleManager (WP5 5.1)
+    const { LifecycleManager } = await import('@/lib/services/LifecycleManager');
+    const { success, batchId, error: lmError } = await LifecycleManager.moveToTrash('TASK', taskId, userId, "User requested task deletion");
+    if (!success) return { error: lmError || "Failed to move task to trash" };
 
     // Fix audit log trigger fallback
     await supabaseAdmin
@@ -1271,7 +1272,7 @@ export async function deleteTask(taskId: string) {
       .is('actor_id', null);
 
     revalidatePath("/workspaces");
-    return { success: true };
+    return { success: true, batchId };
   } catch (e: any) {
     return { error: e.message };
   }

@@ -166,7 +166,12 @@ export const ticketRunners: TestCaseRunner[] = [
       if (isSuper || hasTicketDelete) {
         return { pass: false, notes: "Standard user holds unauthorized ticket deletion privilege", codePath: "lib/permissions/index.ts" };
       }
-      return { pass: true, notes: "Ticket deletion correctly restricted from standard users" };
+      const { deleteTicket } = await import("../../lib/actions/tickets");
+      const delRes = await deleteTicket(ctx.fixedEntities.ticketId);
+      if (delRes && !(delRes as any).error) {
+        return { pass: false, notes: "Security violation: unauthorized caller permitted to delete ticket", codePath: "lib/actions/tickets.ts" };
+      }
+      return { pass: true, notes: "Ticket deletion correctly restricted from standard users via deleteTicket action" };
     }
   },
   {

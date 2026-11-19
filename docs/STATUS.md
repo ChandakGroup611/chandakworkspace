@@ -37,12 +37,12 @@
 | **4.4** | WP4 | 1000-row cap: server pagination and count aggregates | `75739ba8` | — | TC-TASK-001, TC-TCK-001 | DONE |
 | **4.5** | WP4 | createTask duplicate prevention returning existing task ID | `75739ba8` | — | TC-TASK-003 | DONE |
 | **4.6** | WP4 | Status change notification emails format human-readable status names | `75739ba8` | — | TC-MAIL-002 | DONE |
-| **5.1** | WP5 | Unified soft delete via LifecycleManager.moveToTrash | — | — | TC-TASK-007, TC-TCK-007 | TODO |
-| **5.2** | WP5 | Batch restore via LifecycleManager.restoreFromTrash with parent checks | — | — | TC-REGR-004 | TODO |
-| **5.3** | WP5 | Purge: Super Admin typed confirmation and child cascade check | — | — | TC-TASK-007 | TODO |
-| **5.4** | WP5 | Trash UI with search, metadata columns, and pagination | — | — | TC-TASK-007 | TODO |
-| **5.5** | WP5 | Add tickets and module-scoped Trash views | — | — | TC-TCK-007 | TODO |
-| **5.6** | WP5 | Trash orphan report & repair active batches with backup | — | — | TC-TASK-007 | TODO |
+| **5.1** | WP5 | Unified soft delete via LifecycleManager.moveToTrash | pending | — | TC-TASK-007, TC-TCK-007 | DONE |
+| **5.2** | WP5 | Batch restore via LifecycleManager.restoreFromTrash with parent checks | pending | — | TC-REGR-004 | DONE |
+| **5.3** | WP5 | Purge: Super Admin typed confirmation and child cascade check | pending | — | TC-TASK-007 | DONE |
+| **5.4** | WP5 | Trash UI with search, metadata columns, and pagination | pending | — | TC-TASK-007 | DONE |
+| **5.5** | WP5 | Add tickets and module-scoped Trash views | pending | — | TC-TCK-007 | DONE |
+| **5.6** | WP5 | Trash orphan report & repair active batches with backup | pending | — | TC-TASK-007 | DONE |
 | **6.1** | WP6 | Convert remaining hollow baseline runners to real assertions | — | — | TC-AUTH-001 to TC-REGR-013 | TODO |
 | **6.2** | WP6 | KNOWN_BUGS.md hand-maintained gate synchronization | — | — | All | TODO |
 | **6.3** | WP6 | Super Admin release verification checklist | — | — | TC-TASK-001, TC-USER-003 | TODO |

@@ -736,11 +736,12 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
     return { error: 'Cannot delete this requirement because there are active tasks raised against it. Please delete those tasks first.' };
   }
 
-  // Soft delete the requirement so it can be viewed in the Trash Data module
-  const { error } = await supabaseAdmin.from('requirements').update({ is_deleted: true }).eq('id', reqId);
-  if (error) return { error: 'Failed to delete requirement: ' + error.message };
+  // Soft delete the requirement via LifecycleManager (WP5 5.1)
+  const { LifecycleManager } = await import('@/lib/services/LifecycleManager');
+  const { success, batchId, error: lmError } = await LifecycleManager.moveToTrash('REQUIREMENT', reqId, performedBy, "User requested requirement deletion");
+  if (!success) return { error: lmError || 'Failed to delete requirement' };
   revalidatePath('/requirements');
-  return { success: true };
+  return { success: true, batchId };
 }
 
 export async function updateRequirementIntake(reqId: string, payload: any, performedBy: string) {

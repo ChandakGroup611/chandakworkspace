@@ -251,8 +251,21 @@ export const taskRunners: TestCaseRunner[] = [
       if (delRes && !(delRes as any).error) {
         return { pass: false, notes: "Security violation: unauthorized caller permitted to delete task", codePath: "lib/actions/tasks.ts" };
       }
+
+      // Verify LifecycleManager guard check validates entity existence before batch creation
+      const { LifecycleManager } = await import("../../lib/services/LifecycleManager");
+      let threw = false;
+      try {
+        await LifecycleManager.moveToTrash('TASK', '00000000-0000-0000-0000-000000000000', stdUserId);
+      } catch {
+        threw = true;
+      }
+      if (!threw) {
+        return { pass: false, notes: "Guard check failed to reject invalid entity before creating batch", codePath: "lib/services/LifecycleManager.ts" };
+      }
+
       if (!isSuper && !isOwner) {
-        return { pass: true, notes: "Standard member is properly restricted from deleting workspace and task" };
+        return { pass: true, notes: "Standard member is properly restricted from deleting workspace and task; LifecycleManager guards validated" };
       }
       return { pass: false, notes: "Standard member has unauthorized workspace deletion rights", codePath: "lib/actions/workspaces.ts" };
     }

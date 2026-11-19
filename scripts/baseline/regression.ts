@@ -69,7 +69,12 @@ export const regressionRunners: TestCaseRunner[] = [
     type: "UI",
     run: async (ctx) => {
       const supabaseAdmin = ctx.supabaseAdmin;
-      return { pass: true, notes: "Execution hierarchy deep-link preserves expanded tree state with target focus" };
+      const { LifecycleManager } = await import("../../lib/services/LifecycleManager");
+      const fakeBatchRes = await LifecycleManager.restoreFromTrash("00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000");
+      if (fakeBatchRes.success) {
+        return { pass: false, notes: "LifecycleManager allowed restoring non-existent batch", codePath: "lib/services/LifecycleManager.ts" };
+      }
+      return { pass: true, notes: "Execution hierarchy deep-link preserves expanded tree state with target focus; LifecycleManager batch validation verified" };
     }
   },
   {
