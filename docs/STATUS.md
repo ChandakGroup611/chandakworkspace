@@ -46,16 +46,16 @@
 | **6.1** | WP6 | Real baseline assertions per module: 77 PASS, 0 FAIL, 50 MANUAL, 10 NOT_AUTOMATED | `0abfaa8b` | — | TC-TASK-001 to TC-REGR-013 | DONE |
 | **6.2** | WP6 | Hand-maintained KNOWN_BUGS.md gate synchronization (0 active defects) | `0abfaa8b` | — | All | DONE |
 | **6.3** | WP6 | 10-line Super Admin release verification checklist in SUPERADMIN_RELEASE_CHECKLIST.md | `0abfaa8b` | — | TC-TASK-001, TC-USER-003 | DONE |
-| **7.1** | WP7 | Access inventory: routes, actions, and current permission checks in ACCESS_INVENTORY.md | `pending` | — | TC-XMOD-004 | DONE |
-| **7.2** | WP7 | Module roles matrix (MODULE_ROLES.md) & typed module permission modules | `pending` | — | TC-IAM-001 to TC-IAM-008 | DONE |
-| **7.3** | WP7 | Grandfather dry-run & zero-access-loss audit (GRANDFATHER_REPORT.md) | `pending` | — | All Users | DONE |
-| **7.4** | WP7 | Server-side authorize wrapper (defineAction, authorize) & useModuleAccess hook | `pending` | — | All Modules | DONE |
-| **7.5** | WP7 | Invite & edit user UI: module role, scope, and dashboard selector | `pending` | — | TC-USER-004 | DONE |
-| **7.6** | WP7 | Module-scoped IAM Cockpit: STANDARD undeletable, retired legacy roles hidden | `pending` | — | TC-IAM-001 to TC-IAM-008 | DONE |
-| **7.7** | WP7 | Module-scoped email templates & event triggers with additive module_code | `pending` | — | TC-MAIL-001 to TC-MAIL-008 | DONE |
-| **7.8** | WP7 | Module-scoped masters, statuses, priorities, number series | `pending` | — | TC-MSTR-001 to TC-MSTR-008 | DONE |
-| **7.9** | WP7 | CI governance gate scripts/check-access.ts (5 automated RBAC gates pass) | `pending` | — | All | DONE |
-| **7.10** | WP7 | Read-only Access Matrix inspection screen at /settings/access-matrix | `pending` | — | TC-IAM-001 | DONE |
-| **7.11** | WP7 | Governance update in .agents/AGENTS.md & module deployment train | `pending` | — | All Modules | DONE |
+| **7.1** | WP7 | Access inventory: routes, actions, and current permission checks in ACCESS_INVENTORY.md | `9ff6d8ef` | — | TC-XMOD-004 | DONE |
+| **7.2** | WP7 | Module roles matrix (MODULE_ROLES.md) & typed module permission modules | `9ff6d8ef` | — | TC-IAM-001 to TC-IAM-008 | DONE |
+| **7.3** | WP7 | Grandfather dry-run & zero-access-loss audit (GRANDFATHER_REPORT.md) | `9ff6d8ef` | — | All Users | DONE |
+| **7.4** | WP7 | Server-side authorize wrapper (defineAction, authorize) & useModuleAccess hook | `9ff6d8ef` | — | All Modules | DONE |
+| **7.5** | WP7 | Invite & edit user UI: module role, scope, and dashboard selector | `9ff6d8ef` | — | TC-USER-004 | DONE |
+| **7.6** | WP7 | Module-scoped IAM Cockpit: STANDARD undeletable, retired legacy roles hidden | `9ff6d8ef` | — | TC-IAM-001 to TC-IAM-008 | DONE |
+| **7.7** | WP7 | Module-scoped email templates & event triggers with additive module_code | `9ff6d8ef` | — | TC-MAIL-001 to TC-MAIL-008 | DONE |
+| **7.8** | WP7 | Module-scoped masters, statuses, priorities, number series | `9ff6d8ef` | — | TC-MSTR-001 to TC-MSTR-008 | DONE |
+| **7.9** | WP7 | CI governance gate scripts/check-access.ts (5 automated RBAC gates pass) | `9ff6d8ef` | — | All | DONE |
+| **7.10** | WP7 | Read-only Access Matrix inspection screen at /settings/access-matrix | `9ff6d8ef` | — | TC-IAM-001 | DONE |
+| **7.11** | WP7 | Governance update in .agents/AGENTS.md & module deployment train | `9ff6d8ef` | — | All Modules | DONE |
 | **8.1** | WP8 | Standardize components: ActivityTimeline, SavedFilters, States, Back | — | — | All Modules | TODO |
 | **8.2** | WP8 | Build gaps: My Work, Approval Inbox, inline edit, Request Access | — | — | All Modules | TODO |
