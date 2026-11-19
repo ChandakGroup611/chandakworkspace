@@ -8,9 +8,14 @@ import { hasPermission } from '@/lib/permissions';
 // Filtering MUST happen inside the DB query using explicit backend scopes.
 // =========================================================================
 
-export async function getVisibleTickets(userId: string, customSelect?: string, filters?: { searchQuery?: string, status_id?: string, priority_id?: string, scope_id?: string }) {
+export async function getVisibleTickets(
+  userId: string,
+  customSelect?: string,
+  filters?: { searchQuery?: string, status_id?: string, priority_id?: string, scope_id?: string },
+  options?: { limit?: number; offset?: number; page?: number }
+) {
   const canViewAll = await hasPermission(userId, 'SUPER_ADMIN');
-  
+
   const defaultSelect = `
       *,
       creator:user_master!fk_tickets_creator(full_name, profile_photo),
@@ -20,16 +25,20 @@ export async function getVisibleTickets(userId: string, customSelect?: string, f
       status:status_master(status_name, status_color, is_terminal)
   `;
 
+  const maxLimit = Math.min(options?.limit || 1000, 1000);
+  const offset = options?.offset ?? (options?.page ? (options.page - 1) * maxLimit : 0);
+
   let query = supabaseAdmin
     .from('tickets')
-    .select(customSelect || defaultSelect)
+    .select(customSelect || defaultSelect, { count: 'exact' })
     .eq('is_deleted', false)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, offset + maxLimit - 1);
 
   if (!canViewAll) {
     // Determine explicitly assigned boundaries (SELF, ASSIGNED, QUEUE_OWNER)
     let explicitOrFilters = [
-      `creator_id.eq.${userId}`, 
+      `creator_id.eq.${userId}`,
       `assignee_id.eq.${userId}`,
       `queue_owner_id.eq.${userId}`
     ];
@@ -72,7 +81,7 @@ export async function getVisibleTickets(userId: string, customSelect?: string, f
   }
 
   const { data, error } = await query;
-  
+
   if (error) {
     console.error('Error fetching visible tickets:', error);
     throw new Error(`Failed to fetch tickets: ${error.message} (Hint: ${error.hint || 'none'}, Details: ${error.details || 'none'})`);

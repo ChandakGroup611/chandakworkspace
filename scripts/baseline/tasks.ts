@@ -101,28 +101,49 @@ export const taskRunners: TestCaseRunner[] = [
   {
     tcId: "TC-TASK-003",
     module: "Workspace/Tasks",
-    screen: "app/workspaces/page.tsx (route: /workspaces)",
-    description: "Super Admin creates workspace with unique code and registered owner",
+    screen: "app/workspaces/tasks/page.tsx (route: /workspaces/tasks)",
+    description: "createTask duplicate prevention returning existing task ID within 60s (Item 4.5)",
     role: "Super Admin",
     type: "functional",
     suite: "sandbox",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
       const superAdminId = ctx.users["test.superadmin@chandakgroup.tech"];
-      const code = `WS-AUTO-${Date.now()}`;
-      const { data, error } = await supabaseAdmin.from("workspaces").insert({
-        workspace_name: "[TEST-AUTO] Auto Workspace",
-        workspace_code: code,
-        description: "Automated test workspace",
-        workspace_owner_id: superAdminId,
-        created_by: superAdminId,
-        is_active: true,
-        is_deleted: false
-      }).select("id, workspace_code, workspace_owner_id").single();
-      if (error) return { pass: false, notes: `Workspace creation failed: ${error.message}`, codePath: "lib/actions/workspaces.ts" };
-      // Clean up
-      await supabaseAdmin.from("workspaces").delete().eq("id", data.id);
-      return { pass: true, notes: `Workspace created successfully with code ${data.workspace_code}` };
+      const { createTask, deleteTask } = await import("../../lib/actions/tasks");
+
+      const title = `[ZZ-TEST-SANDBOX] Dup Test ${Date.now()}`;
+      const payload = {
+        workspace_id: ctx.fixedEntities.workspaceId,
+        subject: title,
+        description: "Testing 60s idempotency key and duplicate prevention",
+        priority_id: "507d7b96-8cc0-48ac-b818-f683a88b8c46",
+        created_by: superAdminId
+      };
+
+      // First creation
+      const res1 = await createTask(payload);
+      if (!res1 || !res1.data?.id) {
+        return { pass: false, notes: `First task creation failed: ${JSON.stringify(res1)}`, codePath: "lib/actions/tasks.ts" };
+      }
+
+      const firstId = res1.data.id;
+
+      try {
+        // Immediate duplicate creation attempt within 60s
+        const res2 = await createTask(payload);
+        if (!res2 || !res2.data?.id) {
+          return { pass: false, notes: `Duplicate attempt failed: ${JSON.stringify(res2)}`, codePath: "lib/actions/tasks.ts" };
+        }
+
+        if (res2.data.id !== firstId) {
+          // If a new task was created instead of returning existing
+          await deleteTask(res2.data.id);
+          return { pass: false, notes: `Duplicate prevention failed: created second task ${res2.data.id} instead of returning ${firstId}`, codePath: "lib/actions/tasks.ts" };
+        }
+
+        return { pass: true, notes: `Duplicate prevention verified: returned existing task ID ${firstId} on repeated submit within 60s` };
+      } finally {
+        await deleteTask(firstId);
+      }
     }
   },
   {

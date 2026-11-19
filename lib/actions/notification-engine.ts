@@ -586,7 +586,10 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     'subcategory_id': { table: 'ticket_subcategories', column: 'name' },
     'workspace_id': { table: 'workspaces', column: 'workspace_name' },
     'status': { table: 'status_master', column: 'status_name' },
-    'status_id': { table: 'status_master', column: 'status_name' }
+    'status_id': { table: 'status_master', column: 'status_name' },
+    'old_status': { table: 'status_master', column: 'status_name' },
+    'new_status': { table: 'status_master', column: 'status_name' },
+    'changed_by': { table: 'user_master', column: 'full_name' }
   };
 
   for (const [key, value] of Object.entries(hydrated)) {
@@ -604,6 +607,42 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
        }
     }
   }
+
+  // Resolve raw status codes into human status names (Item 4.6)
+  for (const sKey of ['status', 'old_status', 'new_status', 'status_id']) {
+    const val = hydrated[sKey];
+    if (val && typeof val === 'string' && val.includes('_') && val === val.toUpperCase()) {
+      try {
+        const { data: sRow } = await supabaseAdmin.from('status_master').select('status_name').eq('status_code', val).maybeSingle();
+        if (sRow?.status_name) hydrated[sKey] = sRow.status_name;
+      } catch {}
+    }
+  }
+
+  // Ensure changed_by / changed_by_name is populated from actor
+  if (!hydrated.changed_by && hydrated.triggering_user_id) {
+    try {
+      const { data: actor } = await supabaseAdmin.from('user_master').select('full_name').eq('id', hydrated.triggering_user_id).maybeSingle();
+      if (actor?.full_name) {
+        hydrated.changed_by = actor.full_name;
+        hydrated.changed_by_name = actor.full_name;
+      }
+    } catch {}
+  }
+
+  // Ensure status_transition is cleanly formatted
+  if (hydrated.old_status && (hydrated.new_status || hydrated.status)) {
+    const fromName = hydrated.old_status;
+    const toName = hydrated.new_status || hydrated.status;
+    hydrated.status_transition = `${fromName} → ${toName}`;
+  }
+
+  // Title aliases
+  if (hydrated.task_name && !hydrated.title) hydrated.title = hydrated.task_name;
+  if (hydrated.ticket_title && !hydrated.title) hydrated.title = hydrated.ticket_title;
+  if (hydrated.req_name && !hydrated.title) hydrated.title = hydrated.req_name;
+  if (hydrated.title && !hydrated.task_name && moduleName === 'Task') hydrated.task_name = hydrated.title;
+  if (hydrated.title && !hydrated.ticket_title && moduleName === 'Ticket') hydrated.ticket_title = hydrated.title;
 
   // Set aliases for common merge tags across all modules
   if (hydrated.assigned_to && !hydrated.assigned_user) {

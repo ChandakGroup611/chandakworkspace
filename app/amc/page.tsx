@@ -23,6 +23,7 @@ import { AMCExecutiveDashboard } from "@/components/amc/AMCExecutiveDashboard";
 import { CustomPaymentMilestoneManager, PaymentMilestone } from "@/components/amc/CustomPaymentMilestoneManager";
 import { createClient } from "@/utils/supabase/client";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
+import { todayIST, toISTDateString } from "@/lib/utils/date-utils";
 import { saveMasterEntity } from "@/lib/actions/masters";
 import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
 import { formatDate, formatDateTime } from "@/components/ui/data";
@@ -317,7 +318,7 @@ export default function AMCPage() {
     }
     d.setDate(d.getDate() - 1);
     // ui-audit-ignore-next-line html-date-input
-    return d.toISOString().split('T')[0];
+    return toISTDateString(d) || "";
   };
 
   const handleRenewalChange = (periodType: string, baseDateStr: string) => {
@@ -364,7 +365,7 @@ export default function AMCPage() {
             }
             if (!updated.releaseDate) {
               // ui-audit-ignore-next-line html-date-input
-              updated.releaseDate = new Date().toISOString().split('T')[0];
+              updated.releaseDate = todayIST();
             }
           }
         }
@@ -439,7 +440,7 @@ export default function AMCPage() {
                 }
                 if (!updated.releaseDate) {
                   // ui-audit-ignore-next-line html-date-input
-                  updated.releaseDate = new Date().toISOString().split('T')[0];
+                  updated.releaseDate = todayIST();
                 }
               }
             }
@@ -866,10 +867,10 @@ export default function AMCPage() {
     setFormDataClassification(rec.data_classification || "");
     setFormComplianceStatus(rec.compliance_status || []);
     // ui-audit-ignore-next-line html-date-input
-    setFormInfosecApprovedDate(rec.infosec_approved_date ? new Date(rec.infosec_approved_date).toISOString().split('T')[0] : "");
+    setFormInfosecApprovedDate(rec.infosec_approved_date ? (toISTDateString(rec.infosec_approved_date) || "") : "");
     setFormDpaSigned(rec.dpa_signed || false);
     // ui-audit-ignore-next-line html-date-input
-    setFormDpaSignedDate(rec.dpa_signed_date ? new Date(rec.dpa_signed_date).toISOString().split('T')[0] : "");
+    setFormDpaSignedDate(rec.dpa_signed_date ? (toISTDateString(rec.dpa_signed_date) || "") : "");
     setRevealedLicenseKeys({});
 
     const linewiseDetected = rec.is_line_item_wise !== undefined

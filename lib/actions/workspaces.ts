@@ -998,7 +998,7 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
       taskQuery = taskQuery.lte('created_at', filters.dateTo);
     }
 
-    const { data: fetchedTasks, error: taskErr } = await taskQuery.order('created_at', { ascending: false });
+    const { data: fetchedTasks, error: taskErr } = await taskQuery.order('created_at', { ascending: false }).limit(1000);
     if (!taskErr && fetchedTasks) {
       tasks = fetchedTasks;
     }
@@ -1305,7 +1305,7 @@ export async function fetchAllHierarchyBranches() {
     tasksQuery = tasksQuery.or(buildTaskEnrollmentFilter(enrollContext));
   }
 
-  const { data: allTasks } = await tasksQuery.order('created_at', { ascending: false });
+  const { data: allTasks } = await tasksQuery.order('created_at', { ascending: false }).limit(1000);
 
   const tasksMap = new Map<string, any>();
   (allTasks || []).forEach((t: any) => {

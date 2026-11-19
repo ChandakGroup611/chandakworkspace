@@ -4,6 +4,7 @@ import { createClient as createServerClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { queueBusinessEvent } from "@/lib/actions/notification-engine";
+import { todayIST, toISTDateString, isOverdue } from "@/lib/utils/date-utils";
 
 import { hasPermission } from "@/lib/permissions";
 
@@ -170,7 +171,7 @@ export async function changeTicketStatus(
   // Fetch ticket details
   const { data: ticket, error: fetchErr } = await supabaseAdmin
     .from('tickets')
-    .select('id, code, scope_type, status_id, creator_id, assignee_id, department_id, queue_owner_id')
+    .select('id, code, title, scope_type, status_id, creator_id, assignee_id, department_id, queue_owner_id')
     .eq('id', ticketId)
     .single();
 
@@ -252,9 +253,11 @@ export async function changeTicketStatus(
       created_at: new Date().toISOString()
     }]);
 
-  // Side effect 3: Notification queue push with names old -> new
+  // Side effect 3: Notification queue push and business event with human names old -> new (Item 4.6)
+  const isClosedOrTerminal = targetStatus.is_closed || targetStatus.is_terminal;
+  const statusTransitionDisplay = `${oldName} → ${newName}`;
+
   if (ticket.creator_id && ticket.creator_id !== userId) {
-    const isClosedOrTerminal = targetStatus.is_closed || targetStatus.is_terminal;
     await supabaseAdmin.from('notification_queue').insert([{
       recipient_id: ticket.creator_id,
       payload: {
@@ -262,11 +265,29 @@ export async function changeTicketStatus(
         message: `Ticket ${ticket.code} status changed from ${oldName} to ${newName}.`,
         ticket_id: ticketId,
         old_status: oldName,
-        new_status: newName
+        new_status: newName,
+        status_transition: statusTransitionDisplay
       },
       is_read: false
     }]);
   }
+
+  queueBusinessEvent("Ticket", "Status Changed", {
+    entity_id: ticketId,
+    triggering_user_id: userId,
+    status: targetStatus.id,
+    status_name: newName,
+    status_transition: statusTransitionDisplay,
+    old_status: oldName,
+    new_status: newName,
+    ticket_code: ticket.code,
+    ticket_title: ticket.title || ticket.code,
+    assigned_to: ticket.assignee_id,
+    created_by: ticket.creator_id,
+    department_id: ticket.department_id,
+    remarks: remark || "",
+    link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${ticketId}`
+  }).catch(e => console.error("[NotificationEngine] Ticket status change queue push failed", e));
 
   // Revalidate cache
   try {
@@ -958,7 +979,7 @@ export async function fetchTicketMetrics() {
       resolvedTickets++;
     } else {
       openTickets++;
-      if (t.due_date && new Date(t.due_date).getTime() < now) {
+      if (t.due_date && isOverdue(t.due_date, isResolved)) {
         breachedSla++;
       }
     }
@@ -968,7 +989,7 @@ export async function fetchTicketMetrics() {
       workloadMap[assigneeName] = (workloadMap[assigneeName] || 0) + 1;
     }
 
-    const dateStr = new Date(t.created_at).toISOString().split('T')[0];
+    const dateStr = toISTDateString(t.created_at) || todayIST();
     volumeMap[dateStr] = (volumeMap[dateStr] || 0) + 1;
   });
 

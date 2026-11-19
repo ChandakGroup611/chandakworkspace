@@ -7,6 +7,7 @@ import { dispatchNotification } from '@/lib/actions/notifications';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { fetchWorkspaceStakeholders } from '@/lib/actions/workspaces';
+import { todayIST, toISTDateString, isOverdue } from '@/lib/utils/date-utils';
 export async function getDepartments() {
   const { data, error } = await supabaseAdmin
     .from('departments')
@@ -185,17 +186,23 @@ export async function createTask(payload: {
       }
     }
 
-    // Prevent duplicate rapid-fire task creation (Idempotency / Double-click Protection: 3 seconds)
-    const threeSecondsAgo = new Date(Date.now() - 3 * 1000).toISOString();
-    const taskSubject = payload.subject || payload.title || 'Untitled Task';
+    // Prevent duplicate rapid-fire task creation (Item 4.5: Idempotency within 60 seconds)
+    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000).toISOString();
+    const taskSubject = (payload.subject || payload.title || 'Untitled Task').trim();
     let dupQuery = supabaseAdmin
       .from('tasks')
-      .select('id')
+      .select('id, task_code, subject, workspace_id, created_at')
       .eq('subject', taskSubject)
-      .eq('workspace_id', finalWorkspaceId)
       .eq('created_by', creatorId)
-      .gte('created_at', threeSecondsAgo);
+      .eq('is_deleted', false)
+      .gte('created_at', sixtySecondsAgo);
 
+    if (finalWorkspaceId) {
+      dupQuery = dupQuery.eq('workspace_id', finalWorkspaceId);
+    }
+    if (payload.assigned_to) {
+      dupQuery = dupQuery.eq('assigned_to', payload.assigned_to);
+    }
     if (parentTaskId) {
       dupQuery = dupQuery.eq('parent_task_id', parentTaskId);
     } else {
@@ -205,14 +212,20 @@ export async function createTask(payload: {
     const { data: existingTask } = await dupQuery.limit(1);
 
     if (existingTask && existingTask.length > 0) {
-      console.warn("[createTask] Prevented duplicate rapid task creation");
-      return { success: true, warning: "Task was already created recently. Duplicate prevented." };
+      console.warn("[createTask] Duplicate prevented within 60s bucket, returning existing task:", existingTask[0].id);
+      return { 
+        success: true, 
+        data: existingTask[0], 
+        warning: "Duplicate prevented. Returning existing task created within 60 seconds." 
+      };
     }
-    let startDate = (payload.start_date && payload.start_date.trim()) ? payload.start_date.trim() : null;
-    let endDate = (payload.end_date && payload.end_date.trim()) ? payload.end_date.trim() : null;
+
+    // Normalizing dates to Asia/Kolkata (Item 4.2)
+    let startDate = (payload.start_date && payload.start_date.trim()) ? toISTDateString(payload.start_date.trim()) : null;
+    let endDate = (payload.end_date && payload.end_date.trim()) ? toISTDateString(payload.end_date.trim()) : null;
 
     if (endDate && !startDate) {
-      startDate = new Date().toISOString().split('T')[0];
+      startDate = todayIST();
     }
 
     if (startDate && endDate && startDate > endDate) {

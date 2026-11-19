@@ -88,7 +88,7 @@ export const crossRunners: TestCaseRunner[] = [
     tcId: "TC-XMOD-006",
     module: "Cross-cutting",
     screen: "app/sla/rules/page.tsx (route: /sla/rules)",
-    description: "SLA policies are read-only for standard staff; policy creation/editing blocked",
+    description: "SLA policies and working days calendar (Mon-Sat, sla_holidays exclusion, D9 TAT calculation)",
     role: "STANDARD",
     type: "permission",
     run: async (ctx) => {
@@ -100,7 +100,34 @@ export const crossRunners: TestCaseRunner[] = [
       if (isSuper || hasSlaManage) {
         return { pass: false, notes: "Standard staff has unauthorized SLA management rights", codePath: "lib/permissions/index.ts" };
       }
-      return { pass: true, notes: "SLA policy mutation actions restricted to administrators" };
+
+      // Assert sla_holidays exists and has seeded holidays (Item 4.3 / D9)
+      const { data: holidays, error: holErr } = await supabaseAdmin.from("sla_holidays").select("holiday_date");
+      if (holErr || !holidays || holidays.length === 0) {
+        return { pass: false, notes: `sla_holidays table empty or query failed: ${holErr?.message}`, codePath: "supabase/migrations/20261119120000_wp4_reliability_and_concurrency.sql" };
+      }
+
+      const { countWorkingDaysIST, todayIST, isOverdue } = await import("../../lib/utils/date-utils");
+      const holSet = new Set<string>(holidays.map((h: any) => h.holiday_date));
+      // Sunday is skipped
+      const sundayTest = countWorkingDaysIST("2026-11-22", "2026-11-22", holSet); // Nov 22, 2026 is Sunday
+      if (sundayTest !== 0) {
+        return { pass: false, notes: "countWorkingDaysIST counted Sunday as working day", codePath: "lib/utils/date-utils.ts" };
+      }
+
+      // Working days Monday-Wednesday = 3 days
+      const daysCount = countWorkingDaysIST("2026-11-23", "2026-11-25", holSet); // Mon-Wed
+      if (daysCount !== 3) {
+        return { pass: false, notes: `countWorkingDaysIST expected 3, got ${daysCount}`, codePath: "lib/utils/date-utils.ts" };
+      }
+
+      // Assert isOverdue returns false for closed tasks even with past date
+      const closedOverdue = isOverdue("2020-01-01", { is_closed: true });
+      if (closedOverdue) {
+        return { pass: false, notes: "isOverdue returned true for closed status", codePath: "lib/utils/date-utils.ts" };
+      }
+
+      return { pass: true, notes: `SLA policy permissions, sla_holidays (${holidays.length} seeded), and IST working days engine verified` };
     }
   }
 ];

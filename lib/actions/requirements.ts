@@ -42,7 +42,7 @@ export async function changeRequirementStatus(
 
   const { data: req, error: fetchErr } = await supabaseAdmin
     .from('requirements')
-    .select('id, code, title, status_id, approval_status, creator_id, owner_id, current_assignee_id')
+    .select('id, code, title, status_id, approval_status, creator_id, owner_id, current_assignee_id, department_id')
     .eq('id', reqId)
     .single();
 
@@ -127,7 +127,9 @@ export async function changeRequirementStatus(
   // Activity log
   await logActivityEvent('REQUIREMENT', reqId, 'STATUS_CHANGE', { status_id: req.status_id, old_status_name: oldName }, { status_id: targetStatus.id, status_name: newName, approval_status: newApprovalStatus, remark: remark || null }, userId);
 
-  // Notification queue push
+  // Notification queue push and business event with human names old -> new (Item 4.6)
+  const statusTransitionDisplay = `${oldName} → ${newName}`;
+
   if (req.creator_id && req.creator_id !== userId) {
     await supabaseAdmin.from('notification_queue').insert([{
       recipient_id: req.creator_id,
@@ -136,11 +138,31 @@ export async function changeRequirementStatus(
         message: `Requirement ${req.code} status changed from ${oldName} to ${newName}.`,
         requirement_id: reqId,
         old_status: oldName,
-        new_status: newName
+        new_status: newName,
+        status_transition: statusTransitionDisplay
       },
       is_read: false
     }]);
   }
+
+  const { queueBusinessEvent } = await import('@/lib/actions/notification-engine');
+  queueBusinessEvent("Requirement", "Status Changed", {
+    entity_id: reqId,
+    triggering_user_id: userId,
+    status: targetStatus.id,
+    status_name: newName,
+    status_transition: statusTransitionDisplay,
+    old_status: oldName,
+    new_status: newName,
+    req_code: req.code,
+    req_name: req.title,
+    title: req.title,
+    created_by: req.creator_id,
+    current_assignee_id: req.current_assignee_id,
+    department_id: req.department_id,
+    remarks: remark || "",
+    link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/requirements/${reqId}`
+  }).catch(e => console.error("[NotificationEngine] Requirement status change queue push failed", e));
 
   // Revalidate cache
   try {
@@ -336,7 +358,8 @@ export async function fetchRequirements(workspaceId?: string | null) {
       requirement_approval_flow(level, status)
     `)
     .eq('is_deleted', false)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(1000);
 
   if (workspaceId) {
     query = query.contains('custom_fields', { workspace_id: workspaceId });
@@ -760,7 +783,7 @@ export async function updateRequirementIntake(reqId: string, payload: any, perfo
 export async function fetchRequirementAuditLogs(reqId: string) {
   const { unstable_noStore: noStore } = await import('next/cache');
   noStore();
-  const { data: logs, error } = await supabaseAdmin.from('activity_events').select('*').eq('module_type', 'REQUIREMENT').eq('record_id', reqId).order('performed_at', { ascending: false });
+  const { data: logs, error } = await supabaseAdmin.from('activity_events').select('*').eq('module_type', 'REQUIREMENT').eq('record_id', reqId).order('performed_at', { ascending: false }).limit(100);
   if (error || !logs) return [];
   const userIds = [...new Set(logs.map(l => l.performed_by).filter(Boolean))];
   let usersMap: Record<string, any> = {};
@@ -797,7 +820,8 @@ export async function fetchRequirementAnalyticsData() {
     requirement_approval_flow(approver_id)
   `)
   .eq('is_deleted', false)
-  .order('created_at', { ascending: false });
+  .order('created_at', { ascending: false })
+  .limit(1000);
 
   if (error) {
     console.error("fetchRequirementAnalyticsData Error:", error);

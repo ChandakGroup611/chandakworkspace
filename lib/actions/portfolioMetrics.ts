@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
+import { isOverdue as isOverdueHelper } from "@/lib/utils/date-utils";
 
 export interface PortfolioItem {
   id: string;
@@ -194,7 +195,7 @@ export async function fetchLivePortfolioData(): Promise<PortfolioMetricsResponse
     (activityEvents || []).forEach((ev: any) => {
       if (!ev.record_id) return;
       const recId = ev.record_id;
-      
+
       const oldDue = ev.old_value?.end_date || ev.old_value?.due_date;
       const newDue = ev.new_value?.end_date || ev.new_value?.due_date;
 
@@ -241,14 +242,14 @@ export async function fetchLivePortfolioData(): Promise<PortfolioMetricsResponse
       const rawStatus = (t.status_master as any)?.status_name || "Open";
       const status = normalizeStatus(rawStatus);
       const priority = normalizePriority(t.priority?.priority_name || "Standard");
-      
+
       const assignedUser = t.assigned_to ? userMap.get(t.assigned_to) : null;
       const creatorUser = t.created_by ? userMap.get(t.created_by) : null;
 
       const dueDateTime = t.end_date ? new Date(t.end_date).getTime() : null;
-      const isOverdue = !!dueDateTime && dueDateTime < nowTime && status !== "Resolved";
-      const overdueDays = (dueDateTime && isOverdue) 
-        ? Math.max(1, Math.ceil((nowTime - dueDateTime) / (1000 * 3600 * 24))) 
+      const isOverdue = isOverdueHelper(t.end_date, status);
+      const overdueDays = (dueDateTime && isOverdue)
+        ? Math.max(1, Math.ceil((nowTime - dueDateTime) / (1000 * 3600 * 24)))
         : 0;
 
       const revInfo = revisionsMap.get(t.id);
@@ -330,9 +331,9 @@ export async function fetchLivePortfolioData(): Promise<PortfolioMetricsResponse
       const creatorUser = tk.creator_id ? userMap.get(tk.creator_id) : null;
 
       const dueDateTime = tk.due_date ? new Date(tk.due_date).getTime() : null;
-      const isOverdue = !!dueDateTime && dueDateTime < nowTime && status !== "Resolved";
-      const overdueDays = (dueDateTime && isOverdue) 
-        ? Math.max(1, Math.ceil((nowTime - dueDateTime) / (1000 * 3600 * 24))) 
+      const isOverdue = isOverdueHelper(tk.due_date, status);
+      const overdueDays = (dueDateTime && isOverdue)
+        ? Math.max(1, Math.ceil((nowTime - dueDateTime) / (1000 * 3600 * 24)))
         : 0;
 
       const revInfo = revisionsMap.get(tk.id);
@@ -376,9 +377,9 @@ export async function fetchLivePortfolioData(): Promise<PortfolioMetricsResponse
       const creatorUser = rq.creator_id ? userMap.get(rq.creator_id) : null;
 
       const dueDateTime = rq.due_date ? new Date(rq.due_date).getTime() : null;
-      const isOverdue = !!dueDateTime && dueDateTime < nowTime && status !== "Resolved";
-      const overdueDays = (dueDateTime && isOverdue) 
-        ? Math.max(1, Math.ceil((nowTime - dueDateTime) / (1000 * 3600 * 24))) 
+      const isOverdue = isOverdueHelper(rq.due_date, status);
+      const overdueDays = (dueDateTime && isOverdue)
+        ? Math.max(1, Math.ceil((nowTime - dueDateTime) / (1000 * 3600 * 24)))
         : 0;
 
       const isResolved = status === "Resolved";
@@ -421,9 +422,9 @@ export async function fetchLivePortfolioData(): Promise<PortfolioMetricsResponse
       const ownerUser = ownerUserId ? userMap.get(ownerUserId) : null;
 
       const dueDateTime = ws.end_date ? new Date(ws.end_date).getTime() : null;
-      const isOverdue = !!dueDateTime && dueDateTime < nowTime && status !== "Resolved";
-      const overdueDays = (dueDateTime && isOverdue) 
-        ? Math.max(1, Math.ceil((nowTime - dueDateTime) / (1000 * 3600 * 24))) 
+      const isOverdue = isOverdueHelper(ws.end_date, status);
+      const overdueDays = (dueDateTime && isOverdue)
+        ? Math.max(1, Math.ceil((nowTime - dueDateTime) / (1000 * 3600 * 24)))
         : 0;
 
       const isResolved = status === "Resolved";

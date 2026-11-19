@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { getUserAccessScope } from "@/lib/auth/scope";
+import { isOverdue } from "@/lib/utils/date-utils";
 
 export async function fetchLiveDashboardMetrics() {
   const cookieStore = await cookies();
@@ -361,7 +362,7 @@ export async function fetchLiveDashboardMetrics() {
         dueDate: t.end_date,
         daysInStatus: daysInStatus,
         slaRemainingMs: slaRemainingMs,
-        isOverdue: t.end_date && new Date(t.end_date).getTime() < now && status !== "Resolved"
+        isOverdue: isOverdue(t.end_date, status)
       });
     });
 
@@ -429,8 +430,8 @@ export async function fetchLiveDashboardMetrics() {
         dueDate: t.due_date,
         daysInStatus: daysInStatus,
         slaRemainingMs: slaRemainingMs,
-        isOverdue: t.due_date && new Date(t.due_date).getTime() < now && status !== "Resolved",
-        slaBreached: t.due_date && new Date(t.due_date).getTime() < now && status !== "Resolved"
+        isOverdue: isOverdue(t.due_date, status),
+        slaBreached: isOverdue(t.due_date, status)
       });
     });
 
@@ -468,7 +469,7 @@ export async function fetchLiveDashboardMetrics() {
         dueDate: r.due_date,
         daysInStatus: daysInStatus,
         slaRemainingMs: slaRemainingMs,
-        isOverdue: r.due_date && new Date(r.due_date).getTime() < now && status !== "Resolved"
+        isOverdue: isOverdue(r.due_date, status)
       });
     });
 
@@ -516,7 +517,7 @@ export async function fetchLiveDashboardMetrics() {
         dueDate: w.end_date,
         daysInStatus: daysInStatus,
         slaRemainingMs: null,
-        isOverdue: w.end_date && new Date(w.end_date).getTime() < now && status !== "Resolved"
+        isOverdue: isOverdue(w.end_date, status)
       });
     });
 

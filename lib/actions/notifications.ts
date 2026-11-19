@@ -20,7 +20,8 @@ export async function fetchUnreadNotifications() {
     .select("*")
     .eq("user_id", userData.user.id)
     .eq("is_read", false)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   if (error) {
     console.error("Error fetching notifications:", error);

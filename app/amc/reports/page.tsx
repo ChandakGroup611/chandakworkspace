@@ -7,15 +7,16 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
-import { 
-  BarChart2, 
-  DollarSign, 
-  Download, 
-  ArrowLeft, 
-  PieChart, 
-  List, 
-  CheckCircle, 
-  Clock, 
+import { isOverdue } from "@/lib/utils/date-utils";
+import {
+  BarChart2,
+  DollarSign,
+  Download,
+  ArrowLeft,
+  PieChart,
+  List,
+  CheckCircle,
+  Clock,
   AlertCircle,
   Activity,
   Layers,
@@ -32,7 +33,7 @@ export default function AMCReportsPage() {
   try {
     const themeCtx = useTheme();
     isLightMode = themeCtx.isLight;
-  } catch (e) {}
+  } catch (e) { }
   const supabase = createClient();
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
   const [loading, setLoading] = useState(true);
@@ -73,7 +74,7 @@ export default function AMCReportsPage() {
           departments:cost_center_id(name)
         `)
         .eq('is_deleted', false);
-      
+
       // 2. Fetch all Invoices
       const { data: invData } = await supabase
         .from('amc_invoices')
@@ -356,7 +357,7 @@ export default function AMCReportsPage() {
                       </AppTableRow>
                     ) : (
                       invoices.map(inv => {
-                        const isOverdue = inv.status === 'Pending' && inv.due_date && new Date(inv.due_date) < new Date();
+                        const isInvOverdue = isOverdue(inv.due_date, inv.status);
                         return (
                           <AppTableRow key={inv.id} className="border-b border-border hover:bg-elevated/60 transition-colors">
                             <AppTableCell className="p-3 font-semibold text-foreground">{inv.software_amc?.software_name || '-'}</AppTableCell>
@@ -366,12 +367,11 @@ export default function AMCReportsPage() {
                               ₹ {(parseFloat(inv.amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </AppTableCell>
                             <AppTableCell className="p-3">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                                inv.status === 'Paid' ? 'bg-success-soft text-success-text border-success-border' :
-                                isOverdue ? 'bg-danger-soft text-danger-text border-danger-border' :
-                                'bg-warning-soft text-warning-text border-warning-border'
-                              }`}>
-                                {inv.status === 'Paid' ? 'Paid' : isOverdue ? 'Overdue' : 'Pending'}
+                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${inv.status === 'Paid' ? 'bg-success-soft text-success-text border-success-border' :
+                                  isInvOverdue ? 'bg-danger-soft text-danger-text border-danger-border' :
+                                    'bg-warning-soft text-warning-text border-warning-border'
+                                }`}>
+                                {inv.status === 'Paid' ? 'Paid' : isInvOverdue ? 'Overdue' : 'Pending'}
                               </span>
                             </AppTableCell>
                             <AppTableCell className="p-3 text-muted">{inv.payment_date ? String(inv.payment_date).slice(0, 10) : '-'}</AppTableCell>

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -14,7 +15,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { EmptyState } from "@/components/ui/feedback/States";
 import { formatDate } from "@/components/ui/data";
-import { Info } from "lucide-react";
 
 // Mock data for UI demonstration since DB tables might not exist locally
 const initialHolidays = [
@@ -36,18 +36,38 @@ export default function HolidayCalendar() {
   const canUpdate = isSuperAdmin || hasPermission("SLA_UPDATE") || hasPermission("SLA_MANAGE");
   const canDelete = isSuperAdmin || hasPermission("SLA_DELETE") || hasPermission("SLA_MANAGE");
 
-  const [holidays, setHolidays] = useState(initialHolidays);
+  const [holidays, setHolidays] = useState<any[]>([]);
   const [workingHours, setWorkingHours] = useState(initialWorkingHours);
   const [activeTab, setActiveTab] = useState<"holidays" | "working_hours">("holidays");
 
-  const [newHoliday, setNewHoliday] = useState({ name: "", date: "", region: "Global" });
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadHolidays() {
+      const { data, error } = await supabase
+        .from('sla_holidays')
+        .select('*')
+        .order('holiday_date', { ascending: true });
+      if (!error && data) {
+        setHolidays(data.map((h: any) => ({
+          id: h.id,
+          name: h.holiday_name,
+          date: h.holiday_date,
+          region: h.region || 'India'
+        })));
+      }
+    }
+    loadHolidays();
+  }, []);
+
+  const [newHoliday, setNewHoliday] = useState({ name: "", date: "", region: "India" });
   
   // Working Hours Modal State
   const [editingWorkingHours, setEditingWorkingHours] = useState<any | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ name: "", timezone: "UTC", schedule: "" });
 
-  const handleAddHoliday = () => {
+  const handleAddHoliday = async () => {
     if (!canCreate) {
       toast.error("You do not have permission to add holidays.");
       return;
@@ -56,14 +76,30 @@ export default function HolidayCalendar() {
       toast.warning("Please enter holiday name and date.");
       return;
     }
-    setHolidays([...holidays, { ...newHoliday, id: Date.now().toString() }]);
-    setNewHoliday({ name: "", date: "", region: "Global" });
+    const { data, error } = await supabase.from('sla_holidays').insert([{
+      holiday_name: newHoliday.name.trim(),
+      holiday_date: newHoliday.date,
+      region: newHoliday.region || 'India'
+    }]).select().single();
+
+    if (error) {
+      toast.error(error.message || "Failed to add holiday.");
+      return;
+    }
+
+    setHolidays([...holidays, { id: data.id, name: data.holiday_name, date: data.holiday_date, region: data.region }]);
+    setNewHoliday({ name: "", date: "", region: "India" });
     toast.success("Holiday added to calendar.");
   };
 
-  const handleDeleteHoliday = (id: string) => {
+  const handleDeleteHoliday = async (id: string) => {
     if (!canDelete) {
       toast.error("You do not have permission to delete holidays.");
+      return;
+    }
+    const { error } = await supabase.from('sla_holidays').delete().eq('id', id);
+    if (error) {
+      toast.error(error.message || "Failed to remove holiday.");
       return;
     }
     setHolidays(holidays.filter(h => h.id !== id));
@@ -157,18 +193,13 @@ export default function HolidayCalendar() {
         breadcrumbs={[{ label: "SLA tracking", href: "/sla" }, { label: "Working hours and holidays" }]}
       />
 
-      <div role="note" className="mb-4 flex items-start gap-2.5 rounded-md border border-info-border bg-info-soft p-3 text-[13px] text-info-text">
-        <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-        <p>This page shows sample data for now. Holidays and schedules you add here aren&apos;t saved yet and are cleared when you leave the page.</p>
-      </div>
-
       <div role="tablist" aria-label="Schedules" className="flex gap-1 overflow-x-auto border-b border-border hide-scrollbar">
-        <button type="button" role="tab" aria-selected={activeTab === 'holidays'} onClick={() => setActiveTab("holidays")} className={`${TAB} ${activeTab === 'holidays' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
+        <AppButton type="button" role="tab" aria-selected={activeTab === 'holidays'} onClick={() => setActiveTab("holidays")} className={`${TAB} ${activeTab === 'holidays' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
           <Calendar className="w-4 h-4" aria-hidden /> Holidays
-        </button>
-        <button type="button" role="tab" aria-selected={activeTab === 'working_hours'} onClick={() => setActiveTab("working_hours")} className={`${TAB} ${activeTab === 'working_hours' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
+        </AppButton>
+        <AppButton type="button" role="tab" aria-selected={activeTab === 'working_hours'} onClick={() => setActiveTab("working_hours")} className={`${TAB} ${activeTab === 'working_hours' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
           <Clock className="w-4 h-4" aria-hidden /> Working hours
-        </button>
+        </AppButton>
       </div>
 
       <div className="mt-5">
@@ -267,16 +298,17 @@ export default function HolidayCalendar() {
               </AppCard>
             ))}
             {canCreate && (
-              <button
+              <AppButton
                 type="button"
+                variant="outline"
                 onClick={handleOpenCreateSchedule}
-                className="flex min-h-[148px] items-center justify-center rounded-lg border border-border bg-sunken text-center transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex min-h-[148px] h-auto flex-col items-center justify-center rounded-lg border border-border bg-sunken text-center transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring p-4"
               >
                 <span>
                   <Plus className="mx-auto mb-1.5 h-6 w-6 text-muted" aria-hidden />
                   <span className="text-[13.5px] font-medium text-subtle">New working hours profile</span>
                 </span>
-              </button>
+              </AppButton>
             )}
           </div>
         )}

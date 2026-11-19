@@ -1,7 +1,11 @@
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { hasPermission } from '@/lib/permissions';
 
-export async function getVisibleTasks(userId: string, customSelect?: string) {
+export async function getVisibleTasks(
+  userId: string, 
+  customSelect?: string,
+  options?: { limit?: number; offset?: number; page?: number }
+) {
   const canViewAll = await hasPermission(userId, 'TASKS_MANAGE');
   
   const defaultSelect = `
@@ -14,11 +18,15 @@ export async function getVisibleTasks(userId: string, customSelect?: string) {
       workspace:workspaces(workspace_name)
   `;
 
+  const maxLimit = Math.min(options?.limit || 1000, 1000);
+  const offset = options?.offset ?? (options?.page ? (options.page - 1) * maxLimit : 0);
+
   let query = supabaseAdmin
     .from('tasks')
-    .select(customSelect || defaultSelect)
+    .select(customSelect || defaultSelect, { count: 'exact' })
     .eq('is_deleted', false)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, offset + maxLimit - 1);
 
   if (!canViewAll) {
     let orFilters = [`created_by.eq.${userId}`, `assigned_to.eq.${userId}`];

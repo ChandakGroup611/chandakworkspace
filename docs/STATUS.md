@@ -31,12 +31,12 @@
 | **3.3** | WP3 | UAT FAIL dialog: selectively reopen user-ticked tasks | `18a7bb73` | — | TC-REQ-005 | DONE |
 | **3.4** | WP3 | Single-function status transitions for tickets and requirements | `18a7bb73` | — | TC-TCK-002, TC-REQ-002 | DONE |
 | **3.5** | WP3 | Data audit: tickets/requirements status consistency report | `18a7bb73` | — | TC-TCK-001, TC-REQ-001 | DONE |
-| **4.1** | WP4 | Atomic email queue claiming with SKIP LOCKED and backoff intervals | — | — | TC-MAIL-008 | TODO |
-| **4.2** | WP4 | Asia/Kolkata date handling (todayIST, toISTDateString, isOverdue) | — | — | TC-TASK-005, TC-TCK-005 | TODO |
-| **4.3** | WP4 | TAT escalation using working days & holiday calendar (D9) | — | — | TC-XMOD-003 | TODO |
-| **4.4** | WP4 | 1000-row cap: server pagination and count aggregates | — | — | TC-TASK-001, TC-TCK-001 | TODO |
-| **4.5** | WP4 | createTask duplicate prevention returning existing task ID | — | — | TC-TASK-003 | TODO |
-| **4.6** | WP4 | Status change notification emails format human-readable status names | — | — | TC-MAIL-002 | TODO |
+| **4.1** | WP4 | Atomic email queue claiming with SKIP LOCKED and backoff intervals | pending | — | TC-MAIL-008 | DONE |
+| **4.2** | WP4 | Asia/Kolkata date handling (todayIST, toISTDateString, isOverdue) | pending | — | TC-TASK-005, TC-TCK-005 | DONE |
+| **4.3** | WP4 | TAT escalation using working days & holiday calendar (D9) | pending | — | TC-XMOD-003, TC-XMOD-006 | DONE |
+| **4.4** | WP4 | 1000-row cap: server pagination and count aggregates | pending | — | TC-TASK-001, TC-TCK-001 | DONE |
+| **4.5** | WP4 | createTask duplicate prevention returning existing task ID | pending | — | TC-TASK-003 | DONE |
+| **4.6** | WP4 | Status change notification emails format human-readable status names | pending | — | TC-MAIL-002 | DONE |
 | **5.1** | WP5 | Unified soft delete via LifecycleManager.moveToTrash | — | — | TC-TASK-007, TC-TCK-007 | TODO |
 | **5.2** | WP5 | Batch restore via LifecycleManager.restoreFromTrash with parent checks | — | — | TC-REGR-004 | TODO |
 | **5.3** | WP5 | Purge: Super Admin typed confirmation and child cascade check | — | — | TC-TASK-007 | TODO |

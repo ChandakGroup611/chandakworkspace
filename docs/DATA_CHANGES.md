@@ -104,4 +104,21 @@
   WHERE r.id = b.id;
   ```
 
+---
+
+## 2026-11-19: Master Programme WP4 (Items 4.1, 4.3 & Decision D9)
+
+### 6. Email Queue Alignment & Atomic Claiming Function
+- **What:**
+  - Added columns `status`, `attempts`, `retry_count`, `next_retry_at`, `error_message`, `processed_at`, `html_body`, `module`, `event`, `recipient_user_id`, `provider_used` to `public.email_queue`.
+  - Backfilled `status` (`'COMPLETED'` for `is_sent = true`, `'PENDING'` for others).
+  - Created Postgres RPC function `public.claim_email_queue_batch(p_batch_size INT)` with `FOR UPDATE SKIP LOCKED`.
+  - Created table `public.sla_holidays` with RLS and seeded 14 statutory Indian/Maharashtra holidays for 2026-2027.
+- **Why:** Prevent race conditions / duplicate deliveries in async email processor across concurrent workers, enable progressive backoff (1m, 5m, 15m, 60m), and provide database-backed holiday calendar for TAT SLA calculations.
+- **Affected Row Count:** 866 rows in `email_queue`.
+- **Backup Table:** `public.backup_email_queue_20261119` (866 rows).
+- **Migration Script:** `supabase/migrations/20261119120000_wp4_reliability_and_concurrency.sql`
+- **How to Undo:**
+  Run `supabase/migrations/20261119120000_wp4_reliability_and_concurrency_down.sql`.
+
 

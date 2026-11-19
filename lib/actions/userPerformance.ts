@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
+import { isOverdue as isOverdueHelper } from "@/lib/utils/date-utils";
 
 export interface UserPerformanceActivity {
   id: string;
@@ -303,7 +304,7 @@ export async function fetchUserPerformanceWorkingSheet(
       const rawStatus = (t.status_master as any)?.status_name || "Active";
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
-      const isOverdue = !!t.end_date && new Date(t.end_date).getTime() < now && !isResolved;
+      const isOverdue = isOverdueHelper(t.end_date, isResolved);
       
       const completedTime = t.updated_at ? new Date(t.updated_at).getTime() : new Date(t.created_at).getTime();
       const dueTime = t.end_date ? new Date(t.end_date).getTime() : null;
@@ -380,7 +381,7 @@ export async function fetchUserPerformanceWorkingSheet(
       const rawStatus = (tk.status_master as any)?.status_name || "Open";
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
-      const isOverdue = !!tk.due_date && new Date(tk.due_date).getTime() < now && !isResolved;
+      const isOverdue = isOverdueHelper(tk.due_date, isResolved);
 
       const completedTime = tk.updated_at ? new Date(tk.updated_at).getTime() : new Date(tk.created_at).getTime();
       const dueTime = tk.due_date ? new Date(tk.due_date).getTime() : null;
@@ -419,7 +420,7 @@ export async function fetchUserPerformanceWorkingSheet(
       const rawStatus = (rq.status_master as any)?.status_name || "Submitted";
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
-      const isOverdue = !!rq.due_date && new Date(rq.due_date).getTime() < now && !isResolved;
+      const isOverdue = isOverdueHelper(rq.due_date, isResolved);
 
       const completedTime = rq.updated_at ? new Date(rq.updated_at).getTime() : new Date(rq.created_at).getTime();
       const dueTime = rq.due_date ? new Date(rq.due_date).getTime() : null;
@@ -468,7 +469,7 @@ export async function fetchUserPerformanceWorkingSheet(
       const rawStatus = (w.status_master as any)?.status_name || "Active";
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
-      const isOverdue = !!w.end_date && new Date(w.end_date).getTime() < now && !isResolved;
+      const isOverdue = isOverdueHelper(w.end_date, isResolved);
       const isSub = !!w.parent_workspace_id;
 
       const completedTime = w.updated_at ? new Date(w.updated_at).getTime() : new Date(w.created_at).getTime();

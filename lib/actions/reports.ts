@@ -4,6 +4,7 @@ import { getVisibleTickets } from "@/lib/repositories/tickets";
 import { getVisibleRequirements } from "@/lib/repositories/requirements";
 import { cookies } from "next/headers";
 import { createClient as createServerClient } from "@/utils/supabase/server";
+import { todayIST } from "@/lib/utils/date-utils";
 
 function generateExecutiveCSV(title: string, data: any[], columns: { header: string; key: string | ((row: any) => string) }[]) {
   const lines: string[] = [];
@@ -62,7 +63,7 @@ export async function exportTicketReport(userId: string) {
   const csv = generateExecutiveCSV("Ticket Operations Report", tickets, columns);
   
   return {
-    filename: `Ticket_Report_${new Date().toISOString().split('T')[0]}.csv`,
+    filename: `Ticket_Report_${todayIST()}.csv`,
     mimeType: "text/csv",
     content: csv
   };
@@ -85,7 +86,7 @@ export async function exportRequirementReport(userId: string) {
   const csv = generateExecutiveCSV("Requirement Delivery & Governance Report", requirements, columns);
   
   return {
-    filename: `Requirement_Report_${new Date().toISOString().split('T')[0]}.csv`,
+    filename: `Requirement_Report_${todayIST()}.csv`,
     mimeType: "text/csv",
     content: csv
   };
