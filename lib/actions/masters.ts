@@ -10,46 +10,86 @@ import { revalidatePath } from "next/cache";
  * Architecture: Scope-Driven, Relational, Real-time safe
  */
 
-export async function fetchScopes() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data, error } = await supabase
-    .from("ticket_scopes")
-    .select("*")
-    .order("name");
-  
-  if (error) {
-    console.error("Error fetching ticket scopes:", error);
-    return [];
+const CANONICAL_SCOPES = [
+  {
+    id: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1",
+    code: "INFRA",
+    name: "IT Infrastructure",
+    description: "Server issues, hardware faults, network connectivity, and assigned asset support.",
+  },
+  {
+    id: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2",
+    code: "ERP",
+    name: "ERP & Software Systems",
+    description: "SAP, Salesforce, internal modules, bugs, and software requirement requests.",
+  },
+  {
+    id: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3",
+    code: "OTHERS",
+    name: "General Inquiries",
+    description: "General support, access requests, and other non-technical operational help.",
   }
-  return data;
+];
+
+let cachedScopes: any[] | null = null;
+let scopesCachedAt = 0;
+
+export async function fetchScopes() {
+  const now = Date.now();
+  if (cachedScopes && now - scopesCachedAt < 300_000) {
+    return cachedScopes;
+  }
+
+  try {
+    const { supabaseAdmin } = await import("@/lib/supabase/service_role");
+    const { data, error } = await supabaseAdmin
+      .from("ticket_scopes")
+      .select("*")
+      .order("name");
+    
+    if (!error && data && data.length > 0) {
+      cachedScopes = data;
+      scopesCachedAt = now;
+      return data;
+    }
+  } catch (err) {
+    console.error("[fetchScopes] error fetching ticket scopes, using canonical fallback:", err);
+  }
+
+  return cachedScopes || CANONICAL_SCOPES;
 }
+
+const mastersCacheByScope = new Map<string, { data: Record<string, any[]>; timestamp: number }>();
 
 /**
  * Fetches all baseline masters mapped to a specific scope.
- * Target performance: <200ms
+ * Target performance: <20ms (in-memory cached for 5 minutes)
  */
 export async function fetchMastersByScope(scopeId: string) {
   if (!scopeId) return {};
+
+  const now = Date.now();
+  const cached = mastersCacheByScope.get(scopeId);
+  if (cached && now - cached.timestamp < 300_000) {
+    return cached.data;
+  }
   
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const { supabaseAdmin } = await import("@/lib/supabase/service_role");
   
   // 1. Resolve architectural mapping for the scope
-  const { data: mappings, error: mapError } = await supabase
+  const { data: mappings, error: mapError } = await supabaseAdmin
     .from("scope_master_mapping")
     .select("master_key")
     .eq("scope_id", scopeId);
   
   if (mapError) {
     console.error(`Error fetching mappings for scope ${scopeId}:`, mapError);
-    return {};
+    return cached?.data || {};
   }
   
-  const masterKeys = mappings.map(m => m.master_key);
-  console.log(`[Masters] Fetching for scope: ${scopeId}, keys:`, masterKeys);
+  const masterKeys = (mappings || []).map(m => m.master_key);
   
-  // 2. Parallelized Execution of Scoped Master Queries
+  // 2. Parallelized Execution of Scoped Master Queries using supabaseAdmin for high performance
   const masterData = await Promise.all(masterKeys.map(async (key) => {
     let tableName = "";
     switch (key) {
@@ -67,7 +107,7 @@ export async function fetchMastersByScope(scopeId: string) {
     
     if (!tableName) return { key, data: [] };
 
-    let query = supabase.from(tableName).select("*");
+    let query = supabaseAdmin.from(tableName).select("*");
     
     // Enforce STRICT scope isolation across all master tables
     query = query.eq("scope_id", scopeId);
@@ -103,6 +143,7 @@ export async function fetchMastersByScope(scopeId: string) {
     if (item) results[item.key] = item.data;
   });
 
+  mastersCacheByScope.set(scopeId, { data: results, timestamp: now });
   return results;
 }
 

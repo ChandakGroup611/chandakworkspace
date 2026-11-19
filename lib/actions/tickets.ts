@@ -476,9 +476,12 @@ export async function generateTeamsMeetingLink(ticketId: string) {
   return { success: true, teamsMeeting: updatedCustomFields.teams_meeting };
 }
 
+let cachedMetadata: any = null;
+let metadataCachedAt = 0;
+
 /**
  * Fetches all data required for the Tickets Dashboard
- * Uses optimized repositories and explicit queries
+ * Uses in-memory cached metadata (5-min TTL) and optimized single ticket repository query
  */
 export async function fetchTicketDashboardData(filters?: { searchQuery?: string, status_id?: string, priority_id?: string, scope_id?: string }) {
   const cookieStore = await cookies();
@@ -489,60 +492,79 @@ export async function fetchTicketDashboardData(filters?: { searchQuery?: string,
     throw new Error("Unauthenticated. Please log in first.");
   }
 
-  // Import dynamically or ensure it's imported at top (we'll just use it)
-  // Actually since we are in actions/tickets.ts, we should import getVisibleTickets at the top.
-  // Wait, I can't put import at the bottom.
-  // Let me just import it inline for now, or use require.
   const { getVisibleTickets } = await import('@/lib/repositories/tickets');
+  const { supabaseAdmin } = await import('@/lib/supabase/service_role');
 
-  const tickets = await getVisibleTickets(user.id, undefined, filters);
+  const ticketsPromise = getVisibleTickets(user.id, undefined, filters).catch((err) => {
+    console.error("[fetchTicketDashboardData] getVisibleTickets error:", err);
+    return [];
+  });
 
   const scopeId = filters?.scope_id !== "ALL" ? filters?.scope_id : null;
+  const now = Date.now();
 
-  let prioQuery = supabase.from("priority_master").select("*, name:priority_name, code:priority_code").eq("is_deleted", false);
-  let stateQuery = supabase.from("status_master").select("*, name:status_name, code:status_code");
-  let catQuery = supabase.from("ticket_categories").select("*").eq("is_deleted", false);
-  let subcatQuery = supabase.from("ticket_subcategories").select("*").eq("is_deleted", false);
-  let typeQuery = supabase.from("issue_types").select("*").eq("is_deleted", false);
+  let metadata = cachedMetadata;
+  if (!metadata || now - metadataCachedAt >= 300_000) {
+    const [deptRes, prioRes, stateRes, catRes, subcatRes, typeRes, scopeRes] = await Promise.all([
+      supabaseAdmin.from("departments").select("*").eq("is_deleted", false),
+      supabaseAdmin.from("priority_master").select("*, name:priority_name, code:priority_code").eq("is_deleted", false),
+      supabaseAdmin.from("status_master").select("*, name:status_name, code:status_code"),
+      supabaseAdmin.from("ticket_categories").select("*").eq("is_deleted", false),
+      supabaseAdmin.from("ticket_subcategories").select("*").eq("is_deleted", false),
+      supabaseAdmin.from("issue_types").select("*").eq("is_deleted", false),
+      supabaseAdmin.from("ticket_scopes").select("*")
+    ]);
 
-  if (scopeId) {
-    prioQuery = prioQuery.eq("scope_id", scopeId);
-    stateQuery = stateQuery.eq("scope_id", scopeId);
-    catQuery = catQuery.eq("scope_id", scopeId);
-    subcatQuery = subcatQuery.eq("scope_id", scopeId);
-    typeQuery = typeQuery.eq("scope_id", scopeId);
+    const dedupe = (arr: any[]) => {
+      const seen = new Set();
+      return (arr || []).filter(item => {
+        const code = item.code || item.name;
+        if (seen.has(code)) return false;
+        seen.add(code);
+        return true;
+      });
+    };
+
+    metadata = {
+      departments: deptRes.data || [],
+      priorities: dedupe(prioRes.data || []),
+      states: dedupe(stateRes.data || []),
+      categories: dedupe(catRes.data || []),
+      subcategories: dedupe(subcatRes.data || []),
+      issueTypes: dedupe(typeRes.data || []),
+      scopes: scopeRes.data || []
+    };
+
+    cachedMetadata = metadata;
+    metadataCachedAt = now;
   }
 
-  const [deptRes, prioRes, stateRes, catRes, subcatRes, typeRes, scopeRes] = await Promise.all([
-    supabase.from("departments").select("*").eq("is_deleted", false),
-    prioQuery,
-    stateQuery,
-    catQuery,
-    subcatQuery,
-    typeQuery,
-    supabase.from("ticket_scopes").select("*")
-  ]);
+  const tickets = await ticketsPromise;
 
-  const dedupe = (arr: any[]) => {
-    if (scopeId) return arr;
-    const seen = new Set();
-    return arr.filter(item => {
-      const code = item.code || item.name;
-      if (seen.has(code)) return false;
-      seen.add(code);
-      return true;
-    });
-  };
+  // If a specific scopeId filter is applied, filter the metadata lists
+  let priorities = metadata.priorities;
+  let states = metadata.states;
+  let categories = metadata.categories;
+  let subcategories = metadata.subcategories;
+  let issueTypes = metadata.issueTypes;
+
+  if (scopeId) {
+    priorities = priorities.filter((p: any) => p.scope_id === scopeId);
+    states = states.filter((s: any) => s.scope_id === scopeId);
+    categories = categories.filter((c: any) => c.scope_id === scopeId);
+    subcategories = subcategories.filter((sc: any) => sc.scope_id === scopeId);
+    issueTypes = issueTypes.filter((t: any) => t.scope_id === scopeId);
+  }
 
   return {
-    tickets,
-    departments: deptRes.data || [],
-    priorities: dedupe(prioRes.data || []),
-    states: dedupe(stateRes.data || []),
-    categories: dedupe(catRes.data || []),
-    subcategories: dedupe(subcatRes.data || []),
-    issueTypes: dedupe(typeRes.data || []),
-    scopes: scopeRes.data || []
+    tickets: tickets || [],
+    departments: metadata.departments || [],
+    priorities: priorities || [],
+    states: states || [],
+    categories: categories || [],
+    subcategories: subcategories || [],
+    issueTypes: issueTypes || [],
+    scopes: metadata.scopes || []
   };
 }
 

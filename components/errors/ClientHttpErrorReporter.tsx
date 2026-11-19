@@ -34,6 +34,14 @@ export function ClientHttpErrorReporter() {
         const response = await originalFetch(...args);
         if (!response.ok && response.status >= 400) {
           const rawUrl = typeof args[0] === "string" ? args[0] : (args[0] instanceof Request ? args[0].url : String(args[0]));
+
+          // E2 Auto-reload on Next.js 409 Conflict (stale action ID / deployment version skew)
+          if (response.status === 409 && !isReloading.current) {
+            isReloading.current = true;
+            saveFormDrafts();
+            showReloadNoticeAndReload();
+          }
+
           // Prevent recursive loop on error logging and background version polling
           if (!rawUrl.includes("/api/log-http-error") && !rawUrl.includes("/api/version")) {
             const method = (args[1]?.method || (args[0] instanceof Request ? args[0].method : "GET")).toUpperCase();

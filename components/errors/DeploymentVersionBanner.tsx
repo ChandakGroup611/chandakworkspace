@@ -46,9 +46,9 @@ export function DeploymentVersionBanner() {
     // R1: Periodic poll every 10 minutes (600,000 ms), paused when tab is hidden
     const interval = setInterval(checkVersion, 600000);
 
-    // Check on window focus only if at least 10 minutes have elapsed since last check
+    // Check on window focus if at least 30 seconds have elapsed since last check
     const handleFocus = () => {
-      if (Date.now() - lastCheckedAt >= 600000) {
+      if (Date.now() - lastCheckedAt >= 30000) {
         checkVersion();
       }
     };

@@ -127,12 +127,11 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // R1: Skip Supabase getUser round trip for health, heartbeat, session endpoints, static assets, and RSC prefetch requests
+  // R1: Skip Supabase getUser round trip for health endpoints, static assets, and RSC prefetch requests
   if (
     pathname === "/api/version" || 
     pathname === "/api/health" || 
     pathname === "/api/heartbeat" ||
-    pathname.startsWith("/api/session/") ||
     pathname === "/sys-deploy-c7a8b9e1.php"
   ) {
     return NextResponse.next();
@@ -168,9 +167,11 @@ export async function middleware(request: NextRequest) {
   // Dashboard engine API calls (/dashboards/<key>/api/...) answer 401 JSON themselves.
   const isApiRoute = pathname.startsWith("/api") || /^\/dashboards\/[^/]+\/(api|static|healthz)(\/|$)/.test(pathname);
   const isAuthCallback = pathname.startsWith("/auth/");
+  const isServerAction = Boolean(request.headers.get("next-action"));
 
-  // If user is not authenticated and trying to access protected routes, redirect to /login
-  if (!user && !isAuthPage && !isApiRoute && !isAuthCallback) {
+  // If user is not authenticated and trying to access protected page routes, redirect to /login
+  // Never redirect Server Action RPC calls to /login HTML, as that breaks the client action protocol with 307
+  if (!user && !isAuthPage && !isApiRoute && !isAuthCallback && !isServerAction) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname + request.nextUrl.search);

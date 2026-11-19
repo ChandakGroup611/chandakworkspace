@@ -13,16 +13,54 @@ interface TicketScopeSelectorProps {
   onDiscard?: () => void;
 }
 
+const FALLBACK_SCOPES = [
+  {
+    id: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1",
+    code: "INFRA",
+    name: "IT Infrastructure",
+    description: "Server issues, hardware faults, network connectivity, and assigned asset support.",
+  },
+  {
+    id: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2",
+    code: "ERP",
+    name: "ERP & Software Systems",
+    description: "SAP, Salesforce, internal modules, bugs, and software requirement requests.",
+  },
+  {
+    id: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3",
+    code: "OTHERS",
+    name: "General Inquiries",
+    description: "General support, access requests, and other non-technical operational help.",
+  }
+];
+
 export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelectorProps) {
   const { isLight: isLightMode } = useTheme();
-  const [dbScopes, setDbScopes] = React.useState<any[]>([]);
+  const [dbScopes, setDbScopes] = React.useState<any[]>(FALLBACK_SCOPES);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetchScopes().then(data => {
-      setDbScopes(data);
-      setLoading(false);
-    });
+    let isMounted = true;
+    fetchScopes()
+      .then(data => {
+        if (!isMounted) return;
+        if (data && data.length > 0) {
+          setDbScopes(data);
+        } else {
+          setDbScopes(FALLBACK_SCOPES);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load scopes:", err);
+        if (isMounted) setDbScopes(FALLBACK_SCOPES);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const getIcon = (code: string) => {

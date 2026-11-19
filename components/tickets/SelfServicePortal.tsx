@@ -24,9 +24,9 @@ export function SelfServicePortal() {
     try {
       const data = await fetchTicketDashboardData({ searchQuery: searchQuery || undefined });
       
-      const finalTicketData = data.tickets || [];
-      const activeStates = data.states || [];
-      const activePrios = data.priorities || [];
+      const finalTicketData = data?.tickets || [];
+      const activeStates = data?.states || [];
+      const activePrios = data?.priorities || [];
 
       const mappedTickets = finalTicketData.map((t: any) => ({
         ...t,
@@ -39,6 +39,7 @@ export function SelfServicePortal() {
       setTickets(mappedTickets);
     } catch (err) {
       console.error("Failed to load your tickets:", err);
+      setTickets([]);
     } finally {
       setLoading(false);
     }

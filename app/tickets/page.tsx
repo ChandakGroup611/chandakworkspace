@@ -85,14 +85,14 @@ function TicketsPageContent() {
         scope_id: selectedScope
       });
 
-      const finalTicketData = data.tickets || [];
-      const activeDepts = data.departments || [];
-      const activePrios = data.priorities || [];
-      const activeStates = data.states || [];
-      const activeCats = data.categories || [];
-      const activeSubcats = data.subcategories || [];
-      const activeTypes = data.issueTypes || [];
-      const activeScopes = data.scopes || [];
+      const finalTicketData = data?.tickets || [];
+      const activeDepts = data?.departments || [];
+      const activePrios = data?.priorities || [];
+      const activeStates = data?.states || [];
+      const activeCats = data?.categories || [];
+      const activeSubcats = data?.subcategories || [];
+      const activeTypes = data?.issueTypes || [];
+      const activeScopes = data?.scopes || [];
 
       setDepartments(activeDepts);
       setPriorities(activePrios);
@@ -102,7 +102,7 @@ function TicketsPageContent() {
       setIssueTypes(activeTypes);
       
       // Map scopes for the list filter pills (requires id and name properties)
-      setScopesList(activeScopes.map(s => ({
+      setScopesList(activeScopes.map((s: any) => ({
         id: s.id,
         name: s.name,
         code: s.code
@@ -114,12 +114,12 @@ function TicketsPageContent() {
           ...t,
           dbId: t.id,
           id: t.code || `INC-${t.id.slice(0, 8)}`,
-          priorityObj: activePrios.find(p => p.id === t.priority_id),
-          statusObj: activeStates.find(s => s.id === t.status_id),
-          departmentObj: activeDepts.find(d => d.id === t.department_id),
-          categoryObj: activeCats.find(c => c.id === custom.category_id),
-          subcategoryObj: activeSubcats.find(sc => sc.id === custom.subcategory_id),
-          issueTypeObj: activeTypes.find(it => it.id === custom.issue_type_id),
+          priorityObj: activePrios.find((p: any) => p.id === t.priority_id),
+          statusObj: activeStates.find((s: any) => s.id === t.status_id),
+          departmentObj: activeDepts.find((d: any) => d.id === t.department_id),
+          categoryObj: activeCats.find((c: any) => c.id === custom.category_id),
+          subcategoryObj: activeSubcats.find((sc: any) => sc.id === custom.subcategory_id),
+          issueTypeObj: activeTypes.find((it: any) => it.id === custom.issue_type_id),
           assignedTo: t.assignee?.full_name || "",
           createdAt: t.created_at
         };
