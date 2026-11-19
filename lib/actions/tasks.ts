@@ -401,7 +401,7 @@ export async function createTask(payload: {
     }
 
     // In-app & realtime notifications
-    if (task.assigned_to && task.assigned_to !== creatorId) {
+    if (task.assigned_to) {
       dispatchNotification(
         task.assigned_to,
         'Task Assigned',
@@ -415,7 +415,7 @@ export async function createTask(payload: {
 
     if (payload.participants && payload.participants.length > 0) {
       for (const p of payload.participants) {
-        if (p.user_id && p.user_id !== creatorId && p.user_id !== task.assigned_to) {
+        if (p.user_id && p.user_id !== task.assigned_to) {
           dispatchNotification(
             p.user_id,
             'Task Assignment',
@@ -445,7 +445,8 @@ export async function createTask(payload: {
       is_subtask: !!task.parent_task_id,
       parent_task_id: task.parent_task_id || null,
       task_type: task.parent_task_id ? 'Subtask' : 'Task',
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${task.id}`
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${task.id}`,
+      _disableInApp: true
     };
 
     queueBusinessEvent("Task", "Assigned", taskPayload)
@@ -1624,7 +1625,8 @@ async function notifyTaskRemark(taskId: string, remarkContent: string, authorId:
       created_by: task.created_by,
       workspace_id: task.workspace_id,
       creator_name: authorName,
-      link: `${siteUrl}${taskLink}`
+      link: `${siteUrl}${taskLink}`,
+      _disableInApp: true
     };
 
     queueBusinessEvent("Task", "Comment Added", eventPayload).catch(e =>
@@ -2186,7 +2188,8 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
       workspace_id: taskData?.workspace_id,
       department_id: taskData?.department_id,
       creator_name: user?.user_metadata?.full_name || "System",
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`,
+      _disableInApp: true
     }).catch(e => console.error("[NotificationEngine] Background push failed", e));
   }).then(undefined, () => { });
 
@@ -2212,7 +2215,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const taskSubject = taskDetails?.subject || 'Task';
 
   // Notify newly assigned primary assignee if changed
-  if (finalPrimaryId && finalPrimaryId !== userId && finalPrimaryId !== task.assigned_to) {
+  if (finalPrimaryId && finalPrimaryId !== task.assigned_to) {
     dispatchNotification(
       finalPrimaryId,
       'Task Assigned',
@@ -2226,7 +2229,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
 
   // Notify executors
   uniqueAssigneeIds.forEach(execId => {
-    if (execId !== userId && execId !== task.assigned_to) {
+    if (execId !== task.assigned_to) {
       dispatchNotification(
         execId,
         'Task Executor Assignment',
@@ -2329,6 +2332,25 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
       watchers_text: newWatcherNames || 'None'
     }
   }]);
+
+  // Dispatch in-app & email notifications to newly added watchers
+  if (uniqueWatcherIds.length > 0) {
+    const { data: currentTask } = await supabaseAdmin.from('tasks').select('subject').eq('id', taskId).maybeSingle();
+    const taskSubject = currentTask?.subject || 'Task';
+    const actorName = stakeholders.find((s: any) => s.id === userId)?.full_name || 'System';
+
+    for (const watcherId of uniqueWatcherIds) {
+      dispatchNotification(
+        watcherId,
+        'Added as Task Watcher',
+        `You have been added as a Watcher on task "${taskSubject}".`,
+        `/tasks/${taskId}`,
+        'TASK',
+        'WATCHER_ADDED',
+        { task_name: taskSubject, creator_name: actorName }
+      ).catch(e => console.error("[updateTaskWatchers] dispatchNotification failed", e));
+    }
+  }
 
   return { success: true };
 }

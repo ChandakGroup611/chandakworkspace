@@ -262,6 +262,12 @@ async function dispatchEmail(item: any, provider: any) {
     const senderName = provider.config.sender_name || provider.config.from_name || "Noreply";
     const replyToEmail = provider.config.reply_to || "Noreply@chandakgroup.com";
     
+    // For Microsoft 365 / Exchange SMTP, Microsoft rejects if the envelope from does not match the authenticated user (554 5.2.252 SendAsDenied).
+    // Use the authenticated user as the sender address while preserving the friendly display name and replyTo.
+    const isM365 = provider.provider_name === "Microsoft 365" || 
+      (provider.config.host || provider.config.smtp_host || '').toLowerCase().includes('office365');
+    const effectiveFrom = (isM365 && authUser) ? authUser : configuredFrom;
+
     const hasHtml = item.html_body || (item.body_template && (item.body_template.includes('<p') || item.body_template.includes('<div') || item.body_template.includes('<html') || item.body_template.includes('<table') || item.body_template.includes('<body')));
     
     let htmlContent = item.html_body || (hasHtml ? item.body_template : undefined);
@@ -281,7 +287,7 @@ async function dispatchEmail(item: any, provider: any) {
 
     try {
       await transporter.sendMail({
-        from: `"${senderName}" <${configuredFrom}>`,
+        from: `"${senderName}" <${effectiveFrom}>`,
         replyTo: replyToEmail,
         to: item.recipient_email,
         subject: item.subject || "System Notification",
@@ -290,14 +296,13 @@ async function dispatchEmail(item: any, provider: any) {
       });
       return true;
     } catch (sendErr: any) {
-      // If Microsoft Exchange rejects with SendAsDenied (554 5.2.252 because the authenticated user has not been granted SendAs permissions for Noreply@chandakgroup.com in M365),
-      // fallback to the authenticated sender with "Noreply" display name and replyTo so mail delivery succeeds
+      // If any unexpected SendAsDenied (554 5.2.252) still occurs, fallback to authUser
       if (
         authUser && 
-        configuredFrom.toLowerCase() !== authUser.toLowerCase() && 
+        effectiveFrom.toLowerCase() !== authUser.toLowerCase() && 
         (sendErr?.message?.includes('SendAsDenied') || sendErr?.message?.includes('554') || sendErr?.code === 'EENVELOPE')
       ) {
-        console.warn(`[dispatchEmail] SendAsDenied for ${configuredFrom}. Falling back to authenticated sender ${authUser} with "${senderName}" display name & replyTo.`);
+        console.warn(`[dispatchEmail] SendAsDenied for ${effectiveFrom}. Falling back to authenticated sender ${authUser} with "${senderName}" display name & replyTo.`);
         await transporter.sendMail({
           from: `"${senderName}" <${authUser}>`,
           replyTo: replyToEmail,

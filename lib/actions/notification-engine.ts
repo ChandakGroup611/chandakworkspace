@@ -92,10 +92,15 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       }
     }
 
-    // Suppress triggering user for all collaborative actions (e.g., Comment Added, Status Changed, Updated, Executors Changed, Assigned).
-    // The actor who performed the action must never receive an email notifying them of their own action.
+    // Suppress triggering user for collaborative actions (e.g., Comment Added, Status Changed)
+    // UNLESS the event is an explicit self-assignment / creation or self-notification was explicitly requested.
     const isPublicTicketReceipt = moduleName === 'Ticket' && eventName.toLowerCase() === 'created';
-    if (!isPublicTicketReceipt && payload.triggering_user_id) {
+    const isSelfAssignment = (
+      (eventName.toLowerCase().includes('assign') || eventName.toLowerCase() === 'created') &&
+      (payload.assigned_to === payload.triggering_user_id || payload.allow_self_notification)
+    );
+
+    if (!isPublicTicketReceipt && !isSelfAssignment && payload.triggering_user_id) {
       recipientUserIds.delete(payload.triggering_user_id);
     }
 
@@ -250,6 +255,64 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     } else {
       // Trigger background processor asynchronously (fire and forget)
       triggerBackgroundProcessor();
+    }
+
+    // 6.1 Real-Time In-App Notification Stream insertion (notification_queue & task_notifications)
+    if (!payload._disableInApp && candidateUsers.length > 0) {
+      try {
+        const itemLabel = autoHydratedPayload.task_name || 
+                          autoHydratedPayload.task_code || 
+                          autoHydratedPayload.ticket_title || 
+                          autoHydratedPayload.ticket_code || 
+                          autoHydratedPayload.workspace_name || 
+                          autoHydratedPayload.req_name || 
+                          autoHydratedPayload.ticket_no || 
+                          autoHydratedPayload.registration_number || 
+                          moduleName;
+        const notifTitle = `${moduleName} ${eventName}: ${itemLabel}`;
+        const notifMessage = autoHydratedPayload.remarks || 
+                             autoHydratedPayload.description || 
+                             autoHydratedPayload.status_transition || 
+                             `${moduleName} ${eventName}`;
+
+        const isWorkspace = moduleName === 'Workspace' || (payload.link?.includes('workspaces') && !payload.link?.includes('task='));
+        const isTicket = moduleName === 'Ticket' || payload.link?.includes('tickets');
+        const entityType = isWorkspace ? 'workspace' : (isTicket ? 'ticket' : 'task');
+        const moduleType = isWorkspace ? 'workspaces' : (isTicket ? 'tickets' : (moduleName.toLowerCase().endsWith('s') ? moduleName.toLowerCase() : `${moduleName.toLowerCase()}s`));
+        const extractedEntityId = autoHydratedPayload.task_code || autoHydratedPayload.ticket_no || payload.entity_id || 'SYS';
+
+        const inAppNotifications = candidateUsers.map(user => ({
+          target_user_id: user.id,
+          recipient_id: user.id,
+          entity_type: entityType,
+          entity_id: extractedEntityId,
+          module: moduleType,
+          action_type: eventName.toLowerCase().replace(/\s+/g, '_'),
+          actor: finalCreatorName || 'System',
+          redirect_url: payload.link || null,
+          priority_level: (eventName.toLowerCase().includes('critical') || payload.priority === 'CRITICAL') ? 'CRITICAL' : 'MEDIUM',
+          is_read: false,
+          payload: {
+            title: notifTitle,
+            message: notifMessage
+          }
+        }));
+
+        await supabaseAdmin.from("notification_queue").insert(inAppNotifications);
+
+        if (moduleName === 'Task' && payload.entity_id) {
+          const taskNotifs = candidateUsers.map(user => ({
+            user_id: user.id,
+            title: `Task ${eventName}: ${itemLabel}`,
+            message: notifMessage,
+            link: payload.link || `/tasks/${payload.entity_id}`,
+            is_read: false
+          }));
+          await supabaseAdmin.from("task_notifications").insert(taskNotifs);
+        }
+      } catch (inAppErr) {
+        console.error("[NotificationEngine] Failed to insert in-app notifications:", inAppErr);
+      }
     }
 
   } catch (err) {
