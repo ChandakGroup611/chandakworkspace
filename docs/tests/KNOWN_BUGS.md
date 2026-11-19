@@ -6,7 +6,12 @@
 **Resolved Defects (Master Programme WP1):** 8  
 
 ## Active Defects
-_None. 100% of current baseline test cases pass (74 passed, 0 failed, 50 manual parked, 10 interactive UI)._
+| # | TC-ID | Module | Severity | Affected Entity / Path | Status / Notes |
+| :---: | :--- | :--- | :---: | :--- | :--- |
+| 1 | **TC-TASK-016** | Workspace/Tasks | **P1** | `scripts/seed-test-users.ts` | Test user `test.task.standard@chandakgroup.tech` missing workspace enrollment on live DB. |
+| 2 | **TC-BDGT-001** | Budget | **P1** | `lib/budget/data.ts` | Test user `test.budget.viewer@chandakgroup.tech` missing role_id 4 in budget_members on live DB. |
+| 3 | **TC-BDGT-010** | Budget | **P1** | `scripts/seed-test-users.ts` | Test user `test.budget.viewer@chandakgroup.tech` missing viewer role on live DB. |
+| 4 | **TC-REGR-013** | Regression | **P1** | `app/dashboards/page.tsx` | Test user IT viewer assigned keys pending live cache sync. |
 
 ## Resolved Defects (WP1)
 | # | TC-ID | Module | Severity | Affected Code Path | Resolution / Work Package |
