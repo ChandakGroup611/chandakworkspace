@@ -57,5 +57,5 @@
 | **7.9** | WP7 | CI governance gate scripts/check-access.ts (5 automated RBAC gates pass) | `9ff6d8ef` | — | All | DONE |
 | **7.10** | WP7 | Read-only Access Matrix inspection screen at /settings/access-matrix | `9ff6d8ef` | — | TC-IAM-001 | DONE |
 | **7.11** | WP7 | Governance update in .agents/AGENTS.md & module deployment train | `9ff6d8ef` | — | All Modules | DONE |
-| **8.1** | WP8 | Standardize components: ActivityTimeline, SavedFiltersDropdown, Empty/Loading states | `pending` | — | All Modules | DONE |
-| **8.2** | WP8 | Build gaps: /my-work page, /approvals unified inbox, and /no-access with Request Access | `pending` | — | All Modules | DONE |
+| **8.1** | WP8 | Standardize components: ActivityTimeline, SavedFiltersDropdown, Empty/Loading states | `7ebb8ad9` | — | All Modules | DONE |
+| **8.2** | WP8 | Build gaps: /my-work page, /approvals unified inbox, and /no-access with Request Access | `7ebb8ad9` | — | All Modules | DONE |
