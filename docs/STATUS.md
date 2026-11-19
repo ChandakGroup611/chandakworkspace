@@ -5,6 +5,7 @@
 
 | Issue / Item | WP | Summary | Commit (Develop) | Prod Commit | Associated TC-IDs | Status |
 | :--- | :---: | :--- | :---: | :---: | :---: | :---: |
+| **T.1-T.7** | WP-T | Regression safety net (map, characterization baseline, changes, checklist) | `9f562889` | — | REG-001 to REG-640 | DONE |
 | **0.1** | WP0 | Check CRON_SECRET on Hostinger env and GitHub secrets | — | — | TC-XMOD-003 | PENDING_USER_SECRET |
 | **0.2** | WP0 | deploy.yml: pull_request trigger, P1 gate, smoke with auto-rollback | `6bee8c12` | — | TC-REGR-010 | DONE |
 | **0.3** | WP0 | Initialize docs/STATUS.md master programme registry | `pending` | — | — | DONE |
@@ -17,7 +18,7 @@
 | **1.7** | WP1 | Single source for dashboards visibility (sidebar, /dashboards, [key]) | `6f5cdb1d` | — | TC-DASH-001, TC-REGR-013 | DONE |
 | **1.8** | WP1 | createTask & all server actions: derive created_by from session | `ffa1a52d` | — | TC-TASK-015, TC-REQ-015, TC-AUTH-006 | DONE |
 | **1.9** | WP1 | Immediate cache invalidation on access revoke / version stamp | `2b29a002` | — | TC-AUTH-003, TC-AUTH-004 | DONE |
-| **2.1** | WP2 | Subtask creation from task page: workspace binding and error handling | — | — | TC-TASK-004 | TODO |
+| **2.1** | WP2 | Subtask creation from task page: workspace binding and error handling | `5d36b6c8` | — | TC-TASK-004 | DONE |
 | **2.2** | WP2 | Single changeTaskStatus function with R1, R2, status_master checks | — | — | TC-TASK-002, TC-TASK-006 | TODO |
 | **2.3** | WP2 | Reopen task (R1) with active is_reopen/open status & error toasts | — | — | TC-TASK-006 | TODO |
 | **2.4** | WP2 | Task page action buttons aligned with existing statuses (D1) | — | — | TC-TASK-002 | TODO |
