@@ -1125,8 +1125,8 @@ export default function TaskExecutionController({
         {/* High-Contrast Clear Warning / Notice Banner */}
         {error && (
           <div role="alert" className={`p-4 rounded-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isReloadRequiredError(error)
-              ? 'bg-warning-soft border-warning-border text-warning-text'
-              : 'bg-danger-soft border-danger-border text-danger-text'
+            ? 'bg-warning-soft border-warning-border text-warning-text'
+            : 'bg-danger-soft border-danger-border text-danger-text'
             }`}>
             <div className="flex items-start sm:items-center gap-3">
               <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden />

@@ -469,6 +469,7 @@ jobs:
           if [ -n "${{ secrets.HOSTINGER_DEPLOY_KEY }}" ]; then
             printf "%s" "${{ secrets.HOSTINGER_DEPLOY_KEY }}" > upload-payload/.deploy_secret
             curl -sS --connect-timeout 15 --max-time 30 -T upload-payload/.deploy_secret -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/.deploy_secret" || echo "FTP .deploy_secret sync failed"
+            curl -sS --connect-timeout 15 --max-time 30 -T upload-payload/.deploy_secret -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/.deploy_secret" || echo "FTP domain .deploy_secret sync failed"
           fi
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/ping.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/ping.php" || echo "FTP to domain public_html ping.php failed"
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/.htaccess -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/.htaccess" || echo "FTP to domain public_html .htaccess failed"
