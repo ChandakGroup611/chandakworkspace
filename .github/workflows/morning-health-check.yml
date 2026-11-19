@@ -1,0 +1,103 @@
+name: Morning Health Check & Full Regression Suite (08:30 IST)
+
+on:
+  schedule:
+    # 08:30 IST = 03:00 UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: morning-health-check
+  cancel-in-progress: false
+
+jobs:
+  morning_health_check:
+    name: "08:30 IST Morning Health & Full Regression Check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund
+
+      - name: Run Full Production Regression Suite
+        id: regression_suite
+        continue-on-error: true
+        env:
+          NODE_OPTIONS: "--experimental-websocket"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          BASE_URL: "https://chandakgroup.tech"
+        run: |
+          echo "Executing Full Production Regression Suite against https://chandakgroup.tech..."
+          npx tsx scripts/run-baseline-tests.ts --ci > /tmp/regression-output.txt 2>&1
+          EXIT_CODE=$?
+          cat /tmp/regression-output.txt
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "REGRESSIONS_DETECTED=true" >> "$GITHUB_ENV"
+          else
+            echo "REGRESSIONS_DETECTED=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Run Morning HTTP Errors Check (E1/E6)
+        id: http_errors
+        continue-on-error: true
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Running 24-hour HTTP error analysis..."
+          npx tsx scripts/morning-error-check.ts > /tmp/morning-errors.txt 2>&1
+          cat /tmp/morning-errors.txt
+
+      - name: Publish Morning Health Summary
+        if: always()
+        run: |
+          echo "## 🌅 Morning Health Check Report (08:30 IST)" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** https://chandakgroup.tech  " >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u)  " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$REGRESSIONS_DETECTED" = "true" ]; then
+            echo "### ❌ FAILURES & REGRESSIONS DETECTED" >> $GITHUB_STEP_SUMMARY
+            echo "> [!CAUTION]" >> $GITHUB_STEP_SUMMARY
+            echo "> Production regression suite detected failures for changes deployed in express mode." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -E "(\[TC-[A-Z0-9-]+\]|CI SAFETY GATE FAILED)" /tmp/regression-output.txt | head -n 30 >> $GITHUB_STEP_SUMMARY || cat /tmp/regression-output.txt | tail -n 25 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🟢 FULL REGRESSION SUITE: PASSED (0 Regressions)" >> $GITHUB_STEP_SUMMARY
+            echo "All P1 baseline test cases passed cleanly against production." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 24-Hour HTTP Errors & Status Trend" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/morning-errors.txt >> $GITHUB_STEP_SUMMARY || echo "No HTTP error logs available." >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          if [ -f docs/tests/BASELINE_REPORT.md ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 Summary Matrix" >> $GITHUB_STEP_SUMMARY
+            sed -n '/## 1. Summary by Operational Module/,/## 2. Master Execution Results Matrix/p' docs/tests/BASELINE_REPORT.md | head -n -1 >> $GITHUB_STEP_SUMMARY || true
+          fi
+
+      - name: Enforce Morning Gate Result
+        run: |
+          if [ "$REGRESSIONS_DETECTED" = "true" ]; then
+            echo "::error::Morning health check detected regressions on production!"
+            exit 1
+          fi
+          echo "Morning health check completed with zero regressions."

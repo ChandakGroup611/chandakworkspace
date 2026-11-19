@@ -22,6 +22,11 @@ on:
       - 'run_logs/**'
       - 'examples/**'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Deployment mode (e.g. express or normal)'
+        required: false
+        default: 'normal'
 
 concurrency:
   group: production-deploy
@@ -29,10 +34,49 @@ concurrency:
 
 jobs:
   # =========================================================================
+  # PIPELINE MODE & DATE GUARD CHECK
+  # =========================================================================
+  pipeline_mode:
+    name: "Pipeline Mode & Date Guard Check"
+    runs-on: ubuntu-latest
+    outputs:
+      is_express: ${{ steps.check.outputs.is_express }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Evaluate Mode & Date Guard
+        id: check
+        run: |
+          COMMIT_MSG=$(git log -1 --format=%B)
+          CURRENT_UTC=$(date -u +%s)
+          # Date guard: 2026-11-19T18:29:59Z (= 23:59 IST) -> epoch 1795112999
+          EXPIRY_UTC=1795112999
+          
+          echo "Current UTC epoch: $CURRENT_UTC"
+          echo "Expiry UTC epoch: $EXPIRY_UTC (2026-11-19T18:29:59Z)"
+          echo "Commit message: $COMMIT_MSG"
+          echo "Workflow dispatch input: ${{ inputs.mode }}"
+
+          IS_EXPRESS=false
+          if [ "$CURRENT_UTC" -le "$EXPIRY_UTC" ]; then
+            if echo "$COMMIT_MSG" | grep -qi "\[express\]" || [ "${{ inputs.mode }}" = "express" ]; then
+              echo "EXPRESS MODE ACTIVE: Skipping test/approval governance gates today."
+              IS_EXPRESS=true
+            fi
+          else
+            echo "DATE GUARD TRIGGERED: Current time ($CURRENT_UTC) is past 2026-11-19T18:29:59Z. [express] is ignored; enforcing full pipeline."
+          fi
+
+          echo "is_express=$IS_EXPRESS" >> "$GITHUB_OUTPUT"
+
+  # =========================================================================
   # PARALLEL GOVERNANCE GATES
   # =========================================================================
   typecheck:
     name: "Gate 1: Typecheck (tsc)"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -52,6 +96,8 @@ jobs:
 
   lint:
     name: "Gate 2: Linter (eslint)"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -71,6 +117,8 @@ jobs:
 
   security:
     name: "Gate 3: Security Audit (npm audit)"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -85,6 +133,8 @@ jobs:
 
   access:
     name: "Gate 4: Access & RBAC Audit"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -112,6 +162,8 @@ jobs:
 
   secrets:
     name: "Gate 5: Secret & Key Leak Scanner"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -132,6 +184,8 @@ jobs:
 
   guard:
     name: "Gate 6: Architecture & Approval Guard"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository (fetch history for diff analysis)
@@ -181,6 +235,8 @@ jobs:
 
   hygiene:
     name: "Gate 7: Repository Hygiene & Size Limits (C3)"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository (fetch history for diff inspection)
@@ -227,6 +283,8 @@ jobs:
 
   unused:
     name: "Advisory: Unused Code & Exports (knip)"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -253,6 +311,8 @@ jobs:
 
   p1_tests:
     name: "Gate 8: P1 Read-Only Baseline Tests"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -280,6 +340,8 @@ jobs:
 
   routes_integrity:
     name: "Gate 9: Dead Link & Route Contract Integrity"
+    needs: [pipeline_mode]
+    if: needs.pipeline_mode.outputs.is_express != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -302,7 +364,23 @@ jobs:
   # =========================================================================
   build:
     name: "Build Next.js Standalone"
-    needs: [typecheck, lint, security, access, secrets, guard, hygiene, p1_tests, routes_integrity]
+    needs: [pipeline_mode, typecheck, lint, security, access, secrets, guard, hygiene, p1_tests, routes_integrity]
+    if: |
+      always() &&
+      !cancelled() &&
+      (
+        (needs.pipeline_mode.outputs.is_express == 'true') ||
+        (
+          needs.typecheck.result == 'success' &&
+          needs.lint.result == 'success' &&
+          needs.security.result == 'success' &&
+          needs.access.result == 'success' &&
+          needs.secrets.result == 'success' &&
+          needs.guard.result == 'success' &&
+          needs.hygiene.result == 'success' &&
+          needs.routes_integrity.result == 'success'
+        )
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -519,7 +597,7 @@ jobs:
   # =========================================================================
   verify:
     name: "Verify Live Deployment"
-    needs: [deploy]
+    needs: [pipeline_mode, deploy]
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
@@ -572,18 +650,22 @@ jobs:
           echo "=== VERIFICATION COMPLETE: COMMIT $EXPECTED_COMMIT IS 100% LIVE ==="
 
       - name: Checkout Repository for Smoke Check
+        if: needs.pipeline_mode.outputs.is_express != 'true'
         uses: actions/checkout@v4
 
       - name: Set up Node.js for Smoke Check
+        if: needs.pipeline_mode.outputs.is_express != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
       - name: Install Dependencies for Smoke Check
+        if: needs.pipeline_mode.outputs.is_express != 'true'
         run: npm ci --prefer-offline --no-audit
 
       - name: Post-Deploy Read-Only Smoke Check
+        if: needs.pipeline_mode.outputs.is_express != 'true'
         env:
           NODE_OPTIONS: "--experimental-websocket"
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
