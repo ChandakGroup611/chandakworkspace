@@ -79,18 +79,11 @@ export async function middleware(request: NextRequest) {
   const method = request.method.toUpperCase();
   const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
 
-  // R6: Rate limit /login (max 15/min per IP) and /api/* (max 120/min per IP)
+  // R6: Rate limit /login POST only (max 60/min per IP) to prevent brute force; /api/* unthrottled for shared office IPs
   if (pathname === "/login" && method === "POST") {
-    if (isRateLimited(`login:${clientIp}`, 15, 60_000)) {
+    if (isRateLimited(`login:${clientIp}`, 60, 60_000)) {
       return NextResponse.json(
         { error: "Too many login attempts. Please wait 1 minute before retrying." },
-        { status: 429, headers: { "Retry-After": "60" } }
-      );
-    }
-  } else if (pathname.startsWith("/api/") && !pathname.startsWith("/api/version") && !pathname.startsWith("/api/heartbeat")) {
-    if (isRateLimited(`api:${clientIp}`, 120, 60_000)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please slow down." },
         { status: 429, headers: { "Retry-After": "60" } }
       );
     }
