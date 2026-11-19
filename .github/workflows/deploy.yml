@@ -367,13 +367,12 @@ jobs:
           <IfModule LiteSpeed>
               CacheLookup on
               RewriteEngine On
-              RewriteRule .* - [E=verifycaptcha:bypass]
+              RewriteRule .* - [E=verifycaptcha:off]
               RewriteRule .* - [E=noconntimeout:1]
               RewriteRule .* - [E=noabort:1]
           </IfModule>
 
           RewriteEngine On
-          RewriteRule .* - [E=verifycaptcha:bypass]
           RewriteRule ^\.builds - [F,L]
           RewriteRule ^deploy\.zip$ - [F,L]
 
@@ -409,10 +408,6 @@ jobs:
           PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
           PassengerStartupFile server.js
           PassengerBaseURI /
-          PassengerMaxPoolSize 1
-          PassengerMaxInstancesPerApp 1
-          PassengerMinInstances 1
-          PassengerPoolIdleTime 0
           SetEnv NODE_OPTIONS "--v8-pool-size=1 --max-old-space-size=512"
           SetEnv LSNODE_CONSOLE_LOG console.log
           SetEnv TOKIO_WORKER_THREADS 1

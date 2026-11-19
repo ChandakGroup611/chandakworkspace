@@ -1,0 +1,26 @@
+name: Production 24/7 Warmup & Anti-Idle Keepalive
+
+on:
+  schedule:
+    # Run every 5 minutes to keep Passenger Node.js worker permanently warm
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: keepalive-ping
+  cancel-in-progress: true
+
+jobs:
+  warmup_ping:
+    name: "Keepalive Ping to /api/version"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Live Endpoint
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "https://chandakgroup.tech/api/version" || echo "000")
+          echo "Keepalive status code: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Worker is warm and online."
+          else
+            echo "::warning::Keepalive returned HTTP $HTTP_CODE"
+          fi
