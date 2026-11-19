@@ -2050,25 +2050,28 @@ export async function executeTaskBatchOperation(payload: {
   revalidatePath(`/workspaces/tasks`);
 
   // Fire-and-forget: Push to async background queue
-  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id, description, priority_id, start_date, end_date').eq('id', taskId).single().then(async ({ data: taskData }) => {
-    const { stripHtmlToText } = await import('@/lib/email/email-renderer');
-    const cleanRemarks = remarks ? stripHtmlToText(remarks) : "";
-    const cleanDesc = taskData?.description ? stripHtmlToText(taskData.description) : "";
-    queueBusinessEvent("Task", "Updated", {
-      entity_id: taskId,
-      triggering_user_id: userId,
-      status: statusChanges || taskData?.status_id || "UPDATED",
-      task_name: taskData?.subject || "Task Updated",
-      description: cleanDesc !== cleanRemarks ? cleanDesc : "",
-      remarks: cleanRemarks,
-      assigned_to: taskData?.assigned_to,
-      created_by: taskData?.created_by,
-      workspace_id: taskData?.workspace_id,
-      department_id: taskData?.department_id,
-      creator_name: user?.user_metadata?.full_name || "System",
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
-    }).catch(e => console.error("[NotificationEngine] Background push failed", e));
-  }).then(undefined, () => { });
+  // ONLY fire "Task Updated" business event if core task fields actually changed
+  if (Object.keys(updatePayload).length > 0) {
+    supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id, description, priority_id, start_date, end_date').eq('id', taskId).single().then(async ({ data: taskData }) => {
+      const { stripHtmlToText } = await import('@/lib/email/email-renderer');
+      const cleanRemarks = remarks ? stripHtmlToText(remarks) : "";
+      const cleanDesc = taskData?.description ? stripHtmlToText(taskData.description) : "";
+      queueBusinessEvent("Task", "Updated", {
+        entity_id: taskId,
+        triggering_user_id: userId,
+        status: statusChanges || taskData?.status_id || "UPDATED",
+        task_name: taskData?.subject || "Task Updated",
+        description: cleanDesc !== cleanRemarks ? cleanDesc : "",
+        remarks: cleanRemarks,
+        assigned_to: taskData?.assigned_to,
+        created_by: taskData?.created_by,
+        workspace_id: taskData?.workspace_id,
+        department_id: taskData?.department_id,
+        creator_name: user?.user_metadata?.full_name || "System",
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
+      }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+    }).then(undefined, () => { });
+  }
 
   return {
     success: true,
@@ -2176,20 +2179,25 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   revalidatePath(`/workspaces/tasks`);
 
   // Fire-and-forget: Push to async background queue
+  // If primary assignee changed, fire "Task Assigned". If only executors changed, fire "Task Executors Changed". Never both.
+  const primaryChanged = !!(finalPrimaryId && finalPrimaryId !== task.assigned_to);
+
   supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
-    queueBusinessEvent("Task", "Executors Changed", {
-      entity_id: taskId,
-      triggering_user_id: userId || "",
-      status: taskData?.status_id || "UPDATED",
-      task_name: taskData?.subject || "Task Assignment Changed",
-      assigned_to: finalPrimaryId || taskData?.assigned_to,
-      created_by: taskData?.created_by,
-      workspace_id: taskData?.workspace_id,
-      department_id: taskData?.department_id,
-      creator_name: user?.user_metadata?.full_name || "System",
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`,
-      _disableInApp: true
-    }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+    if (!primaryChanged) {
+      queueBusinessEvent("Task", "Executors Changed", {
+        entity_id: taskId,
+        triggering_user_id: userId || "",
+        status: taskData?.status_id || "UPDATED",
+        task_name: taskData?.subject || "Task Assignment Changed",
+        assigned_to: finalPrimaryId || taskData?.assigned_to,
+        created_by: taskData?.created_by,
+        workspace_id: taskData?.workspace_id,
+        department_id: taskData?.department_id,
+        creator_name: user?.user_metadata?.full_name || "System",
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`,
+        _disableInApp: true
+      }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+    }
   }).then(undefined, () => { });
 
   // Log the assignment change in audit trail
@@ -2214,7 +2222,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const taskSubject = taskDetails?.subject || 'Task';
 
   // Notify newly assigned primary assignee if changed
-  if (finalPrimaryId && finalPrimaryId !== task.assigned_to) {
+  if (primaryChanged && finalPrimaryId) {
     dispatchNotification(
       finalPrimaryId,
       'Task Assigned',

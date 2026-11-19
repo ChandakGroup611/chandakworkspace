@@ -880,20 +880,31 @@ export default function TaskExecutionController({
         ?.filter((c: any) => String(c.id).startsWith("temp-"))
         .map((c: any) => ({ label: c.label, assignee_id: c.assignee_id })) || [];
 
-      const res = await executeTaskBatchOperation({
-        taskId,
-        updates: updatePayload,
-        statusChanges: finalStatusId,
-        departmentChange: departmentChangeObj,
-        checklistCreates: newChecklistsPayload.length > 0 ? newChecklistsPayload : pendingChecklists,
-        checklistUpdates: editedChecklists,
-        remarks: remarksDraft.trim(),
-        attachmentIds
-      });
+      const hasBatchUpdates = Object.keys(updatePayload).length > 0 ||
+        finalStatusId !== undefined ||
+        departmentChangeObj !== undefined ||
+        newChecklistsPayload.length > 0 ||
+        (pendingChecklists && pendingChecklists.length > 0) ||
+        (editedChecklists && Object.keys(editedChecklists).length > 0) ||
+        (remarksDraft && remarksDraft.trim().length > 0) ||
+        attachmentIds.length > 0;
 
+      let res: any = { success: true };
+      if (hasBatchUpdates) {
+        res = await executeTaskBatchOperation({
+          taskId,
+          updates: updatePayload,
+          statusChanges: finalStatusId,
+          departmentChange: departmentChangeObj,
+          checklistCreates: newChecklistsPayload.length > 0 ? newChecklistsPayload : pendingChecklists,
+          checklistUpdates: editedChecklists,
+          remarks: remarksDraft.trim(),
+          attachmentIds
+        });
+
+        if (res?.error) throw new Error("Batch Save Error: " + res.error);
+      }
       const t2 = performance.now();
-
-      if (res?.error) throw new Error("Batch Save Error: " + res.error);
 
       if (pendingAssignees !== null || pendingPrimaryAssignee !== null) {
         const { updateTaskAssignees } = await import("@/lib/actions/tasks");
