@@ -5,6 +5,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import DataRetentionClient from "./DataRetentionClient";
 
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export default function CompliancePage() {
   const { hasPermission, roleCode, loading } = usePermissions();
@@ -22,10 +23,11 @@ export default function CompliancePage() {
   }
   if (roleCode !== "SUPER_ADMIN" && !hasPermission("TRASH_VIEW")) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4">
-        <h2 className="text-xl font-semibold">Access denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view Trash Data.</p>
-      </div>
+      <AccessRestricted
+        requiredRole="Super Admin"
+        requiredPermission="TRASH_VIEW"
+        moduleName="Compliance & Vault"
+      />
     );
   }
 

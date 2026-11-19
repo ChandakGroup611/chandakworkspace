@@ -10,6 +10,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { fetchTicketMetrics } from "@/lib/actions/tickets";
 import { TicketsDashboard } from "@/components/tickets/TicketsDashboard";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export default function TicketDashboardPage() {
   const router = useRouter();
@@ -50,10 +51,11 @@ export default function TicketDashboardPage() {
 
   if (!hasPermission("TICKETS_VIEW")) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 bg-surface text-foreground">
-        <h2 className="text-xl font-bold text-danger">Access denied</h2>
-        <p className="text-xs text-muted-foreground">You do not have capabilities to view Operations Tickets.</p>
-      </div>
+      <AccessRestricted
+        requiredRole="Ticket Agent"
+        requiredPermission="TICKETS_VIEW"
+        moduleName="Ticket Operations"
+      />
     );
   }
 

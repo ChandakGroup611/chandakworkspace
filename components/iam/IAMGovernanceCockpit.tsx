@@ -38,6 +38,7 @@ import {
   updateRole
 } from "@/lib/actions/iam";
 import { confirmAction } from "@/components/ui/feedback/confirm";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 interface IAMGovernanceCockpitProps {
   initialRoles?: any[];
@@ -392,13 +393,11 @@ export default function IAMGovernanceCockpit({
 
   if (!hasPermission("IAM_VIEW")) {
     return (
-      <div className="h-96 flex flex-col items-center justify-center space-y-4 text-center">
-        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
-          <Lock className="h-10 w-10" />
-        </div>
-        <h2 className={cn("text-lg font-semibold", "text-foreground")}>Access denied</h2>
-        <p className="text-xs text-muted max-w-sm">You do not have capabilities to view the IAM Governance Cockpit.</p>
-      </div>
+      <AccessRestricted
+        requiredRole="Super Admin"
+        requiredPermission="IAM_VIEW"
+        moduleName="IAM Governance"
+      />
     );
   }
 

@@ -5,6 +5,7 @@ import { updateEventTriggerConfig } from "@/lib/actions/email-config";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Shield } from "lucide-react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export default function EventTriggerMatrix({ configList }: { configList: any[] }) {
   const [configs, setConfigs] = useState(configList);
@@ -35,13 +36,11 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
 
   if (!hasPermission("SETTINGS_NOTIFICATIONS_VIEW")) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
-          <Shield className="h-10 w-10" />
-        </div>
-        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view Notification Settings.</p>
-      </div>
+      <AccessRestricted
+        requiredRole="Super Admin"
+        requiredPermission="SETTINGS_NOTIFICATIONS_VIEW"
+        moduleName="Notification Settings"
+      />
     );
   }
 

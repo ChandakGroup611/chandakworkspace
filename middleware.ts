@@ -5,11 +5,85 @@ import { MODULE_CHOSEN_COOKIE } from "@/lib/module-gate";
 // Pages that never go through the module gate (sign-in flow, onboarding, public share links, shared user settings).
 const GATE_EXEMPT = /^\/(select-module|login|register|auth\/|api\/|profile|settings|share\/|verify-drawing\/|offline|_next\/)/;
 
+const API_METHOD_CONTRACT: Record<string, string[]> = {
+  "/api/version": ["GET", "HEAD"],
+  "/api/health": ["GET", "HEAD"],
+  "/api/amc": ["POST", "DELETE"],
+  "/api/auth/permissions": ["GET", "HEAD"],
+  "/api/build-info": ["GET", "HEAD"],
+  "/api/copilot/action/execute": ["POST"],
+  "/api/copilot/chat": ["POST"],
+  "/api/copilot/poc-stream": ["POST"],
+  "/api/cron/fleet-compliance-audit": ["GET", "POST"],
+  "/api/cron/process-email-queue": ["GET", "POST"],
+  "/api/cron/tat-escalation": ["GET", "POST"],
+  "/api/heartbeat": ["POST"],
+  "/api/log-http-error": ["POST"],
+  "/api/mentions": ["POST"],
+  "/api/migration/upload": ["POST"],
+  "/api/modules": ["GET", "POST"],
+  "/api/perf": ["GET", "HEAD"],
+  "/api/revalidate-iam": ["GET", "HEAD"],
+  "/api/search": ["GET", "HEAD"],
+  "/api/session/conflict": ["POST"],
+  "/api/session/register": ["POST"],
+  "/api/sla": ["GET", "HEAD"],
+  "/api/users": ["GET", "HEAD"],
+  "/api/vehicle/create": ["POST"],
+  "/api/vehicle/document-content": ["GET", "HEAD"],
+  "/api/vehicle/documents": ["GET", "HEAD"],
+  "/api/vehicle/documents/delete": ["POST"],
+  "/api/vehicle/documents/update": ["POST"],
+  "/api/vehicle/documents/upload": ["POST"],
+  "/api/vehicle/image": ["GET", "HEAD"],
+  "/api/vehicle/image/cutout": ["GET", "HEAD"],
+  "/api/vehicle/lookup": ["GET", "HEAD"],
+  "/api/vehicle/model-image": ["POST", "DELETE"],
+  "/api/vehicle/model-image/auto": ["GET", "POST"],
+  "/api/vehicle/model-image/candidates": ["GET", "HEAD"],
+  "/api/vehicle/model-image/file": ["GET", "HEAD"],
+  "/api/vehicle/model-image/preview": ["POST"],
+  "/api/vehicle/model-images": ["GET", "HEAD"],
+  "/api/webhooks/event-worker": ["POST"]
+};
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const method = request.method.toUpperCase();
+
+  // E3 Method Contract: Enforce 405 JSON on exact API routes
+  if (API_METHOD_CONTRACT[pathname]) {
+    const allowed = API_METHOD_CONTRACT[pathname];
+    if (!allowed.includes(method)) {
+      return NextResponse.json(
+        { error: "Method Not Allowed", path: pathname, method, allowedMethods: allowed },
+        { status: 405, headers: { Allow: allowed.join(", ") } }
+      );
+    }
+  }
+
+  // E3 Method Contract: Enforce 405 JSON on proxy attachment
+  if (pathname.startsWith("/api/proxy-attachment/")) {
+    const allowed = ["GET", "HEAD"];
+    if (!allowed.includes(method)) {
+      return NextResponse.json(
+        { error: "Method Not Allowed", path: pathname, method, allowedMethods: allowed },
+        { status: 405, headers: { Allow: allowed.join(", ") } }
+      );
+    }
+  }
+
+  // E3 Method Contract: Disallow destructive methods (PUT/DELETE/PATCH) on page routes
+  const isApiOrSpecial = pathname.startsWith("/api") || pathname.startsWith("/auth") || pathname.startsWith("/dashboards") || pathname === "/sys-deploy-c7a8b9e1.php";
+  if (!isApiOrSpecial && ["PUT", "DELETE", "PATCH"].includes(method)) {
+    return NextResponse.json(
+      { error: "Method Not Allowed", path: pathname, method, allowedMethods: ["GET", "HEAD", "POST"] },
+      { status: 405, headers: { Allow: "GET, HEAD, POST" } }
+    );
+  }
 
   // Health checks and deployment probes: respond immediately without Supabase session roundtrip
-  if (pathname === "/api/version" || pathname === "/api/health" || pathname === "/deploy-hook.php") {
+  if (pathname === "/api/version" || pathname === "/api/health" || pathname === "/sys-deploy-c7a8b9e1.php") {
     return NextResponse.next();
   }
 

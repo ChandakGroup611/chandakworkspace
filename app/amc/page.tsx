@@ -28,6 +28,7 @@ import { saveMasterEntity } from "@/lib/actions/masters";
 import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
 import { formatDate, formatDateTime } from "@/components/ui/data";
 import { EmptyState } from "@/components/ui/feedback/States";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";
 import Link from "next/link";
 import ChandakLoader from "@/components/ui/ChandakLoader";
@@ -1539,14 +1540,11 @@ export default function AMCPage() {
 
   if (!isSuperAdmin && !hasPermission("AMC_VIEW")) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center text-muted">
-        <Lock className="h-12 w-12 mb-4 opacity-50" />
-        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
-        <p className="text-sm mt-2 text-muted">You do not have permission to view the AMC module.</p>
-        <Link href="/" className="mt-4">
-          <AppButton variant="primary" size="sm">Return to dashboard</AppButton>
-        </Link>
-      </div>
+      <AccessRestricted
+        requiredRole="AMC Manager"
+        requiredPermission="AMC_VIEW"
+        moduleName="AMC Management"
+      />
     );
   }
 

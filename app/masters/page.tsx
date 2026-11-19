@@ -49,6 +49,7 @@ import {
   Clock,
   FileSpreadsheet
 } from "lucide-react";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 import { SystemMasterBulkImportModal } from "@/components/masters/SystemMasterBulkImportModal";
 
 // List of all master tables mapped to labels and icons
@@ -552,14 +553,11 @@ function MastersPageContent() {
 
   if (!hasPermission("SYSTEM_MASTERS_VIEW")) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        "bg-surface text-foreground"
-      }`}>
-        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
-          <Lock className="h-10 w-10" />
-        </div>
-        <h2 className="text-xl font-semibold">Access denied</h2>
-      </div>
+      <AccessRestricted
+        requiredRole="Master Data Admin"
+        requiredPermission="SYSTEM_MASTERS_VIEW"
+        moduleName="System Masters"
+      />
     );
   }
 

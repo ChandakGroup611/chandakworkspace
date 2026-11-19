@@ -14,6 +14,7 @@ import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
 import { SystemMasterBulkImportModal, MasterTableConfig } from "@/components/masters/SystemMasterBulkImportModal";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { confirmAction } from "@/components/ui/feedback/confirm";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 const COMPANY_MASTER_CONFIG: MasterTableConfig[] = [
   {
@@ -194,15 +195,11 @@ export default function CompanyMasterPage() {
 
   if (!hasPermission("COMPANIES_VIEW") && !hasPermission("MASTERS_VIEW") && !hasPermission("SYSTEM_MASTERS_VIEW") && !hasPermission("MASTERS_MANAGE") && roleCode !== "SUPER_ADMIN") {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        "bg-surface"
-      }`}>
-        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
-          <Lock className="h-10 w-10" />
-        </div>
-        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view the Company Master.</p>
-      </div>
+      <AccessRestricted
+        requiredRole="Company Admin"
+        requiredPermission="COMPANIES_VIEW"
+        moduleName="Company Masters"
+      />
     );
   }
 

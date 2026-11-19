@@ -34,10 +34,16 @@ jobs:
       - name: Trigger Server Housekeeping via Deploy Hook
         id: cleanup
         env:
-          DEPLOY_KEY: ${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}
+          DEPLOY_KEY: ${{ secrets.HOSTINGER_DEPLOY_KEY }}
         run: |
           echo "Executing authenticated server housekeeping..."
-          RESP=$(curl -sS --connect-timeout 20 --max-time 180 "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&action=housekeeping" || echo "{}")
+          TS=$(date +%s)
+          SIG=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$DEPLOY_KEY" | sed 's/^.* //')
+          RESP=$(curl -sS --connect-timeout 20 --max-time 180 \
+            -H "X-Deploy-Key: ${DEPLOY_KEY}" \
+            -H "X-Deploy-Timestamp: ${TS}" \
+            -H "X-Deploy-Signature: ${SIG}" \
+            "https://chandakgroup.tech/sys-deploy-c7a8b9e1.php?action=housekeeping" || echo "{}")
           echo "Server response:"
           echo "$RESP"
 

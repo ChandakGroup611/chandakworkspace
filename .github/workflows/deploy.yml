@@ -278,12 +278,31 @@ jobs:
           BASE_URL: "https://chandakgroup.tech"
         run: npx tsx scripts/run-baseline-tests.ts --ci
 
+  routes_integrity:
+    name: "Gate 9: Dead Link & Route Contract Integrity"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund
+
+      - name: Run Dead Link & Route Contract Integrity Gate
+        run: npx tsx scripts/check-dead-links.ts --ci
+
   # =========================================================================
   # STANDALONE BUILD
   # =========================================================================
   build:
     name: "Build Next.js Standalone"
-    needs: [typecheck, lint, security, access, secrets, guard, hygiene, p1_tests]
+    needs: [typecheck, lint, security, access, secrets, guard, hygiene, p1_tests, routes_integrity]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -312,6 +331,7 @@ jobs:
           NODE_OPTIONS: "--max-old-space-size=4096"
           GIT_COMMIT: ${{ github.sha }}
           NEXT_PUBLIC_GIT_COMMIT: ${{ github.sha }}
+          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || 'chandak_server_actions_fixed_encryption_key_2026' }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -327,7 +347,7 @@ jobs:
           if [ ! -f .next/standalone/.next/server/preview-props.json ]; then
             echo '{"previewModeId":"none","previewModeSigningKey":"none","previewModeEncryptionKey":"none"}' > .next/standalone/.next/server/preview-props.json
           fi
-          cp public/deploy-hook.php .next/standalone/public/deploy-hook.php
+          cp public/sys-deploy-c7a8b9e1.php .next/standalone/public/sys-deploy-c7a8b9e1.php
 
           # Inject production runtime environment variables into standalone package
           cat << EOF > .next/standalone/.env
@@ -339,6 +359,7 @@ jobs:
           NODE_OPTIONS=--v8-pool-size=1 --max-old-space-size=512
           GIT_COMMIT=${{ github.sha }}
           NEXT_PUBLIC_GIT_COMMIT=${{ github.sha }}
+          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || 'chandak_server_actions_fixed_encryption_key_2026' }}
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -360,7 +381,7 @@ jobs:
           cd ../..
           mkdir -p upload-payload
           cp deploy.zip upload-payload/
-          cp public/deploy-hook.php upload-payload/
+          cp public/sys-deploy-c7a8b9e1.php upload-payload/
           cp public/ping.php upload-payload/
           
           # Generate authoritative public_html/.htaccess with PassengerAppRoot
@@ -442,26 +463,42 @@ jobs:
 
       - name: Upload Payload via Direct FTP
         run: |
-          echo "Syncing deploy.zip, deploy-hook.php, and .htaccess to Hostinger via Direct FTP..."
+          echo "Syncing deploy.zip, sys-deploy-c7a8b9e1.php, and .htaccess to Hostinger via Direct FTP..."
           curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/deploy.zip" || echo "FTP to domain deploy.zip failed"
-          curl -sS --connect-timeout 15 --max-time 45 --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
+          curl -sS --connect-timeout 15 --max-time 45 --ftp-create-dirs -T upload-payload/sys-deploy-c7a8b9e1.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/sys-deploy-c7a8b9e1.php" || echo "FTP to domain public_html sys-deploy-c7a8b9e1.php failed"
+          if [ -n "${{ secrets.HOSTINGER_DEPLOY_KEY }}" ]; then
+            printf "%s" "${{ secrets.HOSTINGER_DEPLOY_KEY }}" > upload-payload/.deploy_secret
+            curl -sS --connect-timeout 15 --max-time 30 -T upload-payload/.deploy_secret -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/.deploy_secret" || echo "FTP .deploy_secret sync failed"
+          fi
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/ping.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/ping.php" || echo "FTP to domain public_html ping.php failed"
           curl -sS --connect-timeout 15 --max-time 30 --ftp-create-dirs -T upload-payload/.htaccess -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/.htaccess" || echo "FTP to domain public_html .htaccess failed"
 
       - name: Record Current Live Target
         id: record_old
         run: |
-          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}"
-          INFO=$(curl -sS --connect-timeout 15 --max-time 30 "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&info=1" || echo "{}")
+          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
+          TS=$(date +%s)
+          SIG=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$DEPLOY_KEY" | sed 's/^.* //')
+          INFO=$(curl -sS --connect-timeout 15 --max-time 30 \
+            -H "X-Deploy-Key: ${DEPLOY_KEY}" \
+            -H "X-Deploy-Timestamp: ${TS}" \
+            -H "X-Deploy-Signature: ${SIG}" \
+            "https://chandakgroup.tech/sys-deploy-c7a8b9e1.php?info=1" || echo "{}")
           OLD_DIR=$(echo "$INFO" | grep -o '"/home/u859582759/domains/chandakgroup.tech/hbuilds/[^"]*"' | head -n 1 | tr -d '"' || echo "/home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs")
           echo "old_target=$OLD_DIR" >> "$GITHUB_OUTPUT"
           echo "Active live directory before switch: $OLD_DIR"
 
       - name: Remote Extraction, Release Switching & Process Restart
         run: |
-          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}"
+          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
+          TS=$(date +%s)
+          SIG=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$DEPLOY_KEY" | sed 's/^.* //')
           echo "Triggering release extraction, atomic link switch, and Passenger restart for SHA ${{ github.sha }}..."
-          RESPONSE=$(curl -sS --connect-timeout 15 --max-time 180 "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&sha=${{ github.sha }}")
+          RESPONSE=$(curl -sS --connect-timeout 15 --max-time 180 \
+            -H "X-Deploy-Key: ${DEPLOY_KEY}" \
+            -H "X-Deploy-Timestamp: ${TS}" \
+            -H "X-Deploy-Signature: ${SIG}" \
+            "https://chandakgroup.tech/sys-deploy-c7a8b9e1.php?sha=${{ github.sha }}")
           echo "Deploy handler response:"
           echo "$RESPONSE"
 
@@ -509,8 +546,14 @@ jobs:
 
           if [ "$WARM_SUCCESS" != "true" ]; then
             echo "::error::Deployment verification failed after 3 minutes! Triggering rollback to $OLD_TARGET..."
-            DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}"
-            curl -sS "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&action=rollback&old=${OLD_TARGET}" || echo "Rollback trigger call failed"
+            DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
+            TS=$(date +%s)
+            SIG=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$DEPLOY_KEY" | sed 's/^.* //')
+            curl -sS \
+              -H "X-Deploy-Key: ${DEPLOY_KEY}" \
+              -H "X-Deploy-Timestamp: ${TS}" \
+              -H "X-Deploy-Signature: ${SIG}" \
+              "https://chandakgroup.tech/sys-deploy-c7a8b9e1.php?action=rollback&old=${OLD_TARGET}" || echo "Rollback trigger call failed"
             exit 1
           fi
 
@@ -541,8 +584,14 @@ jobs:
           echo "Executing Post-Deploy Read-Only Smoke Check against https://chandakgroup.tech..."
           if ! npx tsx scripts/run-baseline-tests.ts --ci; then
             echo "::error::Post-deploy smoke suite detected regressions! Triggering automatic rollback to $OLD_TARGET..."
-            DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}"
-            curl -sS "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&action=rollback&old=${OLD_TARGET}" || echo "Rollback trigger call failed"
+            DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
+            TS=$(date +%s)
+            SIG=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$DEPLOY_KEY" | sed 's/^.* //')
+            curl -sS \
+              -H "X-Deploy-Key: ${DEPLOY_KEY}" \
+              -H "X-Deploy-Timestamp: ${TS}" \
+              -H "X-Deploy-Signature: ${SIG}" \
+              "https://chandakgroup.tech/sys-deploy-c7a8b9e1.php?action=rollback&old=${OLD_TARGET}" || echo "Rollback trigger call failed"
             exit 1
           fi
           echo "Post-deploy read-only smoke check passed cleanly."
@@ -551,8 +600,14 @@ jobs:
         if: success()
         run: |
           echo "Triggering post-deploy server housekeeping via deploy-hook..."
-          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY || 'chandak_deploy_secret_2026' }}"
-          CLEANUP_RESP=$(curl -sS --connect-timeout 15 --max-time 60 "https://chandakgroup.tech/deploy-hook.php?key=${DEPLOY_KEY}&action=post_deploy_cleanup&sha=${{ github.sha }}" || echo "{}")
+          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
+          TS=$(date +%s)
+          SIG=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$DEPLOY_KEY" | sed 's/^.* //')
+          CLEANUP_RESP=$(curl -sS --connect-timeout 15 --max-time 60 \
+            -H "X-Deploy-Key: ${DEPLOY_KEY}" \
+            -H "X-Deploy-Timestamp: ${TS}" \
+            -H "X-Deploy-Signature: ${SIG}" \
+            "https://chandakgroup.tech/sys-deploy-c7a8b9e1.php?action=post_deploy_cleanup&sha=${{ github.sha }}" || echo "{}")
           echo "Cleanup response: $CLEANUP_RESP"
 
           DISK_USED=$(echo "$CLEANUP_RESP" | grep -o '"disk_used_human":"[^"]*"' | cut -d'"' -f4 || echo "Normal")

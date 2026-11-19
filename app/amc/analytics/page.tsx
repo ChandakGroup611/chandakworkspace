@@ -28,6 +28,7 @@ import {
 import Link from "next/link";
 import { usePermissions } from "@/hooks/usePermissions";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export default function AMCAnalyticsPage() {
   let isLightMode = false;
@@ -49,14 +50,11 @@ export default function AMCAnalyticsPage() {
 
   if (!permsLoading && !isSuperAdmin && !hasPermission("AMC_VIEW")) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center text-muted">
-        <Lock className="h-12 w-12 mb-4 opacity-50" />
-        <h2 className="text-xl font-semibold text-foreground">Access denied</h2>
-        <p className="text-sm mt-2 text-muted">You do not have permission to view AMC Analytics.</p>
-        <Link href="/" className="mt-4">
-          <AppButton variant="primary" size="sm">Return to dashboard</AppButton>
-        </Link>
-      </div>
+      <AccessRestricted
+        requiredRole="AMC Manager"
+        requiredPermission="AMC_VIEW"
+        moduleName="AMC Analytics"
+      />
     );
   }
 

@@ -1,17 +1,17 @@
 import { checkServerPermission } from "@/lib/permissions";
 import React from 'react';
 import MigrationClient from './Client';
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export default async function MigrationPage() {
   const canAccess = await checkServerPermission("DATA_MIGRATION_VIEW");
   if (!canAccess) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold text-danger-text">Access denied</h2>
-          <p className="text-muted">You do not have permission to view this page.</p>
-        </div>
-      </div>
+      <AccessRestricted
+        requiredRole="Data Migration Admin"
+        requiredPermission="DATA_MIGRATION_VIEW"
+        moduleName="Data Migration"
+      />
     );
   }
 

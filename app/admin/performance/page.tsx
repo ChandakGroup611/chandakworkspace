@@ -9,6 +9,7 @@ import { hydrationStore } from '@/hooks/use-hydration-tracker';
 import { getPerformanceServerMetrics } from './actions';
 import { performanceGovernor, GovernanceMetrics, DegradationStage } from '@/utils/performance/PerformanceGovernanceEngine';
 import { usePermissions } from "@/hooks/usePermissions";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export default function PerformanceCommandCenter() {
   const { hasPermission, roleCode } = usePermissions();
@@ -64,12 +65,10 @@ export default function PerformanceCommandCenter() {
 
   if (!canView) {
     return (
-      <div className="flex h-[80vh] w-full items-center justify-center">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold text-danger-text">Access denied</h2>
-          <p className="text-muted">Super Admin privileges are required to view the Performance Command Center.</p>
-        </div>
-      </div>
+      <AccessRestricted
+        requiredRole="Super Admin"
+        moduleName="System Performance"
+      />
     );
   }
 

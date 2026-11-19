@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getVisibleWorkspaces } from "@/lib/repositories/workspaces";
 import TransferTasksClient from "./Client"; 
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export const dynamic = 'force-dynamic';
 
@@ -12,12 +13,11 @@ export default async function TransferTasksPage() {
   const canAccess = await checkServerPermission("TASKS_TRANSFER_VIEW");
   if (!canAccess) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
-          <p className="text-muted">You do not have permission to view this page.</p>
-        </div>
-      </div>
+      <AccessRestricted
+        requiredRole="Workspace Admin"
+        requiredPermission="TASKS_TRANSFER_VIEW"
+        moduleName="Workspaces"
+      />
     );
   }
 

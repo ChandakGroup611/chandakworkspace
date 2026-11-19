@@ -222,4 +222,4 @@ async function handle(req: NextRequest, ctx: Ctx) {
   return res;
 }
 
-export { handle as GET, handle as POST, handle as HEAD };
+export { handle as GET, handle as POST, handle as PUT, handle as PATCH, handle as DELETE, handle as HEAD, handle as OPTIONS };

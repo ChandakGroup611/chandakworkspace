@@ -24,6 +24,7 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Date:** 2026-11-19 | **Release:** WP-E HTTP Errors (403/404/405) Permanent Resolution: E0 hardened deploy hook with HMAC headers & non-guessable path, E1 app_http_errors logging table & browser reporter, E2 deploy version skew prevention with fixed encryption key & 7-day static chunk retention, E3 ROUTES.md contract with proper 405 JSON on all routes, E4 dead link elimination with CI gate, E5 friendly access restricted UI with access request trigger | **Status:** [approved] MASTER PROGRAMME WP-E
 * **Date:** 2026-11-19 | **Release:** Security hardening: CRON_SECRET auth on all cron routes (A.4), vehicle create session check (A.3), scoped test modes & is_test isolation (A.2) | **Commit:** `182dee80` | **Status:** PASS (Verified Live)
 * **Date:** 2026-11-18 | **Release:** One-time automated governance pipeline setup (6-8 min deployment, 6 parallel gates, exact commit verification, atomic release rollback) | **Status:** [approved] Verified
 

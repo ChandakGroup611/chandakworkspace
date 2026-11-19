@@ -28,6 +28,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useLocalReportConfig, UIFieldDefinition } from "@/hooks/useLocalReportConfig";
 import DynamicReportBuilder from "@/components/reports/DynamicReportBuilder";
 import { Settings2 } from "lucide-react";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
 import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
 import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
@@ -412,13 +413,11 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
 
   if (!hasPermission("REQUIREMENTS_REPORTS_VIEW")) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-danger-soft border border-danger-border text-danger-text">
-          <Shield className="h-10 w-10" />
-        </div>
-        <h2 className="text-xl font-bold text-foreground">Access denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view Requirement Analytics.</p>
-      </div>
+      <AccessRestricted
+        requiredRole="Requirement Manager"
+        requiredPermission="REQUIREMENTS_REPORTS_VIEW"
+        moduleName="Requirements"
+      />
     );
   }
 

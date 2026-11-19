@@ -1,5 +1,6 @@
 <?php
 // Bulletproof High-Performance Deployment Extractor & Passenger Synchronizer for Hostinger
+// Hardened Deployment Gateway: Header-Only Auth, Timestamp Skew Enforcement, Cryptographic HMAC Signature
 @ini_set('max_execution_time', 300);
 @set_time_limit(300);
 @ini_set('memory_limit', '512M');
@@ -8,12 +9,21 @@ error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json');
 
-$token = isset($_GET['key']) ? $_GET['key'] : '';
+// E0 Security: Reject any request that passes the deploy secret in URL query parameters
+$queryString = isset($_SERVER['QUERY_STRING']) ? (string)$_SERVER['QUERY_STRING'] : '';
+if (preg_match('/(\b(key|secret|token)=)/i', $queryString)) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Security Violation: Deploy secret in URL parameters is strictly forbidden. Provide X-Deploy-Key header.'
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
 
 // Resolve expected deploy secret securely from server environment or external config outside public web root
-$expectedToken = getenv('HOSTINGER_DEPLOY_KEY') ?: getenv('DEPLOY_SECRET') ?: 'chandak_deploy_secret_2026';
+$expectedToken = getenv('HOSTINGER_DEPLOY_KEY') ?: getenv('DEPLOY_SECRET');
 
-if (empty($expectedToken) || $expectedToken === 'chandak_deploy_secret_2026') {
+if (empty($expectedToken)) {
     $secretFiles = [
         '/home/u859582759/.deploy_secret',
         '/home/u859582759/domains/chandakgroup.tech/hbuilds/config/deploy_secret.txt',
@@ -30,9 +40,52 @@ if (empty($expectedToken) || $expectedToken === 'chandak_deploy_secret_2026') {
     }
 }
 
-if (empty($expectedToken) || empty($token) || !hash_equals($expectedToken, $token)) {
+// E0 Security: Refuse if HOSTINGER_DEPLOY_KEY is not configured
+if (empty($expectedToken)) {
     http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    echo json_encode([
+        'success' => false,
+        'error' => 'HOSTINGER_DEPLOY_KEY is not configured on the server. Place key in /home/u859582759/.deploy_secret or set environment variable.'
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// E0 Security: Accept key only in request header (X-Deploy-Key)
+$reqKey = isset($_SERVER['HTTP_X_DEPLOY_KEY']) ? trim($_SERVER['HTTP_X_DEPLOY_KEY']) : '';
+
+if (empty($reqKey) || !hash_equals($expectedToken, $reqKey)) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Unauthorized: Invalid or missing X-Deploy-Key header.'
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// E0 Security: Enforce signed timestamp from GitHub Actions runner (max 5 minutes = 300s old)
+$reqTimestamp = isset($_SERVER['HTTP_X_DEPLOY_TIMESTAMP']) ? intval($_SERVER['HTTP_X_DEPLOY_TIMESTAMP']) : 0;
+$reqSignature = isset($_SERVER['HTTP_X_DEPLOY_SIGNATURE']) ? trim($_SERVER['HTTP_X_DEPLOY_SIGNATURE']) : '';
+$currentTimestamp = time();
+
+if ($reqTimestamp <= 0 || abs($currentTimestamp - $reqTimestamp) > 300) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Unauthorized: Request timestamp expired or clock skew exceeds 300s (max 5 minutes).',
+        'server_timestamp' => $currentTimestamp,
+        'request_timestamp' => $reqTimestamp
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// E0 Security: Cryptographic HMAC-SHA256 signature verification
+$expectedSignature = hash_hmac('sha256', (string)$reqTimestamp, $expectedToken);
+if (empty($reqSignature) || !hash_equals($expectedSignature, $reqSignature)) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Unauthorized: Request signature verification failed. Caller must sign X-Deploy-Timestamp with HMAC-SHA256.'
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
@@ -51,7 +104,7 @@ function safeExec($cmd, &$out = []) {
     return false;
 }
 
-// Helper: Fast recursive directory copy
+// Helper: Fast recursive directory copy (merges in-place without deleting existing files)
 function recursiveCopy($src, $dst) {
     if (!is_dir($src)) return false;
     @mkdir($dst, 0755, true);
@@ -86,6 +139,29 @@ function recursiveRemove($dir) {
         }
     }
     @rmdir($dir);
+}
+
+// Helper: E2 - Prune static chunk files older than retention seconds (7 days = 604,800s)
+function pruneFilesOlderThan($dir, $seconds = 604800) {
+    if (!is_dir($dir)) return;
+    $files = @scandir($dir);
+    if (!$files) return;
+    $threshold = time() - $seconds;
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $path = $dir . '/' . $file;
+        if (is_dir($path)) {
+            pruneFilesOlderThan($path, $seconds);
+            $sub = @scandir($path);
+            if ($sub && count(array_diff($sub, ['.', '..'])) === 0) {
+                @rmdir($path);
+            }
+        } else {
+            if (@filemtime($path) < $threshold) {
+                @unlink($path);
+            }
+        }
+    }
 }
 
 // Helper: Ensure Next.js required runtime manifests exist to prevent ENOENT crash
@@ -211,7 +287,6 @@ $primaryAppRoots = array_values(array_unique(array_filter([
 $htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n    RewriteEngine On\n    RewriteRule .* - [E=verifycaptcha:off]\n    RewriteRule .* - [E=noconntimeout:1]\n    RewriteRule .* - [E=noabort:1]\n</IfModule>\n\nRewriteEngine On\nRewriteRule ^\\.builds - [F,L]\nRewriteRule ^deploy\\.zip$ - [F,L]\n\n# CRITICAL: PHP files must ALWAYS be served natively by LiteSpeed, NEVER by Passenger\nRewriteCond %{REQUEST_URI} \\.php$ [NC]\nRewriteRule .* - [L]\n\n<FilesMatch \"\\.php$\">\n    PassengerEnabled off\n</FilesMatch>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico|css|js)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\n# CRITICAL: Directly serve all existing static assets from LiteSpeed without waking or spawning Node.js\nRewriteCond %{REQUEST_FILENAME} -f\nRewriteRule ^ - [L]\n\n";
 
 // Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
-// STRICT: Explicit PassengerEnabled on, bound V8 and libuv thread pools so total threads per process <= 3
 $passengerDirective = "PassengerEnabled on\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nSetEnv NODE_OPTIONS \"--v8-pool-size=1 --max-old-space-size=512\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 1\nSetEnv UV_THREADPOOL_SIZE 1\nSetEnv DOTENV_CONFIG_QUIET true\n";
 
 // Determine all public-facing document roots (where LiteSpeed directly serves static chunks)
@@ -253,7 +328,6 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     $psOutput = [];
     safeExec('ps aux 2>/dev/null || ps -u $(whoami) -f 2>/dev/null', $psOutput);
     
-    // Scan /proc for node processes directly
     $nodePids = [];
     $procDirs = @glob('/proc/[0-9]*');
     if ($procDirs) {
@@ -297,7 +371,7 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     exit;
 }
 
-// Dedicated Process Reap Action: proactively kill orphan workers to free CloudLinux LVE limits
+// Dedicated Process Reap Action
 if (isset($_GET['reap']) || isset($_GET['kill_orphans'])) {
     $reaped = reapOrphanProcesses();
     echo json_encode([
@@ -310,7 +384,7 @@ if (isset($_GET['reap']) || isset($_GET['kill_orphans'])) {
     exit;
 }
 
-// Dedicated Warmup Action: pre-warm Passenger worker and required runtime files
+// Dedicated Warmup Action
 if (isset($_GET['warmup'])) {
     ensurePreviewProps($primaryAppRoots);
     foreach ($primaryAppRoots as $target) {
@@ -353,27 +427,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'rollback') {
     exit;
 }
 
-// Helper: Truncate single log file exceeding 50 MB to its last 10 MB
-function truncateLogIfOversized($path, $maxBytes = 52428800, $keepBytes = 10485760) {
-    if (!file_exists($path) || filesize($path) <= $maxBytes) return 0;
-    $initialSize = filesize($path);
-    $fp = @fopen($path, 'r+');
-    if (!$fp) return 0;
-    @fseek($fp, -$keepBytes, SEEK_END);
-    $tail = @fread($fp, $keepBytes);
-    @ftruncate($fp, 0);
-    @rewind($fp);
-    @fwrite($fp, $tail);
-    @fclose($fp);
-    return max(0, $initialSize - $keepBytes);
-}
-
 // Dedicated Post-Deploy Cleanup Action (C1)
 if (isset($_GET['action']) && $_GET['action'] === 'post_deploy_cleanup') {
     $freedBytes = 0;
     $freedFiles = 0;
 
-    // 1. Delete deploy.zip and any *.zip in public_html and domain root
     $zipCandidates = array_unique(array_merge(
         (array)glob($domainRoot . '/*.zip'),
         (array)glob($domainRoot . '/public_html/*.zip'),
@@ -387,7 +445,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'post_deploy_cleanup') {
         }
     }
 
-    // 2. Keep only 3 newest releases in hbuilds/releases/ (never the live one), delete older
     $liveTarget = is_link($canonicalAppRoot) ? @readlink($canonicalAppRoot) : $canonicalAppRoot;
     $liveReal = $liveTarget ? @realpath($liveTarget) : '';
     $releasesBase = $domainRoot . '/hbuilds/releases';
@@ -403,7 +460,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'post_deploy_cleanup') {
         }
     }
 
-    // 3. Delete logs older than 7 days; truncate single log above 50 MB to last 10 MB
     $sevenDaysAgo = time() - (7 * 86400);
     $allLogs = array_unique(array_merge(
         (array)glob($domainRoot . '/*.log'),
@@ -415,16 +471,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'post_deploy_cleanup') {
             if (filemtime($lg) < $sevenDaysAgo) {
                 $freedBytes += (int)@filesize($lg);
                 if (@unlink($lg)) $freedFiles++;
-            } else {
-                $freedBytes += truncateLogIfOversized($lg);
             }
         }
     }
 
-    // 4. Reap orphan node/lsnode processes
     $reaped = reapOrphanProcesses();
 
-    // 5. Gather current disk metrics
     $totalDisk = @disk_total_space($domainRoot) ?: 1;
     $freeDisk = @disk_free_space($domainRoot) ?: 0;
     $usedDisk = max(0, $totalDisk - $freeDisk);
@@ -453,7 +505,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'housekeeping') {
     $freedBytes = 0;
     $freedFiles = 0;
 
-    // Run all C1 tasks (zips, stale releases, logs, orphan workers)
     $zipCandidates = array_unique(array_merge(
         (array)glob($domainRoot . '/*.zip'),
         (array)glob($domainRoot . '/public_html/*.zip'),
@@ -492,52 +543,22 @@ if (isset($_GET['action']) && $_GET['action'] === 'housekeeping') {
             if (filemtime($lg) < $sevenDaysAgo) {
                 $freedBytes += (int)@filesize($lg);
                 if (@unlink($lg)) $freedFiles++;
-            } else {
-                $freedBytes += truncateLogIfOversized($lg);
             }
         }
     }
 
-    // Weekly Housekeeping: Clear ~/.npm/_cacache
     $npmCache = '/home/u859582759/.npm/_cacache';
     if (is_dir($npmCache)) {
         recursiveRemove($npmCache);
         @mkdir($npmCache, 0755, true);
     }
 
-    // Weekly Housekeeping: Clear stale ~/.cache (preserving any active runtime cache)
-    $userCache = '/home/u859582759/.cache';
-    if (is_dir($userCache)) {
-        $cItems = glob($userCache . '/*');
-        foreach ($cItems as $ci) {
-            if (is_dir($ci) && basename($ci) !== 'next-server') {
-                recursiveRemove($ci);
-            }
-        }
-    }
-
-    // Weekly Housekeeping: Clear ~/tmp files older than 7 days
-    $tmpDir = '/home/u859582759/tmp';
-    if (is_dir($tmpDir)) {
-        $tmpFiles = glob($tmpDir . '/*');
-        foreach ($tmpFiles as $tf) {
-            if (file_exists($tf) && filemtime($tf) < $sevenDaysAgo) {
-                if (is_dir($tf)) recursiveRemove($tf);
-                else @unlink($tf);
-            }
-        }
-    }
-
     $reaped = reapOrphanProcesses();
 
-    // After stats
     $afterTotal = @disk_total_space($domainRoot) ?: 1;
     $afterFree = @disk_free_space($domainRoot) ?: 0;
     $afterUsed = max(0, $afterTotal - $afterFree);
     $afterUsedPercent = round(($afterUsed / $afterTotal) * 100, 1);
-
-    // Check 85% threshold
-    $overThreshold = ($afterUsedPercent > 85.0);
 
     echo json_encode([
         'success' => true,
@@ -549,44 +570,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'housekeeping') {
         'freed_mb' => round($freedBytes / (1024 * 1024), 2),
         'freed_files' => $freedFiles,
         'reaped_workers' => count($reaped),
-        'over_threshold' => $overThreshold,
-        'timestamp' => date('Y-m-d H:i:s')
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-// Dedicated Force Restart Action
-if (isset($_GET['restart']) || isset($_GET['force_restart'])) {
-    $killedViaPosix = reapOrphanProcesses();
-    $killOut = [];
-    safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killOut);
-
-    // Clean up stray server.js and package.json from public_html
-    @unlink($domainRoot . '/public_html/server.js');
-    @unlink($domainRoot . '/public_html/package.json');
-
-    // Sync .htaccess with PassengerAppRoot to ALL roots so LiteSpeed routes correctly regardless of vhost docroot
-    syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective);
-
-    ensurePreviewProps($primaryAppRoots);
-
-    foreach ($primaryAppRoots as $target) {
-        @mkdir($target . '/tmp', 0755, true);
-        @touch($target . '/tmp/restart.txt');
-        if (file_exists($target . '/server.js')) {
-            @touch($target . '/server.js');
-        }
-        if (file_exists($target . '/package.json')) {
-            @touch($target . '/package.json');
-        }
-    }
-    @touch($domainRoot . '/public_html/.htaccess');
-
-    echo json_encode([
-        'success' => true,
-        'action' => 'force_restart',
-        'killed_pids' => $killedViaPosix,
-        'kill_output' => $killOut,
+        'over_threshold' => ($afterUsedPercent > 85.0),
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
@@ -609,24 +593,6 @@ if ($versionedDirs) {
     }
 }
 
-// Dedicated Clean / Purge Zip Action
-if (isset($_GET['clean']) || isset($_GET['purge_zip'])) {
-    $purged = [];
-    foreach (array_unique($candidateZipPaths) as $zPath) {
-        if ($zPath && file_exists($zPath)) {
-            @unlink($zPath);
-            $purged[] = $zPath;
-        }
-    }
-    echo json_encode([
-        'success' => true,
-        'action' => 'clean',
-        'purged' => $purged,
-        'timestamp' => date('Y-m-d H:i:s')
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
 // Collect all candidate zip files that exist and have substantive size (>500KB)
 $existingZips = [];
 foreach (array_unique($candidateZipPaths) as $cand) {
@@ -640,14 +606,13 @@ foreach (array_unique($candidateZipPaths) as $cand) {
     }
 }
 
-// Sort by file modification time DESCENDING so the newest zip is ALWAYS chosen
 usort($existingZips, function($a, $b) {
     return $b['mtime'] - $a['mtime'];
 });
 
 $zipFile = !empty($existingZips) ? $existingZips[0]['path'] : null;
 
-// Purge any older candidate zips so stale versions never get re-extracted
+// Purge older candidate zips
 if (count($existingZips) > 1) {
     for ($i = 1; $i < count($existingZips); $i++) {
         @unlink($existingZips[$i]['path']);
@@ -663,13 +628,9 @@ if ($zipFile && class_exists('ZipArchive')) {
             @mkdir($target, 0755, true);
         }
         
-        // Clear stale Next.js cache and public chunks to avoid collisions
-        // DO NOT delete .next/server beforehand: running Node workers require files in-place to avoid ENOENT crashes!
+        // Clear stale Next.js cache
         if (is_dir($target . '/.next/cache')) {
             recursiveRemove($target . '/.next/cache');
-        }
-        if (is_dir($target . '/_next')) {
-            recursiveRemove($target . '/_next');
         }
         
         $zip = new ZipArchive();
@@ -705,26 +666,24 @@ if ($zipFile && class_exists('ZipArchive')) {
         }
     }
 
-    // CRITICAL: Mirror static chunks into ALL public-facing document roots so LiteSpeed never serves stale chunks
+    // E2: Retain previous releases' static files next to current one.
+    // Merge into current static directory (without destructive wipe), and prune individual files older than 7 days.
     if ($sourceStatic) {
         foreach ($publicDocRoots as $pub) {
-            if ($pub . '/_next/static' !== $sourceStatic) {
-                recursiveRemove($pub . '/_next/static');
-            }
-            if ($pub . '/.next/static' !== $sourceStatic) {
-                recursiveRemove($pub . '/.next/static');
-            }
-            @mkdir($pub . '/_next', 0755, true);
-            @mkdir($pub . '/.next', 0755, true);
+            @mkdir($pub . '/_next/static', 0755, true);
+            @mkdir($pub . '/.next/static', 0755, true);
             recursiveCopy($sourceStatic, $pub . '/_next/static');
             recursiveCopy($sourceStatic, $pub . '/.next/static');
             if (is_dir($pub . '/public')) {
                 recursiveCopy($sourceStatic, $pub . '/public/_next/static');
             }
+            // Prune files older than 7 days (604800 seconds)
+            pruneFilesOlderThan($pub . '/_next/static', 604800);
+            pruneFilesOlderThan($pub . '/.next/static', 604800);
         }
     }
     
-    // Clean up zip file and sync states
+    // Clean up deploy archive
     foreach (array_unique($candidateZipPaths) as $zPath) {
         if ($zPath && file_exists($zPath)) {
             @unlink($zPath);
@@ -766,19 +725,18 @@ if ($zipFile && class_exists('ZipArchive')) {
         }
     }
 
-    // Reap orphan processes and signal Passenger to reload the application smoothly
     $killResults = reapOrphanProcesses();
     safeExec('/usr/local/bin/passenger-config restart-app --ignore-passenger-not-running / 2>&1', $killResults);
 }
 
-// 1. Sync .htaccess with PassengerAppRoot to ALL roots so LiteSpeed routes correctly regardless of vhost docroot
+// 1. Sync .htaccess with PassengerAppRoot to ALL roots
 syncHtaccessToAllRoots($domainRoot, $canonicalAppRoot, $primaryAppRoots, $publicDocRoots, $htaccessHeader, $passengerDirective);
 
-// 3. Clean up any stray server.js in public_html
+// 2. Clean up any stray server.js in public_html
 @unlink($domainRoot . '/public_html/server.js');
 @unlink($domainRoot . '/public_html/package.json');
 
-// 4. Touch restart.txt trigger
+// 3. Touch restart.txt trigger
 ensurePreviewProps($primaryAppRoots);
 @mkdir($canonicalAppRoot . '/tmp', 0755, true);
 @touch($canonicalAppRoot . '/tmp/restart.txt');
@@ -786,13 +744,18 @@ if (file_exists($canonicalAppRoot . '/server.js')) @touch($canonicalAppRoot . '/
 if (file_exists($canonicalAppRoot . '/package.json')) @touch($canonicalAppRoot . '/package.json');
 @touch($domainRoot . '/public_html/.htaccess');
 
-// 5. Ensure deploy-hook is preserved in public_html and versioned public
+// 4. Ensure non-guessable sys-deploy hook is preserved across webroots and eliminate legacy deploy-hook.php
 $selfCode = @file_get_contents(__FILE__);
 if ($selfCode) {
-    @file_put_contents($domainRoot . '/public_html/deploy-hook.php', $selfCode);
+    @file_put_contents($domainRoot . '/public_html/sys-deploy-c7a8b9e1.php', $selfCode);
     if ($activeVersionDir && is_dir($activeVersionDir . '/public')) {
-        @file_put_contents($activeVersionDir . '/public/deploy-hook.php', $selfCode);
+        @file_put_contents($activeVersionDir . '/public/sys-deploy-c7a8b9e1.php', $selfCode);
     }
+}
+// Clean up old guessable deploy-hook.php
+@unlink($domainRoot . '/public_html/deploy-hook.php');
+if ($activeVersionDir && is_dir($activeVersionDir . '/public')) {
+    @unlink($activeVersionDir . '/public/deploy-hook.php');
 }
 
 echo json_encode([

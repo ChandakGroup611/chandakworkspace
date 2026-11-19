@@ -3,6 +3,7 @@ import React from "react";
 import { Metadata } from "next";
 import { fetchEventTriggerConfig } from "@/lib/actions/email-config";
 import EventTriggerMatrix from "@/components/settings/EventTriggerMatrix";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,12 +16,11 @@ export default async function NotificationsSettingsPage() {
   const canAccess = await checkServerPermission("SETTINGS_NOTIFICATIONS_VIEW");
   if (!canAccess) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold text-danger-text">Access denied</h2>
-          <p className="text-muted">You do not have permission to view this page.</p>
-        </div>
-      </div>
+      <AccessRestricted
+        requiredRole="Super Admin"
+        requiredPermission="SETTINGS_NOTIFICATIONS_VIEW"
+        moduleName="Notification Settings"
+      />
     );
   }
 

@@ -48,6 +48,9 @@ export const metadata = {
 
 import { ThemeScript } from '@/components/theme/ThemeScript';
 
+import { ClientHttpErrorReporter } from "@/components/errors/ClientHttpErrorReporter";
+import { DeploymentVersionBanner } from "@/components/errors/DeploymentVersionBanner";
+
 export default function RootLayout({
   children,
 }: {
@@ -70,6 +73,8 @@ export default function RootLayout({
         <QueryProvider>
           <PermissionsProvider>
             <ThemeProvider>
+              <ClientHttpErrorReporter />
+              <DeploymentVersionBanner />
               <ClientSessionManager />
               <AppScreensaver />
               <GlobalAutoRefresh />

@@ -2,6 +2,7 @@
 
 import ReportsClient from "@/components/reports/ReportsClient";
 import { usePermissions } from "@/hooks/usePermissions";
+import { AccessRestricted } from "@/components/errors/AccessRestricted";
 
 export default function ReportsPage() {
   const { hasPermission, roleCode } = usePermissions();
@@ -9,12 +10,11 @@ export default function ReportsPage() {
 
   if (!canView) {
     return (
-      <div className="flex h-[80vh] w-full items-center justify-center">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-danger">Access denied</h2>
-          <p className="text-muted">You do not have permission to view workspace reports.</p>
-        </div>
-      </div>
+      <AccessRestricted
+        requiredRole="Workspace Manager"
+        requiredPermission="REPORTS_VIEW"
+        moduleName="Workspaces & Tasks"
+      />
     );
   }
 
