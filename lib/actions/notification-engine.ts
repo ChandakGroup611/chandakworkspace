@@ -92,15 +92,9 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       }
     }
 
-    // Suppress triggering user for collaborative actions (e.g., Comment Added, Status Changed)
-    // UNLESS the event is an explicit self-assignment / creation or self-notification was explicitly requested.
-    const isPublicTicketReceipt = moduleName === 'Ticket' && eventName.toLowerCase() === 'created';
-    const isSelfAssignment = (
-      (eventName.toLowerCase().includes('assign') || eventName.toLowerCase() === 'created') &&
-      (payload.assigned_to === payload.triggering_user_id || payload.allow_self_notification)
-    );
-
-    if (!isPublicTicketReceipt && !isSelfAssignment && payload.triggering_user_id) {
+    // Do not suppress the actor if they are configured as an intended recipient in notification_rules
+    // (e.g. Creator, Assigned User, Executors). If the user configured those recipient roles, they should receive the email & notification.
+    if (payload.suppress_actor && payload.triggering_user_id) {
       recipientUserIds.delete(payload.triggering_user_id);
     }
 

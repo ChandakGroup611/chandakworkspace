@@ -1581,8 +1581,7 @@ async function notifyTaskRemark(taskId: string, remarkContent: string, authorId:
       });
     }
 
-    // Exclude author from self-notification
-    recipientIds.delete(authorId);
+    // Stakeholders (including author if they are creator/assignee/watcher) are retained so in-app bell updates
 
     const statusName = (task.status as any)?.status_name || '';
     const taskLink = `/tasks/${taskId}`;
@@ -2225,11 +2224,22 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
       'ASSIGNED',
       { _disableEmail: true }
     ).catch(e => console.error("[updateTaskAssignees] dispatchNotification primary failed", e));
+
+    queueBusinessEvent("Task", "Assigned", {
+      entity_id: taskId,
+      triggering_user_id: userId || "",
+      task_name: taskSubject,
+      assigned_to: finalPrimaryId,
+      created_by: task.created_by,
+      workspace_id: effectiveWsId,
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`,
+      _disableInApp: true
+    }).catch(e => console.error("[updateTaskAssignees] Task Assigned push failed", e));
   }
 
-  // Notify executors
+  // Notify executors (excluding the primary assignee)
   uniqueAssigneeIds.forEach(execId => {
-    if (execId !== task.assigned_to) {
+    if (execId !== finalPrimaryId) {
       dispatchNotification(
         execId,
         'Task Executor Assignment',
