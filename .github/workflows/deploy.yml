@@ -466,6 +466,7 @@ jobs:
         run: |
           echo "Syncing deploy.zip, sys-deploy-c7a8b9e1.php, and .htaccess to Hostinger via Direct FTP..."
           curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/deploy.zip" || echo "FTP to domain deploy.zip failed"
+          curl -sS --connect-timeout 15 --max-time 90 --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to public_html deploy.zip failed"
           curl -sS --connect-timeout 15 --max-time 45 --ftp-create-dirs -T upload-payload/sys-deploy-c7a8b9e1.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/sys-deploy-c7a8b9e1.php" || echo "FTP to domain public_html sys-deploy-c7a8b9e1.php failed"
           if [ -n "${{ secrets.HOSTINGER_DEPLOY_KEY }}" ]; then
             printf "%s" "${{ secrets.HOSTINGER_DEPLOY_KEY }}" > upload-payload/.deploy_secret
@@ -489,6 +490,15 @@ jobs:
           OLD_DIR=$(echo "$INFO" | grep -o '"/home/u859582759/domains/chandakgroup.tech/hbuilds/[^"]*"' | head -n 1 | tr -d '"' || echo "/home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs")
           echo "old_target=$OLD_DIR" >> "$GITHUB_OUTPUT"
           echo "Active live directory before switch: $OLD_DIR"
+          if [ -n "$OLD_DIR" ]; then
+            REMOTE_REL=$(echo "$OLD_DIR" | sed 's|/home/[^/]*/||')
+            echo "Syncing deploy handler to active live directory: $REMOTE_REL"
+            curl -sS --connect-timeout 15 --max-time 45 -T upload-payload/sys-deploy-c7a8b9e1.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/${REMOTE_REL}/sys-deploy-c7a8b9e1.php" || echo "FTP to active live dir sys-deploy failed"
+            if echo "$REMOTE_REL" | grep -q "/public$"; then
+              ROOT_REL=$(echo "$REMOTE_REL" | sed 's|/public$||')
+              curl -sS --connect-timeout 15 --max-time 45 -T upload-payload/sys-deploy-c7a8b9e1.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/${ROOT_REL}/sys-deploy-c7a8b9e1.php" || echo "FTP to root sys-deploy failed"
+            fi
+          fi
 
       - name: Remote Extraction, Release Switching & Process Restart
         run: |
