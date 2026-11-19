@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import {
-  getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask,
+  getTaskDetails, createTask, updateTask, deleteTask, transitionTaskStatus, resolveTask,
   approveTask, reopenTask, createChecklistItem,
   createTaskAttachment, deleteTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses,
   getTaskChecklists, getTaskAttachments, executeTaskBatchOperation
@@ -212,21 +212,38 @@ export default function TaskExecutionController({
     }
   };
 
-  const handleSubtaskCreated = async (newSubtask: any) => {
-    setIsAddingSubtask(false);
-    toast.success("Subtask created successfully");
+  const handleSubtaskCreated = async (payload: any) => {
     try {
+      const targetWorkspaceId = task?.sub_workspace_id || task?.workspace_id;
+      const res = await createTask({
+        ...payload,
+        workspace_id: targetWorkspaceId,
+        parent_task_id: task?.id || taskId,
+        created_by: currentUid || ""
+      });
+
+      if (res && res.error) {
+        toast.error(res.error);
+        return; // Keep wizard open on failure
+      }
+
+      toast.success("Subtask created successfully");
+      setIsAddingSubtask(false);
+
       const fresh = await getTaskDetails(taskId);
       if (fresh && !fresh.error && fresh.subtasks) {
         setSubtasks(fresh.subtasks);
-      } else if (newSubtask) {
-        setSubtasks(prev => [...prev, newSubtask]);
+      } else if (res && res.data) {
+        setSubtasks(prev => [...prev, res.data]);
+      } else if (payload) {
+        setSubtasks(prev => [...prev, payload]);
       }
-    } catch (e) {
-      if (newSubtask) setSubtasks(prev => [...prev, newSubtask]);
+      router.refresh();
+      if (onUpdate) onUpdate();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to create subtask");
+      // Keep wizard open on error
     }
-    router.refresh();
-    if (onUpdate) onUpdate();
   };
 
   // Lazy Load States
@@ -2794,8 +2811,8 @@ export default function TaskExecutionController({
         {/* Subtask Creation Wizard */}
         {isAddingSubtask && (
           <TaskCreationWizard
-            workspaceId={task?.workspace_id || ""}
-            initialParentTaskId={task?.id}
+            workspaceId={task?.sub_workspace_id || task?.workspace_id || ""}
+            initialParentTaskId={task?.id || taskId}
             onClose={() => setIsAddingSubtask(false)}
             onSuccess={handleSubtaskCreated}
           />

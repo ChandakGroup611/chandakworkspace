@@ -211,7 +211,7 @@ export const designRunners: TestCaseRunner[] = [
         const hasRejection = res.status === 404 || res.status === 400 || text.includes("Invalid") || text.includes("expired") || text.includes("not found");
         if (!hasRejection && res.status === 200 && !text.includes("alert")) {
           const pageMod = await import("../../app/verify-drawing/[token]/page");
-          if (pageMod.default) {
+          if (typeof pageMod.default === 'function') {
             return { pass: true, notes: "Verified Server Component reject handler for invalid tokens" };
           }
           return { pass: false, notes: "Invalid verify-drawing token did not trigger rejection", codePath: "app/verify-drawing/[token]/page.tsx" };

@@ -184,14 +184,14 @@ export const requirementRunners: TestCaseRunner[] = [
       const prevEnv = process.env.NODE_ENV;
       const prevSandbox = process.env.SANDBOX_CONFIRM;
       try {
-        process.env.NODE_ENV = "production";
+        (process.env as any).NODE_ENV = "production";
         delete process.env.SANDBOX_CONFIRM;
         const res = await createRequirement(maliciousPayload as any);
         if (res && !("error" in res)) {
           return { pass: false, notes: "VULNERABILITY: createRequirement accepted spoofed created_by without server session", codePath: "lib/actions/requirements.ts" };
         }
       } finally {
-        process.env.NODE_ENV = prevEnv;
+        (process.env as any).NODE_ENV = prevEnv;
         if (prevSandbox) process.env.SANDBOX_CONFIRM = prevSandbox;
       }
       return { pass: true, notes: "Server strictly derives identity from authenticated session; spoofed created_by is rejected" };

@@ -11,7 +11,7 @@ export const ticketRunners: TestCaseRunner[] = [
     run: async (ctx) => {
       const stdUserId = ctx.users["test.ticket.standard@chandakgroup.tech"];
       const { getVisibleTickets } = await import("../../lib/repositories/tickets");
-      const visible = await getVisibleTickets(stdUserId);
+      const visible = (await getVisibleTickets(stdUserId)) as any[];
       for (const t of visible) {
         if (t.creator_id !== stdUserId && t.assignee_id !== stdUserId) {
           return { pass: false, notes: `Security violation: standard user saw ticket ${t.code} owned by ${t.creator_id}`, codePath: "lib/repositories/tickets.ts" };

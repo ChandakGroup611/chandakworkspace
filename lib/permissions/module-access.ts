@@ -147,6 +147,7 @@ async function loadUserModuleContext(userId: string): Promise<UserContextCache> 
       isSuperAdmin: false,
       modules: new Map(),
       expiresAt: Date.now() + USER_CACHE_TTL_MS,
+      cacheVersion: globalCacheVersion,
     };
     userAccessCache.set(userId, emptyContext);
     return emptyContext;

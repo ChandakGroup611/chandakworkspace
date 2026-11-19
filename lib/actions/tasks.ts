@@ -113,17 +113,10 @@ export async function createTask(payload: {
     const finalWorkspaceId = cleanUUID(payload.sub_workspace_id) || cleanUUID(payload.workspace_id);
 
     // Strict Access Validation:
-    // 1. Workspace membership check & Module RBAC TASKS_CREATE
+    // 1. Workspace membership check & Module RBAC TASKS_CREATE (grandfathered for existing members until WP7)
     const { hasPermission } = await import('@/lib/permissions');
     const { can } = await import('@/lib/permissions/module-access');
     const isSuperAdmin = await hasPermission(creatorId, 'SUPER_ADMIN');
-
-    if (!isSuperAdmin) {
-      const canCreate = await can(creatorId, 'TASK_WORKFLOW', 'TASKS_CREATE', { workspace_id: finalWorkspaceId || undefined });
-      if (!canCreate) {
-        return { error: "Access Denied: You lack TASKS_CREATE permission in Task Workflow." };
-      }
-    }
 
     if (!isSuperAdmin && finalWorkspaceId) {
       const [memberCheck, ownerCheck] = await Promise.all([
@@ -131,8 +124,18 @@ export async function createTask(payload: {
         supabaseAdmin.from('workspaces').select('id').eq('id', finalWorkspaceId).eq('workspace_owner_id', creatorId).eq('is_deleted', false).maybeSingle()
       ]);
 
-      if (!memberCheck.data && !ownerCheck.data) {
-        return { error: "Access Denied: You do not have permission to create tasks in this workspace or sub-workspace." };
+      const isMemberOrOwner = !!(memberCheck.data || ownerCheck.data);
+
+      if (!isMemberOrOwner) {
+        const canCreate = await can(creatorId, 'TASK_WORKFLOW', 'TASKS_CREATE', { workspace_id: finalWorkspaceId || undefined });
+        if (!canCreate) {
+          return { error: "Access Denied: You do not have permission to create tasks in this workspace or sub-workspace." };
+        }
+      }
+    } else if (!isSuperAdmin) {
+      const canCreate = await can(creatorId, 'TASK_WORKFLOW', 'TASKS_CREATE');
+      if (!canCreate) {
+        return { error: "Access Denied: You lack TASKS_CREATE permission in Task Workflow." };
       }
     }
 

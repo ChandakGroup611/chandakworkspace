@@ -55,22 +55,23 @@ export const taskRunners: TestCaseRunner[] = [
     type: "functional",
     suite: "sandbox",
     run: async (ctx) => {
-      const supabaseAdmin = ctx.supabaseAdmin;
       const stdUserId = ctx.users["test.task.standard@chandakgroup.tech"];
       const wsId = ctx.fixedEntities.workspaceId;
-      const { data, error } = await supabaseAdmin.from("tasks").insert({
+      const { createTask, deleteTask } = await import("../../lib/actions/tasks");
+      const res = await createTask({
         workspace_id: wsId,
-        subject: "[TEST-AUTO] Standard User Task",
+        subject: "[TEST-AUTO] Standard User Subtask Test",
         priority_id: "838d98c4-4fe6-484b-8e76-11bdf770f615",
         created_by: stdUserId,
-        assigned_to: stdUserId,
-        is_deleted: false
-      }).select("id").single();
-      if (error) return { pass: false, notes: `Task creation returned error: ${error.message}`, codePath: "tasks" };
-      if (data?.id) {
-        await supabaseAdmin.from("tasks").delete().eq("id", data.id);
+        parent_task_id: ctx.fixedEntities.taskId
+      });
+      if (res && res.error) {
+        return { pass: false, notes: `Subtask creation via action failed: ${res.error}`, codePath: "lib/actions/tasks.ts" };
       }
-      return { pass: true, notes: "Task created successfully in enrolled workspace" };
+      if (res && res.data?.id) {
+        await deleteTask(res.data.id);
+      }
+      return { pass: true, notes: "Subtask created successfully with workspace binding via createTask" };
     }
   },
   {
@@ -212,14 +213,14 @@ export const taskRunners: TestCaseRunner[] = [
       const prevEnv = process.env.NODE_ENV;
       const prevSandbox = process.env.SANDBOX_CONFIRM;
       try {
-        process.env.NODE_ENV = "production";
+        (process.env as any).NODE_ENV = "production";
         delete process.env.SANDBOX_CONFIRM;
         const res = await createTask(maliciousPayload as any);
         if (res && !("error" in res)) {
           return { pass: false, notes: "VULNERABILITY: createTask accepted spoofed created_by without server session", codePath: "lib/actions/tasks.ts" };
         }
       } finally {
-        process.env.NODE_ENV = prevEnv;
+        (process.env as any).NODE_ENV = prevEnv;
         if (prevSandbox) process.env.SANDBOX_CONFIRM = prevSandbox;
       }
       return { pass: true, notes: "Server strictly derives identity from authenticated session; spoofed created_by is rejected" };

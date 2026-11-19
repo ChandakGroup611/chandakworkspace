@@ -84,7 +84,7 @@ export const authRunners: TestCaseRunner[] = [
       const prevEnv = process.env.NODE_ENV;
       const prevSandbox = process.env.SANDBOX_CONFIRM;
       try {
-        process.env.NODE_ENV = "production";
+        (process.env as any).NODE_ENV = "production";
         delete process.env.SANDBOX_CONFIRM;
         const [taskRes, reqRes] = await Promise.all([
           createTask({
@@ -104,7 +104,7 @@ export const authRunners: TestCaseRunner[] = [
           return { pass: false, notes: "VULNERABILITY: Actions trusted client-supplied created_by without server session", codePath: "lib/actions/tasks.ts, lib/actions/requirements.ts" };
         }
       } finally {
-        process.env.NODE_ENV = prevEnv;
+        (process.env as any).NODE_ENV = prevEnv;
         if (prevSandbox) process.env.SANDBOX_CONFIRM = prevSandbox;
       }
       return { pass: true, notes: "All verified server actions enforce authenticated session identity; client-supplied created_by is ignored/rejected" };
