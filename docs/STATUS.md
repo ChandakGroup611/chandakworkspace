@@ -26,11 +26,11 @@
 | **2.6** | WP2 | Active, non-deleted, scope-bounded status lists in D4 order | `5173cd4a` | — | TC-REGR-002 | DONE |
 | **2.7** | WP2 | Single default status per scope; remove self-heal inserts | `5173cd4a` | — | TC-TCK-003, TC-TASK-003 | DONE |
 | **2.8** | WP2 | Data cleanup: fix inactive/deleted status pointers with backup | `5173cd4a` | — | TC-TASK-002 | DONE |
-| **3.1** | WP3 | D6 auto-UAT rules and reopen requirement sync on sub-100% completion | `pending` | — | TC-REQ-003, TC-TASK-002 | DONE |
-| **3.2** | WP3 | UAT PASS: single active closed requirement status; atomic status update | `pending` | — | TC-REQ-005, TC-REQ-002 | DONE |
-| **3.3** | WP3 | UAT FAIL dialog: selectively reopen user-ticked tasks | `pending` | — | TC-REQ-005 | DONE |
-| **3.4** | WP3 | Single-function status transitions for tickets and requirements | `pending` | — | TC-TCK-002, TC-REQ-002 | DONE |
-| **3.5** | WP3 | Data audit: tickets/requirements status consistency report | `pending` | — | TC-TCK-001, TC-REQ-001 | DONE |
+| **3.1** | WP3 | D6 auto-UAT rules and reopen requirement sync on sub-100% completion | `18a7bb73` | — | TC-REQ-003, TC-TASK-002 | DONE |
+| **3.2** | WP3 | UAT PASS: single active closed requirement status; atomic status update | `18a7bb73` | — | TC-REQ-005, TC-REQ-002 | DONE |
+| **3.3** | WP3 | UAT FAIL dialog: selectively reopen user-ticked tasks | `18a7bb73` | — | TC-REQ-005 | DONE |
+| **3.4** | WP3 | Single-function status transitions for tickets and requirements | `18a7bb73` | — | TC-TCK-002, TC-REQ-002 | DONE |
+| **3.5** | WP3 | Data audit: tickets/requirements status consistency report | `18a7bb73` | — | TC-TCK-001, TC-REQ-001 | DONE |
 | **4.1** | WP4 | Atomic email queue claiming with SKIP LOCKED and backoff intervals | — | — | TC-MAIL-008 | TODO |
 | **4.2** | WP4 | Asia/Kolkata date handling (todayIST, toISTDateString, isOverdue) | — | — | TC-TASK-005, TC-TCK-005 | TODO |
 | **4.3** | WP4 | TAT escalation using working days & holiday calendar (D9) | — | — | TC-XMOD-003 | TODO |
