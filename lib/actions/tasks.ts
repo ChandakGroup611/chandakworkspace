@@ -1882,6 +1882,10 @@ export async function executeTaskBatchOperation(payload: {
   checklistUpdates?: Record<string, { is_completed?: boolean; assignee_id?: string }>;
   remarks?: string;
   attachmentIds?: string[];
+  assignees?: string[];
+  primaryAssigneeId?: string | null;
+  watchers?: string[];
+  workspaceId?: string;
 }) {
   const cookieStore = await cookies();
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
@@ -2045,6 +2049,19 @@ export async function executeTaskBatchOperation(payload: {
   // FIRE AND FORGET - DO NOT AWAIT SIDE EFFECTS
   Promise.allSettled(sideEffects).catch(e => console.error("[SideEffects Error]", e));
 
+  // Atomic Assignment & Watcher updates within batch operation
+  const effectiveWs = payload.workspaceId || currentTask.workspace_id;
+  if (payload.assignees !== undefined || payload.primaryAssigneeId !== undefined) {
+    const assigneesList = payload.assignees !== undefined ? payload.assignees : [];
+    const assignRes = await updateTaskAssignees(taskId, effectiveWs, assigneesList, payload.primaryAssigneeId ?? undefined);
+    if (assignRes?.error) return { error: assignRes.error };
+  }
+
+  if (payload.watchers !== undefined) {
+    const watchRes = await updateTaskWatchers(taskId, effectiveWs, payload.watchers);
+    if (watchRes?.error) return { error: watchRes.error };
+  }
+
   // Purge the cache for this task to ensure Next.js auto-refresh works on production
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath(`/workspaces/tasks`);
@@ -2145,6 +2162,17 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const participants: any[] = [];
   uniqueAssigneeIds.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'EXECUTOR' }));
 
+  // Fetch existing executors to identify who is newly added vs already assigned
+  const { data: existingExecutorsData } = await supabaseAdmin
+    .from('task_participants')
+    .select('user_id')
+    .eq('task_id', taskId)
+    .eq('participation_role', 'EXECUTOR');
+  const existingExecutorIds = new Set((existingExecutorsData || []).map(p => p.user_id));
+  const newlyAddedExecutorIds = uniqueAssigneeIds.filter(id => !existingExecutorIds.has(id));
+  const executorsRemoved = (existingExecutorsData || []).some(p => !uniqueAssigneeIds.includes(p.user_id));
+  const executorsActuallyChanged = newlyAddedExecutorIds.length > 0 || executorsRemoved;
+
   // Perform the swap transactionally
   // ONLY delete executors, leave explicit watchers alone!
   const { error: deleteError } = await supabaseAdmin.from('task_participants').delete().eq('task_id', taskId).eq('participation_role', 'EXECUTOR');
@@ -2182,8 +2210,8 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   // If primary assignee changed, fire "Task Assigned". If only executors changed, fire "Task Executors Changed". Never both.
   const primaryChanged = !!(finalPrimaryId && finalPrimaryId !== task.assigned_to);
 
-  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
-    if (!primaryChanged) {
+  if (!primaryChanged && executorsActuallyChanged) {
+    supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
       queueBusinessEvent("Task", "Executors Changed", {
         entity_id: taskId,
         triggering_user_id: userId || "",
@@ -2197,8 +2225,8 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
         link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`,
         _disableInApp: true
       }).catch(e => console.error("[NotificationEngine] Background push failed", e));
-    }
-  }).then(undefined, () => { });
+    }).then(undefined, () => { });
+  }
 
   // Log the assignment change in audit trail
   const newExecutorNames = uniqueAssigneeIds
@@ -2230,7 +2258,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
       `/tasks/${taskId}`,
       'TASK',
       'ASSIGNED',
-      { _disableEmail: true }
+      { _disableEmail: true, task_id: taskId }
     ).catch(e => console.error("[updateTaskAssignees] dispatchNotification primary failed", e));
 
     queueBusinessEvent("Task", "Assigned", {
@@ -2245,8 +2273,8 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     }).catch(e => console.error("[updateTaskAssignees] Task Assigned push failed", e));
   }
 
-  // Notify executors (excluding the primary assignee)
-  uniqueAssigneeIds.forEach(execId => {
+  // Notify ONLY newly added executors (excluding the primary assignee)
+  newlyAddedExecutorIds.forEach(execId => {
     if (execId !== finalPrimaryId) {
       dispatchNotification(
         execId,
@@ -2255,7 +2283,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
         `/tasks/${taskId}`,
         'TASK',
         'ASSIGNED',
-        { _disableEmail: true }
+        { _disableEmail: true, task_id: taskId }
       ).catch(e => console.error("[updateTaskAssignees] dispatchNotification executor failed", e));
     }
   });
@@ -2306,6 +2334,15 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
   const participants: any[] = [];
   uniqueWatcherIds.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'WATCHER' }));
 
+  // Fetch existing watchers to identify who is newly added vs already watching
+  const { data: existingWatchersData } = await supabaseAdmin
+    .from('task_participants')
+    .select('user_id')
+    .eq('task_id', taskId)
+    .eq('participation_role', 'WATCHER');
+  const existingWatcherIds = new Set((existingWatchersData || []).map(p => p.user_id));
+  const newlyAddedWatcherIds = uniqueWatcherIds.filter(id => !existingWatcherIds.has(id));
+
   // Delete existing watchers for this task
   const { error: deleteError } = await supabaseAdmin
     .from('task_participants')
@@ -2351,13 +2388,13 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
     }
   }]);
 
-  // Dispatch in-app & email notifications to newly added watchers
-  if (uniqueWatcherIds.length > 0) {
+  // Dispatch in-app & email notifications ONLY to newly added watchers
+  if (newlyAddedWatcherIds.length > 0) {
     const { data: currentTask } = await supabaseAdmin.from('tasks').select('subject').eq('id', taskId).maybeSingle();
     const taskSubject = currentTask?.subject || 'Task';
     const actorName = stakeholders.find((s: any) => s.id === userId)?.full_name || 'System';
 
-    for (const watcherId of uniqueWatcherIds) {
+    for (const watcherId of newlyAddedWatcherIds) {
       dispatchNotification(
         watcherId,
         'Added as Task Watcher',
@@ -2365,7 +2402,7 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
         `/tasks/${taskId}`,
         'TASK',
         'WATCHER_ADDED',
-        { task_name: taskSubject, creator_name: actorName }
+        { task_name: taskSubject, creator_name: actorName, task_id: taskId }
       ).catch(e => console.error("[updateTaskWatchers] dispatchNotification failed", e));
     }
   }

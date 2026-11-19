@@ -132,6 +132,8 @@ export async function dispatchNotification(
       return;
     }
 
+  const extractedEntityId = link ? (link.includes('task=') ? link.split('task=')[1] : (link.includes('id=') ? link.split('id=')[1] : link.split('/').pop())) || 'SYS' : 'SYS';
+
   // 1. Insert into DB (In-App Queue)
   let notif: any = null;
   if (isInAppEnabled) {
@@ -151,7 +153,6 @@ export async function dispatchNotification(
       const isTicket = link?.includes('tickets');
       const entityType = isWorkspace ? 'workspace' : (isTicket ? 'ticket' : 'task');
       const moduleType = isWorkspace ? 'workspaces' : (isTicket ? 'tickets' : 'tasks');
-      const extractedEntityId = link ? (link.includes('task=') ? link.split('task=')[1] : (link.includes('id=') ? link.split('id=')[1] : link.split('/').pop())) || 'SYS' : 'SYS';
 
       await supabaseAdmin.from('notification_queue').insert([{
         target_user_id: userId,
@@ -240,6 +241,30 @@ export async function dispatchNotification(
 
       // Transform any remaining site links to direct access links for this recipient
       finalBody = transformEmailContentLinks(finalBody, userId, user.email, baseUrl);
+
+      // 60-second Anti-Spam / Rapid Coalescing Gate:
+      const targetEntityId = String(customPayload?.task_id || customPayload?.entity_id || extractedEntityId || '');
+      const sixtySecondsAgo = new Date(Date.now() - 60000).toISOString();
+      const { data: recentQueued } = await supabaseAdmin
+        .from('email_queue')
+        .select('subject, body_template')
+        .eq('recipient_email', user.email)
+        .gte('created_at', sixtySecondsAgo);
+
+      const isDuplicate = recentQueued && recentQueued.some(q => {
+        if (targetEntityId && targetEntityId !== 'SYS' && q.body_template?.includes(targetEntityId)) return true;
+        if (finalSubject && q.subject?.includes(finalSubject)) return true;
+        return false;
+      });
+
+      if (isDuplicate) {
+        console.log(`[dispatchNotification] Coalesced duplicate email for ${user.email} on entity ${targetEntityId} within 60s window.`);
+        return;
+      }
+
+      if (targetEntityId && targetEntityId !== 'SYS') {
+        finalBody += `\n<!-- entity_id:${targetEntityId} -->`;
+      }
 
       await supabaseAdmin.from('email_queue').insert([{
         recipient_email: user.email,

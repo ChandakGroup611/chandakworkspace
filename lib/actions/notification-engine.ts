@@ -139,25 +139,25 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     });
 
     // 5.1 Anti-Spam / Rapid Coalescing Gate:
-    // Check if an email for this recipient regarding this entity was queued within the last 15 seconds
+    // Check if an email for this recipient regarding this entity was queued within the last 60 seconds
     // to prevent duplicate emails from rapid multi-triggers (e.g. Task Updated + Executors Changed during same save)
     let candidateUsers = uniqueUsers;
     if (payload.entity_id) {
-      const fifteenSecondsAgo = new Date(Date.now() - 15000).toISOString();
+      const sixtySecondsAgo = new Date(Date.now() - 60000).toISOString();
       const candidateEmails = uniqueUsers.map(u => u.email.trim().toLowerCase());
 
       const { data: recentQueued } = await supabaseAdmin
         .from("email_queue")
         .select("recipient_email, subject, body_template")
         .in("recipient_email", candidateEmails)
-        .gte("created_at", fifteenSecondsAgo);
+        .gte("created_at", sixtySecondsAgo);
 
       if (recentQueued && recentQueued.length > 0) {
         candidateUsers = uniqueUsers.filter(user => {
           const userEmail = user.email.trim().toLowerCase();
           const taskCode = payload.task_code || '';
           const taskName = payload.task_name || '';
-          const entityId = payload.entity_id;
+          const entityId = String(payload.entity_id);
           const alreadyQueued = recentQueued.some(q => {
             if (q.recipient_email?.toLowerCase() !== userEmail) return false;
             if (entityId && q.body_template?.includes(entityId)) return true;
@@ -166,7 +166,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
             return false;
           });
           if (alreadyQueued) {
-            console.log(`[NotificationEngine] Coalesced duplicate email for ${userEmail} on entity ${payload.entity_id} within 15s window.`);
+            console.log(`[NotificationEngine] Coalesced duplicate email for ${userEmail} on entity ${payload.entity_id} within 60s window.`);
             return false;
           }
           return true;
@@ -232,6 +232,10 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       }
 
       finalHtmlBody = transformEmailContentLinks(finalHtmlBody, user.id, user.email, baseUrl);
+
+      if (payload.entity_id) {
+        finalHtmlBody += `\n<!-- entity_id:${payload.entity_id} -->`;
+      }
 
       return {
         recipient_email: user.email,

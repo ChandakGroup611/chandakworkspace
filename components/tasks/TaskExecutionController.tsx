@@ -880,6 +880,10 @@ export default function TaskExecutionController({
         ?.filter((c: any) => String(c.id).startsWith("temp-"))
         .map((c: any) => ({ label: c.label, assignee_id: c.assignee_id })) || [];
 
+      const executorsToUpdate = pendingAssignees !== null ? pendingAssignees : undefined;
+      const primaryToUpdate = pendingPrimaryAssignee !== null ? pendingPrimaryAssignee : undefined;
+      const watchersToUpdate = pendingWatchers !== null ? pendingWatchers : undefined;
+
       const hasBatchUpdates = Object.keys(updatePayload).length > 0 ||
         finalStatusId !== undefined ||
         departmentChangeObj !== undefined ||
@@ -887,7 +891,10 @@ export default function TaskExecutionController({
         (pendingChecklists && pendingChecklists.length > 0) ||
         (editedChecklists && Object.keys(editedChecklists).length > 0) ||
         (remarksDraft && remarksDraft.trim().length > 0) ||
-        attachmentIds.length > 0;
+        attachmentIds.length > 0 ||
+        executorsToUpdate !== undefined ||
+        primaryToUpdate !== undefined ||
+        watchersToUpdate !== undefined;
 
       let res: any = { success: true };
       if (hasBatchUpdates) {
@@ -899,7 +906,11 @@ export default function TaskExecutionController({
           checklistCreates: newChecklistsPayload.length > 0 ? newChecklistsPayload : pendingChecklists,
           checklistUpdates: editedChecklists,
           remarks: remarksDraft.trim(),
-          attachmentIds
+          attachmentIds,
+          assignees: executorsToUpdate !== undefined ? executorsToUpdate : (primaryToUpdate !== undefined ? (task.task_assignees || []).map((e: any) => e.id) : undefined),
+          primaryAssigneeId: primaryToUpdate !== undefined ? primaryToUpdate : (executorsToUpdate !== undefined ? task.assigned_to : undefined),
+          watchers: watchersToUpdate,
+          workspaceId: task.workspace_id
         });
 
         if (res?.error) throw new Error("Batch Save Error: " + res.error);
@@ -907,11 +918,6 @@ export default function TaskExecutionController({
       const t2 = performance.now();
 
       if (pendingAssignees !== null || pendingPrimaryAssignee !== null) {
-        const { updateTaskAssignees } = await import("@/lib/actions/tasks");
-        const executorsToUpdate = pendingAssignees !== null ? pendingAssignees : (task.task_assignees || []).map((e: any) => e.id);
-        const primaryToUpdate = pendingPrimaryAssignee !== null ? pendingPrimaryAssignee : task.assigned_to;
-        const assigneesRes = await updateTaskAssignees(taskId, task.workspace_id, executorsToUpdate, primaryToUpdate);
-        if (assigneesRes?.error) throw new Error(assigneesRes.error);
         setPendingAssignees(null);
         setPendingPrimaryAssignee(null);
         // Force hydration since assignment changed
@@ -919,9 +925,6 @@ export default function TaskExecutionController({
       }
 
       if (pendingWatchers !== null) {
-        const { updateTaskWatchers } = await import("@/lib/actions/tasks");
-        const watchersRes = await updateTaskWatchers(taskId, task.workspace_id, pendingWatchers);
-        if (watchersRes?.error) throw new Error(watchersRes.error);
         setPendingWatchers(null);
         // Force hydration since watchers changed
         await loadTaskDetails(true);
