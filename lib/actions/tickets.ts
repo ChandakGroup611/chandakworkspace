@@ -520,7 +520,7 @@ export async function generateTeamsMeetingLink(ticketId: string) {
  * Fetches all data required for the Tickets Dashboard
  * Masters are read fresh on every call; tickets via the visibility-scoped repository query
  */
-export async function fetchTicketDashboardData(filters?: { searchQuery?: string, status_id?: string, priority_id?: string, scope_id?: string }) {
+export async function fetchTicketDashboardData(filters?: { searchQuery?: string, status_id?: string, priority_id?: string, scope_id?: string, scope_type?: string }) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
@@ -537,7 +537,7 @@ export async function fetchTicketDashboardData(filters?: { searchQuery?: string,
     return [];
   });
 
-  const scopeId = filters?.scope_id !== "ALL" ? filters?.scope_id : null;
+  let scopeId: string | null | undefined = filters?.scope_id !== "ALL" ? filters?.scope_id : null;
 
   // Masters are read fresh on every call (no in-memory cache): a status, priority or category saved in
   // Master data must show in Tickets immediately. Filter by scope first; de-duplicate by code only when no
@@ -553,6 +553,13 @@ export async function fetchTicketDashboardData(filters?: { searchQuery?: string,
   ]);
 
   const ticketScopeIds = new Set((scopeRes.data || []).map((s: any) => s.id));
+  // A ticket stores its scope as a code (scope_type: INFRA / ERP or ERP/SOFTWARE / OTHERS); resolve it
+  // to the scope id that the masters use, so a ticket's page shows its own scope's priorities/statuses.
+  if (!scopeId && filters?.scope_type) {
+    const code = String(filters.scope_type).toUpperCase() === "ERP/SOFTWARE" ? "ERP" : String(filters.scope_type).toUpperCase();
+    const match = (scopeRes.data || []).find((s: any) => String(s.code || "").toUpperCase() === code);
+    if (match) scopeId = match.id;
+  }
   const byScope = (arr: any[] | null, ticketScopesOnly = false) => {
     let list = arr || [];
     if (scopeId) return list.filter((item: any) => item.scope_id === scopeId);

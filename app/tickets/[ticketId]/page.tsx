@@ -42,7 +42,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       // lists show the names defined for its scope (IT Infrastructure / ERP / General).
       const foundTicket: any = await fetchSingleTicketDetails(ticketId);
       const data = await fetchTicketDashboardData(
-        foundTicket?.scope_id ? { scope_id: foundTicket.scope_id } : undefined
+        foundTicket?.scope_type ? { scope_type: foundTicket.scope_type } : undefined
       );
 
       setDepartments(data.departments || []);

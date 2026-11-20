@@ -36,7 +36,7 @@ const REPORT_PAGE_SIZE = 1000;
 const REPORT_MAX_PAGES = 10; // up to 10,000 tickets per report
 
 const REPORT_SELECT = `
-  id, code, title, description, scope_id, custom_fields, due_date, created_at, updated_at,
+  id, code, title, description, scope_type, custom_fields, due_date, created_at, updated_at,
   creator:user_master!fk_tickets_creator(full_name),
   assignee:user_master!fk_tickets_assignee(full_name),
   department:departments(name),
@@ -78,7 +78,14 @@ export async function generateTicketReportData(): Promise<{ rows: TicketReportRo
       supabaseAdmin.from("ticket_subcategories").select("id, name"),
       supabaseAdmin.from("issue_types").select("id, name"),
     ]);
-    const scopes = nameMap(scopeRes.data);
+    // Tickets store their scope as a code in scope_type ('INFRA', 'ERP' / 'ERP/SOFTWARE', 'OTHERS').
+    const scopeByCode = new Map<string, string>();
+    (scopeRes.data || []).forEach((s: any) => { if (s?.code) scopeByCode.set(String(s.code).toUpperCase(), s.name || s.code); });
+    const scopeName = (scopeType: string | null | undefined) => {
+      if (!scopeType) return "";
+      const code = String(scopeType).toUpperCase() === "ERP/SOFTWARE" ? "ERP" : String(scopeType).toUpperCase();
+      return scopeByCode.get(code) || String(scopeType);
+    };
     const categories = nameMap(catRes.data);
     const subcategories = nameMap(subcatRes.data);
     const issueTypes = nameMap(typeRes.data);
@@ -93,7 +100,7 @@ export async function generateTicketReportData(): Promise<{ rows: TicketReportRo
         code: t.code || `INC-${String(t.id).slice(0, 8)}`,
         title: t.title || "",
         description: String(t.description || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
-        scope: scopes.get(t.scope_id) || "",
+        scope: scopeName(t.scope_type),
         category: categories.get(custom.category_id) || "",
         subcategory: subcategories.get(custom.subcategory_id) || "",
         issue_type: issueTypes.get(custom.issue_type_id) || "",
