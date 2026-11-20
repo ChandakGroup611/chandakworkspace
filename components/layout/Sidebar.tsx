@@ -198,6 +198,7 @@ const dashboardsNavGroups: NavGroup[] = [
       { label: "Marketing budget", href: "/dashboards/mkt", icon: LineChart, permission: "DASH_MKT_VIEW" },
       { label: "Admin access", href: "/dashboards/adm", icon: LineChart, permission: "DASH_ADM_VIEW" },
       { label: "Engineering budget", href: "/dashboards/engg", icon: LineChart, permission: "DASH_ENGG_VIEW" },
+      { label: "Sales (Salesforce)", href: "/dashboards/sfdc", icon: LineChart, permission: "DASH_SFDC_VIEW" },
     ]
   }
 ];
