@@ -92,7 +92,7 @@ export async function getMeetings(filters?: {
       data = data.filter((m: any) => {
         if (!m.is_confidential) return true;
         if (m.organizer_id === userId || m.chair_id === userId || m.default_minute_taker_id === userId) return true;
-        return m.members?.some((mem: any) => mem.user_id === userId);
+        return m.members?.some((mem: any) => mem.user?.id === userId);
       });
     }
 

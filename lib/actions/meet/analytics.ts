@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { requireMeet } from "@/lib/permissions/meet";
+import { getHiddenConfidentialMeetingIds } from "@/lib/utils/meet-scope";
 import type { MeetDashboardKPIs, MeetingSession, MeetingPoint, MeetingTask } from "@/types/meet";
 
 export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
@@ -228,7 +229,10 @@ export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
 }
 
 export async function getMeetReports(reportKey: string, filters?: any) {
-  await requireMeet("MEET_REPORT_VIEW");
+  const auth = await requireMeet("MEET_REPORT_VIEW");
+  // Rows from confidential meetings the viewer is not part of are excluded (Spec S3)
+  const hidden = await getHiddenConfidentialMeetingIds(auth.userId, auth.isSuperAdmin || auth.isMeetAdmin);
+  const isVisible = (meetingId?: string | null) => !meetingId || !hidden.has(meetingId);
   try {
     switch (reportKey) {
       case "R2": // Meeting summary
@@ -242,7 +246,7 @@ export async function getMeetReports(reportKey: string, filters?: any) {
           `)
           .eq("is_deleted", false);
 
-        return (meetings || []).map((m: any) => ({
+        return (meetings || []).filter((m: any) => isVisible(m.id)).map((m: any) => ({
           code: m.code,
           title: m.title,
           department: m.department?.name || "General",
@@ -264,14 +268,14 @@ export async function getMeetReports(reportKey: string, filters?: any) {
           .select(`
             code, title, point_type, priority, status, tat_days, due_date, carry_forward_count, progress_percent,
             owner:user_master!meet_points_owner_id_fkey(full_name),
-            meeting:meet_meetings(title, code)
+            meeting:meet_meetings(id, title, code)
           `)
           .not("status", "in", '("closed","dropped")')
           .eq("is_deleted", false)
           .order("due_date", { ascending: true });
 
         const today = new Date().toISOString().split("T")[0];
-        return (pendingPoints || []).map((p: any) => ({
+        return (pendingPoints || []).filter((p: any) => isVisible(p.meeting?.id)).map((p: any) => ({
           code: p.code,
           title: p.title,
           meeting: p.meeting?.title,
@@ -292,13 +296,13 @@ export async function getMeetReports(reportKey: string, filters?: any) {
           .select(`
             code, title, carry_forward_count, status, due_date,
             owner:user_master!meet_points_owner_id_fkey(full_name),
-            meeting:meet_meetings(title)
+            meeting:meet_meetings(id, title)
           `)
           .gt("carry_forward_count", 0)
           .eq("is_deleted", false)
           .order("carry_forward_count", { ascending: false });
 
-        return (carriedPoints || []).map((p: any) => ({
+        return (carriedPoints || []).filter((p: any) => isVisible(p.meeting?.id)).map((p: any) => ({
           code: p.code,
           title: p.title,
           meeting: p.meeting?.title,
@@ -320,7 +324,7 @@ export async function getMeetReports(reportKey: string, filters?: any) {
           .eq("is_deleted", false)
           .order("due_date", { ascending: false });
 
-        return (tasks || []).map((t: any) => {
+        return (tasks || []).filter((t: any) => isVisible(t.point?.meeting?.id)).map((t: any) => {
           const owner = Array.isArray(t.owner) ? t.owner[0] : t.owner;
           return {
             code: t.code,

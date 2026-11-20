@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import type { MeetNote, MeetNoteBlock, NoteKind, NoteBlockType } from "@/types/meet";
 import { isActionLikeText } from "@/lib/utils/meet-notes";
 import { requireMeet } from "@/lib/permissions/meet";
+import { getHiddenConfidentialMeetingIds } from "@/lib/utils/meet-scope";
 
 /**
  * Check if the note belongs to a session whose MoM is already published (Spec N9)
@@ -80,8 +81,22 @@ export async function getNotes(filters?: {
       return [];
     }
 
+    // Privacy: personal notes are visible only to their owner;
+    // session notes of confidential meetings only to participants (Spec N5, S3)
+    const hidden = await getHiddenConfidentialMeetingIds(
+      userId || "",
+      auth.isSuperAdmin || auth.isMeetAdmin
+    );
+    const visible = (data || []).filter((note: any) => {
+      if (note.kind === "personal" || note.visibility === "private") {
+        return note.owner_id === userId;
+      }
+      const meetingId = note.meeting_id || note.session?.meeting?.id;
+      return !meetingId || !hidden.has(meetingId);
+    });
+
     // Process blocks and compute open loops
-    const processed = (data || []).map((note: any) => {
+    const processed = visible.map((note: any) => {
       const activeBlocks = (note.blocks || [])
         .filter((b: any) => !b.deleted_at)
         .sort((a: any, b: any) => a.position - b.position);
@@ -218,6 +233,34 @@ export async function createPersonalNote(title: string, tags: string[] = []): Pr
   }
 }
 
+/** Write access to a note: personal/private notes only by owner; session notes not in hidden confidential meetings. */
+async function assertNoteWritable(
+  noteId: string,
+  auth: { userId: string; isSuperAdmin: boolean; isMeetAdmin: boolean }
+): Promise<string | null> {
+  const { data: note } = await supabaseAdmin
+    .from("meet_notes")
+    .select("id, kind, visibility, owner_id, meeting_id, session:meet_sessions(meeting_id)")
+    .eq("id", noteId)
+    .maybeSingle();
+  if (!note) return "Note not found";
+  if (note.kind === "personal" || note.visibility === "private") {
+    return note.owner_id === auth.userId ? null : "You can only edit your own personal notes";
+  }
+  const sess: any = Array.isArray(note.session) ? note.session[0] : note.session;
+  const meetingId = note.meeting_id || sess?.meeting_id;
+  if (meetingId) {
+    const hidden = await getHiddenConfidentialMeetingIds(auth.userId, auth.isSuperAdmin || auth.isMeetAdmin);
+    if (hidden.has(meetingId)) return "This meeting is confidential";
+  }
+  return null;
+}
+
+async function noteIdForBlock(blockId: string): Promise<string | null> {
+  const { data } = await supabaseAdmin.from("meet_note_blocks").select("note_id").eq("id", blockId).maybeSingle();
+  return data?.note_id || null;
+}
+
 export async function addNoteBlock(input: {
   note_id: string;
   text: string;
@@ -230,6 +273,9 @@ export async function addNoteBlock(input: {
     if (!auth.allowed) {
       return { success: false, error: auth.error || "Permission denied" };
     }
+
+    const denied = await assertNoteWritable(input.note_id, auth);
+    if (denied) return { success: false, error: denied };
 
     // N9 Lock check: If session is published, only allow addendum blocks
     const isLocked = await isNoteSessionPublished(input.note_id);
@@ -307,6 +353,11 @@ export async function updateNoteBlock(
       return { success: false, error: auth.error || "Permission denied" };
     }
 
+    const blockNoteId = await noteIdForBlock(blockId);
+    if (!blockNoteId) return { success: false, error: "Note line not found" };
+    const denied = await assertNoteWritable(blockNoteId, auth);
+    if (denied) return { success: false, error: denied };
+
     // N9 Lock check: If session is published, existing blocks cannot be modified
     const isLocked = await isBlockSessionPublished(blockId);
     if (isLocked) {
@@ -338,6 +389,11 @@ export async function deleteNoteBlock(blockId: string): Promise<{ success: boole
     if (!auth.allowed) {
       return { success: false, error: auth.error || "Permission denied" };
     }
+
+    const blockNoteId = await noteIdForBlock(blockId);
+    if (!blockNoteId) return { success: false, error: "Note line not found" };
+    const denied = await assertNoteWritable(blockNoteId, auth);
+    if (denied) return { success: false, error: denied };
 
     // N9 Lock check: If session is published, deletion is forbidden
     const isLocked = await isBlockSessionPublished(blockId);

@@ -5,6 +5,7 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingDecision, DecisionStatus } from "@/types/meet";
 import { requireMeet } from "@/lib/permissions/meet";
+import { getHiddenConfidentialMeetingIds } from "@/lib/utils/meet-scope";
 
 export async function getDecisions(filters?: {
   search?: string;
@@ -40,7 +41,11 @@ export async function getDecisions(filters?: {
       return [];
     }
 
-    return (data || []) as MeetingDecision[];
+    // Hide decisions of confidential meetings the user is not part of (Spec S3)
+    const hidden = await getHiddenConfidentialMeetingIds(auth.userId, auth.isSuperAdmin || auth.isMeetAdmin);
+    const visible = (data || []).filter((d: any) => !d.session?.meeting_id || !hidden.has(d.session.meeting_id));
+
+    return visible as MeetingDecision[];
   } catch (err: any) {
     console.error("Unexpected error in getDecisions:", err);
     return [];

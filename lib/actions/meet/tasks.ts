@@ -5,6 +5,7 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingTask, TaskStatus, PointPriority } from "@/types/meet";
 import { requireMeet } from "@/lib/permissions/meet";
+import { getHiddenConfidentialMeetingIds } from "@/lib/utils/meet-scope";
 
 export interface CreateTaskInput {
   point_id?: string | null;
@@ -31,9 +32,17 @@ export async function getTasks(filters?: {
     const { user } = await getCachedUser();
     if (!user) return [];
 
-    // Check if user has global task management authority
-    const auth = await requireMeet("MEET_TASK_MANAGE");
-    const isManager = auth.allowed;
+    // Check if user has global task management authority.
+    // requireMeet throws on denial; a plain task owner must still see their own tasks.
+    let isManager = false;
+    let isAdmin = false;
+    try {
+      const auth = await requireMeet("MEET_TASK_MANAGE");
+      isManager = auth.allowed;
+      isAdmin = auth.isSuperAdmin || auth.isMeetAdmin;
+    } catch {
+      isManager = false;
+    }
 
     let query = supabaseAdmin
       .from("meet_tasks")
@@ -50,10 +59,10 @@ export async function getTasks(filters?: {
       .order("created_at", { ascending: false });
 
     // Enforce data scoping: if not manager, user sees only their assigned tasks
-    if (filters?.ownerId) {
-      query = query.eq("owner_id", filters.ownerId);
-    } else if (!isManager) {
+    if (!isManager) {
       query = query.eq("owner_id", user.id);
+    } else if (filters?.ownerId) {
+      query = query.eq("owner_id", filters.ownerId);
     }
 
     if (filters?.search) {
@@ -72,6 +81,16 @@ export async function getTasks(filters?: {
     const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
     let filtered = (data || []) as MeetingTask[];
+
+    // Managers must not see tasks from confidential meetings they are not part of (own tasks always visible)
+    if (isManager) {
+      const hidden = await getHiddenConfidentialMeetingIds(user.id, isAdmin);
+      if (hidden.size > 0) {
+        filtered = filtered.filter(
+          (t: any) => t.owner_id === user.id || !t.point?.meeting_id || !hidden.has(t.point.meeting_id)
+        );
+      }
+    }
 
     if (filters?.statusTab) {
       switch (filters.statusTab) {
