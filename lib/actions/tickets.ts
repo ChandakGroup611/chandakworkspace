@@ -71,10 +71,12 @@ export async function addTicketRemark(ticketId: string, content: string) {
     throw new Error("Unauthenticated. Please log in first.");
   }
 
-  const hasAccess = await checkServerPermission(supabase, user.id, "TICKETS_UPDATE");
-
-  // Relaxed: Allow all authenticated members to add remarks
-  // Removed strict capability/creator check as per new requirement.
+  // Relaxed: any authenticated member who can see the ticket may add remarks
+  // (no TICKETS_UPDATE capability required, as per requirement).
+  const { canAccessTicket } = await import("@/lib/permissions");
+  if (!(await canAccessTicket(user.id, ticketId))) {
+    throw new Error("Unauthorized: You do not have access to this ticket.");
+  }
 
   const { data, error } = await supabase
     .from("ticket_comments")

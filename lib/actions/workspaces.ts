@@ -26,6 +26,15 @@ async function checkServerPermission(supabase: any, userId: string, requiredPerm
   return hasPermission(userId, requiredPerm);
 }
 
+/** Returns the signed-in user's ID or throws. Every exported action here is a public endpoint. */
+async function requireUserId(): Promise<string> {
+  const { user } = await getCachedUser();
+  if (!user?.id) throw new Error("Unauthenticated. Please log in.");
+  return user.id;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Enterprise Workspace & Task Server Actions
  */
@@ -527,7 +536,8 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
   }
 }
 
-export async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspaces?: any[]) {
+// Internal only (not exported): takes a userId, so it must never be a callable server action.
+async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspaces?: any[]) {
   const tId = Math.random().toString(36).substr(2, 5);
   console.time(`[PROFILER] fetchHierarchyRoots_TOTAL_${tId}`);
   try {
@@ -559,7 +569,8 @@ export async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspace
  * Resolves user task enrollment filter criteria.
  * Returns participant task IDs, subordinate user IDs (if manager), and managed department IDs.
  */
-export async function getUserTaskEnrollmentContext(userId: string) {
+// Internal only (not exported): takes a userId, so it must never be a callable server action.
+async function getUserTaskEnrollmentContext(userId: string) {
   const [partRes, scopeRes] = await Promise.all([
     supabaseAdmin.from("task_participants").select("task_id").eq("user_id", userId),
     import("@/lib/auth/scope").then(m => m.getUserAccessScope(userId)).catch(() => null)
@@ -743,6 +754,12 @@ export async function fetchTaskHierarchyAncestors(taskId: string): Promise<{
   workspaceId: string | null;
 }> {
   try {
+    const userId = await requireUserId();
+    const { canAccessTask } = await import("@/lib/permissions");
+    if (!taskId || !(await canAccessTask(userId, taskId))) {
+      return { ancestorTaskIds: [], workspaceId: null };
+    }
+
     const ancestorTaskIds: string[] = [];
     let currentId: string | null = taskId;
     let wsId: string | null = null;
@@ -1712,6 +1729,11 @@ export async function deleteWorkspace(id: string) {
 
 export async function fetchWorkspaceStakeholders(workspaceId: string): Promise<any[]> {
   if (!workspaceId) return [];
+  await requireUserId();
+  return loadWorkspaceStakeholders(workspaceId);
+}
+
+async function loadWorkspaceStakeholders(workspaceId: string): Promise<any[]> {
   // 1. Fetch workspace info to get parent_workspace_id and workspace_owner_id
   const { data: ws } = await supabaseAdmin
     .from("workspaces")
@@ -1732,7 +1754,7 @@ export async function fetchWorkspaceStakeholders(workspaceId: string): Promise<a
 
   // If no direct members and workspace has a parent, fall back to parent workspace members
   if (memberList.length === 0 && ws?.parent_workspace_id) {
-    return fetchWorkspaceStakeholders(ws.parent_workspace_id);
+    return loadWorkspaceStakeholders(ws.parent_workspace_id);
   }
 
   // 3. Collect all user IDs (members + workspace owner)
@@ -1757,7 +1779,7 @@ export async function fetchWorkspaceStakeholders(workspaceId: string): Promise<a
   // 4. Fetch user details for those members
   const { data: users, error: userError } = await supabaseAdmin
     .from("user_master")
-    .select(`id, full_name, user_code`)
+    .select(`id, full_name, user_code, email`)
     .in("id", userIds)
     .eq("is_deleted", false);
 
@@ -2110,6 +2132,18 @@ export async function toggleChecklistItem(itemId: string, completed: boolean) {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) throw new Error("Unauthenticated");
 
+  const { data: item } = await supabaseAdmin
+    .from("task_checklists")
+    .select("task_id")
+    .eq("id", itemId)
+    .maybeSingle();
+  if (!item) throw new Error("Checklist item not found");
+
+  const { canAccessTask } = await import("@/lib/permissions");
+  if (!(await canAccessTask(userId, item.task_id))) {
+    throw new Error("Unauthorized: You do not have access to this task.");
+  }
+
   const { data, error } = await supabaseAdmin
     .from("task_checklists")
     .update({
@@ -2198,6 +2232,7 @@ export async function fetchSidebarCounts() {
 }
 
 export async function fetchAssignableUsers() {
+  await requireUserId();
   const { data, error } = await supabaseAdmin
     .from("user_master")
     .select("id, full_name, user_code")
@@ -2217,6 +2252,11 @@ export async function createSprint(workspaceId: string, formData: any) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthenticated");
 
+  const { canManageWorkspace } = await import("@/lib/permissions");
+  if (!(await canManageWorkspace(user.id, workspaceId))) {
+    throw new Error("Unauthorized: You do not have permission to create sprints in this workspace.");
+  }
+
   const { data, error } = await supabaseAdmin.from("sprints").insert([{
     workspace_id: workspaceId,
     name: formData.name,
@@ -2232,24 +2272,43 @@ export async function createSprint(workspaceId: string, formData: any) {
 }
 
 export async function fetchSprints(workspaceId: string) {
+  const userId = await requireUserId();
+  const { canAccessWorkspace } = await import("@/lib/permissions");
+  if (!workspaceId || !(await canAccessWorkspace(userId, workspaceId))) return [];
+
   const { data: allWs } = await supabaseAdmin.from("workspaces").select("id, parent_workspace_id").eq("is_deleted", false);
   if (!allWs) return [];
 
-  // Find the root workspace
-  let rootId = workspaceId;
-  let current = allWs.find(w => w.id === rootId);
-  while (current && current.parent_workspace_id) {
-    rootId = current.parent_workspace_id;
-    current = allWs.find(w => w.id === rootId);
+  const byId = new Map<string, any>(allWs.map((w: any) => [w.id, w]));
+  const childrenOf = new Map<string, string[]>();
+  for (const w of allWs) {
+    if (!w.parent_workspace_id) continue;
+    const list = childrenOf.get(w.parent_workspace_id) || [];
+    list.push(w.id);
+    childrenOf.set(w.parent_workspace_id, list);
   }
 
-  // Now get all descendants of the root
-  const getDescendants = (id: string, all: any[]): string[] => {
-    const children = all.filter((w: any) => w.parent_workspace_id === id);
-    return [id, ...children.flatMap((c: any) => getDescendants(c.id, all))];
-  };
+  // Find the root workspace (guard against cycles)
+  let rootId = workspaceId;
+  const seenUp = new Set<string>([rootId]);
+  let current = byId.get(rootId);
+  while (current?.parent_workspace_id && !seenUp.has(current.parent_workspace_id)) {
+    rootId = current.parent_workspace_id;
+    seenUp.add(rootId);
+    current = byId.get(rootId);
+  }
 
-  const hierarchyIds = getDescendants(rootId, allWs);
+  // Collect all descendants of the root
+  const hierarchyIds: string[] = [];
+  const seen = new Set<string>();
+  const stack = [rootId];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    hierarchyIds.push(id);
+    stack.push(...(childrenOf.get(id) || []));
+  }
 
   const { data, error } = await supabaseAdmin.from("sprints")
     .select("*")
@@ -2295,6 +2354,11 @@ export async function createTaskTemplate(workspaceId: string, formData: any) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthenticated");
 
+  const { canManageWorkspace } = await import("@/lib/permissions");
+  if (!(await canManageWorkspace(user.id, workspaceId))) {
+    throw new Error("Unauthorized: You do not have permission to create templates in this workspace.");
+  }
+
   const { data, error } = await supabaseAdmin.from("task_templates").insert([{
     workspace_id: workspaceId,
     template_name: formData.template_name,
@@ -2310,6 +2374,12 @@ export async function createTaskTemplate(workspaceId: string, formData: any) {
 }
 
 export async function fetchTaskTemplates(workspaceId: string) {
+  const userId = await requireUserId();
+  // Validate before interpolating into the PostgREST filter string (prevents filter injection).
+  if (!workspaceId || !UUID_RE.test(workspaceId)) return [];
+  const { canAccessWorkspace } = await import("@/lib/permissions");
+  if (!(await canAccessWorkspace(userId, workspaceId))) return [];
+
   const { data, error } = await supabaseAdmin.from("task_templates")
     .select("*")
     .or(`workspace_id.eq.${workspaceId},workspace_id.is.null`)

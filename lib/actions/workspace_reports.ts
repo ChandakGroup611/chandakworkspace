@@ -216,6 +216,10 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
 }
 
 export async function getAllReportCustomFields() {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) return [];
+
   const { data, error } = await supabaseAdmin
     .from('task_custom_fields_master')
     .select('field_key, field_name, field_type')
