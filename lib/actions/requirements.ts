@@ -336,6 +336,18 @@ export async function handleRequirementUAT(
 }
 
 export async function fetchRequirements(workspaceId?: string | null) {
+  // This action had no sign-in or permission check, so anyone could call it directly and read every
+  // requirement. It now requires a signed-in user with Requirements access (visibility is unchanged).
+  const viewerId = await signedInUserId();
+  if (!viewerId) return [];
+  const { hasPermission } = await import('@/lib/permissions');
+  const canView =
+    (await hasPermission(viewerId, 'SUPER_ADMIN')) ||
+    (await hasPermission(viewerId, 'REQUIREMENTS_VIEW')) ||
+    (await hasPermission(viewerId, 'REQUIREMENTS_APPROVALS_VIEW')) ||
+    (await hasPermission(viewerId, 'REQUIREMENTS_MANAGE'));
+  if (!canView) return [];
+
   let query = supabaseAdmin
     .from('requirements')
     .select(`
@@ -365,7 +377,7 @@ export async function fetchRequirements(workspaceId?: string | null) {
     query = query.contains('custom_fields', { workspace_id: workspaceId });
   }
 
-  const { data, error } = await query; console.log('FETCH REQS RESULT:', error, data ? data.length : 0);
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching requirements:", error);

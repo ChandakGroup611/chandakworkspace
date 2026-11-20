@@ -6,6 +6,11 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 export const dynamic = "force-dynamic";
 
+// Only AMC tables may be written through this endpoint (it used to accept any table name from the browser).
+function isAmcTable(name: unknown): name is string {
+  return typeof name === "string" && (name === "software_amc" || /^amc_[a-z_]+$/.test(name));
+}
+
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
@@ -22,10 +27,17 @@ export async function POST(request: Request) {
     if (!tableName || !payload) {
       return NextResponse.json({ success: false, error: "Missing tableName or payload." }, { status: 400 });
     }
+    if (!isAmcTable(tableName)) {
+      return NextResponse.json({ success: false, error: "This endpoint only saves AMC records." }, { status: 400 });
+    }
 
     const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
     const requiredPerm = editId ? "AMC_EDIT" : "AMC_CREATE";
-    const hasPerm = isSuperAdmin || (await hasPermission(user.id, requiredPerm)) || (await hasPermission(user.id, "AMC_UPDATE"));
+    const hasPerm =
+      isSuperAdmin ||
+      (await hasPermission(user.id, requiredPerm)) ||
+      (editId ? await hasPermission(user.id, "AMC_UPDATE") : false) ||
+      (await hasPermission(user.id, "AMC_MANAGE"));
 
     if (!hasPerm) {
       return NextResponse.json({ success: false, error: `Forbidden: Missing ${requiredPerm} permission.` }, { status: 403 });
@@ -45,14 +57,16 @@ export async function POST(request: Request) {
         updatePayload.updated_at = new Date().toISOString();
       }
 
-      res = await supabase
+      // Permission was checked above; write with the service role so the user's row policies can't
+      // silently block the save ("Cannot coerce the result to a single JSON object").
+      res = await supabaseAdmin
         .from(tableName)
         .update(updatePayload)
         .eq("id", editId)
         .select()
         .single();
     } else {
-      res = await supabase
+      res = await supabaseAdmin
         .from(tableName)
         .insert([payload])
         .select()
@@ -86,12 +100,18 @@ export async function DELETE(request: Request) {
     if (!tableName || !id) {
       return NextResponse.json({ success: false, error: "Missing tableName or id." }, { status: 400 });
     }
+    if (!isAmcTable(tableName)) {
+      return NextResponse.json({ success: false, error: "This endpoint only deletes AMC records." }, { status: 400 });
+    }
 
     const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
-    const hasDeletePerm = isSuperAdmin || (await hasPermission(user.id, "AMC_DELETE"));
+    const hasDeletePerm = isSuperAdmin || (await hasPermission(user.id, "AMC_DELETE")) || (await hasPermission(user.id, "AMC_MANAGE"));
 
     if (!hasDeletePerm) {
       return NextResponse.json({ success: false, error: "Forbidden: Missing AMC_DELETE permission." }, { status: 403 });
+    }
+    if (hardDelete && !isSuperAdmin) {
+      return NextResponse.json({ success: false, error: "Only a Super Admin can permanently delete AMC records." }, { status: 403 });
     }
 
     const tablesWithoutUpdatedAt = [
@@ -126,13 +146,17 @@ export async function DELETE(request: Request) {
 
     let res;
     if (hardDelete) {
-      res = await supabase.from(tableName).delete().eq("id", id);
+      res = await supabaseAdmin.from(tableName).delete().eq("id", id);
     } else {
       const updatePayload: any = { is_deleted: true };
       if (!tablesWithoutUpdatedAt.includes(tableName)) {
         updatePayload.updated_at = new Date().toISOString();
       }
-      res = await supabase.from(tableName).update(updatePayload).eq("id", id);
+      if (tableName === "software_amc") {
+        updatePayload.deleted_by = user.id;
+        updatePayload.deleted_at = new Date().toISOString();
+      }
+      res = await supabaseAdmin.from(tableName).update(updatePayload).eq("id", id);
     }
 
     if (res.error) {
