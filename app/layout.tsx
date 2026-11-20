@@ -51,6 +51,12 @@ import { ThemeScript } from '@/components/theme/ThemeScript';
 import { ClientHttpErrorReporter } from "@/components/errors/ClientHttpErrorReporter";
 import { DeploymentVersionBanner } from "@/components/errors/DeploymentVersionBanner";
 
+// Every page in this app depends on the signed-in user, so never serve a page pre-built at build time.
+// Pre-built pages from older builds were being served after deploys (Tickets, Requirements, AMC, Trash,
+// Masters showed "build-1793…" from late October), so their Server Actions no longer existed on the
+// server and every list and save failed. Rendering per request removes that whole class of problem.
+export const dynamic = 'force-dynamic'
+
 export default function RootLayout({
   children,
 }: {
