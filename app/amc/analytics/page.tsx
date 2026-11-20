@@ -48,16 +48,6 @@ export default function AMCAnalyticsPage() {
 
   const isSuperAdmin = roleCode === "SUPER_ADMIN";
 
-  if (!permsLoading && !isSuperAdmin && !hasPermission("AMC_VIEW")) {
-    return (
-      <AccessRestricted
-        requiredRole="AMC Manager"
-        requiredPermission="AMC_VIEW"
-        moduleName="AMC Analytics"
-      />
-    );
-  }
-
   const fetchData = async () => {
     try {
       const { data: amcData, error } = await supabase
@@ -160,7 +150,7 @@ export default function AMCAnalyticsPage() {
     const vendorArray = Object.values(vendorMap)
       .sort((a, b) => b.totalSpend - a.totalSpend);
 
-    const avgRating = ratedCount > 0 ? (totalRatingSum / ratedCount).toFixed(1) : "4.8";
+    const avgRating = ratedCount > 0 ? (totalRatingSum / ratedCount).toFixed(1) : "—";
 
     return {
       totalSpend,
@@ -182,6 +172,18 @@ export default function AMCAnalyticsPage() {
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
   };
+
+  // Must come after every hook above (rules of hooks): returning earlier would crash
+  // with "Rendered fewer hooks than expected" once permissions finish loading.
+  if (!permsLoading && !isSuperAdmin && !hasPermission("AMC_VIEW")) {
+    return (
+      <AccessRestricted
+        requiredRole="AMC Manager"
+        requiredPermission="AMC_VIEW"
+        moduleName="AMC Analytics"
+      />
+    );
+  }
 
   if (loading) {
     return (

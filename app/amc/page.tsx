@@ -122,6 +122,13 @@ export default function AMCPage() {
   const [masterContractTypes, setMasterContractTypes] = useState<string[]>(['AMC', 'Subscription', 'Perpetual License', 'Other']);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  // Deep link from AMC reports: /amc?q=<software name> pre-fills the search.
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get("q");
+      if (q) setSearchQuery(q);
+    } catch { /* ignore malformed URL */ }
+  }, []);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
   const [successAlert, setSuccessAlert] = useState<string | null>(null);
   const [amcData, setAmcData] = useState<any[]>([]);
