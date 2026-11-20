@@ -72,7 +72,16 @@ const taskNavGroups: NavGroup[] = [
         ]
       },
       { label: "My support portal", href: "/support", icon: LifeBuoy, permission: "SUPPORT_PORTAL_VIEW" },
-      { label: "Ticket tracking", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
+      {
+        label: "Ticket tracking",
+        href: "/tickets",
+        icon: Ticket,
+        permission: "TICKETS_VIEW",
+        subItems: [
+          { label: "All tickets", href: "/tickets", permission: "TICKETS_VIEW" },
+          { label: "Reports and analytics", href: "/tickets/reports", permission: "TICKETS_VIEW" }
+        ]
+      },
       { 
         label: "Requirements", 
         href: "/requirements", 
