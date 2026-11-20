@@ -17,7 +17,7 @@ export async function getSessionsForMeeting(meetingId: string): Promise<MeetingS
         minute_taker:user_master!meet_sessions_minute_taker_id_fkey(id, full_name, email),
         attendees:meet_session_attendees(
           id, role, invite_status, attendance, check_in_at,
-          user:user_master(id, full_name, email, profile_photo)
+          user:user_master!meet_session_attendees_user_id_fkey(id, full_name, email, profile_photo)
         )
       `)
       .eq("meeting_id", meetingId)
@@ -99,7 +99,7 @@ export async function getSessionById(sessionId: string): Promise<{
       .from("meet_session_attendees")
       .select(`
         *,
-        user:user_master(id, full_name, email, profile_photo)
+        user:user_master!meet_session_attendees_user_id_fkey(id, full_name, email, profile_photo)
       `)
       .eq("session_id", sessionId);
 
@@ -126,7 +126,7 @@ export async function getSessionById(sessionId: string): Promise<{
           department:departments(id, name),
           tasks:meet_tasks(
             *,
-            owner:user_master(id, full_name, email, profile_photo),
+            owner:user_master!meet_tasks_owner_id_fkey(id, full_name, email, profile_photo),
             checklist:meet_task_checklist(*)
           )
         )
@@ -248,7 +248,7 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
         // Escalate points carried >= 3 times to organizer & department head (P5)
         const { data: escalatedPoints } = await supabaseAdmin
           .from("meet_points")
-          .select("id, code, title, carry_forward_count, meeting:meet_meetings(id, title, organizer:user_master(id, email))")
+          .select("id, code, title, carry_forward_count, meeting:meet_meetings(id, title, organizer:user_master!meet_meetings_organizer_id_fkey(id, email))")
           .gte("carry_forward_count", 3)
           .eq("meeting_id", (await supabaseAdmin.from("meet_sessions").select("meeting_id").eq("id", sessionId).single()).data?.meeting_id)
           .not("status", "in", '("closed","dropped")');

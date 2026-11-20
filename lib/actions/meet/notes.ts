@@ -59,7 +59,7 @@ export async function getNotes(filters?: {
           id, note_id, position, type, text, done, author_id, point_id,
           linked_type, linked_id, not_action, deleted_at,
           author:user_master(id, full_name, email),
-          point:meet_points(id, code, title)
+          point:meet_points!meet_note_blocks_point_id_fkey(id, code, title)
         )
       `)
       .order("pinned", { ascending: false })
@@ -142,7 +142,7 @@ export async function getOrCreateSessionNotes(sessionId: string): Promise<MeetNo
           id, note_id, position, type, text, done, author_id, point_id,
           linked_type, linked_id, not_action, deleted_at,
           author:user_master(id, full_name, email),
-          point:meet_points(id, code, title)
+          point:meet_points!meet_note_blocks_point_id_fkey(id, code, title)
         )
       `)
       .eq("session_id", sessionId)
@@ -318,7 +318,7 @@ export async function addNoteBlock(input: {
       .select(`
         *,
         author:user_master(id, full_name, email),
-        point:meet_points(id, code, title)
+        point:meet_points!meet_note_blocks_point_id_fkey(id, code, title)
       `)
       .single();
 
@@ -540,15 +540,13 @@ export async function convertBlockToItem(
       const { data: dec, error: dErr } = await supabaseAdmin
         .from("meet_decisions")
         .insert({
-          meeting_id: payload.meeting_id,
           session_id: payload.session_id,
           point_id: payload.point_id || null,
-          title: payload.title,
-          decision_type: payload.decision_type || "operational",
+          text: payload.title,
           source_note_block_id: blockId,
           created_by: userId,
         })
-        .select("id, code, title")
+        .select("id, code, text")
         .single();
 
       if (dErr) throw dErr;
@@ -566,7 +564,7 @@ export async function convertBlockToItem(
 
       return {
         success: true,
-        linked_item: { code: dec.code, title: dec.title, status: "Recorded" },
+        linked_item: { code: dec.code, title: dec.text, status: "Recorded" },
       };
     }
 
@@ -595,7 +593,7 @@ export async function generateSessionSummary(sessionId: string): Promise<{
         .select(`
           *,
           meeting:meet_meetings(title, code),
-          attendees:meet_session_attendees(id, role, attendance, user:user_master(full_name))
+          attendees:meet_session_attendees(id, role, attendance, user:user_master!meet_session_attendees_user_id_fkey(full_name))
         `)
         .eq("id", sessionId)
         .single(),
@@ -605,17 +603,17 @@ export async function generateSessionSummary(sessionId: string): Promise<{
           entry_type, discussion_notes,
           point:meet_points(
             id, code, title, status, priority, due_date, carry_forward_count, progress_percent,
-            owner:user_master(full_name)
+            owner:user_master!meet_points_owner_id_fkey(full_name)
           )
         `)
         .eq("session_id", sessionId),
       supabaseAdmin
         .from("meet_tasks")
-        .select("id, code, title, status, due_date, tat_days, owner:user_master(full_name)")
+        .select("id, code, title, status, due_date, tat_days, owner:user_master!meet_tasks_owner_id_fkey(full_name)")
         .eq("session_id", sessionId),
       supabaseAdmin
         .from("meet_decisions")
-        .select("id, code, title, decision_type")
+        .select("id, code, text")
         .eq("session_id", sessionId),
       supabaseAdmin
         .from("meet_notes")

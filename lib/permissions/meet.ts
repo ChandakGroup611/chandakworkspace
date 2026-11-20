@@ -102,7 +102,7 @@ export async function requireMeet(
   // Check platform_role directly
   const { data: um } = await supabaseAdmin
     .from("user_master")
-    .select("platform_role, role:roles(code)")
+    .select("*, role:roles(code)")
     .eq("id", userId)
     .maybeSingle();
 
@@ -150,6 +150,17 @@ export async function requireMeet(
       .eq("id", context.pointId)
       .maybeSingle();
     meetingId = pt?.meeting_id;
+  }
+
+  if (!meetingId && context?.taskId) {
+    const { data: tk } = await supabaseAdmin
+      .from("meet_tasks")
+      .select("point:meet_points(meeting_id), session:meet_sessions(meeting_id)")
+      .eq("id", context.taskId)
+      .maybeSingle();
+    const pt: any = Array.isArray(tk?.point) ? tk?.point[0] : tk?.point;
+    const ss: any = Array.isArray(tk?.session) ? tk?.session[0] : tk?.session;
+    meetingId = pt?.meeting_id || ss?.meeting_id;
   }
 
   let roleInMeeting: MeetAuthResult["roleInMeeting"] = isSuperAdmin || isMeetAdmin ? "admin" : null;

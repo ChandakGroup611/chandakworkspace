@@ -50,7 +50,7 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
           meeting:meet_meetings(id, title, code),
           attendees:meet_session_attendees(
             id, user_id, attendance, late_minutes,
-            user:user_master(id, full_name, email)
+            user:user_master!meet_session_attendees_user_id_fkey(id, full_name, email)
           )
         `)
         .eq("id", sessionId)
@@ -61,17 +61,17 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
           entry_type, discussion_notes, status_at_end,
           point:meet_points(
             id, code, title, status, priority, due_date, carry_forward_count, progress_percent,
-            owner:user_master(id, full_name)
+            owner:user_master!meet_points_owner_id_fkey(id, full_name)
           )
         `)
         .eq("session_id", sessionId),
       supabaseAdmin
         .from("meet_tasks")
-        .select("id, code, title, status, due_date, tat_days, point_id, owner:user_master(full_name)")
+        .select("id, code, title, status, due_date, tat_days, point_id, owner:user_master!meet_tasks_owner_id_fkey(full_name)")
         .eq("session_id", sessionId),
       supabaseAdmin
         .from("meet_decisions")
-        .select("id, code, title, decision_type, point_id")
+        .select("id, code, text, point_id")
         .eq("session_id", sessionId),
       supabaseAdmin
         .from("meet_notes")
@@ -121,7 +121,7 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
       }
 
       if (ptDecisions.length > 0) {
-        const decTitles = ptDecisions.map((d: any) => d.title).join("; ");
+        const decTitles = ptDecisions.map((d: any) => d.text).join("; ");
         summaryText += ` Resolved: ${decTitles}.`;
       }
 
@@ -155,7 +155,7 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
 Meeting: ${session.meeting?.title} (Session: ${session.code})
 Quorum: ${presentCount} present out of ${attendees.length} members.
 Agenda Points: ${(pointsRes.data || []).map((p: any) => p.point?.title).join(", ") || "None"}
-Key Decisions: ${(decisionsRes.data || []).map((d: any) => d.title).join(", ") || "None"}
+Key Decisions: ${(decisionsRes.data || []).map((d: any) => d.text).join(", ") || "None"}
 Action Items: ${(tasksRes.data || []).map((t: any) => t.title).join(", ") || "None"}
 Please respond with ONLY the executive overview paragraph without formatting or preamble.`;
 
@@ -348,7 +348,7 @@ export async function approveAndSendMoM(
     const [attendeesRes, sessionRes] = await Promise.all([
       supabaseAdmin
         .from("meet_session_attendees")
-        .select("user_id, attendance, user:user_master(id, full_name, email)")
+        .select("user_id, attendance, user:user_master!meet_session_attendees_user_id_fkey(id, full_name, email)")
         .eq("session_id", sessionId),
       supabaseAdmin
         .from("meet_sessions")
@@ -384,7 +384,7 @@ Executive Overview:
 ${customOverview || aiMin.overview}
 
 You can access the full session minutes, action points, and decisions directly on Chandak Meet:
-${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/sessions/${sessionId}
+${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}
 
 Please log in and submit your formal acknowledgement.
 

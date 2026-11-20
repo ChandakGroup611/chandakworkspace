@@ -48,7 +48,7 @@ export async function getTasks(filters?: {
       .from("meet_tasks")
       .select(`
         *,
-        owner:user_master(id, full_name, email, profile_photo),
+        owner:user_master!meet_tasks_owner_id_fkey(id, full_name, email, profile_photo),
         checklist:meet_task_checklist(*),
         point:meet_points(
           id, code, title, meeting_id,
@@ -185,7 +185,7 @@ export async function createTask(input: CreateTaskInput) {
       .from("meet_tasks")
       .select(`
         *,
-        owner:user_master(id, full_name, email, profile_photo),
+        owner:user_master!meet_tasks_owner_id_fkey(id, full_name, email, profile_photo),
         checklist:meet_task_checklist(*),
         point:meet_points(
           id, code, title, meeting_id,
@@ -220,7 +220,7 @@ Priority: ${fullTask.priority}
 Due Date: ${dueDate}
 ${input.description ? `Details: ${input.description}\n` : ""}
 Please access your work console:
-${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/my-work
+${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/my-work
 
 Chandak Workspace Meet Committee`,
           status: "pending",
@@ -264,7 +264,7 @@ export async function updateTaskStatus(input: {
 
     // RBAC check: Must be task owner OR have MEET_TASK_MANAGE
     if (currentTask.owner_id !== userId) {
-      const auth = await requireMeet("MEET_TASK_MANAGE");
+      const auth = await requireMeet("MEET_TASK_MANAGE", { taskId: input.taskId });
       if (!auth.allowed) {
         return { success: false, error: "Only the task owner or meeting managers can update task status" };
       }
@@ -341,7 +341,7 @@ export async function toggleTaskChecklist(checklistId: string, isDone: boolean) 
 
     const taskOwnerId = (cl.task as any)?.owner_id;
     if (taskOwnerId !== user.id) {
-      const auth = await requireMeet("MEET_TASK_MANAGE");
+      const auth = await requireMeet("MEET_TASK_MANAGE", { taskId: cl.task_id });
       if (!auth.allowed) {
         return { success: false, error: "Only the task owner or manager can complete checklist items" };
       }
@@ -441,6 +441,12 @@ export async function decideTaskExtension(input: {
 
     if (!ext) return { success: false, error: "Extension request not found" };
 
+    // Confidential-meeting boundary for the task under extension
+    await requireMeet(
+      "MEET_EXTENSION_APPROVE",
+      ext.entity_type === "point" ? { pointId: ext.entity_id } : { taskId: ext.entity_id }
+    );
+
     // Prevent approving one's own extension request (S2 stop-ship requirement)
     if (ext.requested_by === user.id) {
       return { success: false, error: "Conflict of interest: You cannot approve your own extension request." };
@@ -492,7 +498,7 @@ export async function decideTaskExtension(input: {
  */
 export async function deleteTask(taskId: string) {
   try {
-    const auth = await requireMeet("MEET_TASK_MANAGE");
+    const auth = await requireMeet("MEET_TASK_MANAGE", { taskId });
     if (!auth.allowed) {
       return { success: false, error: auth.error || "Permission denied" };
     }

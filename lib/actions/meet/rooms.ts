@@ -20,7 +20,7 @@ export async function checkRoomAvailability(
       .from("meet_room_bookings")
       .select(`
         *,
-        booked_by_user:user_master(id, full_name, email),
+        booked_by_user:user_master!meet_room_bookings_booked_by_fkey(id, full_name, email),
         session:meet_sessions(code, meeting:meet_meetings(title))
       `)
       .eq("room_id", roomId)
@@ -77,10 +77,10 @@ export async function getRoomsWithLiveAvailability(
       .from("meet_room_bookings")
       .select(`
         *,
-        booked_by_user:user_master(id, full_name, email),
+        booked_by_user:user_master!meet_room_bookings_booked_by_fkey(id, full_name, email),
         session:meet_sessions(
           code,
-          meeting:meet_meetings(title, organizer:user_master(full_name))
+          meeting:meet_meetings(title, organizer:user_master!meet_meetings_organizer_id_fkey(full_name))
         )
       `)
       .in("status", ["confirmed", "pending", "checked_in", "tentative"])
@@ -320,13 +320,13 @@ export async function getRoomDisplayData(roomId: string): Promise<{
         .from("meet_room_bookings")
         .select(`
           *,
-          booked_by_user:user_master(id, full_name, profile_photo),
+          booked_by_user:user_master!meet_room_bookings_booked_by_fkey(id, full_name, profile_photo),
           session:meet_sessions(
             id, code,
             meeting:meet_meetings(
               title,
               meeting_type:meet_meeting_types(is_board_mode),
-              organizer:user_master(id, full_name, profile_photo)
+              organizer:user_master!meet_meetings_organizer_id_fkey(id, full_name, profile_photo)
             )
           )
         `)

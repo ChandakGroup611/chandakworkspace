@@ -109,7 +109,7 @@ export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
             .from("meet_points")
             .select(`
               *,
-              owner:user_master(id, full_name, profile_photo),
+              owner:user_master!meet_points_owner_id_fkey(id, full_name, profile_photo),
               meeting:meet_meetings(id, title, code)
             `)
             .eq("owner_id", userId)
@@ -125,7 +125,7 @@ export async function getMeetDashboardKPIs(): Promise<MeetDashboardKPIs> {
             .from("meet_tasks")
             .select(`
               *,
-              owner:user_master(id, full_name, profile_photo),
+              owner:user_master!meet_tasks_owner_id_fkey(id, full_name, profile_photo),
               point:meet_points(id, title, code)
             `)
             .eq("owner_id", userId)
@@ -318,7 +318,7 @@ export async function getMeetReports(reportKey: string, filters?: any) {
           .from("meet_tasks")
           .select(`
             id, code, title, status, priority, tat_days, start_date, due_date, revised_due_date, tat_result, delay_days,
-            owner:user_master(id, full_name, email),
+            owner:user_master!meet_tasks_owner_id_fkey(id, full_name, email),
             point:meet_points(id, code, title, meeting:meet_meetings(id, code, title))
           `)
           .eq("is_deleted", false)
@@ -347,7 +347,7 @@ export async function getMeetReports(reportKey: string, filters?: any) {
           .from("meet_tasks")
           .select(`
             code, title, status, due_date, revised_due_date, tat_result, delay_days,
-            owner:user_master(id, full_name, email)
+            owner:user_master!meet_tasks_owner_id_fkey(id, full_name, email)
           `)
           .eq("is_deleted", false);
 

@@ -16,6 +16,7 @@ const API_METHOD_CONTRACT: Record<string, string[]> = {
   "/api/copilot/chat": ["POST"],
   "/api/copilot/poc-stream": ["POST"],
   "/api/cron/fleet-compliance-audit": ["GET", "POST"],
+  "/api/cron/meet-jobs": ["GET", "POST"],
   "/api/cron/process-email-queue": ["GET", "POST"],
   "/api/cron/tat-escalation": ["GET", "POST"],
   "/api/heartbeat": ["POST"],

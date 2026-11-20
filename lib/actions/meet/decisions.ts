@@ -32,7 +32,7 @@ export async function getDecisions(filters?: {
       query = query.eq("status", filters.status);
     }
     if (filters?.search) {
-      query = query.ilike("title", `%${filters.search}%`);
+      query = query.ilike("text", `%${filters.search}%`);
     }
 
     const { data, error } = await query;
@@ -75,8 +75,7 @@ export async function recordDecision(input: {
       .insert({
         session_id: input.sessionId,
         point_id: input.pointId || null,
-        title: input.text,
-        decision_type: "operational",
+        text: input.text,
         decided_by: input.decidedBy || "Meeting Committee",
         effective_from: input.effectiveFrom || new Date().toISOString().split("T")[0],
         review_date: input.reviewDate || null,
@@ -128,8 +127,7 @@ export async function supersedeDecision(input: {
       .from("meet_decisions")
       .insert({
         session_id: input.sessionId,
-        title: input.text,
-        decision_type: "operational",
+        text: input.text,
         decided_by: input.decidedBy || "Meeting Committee",
         status: "active",
         created_by: userId,

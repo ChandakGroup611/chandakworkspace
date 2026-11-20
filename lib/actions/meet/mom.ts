@@ -26,7 +26,7 @@ export async function generateMoMSnapshot(sessionId: string) {
         .single(),
       supabaseAdmin
         .from("meet_session_attendees")
-        .select("*, user:user_master(full_name, email)")
+        .select("*, user:user_master!meet_session_attendees_user_id_fkey(full_name, email)")
         .eq("session_id", sessionId),
       supabaseAdmin
         .from("meet_session_points")
@@ -38,7 +38,7 @@ export async function generateMoMSnapshot(sessionId: string) {
             owner:user_master!meet_points_owner_id_fkey(full_name, email),
             tasks:meet_tasks(
               code, title, status, due_date, tat_result,
-              owner:user_master(full_name)
+              owner:user_master!meet_tasks_owner_id_fkey(full_name)
             )
           )
         `)
@@ -200,7 +200,7 @@ export async function publishMoM(sessionId: string, version: number = 1) {
     // 5. Queue MoM distribution emails to all attendees (A7 / E8)
     const { data: attendees } = await supabaseAdmin
       .from("meet_session_attendees")
-      .select("user_id, guest_email, user:user_master(id, full_name, email)")
+      .select("user_id, guest_email, user:user_master!meet_session_attendees_user_id_fkey(id, full_name, email)")
       .eq("session_id", sessionId);
 
     const emailRows: any[] = [];

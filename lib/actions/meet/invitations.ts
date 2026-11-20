@@ -281,7 +281,7 @@ Session: ${session?.code}
 Scheduled Time: ${session?.scheduled_start ? new Date(session.scheduled_start).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "Scheduled"}
 
 Please confirm your attendance or propose a delegate directly:
-${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/sessions/${sessionId}
+${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}
 
 Chandak Workspace Meet Committee`,
           status: "pending",

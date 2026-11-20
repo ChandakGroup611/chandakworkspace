@@ -793,8 +793,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                       <div className="space-y-1.5">
                         {summaryData.decisions.map((d: any) => (
                           <div key={d.id} className="p-2 rounded bg-surface border border-border flex items-center justify-between">
-                            <span className="font-medium text-slate-100">{d.code}: {d.title}</span>
-                            <span className="text-[10px] text-amber-400 capitalize">{d.decision_type}</span>
+                            <span className="font-medium text-slate-100">{d.code}: {d.text}</span>
                           </div>
                         ))}
                       </div>

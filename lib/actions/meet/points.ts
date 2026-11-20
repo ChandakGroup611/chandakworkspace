@@ -97,8 +97,7 @@ export async function createPoint(input: CreatePointInput) {
       await supabaseAdmin.from("meet_decisions").insert({
         session_id: input.session_id,
         point_id: point.id,
-        title: input.title,
-        decision_type: "operational",
+        text: input.title,
         decided_by: "Meeting Committee",
         status: "active",
         created_by: userId,
@@ -149,7 +148,7 @@ Priority: ${point.priority}
 Due Date: ${dueDate} (TAT: ${tatDays} working days)
 
 Please review the point details and take necessary action:
-${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/my-work
+${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/my-work
 
 Chandak Workspace Meet Committee`,
           status: "pending",
@@ -429,7 +428,7 @@ You have been reassigned as the primary owner for Meeting Point ${point.code}: "
 Previous Owner: ${(point.owner as any)?.full_name || "Unassigned"}
 ${input.reason ? `Reason: ${input.reason}\n` : ""}
 Please access your workspace to review action items and deadlines:
-${process.env.NEXTAUTH_URL || "https://meet.chandak.com"}/meet/my-work
+${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/my-work
 
 Chandak Workspace Meet Committee`,
           status: "pending",
