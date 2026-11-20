@@ -822,10 +822,9 @@ export default function TaskExecutionController({
   const handleBatchSave = async () => {
     if (!task) return;
 
-    if (!remarksDraft.trim()) {
-      toast.warning("Task remarks are mandatory to save any updates or status changes. Please scroll down to the 'Task Remarks' section to enter your remarks.");
-      return;
-    }
+    // Remark is optional. The editor can hold empty markup such as <p></p>, so check the plain text.
+    const remarkText = (remarksDraft || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").trim();
+    const remarkToSend = remarkText ? remarksDraft.trim() : undefined;
 
     const t0 = performance.now();
     setSaveRemarksLoading(true);
@@ -890,11 +889,16 @@ export default function TaskExecutionController({
         newChecklistsPayload.length > 0 ||
         (pendingChecklists && pendingChecklists.length > 0) ||
         (editedChecklists && Object.keys(editedChecklists).length > 0) ||
-        (remarksDraft && remarksDraft.trim().length > 0) ||
+        !!remarkToSend ||
         attachmentIds.length > 0 ||
         executorsToUpdate !== undefined ||
         primaryToUpdate !== undefined ||
         watchersToUpdate !== undefined;
+
+      if (!hasBatchUpdates) {
+        toast.info("There's nothing to save yet.");
+        return;
+      }
 
       let res: any = { success: true };
       if (hasBatchUpdates) {
@@ -905,7 +909,7 @@ export default function TaskExecutionController({
           departmentChange: departmentChangeObj,
           checklistCreates: newChecklistsPayload.length > 0 ? newChecklistsPayload : pendingChecklists,
           checklistUpdates: editedChecklists,
-          remarks: remarksDraft.trim(),
+          remarks: remarkToSend,
           attachmentIds,
           assignees: executorsToUpdate !== undefined ? executorsToUpdate : (primaryToUpdate !== undefined ? (task.task_assignees || []).map((e: any) => e.id) : undefined),
           primaryAssigneeId: primaryToUpdate !== undefined ? primaryToUpdate : (executorsToUpdate !== undefined ? task.assigned_to : undefined),
@@ -1786,7 +1790,7 @@ export default function TaskExecutionController({
                   <div className="flex items-center gap-2.5 min-w-0">
                     <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
                     <span>
-                      Status change to <strong className="font-semibold">{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
+                      Status change to <strong className="font-semibold">{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> isn&apos;t saved yet. Select <strong className="font-semibold">Save changes</strong>.
                     </span>
                   </div>
                   <button
@@ -1804,7 +1808,7 @@ export default function TaskExecutionController({
                   <div className="flex items-center gap-2.5 min-w-0">
                     <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
                     <span>
-                      Department change to <strong className="font-semibold">{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
+                      Department change to <strong className="font-semibold">{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> isn&apos;t saved yet. Select <strong className="font-semibold">Save changes</strong>.
                     </span>
                   </div>
                   <button
@@ -1822,7 +1826,7 @@ export default function TaskExecutionController({
                   <div className="flex items-center gap-2.5 min-w-0">
                     <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
                     <span>
-                      Executor changes aren&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
+                      Executor changes aren&apos;t saved yet. Select <strong className="font-semibold">Save changes</strong>.
                     </span>
                   </div>
                   <button
@@ -1840,7 +1844,7 @@ export default function TaskExecutionController({
                   <div className="flex items-center gap-2.5 min-w-0">
                     <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
                     <span>
-                      The primary assignee change isn&apos;t saved yet. Add a remark below, then select <strong className="font-semibold">Save changes</strong>.
+                      The primary assignee change isn&apos;t saved yet. Select <strong className="font-semibold">Save changes</strong>.
                     </span>
                   </div>
                   <button
@@ -1856,9 +1860,8 @@ export default function TaskExecutionController({
               <div className="space-y-3 rounded-md border border-border bg-surface p-4">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1 text-[13px] font-medium text-subtle">
-                    Remark <span className="text-danger-text" aria-hidden>*</span>
+                    Remark <span className="font-normal text-muted">(optional)</span>
                   </span>
-                  <span className="text-[12.5px] text-muted">Required when you save a change</span>
                 </div>
                 <RichTextEditor
                   value={remarksDraft}

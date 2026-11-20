@@ -1,32 +1,45 @@
 "use client";
 import { toast } from 'react-toastify';
 
-import React, { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, use, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceConsole";
-import { TicketRightPanel } from "@/components/tickets/TicketRightPanel";
 import { fetchTicketDashboardData, fetchSingleTicketDetails } from "@/lib/actions/tickets";
 import { usePermissions } from "@/hooks/usePermissions";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil, ShieldAlert, Eye } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
-import { StatusBadge, PriorityIndicator, DateCell, UserCell } from "@/components/ui/data";
+import { AppCard } from "@/components/ui/AppCard";
+import { StatusBadge, PriorityIndicator } from "@/components/ui/data";
 import { EmptyState } from "@/components/ui/feedback/States";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import DOMPurify from 'dompurify';
 
 export default function TicketDetailsPage({ params }: { params: Promise<{ ticketId: string }> }) {
-  const router = useRouter();
   const { ticketId } = use(params);
+  return (
+    <Suspense fallback={<div className="flex h-[60vh] items-center justify-center"><ChandakLoader size="lg" title="Loading ticket…" /></div>}>
+      <TicketDetailsContent ticketId={ticketId} />
+    </Suspense>
+  );
+}
+
+function TicketDetailsContent({ ticketId }: { ticketId: string }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isViewMode = searchParams?.get("mode") === "view";
   const { userId, hasPermission, roleCode, loading: permissionsLoading } = usePermissions();
 
   const [loading, setLoading] = useState(true);
   const [ticketData, setTicketData] = useState<any>(null);
-  
-  const [isEditing, setIsEditing] = useState(false);
+
+  // Inline editing (same behaviour as the Task page: click the pencil, edit, save)
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  
+  const [savingDetails, setSavingDetails] = useState(false);
+
   // Master Data
   const [departments, setDepartments] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
@@ -34,14 +47,15 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
   const [categories, setCategories] = useState<any[]>([]);
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [issueTypes, setIssueTypes] = useState<any[]>([]);
+  const [scopeName, setScopeName] = useState("");
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoader = true) => {
+    if (showLoader) setLoading(true);
     try {
       // Load the ticket first, then the masters of THIS ticket's scope, so the priority and status
       // lists show the names defined for its scope (IT Infrastructure / ERP / General).
       const foundTicket: any = await fetchSingleTicketDetails(ticketId);
-      const data = await fetchTicketDashboardData(
+      const data: any = await fetchTicketDashboardData(
         foundTicket?.scope_type ? { scope_type: foundTicket.scope_type } : undefined
       );
 
@@ -53,13 +67,19 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       setIssueTypes(data.issueTypes || []);
 
       if (foundTicket && typeof foundTicket === 'object') {
+        const scopeCode = String(foundTicket.scope_type || "").toUpperCase() === "ERP/SOFTWARE" ? "ERP" : String(foundTicket.scope_type || "").toUpperCase();
+        const scope = (data.scopes || []).find((s: any) => String(s.code || "").toUpperCase() === scopeCode);
+        setScopeName(scope?.name || foundTicket.scope_type || "");
+
         const custom = foundTicket.custom_fields || {};
         const mappedTicket = {
           ...foundTicket,
           dbId: foundTicket.id,
           id: foundTicket.code || `INC-${foundTicket.id.slice(0, 8)}`,
-          priorityObj: (data.priorities || []).find((p: any) => p.id === foundTicket.priority_id) || foundTicket.priority,
-          statusObj: (data.states || []).find((s: any) => s.id === foundTicket.status_id) || foundTicket.status,
+          priorityObj: (data.priorities || []).find((p: any) => p.id === foundTicket.priority_id) ||
+            (foundTicket.priority ? { id: foundTicket.priority_id, name: foundTicket.priority.priority_name } : undefined),
+          statusObj: (data.states || []).find((s: any) => s.id === foundTicket.status_id) ||
+            (foundTicket.status ? { id: foundTicket.status_id, name: foundTicket.status.status_name, is_terminal: foundTicket.status.is_terminal } : undefined),
           departmentObj: (data.departments || []).find((d: any) => d.id === foundTicket.department_id) || foundTicket.department,
           categoryObj: (data.categories || []).find((c: any) => c.id === custom.category_id),
           subcategoryObj: (data.subcategories || []).find((sc: any) => sc.id === custom.subcategory_id),
@@ -68,10 +88,8 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
           createdAt: foundTicket.created_at
         };
         setTicketData(mappedTicket);
-        if (!isEditing) {
-          setEditTitle(mappedTicket.title || "");
-          setEditDescription(mappedTicket.description || "");
-        }
+        if (!editingTitle) setEditTitle(mappedTicket.title || "");
+        if (!editingDescription) setEditDescription(mappedTicket.description || "");
       } else {
         setTicketData(null);
       }
@@ -86,17 +104,24 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
     fetchData();
   }, [ticketId]);
 
-  const handleSaveDetails = async () => {
+  const saveDetails = async (fields: { title?: string; description?: string }) => {
+    if (fields.title !== undefined && !fields.title.trim()) {
+      toast.warning("The subject can't be empty.");
+      return;
+    }
+    setSavingDetails(true);
     try {
       const { updateTicketDetails } = await import("@/lib/actions/tickets");
-      await updateTicketDetails(ticketData.dbId, {
-        title: editTitle,
-        description: editDescription
-      });
-      setIsEditing(false);
-      fetchData();
+      const res: any = await updateTicketDetails(ticketData.dbId, fields);
+      if (res?.error) throw new Error(res.error);
+      setEditingTitle(false);
+      setEditingDescription(false);
+      toast.success("Ticket saved.");
+      fetchData(false);
     } catch (err: any) {
-      toast.error("Couldn't save the ticket: " + err.message);
+      toast.error("Couldn't save the ticket: " + (err?.message || "unknown error"));
+    } finally {
+      setSavingDetails(false);
     }
   };
 
@@ -122,148 +147,147 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
   }
 
   const isSuperAdmin = roleCode === "SUPER_ADMIN" || (hasPermission && hasPermission("SUPER_ADMIN"));
-  const isTicketOwner = userId ? (ticketData.created_by === userId || ticketData.assigned_to === userId || ticketData.owner_id === userId) : false;
-  const canEditTicket = isSuperAdmin || isTicketOwner || (hasPermission && (hasPermission("TICKETS_UPDATE") || hasPermission("TICKETS_MANAGE")));
-
-  const label = "text-[12.5px] text-muted";
+  const isTicketOwner = userId
+    ? (ticketData.creator_id === userId || ticketData.assignee_id === userId || ticketData.queue_owner_id === userId)
+    : false;
+  const canEditTicket = !isViewMode && (isSuperAdmin || isTicketOwner || (hasPermission && (hasPermission("TICKETS_UPDATE") || hasPermission("TICKETS_MANAGE"))));
 
   return (
-    <div className="flex h-full flex-col space-y-5 text-foreground">
-      <Link href="/tickets" className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-accent-soft-text hover:underline">
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Back to tickets
-      </Link>
-      <div className="space-y-5">
-        <div className="grid items-stretch gap-5 xl:grid-cols-[1.8fr_1fr]">
-          <div className="theme-card-structural p-5 sm:p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{ticketData.id}</span>
-              <StatusBadge status={ticketData.statusObj?.name || null} />
-              {canEditTicket && priorities.length > 0 ? (
-                <select
-                  aria-label="Ticket Priority"
-                  value={ticketData.priority_id || ticketData.priorityObj?.id || ""}
-                  onChange={async (e) => {
-                    const newPrioId = e.target.value;
-                    if (!newPrioId) return;
-                    try {
-                      const { updateTicketDetails } = await import("@/lib/actions/tickets");
-                      await updateTicketDetails(ticketData.dbId, { priority_id: newPrioId });
-                      toast.success("Ticket priority updated successfully.");
-                      fetchData();
-                    } catch (err: any) {
-                      toast.error("Failed to update priority: " + err.message);
-                    }
-                  }}
-                  className="h-7 rounded-md border border-border bg-surface px-2 text-[12px] font-medium text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer"
-                >
-                  {priorities.map((p: any) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name || p.priority_name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                ticketData.priorityObj?.name && <PriorityIndicator priority={ticketData.priorityObj.name} className="text-[12.5px] text-subtle" />
-              )}
+    <div className="space-y-5 pb-6 pt-2 text-foreground">
+      {/* Header — same structure as the Task page */}
+      <header className="flex flex-col gap-3 border-b border-border pb-4">
+        <nav aria-label="Ticket navigation" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+          <button
+            type="button"
+            onClick={() => (window.history.length > 1 ? router.back() : router.push("/tickets"))}
+            className="inline-flex items-center gap-1.5 font-medium text-accent-soft-text hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Back
+          </button>
+          <span aria-hidden className="text-muted">/</span>
+          <Link href="/tickets" className="font-medium text-muted transition-colors hover:text-foreground">All tickets</Link>
+          <span aria-hidden className="text-muted">/</span>
+          <Link href="/tickets/reports" className="font-medium text-muted transition-colors hover:text-foreground">Reports and analytics</Link>
+        </nav>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{ticketData.id}</span>
+          <StatusBadge status={ticketData.statusObj?.name || null} />
+          {ticketData.priorityObj?.name && <PriorityIndicator priority={ticketData.priorityObj.name} className="text-[12.5px] text-subtle" />}
+          <span className="text-[12.5px] text-muted">
+            {scopeName ? `${scopeName} · ` : ""}{ticketData.departmentObj?.name || "No department"}
+          </span>
+          {isViewMode && (
+            <Link
+              href={`/tickets/${ticketData.dbId}`}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-[12.5px] font-medium text-foreground hover:bg-surface-hover"
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden /> Switch to edit
+            </Link>
+          )}
+        </div>
+
+        <div>
+          {editingTitle ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label htmlFor="tk-title" className="sr-only">Subject</label>
+              <input
+                id="tk-title"
+                autoFocus
+                className="h-10 flex-1 rounded-md border border-border bg-surface px-3 text-[16px] font-semibold text-heading outline-none focus:ring-2 focus:ring-ring"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveDetails({ title: editTitle.trim() });
+                  if (e.key === "Escape") { setEditingTitle(false); setEditTitle(ticketData.title || ""); }
+                }}
+              />
+              <div className="flex gap-2">
+                <AppButton variant="ghost" size="sm" disabled={savingDetails} onClick={() => { setEditingTitle(false); setEditTitle(ticketData.title || ""); }}>Cancel</AppButton>
+                <AppButton variant="primary" size="sm" disabled={savingDetails} onClick={() => saveDetails({ title: editTitle.trim() })}>
+                  {savingDetails ? "Saving…" : "Save"}
+                </AppButton>
+              </div>
+            </div>
+          ) : (
+            <div className="group flex items-start gap-2">
+              <h1 className="w-full whitespace-normal break-words text-[20px] font-semibold leading-snug text-heading">{ticketData.title}</h1>
               {canEditTicket && (
-                <div className="ml-auto flex gap-2">
-                  {!isEditing ? (
-                    <AppButton variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
-                      Edit details
-                    </AppButton>
-                  ) : (
-                    <>
-                      <AppButton variant="ghost" size="sm" onClick={() => {
-                        setIsEditing(false);
-                        setEditTitle(ticketData.title || "");
-                        setEditDescription(ticketData.description || "");
-                      }}>
-                        Cancel
-                      </AppButton>
-                      <AppButton variant="primary" size="sm" onClick={handleSaveDetails}>
-                        Save changes
-                      </AppButton>
-                    </>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingTitle(true)}
+                  aria-label="Edit subject"
+                  title="Edit subject"
+                  className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
+                </button>
               )}
             </div>
-
-            <div className="mt-3">
-              {!isEditing ? (
-                <h1 className="whitespace-normal break-words text-[20px] font-semibold leading-snug text-heading">{ticketData.title}</h1>
-              ) : (
-                <>
-                  <label htmlFor="tk-title" className="mb-1.5 block text-[13px] font-medium text-subtle">Subject</label>
-                  <input
-                    id="tk-title"
-                    className="h-9 w-full px-3 text-[14px]"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                  />
-                </>
-              )}
-            </div>
-
-            <div className="mt-5">
-              <div className="mb-1.5 text-[13px] font-medium text-subtle">Description</div>
-              {!isEditing ? (
-                <div
-                  className="prose prose-sm w-full max-w-full rounded-md border border-border bg-sunken p-4 text-[13.5px] leading-relaxed text-foreground dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ticketData.description || "No description added.") }}
-                />
-              ) : (
-                <textarea
-                  aria-label="Description"
-                  className="min-h-[140px] w-full resize-y p-3 text-[13.5px]"
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                />
-              )}
-            </div>
-
-            <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 md:grid-cols-4">
-              <div>
-                <dt className={label}>Department</dt>
-                <dd className="mt-1 text-[13.5px] text-foreground">{ticketData.departmentObj?.name || "—"}</dd>
-              </div>
-              <div>
-                <dt className={label}>Raised by</dt>
-                <dd className="mt-1 text-[13.5px]"><UserCell name={ticketData.creator?.full_name || null} emptyLabel="—" /></dd>
-              </div>
-              <div>
-                <dt className={label}>Raised on</dt>
-                <dd className="mt-1 text-[13.5px]"><DateCell value={ticketData.createdAt} /></dd>
-              </div>
-              <div>
-                <dt className={label}>Last updated</dt>
-                <dd className="mt-1 text-[13.5px]"><DateCell value={ticketData.updated_at} /></dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="relative w-full h-full xl:h-auto">
-            <div className="xl:absolute xl:inset-0 w-full h-full">
-              <TicketRightPanel ticketId={ticketData.id} dbId={ticketData.dbId} />
-            </div>
-          </div>
+          )}
         </div>
+      </header>
 
-        <div className="w-full">
-          <TicketWorkspaceConsole 
-            ticket={ticketData}
-            onUpdate={fetchData}
-            departments={departments}
-            priorities={priorities}
-            states={states}
-            categories={categories}
-            subcategories={subcategories}
-            issueTypes={issueTypes}
-            currentUserId={userId}
+      {/* Description */}
+      <AppCard className="space-y-3 border border-border bg-surface p-5 shadow-xs">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[13px] font-medium text-subtle">Description</h2>
+          {canEditTicket && !editingDescription && (
+            <AppButton variant="ghost" size="sm" onClick={() => setEditingDescription(true)} leftIcon={<Pencil className="h-3.5 w-3.5" />}>
+              Edit
+            </AppButton>
+          )}
+        </div>
+        {editingDescription ? (
+          <div className="space-y-2">
+            <textarea
+              aria-label="Description"
+              autoFocus
+              className="min-h-[140px] w-full resize-y rounded-md border border-border bg-surface p-3 text-[13.5px] text-foreground outline-none focus:ring-2 focus:ring-ring"
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+            />
+            <div className="flex justify-end gap-2">
+              <AppButton variant="ghost" size="sm" disabled={savingDetails} onClick={() => { setEditingDescription(false); setEditDescription(ticketData.description || ""); }}>Cancel</AppButton>
+              <AppButton variant="primary" size="sm" disabled={savingDetails} onClick={() => saveDetails({ description: editDescription })}>
+                {savingDetails ? "Saving…" : "Save description"}
+              </AppButton>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="prose prose-sm w-full max-w-full text-[13.5px] leading-relaxed text-foreground dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ticketData.description || "<span class='text-muted'>No description added.</span>") }}
           />
+        )}
+      </AppCard>
+
+      {isViewMode && (
+        <div role="status" className="flex items-start gap-3 rounded-md border border-border bg-sunken p-3 text-[13px] text-subtle">
+          <Eye className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          You are viewing this ticket in read-only mode.
         </div>
-      </div>
+      )}
+      {!isViewMode && !canEditTicket && (
+        <div role="status" className="flex items-start gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text">
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          Only the creator, the assignee, a ticket manager or a super admin can change this ticket.
+        </div>
+      )}
+
+      <TicketWorkspaceConsole
+        ticket={ticketData}
+        onUpdate={() => fetchData(false)}
+        departments={departments}
+        priorities={priorities}
+        states={states}
+        categories={categories}
+        subcategories={subcategories}
+        issueTypes={issueTypes}
+        currentUserId={userId}
+        readOnly={isViewMode}
+      />
     </div>
   );
 }

@@ -1152,8 +1152,9 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
       toast.warning("Status selection is mandatory. Please select a status.");
       return;
     }
-    if (!inlineRemark || inlineRemark.trim().length === 0) {
-      toast.warning("A remark is required.");
+    // Remark is optional when changing status; it is only needed when the user can just add a remark.
+    if (!canChangeFields && (!inlineRemark || inlineRemark.trim().length === 0)) {
+      toast.warning("Write a remark to add.");
       return;
     }
 
@@ -1184,8 +1185,9 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
 
   const handleDepartmentSave = async () => {
     if (!inlineTask) return;
-    if (!inlineRemark || inlineRemark.trim().length === 0) {
-      toast.warning("A remark is required.");
+    // Remark is optional; there must be either a department change or a remark to save.
+    if (inlineNewDepartment === inlineTask.department_id && (!inlineRemark || inlineRemark.trim().length === 0)) {
+      toast.info("There's nothing to save yet.");
       return;
     }
 
@@ -1206,7 +1208,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
           old_name: inlineTask.department?.name,
           new_name: deptMaster?.name
         } : undefined,
-        remarks: inlineRemark
+        remarks: inlineRemark?.trim() ? inlineRemark : undefined
       });
 
       if (res?.error) throw new Error(res.error);
@@ -2719,7 +2721,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
             )}
             
             <div className="grid gap-2">
-              <label className="text-[13px] font-medium text-subtle">Remark <span className="text-danger-text" aria-hidden>*</span></label>
+              <label className="text-[13px] font-medium text-subtle">Remark <span className="font-normal text-muted">(optional)</span></label>
               <textarea
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
@@ -2733,7 +2735,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
             <AppButton 
               variant="primary" 
               onClick={handleStatusSave}
-              disabled={inlineLoading || !inlineRemark.trim() || (canChangeFields && !inlineNewStatus)}
+              disabled={inlineLoading || (canChangeFields ? !inlineNewStatus : !inlineRemark.trim())}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {canChangeFields ? "Change status" : "Add remark"}
@@ -2772,7 +2774,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
             )}
             
             <div className="grid gap-2">
-              <label className="text-[13px] font-medium text-subtle">Remark <span className="text-danger-text" aria-hidden>*</span></label>
+              <label className="text-[13px] font-medium text-subtle">Remark <span className="font-normal text-muted">(optional)</span></label>
               <textarea
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
@@ -2786,7 +2788,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
             <AppButton 
               variant="primary" 
               onClick={handleDepartmentSave}
-              disabled={inlineLoading || !inlineRemark.trim()}
+              disabled={inlineLoading || (!inlineRemark.trim() && inlineNewDepartment === inlineTask?.department_id)}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {canChangeFields && inlineNewDepartment !== inlineTask?.department_id ? "Change department" : "Add remark"}

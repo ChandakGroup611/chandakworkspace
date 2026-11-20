@@ -1212,7 +1212,9 @@ export async function fetchSingleTicketDetails(ticketId: string) {
       status:status_master(status_name, status_color, is_terminal)
     `)
     .eq('is_deleted', false)
-    .or(`id.eq.${ticketId},code.eq.${ticketId}`)
+    // Links can carry the ticket id or its code (e.g. INC-502067888). Comparing a code with the
+    // uuid id column makes Postgres reject the whole query, so match on one column only.
+    .eq(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ticketId) ? 'id' : 'code', ticketId)
     .single();
 
   if (error || !data) {
@@ -1221,7 +1223,7 @@ export async function fetchSingleTicketDetails(ticketId: string) {
 
   // Permission check
   const { hasPermission } = await import('@/lib/permissions');
-  const canViewAll = await hasPermission(user.id, 'TICKETS_MANAGE');
+  const canViewAll = (await hasPermission(user.id, 'SUPER_ADMIN')) || (await hasPermission(user.id, 'TICKETS_MANAGE'));
 
   if (!canViewAll) {
     let allowed = data.creator_id === user.id || data.assignee_id === user.id || data.queue_owner_id === user.id;

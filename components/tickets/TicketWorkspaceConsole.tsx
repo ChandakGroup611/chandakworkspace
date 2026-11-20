@@ -2,12 +2,15 @@
 import { toast } from 'react-toastify';
 import React, { useState, useEffect } from "react";
 import { 
-  Clock, Users, Save, Paperclip, CheckCircle2, Video, MessageSquare, ChevronDown, ChevronUp, Loader2, Network, AlertTriangle
+  Clock, Users, Save, Paperclip, CheckCircle2, Video, MessageSquare, ChevronDown, ChevronUp, Loader2, Network, AlertTriangle,
+  User, Calendar, Timer, ActivitySquare, Link as LinkIcon, CheckSquare, MessageCircle, Gauge, Zap
 } from "lucide-react";
+import { AppCard } from "@/components/ui/AppCard";
+import TicketRealtimeChat from "@/components/tickets/TicketRealtimeChat";
 import DOMPurify from 'dompurify';
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchAssignees } from "@/lib/actions/users";
-import { updateTicketDetails, fetchTicketRelations, linkTicket, searchTickets, fetchTicketComments, addTicketRemark } from "@/lib/actions/tickets";
+import { updateTicketDetails, fetchTicketRelations, linkTicket, searchTickets, fetchTicketComments, addTicketRemark, fetchTicketAuditLogs } from "@/lib/actions/tickets";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
 import { AppButton } from "@/components/ui/AppButton";
 import { formatDate, formatDateTime } from "@/components/ui/data";
@@ -21,7 +24,8 @@ export function TicketWorkspaceConsole({
   categories,
   subcategories,
   issueTypes,
-  currentUserId
+  currentUserId,
+  readOnly = false
 }: any) {
   const { hasPermission, roleCode } = usePermissions();
 
@@ -33,7 +37,7 @@ export function TicketWorkspaceConsole({
   const [isSaving, setIsSaving] = useState(false);
   const [remarksHistory, setRemarksHistory] = useState<any[]>([]);
   const [loadingRemarksHistory, setLoadingRemarksHistory] = useState(true);
-  const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(true);
+  const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
 
   // Relations State
   const [relations, setRelations] = useState<any[]>([]);
@@ -69,7 +73,11 @@ export function TicketWorkspaceConsole({
 
   const isAssignee = !!currentUserId && (currentUserId === ticket?.assignee_id || currentUserId === ticket?.assignee?.id || currentUserId === ticket?.assigned_to);
   const isCreator = !!currentUserId && (currentUserId === ticket?.creator_id || currentUserId === ticket?.created_by);
-  const canEditFields = roleCode === "SUPER_ADMIN" || hasPermission("TICKETS_UPDATE") || hasPermission("TICKETS_MANAGE") || hasPermission("TICKETS_EDIT") || isAssignee || isCreator || !ticket?.assignee_id;
+  const [activeTab, setActiveTab] = useState<'checklist' | 'links' | 'attachments' | 'chat' | 'activity' | 'time'>('checklist');
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [loadingAudits, setLoadingAudits] = useState(false);
+
+  const canEditFields = !readOnly && (roleCode === "SUPER_ADMIN" || hasPermission("TICKETS_UPDATE") || hasPermission("TICKETS_MANAGE") || hasPermission("TICKETS_EDIT") || isAssignee || isCreator || !ticket?.assignee_id);
   const isClassificationLocked = !canEditFields;
 
   const defaultDeptId = ticket?.department_id || ticket?.custom_fields?.department_id || "";
@@ -89,6 +97,12 @@ export function TicketWorkspaceConsole({
         console.error(err);
       } finally {
         setLoadingRemarksHistory(false);
+      }
+      // Existing links were only shown after adding a new one; load them with the ticket.
+      try {
+        setRelations((await fetchTicketRelations(ticket.dbId)) || []);
+      } catch (err) {
+        console.error(err);
       }
     }
     loadInitialData();
@@ -185,14 +199,11 @@ export function TicketWorkspaceConsole({
   const commitChanges = async () => {
     const hasFieldChanges = Object.keys(pendingChanges).length > 0;
     if (!hasFieldChanges && !updateRemark.trim()) return;
-    if (hasFieldChanges && !updateRemark.trim()) {
-      toast.warning("A remark is mandatory when updating ticket details.");
-      return;
-    }
     setIsSaving(true);
     try {
       if (hasFieldChanges) {
-        const updateData = { ...pendingChanges, remark: updateRemark.trim() };
+        // Remark is optional: send it only when one was written.
+        const updateData = { ...pendingChanges, ...(updateRemark.trim() ? { remark: updateRemark.trim() } : {}) };
         await updateTicketDetails(ticket.dbId, updateData);
       } else if (updateRemark.trim()) {
         await addTicketRemark(ticket.dbId, updateRemark.trim());
@@ -245,6 +256,17 @@ export function TicketWorkspaceConsole({
     setSubTasks(updatedTasks);
   };
 
+  useEffect(() => {
+    if (activeTab !== 'activity' || !ticket?.dbId) return;
+    let cancelled = false;
+    setLoadingAudits(true);
+    fetchTicketAuditLogs(ticket.dbId, 200, 0)
+      .then((data: any) => { if (!cancelled) setAuditLogs(data || []); })
+      .catch((err: any) => console.error(err))
+      .finally(() => { if (!cancelled) setLoadingAudits(false); });
+    return () => { cancelled = true; };
+  }, [activeTab, ticket?.dbId, ticket?.updated_at]);
+
   const getPriorityColor = () => {
     const code = ticket.priorityObj?.code;
     if (code === "PR_CRITICAL") return "bg-danger/10 text-danger border-danger-border";
@@ -253,600 +275,585 @@ export function TicketWorkspaceConsole({
     return "bg-accent-soft text-theme-icon border-theme-btn-primary/20";
   };
 
+  const hasPending = Object.keys(pendingChanges).length > 0;
+  const currentCategoryId = pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId;
+  const tileCls = "flex min-h-[72px] flex-col justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2.5";
+  const tileLabel = "flex items-center gap-1.5 text-[12.5px] text-muted";
+  const tileValue = "flex h-8 items-center text-[13.5px] text-foreground truncate";
+  const fieldCls = "h-8 w-full rounded-md border border-border bg-surface px-2 text-[13px] text-foreground outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60";
+  const selectCls = "h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60";
+  const dateValue = pendingChanges.due_date !== undefined
+    ? (pendingChanges.due_date ? new Date(pendingChanges.due_date).toISOString().split('T')[0] : "")
+    : (ticket.due_date ? new Date(ticket.due_date).toISOString().split('T')[0] : "");
+
+  const CardHeader = ({ icon: Icon, title, right }: { icon: any; title: string; right?: React.ReactNode }) => (
+    <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-3">
+      <div className="flex items-center gap-2.5">
+        <Icon className="h-4 w-4 text-muted" aria-hidden />
+        <h3 className="text-[14px] font-semibold text-heading">{title}</h3>
+      </div>
+      {right}
+    </div>
+  );
+
+  const tabs = [
+    { id: 'checklist', label: 'Checklist', icon: CheckSquare, count: subTasks.length },
+    { id: 'links', label: 'Links', icon: LinkIcon, count: relations.length },
+    { id: 'attachments', label: 'Attachments', icon: Paperclip },
+    { id: 'chat', label: 'Chat', icon: MessageCircle },
+    { id: 'activity', label: 'Activity', icon: ActivitySquare },
+    { id: 'time', label: 'Time logs', icon: Clock },
+  ] as const;
+
   return (
-    <div className="flex flex-col h-full overflow-hidden transition-all duration-500">
-      
-      {/* ── EXECUTION CONTROLLER LAYOUT (Identical to Task details structure) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        
-        {/* LEFT COLUMN */}
-        <div className="space-y-6">
-          
-          {/* Checklists / Subtasks */}
-          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
-            <div className="bg-background border-b border-border p-4">
-               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
-                 <CheckCircle2 className="w-4 h-4 text-success" /> Checklist & objectives
-               </h3>
+    <div className="space-y-5">
+
+      {/* 1. Schedule and people — same card and tile layout as the Task page */}
+      <AppCard className="overflow-hidden border border-border p-0 shadow-xs">
+        <CardHeader icon={Clock} title="Schedule and people" />
+        <div className="p-5">
+          <div className="grid grid-cols-1 items-stretch gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={tileCls}>
+              <span className={tileLabel}><User className="h-3.5 w-3.5" aria-hidden /> Raised by</span>
+              <div className={tileValue}>{ticket.creator?.full_name || "System"}</div>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="space-y-2">
-                {subTasks.map((st) => (
-                  <div key={st.id} className="flex items-center justify-between p-2 rounded-lg border border-border/50 bg-background/50 group hover:border-border transition-colors">
-                    <div className="flex items-center gap-3">
-                      <input 
-                        type="checkbox" 
-                        checked={st.completed}
-                        onChange={() => toggleSubTask(st.id)}
-                        disabled={!canEditFields}
-                        className="w-4 h-4 rounded border-border text-theme-icon focus:ring-theme-btn-primary"
-                      />
-                      <span className={`text-xs font-medium ${st.completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                        {st.text}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                      <select
-                        value={st.assignee_id || ""}
-                        onChange={(e) => setSubTaskAssignee(st.id, e.target.value)}
-                        disabled={!canEditFields}
-                        className="text-[11px] bg-transparent border-none text-muted-foreground outline-none font-semibold focus:ring-0 cursor-pointer w-24"
-                      >
-                        <option value="">Unassigned</option>
-                        {assigneesList.map(a => (
-                          <option key={a.id} value={a.id}>{a.full_name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+            <div className={tileCls}>
+              <span className={tileLabel}><Calendar className="h-3.5 w-3.5" aria-hidden /> Raised on</span>
+              <div className={tileValue}>{ticket.created_at ? formatDateTime(ticket.created_at) : "—"}</div>
+            </div>
+            <div className={tileCls}>
+              <label htmlFor="tk-assignee" className={tileLabel}><Users className="h-3.5 w-3.5" aria-hidden /> Executive (assignee)</label>
+              <select
+                id="tk-assignee"
+                value={pendingChanges.assignee_id !== undefined ? pendingChanges.assignee_id : (ticket.assignee_id || "")}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const updates: any = { assignee_id: val };
+                  if (val) {
+                    const assignedState = states.find((s: any) => s.status_code === 'ST_ASSIGNED' || s.code === 'ST_ASSIGNED' || s.name?.toUpperCase() === 'ASSIGNED');
+                    if (assignedState) updates.status_id = assignedState.id;
+                  }
+                  handleFieldUpdate(updates);
+                }}
+                disabled={!canEditFields}
+                className={fieldCls}
+              >
+                <option value="">Unassigned</option>
+                {assigneesList.map(a => (
+                  <option key={a.id} value={a.id}>{a.full_name}</option>
                 ))}
+              </select>
+            </div>
+            <div className={tileCls}>
+              <label htmlFor="tk-due" className={tileLabel}><Calendar className="h-3.5 w-3.5" aria-hidden /> Due date</label>
+              {canEditFields ? (
+                <input
+                  id="tk-due"
+                  type="date"
+                  min={ticket?.createdAt ? new Date(ticket.createdAt).toISOString().split('T')[0] : undefined}
+                  value={dateValue}
+                  onChange={(e) => handleFieldUpdate({ due_date: e.target.value })}
+                  className={fieldCls}
+                />
+              ) : (
+                <div className={tileValue}>{ticket.due_date ? formatDate(ticket.due_date) : "Not set"}</div>
+              )}
+            </div>
+            <div className={tileCls}>
+              <span className={tileLabel}><Timer className="h-3.5 w-3.5" aria-hidden /> SLA</span>
+              <div className={`${tileValue} font-medium ${slaStatus === "BREACHED" ? "text-danger-text" : slaStatus === "MET" ? "text-success" : ""}`}>
+                {slaTimeRemaining || "Calculating…"}
               </div>
-              
-              {canEditFields && (
-                <form onSubmit={handleAddSubTask} className="flex items-center gap-2 mt-4 pt-2">
-                  <input 
-                    type="text"
-                    value={newSubTask}
-                    onChange={(e) => setNewSubTask(e.target.value)}
-                    placeholder="Add a new sub-task…"
-                    className="flex-1 border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all"
-                  />
-                  <AppButton type="submit" variant="primary" disabled={!newSubTask.trim()}>
-                    Add
-                  </AppButton>
-                </form>
+            </div>
+            <div className={tileCls}>
+              <span className={tileLabel}><Clock className="h-3.5 w-3.5" aria-hidden /> Time logged</span>
+              <div className={`${tileValue} tabular-nums`}>{Math.floor(timeLogged / 60)}h {timeLogged % 60}m</div>
+            </div>
+            <div className={tileCls}>
+              <span className={tileLabel}><Gauge className="h-3.5 w-3.5" aria-hidden /> Impact</span>
+              <div className={tileValue}>{ticket.custom_fields?.impact || "Moderate"}</div>
+            </div>
+            <div className={tileCls}>
+              <span className={tileLabel}><Zap className="h-3.5 w-3.5" aria-hidden /> Urgency</span>
+              <div className={tileValue}>{ticket.custom_fields?.urgency || "Moderate"}</div>
+            </div>
+          </div>
+        </div>
+      </AppCard>
+
+      {/* 2. Classification */}
+      <AppCard className="overflow-hidden border border-border p-0 shadow-xs">
+        <CardHeader icon={Network} title="Classification" />
+        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-1.5">
+            <label htmlFor="tk-dept" className="text-[13px] font-medium text-subtle">Department</label>
+            <select id="tk-dept" value={pendingChanges.department_id !== undefined ? pendingChanges.department_id : defaultDeptId} onChange={(e) => handleFieldUpdate({ department_id: e.target.value })} disabled={isClassificationLocked} className={selectCls}>
+              <option value="">Select department</option>
+              {departments?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="tk-itype" className="text-[13px] font-medium text-subtle">Issue type</label>
+            <select id="tk-itype" value={pendingChanges.issue_type_id !== undefined ? pendingChanges.issue_type_id : defaultIssueTypeId} onChange={(e) => handleFieldUpdate({ issue_type_id: e.target.value })} disabled={isClassificationLocked} className={selectCls}>
+              <option value="">Select issue type</option>
+              {issueTypes?.map((it: any) => <option key={it.id} value={it.id}>{it.name}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="tk-cat" className="text-[13px] font-medium text-subtle">Category</label>
+            <select id="tk-cat" value={currentCategoryId} onChange={(e) => handleFieldUpdate({ category_id: e.target.value, sub_category_id: null })} disabled={isClassificationLocked} className={selectCls}>
+              <option value="">Select category</option>
+              {categories?.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="tk-subcat" className="text-[13px] font-medium text-subtle">Subcategory</label>
+            <select id="tk-subcat" value={pendingChanges.sub_category_id !== undefined ? (pendingChanges.sub_category_id || "") : defaultSubCategoryId} onChange={(e) => handleFieldUpdate({ sub_category_id: e.target.value })} disabled={isClassificationLocked || !currentCategoryId} className={selectCls}>
+              <option value="">Select subcategory</option>
+              {subcategories?.filter((sc: any) => sc.category_id === currentCategoryId).map((sc: any) => (
+                <option key={sc.id} value={sc.id}>{sc.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </AppCard>
+
+      {/* 3. Status and remarks */}
+      <AppCard className="overflow-hidden border border-border p-0 shadow-xs">
+        <CardHeader
+          icon={MessageSquare}
+          title="Status and remarks"
+          right={canEditFields ? (
+            <div className="flex gap-2">
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const inProgressStatus = states.find((s: any) => s.name?.includes("Progress") || s.name?.toUpperCase().includes("PROGRESS") || s.name?.includes("Doing"));
+                  if (inProgressStatus) {
+                    handleFieldUpdate({ status_id: inProgressStatus.id, assignee_id: currentUserId });
+                    setUpdateRemark("Acknowledged and actively investigating.");
+                  } else {
+                    toast.info("No 'In progress' status is set up for this scope in Masters.");
+                  }
+                }}
+              >
+                Acknowledge
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const resolvedStatus = states.find((s: any) => s.name?.toUpperCase().includes("RESOLV") || s.code === "ST_RESOLVED");
+                  if (resolvedStatus) {
+                    handleFieldUpdate({ status_id: resolvedStatus.id });
+                    setUpdateRemark("Issue has been resolved successfully.");
+                  } else {
+                    toast.info("No 'Resolved' status is set up for this scope in Masters.");
+                  }
+                }}
+              >
+                Mark resolved
+              </AppButton>
+            </div>
+          ) : undefined}
+        />
+        <div className="space-y-5 p-5">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="tk-status" className="text-[13px] font-medium text-subtle">Status <span className="text-danger">*</span></label>
+              <select
+                id="tk-status"
+                value={pendingChanges.status_id !== undefined ? pendingChanges.status_id : (ticket.status_id || "")}
+                onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
+                disabled={!canEditFields}
+                className={selectCls}
+              >
+                <option value="" disabled>Select status</option>
+                {states.map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="tk-priority" className="text-[13px] font-medium text-subtle">Priority</label>
+              {priorities.length > 0 ? (
+                <select
+                  id="tk-priority"
+                  value={pendingChanges.priority_id !== undefined ? pendingChanges.priority_id : (ticket.priority_id || ticket.priorityObj?.id || "")}
+                  onChange={(e) => { if (e.target.value) handleFieldUpdate({ priority_id: e.target.value }); }}
+                  disabled={!canEditFields}
+                  className={selectCls}
+                >
+                  <option value="" disabled>Select priority</option>
+                  {priorities.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.name || p.priority_name}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="flex h-9 items-center">
+                  <span className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${getPriorityColor()}`}>{ticket.priorityObj?.name || "Not set"}</span>
+                </div>
               )}
             </div>
           </div>
 
-          {/* TICKET RELATIONSHIPS */}
-          <div className="rounded-3xl theme-card-structural shadow-sm flex flex-col relative z-50">
-            <div className="bg-background border-b border-border p-4 rounded-t-3xl">
-               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
-                 <Paperclip className="w-4 h-4 text-danger-text" /> Ticket relationships
-               </h3>
+          {hasPending && (
+            <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warning-border bg-warning-soft p-3 text-[13px] text-warning-text">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+                <span>You have unsaved changes. Click <strong className="font-semibold">Save changes</strong> to save them (a remark is optional).</span>
+              </div>
+              <button type="button" onClick={cancelChanges} className="shrink-0 whitespace-nowrap rounded-md border border-warning-border px-2.5 py-1 text-[12.5px] font-medium hover:bg-surface">
+                Discard
+              </button>
             </div>
-            <div className="p-6">
-              {/* Existing Relations List */}
-              {relations.length > 0 && (
-                <div className="space-y-2 mb-6">
-                  {relations.map((rel: any) => (
-                    <div key={rel.id} className="flex items-center justify-between p-3 border rounded-lg bg-background text-xs">
-                      <div className="flex items-center gap-3">
-                        <span className={`px-2 py-0.5 rounded font-bold ${
-                          rel.relation_type === 'DUPLICATE' ? 'bg-warning/10 text-warning' :
-                          rel.relation_type === 'BLOCKS' ? 'bg-danger/10 text-danger' : 'bg-accent-soft text-theme-icon'
-                        }`}>
-                          {rel.relation_type}
-                        </span>
-                        <span className="font-medium text-foreground">{rel.relatedTicket?.code} - {rel.relatedTicket?.title}</span>
-                      </div>
-                    </div>
-                  ))}
+          )}
+
+          <div className="space-y-1.5">
+            <label htmlFor="tk-remark" className="text-[13px] font-medium text-subtle">
+              Remark <span className="font-normal text-muted">(optional)</span>
+            </label>
+            <textarea
+              id="tk-remark"
+              value={updateRemark}
+              onChange={e => setUpdateRemark(e.target.value)}
+              disabled={!canEditFields}
+              className="min-h-[80px] w-full resize-y rounded-md border border-border bg-surface p-3 text-[13.5px] text-foreground outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+              placeholder={!canEditFields ? "This ticket is read-only for you." : "Add an update or note for this ticket…"}
+            />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-[12.5px] text-muted">Last updated: {ticket.updated_at ? formatDateTime(ticket.updated_at) : "Not yet"}</span>
+              {canEditFields && (
+                <div className="flex gap-2">
+                  {hasPending && (
+                    <AppButton type="button" variant="ghost" size="sm" onClick={cancelChanges} disabled={isSaving}>Cancel</AppButton>
+                  )}
+                  <AppButton
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={commitChanges}
+                    disabled={isSaving || (!hasPending && !updateRemark.trim())}
+                    leftIcon={isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  >
+                    {isSaving ? "Saving…" : hasPending ? "Save changes" : "Add remark"}
+                  </AppButton>
                 </div>
               )}
-              
-              {/* Add Relation Form */}
-              {canEditFields && (
-                <div className="border border-border bg-background rounded-lg p-4">
-                  <div className="flex gap-2">
-                    <select 
+            </div>
+          </div>
+
+          {/* Remarks history */}
+          <div className="border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)}
+              aria-expanded={!isHistoryCollapsed}
+              className="flex w-full items-center justify-between rounded-md text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="flex items-center gap-2 text-[13px] font-medium text-subtle">
+                <MessageSquare className="h-4 w-4 text-muted" aria-hidden />
+                Remarks history
+                {remarksHistory.length > 0 && (
+                  <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">{remarksHistory.length}</span>
+                )}
+              </span>
+              {isHistoryCollapsed ? <ChevronDown className="h-4 w-4 text-muted" aria-hidden /> : <ChevronUp className="h-4 w-4 text-muted" aria-hidden />}
+            </button>
+
+            {!isHistoryCollapsed && (
+              <div className="mt-4 max-h-[360px] space-y-4 overflow-y-auto pr-1">
+                {loadingRemarksHistory ? (
+                  <div className="flex items-center justify-center gap-2 py-6">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted" aria-hidden />
+                    <span className="text-[13px] text-muted">Loading remarks…</span>
+                  </div>
+                ) : remarksHistory.length === 0 ? (
+                  <div className="py-6 text-center text-[13px] text-muted">No remarks yet.</div>
+                ) : (
+                  remarksHistory.map((item: any) => {
+                    const name = item.author?.full_name || item.user?.full_name || "System";
+                    const initials = name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+                    return (
+                      <div key={item.id} className="flex items-start gap-3">
+                        {item.user?.profile_photo ? (
+                          <img src={item.user.profile_photo} alt="" className="h-7 w-7 rounded-full object-cover" />
+                        ) : (
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent-soft-text">{initials}</div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2">
+                            <span className="text-[13px] font-medium text-foreground">{name}</span>
+                            <span className="text-[12px] text-muted">{formatDateTime(item.created_at)}</span>
+                          </div>
+                          <div
+                            className="whitespace-pre-wrap break-words rounded-md border border-border bg-sunken p-2.5 text-[13px] leading-relaxed text-foreground"
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.content || "") }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </AppCard>
+
+      {/* 4. Details and activity — tabbed, like the Task page */}
+      <AppCard className="overflow-hidden border border-border p-0 shadow-xs">
+        <CardHeader icon={ActivitySquare} title="Details and activity" />
+        <div className="p-5">
+          <div role="tablist" aria-label="Ticket details" className="hide-scrollbar -mx-5 -mt-5 mb-2 flex flex-nowrap items-center gap-1 overflow-x-auto border-b border-border px-5">
+            {tabs.map(t => {
+              const isActive = activeTab === t.id;
+              const count = (t as any).count as number | undefined;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(t.id)}
+                  className={`-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "border-primary text-foreground" : "border-transparent text-muted hover:text-foreground"}`}
+                >
+                  <t.icon className="h-3.5 w-3.5" aria-hidden />
+                  <span>{t.label}</span>
+                  {count !== undefined && count > 0 && (
+                    <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">{count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="pt-4">
+            {/* Checklist */}
+            {activeTab === 'checklist' && (
+              <div className="space-y-3">
+                {subTasks.length > 0 ? (
+                  <div className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+                    {subTasks.map((st) => (
+                      <div key={st.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                        <label className="flex min-w-0 items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={st.completed}
+                            onChange={() => toggleSubTask(st.id)}
+                            disabled={!canEditFields}
+                            className="h-4 w-4 rounded border-border"
+                          />
+                          <span className={`truncate text-[13.5px] ${st.completed ? 'text-muted line-through' : 'text-foreground'}`}>{st.text}</span>
+                        </label>
+                        <select
+                          aria-label={`Assignee for ${st.text}`}
+                          value={st.assignee_id || ""}
+                          onChange={(e) => setSubTaskAssignee(st.id, e.target.value)}
+                          disabled={!canEditFields}
+                          className="h-8 w-40 shrink-0 rounded-md border border-border bg-surface px-2 text-[12.5px] text-foreground disabled:opacity-60"
+                        >
+                          <option value="">Unassigned</option>
+                          {assigneesList.map(a => (
+                            <option key={a.id} value={a.id}>{a.full_name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center text-[13px] text-muted">No checklist items yet.</div>
+                )}
+                {canEditFields && (
+                  <form onSubmit={handleAddSubTask} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      aria-label="New checklist item"
+                      value={newSubTask}
+                      onChange={(e) => setNewSubTask(e.target.value)}
+                      placeholder="Add a checklist item…"
+                      className="h-9 flex-1 rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <AppButton type="submit" variant="primary" size="sm" disabled={!newSubTask.trim()}>Add</AppButton>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* Links (related tickets) */}
+            {activeTab === 'links' && (
+              <div className="space-y-4">
+                {relations.length > 0 ? (
+                  <div className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+                    {relations.map((rel: any) => { const rt = rel.relatedTicket || rel.target_ticket; return (
+                      <div key={rel.id} className="flex items-center gap-3 px-3 py-2.5 text-[13px]">
+                        <span className={`shrink-0 rounded px-2 py-0.5 text-[11px] font-semibold ${rel.relation_type === 'DUPLICATE' ? 'bg-warning-soft text-warning-text' : rel.relation_type === 'BLOCKS' ? 'bg-danger-soft text-danger-text' : 'bg-accent-soft text-accent-soft-text'}`}>
+                          {rel.relation_type}
+                        </span>
+                        {rt?.id ? (
+                          <a href={`/tickets/${rt.id}`} className="truncate font-medium text-foreground hover:underline">
+                            {rt.code} — {rt.title}
+                          </a>
+                        ) : (
+                          <span className="truncate text-muted">Linked ticket not available</span>
+                        )}
+                      </div>
+                    ); })}
+                  </div>
+                ) : (
+                  <div className="py-4 text-center text-[13px] text-muted">No linked tickets.</div>
+                )}
+
+                {canEditFields && (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <select
+                      aria-label="Link type"
                       value={newRelationType}
                       onChange={(e) => setNewRelationType(e.target.value as any)}
-                      className="border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground outline-none w-32 focus:border-danger-border focus:ring-1 focus:ring-danger-border transition-all"
+                      className="h-9 rounded-md border border-border bg-surface px-3 text-[13px] text-foreground sm:w-40"
                     >
                       <option value="RELATED">Relates to</option>
                       <option value="BLOCKS">Blocks</option>
                       <option value="DUPLICATE">Duplicate of</option>
                     </select>
-                    
-                    <div className="flex-1 relative" ref={autocompleteRef}>
-                      <input 
+                    <div className="relative flex-1" ref={autocompleteRef}>
+                      <input
                         type="text"
+                        aria-label="Search ticket to link"
                         value={newRelationCode}
-                        onChange={(e) => {
-                          setNewRelationCode(e.target.value);
-                          setShowSuggestions(true);
-                        }}
+                        onChange={(e) => { setNewRelationCode(e.target.value); setShowSuggestions(true); }}
                         onFocus={() => setShowSuggestions(true)}
                         placeholder="Search by ticket code or subject…"
-                        className="w-full border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-danger-border focus:ring-1 focus:ring-danger-border outline-none transition-all"
+                        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-[13px] text-foreground outline-none focus:ring-2 focus:ring-ring"
                       />
-                      {isSearching && (
-                        <div className="absolute right-3 top-2.5">
-                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                        </div>
+                      {(isSearching || isLinking) && (
+                        <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted" aria-hidden />
                       )}
-                      
-                      {/* Autocomplete Dropdown */}
                       {showSuggestions && searchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-1 theme-card-structural rounded-lg  z-50 max-h-[250px] overflow-y-auto">
-                          {searchResults.map((t) => (
-                            <div 
-                              key={t.id} 
+                        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[250px] overflow-y-auto rounded-md border border-border bg-elevated shadow-lg">
+                          {searchResults.filter((t: any) => t.id !== ticket.dbId).map((t: any) => (
+                            <button
+                              key={t.id}
+                              type="button"
                               onClick={async () => {
                                 setIsLinking(true);
                                 try {
                                   await linkTicket(ticket.dbId, t.code, newRelationType);
-                                  const updatedRelations = await fetchTicketRelations(ticket.dbId);
-                                  setRelations(updatedRelations);
+                                  setRelations(await fetchTicketRelations(ticket.dbId));
                                   setNewRelationCode("");
                                   setShowSuggestions(false);
                                 } catch (err: any) {
-                                  toast.error("Failed to link: " + err.message);
+                                  toast.error("Couldn't link the ticket: " + err.message);
                                 } finally {
                                   setIsLinking(false);
                                 }
-                              }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
-                              className="p-3 border-b hover:theme-card-structural/5 dark:hover:theme-card-structural cursor-pointer transition-colors"
+                              }}
+                              className="block w-full border-b border-border p-3 text-left last:border-b-0 hover:bg-surface-hover"
                             >
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-bold text-danger-text">{t.code}</span>
-                                <span className="text-[11px] text-muted-foreground">{formatDate(t.created_at)}</span>
+                              <div className="mb-1 flex items-center justify-between">
+                                <span className="font-mono text-[12px] font-medium text-accent-soft-text">{t.code}</span>
+                                <span className="text-[11.5px] text-muted">{formatDate(t.created_at)}</span>
                               </div>
-                              <div className="text-xs text-foreground truncate">{t.title}</div>
-                            </div>
+                              <div className="truncate text-[13px] text-foreground">{t.title}</div>
+                            </button>
                           ))}
                         </div>
                       )}
                       {showSuggestions && searchResults.length === 0 && newRelationCode.trim().length > 0 && !isSearching && (
-                        <div className="absolute top-full left-0 right-0 mt-1 theme-card-structural rounded-lg  z-50 p-3 text-center text-xs text-muted-foreground">
-                          No tickets found matching "{newRelationCode}"
+                        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-border bg-elevated p-3 text-center text-[13px] text-muted shadow-lg">
+                          No tickets match "{newRelationCode}"
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* TIMELINE & META (Shifted Down) */}
-          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
-            <div className="bg-background border-b border-border p-4 flex items-center justify-between">
-               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
-                 <Clock className="w-4 h-4 text-theme-icon" /> Timeline & meta
-               </h3>
-               {canEditFields && priorities.length > 0 ? (
-                 <select
-                   aria-label="Ticket Priority"
-                   value={ticket.priority_id || ticket.priorityObj?.id || ""}
-                   onChange={async (e) => {
-                     const newPrioId = e.target.value;
-                     if (!newPrioId) return;
-                     await executeFieldUpdate({ priority_id: newPrioId });
-                     toast.success("Priority updated.");
-                   }}
-                   className="h-6 rounded border border-border bg-surface px-1.5 text-[11px] font-semibold text-foreground outline-none focus:border-theme-btn-primary cursor-pointer"
-                 >
-                   {priorities.map((p: any) => (
-                     <option key={p.id} value={p.id}>
-                       {p.name || p.priority_name}
-                     </option>
-                   ))}
-                 </select>
-               ) : (
-                 <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${getPriorityColor()}`}>
-                   {ticket.priorityObj?.name || "STANDARD"}
-                 </span>
-               )}
-            </div>
-            
-            <div className="p-6 grid grid-cols-2 gap-4">
-               <div>
-                  <div className="text-[11px] font-bold text-muted-foreground mb-1">Target due date</div>
-                  <div className="text-xs font-semibold text-foreground flex items-center">
-                    {canEditFields ? (
-                      <input 
-                        type="date" 
-                        min={ticket?.createdAt ? new Date(ticket.createdAt).toISOString().split('T')[0] : undefined}
-                        value={pendingChanges.due_date !== undefined 
-                          ? (pendingChanges.due_date ? new Date(pendingChanges.due_date).toISOString().split('T')[0] : "") 
-                          : (ticket.due_date ? new Date(ticket.due_date).toISOString().split('T')[0] : "")}
-                        onChange={(e) => handleFieldUpdate({ due_date: e.target.value })}
-                        className="bg-transparent border-b border-border/50 text-foreground outline-none focus:border-theme-btn-primary py-0.5 w-full cursor-pointer"
-                      />
-                    ) : (
-                      ticket.due_date ? formatDate(ticket.due_date) : "Not Set"
-                    )}
-                  </div>
-               </div>
-               <div>
-                  <div className="text-[11px] font-bold text-muted-foreground mb-1">SLA status</div>
-                  <div className={`text-xs font-semibold ${slaStatus === "BREACHED" ? "text-danger" : slaStatus === "MET" ? "text-success" : "text-theme-icon"}`}>
-                    {slaTimeRemaining}
-                  </div>
-               </div>
-               <div>
-                  <div className="text-[11px] font-bold text-muted-foreground mb-1">Impact</div>
-                  <div className="text-xs font-semibold text-foreground">
-                    {ticket.custom_fields?.impact || "Moderate"}
-                  </div>
-               </div>
-               <div>
-                  <div className="text-[11px] font-bold text-muted-foreground mb-1">Urgency</div>
-                  <div className="text-xs font-semibold text-foreground">
-                    {ticket.custom_fields?.urgency || "Moderate"}
-                  </div>
-               </div>
-            </div>
-            
-            <div className="bg-background/50 border-t border-border p-4 flex justify-between items-center">
-              <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> Total time logged
-              </span>
-              <span className="text-sm font-semibold text-theme-icon dark:text-theme-icon">
-                {Math.floor(timeLogged / 60)}h {timeLogged % 60}m
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        {/* RIGHT COLUMN */}
-        <div className="space-y-6">
-          
-          {/* EXECUTION TEAM & ROUTING (Moved to Top) */}
-          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
-            <div className="bg-background border-b border-border p-4 flex items-center justify-between">
-               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
-                 <Users className="w-4 h-4 text-theme-icon" /> Execution team & routing
-               </h3>
-            </div>
-            <div className="p-6 space-y-6">
-               <div>
-                <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Executive (Primary Assignee)</label>
-                <select 
-                  value={pendingChanges.assignee_id !== undefined ? pendingChanges.assignee_id : (ticket.assignee_id || "")}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const updates: any = { assignee_id: val };
-                    if (val) {
-                      const assignedState = states.find((s: any) => s.status_code === 'ST_ASSIGNED' || s.name?.toUpperCase() === 'ASSIGNED');
-                      if (assignedState) {
-                        updates.status_id = assignedState.id;
-                      }
-                    }
-                    handleFieldUpdate(updates);
-                  }}
-                  disabled={!canEditFields}
-                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary theme-input-structural text-foreground"
-                >
-                  <option value="">Unassigned</option>
-                  {assigneesList.map(a => (
-                    <option key={a.id} value={a.id}>{a.full_name}</option>
-                  ))}
-                </select>
-               </div>
-               
-               <div>
-                <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">
-                  Workflow status <span className="text-danger">*</span>
-                </label>
-                <select 
-                  value={pendingChanges.status_id !== undefined ? pendingChanges.status_id : (ticket.status_id || "")}
-                  onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
-                  disabled={!canEditFields}
-                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary theme-input-structural text-foreground"
-                >
-                  <option value="" disabled>Select status</option>
-                  {states.map((s: any) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-               </div>
-               
-               {canEditFields && (
-                <div className="pt-2">
-                 <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Log time (minutes)</label>
-                 <form onSubmit={handleLogTime} className="flex items-center gap-2">
-                    <input 
-                      type="number"
-                      min="1"
-                      value={newTimeLog}
-                      onChange={(e) => setNewTimeLog(e.target.value)}
-                      placeholder="e.g. 30"
-                      className="w-full border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-theme-btn-primary outline-none"
-                    />
-                    <AppButton type="submit" variant="outline" size="sm" disabled={!newTimeLog || isLoggingTime}>
-                      {isLoggingTime ? "..." : "Log"}
-                    </AppButton>
-                 </form>
-                </div>
-               )}
-            </div>
-          </div>
-
-          {/* CLASSIFICATION BLOCK (Shifted Down) */}
-          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
-            <div className="bg-background border-b border-border p-4 flex items-center justify-between">
-               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
-                 <Network className="w-4 h-4 text-success" /> Classification
-               </h3>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Department</label>
-                  <select 
-                    value={pendingChanges.department_id !== undefined ? pendingChanges.department_id : defaultDeptId}
-                    onChange={(e) => handleFieldUpdate({ department_id: e.target.value })}
-                    disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-success-border focus:ring-1 focus:ring-success-border theme-input-structural text-foreground"
-                  >
-                    <option value="">Select department</option>
-                    {departments?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Issue type</label>
-                  <select 
-                    value={pendingChanges.issue_type_id !== undefined ? pendingChanges.issue_type_id : defaultIssueTypeId}
-                    onChange={(e) => handleFieldUpdate({ issue_type_id: e.target.value })}
-                    disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-success-border focus:ring-1 focus:ring-success-border theme-input-structural text-foreground"
-                  >
-                    <option value="">Select issue type</option>
-                    {issueTypes?.map((it: any) => <option key={it.id} value={it.id}>{it.name}</option>)}
-                  </select>
-                </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Category</label>
-                  <select 
-                    value={pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId}
-                    onChange={(e) => handleFieldUpdate({ category_id: e.target.value, sub_category_id: null })}
-                    disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-success-border focus:ring-1 focus:ring-success-border theme-input-structural text-foreground"
-                  >
-                    <option value="">Select category</option>
-                    {categories?.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-muted-foreground block mb-1.5">Subcategory</label>
-                  <select 
-                    value={pendingChanges.sub_category_id !== undefined ? pendingChanges.sub_category_id : defaultSubCategoryId}
-                    onChange={(e) => handleFieldUpdate({ sub_category_id: e.target.value })}
-                    disabled={isClassificationLocked || !(pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId)}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-success-border focus:ring-1 focus:ring-success-border theme-input-structural text-foreground"
-                  >
-                    <option value="">Select subcategory</option>
-                    {subcategories?.filter((sc: any) => sc.category_id === (pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId)).map((sc: any) => (
-                      <option key={sc.id} value={sc.id}>{sc.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
+            )}
 
-        </div>
-      </div>
-
-      {/* LOWER SECTION: Remarks and Attachments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-6">
-
-        {/* LEFT: ATTACHMENTS */}
-        <div className="space-y-6">
-          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
-            <div className="bg-background border-b border-border p-4">
-               <h3 className="text-[11px] font-bold text-muted-foreground flex items-center gap-2">
-                 <Paperclip className="w-4 h-4 text-warning" /> References & artifacts
-               </h3>
-            </div>
-            <div className="p-4">
-              <EnterpriseUploader 
-                moduleType="ticket" 
-                recordId={ticket.dbId || ticket.id || ticket.code} 
-                isLightMode={false} 
+            {/* Attachments */}
+            {activeTab === 'attachments' && (
+              <EnterpriseUploader
+                moduleType="ticket"
+                recordId={ticket.dbId || ticket.id || ticket.code}
+                isLightMode={false}
                 onUploadComplete={() => {}}
               />
-            </div>
-          </div>
-        </div>
+            )}
 
-        {/* RIGHT: TICKET REMARKS */}
-        <div className="space-y-3">
-        {(Object.keys(pendingChanges).length > 0) && (
-          <div className="p-3.5 bg-danger-soft border-l-4 border-l-danger-border border border-danger-border text-danger-text text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mb-4 shadow-sm">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <AlertTriangle className="h-4 w-4 text-danger-text shrink-0" />
-              <span>Ticket updates are pending. Write a mandatory remark below and click <strong className="font-semibold text-danger-text underline">"Commit updates & save remark"</strong> to save.</span>
-            </div>
-            <button 
-              type="button" 
-              onClick={cancelChanges} 
-              className="text-xs text-danger-text hover:text-danger-text font-bold px-2.5 py-1 rounded-lg bg-danger-soft hover:bg-danger-soft border border-danger-border transition-colors shrink-0 whitespace-nowrap"
-            >
-              Cancel change
-            </button>
-          </div>
-        )}
+            {/* Chat */}
+            {activeTab === 'chat' && (
+              <div className="flex h-[520px] min-h-0 flex-col">
+                <TicketRealtimeChat ticketId={ticket.dbId} />
+              </div>
+            )}
 
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-bold text-muted">Ticket remarks <span className="text-danger">*</span></label>
-          
-          {/* Quick Actions */}
-          {canEditFields && (
-            <div className="flex gap-2">
-              <AppButton 
-                type="button"
-                onClick={() => {
-                  const inProgressStatus = states.find((s: any) => s.name.includes("Progress") || s.name.includes("Doing"));
-                  if (inProgressStatus) {
-                    handleFieldUpdate({ status_id: inProgressStatus.id, assignee_id: currentUserId });
-                    setUpdateRemark("Acknowledged and actively investigating.");
-                  }
-                }}
-                className="text-[11px] font-bold px-2 py-1 rounded bg-accent-soft text-theme-icon hover:opacity-90/20 transition-colors border border-theme-btn-primary/20"
-              >
-                Acknowledge
-              </AppButton>
-              <AppButton 
-                type="button"
-                onClick={() => {
-                  const resolvedStatus = states.find((s: any) => s.name.includes("Resolv") || s.code === "ST_RESOLVED");
-                  if (resolvedStatus) {
-                    handleFieldUpdate({ status_id: resolvedStatus.id });
-                    setUpdateRemark("Issue has been resolved successfully.");
-                  }
-                }}
-                className="text-[11px] font-bold px-2 py-1 rounded bg-success/10 text-success hover:bg-success/20 transition-colors border border-success-border"
-              >
-                Mark resolved
-              </AppButton>
-            </div>
-          )}
-        </div>
-        <textarea
-          value={updateRemark}
-          onChange={e => setUpdateRemark(e.target.value)}
-          disabled={!canEditFields}
-          className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-theme-btn-primary transition-colors theme-input-structural text-foreground ${!canEditFields ? 'opacity-50 cursor-not-allowed' : ''}`}
-          placeholder={!canEditFields ? "Ticket is frozen/read-only." : "Add update notes or operational remarks…"}
-        />
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-muted">Last updated: {ticket.updated_at ? formatDateTime(ticket.updated_at) : "Not yet"}</span>
-          {canEditFields && (
-            <AppButton 
-              type="button" 
-              variant="primary" 
-              size="sm" 
-              onClick={commitChanges} 
-              disabled={isSaving || (Object.keys(pendingChanges).length > 0 && !updateRemark.trim())}
-              className={(Object.keys(pendingChanges).length > 0) ? "bg-danger-solid hover:bg-danger-solid text-white font-bold shadow-md" : ""}
-            >
-              {isSaving ? "Saving..." : (Object.keys(pendingChanges).length > 0) ? "Commit Updates & Save Remark" : "Save Remarks"}
-            </AppButton>
-          )}
-        </div>
-
-        {/* Remarks History Queue */}
-        <div className="mt-3 rounded-md p-3 transition-all duration-150 theme-card-structural text-foreground">
-          {/* Header with toggle */}
-          <div 
-            onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} 
-            className="flex items-center justify-between cursor-pointer select-none group"
-          >
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-theme-icon" />
-              <span className="text-[11px] font-bold transition-colors text-muted-foreground group-hover:text-theme-icon">
-                Remarks history queue
-              </span>
-              {remarksHistory.length > 0 && (
-                <span className="text-xs py-0.5 px-2 font-semibold rounded-full bg-accent-soft text-theme-icon border border-theme-btn-primary/30">
-                  {remarksHistory.length}
-                </span>
-              )}
-            </div>
-            
-            <AppButton variant="ghost" 
-              type="button"
-              className="p-1 rounded-lg transition-colors hover:theme-card-structural/5 dark:hover:theme-card-structural/10 text-muted-foreground"
-            >
-              {isHistoryCollapsed ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronUp className="h-4 w-4" />
-              )}
-            </AppButton>
-          </div>
-
-          {/* Collapsible Content */}
-          {!isHistoryCollapsed && (
-            <div className="mt-4 space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent">
-              {loadingRemarksHistory ? (
-                <div className="flex items-center justify-center py-6 gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
-                  <span className="text-xs text-muted-foreground">Loading history queue…</span>
-                </div>
-              ) : remarksHistory.length === 0 ? (
-                <div className="text-center py-6 text-xs text-muted-foreground italic">
-                  No remark history entries. Create a new remark above to start the queue.
-                </div>
-              ) : (
-                <div className="relative pl-4 border-l border-theme-btn-primary/20 space-y-5">
-                  {remarksHistory.map((item: any) => {
-                    const initials = (item.author?.full_name || item.user?.full_name || "Unknown")
-                      .split(" ")
-                      .map((n: string) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2);
-                    
-                    return (
-                      <div key={item.id} className="relative group/item">
-                        {/* Timeline Node Point */}
-                        <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-theme-btn-primary border-2 border-background group-hover/item:scale-125 transition-transform" />
-                        
-                        <div className="flex items-start gap-3">
-                          {/* Avatar */}
-                          {item.user?.profile_photo ? (
-                            <img 
-                              src={item.user.profile_photo} 
-                              alt={item.user.full_name} 
-                              className="h-7 w-7 rounded-full border border-theme-btn-primary/20 object-cover"
-                            />
-                          ) : (
-                            <div className="h-7 w-7 rounded-full bg-accent-soft flex items-center justify-center text-xs font-semibold text-accent-soft-text border border-theme-btn-primary/20 shadow-md">
-                              {initials}
-                            </div>
-                          )}
-
-                          {/* Content Block */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
-                              <span className="text-xs font-bold transition-colors text-foreground group-hover/item:text-theme-icon">
-                                {item.author?.full_name || item.user?.full_name || "System Actor"}
-                              </span>
-                              <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
-                                <Clock className="h-3 w-3" />
-                                <span>{formatDateTime(item.created_at)}</span>
-                              </div>
-                            </div>
-                            
-                            <div 
-                              className="text-xs rounded-lg p-2.5 leading-relaxed break-words whitespace-pre-wrap border bg-background/50 border-border text-foreground"
-                              dangerouslySetInnerHTML={{
-                                __html: DOMPurify.sanitize(item.content || "")
-                              }}
-                            />
-                          </div>
+            {/* Activity (audit) */}
+            {activeTab === 'activity' && (
+              <div className="space-y-3">
+                {loadingAudits ? (
+                  <div className="flex items-center justify-center gap-2 py-6">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted" aria-hidden />
+                    <span className="text-[13px] text-muted">Loading activity…</span>
+                  </div>
+                ) : auditLogs.length === 0 ? (
+                  <div className="py-6 text-center text-[13px] text-muted">No activity recorded yet.</div>
+                ) : (
+                  <ol className="relative space-y-4 border-l border-border pl-4">
+                    {auditLogs.map((log: any) => (
+                      <li key={log.id} className="relative">
+                        <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-primary" aria-hidden />
+                        <div className="flex flex-wrap items-center justify-between gap-x-2 text-[13px]">
+                          <span className="font-medium text-foreground">{log.actor?.full_name || "System"} updated the ticket</span>
+                          <span className="text-[12px] text-muted">{formatDateTime(log.created_at)}</span>
                         </div>
-                      </div>
-                    );
-                  })}
+                        {Array.isArray(log.changed_fields) && log.changed_fields.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {log.changed_fields.map((field: string) => (
+                              <span key={field} className="rounded bg-sunken px-1.5 py-0.5 font-mono text-[11.5px] text-subtle">{field}</span>
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            )}
+
+            {/* Time logs */}
+            {activeTab === 'time' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-md border border-border bg-sunken px-4 py-3">
+                  <span className="flex items-center gap-1.5 text-[13px] text-muted"><Clock className="h-4 w-4" aria-hidden /> Total time logged</span>
+                  <span className="text-[15px] font-semibold tabular-nums text-foreground">{Math.floor(timeLogged / 60)}h {timeLogged % 60}m</span>
                 </div>
-              )}
-            </div>
-          )}
+                {canEditFields && (
+                  <form onSubmit={handleLogTime} className="flex items-end gap-2">
+                    <div className="flex-1 space-y-1.5">
+                      <label htmlFor="tk-timelog" className="text-[13px] font-medium text-subtle">Log time (minutes)</label>
+                      <input
+                        id="tk-timelog"
+                        type="number"
+                        min="1"
+                        value={newTimeLog}
+                        onChange={(e) => setNewTimeLog(e.target.value)}
+                        placeholder="e.g. 30"
+                        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    <AppButton type="submit" variant="primary" size="sm" className="h-9" disabled={!newTimeLog || isLoggingTime}>
+                      {isLoggingTime ? "Logging…" : "Log time"}
+                    </AppButton>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        </div>
-
-      </div>
-
+      </AppCard>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
@@ -90,6 +91,7 @@ function optionsOf(rows: TicketReportRow[], key: ColumnKey) {
 }
 
 export default function TicketReportsClient() {
+  const router = useRouter();
   const { hasPermission, roleCode } = usePermissions();
   const canExport =
     roleCode === "SUPER_ADMIN" || hasPermission("TICKETS_MANAGE") || hasPermission("REPORTS_EXPORT");
@@ -372,7 +374,12 @@ export default function TicketReportsClient() {
             </AppTableHeader>
             <AppTableBody>
               {filtered.map((r) => (
-                <AppTableRow key={r.id}>
+                <AppTableRow
+                  key={r.id}
+                  onClick={() => router.push(`/tickets/${r.id}`)}
+                  className="cursor-pointer hover:bg-surface-hover"
+                  title={`Open ${r.code}`}
+                >
                   {visibleColumns.map((c, i) => (
                     <AppTableCell
                       key={c.key}
@@ -380,7 +387,7 @@ export default function TicketReportsClient() {
                       className={`px-4 py-2 text-sm ${i === 0 ? "bg-surface" : ""} ${c.kind === "date" || c.key === "code" ? "whitespace-nowrap" : ""}`}
                     >
                       {c.key === "code" ? (
-                        <Link href={`/tickets/${encodeURIComponent(r.code)}`} className="font-medium text-primary hover:underline">
+                        <Link href={`/tickets/${r.id}`} onClick={(e) => e.stopPropagation()} className="font-medium text-primary hover:underline">
                           {r.code}
                         </Link>
                       ) : c.kind === "badge" && r[c.key] ? (

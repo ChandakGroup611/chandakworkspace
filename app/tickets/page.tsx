@@ -5,7 +5,8 @@ import { createClient } from "@/utils/supabase/client";
 import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceConsole";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Plus, RefreshCw, CheckCircle2, Database, Loader2, ArrowLeft, Search, Filter } from "lucide-react";
+import { Plus, RefreshCw, CheckCircle2, Database, Loader2, ArrowLeft, Search, Filter, Eye, Edit2, Trash2, AlertTriangle } from "lucide-react";
+import { deleteTicket } from "@/lib/actions/tickets";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -54,6 +55,10 @@ function TicketsPageContent() {
   const [showWizard, setShowWizard] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   
   const searchParams = useSearchParams();
   useEffect(() => {
@@ -164,6 +169,40 @@ function TicketsPageContent() {
   const handleTicketClick = (ticket: any) => {
     router.push(`/tickets/${ticket.dbId}`);
   };
+
+  // Row actions follow the same rules as the server: edit = Super Admin, ticket managers/updaters,
+  // the creator, the assignee or the queue owner; delete (moves to Trash) = Super Admin,
+  // TICKETS_DELETE, the creator or the queue owner.
+  const isSuperAdminUser = roleCode === "SUPER_ADMIN" || hasPermission("SUPER_ADMIN");
+  const canEditRow = (t: any) =>
+    isSuperAdminUser || hasPermission("TICKETS_MANAGE") || hasPermission("TICKETS_UPDATE") ||
+    (!!userId && (t.creator_id === userId || t.assignee_id === userId || t.queue_owner_id === userId));
+  const canDeleteRow = (t: any) =>
+    isSuperAdminUser || hasPermission("TICKETS_DELETE") ||
+    (!!userId && (t.creator_id === userId || t.queue_owner_id === userId));
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res: any = await deleteTicket(deleteTarget.dbId, deleteReason.trim() || undefined);
+      if (res?.error) {
+        setDeleteError(res.error);
+        return;
+      }
+      setToastMessage(`Ticket ${deleteTarget.id} moved to Trash`);
+      setDeleteTarget(null);
+      setDeleteReason("");
+      fetchData();
+    } catch (err: any) {
+      setDeleteError(err?.message || "Couldn't delete the ticket.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const ROW_ICON_BTN = "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-hover hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   const getPriorityColor = (code: string | undefined) => {
     if (!code) return "bg-sunken text-muted";
@@ -346,6 +385,20 @@ function TicketsPageContent() {
                         <UserCell name={ticket.assignedTo || null} />
                       </div>
                     </button>
+                    {(canEditRow(ticket) || canDeleteRow(ticket)) && (
+                      <div className="-mt-1 flex justify-end gap-1 px-2 pb-1">
+                        {canEditRow(ticket) && (
+                          <button type="button" aria-label={`Edit ${ticket.id}`} title="Edit" onClick={() => handleTicketClick(ticket)} className={ROW_ICON_BTN}>
+                            <Edit2 className="h-4 w-4" aria-hidden />
+                          </button>
+                        )}
+                        {canDeleteRow(ticket) && (
+                          <button type="button" aria-label={`Delete ${ticket.id}`} title="Delete (moves to Trash)" onClick={() => { setDeleteError(null); setDeleteReason(""); setDeleteTarget(ticket); }} className={cn(ROW_ICON_BTN, "hover:bg-danger-soft hover:text-danger-text")}>
+                            <Trash2 className="h-4 w-4" aria-hidden />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -376,16 +429,40 @@ function TicketsPageContent() {
                           <AppTableCell className="text-subtle">{ticket.departmentObj?.name || "—"}</AppTableCell>
                           <AppTableCell><UserCell name={ticket.assignedTo || null} /></AppTableCell>
                           <AppTableCell className="whitespace-nowrap"><DateCell value={ticket.createdAt} /></AppTableCell>
-                          <AppTableCell className="text-right">
-                            <button
-                              type="button"
-                              aria-label={`Open ${ticket.id}`}
-                              title="Open ticket"
-                              onClick={(e) => { e.stopPropagation(); handleTicketClick(ticket); }}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
-                            >
-                              <ArrowLeft className="h-4 w-4 rotate-180" aria-hidden />
-                            </button>
+                          <AppTableCell className="px-2 text-right">
+                            <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                aria-label={`View ${ticket.id}`}
+                                title="View"
+                                onClick={() => router.push(`/tickets/${ticket.dbId}?mode=view`)}
+                                className={ROW_ICON_BTN}
+                              >
+                                <Eye className="h-4 w-4" aria-hidden />
+                              </button>
+                              {canEditRow(ticket) && (
+                                <button
+                                  type="button"
+                                  aria-label={`Edit ${ticket.id}`}
+                                  title="Edit"
+                                  onClick={() => handleTicketClick(ticket)}
+                                  className={ROW_ICON_BTN}
+                                >
+                                  <Edit2 className="h-4 w-4" aria-hidden />
+                                </button>
+                              )}
+                              {canDeleteRow(ticket) && (
+                                <button
+                                  type="button"
+                                  aria-label={`Delete ${ticket.id}`}
+                                  title="Delete (moves to Trash)"
+                                  onClick={() => { setDeleteError(null); setDeleteReason(""); setDeleteTarget(ticket); }}
+                                  className={cn(ROW_ICON_BTN, "hover:bg-danger-soft hover:text-danger-text")}
+                                >
+                                  <Trash2 className="h-4 w-4" aria-hidden />
+                                </button>
+                              )}
+                            </div>
                           </AppTableCell>
                         </AppTableRow>
                       ))}
@@ -411,6 +488,29 @@ function TicketsPageContent() {
             }
           }}
         />
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4" role="presentation" onClick={() => !deleting && setDeleteTarget(null)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="tk-del-title" className="w-full max-w-md rounded-lg border border-border bg-surface p-5 text-foreground shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-danger-soft p-2 text-danger-text"><AlertTriangle className="h-5 w-5" aria-hidden /></div>
+              <div className="min-w-0">
+                <h3 id="tk-del-title" className="text-[15px] font-semibold text-heading">Delete ticket {deleteTarget.id}?</h3>
+                <p className="mt-1 text-[13px] text-muted">The ticket moves to Trash. A Super Admin can restore it from there.</p>
+              </div>
+            </div>
+            <label htmlFor="tk-del-reason" className="mt-4 block text-[13px] font-medium text-subtle">Reason (optional)</label>
+            <textarea id="tk-del-reason" value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} className="mt-1.5 min-h-[64px] w-full resize-y p-2.5 text-[13px]" placeholder="Why is this ticket being deleted?" />
+            {deleteError && <p role="alert" className="mt-2 text-[12.5px] text-danger-text">{deleteError}</p>}
+            <div className="mt-4 flex justify-end gap-2">
+              <AppButton variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</AppButton>
+              <AppButton variant="destructive" onClick={confirmDelete} disabled={deleting} leftIcon={deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}>
+                {deleting ? "Deleting…" : "Move to Trash"}
+              </AppButton>
+            </div>
+          </div>
+        </div>
       )}
 
       {toastMessage && (
