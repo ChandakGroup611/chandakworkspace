@@ -14,6 +14,7 @@
 | `/api/copilot/chat` | `POST` | [`app/api/copilot/chat/route.ts`](file:///D:/adios/app/api/copilot/chat/route.ts) |
 | `/api/copilot/poc-stream` | `POST` | [`app/api/copilot/poc-stream/route.ts`](file:///D:/adios/app/api/copilot/poc-stream/route.ts) |
 | `/api/cron/fleet-compliance-audit` | `GET, POST` | [`app/api/cron/fleet-compliance-audit/route.ts`](file:///D:/adios/app/api/cron/fleet-compliance-audit/route.ts) |
+| `/api/cron/meet-jobs` | `GET, POST` | [`app/api/cron/meet-jobs/route.ts`](file:///D:/adios/app/api/cron/meet-jobs/route.ts) |
 | `/api/cron/process-email-queue` | `GET, POST` | [`app/api/cron/process-email-queue/route.ts`](file:///D:/adios/app/api/cron/process-email-queue/route.ts) |
 | `/api/cron/tat-escalation` | `GET, POST` | [`app/api/cron/tat-escalation/route.ts`](file:///D:/adios/app/api/cron/tat-escalation/route.ts) |
 | `/api/heartbeat` | `POST` | [`app/api/heartbeat/route.ts`](file:///D:/adios/app/api/heartbeat/route.ts) |
