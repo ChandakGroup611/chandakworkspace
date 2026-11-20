@@ -38,7 +38,12 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await fetchTicketDashboardData();
+      // Load the ticket first, then the masters of THIS ticket's scope, so the priority and status
+      // lists show the names defined for its scope (IT Infrastructure / ERP / General).
+      const foundTicket: any = await fetchSingleTicketDetails(ticketId);
+      const data = await fetchTicketDashboardData(
+        foundTicket?.scope_id ? { scope_id: foundTicket.scope_id } : undefined
+      );
 
       setDepartments(data.departments || []);
       setPriorities(data.priorities || []);
@@ -47,8 +52,6 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       setSubcategories(data.subcategories || []);
       setIssueTypes(data.issueTypes || []);
 
-      const foundTicket: any = await fetchSingleTicketDetails(ticketId);
-      
       if (foundTicket && typeof foundTicket === 'object') {
         const custom = foundTicket.custom_fields || {};
         const mappedTicket = {

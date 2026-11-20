@@ -130,8 +130,12 @@ function TicketsPageContent() {
           ...t,
           dbId: t.id,
           id: t.code || `INC-${t.id.slice(0, 8)}`,
-          priorityObj: activePrios.find((p: any) => p.id === t.priority_id),
-          statusObj: activeStates.find((s: any) => s.id === t.status_id),
+          // Fall back to the names joined on the ticket itself, so a ticket always shows its own
+          // scope's priority/status even when the dropdown list shows one entry per name.
+          priorityObj: activePrios.find((p: any) => p.id === t.priority_id) ||
+            (t.priority ? { id: t.priority_id, name: t.priority.priority_name, priority_name: t.priority.priority_name, color: t.priority.priority_color } : undefined),
+          statusObj: activeStates.find((s: any) => s.id === t.status_id) ||
+            (t.status ? { id: t.status_id, name: t.status.status_name, status_name: t.status.status_name, color: t.status.status_color, is_terminal: t.status.is_terminal } : undefined),
           departmentObj: activeDepts.find((d: any) => d.id === t.department_id),
           categoryObj: activeCats.find((c: any) => c.id === custom.category_id),
           subcategoryObj: activeSubcats.find((sc: any) => sc.id === custom.subcategory_id),

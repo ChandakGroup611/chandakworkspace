@@ -329,15 +329,11 @@ export class LifecycleManager {
     userId: string,
     _confirmedTyped?: string
   ): Promise<PurgeBatchResult> {
-    // 1. Super Admin check
-    const { data: userProps } = await supabaseAdmin
-      .from('user_master')
-      .select('role_id, role:role_master(role_code)')
-      .eq('id', userId)
-      .single();
-
-    const roleCode = (userProps?.role as any)?.role_code;
-    const isSuperAdmin = userProps?.role_id === 1 || roleCode === 'SUPER_ADMIN' || roleCode === 'ROLE_SUPER_ADMIN';
+    // 1. Super Admin check — the same central rule as everywhere else (primary and additional roles,
+    // permission snapshot). The old check read only the primary role through a join and refused real
+    // Super Admins.
+    const { hasPermission } = await import('@/lib/permissions');
+    const isSuperAdmin = await hasPermission(userId, 'SUPER_ADMIN');
 
     if (!isSuperAdmin) {
       return { success: false, error: "Unauthorized: Permanent deletion requires Super Admin privileges." };

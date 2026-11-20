@@ -30,6 +30,15 @@ async function verifyAccess(requiredPermission: string) {
 }
 
 /**
+ * The 19 Nov repair grouped ALL older deleted rows of a table into one shared "legacy archive" batch
+ * (ids a0000000-0000-0000-0000-00000000000N). Those rows were deleted separately, so they must be restored
+ * and purged one by one — never as a batch, or restoring/purging one would affect all of them.
+ */
+function isLegacyArchiveBatch(batchId: string | null | undefined): boolean {
+  return typeof batchId === 'string' && batchId.startsWith('a0000000-0000-0000-0000-00000000000');
+}
+
+/**
  * Hydrates deleted records with delete_batch metadata, deleter user name, and deletion reason.
  */
 async function hydrateTrashMetadata(records: any[]) {
@@ -65,7 +74,14 @@ async function hydrateTrashMetadata(records: any[]) {
     }
   }
 
-  return records.map(r => {
+  // Purged rows stay in the database (nothing is physically deleted in production) but no longer
+  // belong in the Trash list.
+  const visible = records.filter(r => {
+    const b = r.delete_batch_id ? batchMap.get(r.delete_batch_id) : null;
+    return !(b && b.status === 'PURGED');
+  });
+
+  return visible.map(r => {
     const batch = r.delete_batch_id ? batchMap.get(r.delete_batch_id) : null;
     const deleterId = r.deleted_by || batch?.deleted_by;
     const deleterName = deleterId ? (userMap.get(deleterId) || 'System') : '—';
@@ -242,7 +258,7 @@ export async function restoreEntity(entityType: ComplianceEntity | string, ids: 
   const standaloneIds: string[] = [];
 
   for (const r of (records || [])) {
-    if (r.delete_batch_id) {
+    if (r.delete_batch_id && !isLegacyArchiveBatch(r.delete_batch_id)) {
       batchesToRestore.add(r.delete_batch_id);
     } else {
       standaloneIds.push(r.id);
@@ -331,19 +347,35 @@ export async function hardDeleteEntity(entityType: ComplianceEntity | string, id
 
   if (fetchErr) return { success: false, error: fetchErr.message };
 
+  const { hasPermission } = await import('@/lib/permissions');
+  if (!(await hasPermission(userId, 'SUPER_ADMIN'))) {
+    return { success: false, error: "Only a Super Admin can purge records." };
+  }
+
+  const purgedBatches = new Set<string>();
   for (const r of (records || [])) {
-    if (r.delete_batch_id) {
+    if (r.delete_batch_id && !isLegacyArchiveBatch(r.delete_batch_id)) {
+      if (purgedBatches.has(r.delete_batch_id)) continue;
       const res = await LifecycleManager.purgeBatch(r.delete_batch_id, userId);
       if (!res.success) {
         return { success: false, error: res.error, active_children: res.active_children };
       }
+      purgedBatches.add(r.delete_batch_id);
     } else {
-      // Legacy item without batch - create batch and purge
-      const { batchId } = await LifecycleManager.moveToTrash(targetTable, r.id, userId, "Purging legacy trash item");
-      if (batchId) {
-        const res = await LifecycleManager.purgeBatch(batchId, userId);
-        if (!res.success) return { success: false, error: res.error, active_children: res.active_children };
-      }
+      // Legacy / unbatched row: give it its own batch marked PURGED, so only THIS row leaves the Trash.
+      const ownBatchId = crypto.randomUUID();
+      const { error: batchErr } = await supabaseAdmin.from('delete_batches').insert({
+        id: ownBatchId,
+        deleted_by: userId,
+        deleted_at: new Date().toISOString(),
+        root_entity_type: String(targetTable).toUpperCase(),
+        root_entity_id: r.id,
+        reason: 'Purged from Trash',
+        status: 'PURGED'
+      });
+      if (batchErr) return { success: false, error: `Could not purge: ${batchErr.message}` };
+      const { error: rowErr } = await supabaseAdmin.from(targetTable).update({ delete_batch_id: ownBatchId }).eq('id', r.id);
+      if (rowErr) return { success: false, error: `Could not purge: ${rowErr.message}` };
     }
   }
 

@@ -562,7 +562,7 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     try {
       const { data: ticket } = await supabaseAdmin
         .from('tickets')
-        .select('code, title, description, priority_id, status_id, category_id, assignee_id, creator_id')
+        .select('*')
         .eq('id', payload.entity_id)
         .maybeSingle();
       if (ticket) {
@@ -571,7 +571,8 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
         if (!hydrated.description && ticket.description) hydrated.description = ticket.description;
         if (!hydrated.priority && ticket.priority_id) hydrated.priority = ticket.priority_id;
         if (!hydrated.status && ticket.status_id) hydrated.status = ticket.status_id;
-        if (!hydrated.category && ticket.category_id) hydrated.category = ticket.category_id;
+        const ticketCategoryId = ticket.category_id || ticket.custom_fields?.category_id;
+        if (!hydrated.category && ticketCategoryId) hydrated.category = ticketCategoryId;
         if (!hydrated.assigned_to && ticket.assignee_id) hydrated.assigned_to = ticket.assignee_id;
         if (!hydrated.created_by && ticket.creator_id) hydrated.created_by = ticket.creator_id;
 
@@ -724,6 +725,11 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
   if (hydrated.req_name && !hydrated.title) hydrated.title = hydrated.req_name;
   if (hydrated.title && !hydrated.task_name && moduleName === 'Task') hydrated.task_name = hydrated.title;
   if (hydrated.title && !hydrated.ticket_title && moduleName === 'Ticket') hydrated.ticket_title = hydrated.title;
+
+  // Explicit, unambiguous names for assignment emails: who it is assigned TO and who assigned it.
+  // (Templates that printed {{creator_name}} next to "Assigned" showed the actor, e.g. "Super Admin".)
+  if (hydrated.assigned_to && !hydrated.assignee_name) hydrated.assignee_name = hydrated.assigned_to;
+  if (!hydrated.assigned_by_name) hydrated.assigned_by_name = hydrated.changed_by || hydrated.creator_name || "";
 
   // Set aliases for common merge tags across all modules
   if (hydrated.assigned_to && !hydrated.assigned_user) {

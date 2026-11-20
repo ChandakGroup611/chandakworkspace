@@ -171,23 +171,20 @@ export async function changeTicketStatus(
   // Fetch ticket details
   const { data: ticket, error: fetchErr } = await supabaseAdmin
     .from('tickets')
-    .select('id, code, title, scope_type, status_id, creator_id, assignee_id, department_id, queue_owner_id')
+    .select('*')
     .eq('id', ticketId)
     .single();
 
   if (fetchErr || !ticket) return { success: false, error: "Ticket not found" };
 
-  // Determine allowed scope types for status lookup
-  const rawScope = ticket.scope_type || 'ERP';
-  const cleanScope = rawScope.toUpperCase().includes('INFRA') ? 'INFRA' : 'ERP';
-
-  // Validate target status from status_master: must be active, non-deleted, and scoped to ticket scope or GLOBAL
+  // Validate the target status: active, not deleted, not a Task/Requirement status, and preferably the
+  // ticket's own scope (statuses are defined per ticket scope in Master data). The earlier check required
+  // status_master.scope_type to be 'INFRA'/'ERP'/'GLOBAL', which ticket statuses don't use, so every
+  // status change on save was rejected.
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   let targetQuery = supabaseAdmin
     .from('status_master')
     .select('*')
-    .in('scope_type', [cleanScope, 'GLOBAL'])
-    .eq('is_active', true)
     .eq('is_deleted', false);
 
   if (uuidRegex.test(targetStatusIdOrCode)) {
@@ -196,9 +193,17 @@ export async function changeTicketStatus(
     targetQuery = targetQuery.eq('status_code', targetStatusIdOrCode.toUpperCase());
   }
 
-  const { data: targetStatus } = await targetQuery.maybeSingle();
+  const NON_TICKET_SCOPES = ['TASK', 'TASKS', 'REQUIREMENT', 'REQUIREMENTS', 'WORKSPACE', 'WORKSPACES'];
+  const { data: candidates } = await targetQuery.limit(25);
+  const usable = (candidates || []).filter((s: any) =>
+    s.is_active !== false && !NON_TICKET_SCOPES.includes(String(s.scope_type || '').toUpperCase())
+  );
+  const targetStatus: any =
+    usable.find((s: any) => ticket.scope_id && s.scope_id === ticket.scope_id) ||
+    usable.find((s: any) => !s.scope_id) ||
+    usable[0];
   if (!targetStatus) {
-    return { success: false, error: `Invalid status: Target status '${targetStatusIdOrCode}' must be active, non-deleted, and scoped to ${cleanScope}.` };
+    return { success: false, error: `This status can't be used for tickets (it is inactive, deleted, or belongs to another module).` };
   }
 
   // Permission checks: Super Admin, Creator, Assignee, Queue Owner, or TICKETS_UPDATE capability
@@ -323,7 +328,28 @@ export async function updateTicketDetails(ticketId: string, payload: {
     throw new Error("Unauthenticated. Please log in first.");
   }
 
-  const hasAccess = await checkServerPermission(supabase, user.id, "TICKETS_UPDATE");
+  const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+  const { data: existingTicket } = await supabaseAdmin
+    .from("tickets")
+    .select("*")
+    .eq("id", ticketId)
+    .eq("is_deleted", false)
+    .maybeSingle();
+  if (!existingTicket) {
+    throw new Error("Ticket not found or already deleted.");
+  }
+
+  // Who may edit: Super Admin, ticket managers / TICKETS_UPDATE, or the ticket's creator, assignee or queue owner.
+  const canEdit =
+    (await checkServerPermission(supabase, user.id, "SUPER_ADMIN")) ||
+    (await checkServerPermission(supabase, user.id, "TICKETS_MANAGE")) ||
+    (await checkServerPermission(supabase, user.id, "TICKETS_UPDATE")) ||
+    existingTicket.creator_id === user.id ||
+    existingTicket.assignee_id === user.id ||
+    existingTicket.queue_owner_id === user.id;
+  if (!canEdit) {
+    throw new Error("You don't have permission to update this ticket.");
+  }
 
   // Route status changes through changeTicketStatus (Item 3.4)
   if (payload.status_id !== undefined && payload.status_id) {
@@ -357,7 +383,9 @@ export async function updateTicketDetails(ticketId: string, payload: {
   if (Object.keys(updateData).length > 0) {
     updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    // Permission is checked above; write with the service role so row-level policies on the user's
+    // session can't silently reject the save.
+    const { data, error } = await supabaseAdmin
       .from("tickets")
       .update(updateData)
       .eq("id", ticketId)
@@ -370,13 +398,13 @@ export async function updateTicketDetails(ticketId: string, payload: {
     }
     updatedTicket = data;
   } else {
-    const { data } = await supabase.from("tickets").select().eq("id", ticketId).single();
+    const { data } = await supabaseAdmin.from("tickets").select().eq("id", ticketId).single();
     updatedTicket = data;
   }
 
   // Insert remark if provided (when status was not updated)
   if (!payload.status_id && payload.remark && payload.remark.trim() !== '') {
-    const { error: remarkError } = await supabase
+    const { error: remarkError } = await supabaseAdmin
       .from("ticket_comments")
       .insert({
         ticket_id: ticketId,
@@ -389,9 +417,21 @@ export async function updateTicketDetails(ticketId: string, payload: {
     }
   }
 
-  // Notifications for assignment change
-  if (updatedTicket && payload.assignee_id && payload.assignee_id !== user.id) {
-    const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+  // Notifications for assignment change (only when the assignee really changed)
+  const newAssigneeId = updatedTicket?.assignee_id || null;
+  const assigneeChanged = payload.assignee_id !== undefined && newAssigneeId && newAssigneeId !== existingTicket.assignee_id;
+  if (updatedTicket && assigneeChanged) {
+    queueBusinessEvent("Ticket", "Assigned", {
+      entity_id: updatedTicket.id,
+      triggering_user_id: user.id,
+      assigned_to: newAssigneeId,
+      ticket_code: updatedTicket.code,
+      ticket_title: updatedTicket.title || updatedTicket.code,
+      remarks: payload.remark || "",
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${updatedTicket.id}`
+    }).catch((e: any) => console.error("[NotificationEngine] Ticket reassignment event failed", e));
+  }
+  if (updatedTicket && assigneeChanged && newAssigneeId !== user.id) {
     await supabaseAdmin.from('notification_queue').insert({
       recipient_id: payload.assignee_id,
       payload: {
@@ -512,9 +552,16 @@ export async function fetchTicketDashboardData(filters?: { searchQuery?: string,
     supabaseAdmin.from("ticket_scopes").select("*")
   ]);
 
-  const byScope = (arr: any[] | null) => {
-    const list = arr || [];
+  const ticketScopeIds = new Set((scopeRes.data || []).map((s: any) => s.id));
+  const byScope = (arr: any[] | null, ticketScopesOnly = false) => {
+    let list = arr || [];
     if (scopeId) return list.filter((item: any) => item.scope_id === scopeId);
+    // Status and priority masters are shared with Tasks and Requirements; keep only rows that belong to a
+    // ticket scope (fall back to everything if none are scoped, so the lists are never empty).
+    if (ticketScopesOnly) {
+      const ticketRows = list.filter((item: any) => item.scope_id && ticketScopeIds.has(item.scope_id));
+      if (ticketRows.length > 0) list = ticketRows;
+    }
     const seen = new Set();
     return list.filter((item: any) => {
       const code = item.code || item.name;
@@ -528,8 +575,8 @@ export async function fetchTicketDashboardData(filters?: { searchQuery?: string,
     departments: deptRes.data || [],
     scopes: scopeRes.data || []
   };
-  const priorities = byScope(prioRes.data);
-  const states = byScope(stateRes.data);
+  const priorities = byScope(prioRes.data, true);
+  const states = byScope(stateRes.data, true);
   const categories = byScope(catRes.data);
   const subcategories = byScope(subcatRes.data);
   const issueTypes = byScope(typeRes.data);

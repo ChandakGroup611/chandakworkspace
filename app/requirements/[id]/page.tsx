@@ -731,7 +731,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   const snap = requirement.intake_snapshot || {};
 
   return (
-    <PageContainer strict={true} className="bg-background">
+    <PageContainer strict={true} className="bg-background px-3 pt-4 sm:px-4 md:px-6 md:pt-5 lg:px-8">
       <div className="flex-1 overflow-y-auto pb-12">
       <div className="mb-5 flex shrink-0 flex-col gap-3 border-b border-border pb-4">
         <button type="button" onClick={() => router.back()} className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-accent-soft-text hover:underline">
