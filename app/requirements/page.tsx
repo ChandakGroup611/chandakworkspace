@@ -98,7 +98,7 @@ function RequirementsPageContent() {
   const router = useRouter();
   const supabase = createClient();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  
+
   const [mounted, setMounted] = useState(false);
   const [reqs, setReqs] = useState<RequirementItem[]>([]);
   const [loadingReqs, setLoadingReqs] = useState(true);
@@ -124,18 +124,28 @@ function RequirementsPageContent() {
   const loadRequirements = async () => {
     setLoadingReqs(true);
     try {
-      const m = await import("@/lib/actions/requirements");
-      const data = await m.fetchRequirements();
-      
+      let data: any = null;
+      try {
+        const res = await fetch("/api/requirements", { cache: "no-store" });
+        if (res.ok) {
+          data = await res.json();
+        }
+      } catch { }
+
+      if (!data) {
+        const m = await import("@/lib/actions/requirements");
+        data = await m.fetchRequirements();
+      }
+
       // Fetch assets for INFRA mapping
       const { data: assets } = await supabase.from('assets').select('id, name').eq('is_deleted', false);
       const assetMap = new Map(assets?.map((a: any) => [a.id, a.name]) || []);
-      
+
       const mapped = data.map((d: any) => {
         const createdDate = new Date(d.created_at);
         const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
         const ageingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         let statusStr = d?.approval_status || 'Draft';
         if (d?.requirement_approval_flow && Array.isArray(d.requirement_approval_flow) && d.requirement_approval_flow.length > 0) {
           if (statusStr === 'Pending' || statusStr === 'Pending Approval') {
@@ -153,8 +163,8 @@ function RequirementsPageContent() {
           dbId: d?.id,
           title: d?.title || 'Untitled',
           scope: d?.scope || '-',
-          softwareSystem: d?.scope === 'INFRA' 
-            ? (d?.custom_fields?.intake_snapshot?.assetId ? assetMap.get(d?.custom_fields?.intake_snapshot?.assetId) || '-' : '-') 
+          softwareSystem: d?.scope === 'INFRA'
+            ? (d?.custom_fields?.intake_snapshot?.assetId ? assetMap.get(d?.custom_fields?.intake_snapshot?.assetId) || '-' : '-')
             : (d?.software_system?.name || '-'),
           module: d?.module?.name || '-',
           subModule: d?.sub_module?.name || '-',
@@ -166,7 +176,7 @@ function RequirementsPageContent() {
           createdBy: d?.creator?.full_name || '-',
           stage: d?.current_stage || d?.status?.status_name || 'Requirement Registration',
           approvalStatus: statusStr,
-          currentApprover: d?.current_assignee_id ? 'Assigned' : '-', 
+          currentApprover: d?.current_assignee_id ? 'Assigned' : '-',
           currentApproverId: d.current_assignee_id,
           createdAt: formatDate(createdDate),
           ageing: ageingDays,

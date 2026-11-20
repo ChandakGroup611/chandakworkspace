@@ -78,12 +78,28 @@ function TicketsPageContent() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await fetchTicketDashboardData({
-        searchQuery: searchQuery || undefined,
-        status_id: selectedStatus,
-        priority_id: selectedPriority,
-        scope_id: selectedScope
-      });
+      const params = new URLSearchParams();
+      if (searchQuery) params.set("searchQuery", searchQuery);
+      if (selectedStatus && selectedStatus !== "ALL") params.set("status_id", selectedStatus);
+      if (selectedPriority && selectedPriority !== "ALL") params.set("priority_id", selectedPriority);
+      if (selectedScope && selectedScope !== "ALL") params.set("scope_id", selectedScope);
+
+      let data: any = null;
+      try {
+        const res = await fetch(`/api/tickets${params.toString() ? `?${params.toString()}` : ""}`, { cache: "no-store" });
+        if (res.ok) {
+          data = await res.json();
+        }
+      } catch {}
+
+      if (!data) {
+        data = await fetchTicketDashboardData({
+          searchQuery: searchQuery || undefined,
+          status_id: selectedStatus,
+          priority_id: selectedPriority,
+          scope_id: selectedScope
+        });
+      }
 
       const finalTicketData = data?.tickets || [];
       const activeDepts = data?.departments || [];

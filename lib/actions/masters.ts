@@ -72,8 +72,8 @@ export async function fetchMastersByScope(scopeId: string) {
   const cached = mastersCacheByScope.get(scopeId);
   // Cache disabled: a master saved or edited must show immediately (the 5-minute cache hid new values).
   // The last good result is still used as a fallback if the mapping query fails.
-  if (false && cached && now - cached.timestamp < 300_000) {
-    return cached.data;
+  if (Boolean(cached) && false && now - (cached?.timestamp ?? 0) < 300_000) {
+    return cached?.data;
   }
   
   const { supabaseAdmin } = await import("@/lib/supabase/service_role");

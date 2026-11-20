@@ -23,7 +23,7 @@ export default function NotFound() {
         errorMessage: "Page not found (404)",
         referrer: document.referrer || null
       })
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   return (

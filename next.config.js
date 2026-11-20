@@ -26,7 +26,6 @@ const nextConfig = {
       './node_modules/onnxruntime-common/**/*',
     ],
   },
-  deploymentId: process.env.GIT_COMMIT || process.env.NEXT_PUBLIC_GIT_COMMIT || 'production',
   generateBuildId: async () => {
     return process.env.GIT_COMMIT || process.env.NEXT_PUBLIC_GIT_COMMIT || 'production';
   },

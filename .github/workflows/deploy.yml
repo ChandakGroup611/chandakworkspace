@@ -465,7 +465,7 @@ jobs:
           # Generate authoritative public_html/.htaccess with PassengerAppRoot
           cat << 'HTACCESS_EOF' > upload-payload/.htaccess
           <IfModule LiteSpeed>
-              CacheLookup on
+              CacheLookup off
               RewriteEngine On
               RewriteRule .* - [E=verifycaptcha:off]
               RewriteRule .* - [E=noconntimeout:1]

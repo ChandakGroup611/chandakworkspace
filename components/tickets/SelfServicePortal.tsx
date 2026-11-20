@@ -12,34 +12,56 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { formatDate } from "@/components/ui/data";
 
-export function SelfServicePortal() {
+interface SelfServicePortalProps {
+  initialData?: any;
+}
+
+export function SelfServicePortal({ initialData }: SelfServicePortalProps = {}) {
   const router = useRouter();
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const mapTicketsFromData = (data: any) => {
+    const finalTicketData = data?.tickets || [];
+    const activeStates = data?.states || [];
+    const activePrios = data?.priorities || [];
+
+    return finalTicketData.map((t: any) => ({
+      ...t,
+      dbId: t.id,
+      id: t.code || `INC-${t.id.slice(0, 8)}`,
+      priorityObj: activePrios.find((p: any) => p.id === t.priority_id),
+      statusObj: activeStates.find((s: any) => s.id === t.status_id),
+    }));
+  };
+
+  const [tickets, setTickets] = useState<any[]>(() => {
+    if (initialData?.tickets) {
+      return mapTicketsFromData(initialData);
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(!initialData?.tickets);
   const [showWizard, setShowWizard] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      // 1. Try fast REST API first
+      const params = new URLSearchParams();
+      if (searchQuery) params.set("searchQuery", searchQuery);
+      const res = await fetch(`/api/tickets${params.toString() ? `?${params.toString()}` : ""}`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setTickets(mapTicketsFromData(data));
+        return;
+      }
+
+      // 2. Fallback to Server Action
       const data = await fetchTicketDashboardData({ searchQuery: searchQuery || undefined });
-      
-      const finalTicketData = data?.tickets || [];
-      const activeStates = data?.states || [];
-      const activePrios = data?.priorities || [];
-
-      const mappedTickets = finalTicketData.map((t: any) => ({
-        ...t,
-        dbId: t.id,
-        id: t.code || `INC-${t.id.slice(0, 8)}`,
-        priorityObj: activePrios.find((p: any) => p.id === t.priority_id),
-        statusObj: activeStates.find((s: any) => s.id === t.status_id),
-      }));
-
-      setTickets(mappedTickets);
+      setTickets(mapTicketsFromData(data));
     } catch (err) {
       console.error("Failed to load your tickets:", err);
-      setTickets([]);
+      if (!initialData?.tickets) setTickets([]);
     } finally {
       setLoading(false);
     }
@@ -63,9 +85,9 @@ export function SelfServicePortal() {
         title="My IT support"
         icon={<MessageSquare className="h-6 w-6 text-theme-icon" />}
         actions={
-          <AppButton 
-            variant="primary" 
-            size="sm" 
+          <AppButton
+            variant="primary"
+            size="sm"
             onClick={() => setShowWizard(true)}
             leftIcon={<Plus className="h-4 w-4" />}
             className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text font-bold"
@@ -75,14 +97,14 @@ export function SelfServicePortal() {
         }
       />
       <div className="flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full gap-6">
-        
+
         <div className="theme-card-structural p-6 rounded-2xl shadow-sm border-border dark:border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
             <h2 className="text-lg font-bold text-foreground">Support requests</h2>
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-            <input 
+            <input
               type="text"
               placeholder="Search your tickets…"
               value={searchQuery}
@@ -96,7 +118,7 @@ export function SelfServicePortal() {
           <div className="p-4 border-b border-border dark:border-border">
             <h3 className="font-bold text-foreground ">Recent requests</h3>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto">
             {loading && tickets.length === 0 ? (
               <div className="flex items-center justify-center h-48">
@@ -154,7 +176,7 @@ export function SelfServicePortal() {
       </div>
 
       {showWizard && (
-        <TicketCreationWizard 
+        <TicketCreationWizard
           onClose={() => setShowWizard(false)}
           onSuccess={() => {
             setShowWizard(false);

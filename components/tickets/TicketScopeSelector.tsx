@@ -40,15 +40,23 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
 
   React.useEffect(() => {
     let isMounted = true;
-    fetchScopes()
+    fetch("/api/masters/scopes")
+      .then(r => r.json())
       .then(data => {
         if (!isMounted) return;
-        if (data && data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
           setDbScopes(data);
         }
       })
-      .catch((err) => {
-        console.warn("Using fallback ticket categories:", err);
+      .catch(() => {
+        fetchScopes()
+          .then(data => {
+            if (!isMounted) return;
+            if (data && data.length > 0) {
+              setDbScopes(data);
+            }
+          })
+          .catch(() => {});
       });
 
     return () => {

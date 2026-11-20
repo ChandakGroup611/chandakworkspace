@@ -5,41 +5,41 @@ import { AppCard, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { 
-  AppTableContainer, 
-  AppTable, 
-  AppTableHeader, 
-  AppTableBody, 
-  AppTableRow, 
-  AppTableHead, 
-  AppTableCell 
+import {
+  AppTableContainer,
+  AppTable,
+  AppTableHeader,
+  AppTableBody,
+  AppTableRow,
+  AppTableHead,
+  AppTableCell
 } from "@/components/ui/AppTable";
-import { 
-  Trash2, 
-  AlertOctagon, 
-  Archive, 
-  ShieldAlert, 
-  FolderKanban, 
-  Ticket, 
-  RefreshCcw, 
-  CheckSquare, 
-  FileText, 
-  Users, 
-  Building, 
-  UserCog, 
+import {
+  Trash2,
+  AlertOctagon,
+  Archive,
+  ShieldAlert,
+  FolderKanban,
+  Ticket,
+  RefreshCcw,
+  CheckSquare,
+  FileText,
+  Users,
+  Building,
+  UserCog,
   Building2,
   Search,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
-import { 
-  fetchComplianceWorkspaces, 
-  fetchComplianceTasks, 
+import {
+  fetchComplianceWorkspaces,
+  fetchComplianceTasks,
   fetchComplianceRequirements,
   fetchComplianceTickets,
   fetchComplianceAmc,
   fetchComplianceMaster,
-  hardDeleteEntity, 
+  hardDeleteEntity,
   restoreEntity,
   ComplianceEntity
 } from "@/lib/actions/compliance";
@@ -86,7 +86,7 @@ export default function DataRetentionClient() {
   const [activeTab, setActiveTab] = useState<string>("workspaces");
   const [activeView, setActiveView] = useState<ViewType>("deleted"); // default to recycle bin view
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [records, setRecords] = useState<any[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,7 +115,30 @@ export default function DataRetentionClient() {
     try {
       const isDeleted = activeView === "deleted";
       let data: any[] = [];
-      
+
+      // Attempt fast REST endpoint first for zero-409 resilience
+      try {
+        const queryParams = new URLSearchParams({
+          tab: currentTabConfig.id,
+          deleted: String(isDeleted),
+          entity: currentTabConfig.entity,
+          nameKey: currentTabConfig.nameKey,
+          codeKey: currentTabConfig.codeKey
+        });
+        const res = await fetch(`/api/compliance?${queryParams.toString()}`);
+        if (res.ok) {
+          data = await res.json();
+          if (Array.isArray(data)) {
+            setRecords(data);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (restErr) {
+        console.warn("[DataRetentionClient] REST fetch failed, attempting Server Action:", restErr);
+      }
+
+      // Server Action fallback
       if (currentTabConfig.id === "workspaces") {
         data = await fetchComplianceWorkspaces(isDeleted);
       } else if (currentTabConfig.id === "tasks") {
@@ -129,7 +152,7 @@ export default function DataRetentionClient() {
       } else {
         data = await fetchComplianceMaster(currentTabConfig.entity, currentTabConfig.nameKey, currentTabConfig.codeKey, isDeleted);
       }
-      
+
       setRecords(data);
     } catch (e: any) {
       console.error("[DataRetentionClient] Load error:", e);
@@ -188,7 +211,20 @@ export default function DataRetentionClient() {
     setSuccessBanner(null);
 
     try {
-      const result = await restoreEntity(currentTabConfig.entity as ComplianceEntity, ids);
+      let result: any = null;
+      try {
+        const res = await fetch("/api/compliance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "restore", entity: currentTabConfig.entity, ids })
+        });
+        if (res.ok) {
+          result = await res.json();
+        }
+      } catch { }
+      if (!result) {
+        result = await restoreEntity(currentTabConfig.entity as ComplianceEntity, ids);
+      }
       if (result.success) {
         setSuccessBanner(`Successfully restored ${ids.length} record(s).`);
         setSelectedIds(new Set());
@@ -218,7 +254,20 @@ export default function DataRetentionClient() {
     setActiveChildrenError([]);
 
     try {
-      const result = await hardDeleteEntity(currentTabConfig.entity as ComplianceEntity, purgeIds);
+      let result: any = null;
+      try {
+        const res = await fetch("/api/compliance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "purge", entity: currentTabConfig.entity, ids: purgeIds, typedConfirm })
+        });
+        if (res.ok) {
+          result = await res.json();
+        }
+      } catch { }
+      if (!result) {
+        result = await hardDeleteEntity(currentTabConfig.entity as ComplianceEntity, purgeIds);
+      }
       if (result.success) {
         setPurgeModalOpen(false);
         setSuccessBanner(`Successfully purged ${purgeIds.length} record(s).`);
@@ -264,22 +313,22 @@ export default function DataRetentionClient() {
               {activeView === "deleted" ? (
                 <>
                   {canRestore && (
-                    <AppButton 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={() => handleRestore(Array.from(selectedIds))} 
-                      disabled={isProcessing} 
+                    <AppButton
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleRestore(Array.from(selectedIds))}
+                      disabled={isProcessing}
                       leftIcon={<RefreshCcw className="h-3.5 w-3.5" />}
                     >
                       Restore selected
                     </AppButton>
                   )}
                   {canPurge && (
-                    <AppButton 
-                      variant="destructive" 
-                      size="sm" 
-                      onClick={() => openPurgeModal(Array.from(selectedIds))} 
-                      disabled={isProcessing} 
+                    <AppButton
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => openPurgeModal(Array.from(selectedIds))}
+                      disabled={isProcessing}
                       leftIcon={<Trash2 className="h-3.5 w-3.5" />}
                     >
                       Purge selected
@@ -307,11 +356,11 @@ export default function DataRetentionClient() {
             <tr>
               {(activeView === "deleted" || activeTab === "tasks") && (
                 <AppTableHead className="w-[40px]">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedIds.size === pagedRecords.length && pagedRecords.length > 0} 
-                    onChange={() => toggleAll(pagedRecords.map(r => r.id))} 
-                    className="rounded border-border bg-surface/20" 
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === pagedRecords.length && pagedRecords.length > 0}
+                    onChange={() => toggleAll(pagedRecords.map(r => r.id))}
+                    className="rounded border-border bg-surface/20"
                   />
                 </AppTableHead>
               )}
@@ -335,11 +384,11 @@ export default function DataRetentionClient() {
                 <AppTableRow key={record.id}>
                   {(activeView === "deleted" || activeTab === "tasks") && (
                     <AppTableCell>
-                      <input 
-                        type="checkbox" 
-                        checked={selectedIds.has(record.id)} 
-                        onChange={() => toggleSelection(record.id)} 
-                        className="rounded border-border bg-surface/20" 
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(record.id)}
+                        onChange={() => toggleSelection(record.id)}
+                        className="rounded border-border bg-surface/20"
                       />
                     </AppTableCell>
                   )}
@@ -430,7 +479,7 @@ export default function DataRetentionClient() {
           </div>
         </div>
       )}
-      
+
       {successBanner && (
         <div className="p-4 rounded-lg border border-success-border bg-success-soft flex items-start gap-3">
           <CheckSquare className="h-5 w-5 text-success-text shrink-0 mt-0.5" />
@@ -448,15 +497,14 @@ export default function DataRetentionClient() {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <AppButton 
+              <AppButton
                 key={tab.id}
                 variant="ghost"
                 onClick={() => setActiveTab(tab.id)}
-                className={`theme-tab-standard rounded-lg min-w-[110px] ${
-                  isActive 
-                    ? 'bg-surface dark:bg-surface text-primary shadow-sm border border-border font-semibold' 
+                className={`theme-tab-standard rounded-lg min-w-[110px] ${isActive
+                    ? 'bg-surface dark:bg-surface text-primary shadow-sm border border-border font-semibold'
                     : 'text-muted hover:text-foreground border border-transparent'
-                }`}
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
@@ -475,9 +523,9 @@ export default function DataRetentionClient() {
               <span>{currentTabConfig.label} Vault</span>
             </AppCardTitle>
           </div>
-          
+
           <div className="flex bg-surface/40 rounded-lg p-1 border border-border">
-            <AppButton 
+            <AppButton
               variant={activeView === "deleted" ? "destructive" : "ghost"}
               onClick={() => setActiveView("deleted")}
               className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5"
@@ -485,7 +533,7 @@ export default function DataRetentionClient() {
               <ShieldAlert className="h-3.5 w-3.5" />
               Recycle bin
             </AppButton>
-            <AppButton 
+            <AppButton
               variant={activeView === "active" ? "primary" : "ghost"}
               onClick={() => setActiveView("active")}
               className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
@@ -547,9 +595,9 @@ export default function DataRetentionClient() {
               Cancel
             </AppButton>
             {activeChildrenError.length === 0 && (
-              <AppButton 
-                variant="destructive" 
-                onClick={executePurge} 
+              <AppButton
+                variant="destructive"
+                onClick={executePurge}
                 disabled={typedConfirm.trim().toUpperCase() !== "PURGE" || isProcessing}
                 leftIcon={<Trash2 className="h-4 w-4" />}
               >
