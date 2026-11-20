@@ -146,8 +146,22 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
     return true;
   }
 
-  // Strict IAM explicit snapshot check ONLY (Until WP7, hasPermission = explicit IAM snapshot + SUPER_ADMIN only)
-  return ctx.perms.has(permissionCode);
+  if (ctx.perms.has(permissionCode)) return true;
+
+  // Module roles (user_module_access, TASK_WORKFLOW) also grant rights, exactly as before 19 Nov, so that no
+  // user loses access they had. Exception kept from WP1: TASKS_UPDATE is NOT widened to TASKS_UPDATE_CORE
+  // (that made every member an editor of every task).
+  try {
+    const { can } = await import("@/lib/permissions/module-access");
+    let checkCode = permissionCode;
+    if (permissionCode === "AMC_EDIT" || permissionCode === "AMC_UPDATE" || permissionCode === "AMC_CREATE" || permissionCode === "AMC_DELETE") checkCode = "AMC_MANAGE";
+    if (permissionCode === "REQUIREMENTS_MANAGE") checkCode = "REQUIREMENTS_APPROVE";
+    if (permissionCode !== "TASKS_UPDATE" && (await can(userId, "TASK_WORKFLOW", checkCode))) {
+      return true;
+    }
+  } catch { }
+
+  return false;
 }
 
 /**

@@ -50,8 +50,8 @@ jobs:
         run: |
           COMMIT_MSG=$(git log -1 --format=%B)
           CURRENT_UTC=$(date -u +%s)
-          # Date guard: 2026-11-19T18:29:59Z (= 23:59 IST) -> epoch 1795112999
-          EXPIRY_UTC=1795112999
+          # Date guard: 2026-11-20T18:29:59Z (= 23:59 IST) -> epoch 1795199399
+          EXPIRY_UTC=1795199399
           
           echo "Current UTC epoch: $CURRENT_UTC"
           echo "Expiry UTC epoch: $EXPIRY_UTC (2026-11-19T18:29:59Z)"
@@ -409,7 +409,7 @@ jobs:
           NODE_OPTIONS: "--max-old-space-size=4096"
           GIT_COMMIT: ${{ github.sha }}
           NEXT_PUBLIC_GIT_COMMIT: ${{ github.sha }}
-          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || 'chandak_server_actions_fixed_encryption_key_2026' }}
+          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || 'SD/Y2hc/wsIF5PdP1Hp663oXvEyp6KLZ99/9e2D8Ymc=' }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -437,7 +437,7 @@ jobs:
           NODE_OPTIONS=--v8-pool-size=1 --max-old-space-size=512
           GIT_COMMIT=${{ github.sha }}
           NEXT_PUBLIC_GIT_COMMIT=${{ github.sha }}
-          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || 'chandak_server_actions_fixed_encryption_key_2026' }}
+          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || 'SD/Y2hc/wsIF5PdP1Hp663oXvEyp6KLZ99/9e2D8Ymc=' }}
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

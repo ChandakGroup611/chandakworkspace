@@ -37,7 +37,6 @@ const FALLBACK_SCOPES = [
 export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelectorProps) {
   const { isLight: isLightMode } = useTheme();
   const [dbScopes, setDbScopes] = React.useState<any[]>(FALLBACK_SCOPES);
-  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -46,16 +45,10 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
         if (!isMounted) return;
         if (data && data.length > 0) {
           setDbScopes(data);
-        } else {
-          setDbScopes(FALLBACK_SCOPES);
         }
       })
       .catch((err) => {
-        console.error("Failed to load scopes:", err);
-        if (isMounted) setDbScopes(FALLBACK_SCOPES);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
+        console.warn("Using fallback ticket categories:", err);
       });
 
     return () => {
@@ -71,14 +64,6 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
       default: return Layers;
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <ChandakLoader size="md" title="Loading…" subtitle="Fetching ticket categories" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in fade-in zoom-in duration-300">

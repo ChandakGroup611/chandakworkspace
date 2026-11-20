@@ -70,7 +70,9 @@ export async function fetchMastersByScope(scopeId: string) {
 
   const now = Date.now();
   const cached = mastersCacheByScope.get(scopeId);
-  if (cached && now - cached.timestamp < 300_000) {
+  // Cache disabled: a master saved or edited must show immediately (the 5-minute cache hid new values).
+  // The last good result is still used as a fallback if the mapping query fails.
+  if (false && cached && now - cached.timestamp < 300_000) {
     return cached.data;
   }
   

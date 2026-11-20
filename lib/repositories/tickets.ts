@@ -14,7 +14,8 @@ export async function getVisibleTickets(
   filters?: { searchQuery?: string, status_id?: string, priority_id?: string, scope_id?: string },
   options?: { limit?: number; offset?: number; page?: number }
 ) {
-  const canViewAll = await hasPermission(userId, 'SUPER_ADMIN');
+  // Ticket managers (TICKETS_MANAGE) see all tickets, as before 19 Nov; others see their own / their team's.
+  const canViewAll = (await hasPermission(userId, 'SUPER_ADMIN')) || (await hasPermission(userId, 'TICKETS_MANAGE'));
 
   const defaultSelect = `
       *,
