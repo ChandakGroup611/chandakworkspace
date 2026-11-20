@@ -58,6 +58,15 @@ export const DASHBOARDS: DashboardDef[] = [
     defaultEngineUrl: "https://v9tbp89l-8084.inc1.devtunnels.ms",
     accent: "#5B4BD6",
   },
+  {
+    key: "sfdc",
+    name: "Sales (Salesforce)",
+    description: "Sales funnel, site visits, bookings and cancellations, and collections from Salesforce.",
+    permissionPrefix: "DASH_SFDC",
+    engineUrlEnv: "DASHBOARD_ENGINE_URL_SFDC",
+    defaultEngineUrl: "https://v9tbp89l-8085.inc1.devtunnels.ms",
+    accent: "#0F977B",
+  },
 ];
 
 export function getDashboard(key: string): DashboardDef | undefined {

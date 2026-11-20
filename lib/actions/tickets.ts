@@ -205,7 +205,7 @@ export async function changeTicketStatus(
     usable.find((s: any) => !s.scope_id) ||
     usable[0];
   if (!targetStatus) {
-    return { success: false, error: `This status can't be used for tickets (it is inactive, deleted, or belongs to another module).` };
+    return { success: false, error: `This status can't be used for tickets: it is inactive, deleted, or scoped to another module (Tasks, Requirements or Workspaces).` };
   }
 
   // Permission checks: Super Admin, Creator, Assignee, Queue Owner, or TICKETS_UPDATE capability
