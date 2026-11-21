@@ -228,7 +228,12 @@ export function TicketWorkspaceConsole({
       onUpdate();
       toast.success("Ticket updated successfully.");
     } catch (err: any) {
-      toast.error(`Commit failed: ${err.message || "Failed to update"}`);
+      const msg = err?.message || "";
+      if (msg.includes("unexpected response") || msg.includes("Failed to fetch")) {
+        toast.error("Connection interrupted or portal refreshed. Please reload the page to apply changes.");
+      } else {
+        toast.error(`Commit failed: ${msg || "Failed to update"}`);
+      }
     } finally {
       setIsSaving(false);
     }

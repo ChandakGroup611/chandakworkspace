@@ -25,7 +25,8 @@ import {
   CheckCircle2,
   Clock,
   Layers,
-  LayoutList
+  LayoutList,
+  Printer
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -33,6 +34,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 import { EditRequirementModal } from "@/components/requirements/EditRequirementModal";
+import { RequirementPrintModal } from "@/components/requirements/RequirementPrintModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatDate, StatusBadge, statusTone, PriorityIndicator, UserCell } from "@/components/ui/data";
 import { EmptyState } from "@/components/ui/feedback/States";
@@ -124,6 +126,7 @@ function RequirementsPageContent() {
   const [showWizard, setShowWizard] = useState(false);
   const [editReqId, setEditReqId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [printTargetReq, setPrintTargetReq] = useState<RequirementItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
@@ -1121,6 +1124,15 @@ function RequirementsPageContent() {
                           <button
                             type="button"
                             className={iconBtn}
+                            title="Print Change Order"
+                            aria-label={`Print ${r.id}`}
+                            onClick={() => setPrintTargetReq(r)}
+                          >
+                            <Printer className="h-4 w-4" aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className={iconBtn}
                             title="View"
                             aria-label={`View ${r.id}`}
                             onClick={() => navigateToRequirement(r.dbId, "mode=view")}
@@ -1225,6 +1237,15 @@ function RequirementsPageContent() {
                                 <button
                                   type="button"
                                   className={iconBtn}
+                                  title="Print Change Order"
+                                  aria-label={`Print ${r.id}`}
+                                  onClick={() => setPrintTargetReq(r)}
+                                >
+                                  <Printer className="h-4 w-4" aria-hidden />
+                                </button>
+                                <button
+                                  type="button"
+                                  className={iconBtn}
                                   title="View"
                                   aria-label={`View ${r.id}`}
                                   onClick={() => navigateToRequirement(r.dbId, "mode=view")}
@@ -1266,6 +1287,14 @@ function RequirementsPageContent() {
           )}
         </div>
       </div>
+
+      {printTargetReq && (
+        <RequirementPrintModal
+          isOpen={!!printTargetReq}
+          onClose={() => setPrintTargetReq(null)}
+          requirement={printTargetReq}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deleteTargetId}

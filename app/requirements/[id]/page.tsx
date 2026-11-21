@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
-import { Users, Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Users, Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight, X, Printer } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -28,6 +28,7 @@ import { sanitizeErrorMessage } from "@/lib/utils";
 import { LazyQuill } from "@/components/ui/LazyQuill";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { RequirementPrintModal } from "@/components/requirements/RequirementPrintModal";
 
 const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: string }> }) => {
   const [reqId, setReqId] = useState<string>("");
@@ -58,6 +59,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   const [approvalRemarks, setApprovalRemarks] = useState("");
   const [savingApproval, setSavingApproval] = useState(false);
   const [showTaskWizard, setShowTaskWizard] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const { hasPermission } = usePermissions();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "details");
@@ -820,6 +822,14 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             </dl>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <AppButton
+              variant="secondary"
+              leftIcon={<Printer className="h-4 w-4"/>}
+              onClick={() => setShowPrintModal(true)}
+              title="Print Change Order Document"
+            >
+              Print
+            </AppButton>
             {!isViewMode && (isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
               <AppButton variant="ghost" className="text-danger-text hover:bg-danger-soft" leftIcon={<Trash2 className="h-4 w-4"/>} onClick={() => setShowDeleteConfirm(true)}>
                 Delete
@@ -2517,6 +2527,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
           </div>
         )}
       </div>
+
+      <RequirementPrintModal
+        isOpen={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        requirement={requirement}
+      />
 
       <ConfirmDialog
         open={showDeleteConfirm}

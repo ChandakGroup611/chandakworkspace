@@ -27,7 +27,8 @@ import {
   Clock,
   Eye,
   Edit2,
-  Check
+  Check,
+  Printer
 } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
 import { AppButton } from "@/components/ui/AppButton";
@@ -47,6 +48,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
 import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
 import { StatusBadge, PriorityIndicator, UserCell } from "@/components/ui/data";
+import { RequirementPrintModal } from "@/components/requirements/RequirementPrintModal";
 import { cn } from "@/lib/utils";
 
 type RequirementRow = any;
@@ -170,6 +172,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   // Record Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSelectAllFiltered, setIsSelectAllFiltered] = useState(false);
+  const [printTargetReq, setPrintTargetReq] = useState<any | null>(null);
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(25);
@@ -1404,6 +1407,15 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                           <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
+                              onClick={() => setPrintTargetReq(r)}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface-hover hover:text-foreground"
+                              title="Print Change Order"
+                              aria-label={`Print requirement ${r.code || r.id}`}
+                            >
+                              <Printer className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleViewRequirement(r.id)}
                               className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface-hover hover:text-foreground"
                               title="View requirement"
@@ -1497,6 +1509,14 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
           </>
         )}
       </div>
+
+      {printTargetReq && (
+        <RequirementPrintModal
+          isOpen={!!printTargetReq}
+          onClose={() => setPrintTargetReq(null)}
+          requirement={printTargetReq}
+        />
+      )}
     </div>
   );
 }
