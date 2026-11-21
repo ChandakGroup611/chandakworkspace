@@ -146,6 +146,7 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
     );
   }
 
+  const fromReports = searchParams?.get("from") === "reports";
   const isSuperAdmin = roleCode === "SUPER_ADMIN" || (hasPermission && hasPermission("SUPER_ADMIN"));
   const isTicketOwner = userId
     ? (ticketData.creator_id === userId || ticketData.assignee_id === userId || ticketData.queue_owner_id === userId)
@@ -156,19 +157,47 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
     <div className="space-y-5 pb-6 pt-2 text-foreground">
       {/* Header — same structure as the Task page */}
       <header className="flex flex-col gap-3 border-b border-border pb-4">
-        <nav aria-label="Ticket navigation" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
-          <button
-            type="button"
-            onClick={() => (window.history.length > 1 ? router.back() : router.push("/tickets"))}
-            className="inline-flex items-center gap-1.5 font-medium text-accent-soft-text hover:underline"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
-          </button>
-          <span aria-hidden className="text-muted">/</span>
-          <Link href="/tickets" className="font-medium text-muted transition-colors hover:text-foreground">All tickets</Link>
-          <span aria-hidden className="text-muted">/</span>
-          <Link href="/tickets/reports" className="font-medium text-muted transition-colors hover:text-foreground">Reports and analytics</Link>
+        <nav aria-label="Ticket navigation" className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-[13px]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {fromReports ? (
+              <>
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/tickets/reports")}
+                  leftIcon={<ArrowLeft className="h-4 w-4" />}
+                >
+                  Back to Reports
+                </AppButton>
+                <span aria-hidden className="text-muted">/</span>
+                <Link href="/tickets/reports" className="font-semibold text-primary transition-colors hover:underline">
+                  Ticket reports
+                </Link>
+                <span aria-hidden className="text-muted">/</span>
+                <span className="font-mono text-muted">{ticketData.id}</span>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => (window.history.length > 1 ? router.back() : router.push("/tickets"))}
+                  className="inline-flex items-center gap-1.5 font-medium text-accent-soft-text hover:underline"
+                >
+                  <ArrowLeft className="h-4 w-4" aria-hidden />
+                  Back
+                </button>
+                <span aria-hidden className="text-muted">/</span>
+                <Link href="/tickets" className="font-medium text-muted transition-colors hover:text-foreground">All tickets</Link>
+                <span aria-hidden className="text-muted">/</span>
+                <Link href="/tickets/reports" className="font-medium text-muted transition-colors hover:text-foreground">Reports and analytics</Link>
+              </>
+            )}
+          </div>
+          {fromReports && (
+            <Link href="/tickets" className="text-xs text-muted hover:text-foreground">
+              All tickets list →
+            </Link>
+          )}
         </nav>
 
         <div className="flex flex-wrap items-center gap-2">

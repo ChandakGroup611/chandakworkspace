@@ -255,8 +255,21 @@ export async function changeTicketStatus(
       ticket_id: ticketId,
       actor_id: userId,
       operation: 'STATUS_CHANGE',
-      before_values: { status_id: ticket.status_id, status_name: oldName },
-      after_values: { status_id: targetStatus.id, status_name: newName, remark: remark || null },
+      before_values: { status_id: ticket.status_id, status_name: oldName, field_key: 'status' },
+      after_values: { status_id: targetStatus.id, status_name: newName, field_key: 'status', remark: remark || null },
+      created_at: new Date().toISOString()
+    }]);
+
+  // Insert into ticket_activity_stream for realtime UI timeline
+  await supabaseAdmin
+    .from('ticket_activity_stream')
+    .insert([{
+      ticket_id: ticketId,
+      actor: userId,
+      action: `Status changed from ${oldName} to ${newName}`,
+      event_type: 'STATE_CHANGE',
+      before_values: { id: ticket.status_id, name: oldName, status_name: oldName, field_key: 'status' },
+      after_values: { id: targetStatus.id, name: newName, status_name: newName, field_key: 'status', remark: remark || null },
       created_at: new Date().toISOString()
     }]);
 
@@ -404,6 +417,148 @@ export async function updateTicketDetails(ticketId: string, payload: {
     updatedTicket = data;
   }
 
+  // --- Detailed Field-Level Audit Trail ---
+  const diffs: Array<{ field: string; field_key: string; old_value: string; new_value: string }> = [];
+
+  // Priority diff
+  if (updateData.priority_id && updateData.priority_id !== existingTicket.priority_id) {
+    const { data: prios } = await supabaseAdmin
+      .from('priority_master')
+      .select('id, priority_name')
+      .in('id', [existingTicket.priority_id, updateData.priority_id].filter(Boolean));
+    const prioMap = Object.fromEntries((prios || []).map((p: any) => [p.id, p.priority_name]));
+    diffs.push({
+      field: "Priority",
+      field_key: "priority",
+      old_value: prioMap[existingTicket.priority_id] || "None",
+      new_value: prioMap[updateData.priority_id] || "None"
+    });
+  }
+
+  // Assignee diff
+  if (payload.assignee_id !== undefined && updateData.assignee_id !== existingTicket.assignee_id) {
+    const userIds = [existingTicket.assignee_id, updateData.assignee_id].filter(Boolean);
+    let userMap: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: users } = await supabaseAdmin
+        .from('user_master')
+        .select('id, full_name')
+        .in('id', userIds);
+      userMap = Object.fromEntries((users || []).map((u: any) => [u.id, u.full_name]));
+    }
+    diffs.push({
+      field: "Assignee",
+      field_key: "assignee",
+      old_value: existingTicket.assignee_id ? (userMap[existingTicket.assignee_id] || "Assigned User") : "Unassigned",
+      new_value: updateData.assignee_id ? (userMap[updateData.assignee_id] || "Assigned User") : "Unassigned"
+    });
+  }
+
+  // Due Date diff
+  if (payload.due_date !== undefined) {
+    const oldDueStr = existingTicket.due_date ? new Date(existingTicket.due_date).toISOString().slice(0, 10) : "";
+    const newDueStr = updateData.due_date ? new Date(updateData.due_date).toISOString().slice(0, 10) : "";
+    if (oldDueStr !== newDueStr) {
+      const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "None";
+      diffs.push({
+        field: "Due Date",
+        field_key: "due_date",
+        old_value: fmtDate(existingTicket.due_date),
+        new_value: fmtDate(updateData.due_date)
+      });
+    }
+  }
+
+  // Department diff
+  if (updateData.department_id && updateData.department_id !== existingTicket.department_id) {
+    const { data: depts } = await supabaseAdmin
+      .from('departments')
+      .select('id, name')
+      .in('id', [existingTicket.department_id, updateData.department_id].filter(Boolean));
+    const deptMap = Object.fromEntries((depts || []).map((d: any) => [d.id, d.name]));
+    diffs.push({
+      field: "Department",
+      field_key: "department",
+      old_value: deptMap[existingTicket.department_id] || "None",
+      new_value: deptMap[updateData.department_id] || "None"
+    });
+  }
+
+  // Category diff
+  if (updateData.category_id && updateData.category_id !== existingTicket.category_id) {
+    const { data: cats } = await supabaseAdmin
+      .from('ticket_categories')
+      .select('id, name')
+      .in('id', [existingTicket.category_id, updateData.category_id].filter(Boolean));
+    const catMap = Object.fromEntries((cats || []).map((c: any) => [c.id, c.name]));
+    diffs.push({
+      field: "Category",
+      field_key: "category",
+      old_value: catMap[existingTicket.category_id] || "None",
+      new_value: catMap[updateData.category_id] || "None"
+    });
+  }
+
+  // Title diff
+  if (payload.title !== undefined && payload.title.trim() !== (existingTicket.title || '').trim()) {
+    diffs.push({
+      field: "Title",
+      field_key: "title",
+      old_value: existingTicket.title || "",
+      new_value: payload.title.trim()
+    });
+  }
+
+  // Description diff
+  if (payload.description !== undefined && (payload.description || '').trim() !== (existingTicket.description || '').trim()) {
+    diffs.push({
+      field: "Description",
+      field_key: "description",
+      old_value: (existingTicket.description || "").slice(0, 150) || "Empty",
+      new_value: (payload.description || "").slice(0, 150) || "Empty"
+    });
+  }
+
+  // Write audit trail if changes were detected
+  if (diffs.length > 0) {
+    const { data: actorInfo } = await supabaseAdmin
+      .from('user_master')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    const actorDisplayName = actorInfo?.full_name || user.email || 'System User';
+
+    const hasPriority = diffs.some(d => d.field_key === "priority");
+    const hasAssignee = diffs.some(d => d.field_key === "assignee");
+    const hasDueDate = diffs.some(d => d.field_key === "due_date");
+    const eventType = hasPriority ? "PRIORITY_CHANGE" :
+                      hasAssignee ? "ASSIGNMENT" :
+                      hasDueDate ? "DUE_DATE_CHANGE" : "FIELD_UPDATE";
+
+    const actionSummary = diffs.map(d => `${d.field}: ${d.old_value} → ${d.new_value}`).join("; ");
+
+    // Insert to ticket_activity_stream
+    await supabaseAdmin.from("ticket_activity_stream").insert([{
+      ticket_id: ticketId,
+      actor: user.id,
+      action: actionSummary,
+      event_type: eventType,
+      before_values: { diffs, actor_name: actorDisplayName, ticket_code: existingTicket.code },
+      after_values: { diffs, actor_name: actorDisplayName, remark: payload.remark || null, ticket_code: existingTicket.code },
+      created_at: new Date().toISOString()
+    }]);
+
+    // Insert to ticket_audit_logs
+    await supabaseAdmin.from("ticket_audit_logs").insert([{
+      ticket_id: ticketId,
+      actor_id: user.id,
+      operation: eventType,
+      before_values: { diffs, actor_name: actorDisplayName },
+      after_values: { diffs, remark: payload.remark || null, actor_name: actorDisplayName },
+      created_at: new Date().toISOString()
+    }]);
+  }
+
   // Insert remark if provided (when status was not updated)
   if (!payload.status_id && payload.remark && payload.remark.trim() !== '') {
     const { error: remarkError } = await supabaseAdmin
@@ -544,14 +699,15 @@ export async function fetchTicketDashboardData(filters?: { searchQuery?: string,
   // Masters are read fresh on every call (no in-memory cache): a status, priority or category saved in
   // Master data must show in Tickets immediately. Filter by scope first; de-duplicate by code only when no
   // scope is selected (de-duplicating first dropped the other scopes' entries that share a code).
-  const [deptRes, prioRes, stateRes, catRes, subcatRes, typeRes, scopeRes] = await Promise.all([
+  const [deptRes, prioRes, stateRes, catRes, subcatRes, typeRes, scopeRes, usersRes] = await Promise.all([
     supabaseAdmin.from("departments").select("*").eq("is_deleted", false),
     supabaseAdmin.from("priority_master").select("*, name:priority_name, code:priority_code").eq("is_deleted", false),
     supabaseAdmin.from("status_master").select("*, name:status_name, code:status_code"),
     supabaseAdmin.from("ticket_categories").select("*").eq("is_deleted", false),
     supabaseAdmin.from("ticket_subcategories").select("*").eq("is_deleted", false),
     supabaseAdmin.from("issue_types").select("*").eq("is_deleted", false),
-    supabaseAdmin.from("ticket_scopes").select("*")
+    supabaseAdmin.from("ticket_scopes").select("*"),
+    supabaseAdmin.from("user_master").select("id, full_name, email").eq("is_deleted", false).order("full_name")
   ]);
 
   const ticketScopeIds = new Set((scopeRes.data || []).map((s: any) => s.id));
@@ -600,7 +756,8 @@ export async function fetchTicketDashboardData(filters?: { searchQuery?: string,
     categories: categories || [],
     subcategories: subcategories || [],
     issueTypes: issueTypes || [],
-    scopes: metadata.scopes || []
+    scopes: metadata.scopes || [],
+    users: usersRes.data || []
   };
 }
 

@@ -1,10 +1,19 @@
 "use client";
 /* eslint-disable no-restricted-syntax */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { AppButton } from "@/components/ui/AppButton";
-import { Search, Loader2, LayoutDashboard, Target, Briefcase } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  Search,
+  Loader2,
+  LayoutDashboard,
+  Target,
+  Briefcase,
+  Car,
+  Calendar,
+  Landmark
+} from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 import { StatusBadge } from "@/components/ui/data";
 
 export function GlobalCommandCenter() {
@@ -14,6 +23,19 @@ export function GlobalCommandCenter() {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Detect current active module to prioritize relevant search results
+  const currentModule = useMemo(() => {
+    if (!pathname) return "";
+    if (pathname.startsWith("/vehicle")) return "VEHICLE";
+    if (pathname.startsWith("/meet")) return "MEET";
+    if (pathname.startsWith("/budget")) return "BUDGET";
+    if (pathname.startsWith("/tickets")) return "TICKETS";
+    if (pathname.startsWith("/tasks") || pathname.startsWith("/workspaces")) return "TASKS";
+    if (pathname.startsWith("/requirements")) return "REQUIREMENTS";
+    return "";
+  }, [pathname]);
 
   // Keyboard shortcut listener (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -45,7 +67,8 @@ export function GlobalCommandCenter() {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const moduleParam = currentModule ? `&module=${currentModule}` : "";
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}${moduleParam}`);
         const data = await res.json();
         setResults(data.results || []);
       } catch (err) {
@@ -56,22 +79,32 @@ export function GlobalCommandCenter() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, currentModule]);
 
   if (!isOpen) return null;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
+      case "VEHICLE":
+        return <Car className="w-4 h-4 text-primary" />;
+      case "MEETING":
+        return <Calendar className="w-4 h-4 text-purple-500" />;
+      case "BUDGET":
+        return <Landmark className="w-4 h-4 text-emerald-500" />;
       case "TICKET":
-        return <LayoutDashboard className="w-4 h-4 text-primary" />;
+        return <LayoutDashboard className="w-4 h-4 text-sky-500" />;
       case "TASK":
-        return <Target className="w-4 h-4 text-primary" />;
+        return <Target className="w-4 h-4 text-amber-500" />;
       case "REQUIREMENT":
-        return <Briefcase className="w-4 h-4 text-success-text" />;
+        return <Briefcase className="w-4 h-4 text-emerald-600" />;
       default:
         return <Search className="w-4 h-4 text-muted" />;
     }
   };
+
+  const placeholderText = currentModule
+    ? `Search ${currentModule.toLowerCase()} & across all modules… (Esc to close)`
+    : "Search tickets, tasks, vehicles, meetings, budgets… (Esc to close)";
 
   return (
     <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[10vh] bg-[var(--overlay)] animate-in fade-in duration-150">
@@ -92,11 +125,16 @@ export function GlobalCommandCenter() {
             ref={inputRef}
             type="text"
             className="flex-1 h-12 bg-transparent border-none outline-none text-foreground placeholder:text-muted text-sm font-medium"
-            placeholder="Search tickets, tasks, requirements… (Esc to close)"
+            placeholder={placeholderText}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          {loading && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
+          {loading && <Loader2 className="w-4 h-4 text-primary animate-spin mr-2" />}
+          {currentModule && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-accent-soft-text border border-border shrink-0">
+              {currentModule} Mode
+            </span>
+          )}
         </div>
 
         {/* Results */}
@@ -148,11 +186,9 @@ export function GlobalCommandCenter() {
         </div>
 
         <div className="p-2.5 border-t border-border bg-sunken text-[11px] text-center text-muted">
-          Enterprise scoped search
+          Press <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono">Esc</kbd> to close · Navigate with arrow keys or click to open
         </div>
       </div>
     </div>
   );
 }
-
-export default GlobalCommandCenter;
