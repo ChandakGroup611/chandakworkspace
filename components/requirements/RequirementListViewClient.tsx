@@ -1,10 +1,36 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
-import { useVirtualizer } from '@tanstack/react-virtual';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import {
+  FileSpreadsheet,
+  FileText,
+  RotateCcw,
+  Columns3,
+  Search,
+  X,
+  Calendar,
+  AlertCircle,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  CheckCircle2,
+  ChevronDown,
+  Layers,
+  LayoutList,
+  Clock,
+  Eye,
+  Edit2,
+  Check
+} from "lucide-react";
+import * as Popover from "@radix-ui/react-popover";
 import { AppButton } from "@/components/ui/AppButton";
-import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
 import {
   AppTableContainer,
@@ -13,133 +39,169 @@ import {
   AppTableBody,
   AppTableRow,
   AppTableHead,
-  AppTableCell
+  AppTableCell,
 } from "@/components/ui/AppTable";
-import { Loader2, Eye, Search, LayoutList, Layers, CheckCircle2, Download, Upload, Shield } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import ChandakLoader from "@/components/ui/ChandakLoader";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
-import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { MultiSelectFilter } from "@/components/ui/MultiSelectFilter";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/feedback/States";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useLocalReportConfig, UIFieldDefinition } from "@/hooks/useLocalReportConfig";
-import DynamicReportBuilder from "@/components/reports/DynamicReportBuilder";
-import { Settings2 } from "lucide-react";
-import { AccessRestricted } from "@/components/errors/AccessRestricted";
-import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
 import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
 import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
+import { StatusBadge, PriorityIndicator, UserCell } from "@/components/ui/data";
+import { cn } from "@/lib/utils";
 
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { getAllReportCustomFields } from "@/lib/actions/workspace_reports";
+type RequirementRow = any;
 
-type Requirement = any;
+type ColumnKey =
+  | "code"
+  | "title"
+  | "system_name"
+  | "module_name"
+  | "department_name"
+  | "priority_name"
+  | "status_name"
+  | "task_count"
+  | "task_summary"
+  | "requester_name"
+  | "assignee_name"
+  | "due_date"
+  | "due_days"
+  | "created_at"
+  | "updated_at";
 
-interface ReqFilterPayload {
-  scope: "ALL" | "REQUESTER" | "APPROVER";
-  query: string;
-  selectedStatus: string;
-  selectedPriority: string;
-  dateFrom: string;
-  dateTo: string;
+interface ReportColumn {
+  key: ColumnKey;
+  label: string;
+  kind: "text" | "date" | "badge" | "number";
+  defaultVisible: boolean;
+  width: number;
 }
 
-function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
-  const w = col.column_width || col.default_width || 150;
-  const isTitle = col.field_key === "title";
-  const style = { 
-    transform: CSS.Translate.toString(transform), 
-    transition, 
-    minWidth: `${w}px`,
-    width: `${w}px`,
-    opacity: isDragging ? 0.5 : 1,
-    position: 'sticky' as any,
-    top: 0,
-    left: isFirst ? '0px' : undefined,
-    zIndex: isDragging ? 50 : (isFirst ? 30 : 25),
-  };
-  return (
-    <AppTableHead 
-      ref={setNodeRef} 
-      style={style} 
-      className={cn(
-        "select-none bg-elevated border-b border-border font-bold text-xs text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-surface-hover transition-colors", 
-        col.field_key === "actions" ? "w-[50px]" : "", 
-        !isTitle ? "text-center" : "text-left",
-        ["code", "due_date", "created_at", "updated_at", "status_name", "priority_name", "department_name"].includes(col.field_key) ? "whitespace-nowrap" : ""
-      )}
-      {...attributes} 
-      {...listeners}
-    >
-      {col.display_name}
-    </AppTableHead>
-  );
-}
-
-const INITIAL_REQ_FIELDS: UIFieldDefinition[] = [
-  { field_key: "code", display_name: "Req #", data_type: "text", is_default: true, default_width: 100 },
-  { field_key: "title", display_name: "Title", data_type: "text", is_default: true, default_width: 300 },
-  { field_key: "department_name", display_name: "Department", data_type: "badge", is_default: true, default_width: 150 },
-  { field_key: "system_name", display_name: "System", data_type: "text", is_default: true, default_width: 150 },
-  { field_key: "module_name", display_name: "Module", data_type: "text", is_default: true, default_width: 150 },
-  { field_key: "priority_name", display_name: "Priority", data_type: "badge", is_default: true, default_width: 120 },
-  { field_key: "status_name", display_name: "Approval Status", data_type: "badge", is_default: true, default_width: 150 },
-  { field_key: "due_date", display_name: "Due Date", data_type: "date", is_default: true, default_width: 120 },
-  { field_key: "due_days", display_name: "Due Days", data_type: "text", is_default: true, default_width: 140 },
-  { field_key: "task_count", display_name: "Tasks Count", data_type: "number", is_default: true, default_width: 120 },
-  { field_key: "task_summary", display_name: "Task Statuses", data_type: "text", is_default: true, default_width: 200 },
-  { field_key: "requester_name", display_name: "Requester", data_type: "user", is_default: true, default_width: 150 },
-  { field_key: "assignee_name", display_name: "Approver/Assignee", data_type: "user", is_default: true, default_width: 150 },
-  { field_key: "actions", display_name: "Actions", data_type: "custom", is_default: true, default_width: 80 },
-  { field_key: "created_at", display_name: "Created At", data_type: "date", is_default: false, default_width: 120 },
-  { field_key: "updated_at", display_name: "Updated At", data_type: "date", is_default: false, default_width: 120 },
+const COLUMNS: ReportColumn[] = [
+  { key: "code", label: "Req #", kind: "text", defaultVisible: true, width: 110 },
+  { key: "title", label: "Title", kind: "text", defaultVisible: true, width: 260 },
+  { key: "system_name", label: "System / Asset", kind: "text", defaultVisible: true, width: 140 },
+  { key: "module_name", label: "Module", kind: "text", defaultVisible: false, width: 130 },
+  { key: "department_name", label: "Department", kind: "text", defaultVisible: true, width: 140 },
+  { key: "priority_name", label: "Priority", kind: "badge", defaultVisible: true, width: 110 },
+  { key: "status_name", label: "Approval Status", kind: "badge", defaultVisible: true, width: 140 },
+  { key: "task_count", label: "Tasks", kind: "number", defaultVisible: true, width: 90 },
+  { key: "task_summary", label: "Tasks Status", kind: "text", defaultVisible: true, width: 150 },
+  { key: "requester_name", label: "Requester", kind: "text", defaultVisible: true, width: 140 },
+  { key: "assignee_name", label: "Approver/Assignee", kind: "text", defaultVisible: true, width: 150 },
+  { key: "due_date", label: "Due Date", kind: "date", defaultVisible: true, width: 110 },
+  { key: "due_days", label: "Due Timeline", kind: "text", defaultVisible: false, width: 140 },
+  { key: "created_at", label: "Created On", kind: "date", defaultVisible: true, width: 110 },
+  { key: "updated_at", label: "Last Updated", kind: "date", defaultVisible: false, width: 110 },
 ];
 
-const formatDate = (dateString: string | null | undefined): string => {
-  if (!dateString) return "—";
-  try {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${day}-${month}-${year}`;
-  } catch {
-    return "—";
-  }
-};
+const COLUMN_STORAGE_KEY = "chandak_requirement_reports_columns_v1";
+const REPORT_STATE_STORAGE_KEY = "chandak_requirement_reports_state_v1";
 
-const getPriorityVariant = (priorityName?: string | null): "danger" | "warning" | "info" | "neutral" => {
-  if (!priorityName) return "neutral";
-  const p = priorityName.toLowerCase();
-  if (p.includes("stopper") || p.includes("critical") || p.includes("blocker") || p.includes("urgent")) return "danger";
-  if (p.includes("high")) return "warning";
-  if (p.includes("medium")) return "info";
-  return "neutral";
-};
+interface ReqReportFilterPayload {
+  query: string;
+  systems: string[];
+  departments: string[];
+  statuses: string[];
+  priorities: string[];
+  assignees: string[];
+  requesters: string[];
+  kpiCard: null | "PENDING" | "APPROVED" | "IN_PROGRESS" | "REJECTED" | "OVERDUE" | "WITH_TASKS";
+  dateMode: "CREATED" | "DUE" | "BOTH";
+  createdFrom: string;
+  createdTo: string;
+  dueFrom: string;
+  dueTo: string;
+}
 
-const getStatusVariant = (statusName?: string | null): "success" | "warning" | "danger" | "neutral" => {
-  if (!statusName) return "neutral";
-  const s = statusName.toLowerCase();
-  if (s.includes("approved") || s.includes("closed") || s.includes("resolved") || s.includes("done")) return "success";
-  if (s.includes("rejected") || s.includes("cancelled")) return "danger";
-  if (s.includes("pending") || s.includes("in review") || s.includes("review")) return "warning";
-  return "neutral";
-};
+function formatDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+}
 
-export default function RequirementListViewClient({ initialReqs }: { initialReqs: Requirement[] }) {
-  const [reqs, setReqs] = useState<Requirement[]>(initialReqs || []);
-  const [scope, setScope] = useState<"ALL" | "REQUESTER" | "APPROVER">("ALL");
-  const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
+function istDay(value: string | null | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+}
+
+function cellText(col: ReportColumn, row: RequirementRow): string {
+  const v = row[col.key];
+  if (col.kind === "date") return formatDate(v as string | null);
+  if (col.kind === "number") return v === null || v === undefined ? "—" : String(v);
+  if (v === null || v === undefined || v === "") return "—";
+  return String(v);
+}
+
+export default function RequirementListViewClient({ initialReqs }: { initialReqs: RequirementRow[] }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { hasPermission, roleCode } = usePermissions();
+  const canExport =
+    roleCode === "SUPER_ADMIN" || hasPermission("REQUIREMENTS_MANAGE") || hasPermission("REPORTS_EXPORT");
+
+  const [reqs, setReqs] = useState<RequirementRow[]>(initialReqs || []);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  // Filters State
+  const [query, setQuery] = useState("");
+  const [systems, setSystems] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<string[]>([]);
+  const [priorities, setPriorities] = useState<string[]>([]);
+  const [assignees, setAssignees] = useState<string[]>([]);
+  const [requesters, setRequesters] = useState<string[]>([]);
+
+  // Interactive KPI Card Filter
+  const [kpiCard, setKpiCard] = useState<null | "PENDING" | "APPROVED" | "IN_PROGRESS" | "REJECTED" | "OVERDUE" | "WITH_TASKS">(null);
+
+  // Date Filter State
+  const [dateMode, setDateMode] = useState<"CREATED" | "DUE" | "BOTH">("CREATED");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [dueFrom, setDueFrom] = useState("");
+  const [dueTo, setDueTo] = useState("");
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+
+  // Record Selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSelectAllFiltered, setIsSelectAllFiltered] = useState(false);
+
+  // Pagination
+  const [pageSize, setPageSize] = useState<number>(25);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Columns Chooser
+  const [visibleKeys, setVisibleKeys] = useState<ColumnKey[]>(
+    COLUMNS.filter((c) => c.defaultVisible).map((c) => c.key)
+  );
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const [colSearchQuery, setColSearchQuery] = useState("");
+
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+
+  // Restore columns choice from localStorage
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(COLUMN_STORAGE_KEY);
+      if (saved) {
+        const keys = (JSON.parse(saved) as string[]).filter((k) => COLUMNS.some((c) => c.key === k)) as ColumnKey[];
+        if (keys.length) setVisibleKeys(keys);
+      }
+    } catch { }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visibleKeys));
+    } catch { }
+  }, [visibleKeys]);
+
+  // Current user resolution
   useEffect(() => {
     async function getUser() {
       try {
@@ -147,27 +209,113 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (user) setCurrentUserId(user.id);
-      } catch (e) {}
+      } catch (e) { }
     }
     getUser();
   }, []);
 
-  const [dynamicFields, setDynamicFields] = useState<UIFieldDefinition[]>([]);
+  // Restore filter state from sessionStorage (for Back to Reports workflow)
+  useEffect(() => {
+    try {
+      const savedState = window.sessionStorage.getItem(REPORT_STATE_STORAGE_KEY);
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        if (parsed.query !== undefined) setQuery(parsed.query);
+        if (parsed.systems) setSystems(parsed.systems);
+        if (parsed.departments) setDepartments(parsed.departments);
+        if (parsed.statuses) setStatuses(parsed.statuses);
+        if (parsed.priorities) setPriorities(parsed.priorities);
+        if (parsed.assignees) setAssignees(parsed.assignees);
+        if (parsed.requesters) setRequesters(parsed.requesters);
+        if (parsed.kpiCard !== undefined) setKpiCard(parsed.kpiCard);
+        if (parsed.dateMode) setDateMode(parsed.dateMode);
+        if (parsed.createdFrom !== undefined) setCreatedFrom(parsed.createdFrom);
+        if (parsed.createdTo !== undefined) setCreatedTo(parsed.createdTo);
+        if (parsed.dueFrom !== undefined) setDueFrom(parsed.dueFrom);
+        if (parsed.dueTo !== undefined) setDueTo(parsed.dueTo);
+        if (parsed.currentPage) setCurrentPage(parsed.currentPage);
+      }
+    } catch { }
+  }, []);
 
-  const combinedFields = useMemo(() => {
-    return [...INITIAL_REQ_FIELDS, ...dynamicFields];
-  }, [dynamicFields]);
+  // Save filter state to sessionStorage
+  const saveStateToSession = useCallback(() => {
+    try {
+      const stateObj = {
+        query,
+        systems,
+        departments,
+        statuses,
+        priorities,
+        assignees,
+        requesters,
+        kpiCard,
+        dateMode,
+        createdFrom,
+        createdTo,
+        dueFrom,
+        dueTo,
+        currentPage,
+      };
+      window.sessionStorage.setItem(REPORT_STATE_STORAGE_KEY, JSON.stringify(stateObj));
+    } catch { }
+  }, [query, systems, departments, statuses, priorities, assignees, requesters, kpiCard, dateMode, createdFrom, createdTo, dueFrom, dueTo, currentPage]);
 
-  const { layout, availableFields, loading: configLoading, saveLayout, resetToDefault } = useLocalReportConfig('REQUIREMENT_REPORTS', combinedFields);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
-  
-  const visibleColumns = useMemo(() => layout.filter(l => l.is_visible).sort((a, b) => a.display_order - b.display_order), [layout]);
+  useEffect(() => {
+    saveStateToSession();
+  }, [saveStateToSession]);
 
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
-  const [selectedPriority, setSelectedPriority] = useState<string>("");
-  const [dateFrom, setDateFrom] = useState<string>("");
-  const [dateTo, setDateTo] = useState<string>("");
-  
+  // Date validation
+  useEffect(() => {
+    if (createdFrom && createdTo && createdFrom > createdTo) {
+      setDateError("Created 'From' date cannot be later than 'To' date");
+    } else if (dueFrom && dueTo && dueFrom > dueTo) {
+      setDateError("Due 'From' date cannot be later than 'To' date");
+    } else {
+      setDateError(null);
+    }
+  }, [createdFrom, createdTo, dueFrom, dueTo]);
+
+  // Saved Filters Integration
+  const currentPayload: ReqReportFilterPayload = useMemo(() => ({
+    query,
+    systems,
+    departments,
+    statuses,
+    priorities,
+    assignees,
+    requesters,
+    kpiCard,
+    dateMode,
+    createdFrom,
+    createdTo,
+    dueFrom,
+    dueTo,
+  }), [query, systems, departments, statuses, priorities, assignees, requesters, kpiCard, dateMode, createdFrom, createdTo, dueFrom, dueTo]);
+
+  const resetAllFilters = useCallback(() => {
+    setQuery("");
+    setSystems([]);
+    setDepartments([]);
+    setStatuses([]);
+    setPriorities([]);
+    setAssignees([]);
+    setRequesters([]);
+    setKpiCard(null);
+    setCreatedFrom("");
+    setCreatedTo("");
+    setDueFrom("");
+    setDueTo("");
+    setDateError(null);
+    setColumnFilters({});
+    setSelectedIds(new Set());
+    setIsSelectAllFiltered(false);
+    setCurrentPage(1);
+    try {
+      window.sessionStorage.removeItem(REPORT_STATE_STORAGE_KEY);
+    } catch { }
+  }, []);
+
   const {
     savedFilters,
     activeSavedFilterId,
@@ -175,542 +323,1180 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
     updateSavedFilter,
     applySavedFilter,
     deleteSavedFilter
-  } = useSavedFilters<ReqFilterPayload>("chandak_reqs", currentUserId, (payload) => {
-    setScope(payload.scope);
-    setQuery(payload.query);
-    setSelectedStatus(payload.selectedStatus || "");
-    setSelectedPriority(payload.selectedPriority || "");
-    setDateFrom(payload.dateFrom || "");
-    setDateTo(payload.dateTo || "");
-  });
+  } = useSavedFilters<ReqReportFilterPayload>(
+    "chandak_req_reports_v1",
+    currentUserId,
+    (payload) => {
+      setQuery(payload.query || "");
+      setSystems(payload.systems || []);
+      setDepartments(payload.departments || []);
+      setStatuses(payload.statuses || []);
+      setPriorities(payload.priorities || []);
+      setAssignees(payload.assignees || []);
+      setRequesters(payload.requesters || []);
+      setKpiCard(payload.kpiCard || null);
+      setDateMode(payload.dateMode || "CREATED");
+      setCreatedFrom(payload.createdFrom || "");
+      setCreatedTo(payload.createdTo || "");
+      setDueFrom(payload.dueFrom || "");
+      setDueTo(payload.dueTo || "");
+      setCurrentPage(1);
+    }
+  );
 
-  const handleSaveCurrentFilter = () => {
-    saveCurrentFilter({
-      scope, query, selectedStatus, selectedPriority, dateFrom, dateTo
-    });
-  };
-
-  const applyFilter = (f: SavedFilter<ReqFilterPayload>) => {
+  const handleApplySavedFilter = (f: SavedFilter<ReqReportFilterPayload>) => {
     applySavedFilter(
       f,
       (payload) => {
-        setScope(payload.scope);
-        setQuery(payload.query);
-        setSelectedStatus(payload.selectedStatus || "");
-        setSelectedPriority(payload.selectedPriority || "");
-        setDateFrom(payload.dateFrom || "");
-        setDateTo(payload.dateTo || "");
+        setQuery(payload.query || "");
+        setSystems(payload.systems || []);
+        setDepartments(payload.departments || []);
+        setStatuses(payload.statuses || []);
+        setPriorities(payload.priorities || []);
+        setAssignees(payload.assignees || []);
+        setRequesters(payload.requesters || []);
+        setKpiCard(payload.kpiCard || null);
+        setDateMode(payload.dateMode || "CREATED");
+        setCreatedFrom(payload.createdFrom || "");
+        setCreatedTo(payload.createdTo || "");
+        setDueFrom(payload.dueFrom || "");
+        setDueTo(payload.dueTo || "");
+        setCurrentPage(1);
       },
-      () => {
-        setScope("ALL");
-        setQuery("");
-        setSelectedStatus("");
-        setSelectedPriority("");
-        setDateFrom("");
-        setDateTo("");
-      }
+      resetAllFilters
     );
   };
 
-  // currentUserId is defined above in useState
+  // Overdue check
+  const today = istDay(new Date().toISOString());
+  const isOverdue = useCallback((r: RequirementRow) => {
+    const s = (r.status_name || "").toLowerCase();
+    if (s.includes("approved") || s.includes("closed") || s.includes("rejected") || s.includes("cancelled")) return false;
+    if (r.overdue_days && r.overdue_days > 0) return true;
+    if (r.due_date && istDay(r.due_date) < today) return true;
+    return false;
+  }, [today]);
 
-  useEffect(() => {
-    getAllReportCustomFields().then(setDynamicFields).catch(console.error);
-  }, []);
+  // KPI Metrics
+  const countPending = useMemo(() => reqs.filter(r => (r.status_name || "").toLowerCase().includes("pending")).length, [reqs]);
+  const countApproved = useMemo(() => reqs.filter(r => (r.status_name || "").toLowerCase().includes("approved") || (r.status_name || "").toLowerCase() === "closed").length, [reqs]);
+  const countInProgress = useMemo(() => reqs.filter(r => {
+    const s = (r.status_name || "").toLowerCase();
+    return s.includes("in progress") || s.includes("development") || s.includes("uat");
+  }).length, [reqs]);
+  const countRejected = useMemo(() => reqs.filter(r => {
+    const s = (r.status_name || "").toLowerCase();
+    return s.includes("rejected") || s.includes("hold") || s.includes("cancelled");
+  }).length, [reqs]);
+  const countOverdue = useMemo(() => reqs.filter(isOverdue).length, [reqs, isOverdue]);
+  const countWithTasks = useMemo(() => reqs.filter(r => r.task_count && r.task_count > 0).length, [reqs]);
 
-  const uniqueStatuses = useMemo(() => Array.from(new Set(reqs.map((r: any) => r.status_name).filter((s:any) => s !== "—"))) as string[], [reqs]);
-  const uniquePriorities = useMemo(() => Array.from(new Set(reqs.map((r: any) => r.priority_name).filter((s:any) => s !== "—"))) as string[], [reqs]);
-  const router = useRouter();
-  const parentRef = useRef<HTMLDivElement>(null);
+  // Multi-select option lists
+  const systemOptions = useMemo(() => {
+    const set = new Set<string>();
+    reqs.forEach(r => { if (r.system_name && r.system_name !== "—") set.add(r.system_name); });
+    return Array.from(set).sort().map(s => ({ value: s, label: s }));
+  }, [reqs]);
 
-  const filtered = useMemo(() => {
-    return reqs.filter(r => {
-      if (scope === "REQUESTER") {
-        if (r.requester_id !== currentUserId) return false;
-      }
-      if (scope === "APPROVER") {
-        if (r.current_assignee_id !== currentUserId) return false;
-      }
-      
-      if (selectedStatus && r.status_name !== selectedStatus) return false;
-      if (selectedPriority && r.priority_name !== selectedPriority) return false;
-      
-      if (dateFrom) {
-        const fromDate = new Date(dateFrom).getTime();
-        const reqDate = new Date(r.created_at).getTime();
-        if (reqDate < fromDate) return false;
-      }
-      if (dateTo) {
-        const toDate = new Date(dateTo).getTime() + 86400000;
-        const reqDate = new Date(r.created_at).getTime();
-        if (reqDate >= toDate) return false;
+  const departmentOptions = useMemo(() => {
+    const set = new Set<string>();
+    reqs.forEach(r => { if (r.department_name && r.department_name !== "—") set.add(r.department_name); });
+    return Array.from(set).sort().map(d => ({ value: d, label: d }));
+  }, [reqs]);
+
+  const statusOptions = useMemo(() => {
+    const set = new Set<string>();
+    reqs.forEach(r => {
+      const b = (r.status_name || "").split(" · ")[0];
+      if (b && b !== "—") set.add(b);
+    });
+    return Array.from(set).sort().map(s => ({ value: s, label: s }));
+  }, [reqs]);
+
+  const priorityOptions = useMemo(() => {
+    const set = new Set<string>();
+    reqs.forEach(r => { if (r.priority_name && r.priority_name !== "—") set.add(r.priority_name); });
+    return Array.from(set).sort().map(p => ({ value: p, label: p }));
+  }, [reqs]);
+
+  const assigneeOptions = useMemo(() => {
+    const set = new Set<string>(["Unassigned"]);
+    reqs.forEach(r => {
+      if (r.assignee_name && r.assignee_name !== "—") set.add(r.assignee_name);
+    });
+    return Array.from(set)
+      .sort((a, b) => (a === "Unassigned" ? -1 : b === "Unassigned" ? 1 : a.localeCompare(b)))
+      .map(a => ({ value: a, label: a }));
+  }, [reqs]);
+
+  const requesterOptions = useMemo(() => {
+    const set = new Set<string>();
+    reqs.forEach(r => { if (r.requester_name && r.requester_name !== "—") set.add(r.requester_name); });
+    return Array.from(set).sort().map(u => ({ value: u, label: u }));
+  }, [reqs]);
+
+  // Combined Filtered Dataset
+  const filteredRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+
+    return reqs.filter((r) => {
+      // 1. Text Search
+      if (q) {
+        const fullText = `${r.code || ""} ${r.title || ""} ${r.department_name || ""} ${r.system_name || ""} ${r.objective || ""}`.toLowerCase();
+        if (!fullText.includes(q)) return false;
       }
 
-      if (query) {
-        const q = query.toLowerCase();
-        if (!(
-          (r.title || "").toLowerCase().includes(q) ||
-          (r.code || "").toLowerCase().includes(q) ||
-          (r.department_name || "").toLowerCase().includes(q)
-        )) return false;
+      // 2. Interactive KPI Card
+      if (kpiCard === "PENDING") {
+        if (!r.status_name?.toLowerCase().includes("pending")) return false;
+      } else if (kpiCard === "APPROVED") {
+        if (!r.status_name?.toLowerCase().includes("approved") && r.status_name?.toLowerCase() !== "closed") return false;
+      } else if (kpiCard === "IN_PROGRESS") {
+        const s = (r.status_name || "").toLowerCase();
+        if (!s.includes("in progress") && !s.includes("development") && !s.includes("uat")) return false;
+      } else if (kpiCard === "REJECTED") {
+        const s = (r.status_name || "").toLowerCase();
+        if (!s.includes("rejected") && !s.includes("hold") && !s.includes("cancelled")) return false;
+      } else if (kpiCard === "OVERDUE") {
+        if (!isOverdue(r)) return false;
+      } else if (kpiCard === "WITH_TASKS") {
+        if (!r.task_count || r.task_count === 0) return false;
+      }
+
+      // 3. Multi-Select Filters
+      if (systems.length > 0 && !systems.includes(r.system_name)) return false;
+      if (departments.length > 0 && !departments.includes(r.department_name)) return false;
+      if (statuses.length > 0) {
+        const b = (r.status_name || "").split(" · ")[0];
+        if (!statuses.includes(b)) return false;
+      }
+      if (priorities.length > 0 && !priorities.includes(r.priority_name)) return false;
+      if (assignees.length > 0) {
+        const aName = r.assignee_name || "Unassigned";
+        if (!assignees.includes(aName)) return false;
+      }
+      if (requesters.length > 0 && !requesters.includes(r.requester_name)) return false;
+
+      // 4. Date Filtering
+      if (dateMode === "CREATED" || dateMode === "BOTH") {
+        const createdDay = istDay(r.created_at);
+        if (createdFrom && (!createdDay || createdDay < createdFrom)) return false;
+        if (createdTo && (!createdDay || createdDay > createdTo)) return false;
+      }
+      if (dateMode === "DUE" || dateMode === "BOTH") {
+        if (dueFrom || dueTo) {
+          if (!r.due_date) return false;
+          const dueDay = istDay(r.due_date);
+          if (dueFrom && (!dueDay || dueDay < dueFrom)) return false;
+          if (dueTo && (!dueDay || dueDay > dueTo)) return false;
+        }
+      }
+
+      // 5. Per-column header search filters
+      for (const [key, val] of Object.entries(columnFilters)) {
+        if (!val) continue;
+        const col = COLUMNS.find((c) => c.key === key);
+        if (!col) continue;
+        const cell = cellText(col, r).toLowerCase();
+        if (!cell.includes(val.toLowerCase())) return false;
       }
 
       return true;
     });
-  }, [reqs, scope, query, currentUserId, selectedStatus, selectedPriority, dateFrom, dateTo]);
+  }, [reqs, query, kpiCard, systems, departments, statuses, priorities, assignees, requesters, dateMode, createdFrom, createdTo, dueFrom, dueTo, columnFilters, isOverdue]);
 
-  const kpis = useMemo(() => {
-    const total = filtered.length;
-    const pending = filtered.filter(r => r.status_name?.toLowerCase().includes('pending')).length;
-    const approved = filtered.filter(r => r.status_name?.toLowerCase().includes('approved') || r.status_name?.toLowerCase() === 'closed').length;
-    
-    let totalTasks = 0;
-    let closedTasks = 0;
-    filtered.forEach(r => {
-       if (r.task_count) {
-          totalTasks += r.task_count;
-          const closedStr = (r.task_summary || "").match(/(\d+) Closed/);
-          if (closedStr && closedStr[1]) {
-             closedTasks += parseInt(closedStr[1], 10);
-          }
-       }
-    });
+  // Reset pagination on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+    setIsSelectAllFiltered(false);
+  }, [query, systems, departments, statuses, priorities, assignees, requesters, kpiCard, dateMode, createdFrom, createdTo, dueFrom, dueTo, columnFilters]);
 
-    return [
-      { label: "Total reqs", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-accent-soft", iconColorClass: "text-theme-icon" },
-      { label: "Pending", value: pending, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-warning-soft", iconColorClass: "text-warning-text" },
-      { label: "Approved", value: approved, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-success-soft", iconColorClass: "text-success-text" },
-      { label: "Linked tasks progress", value: totalTasks > 0 ? `${Math.round((closedTasks / totalTasks) * 100)}%` : "0%", icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-accent-soft", iconColorClass: "text-theme-icon" },
-    ];
-  }, [filtered]);
+  // Pagination slicing
+  const totalRecords = filteredRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+  const currentPageClamped = Math.min(currentPage, totalPages);
+  const pageStart = (currentPageClamped - 1) * pageSize;
+  const pageEnd = Math.min(pageStart + pageSize, totalRecords);
+  const pagedRows = useMemo(() => filteredRows.slice(pageStart, pageEnd), [filteredRows, pageStart, pageEnd]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  // Visible columns selection
+  const visibleColumns = useMemo(
+    () => COLUMNS.filter((c) => visibleKeys.includes(c.key)),
+    [visibleKeys]
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const activeCol = layout.find(l => l.field_id === active.id);
-      const overCol = layout.find(l => l.field_id === over.id);
-      
-      if (!activeCol || !overCol) return;
+  // Selection Logic
+  const allPageIds = useMemo(() => pagedRows.map((r) => r.id), [pagedRows]);
+  const isAllPageSelected = allPageIds.length > 0 && allPageIds.every((id) => selectedIds.has(id));
+  const isPageIndeterminate =
+    allPageIds.some((id) => selectedIds.has(id)) && !isAllPageSelected;
 
-      const newLayout = [...layout];
-      newLayout.sort((a, b) => a.display_order - b.display_order);
-      
-      const oldIndex = newLayout.findIndex(i => i.field_id === active.id);
-      const newIndex = newLayout.findIndex(i => i.field_id === over.id);
-      
-      const reorderedLayout = arrayMove(newLayout, oldIndex, newIndex);
-      reorderedLayout.forEach((item, idx) => item.display_order = idx + 1);
-      
-      await saveLayout(reorderedLayout);
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = isPageIndeterminate;
     }
-  };
+  }, [isPageIndeterminate]);
 
-  const getExportCellValue = (col: any, r: any) => {
-    switch(col.field_key) {
-      case "code": return r.code || r.id;
-      case "title": return r.title || "—";
-      case "department_name": return r.department_name;
-      case "system_name": return r.system_name;
-      case "module_name": return r.module_name;
-      case "priority_name": return r.priority_name;
-      case "status_name": return r.status_name;
-      case "due_date": return formatDate(r.due_date);
-      case "due_days": return r.due_days;
-      case "task_count": return r.task_count;
-      case "task_summary": return r.task_summary;
-      case "requester_name": return r.requester_name;
-      case "assignee_name": return r.assignee_name;
-      case "created_at": return formatDate(r.created_at);
-      case "updated_at": return formatDate(r.updated_at);
-      default: {
-        let val = undefined;
-        if (r.custom_fields && r.custom_fields[col.field_key] !== undefined) {
-          val = r.custom_fields[col.field_key];
-        } else if (r[col.field_key] !== undefined) {
-          val = r[col.field_key];
-        }
-        
-        if (val !== undefined && val !== null) {
-          if (col.data_type === "boolean") return val ? "Yes" : "No";
-          if (col.data_type === "date") return formatDate(val);
-          return val;
-        }
-        return "—";
+  const toggleSelectRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
       }
-    }
+      return next;
+    });
+    setIsSelectAllFiltered(false);
   };
 
-  const exportToExcel = async () => {
+  const toggleSelectAllPage = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (isAllPageSelected) {
+        allPageIds.forEach((id) => next.delete(id));
+      } else {
+        allPageIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+    setIsSelectAllFiltered(false);
+  };
+
+  const handleSelectAllFiltered = () => {
+    setIsSelectAllFiltered(true);
+    const allFilteredIds = new Set(filteredRows.map((r) => r.id));
+    setSelectedIds(allFilteredIds);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIds(new Set());
+    setIsSelectAllFiltered(false);
+  };
+
+  const selectedCount = isSelectAllFiltered ? filteredRows.length : selectedIds.size;
+
+  // Navigation into requirement details with state preservation
+  const handleViewRequirement = (dbId: string) => {
+    saveStateToSession();
+    router.push(`/requirements/${dbId}?from=reports&mode=view`);
+  };
+
+  const handleEditRequirement = (dbId: string) => {
+    saveStateToSession();
+    router.push(`/requirements/${dbId}?from=reports&tab=analysis`);
+  };
+
+  // Determine export rows
+  const rowsToExport = useMemo(() => {
+    if (isSelectAllFiltered) return filteredRows;
+    if (selectedIds.size > 0) return reqs.filter((r) => selectedIds.has(r.id));
+    return filteredRows;
+  }, [isSelectAllFiltered, selectedIds, reqs, filteredRows]);
+
+  const exportScopeLabel = useMemo(() => {
+    if (isSelectAllFiltered) return `All ${filteredRows.length} matching requirements`;
+    if (selectedIds.size > 0) return `${selectedIds.size} selected requirements`;
+    return `All ${filteredRows.length} filtered requirements`;
+  }, [isSelectAllFiltered, selectedIds, filteredRows.length]);
+
+  // Export to Excel
+  const handleExportExcel = async () => {
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Requirements Analysis");
+    workbook.creator = "Chandak Workspace";
+    workbook.created = new Date();
 
-    const exportCols = visibleColumns.filter(c => c.field_key !== "actions");
+    const sheet = workbook.addWorksheet("Requirements Analysis");
 
-    worksheet.columns = exportCols.map(col => ({
-      header: col.display_name,
-      key: col.field_key,
-      width: col.field_key === "title" ? 40 : 20,
-    }));
+    // Title Row
+    sheet.mergeCells("A1:G1");
+    const titleCell = sheet.getCell("A1");
+    titleCell.value = "CHANDAK WORKSPACE — REQUIREMENT ANALYSIS & REPORTS";
+    titleCell.font = { name: "Segoe UI", size: 14, bold: true, color: { argb: "FFFFFFFF" } };
+    titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0F172A" } };
+    titleCell.alignment = { vertical: "middle", horizontal: "center" };
+    sheet.getRow(1).height = 30;
 
-    worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-    worksheet.getRow(1).fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FF4F46E5" },
-    };
-    worksheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+    // Subtitle Row
+    sheet.mergeCells("A2:G2");
+    const subCell = sheet.getCell("A2");
+    subCell.value = `Scope: ${exportScopeLabel} | Generated: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`;
+    subCell.font = { name: "Segoe UI", size: 9, italic: true, color: { argb: "FF475569" } };
+    sheet.getRow(2).height = 18;
 
-    filtered.forEach((r) => {
-      const row: any = {};
-      exportCols.forEach(col => {
-        row[col.field_key] = getExportCellValue(col, r);
+    // Header Row
+    const headerCols = visibleColumns;
+    const headerRow = sheet.getRow(4);
+    headerRow.height = 24;
+    headerCols.forEach((col, idx) => {
+      const cell = headerRow.getCell(idx + 1);
+      cell.value = col.label;
+      cell.font = { name: "Segoe UI", size: 10, bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E293B" } };
+      cell.alignment = { vertical: "middle", horizontal: col.kind === "number" ? "right" : "left" };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFCBD5E1" } },
+        bottom: { style: "medium", color: { argb: "FF0F172A" } },
+        left: { style: "thin", color: { argb: "FFCBD5E1" } },
+        right: { style: "thin", color: { argb: "FFCBD5E1" } },
+      };
+    });
+
+    // Data Rows
+    rowsToExport.forEach((r, rowIdx) => {
+      const dataRow = sheet.getRow(5 + rowIdx);
+      dataRow.height = 20;
+      headerCols.forEach((col, colIdx) => {
+        const cell = dataRow.getCell(colIdx + 1);
+        const text = cellText(col, r);
+        cell.value = text;
+        cell.font = { name: "Segoe UI", size: 9 };
+        cell.alignment = { vertical: "middle", horizontal: col.kind === "number" ? "right" : "left" };
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFE2E8F0" } },
+          bottom: { style: "thin", color: { argb: "FFE2E8F0" } },
+          left: { style: "thin", color: { argb: "FFE2E8F0" } },
+          right: { style: "thin", color: { argb: "FFE2E8F0" } },
+        };
+        if (rowIdx % 2 === 1) {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+        }
       });
-      worksheet.addRow(row);
+    });
+
+    // Auto-fit column widths
+    headerCols.forEach((col, idx) => {
+      sheet.getColumn(idx + 1).width = Math.max(col.width / 8, 14);
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), "Requirement_Analysis_Report.xlsx");
+    saveAs(new Blob([buffer]), `Requirements_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  const exportToPDF = () => {
-    const doc = new jsPDF("landscape");
-    doc.text("Requirement Analysis Report", 14, 15);
-    
-    const exportCols = visibleColumns.filter(c => c.field_key !== "actions");
-    const tableData = filtered.map(r => exportCols.map(col => getExportCellValue(col, r)));
+  // Export to PDF
+  const handleExportPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("CHANDAK WORKSPACE — REQUIREMENT REPORTS", 40, 36);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`Scope: ${exportScopeLabel} | Generated: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`, 40, 52);
+
+    const head = [visibleColumns.map((c) => c.label)];
+    const body = rowsToExport.map((r) => visibleColumns.map((c) => cellText(c, r)));
 
     autoTable(doc, {
-      head: [exportCols.map(col => col.display_name)],
-      body: tableData,
-      startY: 20,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [79, 70, 229] },
-      alternateRowStyles: { fillColor: [243, 244, 246] }
+      head,
+      body,
+      startY: 64,
+      styles: { fontSize: 8, cellPadding: 4, font: "helvetica" },
+      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      margin: { left: 40, right: 40 },
     });
 
-    doc.save("Requirement_Analysis_Report.pdf");
+    doc.save(`Requirements_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
-  const virtualizer = useVirtualizer({
-    count: filtered.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 64,
-    overscan: 5,
-  });
-
-  if (permsLoading) {
-    return (
-      <div className="py-12 flex justify-center">
-        <ChandakLoader size="md" title="Verifying Permissions…" subtitle="Loading requirements matrix" />
-      </div>
-    );
-  }
-
-  if (!hasPermission("REQUIREMENTS_REPORTS_VIEW")) {
-    return (
-      <AccessRestricted
-        requiredRole="Requirement Manager"
-        requiredPermission="REQUIREMENTS_REPORTS_VIEW"
-        moduleName="Requirements"
-      />
-    );
-  }
+  const isFiltersActive = Boolean(
+    query ||
+    kpiCard ||
+    systems.length ||
+    departments.length ||
+    statuses.length ||
+    priorities.length ||
+    assignees.length ||
+    requesters.length ||
+    createdFrom ||
+    createdTo ||
+    dueFrom ||
+    dueTo ||
+    Object.keys(columnFilters).length
+  );
 
   return (
-    <ExperienceProvider mode="operational">
-      <div className="space-y-6">
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex flex-col gap-1 shrink-0">
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Requirement analysis &amp; reports</h1>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-            <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
-              Export Excel
-            </AppButton>
-            <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<Download className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
-              Export PDF
-            </AppButton>
-            <AppButton variant="outline" size="sm" onClick={() => setIsConfigOpen(true)} leftIcon={<Settings2 className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm shrink-0">
-              Columns
-            </AppButton>
-          </div>
-        </header>
+    <div className="flex flex-col gap-4">
+      {/* Header Toolbar */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-heading">Requirement Reports</h1>
+          <p className="text-xs text-muted">Analysis, status tracking, and SLA auditing across workspace requirements</p>
+        </div>
 
-        {/* Global KPI Summary Bar */}
-        <ReportKPIBar kpis={kpis} />
-
-        <div className="theme-card-structural rounded-2xl shadow-sm flex flex-col">
-          <div className="flex items-center justify-between border-b border-border px-4 pt-2 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-4 sm:gap-6 self-end overflow-x-auto no-scrollbar pb-1 sm:pb-0 shrink-0">
-              {(["ALL","REQUESTER","APPROVER"] as const).map(sc => (
-                <AppButton variant="secondary"
-                  key={sc}
-                  onClick={() => setScope(sc)}
-                  className={`pb-3 text-xs sm:text-[13px] font-bold transition-all border-b-2 relative top-[1px] whitespace-nowrap shrink-0 ${!activeSavedFilterId && scope === sc ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
-                >
-                  {sc === "ALL" ? "All Requirements" : sc === "REQUESTER" ? "My Requests" : "Pending My Approval"}
-                </AppButton>
-              ))}
-
-              {savedFilters.length > 0 && <div className="h-4 w-px bg-border mx-1 sm:mx-2 shrink-0"></div>}
-              
-              {savedFilters.map(f => (
-                <AppButton variant="secondary"
-                  key={f.id}
-                  onClick={() => applyFilter(f)}
-                  className={`pb-3 text-xs sm:text-[13px] font-bold transition-all border-b-2 relative top-[1px] whitespace-nowrap shrink-0 ${activeSavedFilterId === f.id ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
-                >
-                  {f.name}
-                </AppButton>
-              ))}
-              
-              <div className="h-6 w-px bg-border mx-2"></div>
-              
-              <SavedFiltersDropdown
-                savedFilters={savedFilters}
-                activeSavedFilterId={activeSavedFilterId}
-                onSaveCurrent={handleSaveCurrentFilter}
-                onApplyFilter={applyFilter}
-                onDeleteFilter={deleteSavedFilter}
-                onUpdateFilter={updateSavedFilter}
-                currentPayload={{
-                  scope,
-                  query,
-                  selectedStatus,
-                  selectedPriority,
-                  dateFrom,
-                  dateTo
-                }}
-              />
-            </div>
-
-            <div className="flex items-center gap-4 pb-2">
-              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
-                <option value="">All statuses</option>
-                {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 px-4 py-3 bg-surface/50 dark:bg-surface/[0.02]">
-            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-9 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
-              <option value="">All priorities</option>
-              {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            
-            <div className="flex items-center gap-2 mx-2">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary" />
-              <span className="text-sm text-muted">to</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary" />
-            </div>
-            
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-              <input 
-                placeholder="Search requirements, code, department…" 
-                value={query} 
-                onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-sm font-medium h-9 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary placeholder:text-muted" 
-              />
-            </div>
-          </div>
-
-          <DynamicReportBuilder 
-            isOpen={isConfigOpen} 
-            onClose={() => setIsConfigOpen(false)} 
-            layout={layout} 
-            availableFields={availableFields} 
-            onSave={saveLayout} 
-            onReset={resetToDefault} 
-            reportName="Requirement Analysis"
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Saved Filters Dropdown */}
+          <SavedFiltersDropdown<ReqReportFilterPayload>
+            savedFilters={savedFilters}
+            activeSavedFilterId={activeSavedFilterId}
+            onSaveCurrent={() => saveCurrentFilter(currentPayload)}
+            onApplyFilter={handleApplySavedFilter}
+            onDeleteFilter={deleteSavedFilter}
+            onUpdateFilter={updateSavedFilter}
+            currentPayload={currentPayload}
           />
 
-          {/* Mobile Card List (<1024px) */}
-          <div className="block lg:hidden p-4 space-y-3">
-            {filtered.length === 0 ? (
-              <div className="text-center py-12 text-muted text-sm border border-border rounded-xl bg-surface/50">
-                No requirements match your current filters.
-              </div>
-            ) : (
-              filtered.map((r) => (
-                <div 
-                  key={r.id}
-                  onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
-                  className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all cursor-pointer space-y-3 relative active:scale-[0.99]"
-                >
-                  {/* Top Row: Code, Version, Status, Priority */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-mono text-xs font-bold text-warning-text bg-warning-soft px-2 py-0.5 rounded-md shrink-0">
-                        {r.code || r.id}
-                      </span>
-                      {r.amendmentVersion > 0 && (
-                        <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[11px] font-bold shrink-0">
-                          v{r.amendmentVersion}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {r.priority_name && r.priority_name !== "—" && (
-                        <AppBadge variant={getPriorityVariant(r.priority_name)} className="text-[11px] py-0.5 px-2">
-                          {r.priority_name}
-                        </AppBadge>
-                      )}
-                      <AppBadge variant={getStatusVariant(r.status_name)} className="text-[11px] py-0.5 px-2">
-                        {r.status_name || 'Draft'}
-                      </AppBadge>
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <div>
-                    <h3 className="text-sm font-bold text-foreground line-clamp-2">
-                      {r.title || 'Untitled Requirement'}
-                    </h3>
-                  </div>
-
-                  {/* Department, System, Task Count */}
-                  <div className="flex items-center justify-between gap-2 text-xs text-muted flex-wrap">
-                    <div className="flex items-center gap-2 truncate">
-                      {r.department_name && (
-                        <span className="bg-elevated px-2 py-0.5 rounded text-[11px] font-bold text-foreground/80">
-                          {r.department_name}
-                        </span>
-                      )}
-                      {r.system_name && (
-                        <span className="text-muted text-[11px] truncate max-w-[120px]">
-                          {r.system_name}
-                        </span>
-                      )}
-                    </div>
-                    {r.task_count !== undefined && (
-                      <span className="font-bold text-[11px] text-theme-icon bg-accent-soft px-2 py-0.5 rounded-full">
-                        {r.task_count} Tasks
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Bottom Row: Due Info & Quick View Button */}
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
-                    <div className="text-[11px] font-semibold text-muted flex items-center gap-2">
-                      {r.due_days && (
-                        <span className={r.due_days.includes("Overdue") ? "text-danger-text font-bold" : "text-success-text font-bold"}>
-                          {r.due_days}
-                        </span>
-                      )}
-                      {r.due_date && <span>• Due: {formatDate(r.due_date)}</span>}
-                    </div>
-                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <AppButton 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-7 px-2.5 text-xs text-theme-icon hover:bg-accent-soft rounded-lg flex items-center gap-1"
-                        onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
-                      >
-                        <Eye className="h-3.5 w-3.5" /> View analysis
-                      </AppButton>
-                    </div>
-                  </div>
+          {/* Column Chooser Popover */}
+          <Popover.Root open={columnsOpen} onOpenChange={setColumnsOpen}>
+            <Popover.Trigger asChild>
+              <AppButton
+                variant="secondary"
+                aria-label="Customize columns"
+                className="gap-1.5"
+                leftIcon={<Columns3 className="h-4 w-4" />}
+              >
+                Columns
+                <span className="rounded-full bg-accent-soft px-1.5 py-0.2 text-[11px] font-semibold text-accent-soft-text">
+                  {visibleColumns.length}/{COLUMNS.length}
+                </span>
+              </AppButton>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content
+                align="end"
+                sideOffset={6}
+                className="z-[var(--z-popover)] w-64 rounded-xl border border-border bg-elevated p-3 shadow-md outline-none space-y-2"
+              >
+                <div className="flex items-center justify-between pb-1 border-b border-border">
+                  <span className="text-xs font-semibold text-heading">Choose columns</span>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleKeys(COLUMNS.filter((c) => c.defaultVisible).map((c) => c.key))}
+                    className="text-[11px] text-primary hover:underline"
+                  >
+                    Reset default
+                  </button>
                 </div>
-              ))
-            )}
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none" />
+                  <input
+                    type="text"
+                    value={colSearchQuery}
+                    onChange={(e) => setColSearchQuery(e.target.value)}
+                    placeholder="Search columns..."
+                    className="h-7 w-full rounded border border-border bg-surface pl-7 pr-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                  {COLUMNS.filter(c => c.label.toLowerCase().includes(colSearchQuery.toLowerCase())).map((col) => {
+                    const isChecked = visibleKeys.includes(col.key);
+                    return (
+                      <label
+                        key={col.key}
+                        className="flex items-center gap-2 px-2 py-1 text-xs rounded hover:bg-surface cursor-pointer select-none"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            if (isChecked) {
+                              if (visibleKeys.length > 1) {
+                                setVisibleKeys(visibleKeys.filter((k) => k !== col.key));
+                              }
+                            } else {
+                              setVisibleKeys([...visibleKeys, col.key]);
+                            }
+                          }}
+                          className="h-3.5 w-3.5 rounded border-border text-primary"
+                        />
+                        <span className="text-foreground">{col.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+
+          {/* Export Actions with Scope Indicator */}
+          {canExport && (
+            <div className="flex items-center gap-1.5">
+              <AppButton
+                variant="secondary"
+                onClick={handleExportExcel}
+                title={`Export to Excel (${exportScopeLabel})`}
+                leftIcon={<FileSpreadsheet className="h-4 w-4 text-success-text" />}
+              >
+                Excel
+              </AppButton>
+              <AppButton
+                variant="secondary"
+                onClick={handleExportPDF}
+                title={`Export to PDF (${exportScopeLabel})`}
+                leftIcon={<FileText className="h-4 w-4 text-danger-text" />}
+              >
+                PDF
+              </AppButton>
+            </div>
+          )}
+
+          <AppButton
+            variant="ghost"
+            onClick={resetAllFilters}
+            aria-label="Reset all filters"
+            title="Reset all filters"
+            className="text-muted hover:text-foreground"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </AppButton>
+        </div>
+      </div>
+
+      {/* Interactive KPI Cards */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <button
+          type="button"
+          onClick={() => setKpiCard(null)}
+          className={cn(
+            "group relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all",
+            kpiCard === null
+              ? "bg-elevated border-primary/40 ring-1 ring-primary/40 shadow-xs"
+              : "bg-surface border-border hover:border-border-active hover:bg-surface-hover"
+          )}
+        >
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className="text-[11.5px] font-semibold text-muted uppercase tracking-wider">Total</span>
+            <div className="rounded-lg p-1.5 bg-accent-soft text-theme-icon">
+              <LayoutList className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-xl font-bold tracking-tight text-foreground">{reqs.length}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setKpiCard(prev => prev === "PENDING" ? null : "PENDING")}
+          className={cn(
+            "group relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all",
+            kpiCard === "PENDING"
+              ? "bg-elevated border-warning/50 ring-1 ring-warning/50 shadow-xs"
+              : "bg-surface border-border hover:border-warning/30 hover:bg-surface-hover"
+          )}
+        >
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className="text-[11.5px] font-semibold text-warning-text uppercase tracking-wider">Pending</span>
+            <div className="rounded-lg p-1.5 bg-warning-soft text-warning-text">
+              <Layers className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-xl font-bold tracking-tight text-warning-text">{countPending}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setKpiCard(prev => prev === "APPROVED" ? null : "APPROVED")}
+          className={cn(
+            "group relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all",
+            kpiCard === "APPROVED"
+              ? "bg-elevated border-success/50 ring-1 ring-success/50 shadow-xs"
+              : "bg-surface border-border hover:border-success/30 hover:bg-surface-hover"
+          )}
+        >
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className="text-[11.5px] font-semibold text-success-text uppercase tracking-wider">Approved</span>
+            <div className="rounded-lg p-1.5 bg-success-soft text-success-text">
+              <CheckCircle2 className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-xl font-bold tracking-tight text-success-text">{countApproved}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setKpiCard(prev => prev === "IN_PROGRESS" ? null : "IN_PROGRESS")}
+          className={cn(
+            "group relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all",
+            kpiCard === "IN_PROGRESS"
+              ? "bg-elevated border-accent-soft-text/50 ring-1 ring-accent-soft-text/50 shadow-xs"
+              : "bg-surface border-border hover:border-accent-soft-text/30 hover:bg-surface-hover"
+          )}
+        >
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className="text-[11.5px] font-semibold text-accent-soft-text uppercase tracking-wider">In Progress</span>
+            <div className="rounded-lg p-1.5 bg-accent-soft text-accent-soft-text">
+              <RotateCcw className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-xl font-bold tracking-tight text-accent-soft-text">{countInProgress}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setKpiCard(prev => prev === "OVERDUE" ? null : "OVERDUE")}
+          className={cn(
+            "group relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all",
+            kpiCard === "OVERDUE"
+              ? "bg-elevated border-purple-500/50 ring-1 ring-purple-500/50 shadow-xs"
+              : "bg-surface border-border hover:border-purple-500/30 hover:bg-surface-hover"
+          )}
+        >
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className="text-[11.5px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Overdue</span>
+            <div className="rounded-lg p-1.5 bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <Clock className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-xl font-bold tracking-tight text-purple-600 dark:text-purple-400">{countOverdue}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setKpiCard(prev => prev === "WITH_TASKS" ? null : "WITH_TASKS")}
+          className={cn(
+            "group relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all",
+            kpiCard === "WITH_TASKS"
+              ? "bg-elevated border-primary/50 ring-1 ring-primary/50 shadow-xs"
+              : "bg-surface border-border hover:border-primary/30 hover:bg-surface-hover"
+          )}
+        >
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className="text-[11.5px] font-semibold text-theme-icon uppercase tracking-wider">With Tasks</span>
+            <div className="rounded-lg p-1.5 bg-accent-soft text-theme-icon">
+              <Layers className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-xl font-bold tracking-tight text-theme-icon">{countWithTasks}</div>
+        </button>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="theme-card-structural space-y-3 p-3">
+        {/* Row 1: Search & Multi-Select Dropdowns */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
+          <div className="sm:col-span-2 lg:col-span-2">
+            <label className="mb-1 block text-[11.5px] font-semibold uppercase tracking-wider text-muted">
+              Search
+            </label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none" />
+              <input
+                type="search"
+                placeholder="Code, title, system..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="h-8.5 w-full rounded-md border border-border bg-surface pl-8 pr-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
           </div>
 
-          {/* Desktop Table Container (>=1024px) */}
-          <div className="hidden lg:block">
-            <AppTableContainer ref={parentRef} className="h-[600px] rounded-b-2xl">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <AppTable style={{ minWidth: visibleColumns.reduce((acc, col) => acc + (col.column_width || (col as any).default_width || 150), 0) + 100 }}>
-                  <AppTableHeader>
-                    <AppTableRow>
-                      <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
-                        {visibleColumns.map((col, i) => (
-                          <DraggableTableHead key={col.field_id} col={col} isFirst={i === 0} />
-                        ))}
-                      </SortableContext>
-                    </AppTableRow>
-                  </AppTableHeader>
-                  <AppTableBody>
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
-                      const r = filtered[virtualRow.index];
-                      return (
-                        <AppTableRow 
-                          key={r.id} 
-                          style={{ height: `${virtualRow.size}px` }} 
-                          className="hover:bg-surface-hover dark:hover:bg-surface/[0.02] cursor-pointer"
-                          onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
-                        >
-                          {visibleColumns.map((col, i) => {
-                            const w = col.column_width || (col as any).default_width || 150;
+          <div>
+            <label className="mb-1 block text-[11.5px] font-semibold uppercase tracking-wider text-muted">
+              System / Asset
+            </label>
+            <MultiSelectFilter
+              options={systemOptions}
+              selectedValues={systems}
+              onChange={setSystems}
+              placeholder="All systems"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11.5px] font-semibold uppercase tracking-wider text-muted">
+              Department
+            </label>
+            <MultiSelectFilter
+              options={departmentOptions}
+              selectedValues={departments}
+              onChange={setDepartments}
+              placeholder="All depts"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11.5px] font-semibold uppercase tracking-wider text-muted">
+              Approval Status
+            </label>
+            <MultiSelectFilter
+              options={statusOptions}
+              selectedValues={statuses}
+              onChange={setStatuses}
+              placeholder="All statuses"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11.5px] font-semibold uppercase tracking-wider text-muted">
+              Priority
+            </label>
+            <MultiSelectFilter
+              options={priorityOptions}
+              selectedValues={priorities}
+              onChange={setPriorities}
+              placeholder="All priorities"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11.5px] font-semibold uppercase tracking-wider text-muted">
+              Assignee
+            </label>
+            <MultiSelectFilter
+              options={assigneeOptions}
+              selectedValues={assignees}
+              onChange={setAssignees}
+              placeholder="All assignees"
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Date Filtering */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-2 text-xs">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-muted" />
+            <span className="font-semibold text-muted text-[11.5px] uppercase tracking-wider">Date Mode:</span>
+            <div className="inline-flex rounded-lg border border-border bg-surface p-0.5">
+              {(["CREATED", "DUE", "BOTH"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setDateMode(mode)}
+                  className={cn(
+                    "px-2.5 py-1 text-[11.5px] font-medium rounded-md transition-colors",
+                    dateMode === mode
+                      ? "bg-accent-soft text-accent-soft-text font-semibold shadow-2xs"
+                      : "text-muted hover:text-foreground"
+                  )}
+                >
+                  {mode === "CREATED" ? "Created date" : mode === "DUE" ? "Due date" : "Both dates"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {(dateMode === "CREATED" || dateMode === "BOTH") && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted text-[11.5px]">Created:</span>
+              <input
+                type="date"
+                value={createdFrom}
+                onChange={(e) => setCreatedFrom(e.target.value)}
+                className="h-7.5 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <span className="text-muted text-[11.5px]">to</span>
+              <input
+                type="date"
+                value={createdTo}
+                onChange={(e) => setCreatedTo(e.target.value)}
+                className="h-7.5 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          )}
+
+          {(dateMode === "DUE" || dateMode === "BOTH") && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted text-[11.5px]">Due:</span>
+              <input
+                type="date"
+                value={dueFrom}
+                onChange={(e) => setDueFrom(e.target.value)}
+                className="h-7.5 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <span className="text-muted text-[11.5px]">to</span>
+              <input
+                type="date"
+                value={dueTo}
+                onChange={(e) => setDueTo(e.target.value)}
+                className="h-7.5 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          )}
+
+          {(createdFrom || createdTo || dueFrom || dueTo) && (
+            <button
+              type="button"
+              onClick={() => { setCreatedFrom(""); setCreatedTo(""); setDueFrom(""); setDueTo(""); setDateError(null); }}
+              className="text-[11.5px] text-muted hover:text-foreground underline ml-auto"
+            >
+              Reset dates
+            </button>
+          )}
+
+          {dateError && (
+            <div className="flex items-center gap-1 text-[11.5px] text-danger-text w-full">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>{dateError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Active Filter Chips */}
+        {isFiltersActive && (
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-2 text-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted mr-1">Active:</span>
+
+            {query && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-[11.5px] text-accent-soft-text">
+                Search: &ldquo;{query}&rdquo;
+                <button type="button" onClick={() => setQuery("")} className="hover:text-foreground"><X className="h-3 w-3" /></button>
+              </span>
+            )}
+
+            {kpiCard && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-[11.5px] text-accent-soft-text font-semibold">
+                Card: {kpiCard.replace("_", " ")}
+                <button type="button" onClick={() => setKpiCard(null)} className="hover:text-foreground"><X className="h-3 w-3" /></button>
+              </span>
+            )}
+
+            {systems.map((s) => (
+              <span key={s} className="inline-flex items-center gap-1 rounded-md bg-surface border border-border px-2 py-0.5 text-[11.5px] text-foreground">
+                System: {s}
+                <button type="button" onClick={() => setSystems((prev) => prev.filter((x) => x !== s))} className="hover:text-danger-text"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+
+            {departments.map((d) => (
+              <span key={d} className="inline-flex items-center gap-1 rounded-md bg-surface border border-border px-2 py-0.5 text-[11.5px] text-foreground">
+                Dept: {d}
+                <button type="button" onClick={() => setDepartments((prev) => prev.filter((x) => x !== d))} className="hover:text-danger-text"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+
+            {statuses.map((s) => (
+              <span key={s} className="inline-flex items-center gap-1 rounded-md bg-surface border border-border px-2 py-0.5 text-[11.5px] text-foreground">
+                Status: {s}
+                <button type="button" onClick={() => setStatuses((prev) => prev.filter((x) => x !== s))} className="hover:text-danger-text"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+
+            {priorities.map((p) => (
+              <span key={p} className="inline-flex items-center gap-1 rounded-md bg-surface border border-border px-2 py-0.5 text-[11.5px] text-foreground">
+                Priority: {p}
+                <button type="button" onClick={() => setPriorities((prev) => prev.filter((x) => x !== p))} className="hover:text-danger-text"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+
+            {assignees.map((a) => (
+              <span key={a} className="inline-flex items-center gap-1 rounded-md bg-surface border border-border px-2 py-0.5 text-[11.5px] text-foreground">
+                Assignee: {a}
+                <button type="button" onClick={() => setAssignees((prev) => prev.filter((x) => x !== a))} className="hover:text-danger-text"><X className="h-3 w-3" /></button>
+              </span>
+            ))}
+
+            {(createdFrom || createdTo) && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-surface border border-border px-2 py-0.5 text-[11.5px] text-foreground">
+                Created: {createdFrom || "start"} → {createdTo || "now"}
+                <button type="button" onClick={() => { setCreatedFrom(""); setCreatedTo(""); }} className="hover:text-danger-text"><X className="h-3 w-3" /></button>
+              </span>
+            )}
+
+            {(dueFrom || dueTo) && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-surface border border-border px-2 py-0.5 text-[11.5px] text-foreground">
+                Due: {dueFrom || "start"} → {dueTo || "now"}
+                <button type="button" onClick={() => { setDueFrom(""); setDueTo(""); }} className="hover:text-danger-text"><X className="h-3 w-3" /></button>
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={resetAllFilters}
+              className="ml-auto inline-flex items-center gap-1 text-[11.5px] text-primary hover:underline font-medium"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Clear all filters
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Select-All Across Pages Banner */}
+      {isAllPageSelected && totalRecords > pageSize && (
+        <div className="flex items-center justify-between rounded-lg border border-accent-soft-text/30 bg-accent-soft px-3 py-2 text-xs text-accent-soft-text">
+          <span>
+            {isSelectAllFiltered ? (
+              <>All <strong>{totalRecords}</strong> requirements matching current filters are selected.</>
+            ) : (
+              <>All <strong>{pagedRows.length}</strong> requirements on this page are selected.</>
+            )}
+          </span>
+          <div className="flex items-center gap-2">
+            {!isSelectAllFiltered ? (
+              <button
+                type="button"
+                onClick={handleSelectAllFiltered}
+                className="font-semibold underline hover:text-foreground"
+              >
+                Select all {totalRecords} matching requirements
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleClearSelection}
+                className="font-semibold underline hover:text-foreground"
+              >
+                Clear selection
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Report Table Viewport */}
+      <div className="theme-card-structural overflow-hidden">
+        {totalRecords === 0 ? (
+          <EmptyState
+            kind={isFiltersActive ? "no-results" : "empty"}
+            title={isFiltersActive ? "No requirements match these filters" : "No requirement records available"}
+            description={isFiltersActive ? "Clear a filter or search with different keywords." : "Requirements will appear here once registered."}
+            action={isFiltersActive ? (
+              <AppButton variant="secondary" onClick={resetAllFilters}>
+                Clear filters
+              </AppButton>
+            ) : undefined}
+          />
+        ) : (
+          <>
+            <AppTableContainer className="max-h-[60vh] overflow-auto">
+              <AppTable>
+                <AppTableHeader>
+                  <AppTableRow>
+                    {/* Checkbox Column */}
+                    <AppTableHead className="w-10 text-center sticky top-0 bg-elevated z-30">
+                      <input
+                        ref={headerCheckboxRef}
+                        type="checkbox"
+                        checked={isAllPageSelected}
+                        onChange={toggleSelectAllPage}
+                        aria-label="Select all on this page"
+                        className="h-3.5 w-3.5 rounded border-border text-primary cursor-pointer"
+                      />
+                    </AppTableHead>
+
+                    {visibleColumns.map((col) => (
+                      <AppTableHead
+                        key={col.key}
+                        className={cn(
+                          "sticky top-0 bg-elevated z-25 text-xs font-semibold text-foreground px-3 py-2 select-none",
+                          col.kind === "number" ? "text-right" : "text-left"
+                        )}
+                        style={{ minWidth: `${col.width}px` }}
+                      >
+                        <div className="flex flex-col gap-1.5">
+                          <span>{col.label}</span>
+                          <input
+                            type="text"
+                            value={columnFilters[col.key] || ""}
+                            onChange={(e) => setColumnFilters((prev) => ({ ...prev, [col.key]: e.target.value }))}
+                            placeholder={`Filter ${col.label}...`}
+                            className="h-6 w-full rounded border border-border bg-surface px-1.5 text-[11px] font-normal text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </AppTableHead>
+                    ))}
+
+                    <AppTableHead className="w-20 text-right sticky top-0 bg-elevated z-30 px-3">
+                      Actions
+                    </AppTableHead>
+                  </AppTableRow>
+                </AppTableHeader>
+
+                <AppTableBody>
+                  {pagedRows.map((r) => {
+                    const isSelected = selectedIds.has(r.id);
+                    const overdue = isOverdue(r);
+
+                    return (
+                      <AppTableRow
+                        key={r.id}
+                        className={cn(
+                          "cursor-pointer hover:bg-surface-hover transition-colors",
+                          isSelected && "bg-accent-soft/40"
+                        )}
+                        onClick={() => handleViewRequirement(r.id)}
+                      >
+                        {/* Row Checkbox */}
+                        <AppTableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectRow(r.id)}
+                            aria-label={`Select ${r.code || r.id}`}
+                            className="h-3.5 w-3.5 rounded border-border text-primary cursor-pointer"
+                          />
+                        </AppTableCell>
+
+                        {/* Data Cells */}
+                        {visibleColumns.map((col) => {
+                          if (col.key === "code") {
                             return (
-                              <AppTableCell 
-                                key={col.field_id} 
-                                style={{ width: `${w}px`, minWidth: `${w}px` }}
-                                className={cn(
-                                  !["title", "task_summary"].includes(col.field_key) && "text-center",
-                                  "text-[13px]",
-                                  i === 0 && "sticky left-0 bg-elevated z-20"
-                                )}
-                              >
-                                {col.field_key === "actions" ? (
-                                  <AppButton aria-label="View" 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-7 w-7 p-0" 
-                                    onClick={(e) => { e.stopPropagation(); router.push(`/requirements/${r.id}?tab=analysis`); }}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </AppButton>
-                                ) : col.field_key === "status_name" ? (
-                                  <AppBadge variant={getStatusVariant(r.status_name)}>
-                                    {r.status_name}
-                                  </AppBadge>
-                                ) : col.field_key === "priority_name" ? (
-                                  <AppBadge variant={getPriorityVariant(r.priority_name)} className="text-[11px] py-0.5 px-2.5">
-                                    {r.priority_name !== "—" ? r.priority_name : "-"}
-                                  </AppBadge>
-                                ) : col.field_key === "code" ? (
-                                  <span className="font-mono font-bold text-warning-text">{r.code || r.id}</span>
-                                ) : col.field_key === "title" ? (
-                                  <div className="font-medium flex items-center gap-2 max-w-[250px] md:max-w-none" title={r.title}>
-                                    <span className="truncate flex-1 min-w-0">{r.title}</span>
-                                    {r.amendmentVersion > 0 && (
-                                      <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[11px] font-bold shrink-0">
-                                        v{r.amendmentVersion}
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : col.field_key === "task_count" ? (
-                                  <div className="font-bold text-theme-icon bg-accent-soft dark:bg-accent-soft px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
-                                ) : col.field_key === "due_days" ? (
-                                  <div className={cn("font-semibold", r.due_days?.includes("Overdue") ? "text-danger-text" : "text-success-text")}>
-                                    {r.due_days}
-                                  </div>
+                              <AppTableCell key={col.key} className="whitespace-nowrap font-mono text-[12px] font-medium text-accent-soft-text">
+                                <div className="flex items-center gap-1.5">
+                                  <span>{r.code || r.id}</span>
+                                  {overdue && (
+                                    <span className="inline-flex items-center gap-0.5 rounded bg-danger-soft px-1 py-0.2 text-[9.5px] font-bold text-danger-text" title="Overdue">
+                                      <Clock className="h-3 w-3" />
+                                    </span>
+                                  )}
+                                </div>
+                              </AppTableCell>
+                            );
+                          }
+                          if (col.key === "title") {
+                            return (
+                              <AppTableCell key={col.key} className="max-w-[280px] truncate font-medium text-foreground" title={r.title}>
+                                {r.title}
+                              </AppTableCell>
+                            );
+                          }
+                          if (col.key === "priority_name") {
+                            return (
+                              <AppTableCell key={col.key}>
+                                {r.priority_name && r.priority_name !== "—" ? (
+                                  <PriorityIndicator priority={r.priority_name} />
                                 ) : (
-                                  <div className="truncate text-muted-foreground" title={String(getExportCellValue(col, r))}>
-                                    {getExportCellValue(col, r)}
-                                  </div>
+                                  <span className="text-muted">—</span>
                                 )}
                               </AppTableCell>
                             );
-                          })}
-                        </AppTableRow>
-                      );
-                    })}
-                  </AppTableBody>
-                </AppTable>
-              </DndContext>
+                          }
+                          if (col.key === "status_name") {
+                            return (
+                              <AppTableCell key={col.key}>
+                                <StatusBadge status={(r.status_name || "").split(" · ")[0]} />
+                              </AppTableCell>
+                            );
+                          }
+                          if (col.key === "task_count") {
+                            return (
+                              <AppTableCell key={col.key} className="text-right tabular text-subtle">
+                                {r.task_count > 0 ? r.task_count : "—"}
+                              </AppTableCell>
+                            );
+                          }
+                          if (col.key === "task_summary") {
+                            return (
+                              <AppTableCell key={col.key} className="text-xs text-subtle whitespace-nowrap">
+                                {r.task_summary || "No Tasks"}
+                              </AppTableCell>
+                            );
+                          }
+                          if (col.key === "due_date") {
+                            return (
+                              <AppTableCell key={col.key} className="whitespace-nowrap text-subtle tabular">
+                                {r.due_date ? (
+                                  <span className={overdue ? "font-semibold text-danger-text" : ""}>
+                                    {formatDate(r.due_date)}
+                                  </span>
+                                ) : "—"}
+                              </AppTableCell>
+                            );
+                          }
+                          if (col.key === "created_at" || col.key === "updated_at") {
+                            return (
+                              <AppTableCell key={col.key} className="whitespace-nowrap text-subtle tabular">
+                                {formatDate(r[col.key])}
+                              </AppTableCell>
+                            );
+                          }
+                          return (
+                            <AppTableCell key={col.key} className="text-subtle text-xs whitespace-nowrap">
+                              {r[col.key] || "—"}
+                            </AppTableCell>
+                          );
+                        })}
+
+                        {/* Actions */}
+                        <AppTableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleViewRequirement(r.id)}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface-hover hover:text-foreground"
+                              title="View requirement"
+                              aria-label={`View requirement ${r.code || r.id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleEditRequirement(r.id)}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface-hover hover:text-foreground"
+                              title="Edit requirement analysis"
+                              aria-label={`Edit requirement analysis for ${r.code || r.id}`}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </AppTableCell>
+                      </AppTableRow>
+                    );
+                  })}
+                </AppTableBody>
+              </AppTable>
             </AppTableContainer>
-          </div>
-        </div>
+
+            {/* Pagination & Status Footer */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-xs text-muted">
+              <div className="flex items-center gap-2">
+                <span>
+                  Showing <strong>{totalRecords > 0 ? pageStart + 1 : 0}</strong>–<strong>{pageEnd}</strong> of <strong>{totalRecords}</strong> requirements
+                </span>
+                {selectedCount > 0 && (
+                  <span className="rounded bg-accent-soft px-2 py-0.5 text-accent-soft-text font-semibold">
+                    {selectedCount} selected
+                  </span>
+                )}
+                {canExport && (
+                  <span className="hidden md:inline-block text-[11px] text-subtle font-medium">
+                    (Export scope: {exportScopeLabel})
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span>Rows:</span>
+                  <select
+                    aria-label="Rows per page"
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="h-7 rounded border border-border bg-surface px-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    {[10, 25, 50, 100].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <AppButton
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Previous page"
+                    disabled={currentPageClamped <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="h-7 w-7"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </AppButton>
+                  <span>
+                    Page {currentPageClamped} of {totalPages}
+                  </span>
+                  <AppButton
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Next page"
+                    disabled={currentPageClamped >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className="h-7 w-7"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </AppButton>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-    </ExperienceProvider>
+    </div>
   );
 }
-

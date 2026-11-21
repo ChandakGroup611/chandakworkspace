@@ -124,8 +124,15 @@ export async function changeRequirementStatus(
     return { success: false, error: updateError.message || JSON.stringify(updateError) };
   }
 
-  // Activity log
-  await logActivityEvent('REQUIREMENT', reqId, 'STATUS_CHANGE', { status_id: req.status_id, old_status_name: oldName }, { status_id: targetStatus.id, status_name: newName, approval_status: newApprovalStatus, remark: remark || null }, userId);
+  // Activity log with field diff and legacy compatibility
+  await logActivityEvent(
+    'REQUIREMENT',
+    reqId,
+    'STATUS_CHANGE',
+    { status_id: req.status_id, old_status_name: oldName, field_name: 'Status', old_val: oldName },
+    { status_id: targetStatus.id, status_name: newName, approval_status: newApprovalStatus, field_name: 'Status', new_val: newName, remark: remark || null },
+    userId
+  );
 
   // Notification queue push and business event with human names old -> new (Item 4.6)
   const statusTransitionDisplay = `${oldName} → ${newName}`;
@@ -367,7 +374,8 @@ export async function fetchRequirements(workspaceId?: string | null) {
       category:ticket_categories(name),
       sub_category:ticket_subcategories(name),
       requester:user_master!requirements_requester_id_fkey(full_name),
-      requirement_approval_flow(level, status)
+      assignee:user_master!requirements_current_assignee_id_fkey(full_name),
+      requirement_approval_flow(level, status, approver_id)
     `)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
@@ -384,14 +392,39 @@ export async function fetchRequirements(workspaceId?: string | null) {
     return [];
   }
 
-  if (data && data.length > 0) {
-    const creatorIds = [...new Set(data.map(d => d.creator_id).filter(Boolean))];
+  const isSuperAdmin = await hasPermission(viewerId, 'SUPER_ADMIN');
+  const canManageAll = isSuperAdmin || (await hasPermission(viewerId, 'REQUIREMENTS_MANAGE'));
+
+  let filtered = data || [];
+  if (!canManageAll) {
+    const { data: managedDepts } = await supabaseAdmin
+      .from('departments')
+      .select('id')
+      .eq('manager_id', viewerId)
+      .eq('is_deleted', false);
+    const managedDeptIds = new Set(managedDepts?.map((d: any) => d.id) || []);
+
+    filtered = filtered.filter((r: any) => {
+      if (r.creator_id === viewerId) return true;
+      if (r.requester_id === viewerId) return true;
+      if (r.owner_id === viewerId) return true;
+      if (r.current_assignee_id === viewerId) return true;
+      if (r.department_id && managedDeptIds.has(r.department_id)) return true;
+      if (r.requirement_approval_flow && Array.isArray(r.requirement_approval_flow)) {
+        if (r.requirement_approval_flow.some((f: any) => f.approver_id === viewerId)) return true;
+      }
+      return false;
+    });
+  }
+
+  if (filtered && filtered.length > 0) {
+    const creatorIds = [...new Set(filtered.map((d: any) => d.creator_id).filter(Boolean))];
     if (creatorIds.length > 0) {
       const { data: users } = await supabaseAdmin.from('user_master').select('id, full_name').in('id', creatorIds);
       if (users) {
         const userMap: Record<string, any> = {};
-        users.forEach(u => userMap[u.id] = u);
-        data.forEach(d => {
+        users.forEach((u: any) => userMap[u.id] = u);
+        filtered.forEach((d: any) => {
           if (d.creator_id && userMap[d.creator_id]) {
             (d as any).creator = userMap[d.creator_id];
           }
@@ -400,7 +433,7 @@ export async function fetchRequirements(workspaceId?: string | null) {
     }
   }
 
-  return data ? JSON.parse(JSON.stringify(data)) : [];
+  return filtered ? JSON.parse(JSON.stringify(filtered)) : [];
 }
 
 export async function createRequirement(payload: {
@@ -785,9 +818,76 @@ export async function updateRequirementIntake(reqId: string, payload: any, perfo
       updatePayload[field] = payload[field];
     }
   });
+  // Fetch existing state for granular field-level diff audit
+  const { data: existing } = await supabaseAdmin
+    .from('requirements')
+    .select(`
+      title, scope, department_id, software_system_id, priority_id,
+      target_release, story_points, estimated_effort, estimated_cost,
+      budget_impact, start_date, expected_completion_date,
+      acceptance_criteria, dependency_notes, requirement_reason,
+      department:departments!requirements_department_id_fkey(name),
+      priority:priority_master!requirements_priority_id_fkey(name:priority_name),
+      software_system:software_systems(name)
+    `)
+    .eq('id', reqId)
+    .maybeSingle();
+
   const { error } = await supabaseAdmin.from('requirements').update(updatePayload).eq('id', reqId);
   if (error) return { error: 'Failed to update requirement: ' + error.message };
-  await logActivityEvent('REQUIREMENT', reqId, 'INTAKE_UPDATED', null, { message: 'Requirement intake details updated by Super Admin.' }, performedBy);
+
+  // Field-level change recording
+  if (existing) {
+    const diffMap: { field: string; label: string; oldVal: any; newVal: any }[] = [];
+    if (payload.title !== undefined && payload.title !== existing.title) {
+      diffMap.push({ field: 'title', label: 'Title', oldVal: existing.title, newVal: payload.title });
+    }
+    if (payload.scope !== undefined && payload.scope !== existing.scope) {
+      diffMap.push({ field: 'scope', label: 'Scope', oldVal: existing.scope, newVal: payload.scope });
+    }
+    if (payload.department_id !== undefined && payload.department_id !== existing.department_id) {
+      const { data: newDept } = await supabaseAdmin.from('departments').select('name').eq('id', payload.department_id).maybeSingle();
+      diffMap.push({ field: 'department', label: 'Department', oldVal: (existing as any).department?.name || '—', newVal: newDept?.name || payload.department_id });
+    }
+    if (payload.priority_id !== undefined && payload.priority_id !== existing.priority_id) {
+      const { data: newPri } = await supabaseAdmin.from('priority_master').select('priority_name').eq('id', payload.priority_id).maybeSingle();
+      diffMap.push({ field: 'priority', label: 'Priority', oldVal: (existing as any).priority?.name || '—', newVal: newPri?.priority_name || payload.priority_id });
+    }
+    if (payload.software_system_id !== undefined && payload.software_system_id !== existing.software_system_id) {
+      const { data: newSys } = await supabaseAdmin.from('software_systems').select('name').eq('id', payload.software_system_id).maybeSingle();
+      diffMap.push({ field: 'software_system', label: 'System', oldVal: (existing as any).software_system?.name || '—', newVal: newSys?.name || payload.software_system_id });
+    }
+    if (payload.target_release !== undefined && payload.target_release !== existing.target_release) {
+      diffMap.push({ field: 'target_release', label: 'Target Release', oldVal: existing.target_release, newVal: payload.target_release });
+    }
+    if (payload.estimated_effort !== undefined && payload.estimated_effort !== existing.estimated_effort) {
+      diffMap.push({ field: 'estimated_effort', label: 'Estimated Effort', oldVal: existing.estimated_effort, newVal: payload.estimated_effort });
+    }
+    if (payload.start_date !== undefined && payload.start_date !== (existing.start_date ? new Date(existing.start_date).toISOString().slice(0, 10) : '')) {
+      diffMap.push({ field: 'start_date', label: 'Start Date', oldVal: existing.start_date, newVal: payload.start_date });
+    }
+    if (payload.expected_completion_date !== undefined && payload.expected_completion_date !== (existing.expected_completion_date ? new Date(existing.expected_completion_date).toISOString().slice(0, 10) : '')) {
+      diffMap.push({ field: 'due_date', label: 'Expected Due Date', oldVal: existing.expected_completion_date, newVal: payload.expected_completion_date });
+    }
+
+    for (const d of diffMap) {
+      try {
+        await supabaseAdmin.from('activity_events').insert([{
+          module_type: 'REQUIREMENT',
+          record_id: reqId,
+          event_type: 'FIELD_CHANGED',
+          old_value: { field_name: d.label, old_val: String(d.oldVal || 'None') },
+          new_value: { field_name: d.label, new_val: String(d.newVal || 'None'), remark: payload.remark || null },
+          performed_by: performedBy,
+          performed_at: new Date().toISOString()
+        }]);
+      } catch (err: any) {
+        console.error("Failed to log field audit event:", err);
+      }
+    }
+  }
+
+  await logActivityEvent('REQUIREMENT', reqId, 'INTAKE_UPDATED', null, { message: 'Requirement intake details updated.', remark: payload.remark || null }, performedBy);
   revalidatePath('/requirements');
   revalidatePath(`/requirements/${reqId}`);
   return { success: true };
@@ -817,17 +917,19 @@ export async function fetchRequirementAnalyticsData() {
   if (!user) return [];
 
   const { hasPermission } = await import('@/lib/permissions');
-  // Super-admin comes only from the database role, never from a list of email addresses.
-  const isAdmin = await hasPermission(user.id, 'SUPER_ADMIN');
+  const isSuperAdmin = await hasPermission(user.id, 'SUPER_ADMIN');
+  const canManageAll = isSuperAdmin || (await hasPermission(user.id, 'REQUIREMENTS_MANAGE'));
 
   const { data, error } = await supabaseAdmin.from('requirements').select(`
-    id, code, title, scope, approval_status, current_assignee_id, created_at, updated_at, due_date, start_date, creator_id, requester_id, custom_fields,
+    id, code, title, scope, approval_status, current_assignee_id, created_at, updated_at, due_date, start_date, creator_id, requester_id, owner_id, department_id, custom_fields,
     status:status_master(name:status_name, status_color, code:status_code),
     department:departments!requirements_department_id_fkey(name),
     priority:priority_master!requirements_priority_id_fkey(name:priority_name, priority_color),
     software_system:software_systems(name),
     module:software_modules(name),
     sub_module:software_submodules(name),
+    category:ticket_categories(name),
+    sub_category:ticket_subcategories(name),
     requester:user_master!requirements_requester_id_fkey(full_name),
     assignee:user_master!requirements_current_assignee_id_fkey(full_name),
     requirement_approval_flow(approver_id)
@@ -842,11 +944,20 @@ export async function fetchRequirementAnalyticsData() {
   }
 
   let filteredData = data || [];
-  if (!isAdmin) {
+  if (!canManageAll) {
+    const { data: managedDepts } = await supabaseAdmin
+      .from('departments')
+      .select('id')
+      .eq('manager_id', user.id)
+      .eq('is_deleted', false);
+    const managedDeptIds = new Set(managedDepts?.map((d: any) => d.id) || []);
+
     filteredData = filteredData.filter((r: any) => {
       if (r.creator_id === user.id) return true;
       if (r.requester_id === user.id) return true;
+      if (r.owner_id === user.id) return true;
       if (r.current_assignee_id === user.id) return true;
+      if (r.department_id && managedDeptIds.has(r.department_id)) return true;
       if (r.requirement_approval_flow && r.requirement_approval_flow.some((flow: any) => flow.approver_id === user.id)) return true;
       return false;
     });

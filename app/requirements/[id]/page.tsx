@@ -734,9 +734,29 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
     <PageContainer strict={true} className="bg-background px-3 pt-4 sm:px-4 md:px-6 md:pt-5 lg:px-8">
       <div className="flex-1 overflow-y-auto pb-12">
       <div className="mb-5 flex shrink-0 flex-col gap-3 border-b border-border pb-4">
-        <button type="button" onClick={() => router.back()} className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-accent-soft-text hover:underline">
-          <ArrowLeft className="h-4 w-4" aria-hidden /> Back
-        </button>
+        {(() => {
+          const fromParam = searchParams.get('from');
+          const backTarget = fromParam === 'reports'
+            ? '/requirements/reports'
+            : fromParam === 'approvals'
+            ? '/requirements/approvals'
+            : '/requirements';
+          const backLabel = fromParam === 'reports'
+            ? 'Back to Reports'
+            : fromParam === 'approvals'
+            ? 'Back to Approvals'
+            : 'Back to Requirements';
+
+          return (
+            <button
+              type="button"
+              onClick={() => router.push(backTarget)}
+              className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-accent-soft-text hover:underline"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden /> {backLabel}
+            </button>
+          );
+        })()}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
