@@ -37,6 +37,7 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '30mb',
     },
+    agentUpgrade: 'security',
   },
   webpack: (config, { dev, isServer }) => {
     if (dev) {
