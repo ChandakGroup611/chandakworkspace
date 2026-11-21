@@ -43,14 +43,29 @@ export default async function BudgetHome({
         </div>
       )}
       <MySignoffs sb={sb} />
-      <section className="panel"><div className="panel-head"><h2>All projects</h2>
-        <div className="row" style={{ alignItems: "center", gap: 8 }}>
-          <span className="sub">Latest approved version of each project · amounts in crores</span>
-          {(D.can(me, "project.create") || D.can(me, "version.open")) && <Link href="/budget/create" className="btn-action primary">+ Create budget</Link>}
-        </div>
-      </div>
-        {projects.length ? <Portfolio projects={projects} totals={totals} canManage={D.can(me, "project.setup")} /> : <p>No projects yet.</p>}
-      </section>
+      {projects.length > 0 ? (
+        <Portfolio
+          projects={projects}
+          totals={totals}
+          canManage={D.can(me, "project.setup")}
+          canCreate={D.can(me, "project.create") || D.can(me, "version.open")}
+        />
+      ) : (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>All projects</h2>
+            <div className="row" style={{ alignItems: "center", gap: 8 }}>
+              <span className="sub">Latest approved version of each project · amounts in crores</span>
+              {(D.can(me, "project.create") || D.can(me, "version.open")) && (
+                <Link href="/budget/create" className="btn-action primary">
+                  + Create budget
+                </Link>
+              )}
+            </div>
+          </div>
+          <p>No projects yet.</p>
+        </section>
+      )}
       {D.can(me, "project.create") && <>
         <section className="panel cb-cta" id="new-project">
           <div><h2>Create a budget</h2><p className="sub">Type everything in, step by step: project, towers, budget lines, GST and figures. No Excel file needed.</p></div>

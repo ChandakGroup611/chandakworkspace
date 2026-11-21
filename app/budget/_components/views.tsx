@@ -64,8 +64,12 @@ export function NoVersion({ me, project }: Ctx) {
 // ---------- overview ----------
 export async function Overview(c: Ctx & { version: Version }) {
   const { sb, me, project, versions, version: v, names } = c;
-  const [totals, depts, imports, towers] = await Promise.all([
-    D.getTotals(sb, project.id), D.getDepartmentTotals(sb, v.id), D.getImports(sb, project.id), D.getTowers(sb, project.id),
+  const [totals, depts, imports, towers, towerWorkings] = await Promise.all([
+    D.getTotals(sb, project.id),
+    D.getDepartmentTotals(sb, v.id),
+    D.getImports(sb, project.id),
+    D.getTowers(sb, project.id),
+    D.getTowerWorkings(sb, v.id).catch(() => []),
   ]);
   const lookup = await lookupNames(sb, project.id, names);
   const pc = await loadCustom(sb, "project", project.id, new Map([[project.id, { towers: cr(towers.length) }]]), lookup);
@@ -75,10 +79,73 @@ export async function Overview(c: Ctx & { version: Version }) {
   const approved = lastApproved(versions);
   const lastImport = imports.find((i) => i.kind === "detail");
   const kpi = (label: string, value: React.ReactNode, small?: string) => <div className="kpi"><span>{label}</span><b>{value}</b>{small && <small>{small}</small>}</div>;
+
+  // Version progression timeline (R1 -> R2 -> ...)
+  const versionEvolution = versions.map((ver, idx) => {
+    const vt = totals.find((tot) => tot.version_id === ver.id);
+    const prevVer = idx > 0 ? versions[idx - 1] : null;
+    const prevVt = prevVer ? totals.find((tot) => tot.version_id === prevVer.id) : null;
+    const diffCr = vt && prevVt ? vt.ctc_cr - prevVt.ctc_cr : null;
+    return {
+      version: ver,
+      totals: vt,
+      diffCr,
+      isCurrent: ver.id === v.id,
+    };
+  });
+
+  // Tower allocation breakdown (if any tower workings exist)
+  const towerById = new Map(towers.map((t) => [t.id, t]));
+  const towerMap = new Map<number, { name: string; type: string | null; ctc_paise: number; incurred_paise: number }>();
+  for (const tw of towerWorkings) {
+    const tInfo = towerById.get(tw.tower_id);
+    const name = tInfo?.name ?? `Tower ${tw.tower_id}`;
+    const type = tInfo?.type ?? null;
+    const existing = towerMap.get(tw.tower_id) ?? { name, type, ctc_paise: 0, incurred_paise: 0 };
+    existing.ctc_paise += Number(tw.ctc_paise || 0);
+    existing.incurred_paise += Number(tw.incurred_paise || 0);
+    towerMap.set(tw.tower_id, existing);
+  }
+  const towerList = Array.from(towerMap.values()).map((t) => ({
+    name: t.name,
+    type: t.type,
+    ctc_cr: t.ctc_paise / 1e9,
+    incurred_cr: t.incurred_paise / 1e9,
+  }));
+
+  // Top departments by CTC
+  const sortedDepts = [...depts].sort((a, b) => b.ctc_cr - a.ctc_cr);
+  const topDepts = sortedDepts.slice(0, 4);
+
   return (
     <>
       <VersionBanner sb={sb} me={me} project={project} version={v} names={names} />
       <NextStep c={c} draft={draft} />
+
+      {/* Project Financial & Physical Metrics Strip */}
+      <div className="sub-kpis-strip">
+        <div className="sub-kpi-item">
+          <span>Engg Construction Area</span>
+          <b>{v.areas.eng_area ? `${fmtArea(v.areas.eng_area)} sft` : "—"}</b>
+        </div>
+        <div className="sub-kpi-item">
+          <span>Net Sale Carpet</span>
+          <b>{v.areas.total_carpet ? `${fmtArea(v.areas.total_carpet)} sft` : "—"}</b>
+        </div>
+        <div className="sub-kpi-item">
+          <span>Construction Rate</span>
+          <b>{psf != null ? `₹${fmt(psf)} / sft` : "—"}</b>
+        </div>
+        <div className="sub-kpi-item">
+          <span>Projected Sale Value</span>
+          <b>{v.areas.sale_value_cr != null ? `₹${fmt(v.areas.sale_value_cr)} Cr` : "—"}</b>
+        </div>
+        <div className="sub-kpi-item">
+          <span>Towers / Sub-projects</span>
+          <b>{towers.length > 0 ? `${towers.length} tower${towers.length === 1 ? "" : "s"}` : "None split"}</b>
+        </div>
+      </div>
+
       <div className="kpis">
         {kpi("Initial Budget (a)", fmt(t.initial_cr), "Crores")}
         {kpi("Estimated CTC (b)", fmt(t.ctc_cr), psf == null ? undefined : `PSF ₹${fmt(psf)}`)}
@@ -87,7 +154,105 @@ export async function Overview(c: Ctx & { version: Version }) {
         {kpi("Variance (a − b)", <Neg v={t.variance_cr} />, t.variance_cr < 0 ? "CTC is above the initial budget" : "Within the initial budget")}
         {kpi("Budget utilised", fmtPct(t.util_pct), "Cost incurred ÷ CTC")}
       </div>
-      <section className="panel"><div className="panel-head"><h2>Departments</h2><span className="sub">All amounts in crores · R{v.number}</span></div>
+
+      {/* Version Progression & CTC Evolution */}
+      {versionEvolution.length > 1 && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Version progression & CTC evolution</h2>
+            <span className="sub">Revision history from baseline R1 to R{Math.max(...versions.map((x) => x.number))}</span>
+          </div>
+          <div className="version-flow">
+            {versionEvolution.map(({ version: ver, totals: vt, diffCr, isCurrent }) => (
+              <Link
+                key={ver.id}
+                href={`/budget/${project.id}/overview?v=${ver.number}`}
+                className={`version-node ${isCurrent ? "active" : ""}`}
+                title={`Revision R${ver.number} as on ${dmy(ver.as_on)}`}
+              >
+                <div className="version-node-head">
+                  <strong>R{ver.number}</strong>
+                  <span className={`pill ${ver.status}`}>{ver.status}</span>
+                </div>
+                <span className="version-node-date">{dmy(ver.as_on)}</span>
+                <span className="version-node-ctc">{vt ? `₹${fmt(vt.ctc_cr)} Cr` : "—"}</span>
+                {diffCr != null && diffCr !== 0 && (
+                  <span className={`version-node-diff ${diffCr > 0 ? "neg" : ""}`}>
+                    {diffCr > 0 ? `+${fmt(diffCr)} Cr` : `${fmt(diffCr)} Cr`}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Tower Allocation Breakdown (when towers exist) */}
+      {towerList.length > 0 && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Tower-wise budget allocation</h2>
+            <span className="sub">Construction cost split across towers · R{v.number}</span>
+          </div>
+          <div className="tower-alloc-grid">
+            {towerList.map((tw) => {
+              const util = tw.ctc_cr > 0 ? (tw.incurred_cr / tw.ctc_cr) * 100 : 0;
+              const pctOfProject = t.ctc_cr > 0 ? (tw.ctc_cr / t.ctc_cr) * 100 : 0;
+              return (
+                <div key={tw.name} className="tower-alloc-card">
+                  <div className="tower-alloc-head">
+                    <strong>{tw.name}</strong>
+                    {tw.type && <span className="chip typed">{tw.type}</span>}
+                  </div>
+                  <div className="tower-alloc-amounts">
+                    <span>CTC: <b>₹{fmt(tw.ctc_cr)} Cr</b> ({fmtPct(pctOfProject)})</span>
+                    <span>Incurred: <b>₹{fmt(tw.incurred_cr)} Cr</b></span>
+                  </div>
+                  <div className="progress-bar-lg" style={{ marginTop: 4 }}>
+                    <i
+                      className={util > 100 ? "over" : util >= 90 ? "near" : ""}
+                      style={{ width: `${Math.min(100, Math.max(0, util))}%` }}
+                    />
+                  </div>
+                  <div className="tower-alloc-amounts" style={{ marginTop: 2, fontSize: 11 }}>
+                    <span>Utilised: {fmtPct(util)}</span>
+                    <span>Bal: ₹{fmt(tw.ctc_cr - tw.incurred_cr)} Cr</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Top Department Cost Centers & Breakdown Table */}
+      <section className="panel">
+        <div className="panel-head">
+          <h2>Departments</h2>
+          <span className="sub">All amounts in crores · R{v.number}</span>
+        </div>
+        {topDepts.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginBottom: 14 }}>
+            {topDepts.map((d) => {
+              const share = t.ctc_cr > 0 ? (d.ctc_cr / t.ctc_cr) * 100 : 0;
+              return (
+                <div key={d.department_id} style={{ padding: "8px 12px", border: "1px solid var(--line)", borderRadius: 8, background: "var(--surface)", display: "flex", flexDirection: "column", gap: 2 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <strong>{d.department}</strong>
+                    <span style={{ color: "var(--muted)" }}>{fmtPct(share)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--muted)" }}>
+                    <span>CTC: ₹{fmt(d.ctc_cr)} Cr</span>
+                    <span>Inc: ₹{fmt(d.incurred_cr)} Cr</span>
+                  </div>
+                  <div className="progress-bar-lg" style={{ height: 5, marginTop: 2 }}>
+                    <i className={(d.util_pct ?? 0) > 100 ? "over" : (d.util_pct ?? 0) >= 90 ? "near" : ""} style={{ width: `${Math.min(100, Math.max(0, d.util_pct ?? 0))}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
         <div className="scroll"><table><thead><tr><th className="sr">Sr</th><th className="label">Department</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th><th className="n">Variance (a−b)</th><th className="n">Utilised</th></tr></thead>
           <tbody>{depts.map((d, i) => <tr key={d.department_id}><td>{i + 1}</td><td>{d.department}</td><td className="n">{fmt(d.initial_cr)}</td><td className="n">{fmt(d.ctc_cr)}</td><td className="n">{fmt(d.incurred_cr)}</td><td className="n"><Neg v={d.balance_cr} /></td><td className="n"><Neg v={d.variance_cr} /></td><td className="n"><Bar v={d.util_pct} /></td></tr>)}
             <tr className="total"><td></td><td>Total</td><td className="n">{fmt(t.initial_cr)}</td><td className="n">{fmt(t.ctc_cr)}</td><td className="n">{fmt(t.incurred_cr)}</td><td className="n"><Neg v={t.balance_cr} /></td><td className="n"><Neg v={t.variance_cr} /></td><td className="n"><Bar v={t.util_pct} /></td></tr></tbody></table></div>
@@ -256,33 +421,198 @@ async function Insights({ c }: { c: Ctx & { version: Version } }) {
   );
 }
 
-export function Portfolio({ projects, totals, canManage = true }: { projects: Project[]; totals: D.Totals[]; canManage?: boolean }) {
+export function Portfolio({
+  projects,
+  totals,
+  canManage = true,
+  canCreate = false,
+}: {
+  projects: Project[];
+  totals: D.Totals[];
+  canManage?: boolean;
+  canCreate?: boolean;
+}) {
+  const summaries = projects.map((p) => {
+    const pv = totals.filter((t) => t.project_id === p.id);
+    const approved = pv.filter((t) => t.status === "approved").pop();
+    const cur = approved ?? pv[pv.length - 1];
+    return {
+      project: p,
+      cur,
+      allVersions: pv,
+      hasApproved: !!approved,
+    };
+  });
+
+  const withCur = summaries.filter((s) => s.cur != null);
+  const totalInitialCr = withCur.reduce((acc, s) => acc + (s.cur?.initial_cr ?? 0), 0);
+  const totalCtcCr = withCur.reduce((acc, s) => acc + (s.cur?.ctc_cr ?? 0), 0);
+  const totalIncurredCr = withCur.reduce((acc, s) => acc + (s.cur?.incurred_cr ?? 0), 0);
+  const totalBalanceCr = withCur.reduce((acc, s) => acc + (s.cur?.balance_cr ?? 0), 0);
+  const totalVarianceCr = totalInitialCr - totalCtcCr;
+  const overallUtilPct = totalCtcCr > 0 ? (totalIncurredCr / totalCtcCr) * 100 : null;
+
+  const totalProjects = projects.length;
+  const approvedCount = withCur.filter((s) => s.cur?.status === "approved").length;
+  const inProgressCount = withCur.filter((s) => s.cur?.status !== "approved").length;
+  const overBudgetCount = withCur.filter((s) => (s.cur?.variance_cr ?? 0) < 0).length;
+  const nearLimitCount = withCur.filter((s) => (s.cur?.util_pct ?? 0) >= 90).length;
+
+  const kpi = (label: string, value: React.ReactNode, small?: string) => (
+    <div className="kpi">
+      <span>{label}</span>
+      <b>{value}</b>
+      {small && <small>{small}</small>}
+    </div>
+  );
+
   return (
-    <div className="scroll"><table><thead><tr><th className="label">Project</th><th>Version</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Variance (a−b)</th><th className="n">Utilised</th><th className="actions-col">Actions</th></tr></thead><tbody>
-      {projects.map((p) => {
-        const pv = totals.filter((t) => t.project_id === p.id);
-        const cur = pv.filter((t) => t.status === "approved").pop() ?? pv[pv.length - 1];
-        if (!cur) return (
-          <tr key={p.id}>
-            <td><Link href={`/budget/${p.id}`}>{p.name}</Link></td>
-            <td colSpan={6} className="sub">No version yet</td>
-            <td className="actions"><F.ProjectActions p={p} canManage={canManage} /></td>
-          </tr>
-        );
-        return (
-          <tr key={p.id}>
-            <td><Link href={`/budget/${p.id}`}>{p.name}</Link></td>
-            <td>R{cur.number} · {dmy(cur.as_on)}{cur.status !== "approved" && ` (${cur.status.replace("_", " ")})`}</td>
-            <td className="n">{fmt(cur.initial_cr)}</td>
-            <td className="n">{fmt(cur.ctc_cr)}</td>
-            <td className="n">{fmt(cur.incurred_cr)}</td>
-            <td className="n"><Neg v={cur.variance_cr} /></td>
-            <td className="n"><Bar v={cur.util_pct} /></td>
-            <td className="actions"><F.ProjectActions p={p} canManage={canManage} /></td>
-          </tr>
-        );
-      })}
-    </tbody></table></div>
+    <>
+      {/* Portfolio-wide Executive KPI summary cards */}
+      {withCur.length > 0 && (
+        <>
+          <div className="portfolio-strip">
+            <span className="portfolio-metric-tag">
+              Projects: <strong>{totalProjects}</strong>
+            </span>
+            <span className="portfolio-metric-tag">
+              Approved revisions: <strong>{approvedCount}</strong>
+            </span>
+            {inProgressCount > 0 && (
+              <span className="portfolio-metric-tag">
+                In progress / review: <strong>{inProgressCount}</strong>
+              </span>
+            )}
+            {overBudgetCount > 0 && (
+              <span className="chip bad">
+                {overBudgetCount} over initial budget
+              </span>
+            )}
+            {nearLimitCount > 0 && (
+              <span className="chip warn">
+                {nearLimitCount} ≥90% utilised
+              </span>
+            )}
+          </div>
+
+          <div className="kpis" style={{ marginBottom: 18 }}>
+            {kpi("Portfolio Initial Budget", `₹${fmt(totalInitialCr)}`, `Across ${withCur.length} project budgets`)}
+            {kpi("Portfolio Estimated CTC", `₹${fmt(totalCtcCr)}`, "Total approved cost to complete")}
+            {kpi("Total Incurred Actuals", `₹${fmt(totalIncurredCr)}`, "Recorded bills & vouchers")}
+            {kpi("Balance Headroom", `₹${fmt(totalBalanceCr)}`, "Remaining unspent CTC")}
+            {kpi("Net Portfolio Variance", <Neg v={totalVarianceCr} />, totalVarianceCr < 0 ? "Portfolio CTC is above initial" : "Within initial baseline")}
+            {kpi("Overall Utilisation", fmtPct(overallUtilPct), overallUtilPct != null ? `${fmt(totalIncurredCr)} / ${fmt(totalCtcCr)} Cr` : undefined)}
+          </div>
+
+          {/* Cross-Project Spend vs CTC Allocation Panel */}
+          <section className="panel" style={{ marginBottom: 18 }}>
+            <div className="panel-head">
+              <h2>Project spend & budget progress</h2>
+              <span className="sub">Real-time spend against Estimated CTC per project</span>
+            </div>
+            <div className="project-progress-grid">
+              {summaries.map(({ project: p, cur }) => {
+                if (!cur) return null;
+                const util = cur.util_pct ?? (cur.ctc_cr > 0 ? (cur.incurred_cr / cur.ctc_cr) * 100 : 0);
+                return (
+                  <div key={p.id} className="project-progress-card">
+                    <div className="project-progress-header">
+                      <div>
+                        <Link href={`/budget/${p.id}`} className="project-progress-title">
+                          {p.name}
+                        </Link>
+                        {p.location && <div className="project-progress-loc">{p.location}</div>}
+                      </div>
+                      <span className={`pill ${cur.status}`}>
+                        R{cur.number}
+                      </span>
+                    </div>
+                    <div className="project-progress-amounts">
+                      <span>CTC: <b>₹{fmt(cur.ctc_cr)} Cr</b></span>
+                      <span>Incurred: <b>₹{fmt(cur.incurred_cr)} Cr</b></span>
+                    </div>
+                    <div className="progress-bar-lg">
+                      <i
+                        className={util > 100 ? "over" : util >= 90 ? "near" : ""}
+                        style={{ width: `${Math.min(100, Math.max(0, util))}%` }}
+                      />
+                    </div>
+                    <div className="project-progress-footer">
+                      <span>Utilised: <strong>{fmtPct(util)}</strong></span>
+                      <span>Bal: <strong>₹{fmt(cur.balance_cr)} Cr</strong></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* Projects Master Ledger Panel */}
+      <section className="panel">
+        <div className="panel-head">
+          <h2>All projects</h2>
+          <div className="row" style={{ alignItems: "center", gap: 8 }}>
+            <span className="sub">Latest approved version of each project · amounts in crores</span>
+            {canCreate && (
+              <Link href="/budget/create" className="btn-action primary">
+                + Create budget
+              </Link>
+            )}
+          </div>
+        </div>
+        <div className="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th className="label">Project</th>
+                <th>Revision</th>
+                <th className="n">Initial (a)</th>
+                <th className="n">CTC (b)</th>
+                <th className="n">Incurred (c)</th>
+                <th className="n">Balance (b−c)</th>
+                <th className="n">Variance (a−b)</th>
+                <th className="n">Utilised</th>
+                <th className="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summaries.map(({ project: p, cur }) => {
+                if (!cur) {
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        <Link href={`/budget/${p.id}`}>{p.name}</Link>
+                        {p.location && <small style={{ display: "block", color: "var(--muted)", fontSize: 11 }}>{p.location}</small>}
+                      </td>
+                      <td colSpan={7} className="sub">No version yet</td>
+                      <td className="actions"><F.ProjectActions p={p} canManage={canManage} /></td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr key={p.id}>
+                    <td>
+                      <Link href={`/budget/${p.id}`}>{p.name}</Link>
+                      {p.location && <small style={{ display: "block", color: "var(--muted)", fontSize: 11 }}>{p.location}</small>}
+                    </td>
+                    <td>R{cur.number} · {dmy(cur.as_on)}{cur.status !== "approved" && ` (${cur.status.replace("_", " ")})`}</td>
+                    <td className="n">{fmt(cur.initial_cr)}</td>
+                    <td className="n">{fmt(cur.ctc_cr)}</td>
+                    <td className="n">{fmt(cur.incurred_cr)}</td>
+                    <td className="n"><Neg v={cur.balance_cr} /></td>
+                    <td className="n"><Neg v={cur.variance_cr} /></td>
+                    <td className="n"><Bar v={cur.util_pct} /></td>
+                    <td className="actions"><F.ProjectActions p={p} canManage={canManage} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
   );
 }
 

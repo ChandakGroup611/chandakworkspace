@@ -199,6 +199,7 @@ const dashboardsNavGroups: NavGroup[] = [
       { label: "Admin access", href: "/dashboards/adm", icon: LineChart, permission: "DASH_ADM_VIEW" },
       { label: "Engineering budget", href: "/dashboards/engg", icon: LineChart, permission: "DASH_ENGG_VIEW" },
       { label: "Sales (Salesforce)", href: "/dashboards/sfdc", icon: LineChart, permission: "DASH_SFDC_VIEW" },
+      { label: "Organization Budget", href: "/budget", icon: Wallet },
     ]
   }
 ];
@@ -523,6 +524,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
             }
             if (activeModuleCode === "DASHBOARDS") {
               if (item.href === "/dashboards") return item;
+              if (item.href === "/budget") return item;
               const dashKey = item.href.replace("/dashboards/", "");
               if (isSuperAdmin || tickedDashboards.includes(dashKey)) return item;
               return null;
