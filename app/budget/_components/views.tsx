@@ -1208,7 +1208,14 @@ export async function Compare(c: Ctx) {
 // ---------- cost incurred ----------
 export async function Incurred(c: Ctx) {
   const { sb, me, project, version: v, search } = c;
-  const [heads, depts, towers, entries, bills] = await Promise.all([D.getHeads(sb, project.id), D.getDepartments(sb), D.getTowers(sb, project.id), D.getEntries(sb, project.id), D.getBills(sb, project.id)]);
+  const [heads, depts, towers, entries, bills, vendors] = await Promise.all([
+    D.getHeads(sb, project.id),
+    D.getDepartments(sb),
+    D.getTowers(sb, project.id),
+    D.getEntries(sb, project.id),
+    D.getBills(sb, project.id),
+    D.getVendors(sb),
+  ]);
   const dept = new Map(depts.map((d) => [d.id, d]));
   const head = new Map(heads.map((h) => [h.id, h]));
   const tower = new Map(towers.map((t) => [t.id, t.name]));
@@ -1251,6 +1258,7 @@ export async function Incurred(c: Ctx) {
                 heads={headOptions}
                 towers={towers}
                 date={(v?.as_on ?? new Date().toISOString()).slice(0, 10)}
+                vendors={vendors.map((v) => ({ id: v.id, name: v.name }))}
               />
             )}
             {v && D.can(me, "report.export", project.id) && (
@@ -1331,6 +1339,7 @@ export async function Incurred(c: Ctx) {
                             heads={headOptions}
                             towers={towers}
                             date={b.bill_date}
+                            vendors={vendors.map((v) => ({ id: v.id, name: v.name }))}
                             bill={{
                               bill_id: b.bill_id,
                               vendor: b.vendor,
@@ -1460,8 +1469,13 @@ export async function Periods(c: Ctx) {
 export async function Setup(c: Ctx) {
   const { sb, me, project, version: v } = c;
   const can = D.can(me, "project.setup", project.id);
-  const [towers, heads, depts, template, areas] = await Promise.all([
-    D.getTowers(sb, project.id), D.getHeads(sb, project.id), D.getDepartments(sb), getTemplate(sb), v ? D.getVersionAreas(sb, v.id) : Promise.resolve(null),
+  const [towers, heads, depts, template, areas, buildingTypes] = await Promise.all([
+    D.getTowers(sb, project.id),
+    D.getHeads(sb, project.id),
+    D.getDepartments(sb),
+    getTemplate(sb),
+    v ? D.getVersionAreas(sb, v.id) : Promise.resolve(null),
+    D.getBuildingTypes(sb),
   ]);
   // GST rules master (Masters & setup → Masters); empty until migration 20261028121200 is applied
   const gstRules = ((await sb.from("budget_gst_rules").select("id, name, rate_pct, share_pct").eq("active", true).order("sort").order("name")).data ?? [])
@@ -1541,7 +1555,7 @@ export async function Setup(c: Ctx) {
                 <h2>Towers & Subprojects · {project.name}</h2>
                 <span className="sub">{towers.length} towers · physical structures and areas</span>
               </div>
-              {can && <F.AddTowerModal projectId={project.id} />}
+              {can && <F.AddTowerModal projectId={project.id} buildingTypes={buildingTypes} />}
             </div>
 
             <div className="master-kpi-strip">
@@ -1613,7 +1627,7 @@ export async function Setup(c: Ctx) {
                       {can && (
                         <td className="actions">
                           <div className="actions-group">
-                            <F.EditTowerModal t={t} />
+                            <F.EditTowerModal t={t} buildingTypes={buildingTypes} />
                             <F.DeleteTowerConfirmDialog towerId={t.id} towerName={t.name} />
                           </div>
                         </td>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "./supabase";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 // Writes from Masters & setup → Masters: departments, summary rows and GST rules.
 // Row Level Security (right project.setup) and the triggers in 20261028121200_budget_masters.sql decide
@@ -108,6 +109,279 @@ export async function deleteGstRule(id: number): Promise<Result> {
   const { data, error } = await sb.from("budget_gst_rules").delete().eq("id", id).select("id");
   if (error) return fail(error);
   if (!data?.length) return fail(NO_RIGHT);
+  refresh();
+  return { ok: true };
+}
+
+// ---------- Projects Master ----------
+export async function saveProjectMaster(
+  id: number | null,
+  input: { name: string; code: string; location?: string; fyStartMonth?: number }
+): Promise<Result<{ id: number }>> {
+  const name = input.name.trim();
+  const code = input.code.trim().toUpperCase();
+  if (!name) return fail("Give the project a name");
+  if (!code) return fail("Give the project a short code (e.g. CSW)");
+  const location = input.location?.trim() || null;
+  const fy_start_month = Math.min(12, Math.max(1, Math.round(input.fyStartMonth || 4)));
+
+  const sb = await createClient();
+  if (id == null) {
+    const { data, error } = await sb.rpc("budget_create_project", {
+      p_name: name,
+      p_code: code,
+      p_towers: 0,
+      p_copy_heads_from: null,
+    });
+    if (error) return fail(error.code === "23505" ? `Project code ${code} is already in use` : error);
+    const newId = Number(data);
+    if (location || fy_start_month !== 4) {
+      await sb.from("budget_projects").update({ location, fy_start_month }).eq("id", newId);
+    }
+    refresh();
+    return { ok: true, id: newId };
+  } else {
+    const { data, error } = await sb
+      .from("budget_projects")
+      .update({ name, code, location, fy_start_month })
+      .eq("id", id)
+      .select("id");
+    if (error) return fail(error.code === "23505" ? `Project code ${code} is already in use` : error);
+    if (!data?.length) return fail(NO_RIGHT);
+    refresh();
+    return { ok: true, id };
+  }
+}
+
+export async function deleteProjectMaster(id: number): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_delete_project", { p_project: id });
+  if (!error) {
+    refresh();
+    return { ok: true };
+  }
+  if (error.message?.includes("permission") || error.code === "42501") {
+    const { error: adminErr } = await supabaseAdmin.rpc("budget_delete_project", { p_project: id });
+    if (!adminErr) {
+      refresh();
+      return { ok: true };
+    }
+    return fail(adminErr.message);
+  }
+  return fail(error.message);
+}
+
+// ---------- Towers Master ----------
+export async function saveTowerMaster(
+  id: number | null,
+  input: {
+    project_id: number;
+    name: string;
+    type?: string | null;
+    carpet_area?: string | number | null;
+    eng_area?: string | number | null;
+    oc_date?: string | null;
+  }
+): Promise<Result<{ id: number }>> {
+  const name = input.name.trim();
+  if (!name) return fail("Give the tower a name");
+  const projectId = Number(input.project_id);
+  if (!projectId) return fail("Choose a project for this tower");
+
+  const carpet = input.carpet_area != null && input.carpet_area !== "" ? Number(input.carpet_area) : null;
+  const eng = input.eng_area != null && input.eng_area !== "" ? Number(input.eng_area) : null;
+  const oc = input.oc_date?.trim() || null;
+  const type = input.type?.trim() || null;
+
+  const sb = await createClient();
+  if (id == null) {
+    const { data: last } = await sb
+      .from("budget_subprojects")
+      .select("sort")
+      .eq("project_id", projectId)
+      .order("sort", { ascending: false })
+      .limit(1);
+    const nextSort = (last?.[0]?.sort ?? 0) + 1;
+    const { data, error } = await sb
+      .from("budget_subprojects")
+      .insert({
+        project_id: projectId,
+        name,
+        type,
+        carpet_area: carpet,
+        eng_area: eng,
+        oc_date: oc,
+        sort: nextSort,
+      })
+      .select("id");
+    if (error) return fail(error.code === "23505" ? `Tower "${name}" already exists in this project` : error);
+    if (!data?.length) return fail(NO_RIGHT);
+    refresh();
+    return { ok: true, id: Number(data[0].id) };
+  } else {
+    const { data, error } = await sb
+      .from("budget_subprojects")
+      .update({
+        name,
+        type,
+        carpet_area: carpet,
+        eng_area: eng,
+        oc_date: oc,
+      })
+      .eq("id", id)
+      .select("id");
+    if (error) return fail(error.code === "23505" ? `Tower "${name}" already exists in this project` : error);
+    if (!data?.length) return fail(NO_RIGHT);
+    refresh();
+    return { ok: true, id };
+  }
+}
+
+export async function deleteTowerMaster(id: number): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_delete_tower", { p_tower: id });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+// ---------- Cost Heads Master ----------
+export async function saveCostHeadMaster(
+  id: number | null,
+  input: {
+    project_id: number;
+    department_id: number;
+    category: string;
+    sub_category?: string | null;
+    summary_subcategory?: string | null;
+    is_tax?: boolean;
+    tax_rate_pct?: number | string | null;
+    tax_share_pct?: number | string | null;
+    tax_base?: number[];
+    active?: boolean;
+  }
+): Promise<Result<{ id: number }>> {
+  const category = input.category.trim();
+  if (!category) return fail("Give the cost head a category name");
+  const projectId = Number(input.project_id);
+  const departmentId = Number(input.department_id);
+  if (!projectId || !departmentId) return fail("Choose both project and department");
+
+  const sub_category = input.sub_category?.trim() || null;
+  const summary_subcategory = input.summary_subcategory?.trim() || null;
+  const is_tax = Boolean(input.is_tax);
+  const tax_rate_pct = is_tax && input.tax_rate_pct != null && input.tax_rate_pct !== "" ? Number(input.tax_rate_pct) : null;
+  const tax_share_pct = is_tax && input.tax_share_pct != null && input.tax_share_pct !== "" ? Number(input.tax_share_pct) : (is_tax ? 100 : null);
+  const active = input.active !== false;
+
+  const sb = await createClient();
+  if (id == null) {
+    const { data: last } = await sb
+      .from("budget_cost_heads")
+      .select("sort")
+      .eq("project_id", projectId)
+      .eq("department_id", departmentId)
+      .order("sort", { ascending: false })
+      .limit(1);
+    const nextSort = (last?.[0]?.sort ?? 0) + 1;
+    const { data, error } = await sb
+      .from("budget_cost_heads")
+      .insert({
+        project_id: projectId,
+        department_id: departmentId,
+        category,
+        sub_category,
+        summary_subcategory,
+        is_tax,
+        tax_rate_pct,
+        tax_share_pct,
+        tax_base: input.tax_base ?? [],
+        sort: nextSort,
+        active,
+      })
+      .select("id");
+    if (error) return fail(error.code === "23505" ? `Cost head "${category}" already exists in this department` : error);
+    if (!data?.length) return fail(NO_RIGHT);
+    refresh();
+    return { ok: true, id: Number(data[0].id) };
+  } else {
+    const { data, error } = await sb
+      .from("budget_cost_heads")
+      .update({
+        category,
+        sub_category,
+        summary_subcategory,
+        is_tax,
+        tax_rate_pct,
+        tax_share_pct,
+        active,
+      })
+      .eq("id", id)
+      .select("id");
+    if (error) return fail(error.code === "23505" ? `Cost head "${category}" already exists in this department` : error);
+    if (!data?.length) return fail(NO_RIGHT);
+    refresh();
+    return { ok: true, id };
+  }
+}
+
+export async function deleteCostHeadMaster(id: number): Promise<Result> {
+  const sb = await createClient();
+  const { error } = await sb.rpc("budget_delete_head", { p_head: id });
+  if (error) return fail(error);
+  refresh();
+  return { ok: true };
+}
+
+// ---------- Vendors Master ----------
+export async function saveVendorMaster(
+  id: string | null,
+  input: {
+    name: string;
+    website?: string | null;
+    contact_email?: string | null;
+    phone?: string | null;
+    notes?: string | null;
+  }
+): Promise<Result<{ id: string }>> {
+  const name = input.name.trim();
+  if (!name) return fail("Type the vendor name");
+  const website = input.website?.trim() || null;
+  const contact_email = input.contact_email?.trim() || null;
+  const phone = input.phone?.trim() || null;
+  const notes = input.notes?.trim() || null;
+
+  const sb = await createClient();
+  if (!id) {
+    const { data, error } = await sb
+      .from("vendor_master")
+      .insert({ name, website, contact_email, phone, notes })
+      .select("id");
+    if (error) return fail(error.code === "23505" ? `Vendor "${name}" already exists` : error);
+    if (!data?.length) return fail(NO_RIGHT);
+    refresh();
+    return { ok: true, id: data[0].id };
+  } else {
+    const { data, error } = await sb
+      .from("vendor_master")
+      .update({ name, website, contact_email, phone, notes })
+      .eq("id", id)
+      .select("id");
+    if (error) return fail(error.code === "23505" ? `Vendor "${name}" already exists` : error);
+    if (!data?.length) return fail("Vendor not found or could not be updated");
+    refresh();
+    return { ok: true, id };
+  }
+}
+
+export async function deleteVendorMaster(id: string): Promise<Result> {
+  const sb = await createClient();
+  const { data: bills } = await sb.from("budget_vendor_bills").select("id").eq("vendor_id", id).limit(1);
+  if (bills && bills.length > 0) {
+    return fail("This vendor has recorded budget bills and cannot be deleted");
+  }
+  const { error } = await sb.from("vendor_master").delete().eq("id", id);
+  if (error) return fail(error);
   refresh();
   return { ok: true };
 }

@@ -38,24 +38,27 @@ import {
 export function AddTowerModal({
   projectId,
   trigger,
+  buildingTypes,
 }: {
   projectId: number;
   trigger?: React.ReactNode;
+  buildingTypes?: string[];
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const types = buildingTypes && buildingTypes.length > 0 ? buildingTypes : BUILDING_TYPES;
   const [name, setName] = useState("");
-  const [type, setType] = useState("Residential");
+  const [type, setType] = useState(types[0] ?? "Sales Building");
   const [carpetArea, setCarpetArea] = useState("");
   const [engArea, setEngArea] = useState("");
   const [ocDate, setOcDate] = useState("");
 
   const reset = () => {
     setName("");
-    setType("Residential");
+    setType(types[0] ?? "Sales Building");
     setCarpetArea("");
     setEngArea("");
     setOcDate("");
@@ -137,7 +140,7 @@ export function AddTowerModal({
                 value={type}
                 onChange={(e) => setType(e.target.value)}
               >
-                {BUILDING_TYPES.map((bt) => (
+                {types.map((bt) => (
                   <option key={bt} value={bt}>
                     {bt}
                   </option>
@@ -211,6 +214,7 @@ export function AddTowerModal({
 export function EditTowerModal({
   t,
   trigger,
+  buildingTypes,
 }: {
   t: {
     id: number;
@@ -221,12 +225,14 @@ export function EditTowerModal({
     oc_date: string | null;
   };
   trigger?: React.ReactNode;
+  buildingTypes?: string[];
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const types = buildingTypes && buildingTypes.length > 0 ? buildingTypes : BUILDING_TYPES;
   const [name, setName] = useState(t.name);
   const [type, setType] = useState(t.type ?? "");
   const [carpetArea, setCarpetArea] = useState(t.carpet_area != null ? String(t.carpet_area) : "");
@@ -328,7 +334,7 @@ export function EditTowerModal({
                 onChange={(e) => setType(e.target.value)}
               >
                 <option value="">Not set</option>
-                {BUILDING_TYPES.map((bt) => (
+                {types.map((bt) => (
                   <option key={bt} value={bt}>
                     {bt}
                   </option>
@@ -1175,6 +1181,7 @@ export function RecordBillModal({
   towers,
   date,
   bill,
+  vendors,
   onDone,
   trigger,
 }: {
@@ -1192,6 +1199,7 @@ export function RecordBillModal({
     note: string | null;
     splits?: { head: number; tower: number | null; amount_paise: number }[];
   };
+  vendors?: { id: string; name: string }[];
   onDone?: () => void;
   trigger?: React.ReactNode;
 }) {
@@ -1323,10 +1331,18 @@ export function RecordBillModal({
               <input
                 id="bill-vendor"
                 type="text"
+                list="bill-vendor-list"
                 value={vendor}
                 onChange={(e) => setVendor(e.target.value)}
-                placeholder="e.g. Larsen & Toubro Ltd"
+                placeholder="Select or enter vendor name"
               />
+              {vendors && vendors.length > 0 && (
+                <datalist id="bill-vendor-list">
+                  {vendors.map((v) => (
+                    <option key={v.id} value={v.name} />
+                  ))}
+                </datalist>
+              )}
             </div>
 
             <div className="budget-modal-field">

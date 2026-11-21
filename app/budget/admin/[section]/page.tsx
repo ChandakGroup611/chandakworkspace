@@ -34,25 +34,47 @@ export default async function Settings({ params, searchParams }: { params: Promi
   } else if (section === "masters") {
     if (!D.can(me, "project.view")) body = <Notice>You do not have access to the budget masters.</Notice>;
     else {
-      const [depts, summary, gst, heads] = await Promise.all([
+      const [projectsList, towersList, depts, summary, gst, headsList, vendorsList, buildingTypes] = await Promise.all([
+        D.getProjects(sb),
+        D.getAllTowers(sb),
         D.getDepartments(sb),
         sb.from("budget_summary_template").select("category, subcategory, category_sort, subcategory_sort").order("category_sort").order("subcategory_sort"),
         sb.from("budget_gst_rules").select("id, name, rate_pct, share_pct, sort, active").order("sort").order("name"),
-        sb.from("budget_cost_heads").select("department_id"),
+        D.getAllHeads(sb),
+        D.getVendors(sb),
+        D.getBuildingTypes(sb),
       ]);
-      const used = (id: number) => (heads.data ?? []).filter((h) => h.department_id === id).length;
-      // one master per screen: /budget/admin/masters?section=departments|summary|gst
+      const used = (id: number) => headsList.filter((h) => h.department_id === id).length;
       const cats = new Set(((summary.data ?? []) as { category: string }[]).map((r) => r.category)).size;
       const tabs = [
+        { key: "projects", label: "Projects", href: "/budget/admin/masters?section=projects", count: projectsList.length, hint: "All development projects with codes, financial calendars, and locations." },
+        { key: "towers", label: "Towers & Buildings", href: "/budget/admin/masters?section=towers", count: towersList.length, hint: "Towers, wings, and subprojects across all projects with areas and building types." },
+        { key: "building-types", label: "Building Types", href: "/budget/admin/masters?section=building-types", count: buildingTypes.length, hint: "Corporate building types that determine construction summary grouping and allocation logic." },
         { key: "departments", label: "Departments", href: "/budget/admin/masters?section=departments", count: depts.length, hint: "Shared by every project. Each department rolls into one category of the Project Budget Summary." },
-        { key: "summary", label: "Summary categories", href: "/budget/admin/masters?section=summary", count: cats, hint: "Category and sub-category rows of the Project Budget Summary, in report order. Construction rows follow the tower building types." },
-        { key: "gst", label: "GST rules", href: "/budget/admin/masters?section=gst", count: (gst.data ?? []).length, hint: "GST = rate % × eligible share %. Picked when adding a GST cost head; changing a rule does not change heads already set up." },
+        { key: "cost-heads", label: "Cost Heads", href: "/budget/admin/masters?section=cost-heads", count: headsList.length, hint: "Master line items (category & sub-category) mapped to departments and summary rows." },
+        { key: "summary", label: "Summary Categories", href: "/budget/admin/masters?section=summary", count: cats, hint: "Category and sub-category rows of the Project Budget Summary, in report order." },
+        { key: "gst", label: "GST Rules", href: "/budget/admin/masters?section=gst", count: (gst.data ?? []).length, hint: "GST rules = rate % × eligible share %. Picked when adding a GST cost head." },
+        { key: "vendors", label: "Vendors", href: "/budget/admin/masters?section=vendors", count: vendorsList.length, hint: "Approved vendor directory used for recording and tracking contractor and supplier bills." },
       ];
-      const ms = (tabs.some((t) => t.key === sp.section) ? sp.section : "departments") as "departments" | "summary" | "gst";
-      body = <><MasterNav label="Common masters" items={tabs} active={ms} /><MastersSettings section={ms} editable={D.can(me, "project.setup")}
-        departments={depts.map((d) => ({ ...d, heads: used(d.id) }))}
-        summary={(summary.data ?? []) as { category: string; subcategory: string; category_sort: number; subcategory_sort: number }[]}
-        gst={(gst.data ?? []) as { id: number; name: string; rate_pct: number; share_pct: number; sort: number; active: boolean }[]} /></>;
+      const validKeys = tabs.map((t) => t.key);
+      const ms = (validKeys.includes(sp.section ?? "") ? sp.section : "projects") as any;
+      body = (
+        <>
+          <MasterNav label="Budget masters" items={tabs} active={ms} />
+          <MastersSettings
+            section={ms}
+            editable={D.can(me, "project.setup")}
+            projects={projectsList}
+            towers={towersList}
+            departments={depts.map((d) => ({ ...d, heads: used(d.id) }))}
+            heads={headsList}
+            summary={(summary.data ?? []) as any}
+            gst={(gst.data ?? []) as any}
+            vendors={vendorsList}
+            buildingTypes={buildingTypes}
+          />
+        </>
+      );
     }
   } else if (!D.can(me, "fields.manage")) body = <Notice>You do not have the right to change custom fields.</Notice>;
   else {

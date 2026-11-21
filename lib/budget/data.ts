@@ -479,3 +479,97 @@ export async function getWorkspaceUsers(sb: Db, search?: string) {
   return must(await sb.rpc("budget_workspace_directory", { p_search: search || null })) as
     { user_id: string; email: string | null; full_name: string | null; member: boolean; role: string | null; active: boolean | null }[];
 }
+
+export interface Vendor {
+  id: string;
+  name: string;
+  website: string | null;
+  contact_email: string | null;
+  phone: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface GstRule {
+  id: number;
+  name: string;
+  rate_pct: number;
+  share_pct: number;
+  sort: number;
+  active: boolean;
+}
+
+export interface SummaryTemplateRow {
+  category: string;
+  subcategory: string;
+  category_sort: number;
+  subcategory_sort: number;
+}
+
+export async function getBuildingTypes(sb: Db): Promise<string[]> {
+  try {
+    const { data } = await sb
+      .from("budget_summary_template")
+      .select("subcategory")
+      .eq("category", "Construction")
+      .not("subcategory", "ilike", "GST%")
+      .order("subcategory_sort");
+    if (data && data.length > 0) {
+      return data.map((r: { subcategory: string }) => r.subcategory);
+    }
+  } catch {}
+  return [
+    "Sales Building", "Society Building", "Rehab Building", "Common Infra",
+    "MHADA Building", "Reservation Building", "Open Space Area / MCGM", "School / Other Building"
+  ];
+}
+
+export async function getAllTowers(sb: Db, projectId?: number): Promise<(Tower & { project_name?: string; project_code?: string })[]> {
+  let q = sb.from("budget_subprojects").select("id, project_id, name, type, carpet_area, eng_area, oc_date, sort, budget_projects(name, code)");
+  if (projectId != null) q = q.eq("project_id", projectId);
+  const rows = (await q.order("project_id").order("sort")).data as (Tower & { budget_projects?: { name: string; code: string } | null })[] | null;
+  return (rows ?? []).map((r) => ({
+    ...r,
+    project_name: r.budget_projects?.name,
+    project_code: r.budget_projects?.code,
+  }));
+}
+
+export async function getAllHeads(sb: Db, projectId?: number): Promise<(Head & { project_name?: string; department_name?: string; department_category?: string })[]> {
+  let q = sb.from("budget_cost_heads").select("id, project_id, department_id, category, sub_category, note, summary_subcategory, sort, is_tax, tax_rate_pct, tax_share_pct, tax_base, active, budget_projects(name), budget_departments(name, summary_category)");
+  if (projectId != null) q = q.eq("project_id", projectId);
+  const rows = (await q.order("project_id").order("department_id").order("sort")).data as (Head & { budget_projects?: { name: string } | null; budget_departments?: { name: string; summary_category: string } | null })[] | null;
+  return (rows ?? []).map((r) => ({
+    ...r,
+    project_name: r.budget_projects?.name,
+    department_name: r.budget_departments?.name,
+    department_category: r.budget_departments?.summary_category,
+  }));
+}
+
+export async function getVendors(sb: Db): Promise<Vendor[]> {
+  try {
+    const { data } = await sb.from("vendor_master").select("id, name, website, contact_email, phone, notes, created_at").order("name");
+    return (data ?? []) as Vendor[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getGstRules(sb: Db): Promise<GstRule[]> {
+  try {
+    const { data } = await sb.from("budget_gst_rules").select("id, name, rate_pct, share_pct, sort, active").order("sort").order("name");
+    return (data ?? []) as GstRule[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getSummaryCategories(sb: Db): Promise<SummaryTemplateRow[]> {
+  try {
+    const { data } = await sb.from("budget_summary_template").select("category, subcategory, category_sort, subcategory_sort").order("category_sort").order("subcategory_sort");
+    return (data ?? []) as SummaryTemplateRow[];
+  } catch {
+    return [];
+  }
+}

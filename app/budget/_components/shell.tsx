@@ -40,7 +40,7 @@ const AREAS: { id: Area; label: string; first: string; subs?: SubTab[] }[] = [
   { id: "setup", label: "Setup", first: "setup" },
 ];
 const ADMIN_TABS: { id: string; label: string; href: string; right: (me: Me) => boolean }[] = [
-  { id: "masters", label: "Common masters", href: "/budget/admin/masters", right: (me) => can(me, "project.setup") },
+  { id: "masters", label: "Master Module", href: "/budget/admin/masters", right: (me) => can(me, "project.setup") || can(me, "project.view") },
   { id: "access", label: "Access & roles", href: "/budget/admin/access", right: (me) => can(me, "access.manage") },
   { id: "fields", label: "Custom fields", href: "/budget/admin/fields", right: (me) => can(me, "fields.manage") },
 ];
@@ -132,7 +132,8 @@ export function Shell({ me, projects, project, versions, version, tab, children 
               )}
               <div className="top-links">
                 <Link href={helpHref} className="icon-link" aria-current={area === "help" ? "page" : undefined} title="Workflow guide">? Guide</Link>
-                {allowed.admin && <Link href={adminTabs[0]?.href ?? "/budget/admin/masters"} className="icon-link" aria-current={area === "admin" ? "page" : undefined} title="Administration: shared masters, access and custom fields">Administration</Link>}
+                {can(me, "project.view") && <Link href="/budget/admin/masters" className="icon-link" aria-current={tab === "masters" ? "page" : undefined} title="Budget Masters: Projects, Towers, Building Types, Departments, Cost Heads, GST, Vendors">Masters</Link>}
+                {allowed.admin && <Link href={adminTabs.find((t) => t.id !== "masters")?.href ?? "/budget/admin/access"} className="icon-link" aria-current={area === "admin" && tab !== "masters" ? "page" : undefined} title="Administration: access and custom fields">Admin</Link>}
               </div>
             </div>
           </div>
