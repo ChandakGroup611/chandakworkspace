@@ -285,13 +285,13 @@ export interface RuleState {
 }
 
 
-function Bar({ v }: { v: number | null }) {
+export function Bar({ v }: { v: number | null }) {
   if (v == null) return null;
   return <><span className="bar"><i className={v > 100 ? "over" : ""} style={{ width: `${Math.min(100, Math.max(0, v))}%` }} /></span>{fmtPct(v)}</>;
 }
 export const Neg = ({ v }: { v: number | null }) => <span className={isNeg(v) ? "neg" : ""}>{fmt(v)}</span>;
 
-function AmountInput({ line, field, shown }: { line: NonNullable<EntryRow["line"]>; field: "initial" | "ctc"; shown: number }) {
+export function AmountInput({ line, field, shown }: { line: NonNullable<EntryRow["line"]>; field: "initial" | "ctc"; shown: number }) {
   const { pending, run, banner } = useAction();
   const stored = line[field];
   const calc = field === "initial" ? line.initialCalc : line.ctcCalc;
@@ -318,7 +318,7 @@ function AmountInput({ line, field, shown }: { line: NonNullable<EntryRow["line"
   );
 }
 
-function RemarkInput({ line }: { line: NonNullable<EntryRow["line"]> }) {
+export function RemarkInput({ line }: { line: NonNullable<EntryRow["line"]> }) {
   const { run, banner } = useAction();
   return (
     <>
@@ -384,7 +384,7 @@ export function EntryTable({ rows, total, customFields = [], picks }: { rows: En
   );
 }
 
-function DeptRemarkInput({ d }: { d: NonNullable<EntryRow["deptRemark"]> }) {
+export function DeptRemarkInput({ d }: { d: NonNullable<EntryRow["deptRemark"]> }) {
   const { run, banner } = useAction();
   if (!d.editable) return <>{d.text}</>;
   return (
@@ -398,7 +398,7 @@ function DeptRemarkInput({ d }: { d: NonNullable<EntryRow["deptRemark"]> }) {
 }
 
 /** The CTC rule of a line: shown as a chip; on a draft, opens a small form to change it. */
-function LineRuleCell({ lineId, rule, editable }: { lineId: number; rule: RuleState; editable: boolean }) {
+export function LineRuleCell({ lineId, rule, editable }: { lineId: number; rule: RuleState; editable: boolean }) {
   const { pending, run, banner } = useAction();
   const [kind, setKind] = useState<"typed" | "rate" | "balance" | "memo" | "schedule">(rule.kind === "tax" ? "typed" : rule.kind);
   const [open, setOpen] = useState(false);
@@ -1222,3 +1222,8 @@ export function WriteSummaryButton({ projectId, versionNumber, again }: { projec
     </div>
   );
 }
+
+// Re-export standard CRUD modals and accordions
+export * from "./crud-modals";
+export * from "./budget-accordions";
+

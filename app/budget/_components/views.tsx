@@ -119,6 +119,7 @@ export async function Overview(c: Ctx & { version: Version }) {
 
   return (
     <>
+      <F.StageProcessBar projectId={project.id} activeTab="overview" versionNumber={v.number} />
       <VersionBanner sb={sb} me={me} project={project} version={v} names={names} />
       <NextStep c={c} draft={draft} />
 
@@ -503,115 +504,15 @@ export function Portfolio({
             {kpi("Net Portfolio Variance", <Neg v={totalVarianceCr} />, totalVarianceCr < 0 ? "Portfolio CTC is above initial" : "Within initial baseline")}
             {kpi("Overall Utilisation", fmtPct(overallUtilPct), overallUtilPct != null ? `${fmt(totalIncurredCr)} / ${fmt(totalCtcCr)} Cr` : undefined)}
           </div>
-
-          {/* Cross-Project Spend vs CTC Allocation Panel */}
-          <section className="panel" style={{ marginBottom: 18 }}>
-            <div className="panel-head">
-              <h2>Project spend & budget progress</h2>
-              <span className="sub">Real-time spend against Estimated CTC per project</span>
-            </div>
-            <div className="project-progress-grid">
-              {summaries.map(({ project: p, cur }) => {
-                if (!cur) return null;
-                const util = cur.util_pct ?? (cur.ctc_cr > 0 ? (cur.incurred_cr / cur.ctc_cr) * 100 : 0);
-                return (
-                  <div key={p.id} className="project-progress-card">
-                    <div className="project-progress-header">
-                      <div>
-                        <Link href={`/budget/${p.id}`} className="project-progress-title">
-                          {p.name}
-                        </Link>
-                        {p.location && <div className="project-progress-loc">{p.location}</div>}
-                      </div>
-                      <span className={`pill ${cur.status}`}>
-                        R{cur.number}
-                      </span>
-                    </div>
-                    <div className="project-progress-amounts">
-                      <span>CTC: <b>₹{fmt(cur.ctc_cr)} Cr</b></span>
-                      <span>Incurred: <b>₹{fmt(cur.incurred_cr)} Cr</b></span>
-                    </div>
-                    <div className="progress-bar-lg">
-                      <i
-                        className={util > 100 ? "over" : util >= 90 ? "near" : ""}
-                        style={{ width: `${Math.min(100, Math.max(0, util))}%` }}
-                      />
-                    </div>
-                    <div className="project-progress-footer">
-                      <span>Utilised: <strong>{fmtPct(util)}</strong></span>
-                      <span>Bal: <strong>₹{fmt(cur.balance_cr)} Cr</strong></span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
         </>
       )}
 
-      {/* Projects Master Ledger Panel */}
-      <section className="panel">
-        <div className="panel-head">
-          <h2>All projects</h2>
-          <div className="row" style={{ alignItems: "center", gap: 8 }}>
-            <span className="sub">Latest approved version of each project · amounts in crores</span>
-            {canCreate && (
-              <Link href="/budget/create" className="btn-action primary">
-                + Create budget
-              </Link>
-            )}
-          </div>
-        </div>
-        <div className="scroll">
-          <table>
-            <thead>
-              <tr>
-                <th className="label">Project</th>
-                <th>Revision</th>
-                <th className="n">Initial (a)</th>
-                <th className="n">CTC (b)</th>
-                <th className="n">Incurred (c)</th>
-                <th className="n">Balance (b−c)</th>
-                <th className="n">Variance (a−b)</th>
-                <th className="n">Utilised</th>
-                <th className="actions-col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summaries.map(({ project: p, cur }) => {
-                if (!cur) {
-                  return (
-                    <tr key={p.id}>
-                      <td>
-                        <Link href={`/budget/${p.id}`}>{p.name}</Link>
-                        {p.location && <small style={{ display: "block", color: "var(--muted)", fontSize: 11 }}>{p.location}</small>}
-                      </td>
-                      <td colSpan={7} className="sub">No version yet</td>
-                      <td className="actions"><F.ProjectActions p={p} canManage={canManage} /></td>
-                    </tr>
-                  );
-                }
-                return (
-                  <tr key={p.id}>
-                    <td>
-                      <Link href={`/budget/${p.id}`}>{p.name}</Link>
-                      {p.location && <small style={{ display: "block", color: "var(--muted)", fontSize: 11 }}>{p.location}</small>}
-                    </td>
-                    <td>R{cur.number} · {dmy(cur.as_on)}{cur.status !== "approved" && ` (${cur.status.replace("_", " ")})`}</td>
-                    <td className="n">{fmt(cur.initial_cr)}</td>
-                    <td className="n">{fmt(cur.ctc_cr)}</td>
-                    <td className="n">{fmt(cur.incurred_cr)}</td>
-                    <td className="n"><Neg v={cur.balance_cr} /></td>
-                    <td className="n"><Neg v={cur.variance_cr} /></td>
-                    <td className="n"><Bar v={cur.util_pct} /></td>
-                    <td className="actions"><F.ProjectActions p={p} canManage={canManage} /></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {/* Projects Master Directory List Page (Table + Spend Cards with Live Filter) */}
+      <F.ProjectsMasterTable
+        summaries={summaries}
+        canManage={canManage}
+        canCreate={canCreate}
+      />
     </>
   );
 }
@@ -677,21 +578,44 @@ export async function Entry(c: Ctx & { version: Version }) {
     };
   };
   const rows: F.EntryRow[] = [];
+  const deptGroups: F.DepartmentGroup[] = [];
   for (const d of g.departments) {
     if (search.dept && d.department !== search.dept) continue;
-    rows.push({ kind: "dept", key: `d${d.department_id}`, label: `${d.sr}. ${d.department}`, ...d.totals,
-      deptRemark: { versionId: v.id, departmentId: d.department_id, text: v.department_remarks?.[String(d.department_id)] ?? "", editable: v.status === "draft" && D.can(me, "budget.edit", project.id, d.department_id) } });
+    const deptRows: F.EntryRow[] = [];
+    const deptRem = { versionId: v.id, departmentId: d.department_id, text: v.department_remarks?.[String(d.department_id)] ?? "", editable: v.status === "draft" && D.can(me, "budget.edit", project.id, d.department_id) };
+    rows.push({ kind: "dept", key: `d${d.department_id}`, label: `${d.sr}. ${d.department}`, ...d.totals, deptRemark: deptRem });
     for (const cat of d.categories) {
       const ls = cat.lines.filter((f) => towerMatch(f, search.tower));
       if (!ls.length) continue;
-      if (cat.grouped) rows.push({ kind: "cat", key: `c${d.department_id}-${cat.category}`, label: cat.category, indent: 1, ...cat.totals });
-      for (const f of ls) rows.push(lineRow(f, cat.grouped ? 2 : 1));
+      if (cat.grouped) {
+        const catRow: F.EntryRow = { kind: "cat", key: `c${d.department_id}-${cat.category}`, label: cat.category, indent: 1, ...cat.totals };
+        rows.push(catRow);
+        deptRows.push(catRow);
+      }
+      for (const f of ls) {
+        const lr = lineRow(f, cat.grouped ? 2 : 1);
+        rows.push(lr);
+        deptRows.push(lr);
+      }
     }
+    deptGroups.push({
+      department_id: d.department_id,
+      sr: d.sr,
+      department: d.department,
+      totals: d.totals,
+      deptRemark: deptRem,
+      rows: deptRows,
+    });
   }
+  const memoRows: F.EntryRow[] = [];
   const memo = g.memo.filter((f) => (!search.dept || f.department === search.dept) && towerMatch(f, search.tower));
   if (memo.length) {
     rows.push({ kind: "memo", key: "memo", label: "Memo items · outside every total", ...groupDetail([], null).total });
-    for (const f of memo) rows.push({ ...lineRow(f, 1), label: `${f.department} · ${f.sub_category || f.category}` });
+    for (const f of memo) {
+      const mr = { ...lineRow(f, 1), label: `${f.department} · ${f.sub_category || f.category}` };
+      rows.push(mr);
+      memoRows.push(mr);
+    }
   }
   const total: F.EntryRow = { kind: "dept", key: "total", label: "Total (all departments)", ...g.total };
   let notice: React.ReactNode;
@@ -732,6 +656,7 @@ export async function Entry(c: Ctx & { version: Version }) {
   const gridForm = canAddLine ? headForm : null;
   return (
     <>
+      <F.StageProcessBar projectId={project.id} activeTab="entry" versionNumber={v.number} />
       <VersionBanner sb={sb} me={me} project={project} version={v} names={c.names} />
       <Notice kind={v.status === "approved" ? "locked" : ""}>{notice}</Notice>
       {canOpenNext && <section className="panel" id="manual-entry">
@@ -745,7 +670,7 @@ export async function Entry(c: Ctx & { version: Version }) {
         <div className="panel-head">
           <div>
             <h2>Budget entry · R{v.number}</h2>
-            <span className="sub">{formMode ? "Line by line" : "Working sheet"} · All amounts in crores</span>
+            <span className="sub">{formMode ? "Line by line" : "Department Working Sheets"} · All amounts in crores</span>
           </div>
           {v.status === "draft" && <nav className="seg" aria-label="Entry view">
             <Link href={sheetHref} aria-current={!formMode ? "page" : undefined}>Sheet</Link>
@@ -766,7 +691,18 @@ export async function Entry(c: Ctx & { version: Version }) {
           </div>
         </div>
         {figs.length === 0 && <Notice kind="draft">R{v.number} has no budget lines yet. {canAddLine ? <>Add them in <a href="#add-lines">Add several lines</a> below, with their amounts, or follow <Link href={`/budget/${project.id}/start?v=${v.number}`}>Get started</Link>.</> : "The budget preparer adds the lines."}</Notice>}
-        {formMode ? <LineByLineForm lines={formLines} sheetHref={sheetHref} /> : <F.EntryTable rows={rows} total={total} customFields={lineFields} picks={picks} />}
+        {formMode ? (
+          <LineByLineForm lines={formLines} sheetHref={sheetHref} />
+        ) : (
+          <F.DepartmentAccordionEntry
+            departments={deptGroups}
+            memoRows={memoRows}
+            total={total}
+            customFields={lineFields}
+            picks={picks}
+            versionId={v.id}
+          />
+        )}
         <p className="note">Crores. Typed or imported: Initial, CTC, Remark. Everything else is calculated. PSF = amount ÷ engineering construction area ({fmtArea(v.areas.eng_area)} sft). Cost incurred comes from the Cost incurred tab, up to {dmy(v.as_on)}.
           {flag.size > 0 && ` ${flag.size} line(s) changed by more than 10% need a remark before approval.`}
           {lineFields.length > 0 && " Extra columns are custom fields; calculated ones are worked out on the server from the figures in the row."}</p>
@@ -894,12 +830,71 @@ export async function Schedules(c: Ctx & { version: Version }) {
   const [schedules, figs] = await Promise.all([D.getSchedules(sb, v.id), D.getLineFigures(sb, v.id)]);
   const line = new Map(figs.map((f) => [f.line_id, f]));
   const editable = (lineId: number) => v.status === "draft" && D.can(me, "budget.edit", project.id, line.get(lineId)?.department_id);
+  const totalScheduleCr = schedules.reduce((acc, s) => {
+    return acc + s.rows.reduce((sum, r) => sum + (r.amount_paise ? Number(r.amount_paise) / 1e9 : 0), 0);
+  }, 0);
+
   return (
     <>
+      <F.StageProcessBar projectId={project.id} activeTab="schedules" versionNumber={v.number} />
       <VersionBanner sb={sb} me={me} project={project} version={v} names={c.names} />
       <Notice>Each schedule works out one budget line&apos;s Estimated CTC, as the working sheets behind the Summary (GST, interest, rent, corpus, stamp duty, SRA cost …).
         Amount = quantity × rate × % × periods, or a typed amount. Give a line a schedule from Budget entry → Rule → &quot;Worked out in a schedule&quot;.
         Schedules are kept per version and go into the Summary Excel as working sheets.</Notice>
+
+      {/* Supporting Schedules Directory / Master List Table */}
+      {schedules.length > 0 && (
+        <section className="panel" style={{ marginBottom: 18 }}>
+          <div className="panel-head">
+            <div>
+              <h2>Supporting Schedules Directory</h2>
+              <span className="sub">{schedules.length} schedules in R{v.number} · Total worked out: ₹{fmt(totalScheduleCr)} Cr</span>
+            </div>
+          </div>
+          <div className="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th className="label">Schedule Title</th>
+                  <th>Linked Budget Line</th>
+                  <th>Department</th>
+                  <th className="n">Items</th>
+                  <th className="n">Total (Cr)</th>
+                  <th className="actions-col">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {schedules.map((s, idx) => {
+                  const f = line.get(s.line_id);
+                  const totalCr = s.rows.reduce((sum, r) => sum + (r.amount_paise ? Number(r.amount_paise) / 1e9 : 0), 0);
+                  return (
+                    <tr key={s.id}>
+                      <td>{idx + 1}</td>
+                      <td>
+                        <a href={`#s${s.id}`} className="font-semibold text-primary hover:underline">
+                          {s.title}
+                        </a>
+                        {s.note && <div className="text-xs text-muted mt-0.5">{s.note}</div>}
+                      </td>
+                      <td>{f ? (f.sub_category || f.category) : "—"}</td>
+                      <td>{f?.department ?? "—"}</td>
+                      <td className="n">{s.rows.length}</td>
+                      <td className="n"><strong>{fmt(totalCr)}</strong></td>
+                      <td className="actions">
+                        <a href={`#s${s.id}`} className="btn-action">
+                          Open Editor ↓
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {schedules.map((s) => { const f = line.get(s.line_id); return (
         <section className="panel" id={`s${s.id}`} key={s.id}>
           <div className="panel-head"><h2>{s.title}</h2>{editable(s.line_id) && <F.ScheduleTitle key={`${s.title}-${s.note}`} s={s} />}<span className="sub">{f ? `${f.department} · ${f.sub_category || f.category}${f.subproject ? ` · ${f.subproject}` : ""} → Summary: ${f.summary_category} · ${f.summary_subcategory}` : ""}</span></div>
@@ -1234,41 +1229,209 @@ export async function Incurred(c: Ctx) {
   const cf = await loadCustom(sb, "cost_entry", project.id, new Map(shown.map((e) => [e.id, { amount: rupeesFromPaise(e.amount_paise), month: day(e.month) }])), await lookupNames(sb, project.id, c.names));
   const listed = cf.fields.filter((f) => f.show_in_reports);
   const picks = await picksFor(sb, project.id, c.names);
+  const totalBasicPaise = bills.reduce((s, b) => s + Number(b.basic_paise), 0);
+  const totalGstPaise = bills.reduce((s, b) => s + Number(b.gst_paise), 0);
+  const totalGrossPaise = bills.reduce((s, b) => s + Number(b.total_paise), 0);
+
   return (
     <>
-      {allowed.length ? <section className="panel" id="record-cost"><div className="panel-head"><h2>Record cost incurred</h2><span className="sub">Type one entry here, or import a cost incurred sheet on Import from Excel</span></div>
-        <F.EntryForm projectId={project.id} heads={allowed.map((h) => ({ id: h.id, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}` }))} towers={towers}
-          month={(v?.as_on ?? new Date().toISOString()).slice(0, 7)} customFields={cf.fields.filter((f) => f.show_in_entry)} picks={picks} />
-        <p className="note">Amounts are entered in rupees and shown in crores in the budget.{v && ` A version counts every entry up to its as-on month (R${v.number}: up to ${monthName(v.as_on)}).`}</p></section>
-        : <Notice>{!D.can(me, "cost.enter", project.id) ? "You can read every entry; departments record their own costs." : "No cost heads you can record against."}</Notice>}
-      {allowed.length > 0 && <section className="panel" id="record-bill"><div className="panel-head"><h2>Record a bill</h2><span className="sub">Split a vendor bill over cost heads and towers; each split counts as cost incurred in the bill&apos;s month</span></div>
-        <F.BillForm projectId={project.id} heads={allowed.map((h) => ({ id: h.id, label: `${(dept.get(h.department_id)?.name ?? "Head")} · ${h.sub_category || h.category}` }))} towers={towers}
-          date={(v?.as_on ?? new Date().toISOString()).slice(0, 10)} />
-        <p className="note">Enter the basic amount of each split; GST on the bill is kept for reference, as the GST heads work out GST cost. The same bill number of a vendor cannot be recorded twice.</p></section>}
-      <section className="panel"><div className="panel-head"><h2>Bills · {project.name}</h2><span className="sub">{bills.length} bills · basic {fmt(toCr(bills.reduce((s, b) => s + Number(b.basic_paise), 0)))} crores</span>
-        {v && D.can(me, "report.export", project.id) && <a className="btn" href={`/budget/${project.id}/export/bills?v=${v.number}`} download title={`Bills dated up to ${monthName(v.as_on)}, the ones R${v.number} counts`}>Download Excel</a>}</div>
-        <div className="scroll"><table><thead><tr><th>Bill date</th><th className="label">Vendor</th><th>Bill no.</th><th>Work order</th><th>Split over</th><th className="n">Basic (₹)</th><th className="n">GST (₹)</th><th className="n">Total (₹)</th><th>Entered by</th><th className="actions-col">Actions</th></tr></thead><tbody>
-          {bills.map((b) => <F.BillRow key={`${b.bill_id}-${b.basic_paise}-${b.bill_date}-${b.vendor}-${b.bill_no}-${b.gst_paise}`} b={b} heads={headOptions} towers={towers} editable={D.can(me, "cost.enter", project.id)}
-            splits={entries.filter((e) => e.bill_id === b.bill_id).map((e) => { const h = head.get(e.cost_head_id)!; return { head: e.cost_head_id, headLabel: `${dept.get(h.department_id)?.name} · ${h.sub_category || h.category}`,
-              tower: e.subproject_id, towerName: e.subproject_id ? tower.get(e.subproject_id) ?? null : null, amount_paise: e.amount_paise, month: monthName(e.month) }; })}>
-            <td>{dmy(b.bill_date)}</td><td>{b.vendor}</td><td>{b.bill_no}</td><td>{b.work_order}</td>
-            <td><div className="trunc" title={(billHeads.get(b.bill_id) ?? []).join(", ")}>{(billHeads.get(b.bill_id) ?? []).join(", ")}</div></td>
-            <td className="n">{fmtRupees(b.basic_paise)}</td><td className="n">{fmtRupees(b.gst_paise)}</td><td className="n">{fmtRupees(b.total_paise)}</td>
-            <td>{(b.entered_by && c.names[b.entered_by]) || ""}</td></F.BillRow>)}
-          {bills.length === 0 && <tr><td colSpan={10} className="sub">No bills yet. Typed and imported entries below still count.</td></tr>}
-        </tbody></table></div>
+      <F.StageProcessBar projectId={project.id} activeTab="incurred" versionNumber={v?.number ?? null} />
+
+      {/* Vendor Bills Master Ledger */}
+      <section className="panel" style={{ marginBottom: 18 }}>
+        <div className="panel-head">
+          <div>
+            <h2>Vendor Bills Ledger · {project.name}</h2>
+            <span className="sub">{bills.length} bills recorded · {fmt(toCr(totalBasicPaise))} Cr basic value</span>
+          </div>
+          <div className="row" style={{ alignItems: "center", gap: 8 }}>
+            {allowed.length > 0 && (
+              <F.RecordBillModal
+                projectId={project.id}
+                heads={headOptions}
+                towers={towers}
+                date={(v?.as_on ?? new Date().toISOString()).slice(0, 10)}
+              />
+            )}
+            {v && D.can(me, "report.export", project.id) && (
+              <a
+                className="btn"
+                href={`/budget/${project.id}/export/bills?v=${v.number}`}
+                download
+                title={`Bills dated up to ${monthName(v.as_on)}, the ones R${v.number} counts`}
+              >
+                Download Excel
+              </a>
+            )}
+          </div>
+        </div>
+
+        <div className="master-kpi-strip">
+          <div className="master-kpi-tile">
+            <span className="kpi-label">Recorded Bills</span>
+            <span className="kpi-val">{bills.length}</span>
+            <span className="kpi-sub">Total vendor bills</span>
+          </div>
+          <div className="master-kpi-tile">
+            <span className="kpi-label">Basic Amount</span>
+            <span className="kpi-val">₹{fmt(toCr(totalBasicPaise))} Cr</span>
+            <span className="kpi-sub">Excluding GST</span>
+          </div>
+          <div className="master-kpi-tile">
+            <span className="kpi-label">GST Input</span>
+            <span className="kpi-val">₹{fmt(toCr(totalGstPaise))} Cr</span>
+            <span className="kpi-sub">Tax component</span>
+          </div>
+          <div className="master-kpi-tile">
+            <span className="kpi-label">Gross Value</span>
+            <span className="kpi-val">₹{fmt(toCr(totalGrossPaise))} Cr</span>
+            <span className="kpi-sub">Invoice gross total</span>
+          </div>
+        </div>
+
+        <div className="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Bill date</th>
+                <th className="label">Vendor</th>
+                <th>Bill no.</th>
+                <th>Work order</th>
+                <th>Split over</th>
+                <th className="n">Basic (₹)</th>
+                <th className="n">GST (₹)</th>
+                <th className="n">Total (₹)</th>
+                <th>Entered by</th>
+                <th className="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bills.map((b) => {
+                const billSplits = entries.filter((e) => e.bill_id === b.bill_id);
+                return (
+                  <tr key={b.bill_id}>
+                    <td>{dmy(b.bill_date)}</td>
+                    <td><strong>{b.vendor}</strong></td>
+                    <td>{b.bill_no}</td>
+                    <td>{b.work_order || "—"}</td>
+                    <td>
+                      <div className="trunc" title={(billHeads.get(b.bill_id) ?? []).join(", ")}>
+                        {(billHeads.get(b.bill_id) ?? []).join(", ") || "—"}
+                      </div>
+                    </td>
+                    <td className="n">{fmtRupees(b.basic_paise)}</td>
+                    <td className="n">{fmtRupees(b.gst_paise)}</td>
+                    <td className="n"><strong>{fmtRupees(b.total_paise)}</strong></td>
+                    <td>{(b.entered_by && c.names[b.entered_by]) || ""}</td>
+                    <td className="actions">
+                      {D.can(me, "cost.enter", project.id) && (
+                        <div className="actions-group">
+                          <F.RecordBillModal
+                            projectId={project.id}
+                            heads={headOptions}
+                            towers={towers}
+                            date={b.bill_date}
+                            bill={{
+                              bill_id: b.bill_id,
+                              vendor: b.vendor,
+                              bill_no: b.bill_no,
+                              bill_date: b.bill_date,
+                              work_order: b.work_order,
+                              gst_paise: b.gst_paise,
+                              note: b.note,
+                              splits: billSplits.map((e) => ({
+                                head: e.cost_head_id,
+                                tower: e.subproject_id,
+                                amount_paise: e.amount_paise,
+                              })),
+                            }}
+                            trigger={<button type="button" className="btn-action">Edit</button>}
+                          />
+                          <F.DeleteBill id={b.bill_id} />
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {bills.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="sub text-center py-6">
+                    No bills recorded yet. Use &quot;Record Bill&quot; above to add vendor invoices.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
-      <section className="panel"><div className="panel-head"><h2>Entries · {project.name}</h2>
-        <div className="row"><F.QuerySelect name="dept" label="" value={search.dept ?? ""} options={[["", "All departments"], ...depts.map((d): [string, string] => [d.name, d.name])]} /></div></div>
-        {lineHead && <Notice>Showing the entries behind {dept.get(lineHead.department_id)?.name} · {lineHead.sub_category || lineHead.category}{line!.tower ? ` · ${tower.get(line!.tower)}` : line!.tower === 0 ? " (not split by tower)" : ""}{line!.upto ? ` up to ${monthName(line!.upto + "-01")}` : ""}. <Link href={`/budget/${project.id}/incurred${v ? `?v=${v.number}` : ""}`}>Show all</Link></Notice>}
-        <p className="sub">{shown.length} entries · {fmt(toCr(total))} crores. Imported entries carry the file or Excel formula they came from.</p>
-        <div className="scroll"><table><thead><tr><th>Month</th><th className="label">Department</th><th className="label">Cost head</th><th>Tower</th><th className="n">Amount (₹)</th><th>Reference</th>{listed.map((f) => <th key={f.id} className={isNum(f) ? "n" : ""} title={fieldTitle(f)}>{f.label}</th>)}<th>Source</th><th>Entered by</th><th className="actions-col">Actions</th></tr></thead><tbody>
-          {shown.map((e) => { const h = head.get(e.cost_head_id)!; return <tr key={e.id}><td>{monthName(e.month)}</td><td>{dept.get(h.department_id)?.name}</td><td>{h.sub_category || h.category}</td><td>{e.subproject_id ? tower.get(e.subproject_id) : ""}</td>
-            <td className="n"><span className={e.amount_paise < 0 ? "neg" : ""}>{fmtRupees(e.amount_paise)}</span></td><td><div className="trunc" title={e.reference ?? ""}>{e.reference}</div></td>
-            {listed.map((f) => <td key={f.id} className={isNum(f) ? "n" : ""}><CustomInput field={f} entity="cost_entry" entityId={e.id} cell={cf.cells.get(e.id)?.[f.key]} editable={D.can(me, "cost.enter", project.id, h.department_id)} picks={picks} compact /></td>)}
-            <td>{e.bill_id ? <span className="chip">Bill</span> : e.source === "excel" ? <span className="chip xl">Excel</span> : <span className="chip typed">Typed</span>}</td><td>{(e.entered_by && c.names[e.entered_by]) || ""}</td>
-            <td>{D.can(me, "cost.enter", project.id, h.department_id) && (e.bill_id ? <span className="note">Change it on the bill</span> : <F.EntryActions e={e} heads={headOptions} towers={towers} />)}</td></tr>; })}
-        </tbody></table></div>
+
+      {/* Cost Incurred Entries Ledger */}
+      <section className="panel">
+        <div className="panel-head">
+          <div>
+            <h2>Cost Incurred Entries Ledger · {project.name}</h2>
+            <span className="sub">{shown.length} entries · {fmt(toCr(total))} crores total incurred</span>
+          </div>
+          <div className="row" style={{ alignItems: "center", gap: 8 }}>
+            <F.QuerySelect name="dept" label="" value={search.dept ?? ""} options={[["", "All departments"], ...depts.map((d): [string, string] => [d.name, d.name])]} />
+            {allowed.length > 0 && (
+              <F.RecordEntryModal
+                projectId={project.id}
+                heads={headOptions}
+                towers={towers}
+                month={(v?.as_on ?? new Date().toISOString()).slice(0, 7)}
+              />
+            )}
+          </div>
+        </div>
+
+        {lineHead && <Notice>Showing entries behind {dept.get(lineHead.department_id)?.name} · {lineHead.sub_category || lineHead.category}{line!.tower ? ` · ${tower.get(line!.tower)}` : line!.tower === 0 ? " (not split by tower)" : ""}{line!.upto ? ` up to ${monthName(line!.upto + "-01")}` : ""}. <Link href={`/budget/${project.id}/incurred${v ? `?v=${v.number}` : ""}`}>Show all</Link></Notice>}
+
+        <div className="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th className="label">Department</th>
+                <th className="label">Cost head</th>
+                <th>Tower</th>
+                <th className="n">Amount (₹)</th>
+                <th>Reference</th>
+                {listed.map((f) => <th key={f.id} className={isNum(f) ? "n" : ""} title={fieldTitle(f)}>{f.label}</th>)}
+                <th>Source</th>
+                <th>Entered by</th>
+                <th className="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((e) => {
+                const h = head.get(e.cost_head_id)!;
+                return (
+                  <tr key={e.id}>
+                    <td>{monthName(e.month)}</td>
+                    <td>{dept.get(h.department_id)?.name}</td>
+                    <td><strong>{h.sub_category || h.category}</strong></td>
+                    <td>{e.subproject_id ? <span className="chip">{tower.get(e.subproject_id)}</span> : ""}</td>
+                    <td className="n"><span className={e.amount_paise < 0 ? "neg" : ""}><strong>{fmtRupees(e.amount_paise)}</strong></span></td>
+                    <td><div className="trunc" title={e.reference ?? ""}>{e.reference}</div></td>
+                    {listed.map((f) => <td key={f.id} className={isNum(f) ? "n" : ""}><CustomInput field={f} entity="cost_entry" entityId={e.id} cell={cf.cells.get(e.id)?.[f.key]} editable={D.can(me, "cost.enter", project.id, h.department_id)} picks={picks} compact /></td>)}
+                    <td>{e.bill_id ? <span className="chip">Bill</span> : e.source === "excel" ? <span className="chip xl">Excel</span> : <span className="chip typed">Typed</span>}</td>
+                    <td>{(e.entered_by && c.names[e.entered_by]) || ""}</td>
+                    <td>{D.can(me, "cost.enter", project.id, h.department_id) && (e.bill_id ? <span className="note">Change on bill</span> : <F.EntryActions e={e} heads={headOptions} towers={towers} />)}</td>
+                  </tr>
+                );
+              })}
+              {shown.length === 0 && (
+                <tr>
+                  <td colSpan={9 + listed.length} className="sub text-center py-6">
+                    No entries found matching filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </>
   );
@@ -1333,35 +1496,260 @@ export async function Setup(c: Ctx) {
   const section = tabs.some((t) => t.key === c.search.section) ? c.search.section! : tabs[0].key;
   return (
     <>
+      <F.StageProcessBar projectId={project.id} activeTab="setup" versionNumber={v?.number ?? null} />
       <MasterNav label="Project setup masters" items={tabs} active={section} />
-      {section === "project" && can && <section className="panel"><div className="panel-head"><h2>Project details · {project.name}</h2></div>
-        <F.ProjectForm key={project.id} p={project} /></section>}
-      {section === "towers" && <>
-      <section className="panel"><div className="panel-head"><h2>Towers · {project.name}</h2>
-        {can && <a href="#add-tower" className="btn-action primary">+ Add Tower</a>}
-      </div>
-        <div className="scroll"><table><thead><tr><th>Tower</th><th>Building type</th><th className="n">Carpet area (sft)</th><th className="n">Engg. construction area (sft)</th><th>OC date</th>{tf.map((f) => <th key={f.id} title={fieldTitle(f)}>{f.label}{f.required && " *"}</th>)}{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
-          {towers.map((t) => <F.TowerRow key={t.id} t={t} editable={can} customFields={tf} cells={tc.cells.get(t.id)} picks={picks} />)}
-          {towers.length === 0 && <tr><td colSpan={6 + tf.length}>No towers yet.</td></tr>}
-        </tbody></table></div>
-        {can && <F.AddTowerButton projectId={project.id} />}
-      </section>
-      {v && <section className="panel"><div className="panel-head"><h2>Areas for R{v.number}</h2><span className="sub">{editAreas ? "Typed here or imported from the workbook header; saved with this draft" : "Areas are kept per version; edit them on a draft version"}</span></div>
-        <F.AreasForm key={v.id} versionId={v.id} areas={v.areas as Record<string, unknown>} editable={editAreas} net={areas?.net_sale_carpet ?? null} />
-      </section>}
-      </>}
-      {section === "heads" && <section className="panel"><div className="panel-head"><h2>Cost heads · {project.name}</h2>
-        {can && <a href="#add-head" className="btn-action primary">+ Add Cost Head</a>}
-      </div>
-        {can && <F.AddHeadForm projectId={project.id} departments={depts} baseOptions={baseOptions} summaryOptions={options} gstRules={gstRules} />}
-        <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="label">Category</th><th className="label-sm">Sub-category</th><th>Summary row</th><th>GST rule</th>{can && <th className="actions-col">Actions</th>}</tr></thead><tbody>
-          {sorted.map((h) => {
-            const d = dept.get(h.department_id)!;
-            const byTower = d.summary_category === "Construction" && !h.is_tax;
-            return <F.HeadRow key={h.id} h={h} deptName={d.name} byTower={byTower} can={can} options={options[d.summary_category] ?? []} gstRules={gstRules} />;
-          })}
-        </tbody></table></div>
-      </section>}
+      {section === "project" && can && (
+        <section className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>Project details · {project.name}</h2>
+              <span className="sub">Core project identity and attributes</span>
+            </div>
+            <F.EditProjectModal p={project} />
+          </div>
+          <div className="master-kpi-strip">
+            <div className="master-kpi-tile">
+              <span className="kpi-label">Project Code</span>
+              <span className="kpi-val"><span className="chip">{project.code}</span></span>
+              <span className="kpi-sub">Identifier in budgets</span>
+            </div>
+            <div className="master-kpi-tile">
+              <span className="kpi-label">Location</span>
+              <span className="kpi-val">{project.location || "Not set"}</span>
+              <span className="kpi-sub">City / Suburb</span>
+            </div>
+            <div className="master-kpi-tile">
+              <span className="kpi-label">Towers Configured</span>
+              <span className="kpi-val">{towers.length}</span>
+              <span className="kpi-sub">Subprojects</span>
+            </div>
+            <div className="master-kpi-tile">
+              <span className="kpi-label">Cost Heads</span>
+              <span className="kpi-val">{heads.length}</span>
+              <span className="kpi-sub">Master line items</span>
+            </div>
+          </div>
+          <F.ProjectForm key={project.id} p={project} />
+        </section>
+      )}
+
+      {section === "towers" && (
+        <>
+          <section className="panel">
+            <div className="panel-head">
+              <div>
+                <h2>Towers & Subprojects · {project.name}</h2>
+                <span className="sub">{towers.length} towers · physical structures and areas</span>
+              </div>
+              {can && <F.AddTowerModal projectId={project.id} />}
+            </div>
+
+            <div className="master-kpi-strip">
+              <div className="master-kpi-tile">
+                <span className="kpi-label">Total Towers</span>
+                <span className="kpi-val">{towers.length}</span>
+                <span className="kpi-sub">Active structures / wings</span>
+              </div>
+              <div className="master-kpi-tile">
+                <span className="kpi-label">Total Carpet Area</span>
+                <span className="kpi-val">
+                  {towers.reduce((s, t) => s + (t.carpet_area || 0), 0).toLocaleString()} sft
+                </span>
+                <span className="kpi-sub">Sum of tower carpet areas</span>
+              </div>
+              <div className="master-kpi-tile">
+                <span className="kpi-label">Total Construction BUA</span>
+                <span className="kpi-val">
+                  {towers.reduce((s, t) => s + (t.eng_area || 0), 0).toLocaleString()} sft
+                </span>
+                <span className="kpi-sub">Engineering BUA</span>
+              </div>
+            </div>
+
+            <div className="scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tower</th>
+                    <th>Building type</th>
+                    <th className="n">Carpet area (sft)</th>
+                    <th className="n">Engg. construction area (sft)</th>
+                    <th>Planned OC date</th>
+                    {tf.map((f) => (
+                      <th key={f.id} title={fieldTitle(f)}>
+                        {f.label}{f.required && " *"}
+                      </th>
+                    ))}
+                    {can && <th className="actions-col">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {towers.map((t) => (
+                    <tr key={t.id}>
+                      <td><strong>{t.name}</strong></td>
+                      <td>
+                        {t.type ? <span className="chip">{t.type}</span> : <span className="sub">Not set</span>}
+                      </td>
+                      <td className="n">
+                        {t.carpet_area ? `${t.carpet_area.toLocaleString()} sft` : "—"}
+                      </td>
+                      <td className="n">
+                        {t.eng_area ? `${t.eng_area.toLocaleString()} sft` : "—"}
+                      </td>
+                      <td>{t.oc_date ? dmy(t.oc_date) : "—"}</td>
+                      {tf.map((f) => (
+                        <td key={f.id}>
+                          <CustomInput
+                            field={f}
+                            entity="tower"
+                            entityId={t.id}
+                            cell={tc.cells.get(t.id)?.[f.key]}
+                            editable={can}
+                            picks={picks}
+                            compact
+                          />
+                        </td>
+                      ))}
+                      {can && (
+                        <td className="actions">
+                          <div className="actions-group">
+                            <F.EditTowerModal t={t} />
+                            <F.DeleteTowerConfirmDialog towerId={t.id} towerName={t.name} />
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                  {towers.length === 0 && (
+                    <tr>
+                      <td colSpan={6 + tf.length} className="sub text-center py-6">
+                        No towers configured yet. Click &quot;Add Tower&quot; above to create one.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {v && (
+            <section className="panel">
+              <div className="panel-head">
+                <h2>Areas for R{v.number}</h2>
+                <span className="sub">{editAreas ? "Saved with this draft version" : "Areas are kept per version; edit them on a draft version"}</span>
+              </div>
+              <F.AreasForm key={v.id} versionId={v.id} areas={v.areas as Record<string, unknown>} editable={editAreas} net={areas?.net_sale_carpet ?? null} />
+            </section>
+          )}
+        </>
+      )}
+
+      {section === "heads" && (
+        <section className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>Cost Heads Master · {project.name}</h2>
+              <span className="sub">{heads.length} cost heads configured</span>
+            </div>
+            {can && (
+              <F.AddCostHeadModal
+                projectId={project.id}
+                departments={depts}
+                summaryOptions={options}
+                gstRules={gstRules}
+                baseOptions={baseOptions}
+              />
+            )}
+          </div>
+
+          <div className="master-kpi-strip">
+            <div className="master-kpi-tile">
+              <span className="kpi-label">Total Cost Heads</span>
+              <span className="kpi-val">{heads.length}</span>
+              <span className="kpi-sub">Across all departments</span>
+            </div>
+            <div className="master-kpi-tile">
+              <span className="kpi-label">Direct Cost Heads</span>
+              <span className="kpi-val">{plain.length}</span>
+              <span className="kpi-sub">Standard expenditure heads</span>
+            </div>
+            <div className="master-kpi-tile">
+              <span className="kpi-label">Tax / GST Heads</span>
+              <span className="kpi-val">{heads.length - plain.length}</span>
+              <span className="kpi-sub">Rule-calculated tax heads</span>
+            </div>
+          </div>
+
+          <div className="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th className="label">Department</th>
+                  <th className="label">Category</th>
+                  <th className="label-sm">Sub-category</th>
+                  <th>Summary row</th>
+                  <th>GST rule</th>
+                  {can && <th className="actions-col">Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((h) => {
+                  const d = dept.get(h.department_id)!;
+                  const byTower = d.summary_category === "Construction" && !h.is_tax;
+                  return (
+                    <tr key={h.id}>
+                      <td>{d.name}</td>
+                      <td><strong>{h.category}</strong></td>
+                      <td>{h.sub_category || <span className="sub">—</span>}</td>
+                      <td>
+                        {byTower ? (
+                          <span className="sub" style={{ fontStyle: "italic" }}>
+                            By tower building type
+                          </span>
+                        ) : (
+                          h.summary_subcategory || <span className="sub">—</span>
+                        )}
+                      </td>
+                      <td>
+                        {h.is_tax ? (
+                          <span className="chip">
+                            GST {Number(h.tax_rate_pct)}% × {Number(h.tax_share_pct ?? 100)}%
+                          </span>
+                        ) : (
+                          <span className="sub">—</span>
+                        )}
+                      </td>
+                      {can && (
+                        <td className="actions">
+                          <div className="actions-group">
+                            <F.EditCostHeadModal
+                              h={h}
+                              deptName={d.name}
+                              options={options[d.summary_category] ?? []}
+                            />
+                            <F.DeleteCostHeadConfirmDialog
+                              headId={h.id}
+                              headName={h.sub_category ? `${h.category} · ${h.sub_category}` : h.category}
+                            />
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+                {sorted.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="sub text-center py-6">
+                      No cost heads configured yet. Click &quot;Add Cost Head&quot; above to create one.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {section === "signoff" && <SignoffSetup c={c} />}
     </>
   );
