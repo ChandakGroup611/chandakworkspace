@@ -1,7 +1,7 @@
 import Link from "next/link";
 import * as D from "@/lib/budget/data";
 import type { Db, Me, Project, Version } from "@/lib/budget/data";
-import { RATE_BASES, dmy, fmt, fmtArea, fmtPct, fmtRupees, isNeg, monthName, nextQuarterEnd, toCr } from "@/lib/budget/format";
+import { RATE_BASES, dmy, fmt, fmtArea, fmtPct, fmtRupees, formatBudgetPeriod, versionTitle, versionSubtitle, isNeg, monthName, nextQuarterEnd, toCr } from "@/lib/budget/format";
 import { type Cells, cr, day, loadCustom, loadVersionCustom, lookupNames, rupeesFromPaise } from "@/lib/budget/custom";
 import { groupDetail } from "@/lib/budget/group";
 import { fieldTitle } from "@/lib/budget/fields";
@@ -122,6 +122,42 @@ export async function Overview(c: Ctx & { version: Version }) {
       <F.StageProcessBar projectId={project.id} activeTab="overview" versionNumber={v.number} />
       <VersionBanner sb={sb} me={me} project={project} version={v} names={names} />
       <NextStep c={c} draft={draft} />
+
+      {/* Budget Period & Financial Context Ribbon */}
+      {(() => {
+        const period = formatBudgetPeriod(v.as_on, project.fy_start_month);
+        const vTitle = versionTitle(v.number);
+        const canEdit = D.canChangeDraft(me, v);
+        return (
+          <div className="portfolio-strip" style={{ marginBottom: 12 }}>
+            <span className="portfolio-metric-tag">
+              Budget: <strong>{vTitle}</strong>
+            </span>
+            <span className="portfolio-metric-tag">
+              Financial Year: <strong>{period.fy}</strong>
+            </span>
+            <span className="portfolio-metric-tag">
+              Period / Quarter: <strong>{period.quarter} ({period.range})</strong>
+            </span>
+            <span className="portfolio-metric-tag">
+              As On Cutoff: <strong>{period.asOnFormatted}</strong>
+            </span>
+            {canEdit && (
+              <F.EditBudgetDetailsModal
+                version={v}
+                project={project}
+                trigger={<button type="button" className="btn-action text-xs py-0.5">Edit Details</button>}
+              />
+            )}
+            <Link
+              href={`/budget/${project.id}/budgets`}
+              className="text-primary hover:underline text-xs font-semibold ml-auto"
+            >
+              All Budgets Registry →
+            </Link>
+          </div>
+        );
+      })()}
 
       {/* Project Financial & Physical Metrics Strip */}
       <div className="sub-kpis-strip">
@@ -1462,6 +1498,101 @@ export async function Periods(c: Ctx) {
         <tr className="total"><td>Total</td>{periods.map((p) => <td key={p} className="n">{fmt(cell(null, p))}</td>)}<td className="n">{fmt(cell(null, null))}</td></tr>
       </tbody></table></div>
     </section>
+  );
+}
+
+// ---------- budgets registry (dedicated list page of all created budgets) ----------
+export async function BudgetsRegistry(c: Ctx) {
+  const { sb, me, project, versions, names } = c;
+  const totals = await D.getTotals(sb, project.id);
+  const v = c.version;
+
+  const rows: F.BudgetRegistryRow[] = versions.map((ver) => ({
+    version: ver,
+    totals: totals.find((t) => t.version_id === ver.id) ?? null,
+    names,
+  }));
+
+  const approved = versions.filter((ver) => ver.status === "approved").pop();
+  const cur = approved ?? versions[versions.length - 1];
+  const curTotals = cur ? totals.find((t) => t.version_id === cur.id) : null;
+  const initialVersion = versions[0];
+  const initialTotals = initialVersion ? totals.find((t) => t.version_id === initialVersion.id) : null;
+
+  const canManage = D.can(me, "project.setup", project.id) || D.can(me, "version.open", project.id);
+
+  return (
+    <>
+      <F.StageProcessBar projectId={project.id} activeTab="overview" versionNumber={v?.number ?? null} />
+
+      <section className="panel" style={{ marginBottom: 18 }}>
+        <div className="panel-head">
+          <div>
+            <h2>Budgets & Revisions Registry · {project.name}</h2>
+            <span className="sub">
+              All baseline and revision budgets for this project with financial periods, cost totals, variances, and action buttons.
+            </span>
+          </div>
+          <div className="row" style={{ alignItems: "center", gap: 8 }}>
+            <Link href={`/budget/${project.id}/periods`} className="btn-action">
+              View Incurred by Period (M / Q / Y) →
+            </Link>
+            {canManage && (
+              <Link href={`/budget/${project.id}/create`} className="btn-action primary">
+                + Create Next Revision
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Master Registry KPI Strip */}
+        <div className="master-kpi-strip">
+          <div className="master-kpi-tile">
+            <span className="kpi-label">Original Baseline Budget</span>
+            <span className="kpi-val">
+              {initialTotals ? `₹${fmt(initialTotals.initial_cr)} Cr` : "—"}
+            </span>
+            <span className="kpi-sub">R1 Initial baseline</span>
+          </div>
+          <div className="master-kpi-tile">
+            <span className="kpi-label">Current Approved CTC</span>
+            <span className="kpi-val">
+              {curTotals ? `₹${fmt(curTotals.ctc_cr)} Cr` : "—"}
+            </span>
+            <span className="kpi-sub">
+              {approved ? `Revision R${approved.number}` : "Latest working figure"}
+            </span>
+          </div>
+          <div className="master-kpi-tile">
+            <span className="kpi-label">Total Incurred Actuals</span>
+            <span className="kpi-val">
+              {curTotals ? `₹${fmt(curTotals.incurred_cr)} Cr` : "—"}
+            </span>
+            <span className="kpi-sub">Spent to date</span>
+          </div>
+          <div className="master-kpi-tile">
+            <span className="kpi-label">Unspent Balance Headroom</span>
+            <span className="kpi-val">
+              {curTotals ? `₹${fmt(curTotals.balance_cr)} Cr` : "—"}
+            </span>
+            <span className="kpi-sub">Remaining unspent CTC</span>
+          </div>
+          <div className="master-kpi-tile">
+            <span className="kpi-label">Total Versions Logged</span>
+            <span className="kpi-val">{versions.length}</span>
+            <span className="kpi-sub">Baseline + Revisions</span>
+          </div>
+        </div>
+
+        {/* Dedicated Budgets Registry Table with Action Buttons */}
+        <F.BudgetsRegistryTable
+          project={project}
+          rows={rows}
+          canCreate={canManage}
+          canManage={canManage}
+        />
+      </section>
+    </>
   );
 }
 

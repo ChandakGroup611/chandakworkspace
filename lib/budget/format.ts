@@ -35,6 +35,72 @@ export function nextQuarterEnd(iso: string) {
   return `${y}-${String(next).padStart(2, "0")}-${String(new Date(y, next, 0).getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * Formats a version number into user-friendly accounting terminology:
+ * Version 1 = "Original Baseline Budget"
+ * Version 2 = "Revision 1 (R2)"
+ * Version 3 = "Revision 2 (R3)"
+ */
+export function versionTitle(versionNumber: number | null | undefined): string {
+  if (versionNumber == null) return "Budget";
+  if (versionNumber === 1) return "Original Baseline Budget";
+  return `Revision ${versionNumber - 1} (R${versionNumber})`;
+}
+
+export function versionSubtitle(versionNumber: number | null | undefined): string {
+  if (versionNumber == null) return "";
+  if (versionNumber === 1) return "Initial project baseline budget";
+  return `Revision ${versionNumber - 1} against original baseline`;
+}
+
+/**
+ * Calculates Financial Year, Quarter, and date range from an ISO date string (YYYY-MM-DD)
+ * and the project's FY start month (default: 4 for April in India).
+ */
+export function formatBudgetPeriod(isoDate: string | null | undefined, fyStartMonth: number = 4) {
+  if (!isoDate) {
+    return {
+      fy: "Current FY",
+      quarter: "—",
+      range: "—",
+      asOnFormatted: "—",
+      label: "Annual Budget",
+    };
+  }
+
+  const d = new Date(isoDate.slice(0, 10) + "T00:00:00");
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1; // 1 to 12
+
+  let fyStartYear = year;
+  if (month < fyStartMonth) {
+    fyStartYear = year - 1;
+  }
+  const fyEndYear = fyStartYear + 1;
+  const startYearShort = String(fyStartYear);
+  const endYearShort = String(fyEndYear).slice(-2);
+  const fyString = `FY ${startYearShort}–${endYearShort}`;
+
+  const offset = (month - fyStartMonth + 12) % 12; // 0 to 11
+  const qNum = Math.floor(offset / 3) + 1; // 1, 2, 3, 4
+  const quarterString = `Q${qNum}`;
+
+  const [y, m, dayNum] = isoDate.slice(0, 10).split("-");
+  const asOnFormatted = `${dayNum}/${m}/${y}`;
+  const rangeStart = `01/${String(fyStartMonth).padStart(2, "0")}/${startYearShort}`;
+  const lastDayOfPrevMonth = new Date(fyEndYear, (fyStartMonth - 1), 0).getDate();
+  const endMonthPadded = String((fyStartMonth - 1 + 12) % 12 || 12).padStart(2, "0");
+  const rangeEnd = `${lastDayOfPrevMonth}/${endMonthPadded}/${fyEndYear}`;
+
+  return {
+    fy: fyString,
+    quarter: quarterString,
+    range: `${rangeStart} – ${rangeEnd}`,
+    asOnFormatted,
+    label: `${fyString} · ${quarterString} (As on ${asOnFormatted})`,
+  };
+}
+
 export const BUILDING_TYPES = [
   "Sales Building", "Society Building", "Rehab Building", "Common Infra", "MHADA Building",
   "Reservation Building", "Open Space Area / MCGM", "School / Other Building",

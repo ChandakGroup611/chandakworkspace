@@ -40,8 +40,14 @@ export async function writeBudgetSummary(projectId: number, versionNumber: numbe
   } catch {
     // keep the rule-written note
   }
-  const { error } = await sb.from("budget_ai_notes").insert({ version_id: v.id, body, provider, facts: { lines: facts.lines } });
-  if (error) return { ok: false, error: error.message };
+  try {
+    const { error } = await sb.from("budget_ai_notes").insert({ version_id: v.id, body, provider, facts: { lines: facts.lines } });
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Failed to save AI summary note." };
+  }
   revalidatePath("/budget", "layout");
   return { ok: true, provider };
 }

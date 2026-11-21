@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { type Db, type Me, type Project, type Version, can, canApprove, canChangeDraft, chainOf, getSignoffLevels, getSignoffStatus, limitedToDepartments } from "@/lib/budget/data";
-import { dmy } from "@/lib/budget/format";
+import { dmy, formatBudgetPeriod, versionTitle } from "@/lib/budget/format";
 import { Selectors, SignoffActions } from "./forms";
 
 export const TABS: [string, string][] = [
-  ["start", "Get started"], ["create", "Create budget"], ["overview", "Overview"], ["entry", "Budget entry"], ["import", "Import from Excel"], ["summary", "Summary report"],
+  ["start", "Get started"], ["create", "Create budget"], ["overview", "Overview"], ["budgets", "Budgets Registry"], ["entry", "Budget entry"], ["import", "Import from Excel"], ["summary", "Summary report"],
   ["detail", "Detail report"], ["compare", "Compare versions"], ["incurred", "Cost incurred"], ["periods", "Month / quarter / year"],
   ["setup", "Project setup"], ["workings", "Tower workings"], ["schedules", "Schedules"], ["line", "Budget line"], ["guide", "Workflow guide & learning hub"],
 ];
@@ -18,7 +18,7 @@ export const TABS: [string, string][] = [
 export type Area = "home" | "start" | "overview" | "prepare" | "actuals" | "reports" | "setup" | "help" | "admin";
 
 export const AREA_OF: Record<string, Area> = {
-  home: "home", start: "start", overview: "overview",
+  home: "home", start: "start", overview: "overview", budgets: "overview",
   create: "prepare", entry: "prepare", workings: "prepare", schedules: "prepare", import: "prepare", line: "prepare",
   incurred: "actuals",
   summary: "reports", detail: "reports", compare: "reports", periods: "reports",
@@ -29,7 +29,9 @@ export const AREA_OF: Record<string, Area> = {
 interface SubTab { id: string; label: string }
 const AREAS: { id: Area; label: string; first: string; subs?: SubTab[] }[] = [
   { id: "start", label: "Get started", first: "start" },
-  { id: "overview", label: "Overview", first: "overview" },
+  { id: "overview", label: "Overview", first: "overview", subs: [
+    { id: "overview", label: "Dashboard" }, { id: "budgets", label: "All Budgets & Revisions" },
+  ] },
   { id: "prepare", label: "Prepare budget", first: "entry", subs: [
     { id: "create", label: "Create budget" }, { id: "entry", label: "Budget entry" }, { id: "workings", label: "Tower workings" }, { id: "schedules", label: "Schedules" }, { id: "import", label: "Import Excel (optional)" },
   ] },
@@ -185,13 +187,19 @@ export async function VersionBanner({ sb, me, project, version, names }: { sb: D
   const signed = steps.filter((s) => s.signed_by).length;
   // the preparer may take back a version under sign-off: same rule as changing the draft
   const mayRecall = version.status === "in_review" && canChangeDraft(me, { ...version, status: "draft" });
+  const period = formatBudgetPeriod(version.as_on, project.fy_start_month);
+  const vTitle = versionTitle(version.number);
+
   return (
     <div className={`banner ${version.status === "approved" ? "locked" : "draft"}`}>
-      <div><b>{project.name} R{version.number}</b> as on {dmy(version.as_on)} · <span className={`pill ${version.status}`}>{version.status.replace("_", " ")}</span> ·{" "}
+      <div>
+        <b>{project.name} · {vTitle}</b> ({period.fy} · {period.quarter}) as on {period.asOnFormatted} ·{" "}
+        <span className={`pill ${version.status}`}>{version.status.replace("_", " ")}</span> ·{" "}
         {version.status === "approved" ? by("approved", version.approved_by)
           : version.status === "in_review" ? `${by("prepared", version.prepared_by)}; ${signed} of ${steps.length} signed, waiting for ${next?.title ?? "sign-off"}`
           : `draft ${by("prepared", version.prepared_by)}`}
-        {version.reason && ` · ${version.reason}`}</div>
+        {version.reason && ` · ${version.reason}`}
+      </div>
       <SignoffActions versionId={version.id} number={version.number} projectId={project.id} status={version.status} chain={chain}
         mayApprove={canApprove(me, version)} mayRecall={mayRecall} next={next ? { title: next.title, mine: next.approver_ids.includes(me.user_id) } : null} />
     </div>

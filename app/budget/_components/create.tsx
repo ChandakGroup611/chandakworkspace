@@ -77,8 +77,20 @@ export async function CreateBudget(c: Ctx) {
     <>
       <section className="panel guide-head">
         <div>
-          <h2>{open ? `Create budget · edit draft R${open.number}` : `Create budget · R${next}`}</h2>
-          <p className="sub">Every input of the detail budget workbook, step by step: version, project areas, towers, budget lines by department, GST and cost incurred. No Excel needed.</p>
+          <h2>
+            {open
+              ? open.number === 1
+                ? "Edit Original Baseline Budget Draft"
+                : `Edit Revision ${open.number - 1} Draft (R${open.number})`
+              : next === 1
+              ? "Create Original Baseline Budget"
+              : `Create Revision ${next - 1} (R${next})`}
+          </h2>
+          <p className="sub">
+            {next === 1
+              ? "Establishes the initial approved baseline budget for this project against which all future revisions, actual costs, and variances will be tracked."
+              : "Every input of the detail budget workbook, step by step: version, project areas, towers, budget lines by department, GST and cost incurred."}
+          </p>
         </div>
         <div className="actions-group">
           {open && <Link className="btn-action" href={`/budget/${pid}/entry?v=${open.number}&mode=form`}>Line by line instead</Link>}

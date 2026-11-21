@@ -129,7 +129,11 @@ Write 4 to 6 short sentences of plain prose, no headings, no bullet points, no m
 then the biggest changes since the last version and their reasons, then what needs attention. Write in British English.`;
 
 export async function latestNote(sb: D.Db, versionId: number) {
-  const { data } = await sb.from("budget_ai_notes").select("body, provider, created_by, created_at").eq("version_id", versionId)
-    .order("created_at", { ascending: false }).limit(1).maybeSingle();
-  return (data ?? null) as { body: string; provider: string; created_by: string | null; created_at: string } | null;
+  try {
+    const { data } = await sb.from("budget_ai_notes").select("body, provider, created_by, created_at").eq("version_id", versionId)
+      .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    return (data ?? null) as { body: string; provider: string; created_by: string | null; created_at: string } | null;
+  } catch {
+    return null;
+  }
 }

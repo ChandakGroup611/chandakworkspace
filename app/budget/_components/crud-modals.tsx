@@ -14,7 +14,7 @@ import {
 import { AppButton } from "@/components/ui/AppButton";
 import * as A from "@/lib/budget/actions";
 import { addTowerFull } from "@/lib/budget/manual-actions";
-import { BUILDING_TYPES, RATE_BASES, fmt, fmtRupees } from "@/lib/budget/format";
+import { BUILDING_TYPES, RATE_BASES, fmt, fmtRupees, formatBudgetPeriod, versionTitle, versionSubtitle, dmy } from "@/lib/budget/format";
 import {
   Building2,
   Layers,
@@ -2158,6 +2158,9 @@ export function ProjectsMasterTable({
                         <Link href={`/budget/${p.id}/overview?v=${cur.number}`} className="btn-action">
                           Overview
                         </Link>
+                        <Link href={`/budget/${p.id}/budgets`} className="btn-action">
+                          Budgets
+                        </Link>
                         <Link href={`/budget/${p.id}/entry?v=${cur.number}`} className="btn-action">
                           Entry
                         </Link>
@@ -2213,8 +2216,11 @@ export function ProjectsMasterTable({
                   <span>Bal: <strong>₹{fmt(cur.balance_cr)} Cr</strong></span>
                 </div>
                 <div className="mt-2 pt-2 border-t border-border flex items-center justify-between text-xs">
-                  <Link href={`/budget/${p.id}/entry?v=${cur.number}`} className="text-primary hover:underline">
-                    Budget Entry →
+                  <Link href={`/budget/${p.id}/budgets`} className="text-primary hover:underline font-medium">
+                    All Budgets →
+                  </Link>
+                  <Link href={`/budget/${p.id}/entry?v=${cur.number}`} className="text-muted hover:text-ink">
+                    Entry
                   </Link>
                   <Link href={`/budget/${p.id}/setup`} className="text-muted hover:text-ink">
                     Setup
@@ -2268,6 +2274,401 @@ export function StageProcessBar({
         );
       })}
     </nav>
+  );
+}
+
+// ==========================================
+// 14. EDIT BUDGET DETAILS MODAL
+// ==========================================
+export function EditBudgetDetailsModal({
+  version,
+  project,
+  trigger,
+}: {
+  version: { id: number; number: number; as_on: string; reason: string | null; status: string };
+  project: { id: number; name: string; fy_start_month?: number };
+  trigger?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const [asOn, setAsOn] = useState(version.as_on.slice(0, 10));
+  const [reason, setReason] = useState(version.reason ?? "");
+
+  const period = formatBudgetPeriod(asOn, project.fy_start_month ?? 4);
+  const title = versionTitle(version.number);
+
+  const handleOpen = () => {
+    setAsOn(version.as_on.slice(0, 10));
+    setReason(version.reason ?? "");
+    setError(null);
+    setOpen(true);
+  };
+
+  const handleSave = () => {
+    setError(null);
+    startTransition(async () => {
+      const res = await A.updateVersion(version.id, {
+        as_on: asOn,
+        reason: reason.trim() || null,
+      });
+      if (!res.ok) {
+        setError(res.error);
+      } else {
+        setOpen(false);
+        router.refresh();
+      }
+    });
+  };
+
+  return (
+    <>
+      {trigger ? (
+        <span onClick={handleOpen}>{trigger}</span>
+      ) : (
+        <button
+          type="button"
+          className="btn-action"
+          onClick={handleOpen}
+        >
+          <Pencil className="h-3 w-3 inline mr-1" />
+          Edit Details
+        </button>
+      )}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+              <Calendar className="h-5 w-5 text-primary" />
+              Edit Budget Details · {title}
+            </DialogTitle>
+          </DialogHeader>
+
+          {error && (
+            <div className="banner error text-sm p-3 rounded" role="alert">
+              <AlertCircle className="h-4 w-4 inline mr-1 text-bad" />
+              {error}
+            </div>
+          )}
+
+          <div className="budget-modal-grid">
+            <div className="budget-modal-field sm:col-span-2">
+              <label>Budget Title / Classification</label>
+              <div className="p-2.5 rounded bg-elevated border border-border text-xs space-y-1">
+                <div className="font-semibold text-ink flex items-center gap-1.5">
+                  <span className={`pill ${version.status}`}>R{version.number} · {version.status.replace("_", " ")}</span>
+                  <span>{title}</span>
+                </div>
+                <div className="text-muted">
+                  {version.number === 1 ? "Initial baseline budget for this development project." : `Revision ${version.number - 1} against initial baseline.`}
+                </div>
+              </div>
+            </div>
+
+            <div className="budget-modal-field">
+              <label htmlFor="bvm-as-on">As-On / Cutoff Date *</label>
+              <input
+                id="bvm-as-on"
+                type="date"
+                value={asOn}
+                onChange={(e) => setAsOn(e.target.value)}
+              />
+            </div>
+
+            <div className="budget-modal-field">
+              <label>Financial Period & Quarter</label>
+              <div className="p-2 rounded bg-elevated border border-border text-xs text-ink font-medium">
+                <div>{period.fy} · {period.quarter}</div>
+                <div className="text-muted text-[11px]">{period.range}</div>
+              </div>
+            </div>
+
+            <div className="budget-modal-field sm:col-span-2">
+              <label htmlFor="bvm-reason">Revision Reason / Planning Notes</label>
+              <textarea
+                id="bvm-reason"
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Describe the context for this budget revision (e.g. Design adjustments in Tower A, commodity price movements, RERA revision)..."
+                className="w-full text-xs rounded border border-border bg-surface p-2 text-ink"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4 flex items-center justify-end gap-2">
+            <AppButton variant="outline" size="sm" disabled={pending} onClick={() => setOpen(false)}>
+              Cancel
+            </AppButton>
+            <AppButton size="sm" disabled={pending} onClick={handleSave}>
+              {pending ? "Saving..." : "Save Budget Details"}
+            </AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// ==========================================
+// 15. DEDICATED BUDGETS REGISTRY TABLE
+// ==========================================
+export interface BudgetRegistryRow {
+  version: {
+    id: number;
+    project_id: number;
+    number: number;
+    as_on: string;
+    status: "draft" | "in_review" | "approved";
+    reason: string | null;
+    prepared_by: string | null;
+    approved_by: string | null;
+    approved_at: string | null;
+  };
+  totals?: {
+    initial_cr: number;
+    ctc_cr: number;
+    incurred_cr: number;
+    balance_cr: number;
+    variance_cr: number;
+    util_pct: number | null;
+  } | null;
+  names: Record<string, string>;
+}
+
+export function BudgetsRegistryTable({
+  project,
+  rows,
+  canCreate,
+  canManage,
+}: {
+  project: { id: number; name: string; code: string; location: string | null; fy_start_month: number };
+  rows: BudgetRegistryRow[];
+  canCreate: boolean;
+  canManage: boolean;
+}) {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const filtered = rows.filter(({ version: v, totals: t, names }) => {
+    if (statusFilter !== "all" && v.status !== statusFilter) return false;
+    const q = search.toLowerCase();
+    const prep = (v.prepared_by && names[v.prepared_by]?.toLowerCase()) ?? "";
+    const apprv = (v.approved_by && names[v.approved_by]?.toLowerCase()) ?? "";
+    const reason = (v.reason ?? "").toLowerCase();
+    const title = versionTitle(v.number).toLowerCase();
+    return (
+      title.includes(q) ||
+      `r${v.number}`.includes(q) ||
+      prep.includes(q) ||
+      apprv.includes(q) ||
+      reason.includes(q)
+    );
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="list-toolbar">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="list-search-box">
+            <Search className="h-4 w-4 text-muted" />
+            <input
+              type="text"
+              className="list-search-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search budgets by title, revision, reason, or preparer..."
+            />
+            {search && (
+              <button
+                type="button"
+                className="text-xs text-muted hover:text-ink px-1"
+                onClick={() => setSearch("")}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          <div className="segmented-nav">
+            <button
+              type="button"
+              className={`segmented-btn ${statusFilter === "all" ? "active" : ""}`}
+              onClick={() => setStatusFilter("all")}
+            >
+              All ({rows.length})
+            </button>
+            <button
+              type="button"
+              className={`segmented-btn ${statusFilter === "approved" ? "active" : ""}`}
+              onClick={() => setStatusFilter("approved")}
+            >
+              Approved ({rows.filter((r) => r.version.status === "approved").length})
+            </button>
+            <button
+              type="button"
+              className={`segmented-btn ${statusFilter === "in_review" ? "active" : ""}`}
+              onClick={() => setStatusFilter("in_review")}
+            >
+              In Review ({rows.filter((r) => r.version.status === "in_review").length})
+            </button>
+            <button
+              type="button"
+              className={`segmented-btn ${statusFilter === "draft" ? "active" : ""}`}
+              onClick={() => setStatusFilter("draft")}
+            >
+              Drafts ({rows.filter((r) => r.version.status === "draft").length})
+            </button>
+          </div>
+        </div>
+
+        {canCreate && (
+          <Link href={`/budget/${project.id}/create`} className="btn-action primary">
+            <Plus className="h-3.5 w-3.5 inline mr-1" />
+            Create Next Revision
+          </Link>
+        )}
+      </div>
+
+      <div className="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th className="label">Budget Classification</th>
+              <th>Financial Period & Cutoff</th>
+              <th>Status</th>
+              <th className="n">Initial (Cr)</th>
+              <th className="n">Estimated CTC (Cr)</th>
+              <th className="n">Incurred (Cr)</th>
+              <th className="n">Balance (Cr)</th>
+              <th className="n">Variance vs Initial</th>
+              <th className="n">Utilised</th>
+              <th>Prepared & Approved</th>
+              <th className="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(({ version: v, totals: t, names }) => {
+              const period = formatBudgetPeriod(v.as_on, project.fy_start_month);
+              const title = versionTitle(v.number);
+              const subtitle = versionSubtitle(v.number);
+              const isOver = (t?.variance_cr ?? 0) < 0;
+
+              return (
+                <tr key={v.id}>
+                  <td>
+                    <div>
+                      <strong className="text-sm text-foreground block">{title}</strong>
+                      <span className="text-xs text-muted block mt-0.5">{subtitle}</span>
+                      {v.reason && (
+                        <div className="text-[11px] text-muted italic mt-1 line-clamp-1" title={v.reason}>
+                          Note: {v.reason}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="space-y-0.5">
+                      <div className="font-semibold text-xs text-ink">{period.fy} · {period.quarter}</div>
+                      <div className="text-[11px] text-muted">As on {period.asOnFormatted}</div>
+                      <div className="text-[10px] text-muted">{period.range}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`pill ${v.status}`}>
+                      R{v.number} · {v.status.replace("_", " ")}
+                    </span>
+                  </td>
+                  <td className="n">{t ? fmt(t.initial_cr) : "—"}</td>
+                  <td className="n">
+                    <strong>{t ? fmt(t.ctc_cr) : "—"}</strong>
+                  </td>
+                  <td className="n">{t ? fmt(t.incurred_cr) : "—"}</td>
+                  <td className="n">
+                    <span className={(t?.balance_cr ?? 0) < 0 ? "neg" : ""}>
+                      {t ? fmt(t.balance_cr) : "—"}
+                    </span>
+                  </td>
+                  <td className="n">
+                    <span className={isOver ? "neg" : ""}>
+                      {t ? fmt(t.variance_cr) : "—"}
+                    </span>
+                  </td>
+                  <td className="n">
+                    {t?.util_pct != null ? (
+                      <span>
+                        <span className="bar inline-block mr-1 align-middle">
+                          <i
+                            className={t.util_pct > 100 ? "over" : t.util_pct >= 90 ? "near" : ""}
+                            style={{ width: `${Math.min(100, Math.max(0, t.util_pct))}%` }}
+                          />
+                        </span>
+                        {fmt(t.util_pct)}%
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="text-xs text-muted space-y-0.5">
+                    {v.prepared_by && (
+                      <div>By: {names[v.prepared_by] ?? "Preparer"}</div>
+                    )}
+                    {v.approved_by && (
+                      <div className="text-good">
+                        Approved: {names[v.approved_by] ?? "Approver"}
+                        {v.approved_at && ` (${dmy(v.approved_at)})`}
+                      </div>
+                    )}
+                  </td>
+                  <td className="actions">
+                    <div className="actions-group">
+                      <Link
+                        href={`/budget/${project.id}/overview?v=${v.number}`}
+                        className="btn-action"
+                        title="View Dashboard for this Budget"
+                      >
+                        Overview
+                      </Link>
+                      <Link
+                        href={`/budget/${project.id}/entry?v=${v.number}`}
+                        className="btn-action"
+                        title="Open Budget Entry Form"
+                      >
+                        Entry
+                      </Link>
+                      <Link
+                        href={`/budget/${project.id}/summary?v=${v.number}`}
+                        className="btn-action"
+                        title="View Executive Summary Report"
+                      >
+                        Summary
+                      </Link>
+                      {canManage && (
+                        <EditBudgetDetailsModal
+                          version={v}
+                          project={project}
+                          trigger={<button type="button" className="btn-action">Edit Details</button>}
+                        />
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={11} className="sub text-center py-6">
+                  No budgets found matching &quot;{search}&quot;.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

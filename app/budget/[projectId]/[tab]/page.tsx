@@ -36,6 +36,7 @@ export default async function BudgetScreen({ params, searchParams }: {
   else if (tab === "guide") body = <BudgetLearningGuide projectId={project.id} version={version} />;
   else if (tab === "incurred") body = await V.Incurred(ctx);
   else if (tab === "periods") body = await V.Periods(ctx);
+  else if (tab === "budgets") body = await V.BudgetsRegistry(ctx);
   else if (!version) body = D.can(me, "project.setup", project.id) || D.can(me, "version.open", project.id) ? await GetStarted(ctx) : V.NoVersion(ctx);
   else {
     const c = { ...ctx, version };

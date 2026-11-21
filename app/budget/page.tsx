@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 const TAB_NAMES: Record<string, string> = {
   overview: "Overview",
+  budgets: "Budgets Registry",
   entry: "Budget entry",
   workings: "Tower workings",
   schedules: "Schedules",
