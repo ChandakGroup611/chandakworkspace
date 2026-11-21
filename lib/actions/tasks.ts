@@ -616,9 +616,13 @@ export async function changeTaskStatus(
 
   // Side effect 2: Insert remark comment if provided
   if (remark && remark.trim().length > 0) {
-    await supabaseAdmin
-      .from('task_comments')
-      .insert([{ task_id: taskId, author_id: userId, content: remark.trim() }]);
+    try {
+      await supabaseAdmin
+        .from('task_comments')
+        .insert([{ task_id: taskId, author_id: userId, content: remark.trim() }]);
+    } catch (commentErr) {
+      console.error("[changeTaskStatus] Non-fatal error saving remark comment:", commentErr);
+    }
   }
 
   // Side effect 3: Notification queue push with names old -> new
@@ -1991,7 +1995,7 @@ export async function executeTaskBatchOperation(payload: {
     ? Object.entries(checklistUpdates).map(([id, updates]) => supabaseAdmin.from('task_checklists').update(updates).eq('id', id).select())
     : [];
 
-  const commentPromise = (remarks && remarks.trim().length > 0)
+  const commentPromise = (remarks && remarks.trim().length > 0 && !statusChanges)
     ? supabaseAdmin.from('task_comments').insert([{ task_id: taskId, author_id: userId, content: remarks }]).select()
     : Promise.resolve({ data: [] });
 

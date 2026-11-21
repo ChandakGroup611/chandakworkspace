@@ -113,7 +113,7 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
     try {
       const { updateTicketDetails } = await import("@/lib/actions/tickets");
       const res: any = await updateTicketDetails(ticketData.dbId, fields);
-      if (res?.error) throw new Error(res.error);
+      if (res?.error || res?.success === false) throw new Error(res?.error || "Failed to save ticket details");
       setEditingTitle(false);
       setEditingDescription(false);
       toast.success("Ticket saved.");

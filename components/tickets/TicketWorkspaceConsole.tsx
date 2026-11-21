@@ -14,6 +14,7 @@ import { updateTicketDetails, fetchTicketRelations, linkTicket, searchTickets, f
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
 import { AppButton } from "@/components/ui/AppButton";
 import { formatDate, formatDateTime } from "@/components/ui/data";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export function TicketWorkspaceConsole({
   ticket,
@@ -35,6 +36,7 @@ export function TicketWorkspaceConsole({
   const [pendingChanges, setPendingChanges] = useState<any>({});
   const [updateRemark, setUpdateRemark] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isRemarkModalOpen, setIsRemarkModalOpen] = useState(false);
   const [remarksHistory, setRemarksHistory] = useState<any[]>([]);
   const [loadingRemarksHistory, setLoadingRemarksHistory] = useState(true);
   const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
@@ -194,26 +196,39 @@ export function TicketWorkspaceConsole({
   const cancelChanges = () => {
     setPendingChanges({});
     setUpdateRemark("");
+    setIsRemarkModalOpen(false);
   };
 
   const commitChanges = async () => {
     const hasFieldChanges = Object.keys(pendingChanges).length > 0;
-    if (!hasFieldChanges && !updateRemark.trim()) return;
+    if (!hasFieldChanges && !updateRemark.trim()) {
+      setIsRemarkModalOpen(false);
+      return;
+    }
     setIsSaving(true);
     try {
       if (hasFieldChanges) {
         // Remark is optional: send it only when one was written.
         const updateData = { ...pendingChanges, ...(updateRemark.trim() ? { remark: updateRemark.trim() } : {}) };
-        await updateTicketDetails(ticket.dbId, updateData);
+        const res: any = await updateTicketDetails(ticket.dbId, updateData);
+        if (res && res.success === false) {
+          toast.error(`Commit failed: ${res.error || "Failed to update ticket"}`);
+          return;
+        }
       } else if (updateRemark.trim()) {
-        await addTicketRemark(ticket.dbId, updateRemark.trim());
+        const res: any = await addTicketRemark(ticket.dbId, updateRemark.trim());
+        if (res && res.success === false) {
+          toast.error(`Commit failed: ${res.error || "Failed to add remark"}`);
+          return;
+        }
       }
       setPendingChanges({});
       setUpdateRemark("");
+      setIsRemarkModalOpen(false);
       onUpdate();
       toast.success("Ticket updated successfully.");
     } catch (err: any) {
-      toast.error(`Commit failed: ${err.message}`);
+      toast.error(`Commit failed: ${err.message || "Failed to update"}`);
     } finally {
       setIsSaving(false);
     }
@@ -434,6 +449,7 @@ export function TicketWorkspaceConsole({
                   if (inProgressStatus) {
                     handleFieldUpdate({ status_id: inProgressStatus.id, assignee_id: currentUserId });
                     setUpdateRemark("Acknowledged and actively investigating.");
+                    setIsRemarkModalOpen(true);
                   } else {
                     toast.info("No 'In progress' status is set up for this scope in Masters.");
                   }
@@ -450,6 +466,7 @@ export function TicketWorkspaceConsole({
                   if (resolvedStatus) {
                     handleFieldUpdate({ status_id: resolvedStatus.id });
                     setUpdateRemark("Issue has been resolved successfully.");
+                    setIsRemarkModalOpen(true);
                   } else {
                     toast.info("No 'Resolved' status is set up for this scope in Masters.");
                   }
@@ -467,7 +484,10 @@ export function TicketWorkspaceConsole({
               <select
                 id="tk-status"
                 value={pendingChanges.status_id !== undefined ? pendingChanges.status_id : (ticket.status_id || "")}
-                onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
+                onChange={(e) => {
+                  handleFieldUpdate({ status_id: e.target.value });
+                  setIsRemarkModalOpen(true);
+                }}
                 disabled={!canEditFields}
                 className={selectCls}
               >
@@ -506,9 +526,14 @@ export function TicketWorkspaceConsole({
                 <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
                 <span>You have unsaved changes. Click <strong className="font-semibold">Save changes</strong> to save them (a remark is optional).</span>
               </div>
-              <button type="button" onClick={cancelChanges} className="shrink-0 whitespace-nowrap rounded-md border border-warning-border px-2.5 py-1 text-[12.5px] font-medium hover:bg-surface">
-                Discard
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button type="button" onClick={() => setIsRemarkModalOpen(true)} className="whitespace-nowrap rounded-md border border-warning-border bg-surface px-2.5 py-1 text-[12.5px] font-medium text-foreground hover:bg-surface-hover">
+                  Review & Remark
+                </button>
+                <button type="button" onClick={cancelChanges} className="whitespace-nowrap rounded-md border border-warning-border px-2.5 py-1 text-[12.5px] font-medium hover:bg-surface">
+                  Discard
+                </button>
+              </div>
             </div>
           )}
 
@@ -535,7 +560,13 @@ export function TicketWorkspaceConsole({
                     type="button"
                     variant="primary"
                     size="sm"
-                    onClick={commitChanges}
+                    onClick={() => {
+                      if (hasPending && !updateRemark.trim()) {
+                        setIsRemarkModalOpen(true);
+                      } else {
+                        commitChanges();
+                      }
+                    }}
                     disabled={isSaving || (!hasPending && !updateRemark.trim())}
                     leftIcon={isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   >
@@ -603,6 +634,70 @@ export function TicketWorkspaceConsole({
           </div>
         </div>
       </AppCard>
+
+      {/* Remark Popup Modal */}
+      <Dialog open={isRemarkModalOpen} onOpenChange={setIsRemarkModalOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Update Status & Remark</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-3">
+            {pendingChanges.status_id ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-sunken p-3 text-[13px]">
+                <span className="text-muted">Target status:</span>
+                <span className="font-semibold text-foreground">
+                  {states.find((s: any) => s.id === pendingChanges.status_id)?.name || "Selected status"}
+                </span>
+                {ticket.statusObj?.name && (
+                  <span className="text-[12px] text-muted">
+                    (from {ticket.statusObj.name})
+                  </span>
+                )}
+              </div>
+            ) : hasPending ? (
+              <div className="rounded-md border border-border bg-sunken p-3 text-[13px] text-foreground">
+                You have pending ticket attribute changes to save.
+              </div>
+            ) : null}
+
+            <div className="space-y-1.5">
+              <label htmlFor="modal-tk-remark" className="text-[13px] font-medium text-subtle">
+                Remark <span className="font-normal text-muted">(optional)</span>
+              </label>
+              <textarea
+                id="modal-tk-remark"
+                value={updateRemark}
+                onChange={(e) => setUpdateRemark(e.target.value)}
+                placeholder="Add an update note or context for this ticket (optional)..."
+                className="min-h-[100px] w-full resize-y rounded-md border border-border bg-surface p-3 text-[13.5px] text-foreground outline-none focus:ring-2 focus:ring-ring"
+                autoFocus
+              />
+              <p className="text-[12px] text-muted">
+                Remark is optional. Records will be saved in ticket history with or without a note.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <AppButton
+              type="button"
+              variant="ghost"
+              onClick={() => setIsRemarkModalOpen(false)}
+              disabled={isSaving}
+            >
+              Cancel
+            </AppButton>
+            <AppButton
+              type="button"
+              variant="primary"
+              onClick={commitChanges}
+              disabled={isSaving}
+              leftIcon={isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            >
+              {isSaving ? "Saving…" : "Save changes"}
+            </AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 4. Details and activity — tabbed, like the Task page */}
       <AppCard className="overflow-hidden border border-border p-0 shadow-xs">

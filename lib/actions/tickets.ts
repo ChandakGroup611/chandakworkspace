@@ -62,39 +62,50 @@ export async function fetchTicketComments(ticketId: string, limit = 20, offset =
 /**
  * Adds an operational remark/comment to a ticket
  */
-export async function addTicketRemark(ticketId: string, content: string) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
+export async function addTicketRemark(ticketId: string, content: string): Promise<{ success: boolean; remark?: any; error?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(cookieStore);
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    throw new Error("Unauthenticated. Please log in first.");
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: "Unauthenticated. Please log in first." };
+    }
+
+    if (!content || !content.trim()) {
+      return { success: false, error: "Remark content cannot be empty." };
+    }
+
+    // Relaxed: any authenticated member who can see the ticket may add remarks
+    // (no TICKETS_UPDATE capability required, as per requirement).
+    const { canAccessTicket } = await import("@/lib/permissions");
+    if (!(await canAccessTicket(user.id, ticketId))) {
+      return { success: false, error: "Unauthorized: You do not have access to this ticket." };
+    }
+
+    const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+    const { data, error } = await supabaseAdmin
+      .from("ticket_comments")
+      .insert({
+        ticket_id: ticketId,
+        author_id: user.id,
+        content: content.trim()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[Server Action] Error adding remark:", error);
+      return { success: false, error: `Failed to save remark: ${error.message}` };
+    }
+
+    revalidatePath("/tickets");
+    revalidatePath(`/tickets/${ticketId}`);
+    return { success: true, remark: data };
+  } catch (err: any) {
+    console.error("[addTicketRemark] Error:", err);
+    return { success: false, error: err.message || "Failed to save remark" };
   }
-
-  // Relaxed: any authenticated member who can see the ticket may add remarks
-  // (no TICKETS_UPDATE capability required, as per requirement).
-  const { canAccessTicket } = await import("@/lib/permissions");
-  if (!(await canAccessTicket(user.id, ticketId))) {
-    throw new Error("Unauthorized: You do not have access to this ticket.");
-  }
-
-  const { data, error } = await supabase
-    .from("ticket_comments")
-    .insert({
-      ticket_id: ticketId,
-      author_id: user.id,
-      content: content.trim()
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("[Server Action] Error adding remark:", error);
-    throw new Error(`Failed to save remark: ${error.message}`);
-  }
-
-  revalidatePath("/tickets");
-  return { success: true, remark: data };
 }
 
 /**
@@ -148,21 +159,23 @@ export async function changeTicketStatus(
   ticketId: string,
   targetStatusIdOrCode: string,
   remark?: string,
-  actorIdOverride?: string
+  actingUserId?: string
 ): Promise<{ success: boolean; data?: { status_id: string; status_name: string }; error?: string }> {
-  let userId: string | null = null;
-  try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(cookieStore);
-    const { data: { user } } = await supabase.auth.getUser();
-    userId = user?.id || null;
-  } catch {
-    // Background scripts or test execution context
+  let userId: string | null = actingUserId || null;
+  if (!userId) {
+    try {
+      const cookieStore = await cookies();
+      const supabase = createServerClient(cookieStore);
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id || null;
+    } catch {
+      // Background scripts or test execution context
+    }
   }
 
   if (!userId) {
     if (process.env.NODE_ENV !== "production") {
-      userId = actorIdOverride || null;
+      userId = actingUserId || null;
     }
   }
 
@@ -208,13 +221,15 @@ export async function changeTicketStatus(
     return { success: false, error: `This status can't be used for tickets: it is inactive, deleted, or scoped to another module (Tasks, Requirements or Workspaces).` };
   }
 
-  // Permission checks: Super Admin, Creator, Assignee, Queue Owner, or TICKETS_UPDATE capability
+  // Permission checks: Super Admin, Creator, Assignee, Queue Owner, TICKETS_UPDATE / TICKETS_MANAGE / TICKETS_EDIT, or unassigned ticket
   const { hasPermission, canAccessTicket } = await import('@/lib/permissions');
   const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
   const isOwnerOrAssignee = ticket.creator_id === userId || ticket.assignee_id === userId || ticket.queue_owner_id === userId;
   const canAccess = await canAccessTicket(userId, ticketId);
+  const hasUpdatePerm = (await hasPermission(userId, "TICKETS_UPDATE")) || (await hasPermission(userId, "TICKETS_MANAGE")) || (await hasPermission(userId, "TICKETS_EDIT"));
+  const isUnassigned = !ticket.assignee_id;
 
-  if (!isSuperAdmin && !isOwnerOrAssignee && !canAccess) {
+  if (!isSuperAdmin && !isOwnerOrAssignee && !canAccess && !hasUpdatePerm && !isUnassigned) {
     return { success: false, error: "Unauthorized: You do not have permission to transition this ticket status." };
   }
 
@@ -241,73 +256,89 @@ export async function changeTicketStatus(
     return { success: false, error: updateError.message || JSON.stringify(updateError) };
   }
 
-  // Side effect 1: Add remark comment if provided
+  // Side effect 1: Add remark comment if provided (wrapped so remark failure never blocks ticket update)
   if (remark && remark.trim().length > 0) {
-    await supabaseAdmin
-      .from('ticket_comments')
-      .insert([{ ticket_id: ticketId, author_id: userId, content: remark.trim() }]);
+    try {
+      await supabaseAdmin
+        .from('ticket_comments')
+        .insert([{ ticket_id: ticketId, author_id: userId, content: remark.trim() }]);
+    } catch (e) {
+      console.error("[changeTicketStatus] Error inserting remark comment:", e);
+    }
   }
 
   // Side effect 2: Insert audit log
-  await supabaseAdmin
-    .from('ticket_audit_logs')
-    .insert([{
-      ticket_id: ticketId,
-      actor_id: userId,
-      operation: 'STATUS_CHANGE',
-      before_values: { status_id: ticket.status_id, status_name: oldName, field_key: 'status' },
-      after_values: { status_id: targetStatus.id, status_name: newName, field_key: 'status', remark: remark || null },
-      created_at: new Date().toISOString()
-    }]);
-
-  // Insert into ticket_activity_stream for realtime UI timeline
-  await supabaseAdmin
-    .from('ticket_activity_stream')
-    .insert([{
-      ticket_id: ticketId,
-      actor: userId,
-      action: `Status changed from ${oldName} to ${newName}`,
-      event_type: 'STATE_CHANGE',
-      before_values: { id: ticket.status_id, name: oldName, status_name: oldName, field_key: 'status' },
-      after_values: { id: targetStatus.id, name: newName, status_name: newName, field_key: 'status', remark: remark || null },
-      created_at: new Date().toISOString()
-    }]);
-
-  // Side effect 3: Notification queue push and business event with human names old -> new (Item 4.6)
-  const isClosedOrTerminal = targetStatus.is_closed || targetStatus.is_terminal;
-  const statusTransitionDisplay = `${oldName} → ${newName}`;
-
-  if (ticket.creator_id && ticket.creator_id !== userId) {
-    await supabaseAdmin.from('notification_queue').insert([{
-      recipient_id: ticket.creator_id,
-      payload: {
-        type: isClosedOrTerminal ? 'TICKET_RESOLVED' : 'TICKET_STATUS_CHANGED',
-        message: `Ticket ${ticket.code} status changed from ${oldName} to ${newName}.`,
+  try {
+    await supabaseAdmin
+      .from('ticket_audit_logs')
+      .insert([{
         ticket_id: ticketId,
-        old_status: oldName,
-        new_status: newName,
-        status_transition: statusTransitionDisplay
-      },
-      is_read: false
-    }]);
+        actor_id: userId,
+        operation: 'STATUS_CHANGE',
+        before_values: { status_id: ticket.status_id, status_name: oldName, field_key: 'status' },
+        after_values: { status_id: targetStatus.id, status_name: newName, field_key: 'status', remark: remark || null },
+        created_at: new Date().toISOString()
+      }]);
+  } catch (e) {
+    console.error("[changeTicketStatus] Error inserting audit log:", e);
   }
 
-  queueBusinessEvent("Ticket", "Status Changed", {
-    entity_id: ticketId,
-    triggering_user_id: userId,
-    status: targetStatus.id,
-    status_name: newName,
-    status_transition: statusTransitionDisplay,
-    old_status: oldName,
-    new_status: newName,
-    ticket_code: ticket.code,
-    ticket_title: ticket.title || ticket.code,
-    assigned_to: ticket.assignee_id,
-    created_by: ticket.creator_id,
-    department_id: ticket.department_id,
-    remarks: remark || "",
-    link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${ticketId}`
-  }).catch(e => console.error("[NotificationEngine] Ticket status change queue push failed", e));
+  // Insert into ticket_activity_stream for realtime UI timeline
+  try {
+    await supabaseAdmin
+      .from('ticket_activity_stream')
+      .insert([{
+        ticket_id: ticketId,
+        actor: userId,
+        action: `Status changed from ${oldName} to ${newName}`,
+        event_type: 'STATE_CHANGE',
+        before_values: { id: ticket.status_id, name: oldName, status_name: oldName, field_key: 'status' },
+        after_values: { id: targetStatus.id, name: newName, status_name: newName, field_key: 'status', remark: remark || null },
+        created_at: new Date().toISOString()
+      }]);
+  } catch (e) {
+    console.error("[changeTicketStatus] Error inserting activity stream:", e);
+  }
+
+  // Side effect 3: Notification queue push and business event with human names old -> new (Item 4.6)
+  try {
+    const isClosedOrTerminal = targetStatus.is_closed || targetStatus.is_terminal;
+    const statusTransitionDisplay = `${oldName} → ${newName}`;
+
+    if (ticket.creator_id && ticket.creator_id !== userId) {
+      await supabaseAdmin.from('notification_queue').insert([{
+        recipient_id: ticket.creator_id,
+        payload: {
+          type: isClosedOrTerminal ? 'TICKET_RESOLVED' : 'TICKET_STATUS_CHANGED',
+          message: `Ticket ${ticket.code} status changed from ${oldName} to ${newName}.`,
+          ticket_id: ticketId,
+          old_status: oldName,
+          new_status: newName,
+          status_transition: statusTransitionDisplay
+        },
+        is_read: false
+      }]);
+    }
+
+    queueBusinessEvent("Ticket", "Status Changed", {
+      entity_id: ticketId,
+      triggering_user_id: userId,
+      status: targetStatus.id,
+      status_name: newName,
+      status_transition: statusTransitionDisplay,
+      old_status: oldName,
+      new_status: newName,
+      ticket_code: ticket.code,
+      ticket_title: ticket.title || ticket.code,
+      assigned_to: ticket.assignee_id,
+      created_by: ticket.creator_id,
+      department_id: ticket.department_id,
+      remarks: remark || "",
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${ticketId}`
+    }).catch(e => console.error("[NotificationEngine] Ticket status change queue push failed", e));
+  } catch (e) {
+    console.error("[changeTicketStatus] Error sending notifications:", e);
+  }
 
   // Revalidate cache
   try {
@@ -334,274 +365,300 @@ export async function updateTicketDetails(ticketId: string, payload: {
   custom_fields?: any;
   remark?: string;
   due_date?: string;
-}) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(cookieStore);
+}): Promise<{ success: boolean; ticket?: any; error?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(cookieStore);
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    throw new Error("Unauthenticated. Please log in first.");
-  }
-
-  const { supabaseAdmin } = await import('@/lib/supabase/service_role');
-  const { data: existingTicket } = await supabaseAdmin
-    .from("tickets")
-    .select("*")
-    .eq("id", ticketId)
-    .eq("is_deleted", false)
-    .maybeSingle();
-  if (!existingTicket) {
-    throw new Error("Ticket not found or already deleted.");
-  }
-
-  // Who may edit: Super Admin, ticket managers / TICKETS_UPDATE, or the ticket's creator, assignee or queue owner.
-  const canEdit =
-    (await checkServerPermission(supabase, user.id, "SUPER_ADMIN")) ||
-    (await checkServerPermission(supabase, user.id, "TICKETS_MANAGE")) ||
-    (await checkServerPermission(supabase, user.id, "TICKETS_UPDATE")) ||
-    existingTicket.creator_id === user.id ||
-    existingTicket.assignee_id === user.id ||
-    existingTicket.queue_owner_id === user.id;
-  if (!canEdit) {
-    throw new Error("You don't have permission to update this ticket.");
-  }
-
-  // Route status changes through changeTicketStatus (Item 3.4)
-  if (payload.status_id !== undefined && payload.status_id) {
-    const statusRes = await changeTicketStatus(ticketId, payload.status_id, payload.remark, user.id);
-    if (statusRes && !statusRes.success) {
-      throw new Error(`Failed to update ticket status: ${statusRes.error}`);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: "Unauthenticated. Please log in first." };
     }
-  }
 
-  const cleanField = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
-
-  const updateData: any = {};
-  if (payload.title !== undefined) updateData.title = payload.title;
-  if (payload.description !== undefined) updateData.description = payload.description;
-  if (payload.assignee_id !== undefined) updateData.assignee_id = cleanField(payload.assignee_id);
-  if (payload.department_id !== undefined) updateData.department_id = cleanField(payload.department_id);
-  if (payload.category_id !== undefined) updateData.category_id = cleanField(payload.category_id);
-  if (payload.sub_category_id !== undefined) updateData.sub_category_id = cleanField(payload.sub_category_id);
-  if (payload.issue_type_id !== undefined) updateData.issue_type_id = cleanField(payload.issue_type_id);
-  if (payload.priority_id !== undefined) {
-    const cleanedPrio = cleanField(payload.priority_id);
-    if (!cleanedPrio) {
-      throw new Error("Operational Priority cannot be cleared. Priority selection is mandatory.");
-    }
-    updateData.priority_id = cleanedPrio;
-  }
-  if (payload.due_date !== undefined) updateData.due_date = payload.due_date ? new Date(payload.due_date).toISOString() : null;
-  if (payload.custom_fields !== undefined) updateData.custom_fields = payload.custom_fields;
-
-  let updatedTicket: any = null;
-  if (Object.keys(updateData).length > 0) {
-    updateData.updated_at = new Date().toISOString();
-
-    // Permission is checked above; write with the service role so row-level policies on the user's
-    // session can't silently reject the save.
-    const { data, error } = await supabaseAdmin
+    const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+    const { data: existingTicket, error: fetchErr } = await supabaseAdmin
       .from("tickets")
-      .update(updateData)
+      .select("*")
       .eq("id", ticketId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("[Server Action] Error updating ticket details:", error);
-      throw new Error(`Failed to update ticket: ${error.message}`);
-    }
-    updatedTicket = data;
-  } else {
-    const { data } = await supabaseAdmin.from("tickets").select().eq("id", ticketId).single();
-    updatedTicket = data;
-  }
-
-  // --- Detailed Field-Level Audit Trail ---
-  const diffs: Array<{ field: string; field_key: string; old_value: string; new_value: string }> = [];
-
-  // Priority diff
-  if (updateData.priority_id && updateData.priority_id !== existingTicket.priority_id) {
-    const { data: prios } = await supabaseAdmin
-      .from('priority_master')
-      .select('id, priority_name')
-      .in('id', [existingTicket.priority_id, updateData.priority_id].filter(Boolean));
-    const prioMap = Object.fromEntries((prios || []).map((p: any) => [p.id, p.priority_name]));
-    diffs.push({
-      field: "Priority",
-      field_key: "priority",
-      old_value: prioMap[existingTicket.priority_id] || "None",
-      new_value: prioMap[updateData.priority_id] || "None"
-    });
-  }
-
-  // Assignee diff
-  if (payload.assignee_id !== undefined && updateData.assignee_id !== existingTicket.assignee_id) {
-    const userIds = [existingTicket.assignee_id, updateData.assignee_id].filter(Boolean);
-    let userMap: Record<string, string> = {};
-    if (userIds.length > 0) {
-      const { data: users } = await supabaseAdmin
-        .from('user_master')
-        .select('id, full_name')
-        .in('id', userIds);
-      userMap = Object.fromEntries((users || []).map((u: any) => [u.id, u.full_name]));
-    }
-    diffs.push({
-      field: "Assignee",
-      field_key: "assignee",
-      old_value: existingTicket.assignee_id ? (userMap[existingTicket.assignee_id] || "Assigned User") : "Unassigned",
-      new_value: updateData.assignee_id ? (userMap[updateData.assignee_id] || "Assigned User") : "Unassigned"
-    });
-  }
-
-  // Due Date diff
-  if (payload.due_date !== undefined) {
-    const oldDueStr = existingTicket.due_date ? new Date(existingTicket.due_date).toISOString().slice(0, 10) : "";
-    const newDueStr = updateData.due_date ? new Date(updateData.due_date).toISOString().slice(0, 10) : "";
-    if (oldDueStr !== newDueStr) {
-      const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "None";
-      diffs.push({
-        field: "Due Date",
-        field_key: "due_date",
-        old_value: fmtDate(existingTicket.due_date),
-        new_value: fmtDate(updateData.due_date)
-      });
-    }
-  }
-
-  // Department diff
-  if (updateData.department_id && updateData.department_id !== existingTicket.department_id) {
-    const { data: depts } = await supabaseAdmin
-      .from('departments')
-      .select('id, name')
-      .in('id', [existingTicket.department_id, updateData.department_id].filter(Boolean));
-    const deptMap = Object.fromEntries((depts || []).map((d: any) => [d.id, d.name]));
-    diffs.push({
-      field: "Department",
-      field_key: "department",
-      old_value: deptMap[existingTicket.department_id] || "None",
-      new_value: deptMap[updateData.department_id] || "None"
-    });
-  }
-
-  // Category diff
-  if (updateData.category_id && updateData.category_id !== existingTicket.category_id) {
-    const { data: cats } = await supabaseAdmin
-      .from('ticket_categories')
-      .select('id, name')
-      .in('id', [existingTicket.category_id, updateData.category_id].filter(Boolean));
-    const catMap = Object.fromEntries((cats || []).map((c: any) => [c.id, c.name]));
-    diffs.push({
-      field: "Category",
-      field_key: "category",
-      old_value: catMap[existingTicket.category_id] || "None",
-      new_value: catMap[updateData.category_id] || "None"
-    });
-  }
-
-  // Title diff
-  if (payload.title !== undefined && payload.title.trim() !== (existingTicket.title || '').trim()) {
-    diffs.push({
-      field: "Title",
-      field_key: "title",
-      old_value: existingTicket.title || "",
-      new_value: payload.title.trim()
-    });
-  }
-
-  // Description diff
-  if (payload.description !== undefined && (payload.description || '').trim() !== (existingTicket.description || '').trim()) {
-    diffs.push({
-      field: "Description",
-      field_key: "description",
-      old_value: (existingTicket.description || "").slice(0, 150) || "Empty",
-      new_value: (payload.description || "").slice(0, 150) || "Empty"
-    });
-  }
-
-  // Write audit trail if changes were detected
-  if (diffs.length > 0) {
-    const { data: actorInfo } = await supabaseAdmin
-      .from('user_master')
-      .select('full_name')
-      .eq('id', user.id)
+      .eq("is_deleted", false)
       .maybeSingle();
-    const actorDisplayName = actorInfo?.full_name || user.email || 'System User';
-
-    const hasPriority = diffs.some(d => d.field_key === "priority");
-    const hasAssignee = diffs.some(d => d.field_key === "assignee");
-    const hasDueDate = diffs.some(d => d.field_key === "due_date");
-    const eventType = hasPriority ? "PRIORITY_CHANGE" :
-                      hasAssignee ? "ASSIGNMENT" :
-                      hasDueDate ? "DUE_DATE_CHANGE" : "FIELD_UPDATE";
-
-    const actionSummary = diffs.map(d => `${d.field}: ${d.old_value} → ${d.new_value}`).join("; ");
-
-    // Insert to ticket_activity_stream
-    await supabaseAdmin.from("ticket_activity_stream").insert([{
-      ticket_id: ticketId,
-      actor: user.id,
-      action: actionSummary,
-      event_type: eventType,
-      before_values: { diffs, actor_name: actorDisplayName, ticket_code: existingTicket.code },
-      after_values: { diffs, actor_name: actorDisplayName, remark: payload.remark || null, ticket_code: existingTicket.code },
-      created_at: new Date().toISOString()
-    }]);
-
-    // Insert to ticket_audit_logs
-    await supabaseAdmin.from("ticket_audit_logs").insert([{
-      ticket_id: ticketId,
-      actor_id: user.id,
-      operation: eventType,
-      before_values: { diffs, actor_name: actorDisplayName },
-      after_values: { diffs, remark: payload.remark || null, actor_name: actorDisplayName },
-      created_at: new Date().toISOString()
-    }]);
-  }
-
-  // Insert remark if provided (when status was not updated)
-  if (!payload.status_id && payload.remark && payload.remark.trim() !== '') {
-    const { error: remarkError } = await supabaseAdmin
-      .from("ticket_comments")
-      .insert({
-        ticket_id: ticketId,
-        author_id: user.id,
-        content: payload.remark.trim()
-      });
-
-    if (remarkError) {
-      console.error("[Server Action] Error adding remark during ticket update:", remarkError);
+    if (fetchErr || !existingTicket) {
+      return { success: false, error: "Ticket not found or already deleted." };
     }
-  }
 
-  // Notifications for assignment change (only when the assignee really changed)
-  const newAssigneeId = updatedTicket?.assignee_id || null;
-  const assigneeChanged = payload.assignee_id !== undefined && newAssigneeId && newAssigneeId !== existingTicket.assignee_id;
-  if (updatedTicket && assigneeChanged) {
-    queueBusinessEvent("Ticket", "Assigned", {
-      entity_id: updatedTicket.id,
-      triggering_user_id: user.id,
-      assigned_to: newAssigneeId,
-      ticket_code: updatedTicket.code,
-      ticket_title: updatedTicket.title || updatedTicket.code,
-      remarks: payload.remark || "",
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${updatedTicket.id}`
-    }).catch((e: any) => console.error("[NotificationEngine] Ticket reassignment event failed", e));
-  }
-  if (updatedTicket && assigneeChanged && newAssigneeId !== user.id) {
-    await supabaseAdmin.from('notification_queue').insert({
-      recipient_id: payload.assignee_id,
-      payload: {
-        type: 'TICKET_ASSIGNED',
-        message: `Ticket ${updatedTicket.code} has been assigned to you.`,
-        ticket_id: updatedTicket.id
-      },
-      is_read: false
-    });
-  }
+    // Who may edit: Super Admin, ticket managers / TICKETS_UPDATE / TICKETS_EDIT, ticket creator, assignee, queue owner, or unassigned ticket
+    const { hasPermission } = await import('@/lib/permissions');
+    const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
+    const hasUpdatePerm =
+      (await hasPermission(user.id, "TICKETS_MANAGE")) ||
+      (await hasPermission(user.id, "TICKETS_UPDATE")) ||
+      (await hasPermission(user.id, "TICKETS_EDIT"));
+    const isOwnerOrAssignee =
+      existingTicket.creator_id === user.id ||
+      existingTicket.assignee_id === user.id ||
+      existingTicket.queue_owner_id === user.id;
+    const isUnassigned = !existingTicket.assignee_id;
 
-  revalidatePath("/tickets");
-  return { success: true, ticket: updatedTicket };
+    const canEdit = isSuperAdmin || hasUpdatePerm || isOwnerOrAssignee || isUnassigned;
+    if (!canEdit) {
+      return { success: false, error: "You don't have permission to update this ticket." };
+    }
+
+    // Route status changes through changeTicketStatus (Item 3.4)
+    if (payload.status_id !== undefined && payload.status_id) {
+      const statusRes = await changeTicketStatus(ticketId, payload.status_id, payload.remark, user.id);
+      if (statusRes && !statusRes.success) {
+        return { success: false, error: `Failed to update ticket status: ${statusRes.error}` };
+      }
+    }
+
+    const cleanField = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
+
+    const updateData: any = {};
+    if (payload.title !== undefined) updateData.title = payload.title;
+    if (payload.description !== undefined) updateData.description = payload.description;
+    if (payload.assignee_id !== undefined) updateData.assignee_id = cleanField(payload.assignee_id);
+    if (payload.department_id !== undefined) updateData.department_id = cleanField(payload.department_id);
+    if (payload.category_id !== undefined) updateData.category_id = cleanField(payload.category_id);
+    if (payload.sub_category_id !== undefined) updateData.sub_category_id = cleanField(payload.sub_category_id);
+    if (payload.issue_type_id !== undefined) updateData.issue_type_id = cleanField(payload.issue_type_id);
+    if (payload.priority_id !== undefined) {
+      const cleanedPrio = cleanField(payload.priority_id);
+      if (!cleanedPrio) {
+        return { success: false, error: "Operational Priority cannot be cleared. Priority selection is mandatory." };
+      }
+      updateData.priority_id = cleanedPrio;
+    }
+    if (payload.due_date !== undefined) updateData.due_date = payload.due_date ? new Date(payload.due_date).toISOString() : null;
+    if (payload.custom_fields !== undefined) updateData.custom_fields = payload.custom_fields;
+
+    let updatedTicket: any = null;
+    if (Object.keys(updateData).length > 0) {
+      updateData.updated_at = new Date().toISOString();
+
+      // Write with the service role so row-level policies on the user's session can't silently reject the save
+      const { data, error } = await supabaseAdmin
+        .from("tickets")
+        .update(updateData)
+        .eq("id", ticketId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[Server Action] Error updating ticket details:", error);
+        return { success: false, error: `Failed to update ticket: ${error.message}` };
+      }
+      updatedTicket = data;
+    } else {
+      const { data } = await supabaseAdmin.from("tickets").select().eq("id", ticketId).single();
+      updatedTicket = data;
+    }
+
+    // --- Detailed Field-Level Audit Trail ---
+    try {
+      const diffs: Array<{ field: string; field_key: string; old_value: string; new_value: string }> = [];
+
+      // Priority diff
+      if (updateData.priority_id && updateData.priority_id !== existingTicket.priority_id) {
+        const { data: prios } = await supabaseAdmin
+          .from('priority_master')
+          .select('id, priority_name')
+          .in('id', [existingTicket.priority_id, updateData.priority_id].filter(Boolean));
+        const prioMap = Object.fromEntries((prios || []).map((p: any) => [p.id, p.priority_name]));
+        diffs.push({
+          field: "Priority",
+          field_key: "priority",
+          old_value: prioMap[existingTicket.priority_id] || "None",
+          new_value: prioMap[updateData.priority_id] || "None"
+        });
+      }
+
+      // Assignee diff
+      if (payload.assignee_id !== undefined && updateData.assignee_id !== existingTicket.assignee_id) {
+        const userIds = [existingTicket.assignee_id, updateData.assignee_id].filter(Boolean);
+        let userMap: Record<string, string> = {};
+        if (userIds.length > 0) {
+          const { data: users } = await supabaseAdmin
+            .from('user_master')
+            .select('id, full_name')
+            .in('id', userIds);
+          userMap = Object.fromEntries((users || []).map((u: any) => [u.id, u.full_name]));
+        }
+        diffs.push({
+          field: "Assignee",
+          field_key: "assignee",
+          old_value: existingTicket.assignee_id ? (userMap[existingTicket.assignee_id] || "Assigned User") : "Unassigned",
+          new_value: updateData.assignee_id ? (userMap[updateData.assignee_id] || "Assigned User") : "Unassigned"
+        });
+      }
+
+      // Due Date diff
+      if (payload.due_date !== undefined) {
+        const oldDueStr = existingTicket.due_date ? new Date(existingTicket.due_date).toISOString().slice(0, 10) : "";
+        const newDueStr = updateData.due_date ? new Date(updateData.due_date).toISOString().slice(0, 10) : "";
+        if (oldDueStr !== newDueStr) {
+          const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "None";
+          diffs.push({
+            field: "Due Date",
+            field_key: "due_date",
+            old_value: fmtDate(existingTicket.due_date),
+            new_value: fmtDate(updateData.due_date)
+          });
+        }
+      }
+
+      // Department diff
+      if (updateData.department_id && updateData.department_id !== existingTicket.department_id) {
+        const { data: depts } = await supabaseAdmin
+          .from('departments')
+          .select('id, name')
+          .in('id', [existingTicket.department_id, updateData.department_id].filter(Boolean));
+        const deptMap = Object.fromEntries((depts || []).map((d: any) => [d.id, d.name]));
+        diffs.push({
+          field: "Department",
+          field_key: "department",
+          old_value: deptMap[existingTicket.department_id] || "None",
+          new_value: deptMap[updateData.department_id] || "None"
+        });
+      }
+
+      // Category diff
+      if (updateData.category_id && updateData.category_id !== existingTicket.category_id) {
+        const { data: cats } = await supabaseAdmin
+          .from('ticket_categories')
+          .select('id, name')
+          .in('id', [existingTicket.category_id, updateData.category_id].filter(Boolean));
+        const catMap = Object.fromEntries((cats || []).map((c: any) => [c.id, c.name]));
+        diffs.push({
+          field: "Category",
+          field_key: "category",
+          old_value: catMap[existingTicket.category_id] || "None",
+          new_value: catMap[updateData.category_id] || "None"
+        });
+      }
+
+      // Title diff
+      if (payload.title !== undefined && payload.title.trim() !== (existingTicket.title || '').trim()) {
+        diffs.push({
+          field: "Title",
+          field_key: "title",
+          old_value: existingTicket.title || "",
+          new_value: payload.title.trim()
+        });
+      }
+
+      // Description diff
+      if (payload.description !== undefined && (payload.description || '').trim() !== (existingTicket.description || '').trim()) {
+        diffs.push({
+          field: "Description",
+          field_key: "description",
+          old_value: (existingTicket.description || "").slice(0, 150) || "Empty",
+          new_value: (payload.description || "").slice(0, 150) || "Empty"
+        });
+      }
+
+      // Write audit trail if changes were detected
+      if (diffs.length > 0) {
+        const { data: actorInfo } = await supabaseAdmin
+          .from('user_master')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+        const actorDisplayName = actorInfo?.full_name || user.email || 'System User';
+
+        const hasPriority = diffs.some(d => d.field_key === "priority");
+        const hasAssignee = diffs.some(d => d.field_key === "assignee");
+        const hasDueDate = diffs.some(d => d.field_key === "due_date");
+        const eventType = hasPriority ? "PRIORITY_CHANGE" :
+                          hasAssignee ? "ASSIGNMENT" :
+                          hasDueDate ? "DUE_DATE_CHANGE" : "FIELD_UPDATE";
+
+        const actionSummary = diffs.map(d => `${d.field}: ${d.old_value} → ${d.new_value}`).join("; ");
+
+        // Insert to ticket_activity_stream
+        await supabaseAdmin.from("ticket_activity_stream").insert([{
+          ticket_id: ticketId,
+          actor: user.id,
+          action: actionSummary,
+          event_type: eventType,
+          before_values: { diffs, actor_name: actorDisplayName, ticket_code: existingTicket.code },
+          after_values: { diffs, actor_name: actorDisplayName, remark: payload.remark || null, ticket_code: existingTicket.code },
+          created_at: new Date().toISOString()
+        }]);
+
+        // Insert to ticket_audit_logs
+        await supabaseAdmin.from("ticket_audit_logs").insert([{
+          ticket_id: ticketId,
+          actor_id: user.id,
+          operation: eventType,
+          before_values: { diffs, actor_name: actorDisplayName },
+          after_values: { diffs, remark: payload.remark || null, actor_name: actorDisplayName },
+          created_at: new Date().toISOString()
+        }]);
+      }
+    } catch (auditErr) {
+      console.error("[updateTicketDetails] Non-fatal error recording audit trail:", auditErr);
+    }
+
+    // Insert remark if provided (when status was not updated)
+    if (!payload.status_id && payload.remark && payload.remark.trim() !== '') {
+      try {
+        const { error: remarkError } = await supabaseAdmin
+          .from("ticket_comments")
+          .insert({
+            ticket_id: ticketId,
+            author_id: user.id,
+            content: payload.remark.trim()
+          });
+
+        if (remarkError) {
+          console.error("[Server Action] Error adding remark during ticket update:", remarkError);
+        }
+      } catch (remarkCatchErr) {
+        console.error("[Server Action] Non-fatal error inserting remark:", remarkCatchErr);
+      }
+    }
+
+    // Notifications for assignment change (only when the assignee really changed)
+    try {
+      const newAssigneeId = updatedTicket?.assignee_id || null;
+      const assigneeChanged = payload.assignee_id !== undefined && newAssigneeId && newAssigneeId !== existingTicket.assignee_id;
+      if (updatedTicket && assigneeChanged) {
+        queueBusinessEvent("Ticket", "Assigned", {
+          entity_id: updatedTicket.id,
+          triggering_user_id: user.id,
+          assigned_to: newAssigneeId,
+          ticket_code: updatedTicket.code,
+          ticket_title: updatedTicket.title || updatedTicket.code,
+          remarks: payload.remark || "",
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${updatedTicket.id}`
+        }).catch((e: any) => console.error("[NotificationEngine] Ticket reassignment event failed", e));
+      }
+      if (updatedTicket && assigneeChanged && newAssigneeId !== user.id) {
+        await supabaseAdmin.from('notification_queue').insert({
+          recipient_id: payload.assignee_id,
+          payload: {
+            type: 'TICKET_ASSIGNED',
+            message: `Ticket ${updatedTicket.code} has been assigned to you.`,
+            ticket_id: updatedTicket.id
+          },
+          is_read: false
+        });
+      }
+    } catch (notifyErr) {
+      console.error("[updateTicketDetails] Non-fatal notification error:", notifyErr);
+    }
+
+    try {
+      revalidatePath("/tickets");
+      revalidatePath(`/tickets/${ticketId}`);
+    } catch {}
+
+    return { success: true, ticket: updatedTicket };
+  } catch (err: any) {
+    console.error("[updateTicketDetails] Unhandled error:", err);
+    return { success: false, error: err.message || "An unexpected error occurred while saving ticket details." };
+  }
 }
 
 /**
