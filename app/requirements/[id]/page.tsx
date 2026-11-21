@@ -24,7 +24,7 @@ const TaskCreationWizard = dynamic(() => import("@/components/tasks/TaskCreation
 });
 
 import SafeHtml from "@/components/ui/SafeHtml";
-import { sanitizeErrorMessage } from "@/lib/utils";
+import { sanitizeErrorMessage, cn } from "@/lib/utils";
 import { LazyQuill } from "@/components/ui/LazyQuill";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
 import ChandakLoader from "@/components/ui/ChandakLoader";
@@ -1221,7 +1221,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
            </div>
         )}
 
-        <div role="tablist" aria-label="Requirement sections" className="mb-5 flex gap-1 overflow-x-auto border-b border-border no-scrollbar">
+        {/* Navigation Tabs - Accessible Active State per Theme */}
+        <div
+          role="tablist"
+          aria-label="Requirement sections"
+          className="mb-6 flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-sunken/50 p-1.5 shadow-2xs"
+        >
           {[
             { id: 'details', label: 'Details', icon: FileText },
             { id: 'analysis', label: 'Business analysis', icon: Target },
@@ -1238,14 +1243,25 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(tab.id)}
-                className={`-mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-[13.5px] transition-colors ${
-                  isActive ? "border-primary font-semibold text-foreground" : "border-transparent font-medium text-muted hover:text-foreground"
-                }`}
+                className={cn(
+                  "group relative inline-flex h-9.5 shrink-0 items-center gap-2 rounded-lg px-4 text-[13px] transition-all select-none",
+                  isActive
+                    ? "bg-accent-soft text-accent-soft-text font-semibold border border-primary/30 shadow-xs ring-1 ring-primary/20"
+                    : "text-muted hover:text-foreground hover:bg-surface/70 border border-transparent font-medium"
+                )}
               >
-                <Icon className="h-4 w-4" aria-hidden />
+                <Icon className={cn("h-4 w-4 transition-colors", isActive ? "text-primary" : "text-muted group-hover:text-foreground")} aria-hidden />
                 <span>{tab.label}</span>
+                {isActive && (
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" aria-label="Active section" />
+                )}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="rounded bg-sunken px-1.5 text-[11.5px] leading-5 text-subtle tabular">{tab.count}</span>
+                  <span className={cn(
+                    "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular transition-colors",
+                    isActive ? "bg-primary text-primary-foreground shadow-2xs" : "bg-elevated text-subtle"
+                  )}>
+                    {tab.count}
+                  </span>
                 )}
               </button>
             );
