@@ -1,5 +1,9 @@
 {
   "scripts": {
+    "prebuild": "node scripts/generate-module-registry.mjs && node scripts/validate-module-manifests.mjs",
+    "predev": "node scripts/generate-module-registry.mjs",
+    "modules:discover": "node scripts/generate-module-registry.mjs",
+    "modules:validate": "node scripts/validate-module-manifests.mjs",
     "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" next dev --webpack",
     "dev:uat": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --env-file=.env.uat\" next dev --webpack",
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" next build --webpack",
