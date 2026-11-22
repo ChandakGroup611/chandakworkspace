@@ -139,8 +139,7 @@ export default function AMCPage() {
     setDrawerRecord(record);
   };
 
-  const handleOpenEditFromDrawer = (record: any) => {
-    setDrawerRecord(null);
+  const handleOpenEditDirect = (record: any) => {
     if (record.contract_type === "Subscription") {
       setEditingRecord(record);
       setIsSubModalOpen(true);
@@ -148,6 +147,11 @@ export default function AMCPage() {
       setEditingRecord(record);
       setIsAMCModalOpen(true);
     }
+  };
+
+  const handleOpenEditFromDrawer = (record: any) => {
+    setDrawerRecord(null);
+    handleOpenEditDirect(record);
   };
 
   // Delete Action
@@ -292,7 +296,8 @@ export default function AMCPage() {
             loading={loading}
             onRefresh={fetchRecords}
             onOpenCreate={handleOpenCreateAMC}
-            onOpenEdit={handleOpenDrawer}
+            onOpenView={handleOpenDrawer}
+            onOpenEdit={handleOpenEditDirect}
             onOpenRenew={(rec) => setRenewRecord(rec)}
             onOpenHistory={(id) => setHistoryRecordId(id)}
             onDelete={(rec) => setDeleteCandidate(rec)}
@@ -309,7 +314,8 @@ export default function AMCPage() {
             loading={loading}
             onRefresh={fetchRecords}
             onOpenCreate={handleOpenCreateSub}
-            onOpenEdit={handleOpenDrawer}
+            onOpenView={handleOpenDrawer}
+            onOpenEdit={handleOpenEditDirect}
             onOpenRenew={(rec) => setRenewRecord(rec)}
             onOpenHistory={(id) => setHistoryRecordId(id)}
             onDelete={(rec) => setDeleteCandidate(rec)}

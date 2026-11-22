@@ -14,10 +14,25 @@ import {
   Users, 
   RotateCcw,
   Boxes,
-  Edit
+  Edit,
+  Building2,
+  Calendar,
+  DollarSign,
+  CheckCircle2,
+  AlertTriangle
 } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppBadge } from "@/components/ui/AppBadge";
+import { AppCard } from "@/components/ui/AppCard";
+import { 
+  AppTableContainer, 
+  AppTable, 
+  AppTableHeader, 
+  AppTableBody, 
+  AppTableRow, 
+  AppTableHead, 
+  AppTableCell 
+} from "@/components/ui/AppTable";
 import { formatDate } from "@/components/ui/data";
 
 // Sub-tabs
@@ -47,15 +62,16 @@ export function ContractDetailDrawer({
   onOpenEditForm,
   isLightMode = false
 }: ContractDetailDrawerProps) {
-  const [activeTab, setActiveTab] = useState("Spend History (TCO)");
+  const [activeTab, setActiveTab] = useState("Overview");
 
   if (!isOpen || !record) return null;
 
   const isSubscription = record.contract_type === "Subscription";
 
-  // Type-tailored tab list
+  // Type-tailored tab list with Overview as the primary tab
   const tabList = isSubscription
     ? [
+        { id: "Overview", label: "Subscription Overview", icon: FileText },
         { id: "Allocations", label: "Seat Allocations", icon: Users },
         { id: "Renewals", label: "Renewals", icon: RotateCcw },
         { id: "Attachments", label: "Attachments", icon: Paperclip },
@@ -63,6 +79,7 @@ export function ContractDetailDrawer({
         { id: "History", label: "Audit Changelog", icon: Clock },
       ]
     : [
+        { id: "Overview", label: "Contract & Line Items", icon: FileText },
         { id: "Implementation", label: "Implementation Lifecycle", icon: Layers },
         { id: "Spend History (TCO)", label: "Spend History (TCO)", icon: TrendingUp },
         { id: "Transactions", label: "Add-ons & Scope", icon: Boxes },
@@ -78,6 +95,12 @@ export function ContractDetailDrawer({
   const handleExportDossier = () => {
     window.print();
   };
+
+  const lineItems = Array.isArray(record.solution_line_items) ? record.solution_line_items : [];
+  const contact = record.vendor_contact_json || {};
+  const taxation = record.taxation_json || {};
+  const bank = record.bank_details_json || {};
+  const paymentMilestones = Array.isArray(record.payment_terms_json?.milestones) ? record.payment_terms_json.milestones : [];
 
   return (
     <div className="fixed inset-0 z-[var(--z-modal)] flex flex-col animate-in slide-in-from-bottom-4 duration-300 bg-surface">
@@ -119,13 +142,13 @@ export function ContractDetailDrawer({
         <div className="flex items-center gap-2">
           <AppButton
             type="button"
-            variant="outline"
+            variant="primary"
             size="sm"
             onClick={() => onOpenEditForm(record)}
             leftIcon={<Edit className="h-3.5 w-3.5" />}
-            className="text-xs"
+            className="text-xs font-semibold"
           >
-            Edit Contract
+            Edit {isSubscription ? "Subscription" : "Contract"}
           </AppButton>
           <AppButton
             type="button"
@@ -168,7 +191,7 @@ export function ContractDetailDrawer({
               </div>
             </>
           )}
-          {record.total_licenses && (
+          {record.total_licenses ? (
             <>
               <div className="h-3 w-[1px] bg-border hidden sm:block"></div>
               <div className="flex items-center gap-1.5 text-muted">
@@ -178,7 +201,18 @@ export function ContractDetailDrawer({
                 </span>
               </div>
             </>
-          )}
+          ) : null}
+          {record.monthly_amortized_cost ? (
+            <>
+              <div className="h-3 w-[1px] bg-border hidden sm:block"></div>
+              <div className="flex items-center gap-1.5 text-muted">
+                <span>Monthly Burn:</span>
+                <span className="font-mono text-foreground font-medium">
+                  {record.currency || "INR"} {Number(record.monthly_amortized_cost).toLocaleString()}/mo
+                </span>
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -215,6 +249,248 @@ export function ContractDetailDrawer({
 
       {/* Tab Content Panes */}
       <div className="flex-1 overflow-y-auto p-5 md:p-8">
+        {/* Tab: Overview (Mirrors the exact state entered during creation) */}
+        {activeTab === 'Overview' && (
+          <div className="space-y-6 max-w-5xl mx-auto">
+            {/* Action Bar */}
+            <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-sunken/40">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {isSubscription ? "SaaS Subscription Dossier" : "AMC Agreement & Itemwise Transactions"}
+                </h3>
+                <p className="text-xs text-muted mt-0.5">
+                  Record loaded in the exact saved state. Click Edit to adjust commercials, line items, or attachments.
+                </p>
+              </div>
+              <AppButton
+                variant="primary"
+                size="sm"
+                onClick={() => onOpenEditForm(record)}
+                leftIcon={<Edit className="h-3.5 w-3.5" />}
+                className="text-xs font-semibold"
+              >
+                Edit Record
+              </AppButton>
+            </div>
+
+            {/* Section 1: Identification & Vendor */}
+            <AppCard className="p-5 border-border shadow-xs space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-theme-icon" /> 1. Provider & Identification
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-muted block">System / Service Name:</span>
+                  <span className="font-semibold text-foreground text-sm mt-0.5 block">{record.software_name}</span>
+                </div>
+                <div>
+                  <span className="text-muted block">Contract Type:</span>
+                  <span className="font-medium text-foreground mt-0.5 block">{record.contract_type || "AMC"}</span>
+                </div>
+                <div>
+                  <span className="text-muted block">Status:</span>
+                  <span className="mt-0.5 inline-block">
+                    <AppBadge variant={record.status === "Active" ? "success" : "neutral"} className="text-[10.5px]">
+                      {record.status || "Active"}
+                    </AppBadge>
+                  </span>
+                </div>
+                {contact.name && (
+                  <div>
+                    <span className="text-muted block">Contact Person:</span>
+                    <span className="font-medium text-foreground mt-0.5 block">{contact.name}</span>
+                  </div>
+                )}
+                {contact.email && (
+                  <div>
+                    <span className="text-muted block">Contact Email:</span>
+                    <span className="font-medium text-foreground mt-0.5 block">{contact.email}</span>
+                  </div>
+                )}
+                {contact.phone && (
+                  <div>
+                    <span className="text-muted block">Contact Phone:</span>
+                    <span className="font-medium text-foreground mt-0.5 block">{contact.phone}</span>
+                  </div>
+                )}
+                {taxation.gstNumber && (
+                  <div>
+                    <span className="text-muted block">GST Number:</span>
+                    <span className="font-mono text-foreground mt-0.5 block">{taxation.gstNumber}</span>
+                  </div>
+                )}
+                {taxation.panNumber && (
+                  <div>
+                    <span className="text-muted block">PAN Number:</span>
+                    <span className="font-mono text-foreground mt-0.5 block">{taxation.panNumber}</span>
+                  </div>
+                )}
+                {bank.bankName && (
+                  <div>
+                    <span className="text-muted block">Bank Details:</span>
+                    <span className="font-mono text-foreground mt-0.5 block">{bank.bankName} ({bank.ifsc})</span>
+                  </div>
+                )}
+              </div>
+            </AppCard>
+
+            {/* Section 2: Commercial Terms & Dates */}
+            <AppCard className="p-5 border-border shadow-xs space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-theme-icon" /> 2. Commercials & Timeline
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+                <div>
+                  <span className="text-muted block">Purchase / Start Date:</span>
+                  <span className="font-mono font-medium text-foreground mt-0.5 block">
+                    {record.purchase_date ? formatDate(record.purchase_date) : "N/A"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted block">Expiry / Renewal Date:</span>
+                  <span className="font-mono font-medium text-foreground mt-0.5 block">
+                    {record.expiry_date ? formatDate(record.expiry_date) : "Open"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted block">Total Financial Value:</span>
+                  <span className="font-semibold text-foreground text-sm tabular-nums mt-0.5 block">
+                    {record.currency || "INR"} {cost.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted block">Billing / Renewal Period:</span>
+                  <span className="font-medium text-foreground mt-0.5 block">
+                    {record.billing_frequency || record.renewal_period_type || "Yearly"}
+                  </span>
+                </div>
+                {record.po_number && (
+                  <div>
+                    <span className="text-muted block">PO Reference:</span>
+                    <span className="font-mono text-foreground mt-0.5 block">{record.po_number}</span>
+                  </div>
+                )}
+                {record.total_licenses && (
+                  <div>
+                    <span className="text-muted block">Capacity / Seats:</span>
+                    <span className="font-mono text-foreground mt-0.5 block">{record.used_licenses || 0} / {record.total_licenses} seats</span>
+                  </div>
+                )}
+              </div>
+            </AppCard>
+
+            {/* Section 3: Itemwise Solution Transactions (Created in AMC modal) */}
+            {!isSubscription && (
+              <AppCard className="p-5 border-border shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                    <Boxes className="h-4 w-4 text-theme-icon" /> 3. Itemwise Solution Breakdown ({lineItems.length} Line Items)
+                  </h4>
+                  {record.is_line_item_wise && (
+                    <AppBadge variant="accent" className="text-[10px]">Line-Item Wise Pricing Active</AppBadge>
+                  )}
+                </div>
+
+                {lineItems.length > 0 ? (
+                  <AppTableContainer className="rounded-lg border border-border">
+                    <AppTable className="text-left text-xs">
+                      <AppTableHeader>
+                        <AppTableRow className="bg-sunken text-muted">
+                          <AppTableHead className="w-12 font-semibold">#</AppTableHead>
+                          <AppTableHead className="font-semibold">Resolution / Item</AppTableHead>
+                          <AppTableHead className="font-semibold text-right">Qty</AppTableHead>
+                          <AppTableHead className="font-semibold text-right">Rate</AppTableHead>
+                          <AppTableHead className="font-semibold text-right">Taxes (GST)</AppTableHead>
+                          <AppTableHead className="font-semibold text-right">Net Amount</AppTableHead>
+                        </AppTableRow>
+                      </AppTableHeader>
+                      <AppTableBody className="divide-y divide-border/60">
+                        {lineItems.map((item: any, idx: number) => {
+                          const tax = (Number(item.cgstAmount) || 0) + (Number(item.sgstAmount) || 0) + (Number(item.igstAmount) || 0);
+                          return (
+                            <AppTableRow key={idx} className="hover:bg-surface-hover/50">
+                              <AppTableCell className="font-mono text-muted">{idx + 1}</AppTableCell>
+                              <AppTableCell className="font-medium text-foreground">{item.resolutionName || "Line Item"}</AppTableCell>
+                              <AppTableCell className="text-right font-mono tabular-nums">{item.qty || 1}</AppTableCell>
+                              <AppTableCell className="text-right font-mono tabular-nums">{record.currency || "INR"} {Number(item.rate || 0).toLocaleString()}</AppTableCell>
+                              <AppTableCell className="text-right font-mono tabular-nums text-muted">{tax > 0 ? `${record.currency || "INR"} ${tax.toLocaleString()}` : "0%"}</AppTableCell>
+                              <AppTableCell className="text-right font-mono font-semibold text-foreground tabular-nums">
+                                {record.currency || "INR"} {Number(item.netAmount || 0).toLocaleString()}
+                              </AppTableCell>
+                            </AppTableRow>
+                          );
+                        })}
+                      </AppTableBody>
+                    </AppTable>
+                  </AppTableContainer>
+                ) : (
+                  <p className="text-xs text-muted">This AMC contract was registered at a lump-sum value without individual line item lines.</p>
+                )}
+              </AppCard>
+            )}
+
+            {/* Section 4: Payment Milestones */}
+            {paymentMilestones.length > 0 && (
+              <AppCard className="p-5 border-border shadow-xs space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-theme-icon" /> 4. Payment Schedule Milestones ({paymentMilestones.length})
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {paymentMilestones.map((m: any, idx: number) => (
+                    <div key={idx} className="p-3 rounded-lg border border-border bg-surface text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">{m.phaseName || `Phase #${idx + 1}`}</span>
+                        <AppBadge variant={m.status === "Amount Released" ? "success" : "neutral"} className="text-[10px]">
+                          {m.status || "Pending"}
+                        </AppBadge>
+                      </div>
+                      <div className="flex items-center justify-between text-muted text-[11px] pt-1">
+                        <span>Allocation: {m.percentage ? `${m.percentage}%` : ""}</span>
+                        <span className="font-mono font-semibold text-foreground">
+                          {record.currency || "INR"} {Number(m.amount || 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AppCard>
+            )}
+
+            {/* Section 5: SLAs & Operational Notes */}
+            <AppCard className="p-5 border-border shadow-xs space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-theme-icon" /> Service Level Agreements & Notes
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-muted block">Support Tier:</span>
+                  <span className="font-medium text-foreground mt-0.5 block">{record.support_tier || "Standard (9x5)"}</span>
+                </div>
+                <div>
+                  <span className="text-muted block">SLA Uptime Commitment:</span>
+                  <span className="font-mono font-semibold text-foreground mt-0.5 block">{record.sla_uptime || "99.5"}%</span>
+                </div>
+                <div>
+                  <span className="text-muted block">Ticket Turnaround (TAT):</span>
+                  <span className="font-medium text-foreground mt-0.5 block">{record.sla_tat || "4 Hours"}</span>
+                </div>
+              </div>
+              {record.specifications && (
+                <div className="pt-2 text-xs">
+                  <span className="text-muted block">Scope Specifications:</span>
+                  <p className="mt-1 text-foreground bg-sunken/40 p-2.5 rounded-lg border border-border/40 whitespace-pre-wrap">{record.specifications}</p>
+                </div>
+              )}
+              {record.notes && (
+                <div className="pt-1 text-xs">
+                  <span className="text-muted block">Remarks & Notes:</span>
+                  <p className="mt-1 text-muted whitespace-pre-wrap">{record.notes}</p>
+                </div>
+              )}
+            </AppCard>
+          </div>
+        )}
+
         {activeTab === 'Implementation' && (
           <AMCImplementationTab 
             amcId={record.id} 

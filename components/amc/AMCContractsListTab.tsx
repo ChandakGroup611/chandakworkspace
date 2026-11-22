@@ -11,7 +11,8 @@ import {
   AppTableBody, 
   AppTableRow, 
   AppTableHead, 
-  AppTableCell 
+  AppTableCell,
+  AppTableContainer 
 } from "@/components/ui/AppTable";
 import { 
   Search, 
@@ -20,6 +21,7 @@ import {
   Calendar, 
   Clock, 
   Edit, 
+  Eye,
   Trash2, 
   ShieldCheck, 
   AlertTriangle,
@@ -38,6 +40,7 @@ interface AMCContractsListTabProps {
   loading: boolean;
   onRefresh: () => void;
   onOpenCreate: () => void;
+  onOpenView?: (record: any) => void;
   onOpenEdit: (record: any) => void;
   onOpenRenew: (record: any) => void;
   onOpenHistory: (recordId: string) => void;
@@ -52,6 +55,7 @@ export function AMCContractsListTab({
   loading,
   onRefresh,
   onOpenCreate,
+  onOpenView,
   onOpenEdit,
   onOpenRenew,
   onOpenHistory,
@@ -280,7 +284,7 @@ export function AMCContractsListTab({
 
       {/* AMC Table */}
       <AppCard className="overflow-hidden p-0 border-border shadow-xs">
-        <div className="overflow-x-auto">
+        <AppTableContainer>
           <AppTable>
             <AppTableHeader>
               <AppTableRow className="bg-sunken/50">
@@ -290,7 +294,7 @@ export function AMCContractsListTab({
                 <AppTableHead className="w-36 font-semibold text-xs">Annual Cost</AppTableHead>
                 <AppTableHead className="w-36 font-semibold text-xs">Valid Dates</AppTableHead>
                 <AppTableHead className="w-28 font-semibold text-xs">Status</AppTableHead>
-                <AppTableHead className="w-32 text-right font-semibold text-xs">Actions</AppTableHead>
+                <AppTableHead className="w-44 text-right font-semibold text-xs">Actions</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
             <AppTableBody>
@@ -325,18 +329,35 @@ export function AMCContractsListTab({
                   const deptName = deptMap[rec.department_id] || "General";
                   const cost = Number(rec.total_cost || rec.cost || 0);
 
+                  const handleRowClick = () => {
+                    if (onOpenView) {
+                      onOpenView(rec);
+                    } else {
+                      onOpenEdit(rec);
+                    }
+                  };
+
                   return (
                     <AppTableRow 
                       key={rec.id} 
                       className="hover:bg-surface-hover/80 transition-colors group cursor-pointer"
-                      onClick={() => onOpenEdit(rec)}
+                      onClick={handleRowClick}
                     >
                       {/* Software Name & Category */}
                       <AppTableCell>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRowClick();
+                            }}
+                            className="h-auto p-0 justify-start text-left font-semibold text-sm text-foreground group-hover:text-primary transition-colors hover:underline hover:bg-transparent"
+                          >
                             {rec.software_name}
-                          </span>
+                          </AppButton>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-[11px] font-mono text-muted">
                               {rec.po_number ? `PO: ${rec.po_number}` : (rec.contract_type || "AMC")}
@@ -410,11 +431,22 @@ export function AMCContractsListTab({
                         className="text-right" 
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="inline-flex items-center gap-1">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
+                          <AppButton
+                            variant="outline"
+                            size="sm"
+                            title="View Contract Dossier"
+                            aria-label={`View ${rec.software_name}`}
+                            onClick={handleRowClick}
+                            className="h-7 px-2 text-[11.5px] font-medium"
+                            leftIcon={<Eye className="h-3.5 w-3.5 text-theme-icon" />}
+                          >
+                            View
+                          </AppButton>
                           <AppButton
                             variant="ghost"
                             size="icon-sm"
-                            title="Edit / View Contract Details"
+                            title="Edit Contract"
                             aria-label={`Edit ${rec.software_name}`}
                             onClick={() => onOpenEdit(rec)}
                             className="text-muted hover:text-foreground"
@@ -448,7 +480,7 @@ export function AMCContractsListTab({
                               title="Delete Contract"
                               aria-label={`Delete ${rec.software_name}`}
                               onClick={() => onDelete(rec)}
-                              className="text-muted hover:text-danger-text"
+                              className="text-muted hover:text-danger-text hover:bg-danger-soft"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </AppButton>
@@ -461,7 +493,7 @@ export function AMCContractsListTab({
               )}
             </AppTableBody>
           </AppTable>
-        </div>
+        </AppTableContainer>
       </AppCard>
     </div>
   );
