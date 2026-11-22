@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import React, { useState, useEffect, use, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceConsole";
+import { TicketRecordForm, scopeCodeOf } from "@/components/tickets/TicketRecordForm";
 import { fetchTicketDashboardData, fetchSingleTicketDetails } from "@/lib/actions/tickets";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ArrowLeft, Pencil, ShieldAlert, Eye } from "lucide-react";
@@ -28,6 +29,8 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isViewMode = searchParams?.get("mode") === "view";
+  // ?mode=edit opens the ticket's own form (the one it was raised with) straight in edit mode.
+  const openFormInEdit = searchParams?.get("mode") === "edit";
   const { userId, hasPermission, roleCode, loading: permissionsLoading } = usePermissions();
 
   const [loading, setLoading] = useState(true);
@@ -48,6 +51,7 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [issueTypes, setIssueTypes] = useState<any[]>([]);
   const [scopeName, setScopeName] = useState("");
+  const [scopeRow, setScopeRow] = useState<any>(null);
 
   const fetchData = async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -70,6 +74,7 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
         const scopeCode = String(foundTicket.scope_type || "").toUpperCase() === "ERP/SOFTWARE" ? "ERP" : String(foundTicket.scope_type || "").toUpperCase();
         const scope = (data.scopes || []).find((s: any) => String(s.code || "").toUpperCase() === scopeCode);
         setScopeName(scope?.name || foundTicket.scope_type || "");
+        setScopeRow(scope || null);
 
         const custom = foundTicket.custom_fields || {};
         const mappedTicket = {
@@ -152,6 +157,10 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
     ? (ticketData.creator_id === userId || ticketData.assignee_id === userId || ticketData.queue_owner_id === userId)
     : false;
   const canEditTicket = !isViewMode && (isSuperAdmin || isTicketOwner || (hasPermission && (hasPermission("TICKETS_UPDATE") || hasPermission("TICKETS_MANAGE"))));
+  // Record standard: show the ticket in the form it was raised with. Inline title/description
+  // editing stays only as a fallback for tickets whose scope has no form.
+  const hasRecordForm = Boolean(scopeRow?.id && scopeCodeOf(ticketData));
+  const inlineEdit = canEditTicket && !hasRecordForm;
 
   return (
     <div className="space-y-5 pb-6 pt-2 text-foreground">
@@ -242,7 +251,7 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
           ) : (
             <div className="group flex items-start gap-2">
               <h1 className="w-full whitespace-normal break-words text-[20px] font-semibold leading-snug text-heading">{ticketData.title}</h1>
-              {canEditTicket && (
+              {inlineEdit && (
                 <button
                   type="button"
                   onClick={() => setEditingTitle(true)}
@@ -258,11 +267,20 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
         </div>
       </header>
 
-      {/* Description */}
+      {hasRecordForm ? (
+        <TicketRecordForm
+          ticket={{ ...ticketData, id: ticketData.dbId, code: ticketData.id }}
+          scope={scopeRow}
+          canEdit={canEditTicket}
+          initialMode={openFormInEdit ? "edit" : "view"}
+          onSaved={() => fetchData(false)}
+        />
+      ) : (
+      /* Description (fallback when the ticket's scope has no form) */
       <AppCard className="space-y-3 border border-border bg-surface p-5 shadow-xs">
         <div className="flex items-center justify-between">
           <h2 className="text-[13px] font-medium text-subtle">Description</h2>
-          {canEditTicket && !editingDescription && (
+          {inlineEdit && !editingDescription && (
             <AppButton variant="ghost" size="sm" onClick={() => setEditingDescription(true)} leftIcon={<Pencil className="h-3.5 w-3.5" />}>
               Edit
             </AppButton>
@@ -291,6 +309,7 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
           />
         )}
       </AppCard>
+      )}
 
       {isViewMode && (
         <div role="status" className="flex items-start gap-3 rounded-md border border-border bg-sunken p-3 text-[13px] text-subtle">

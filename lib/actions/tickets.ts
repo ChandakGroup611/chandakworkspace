@@ -361,6 +361,12 @@ export async function updateTicketDetails(ticketId: string, payload: {
   category_id?: string;
   sub_category_id?: string;
   issue_type_id?: string;
+  // Remaining create-form fields, so the full ticket form can be used for edit.
+  issue_sub_type_id?: string;
+  asset_id?: string;
+  software_system_id?: string;
+  module_id?: string;
+  sub_module_id?: string;
   priority_id?: string;
   custom_fields?: any;
   remark?: string;
@@ -422,6 +428,11 @@ export async function updateTicketDetails(ticketId: string, payload: {
     if (payload.category_id !== undefined) updateData.category_id = cleanField(payload.category_id);
     if (payload.sub_category_id !== undefined) updateData.sub_category_id = cleanField(payload.sub_category_id);
     if (payload.issue_type_id !== undefined) updateData.issue_type_id = cleanField(payload.issue_type_id);
+    if (payload.issue_sub_type_id !== undefined) updateData.issue_sub_type_id = cleanField(payload.issue_sub_type_id);
+    if (payload.asset_id !== undefined) updateData.asset_id = cleanField(payload.asset_id);
+    if (payload.software_system_id !== undefined) updateData.software_system_id = cleanField(payload.software_system_id);
+    if (payload.module_id !== undefined) updateData.module_id = cleanField(payload.module_id);
+    if (payload.sub_module_id !== undefined) updateData.sub_module_id = cleanField(payload.sub_module_id);
     if (payload.priority_id !== undefined) {
       const cleanedPrio = cleanField(payload.priority_id);
       if (!cleanedPrio) {
@@ -1503,4 +1514,18 @@ export async function deleteTicket(ticketId: string, reason?: string) {
 
   revalidatePath('/tickets');
   return { success: true, batchId };
+}
+
+/**
+ * Scope masters (IT Infrastructure / ERP / Others) for showing a saved ticket or
+ * requirement in the intake form it was raised with.
+ */
+export async function fetchTicketScopes() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+  const { data } = await supabaseAdmin.from("ticket_scopes").select("*");
+  return JSON.parse(JSON.stringify(data || []));
 }

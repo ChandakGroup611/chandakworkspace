@@ -1,5 +1,6 @@
 "use client";
 
+import { recordCreatedHref } from "@/components/ui/record";
 import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
@@ -104,6 +105,13 @@ function TicketsPageContent() {
   const [dateError, setDateError] = useState<string | null>(null);
 
   const [showWizard, setShowWizard] = useState(false);
+  // Record standard: the ticket just raised is highlighted in the list.
+  const [createdCode, setCreatedCode] = useState<string | null>(null);
+  useEffect(() => {
+    if (!createdCode) return;
+    const t = window.setTimeout(() => setCreatedCode(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [createdCode]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -920,7 +928,7 @@ function TicketsPageContent() {
                       {filteredTickets.map((ticket) => {
                         const overdue = isOverdue(ticket);
                         return (
-                          <AppTableRow key={ticket.dbId} onClick={() => handleTicketClick(ticket)} className="cursor-pointer hover:bg-surface-hover">
+                          <AppTableRow key={ticket.dbId} data-record-id={ticket.id} data-highlight={createdCode === ticket.id || undefined} onClick={() => handleTicketClick(ticket)} className="cursor-pointer hover:bg-surface-hover">
                             <AppTableCell className="whitespace-nowrap font-mono text-[12.5px] font-semibold text-accent-soft-text">
                               {ticket.id}
                             </AppTableCell>
@@ -984,7 +992,7 @@ function TicketsPageContent() {
                                     type="button"
                                     aria-label={`Edit ${ticket.id}`}
                                     title="Edit"
-                                    onClick={() => handleTicketClick(ticket)}
+                                    onClick={() => router.push(`/tickets/${ticket.dbId}?mode=edit`)}
                                     className={ROW_ICON_BTN}
                                   >
                                     <Edit2 className="h-4 w-4" aria-hidden />
@@ -1025,9 +1033,10 @@ function TicketsPageContent() {
           onSuccess={(id) => {
             setShowWizard(false);
             if (id.includes("-REQ-")) {
-              router.push("/requirements");
+              router.push(recordCreatedHref("/requirements", id));
             } else {
               fetchData();
+              setCreatedCode(id);
               setToastMessage(`Ticket ${id} created`);
             }
           }}

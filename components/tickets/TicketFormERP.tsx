@@ -7,16 +7,21 @@ import { AppInput } from "@/components/ui/AppInput";
 import { Monitor, Clock, Send, Paperclip, X, Loader2, Eye, Download } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { fetchMastersByScope, fetchDependentMasters } from "@/lib/actions/masters";
+import { RecordModeProvider, RecordFieldset, CreateOnly, EditOnly, type RecordMode } from "@/components/ui/record";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface TicketFormERPProps {
   scope: any;
+  /** Saved ticket values (view / edit). Keys match this form's fields. */
+  initialData?: Record<string, any>;
+  /** create (default) · view (same form, read-only) · edit (same form, pre-filled) */
+  recordMode?: RecordMode;
   onCancel: () => void;
   onDiscard?: () => void;
   onSubmit: (data: any) => void;
 }
 
-export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFormERPProps) {
+export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit, initialData, recordMode = "create" }: TicketFormERPProps) {
   const { isLight: isLightMode } = useTheme();
   
   const [loading, setLoading] = useState(true);
@@ -25,7 +30,7 @@ export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFo
   const [submodules, setSubmodules] = useState<any[]>([]);
   const [subcategories, setSubcategories] = useState<any[]>([]);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     systemId: "",
     moduleId: "",
     submoduleId: "",
@@ -48,7 +53,8 @@ export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFo
     opex_amount: "",
     budget_impact: "",
     attachment: null as File | null,
-  });
+    ...(initialData || {}),
+  }));
 
   const [isReqCategory, setIsReqCategory] = useState(false);
 
@@ -129,7 +135,9 @@ export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFo
 
   return (
     <div className="animate-in slide-in-from-bottom-4 duration-500">
+        <RecordModeProvider mode={recordMode}>
         <form className="space-y-4" onSubmit={handleSubmit}>
+          <RecordFieldset className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
             
             {/* Software Hierarchy */}
@@ -358,6 +366,7 @@ export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFo
           )}
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
+            <CreateOnly>
             <div className="flex-1 space-y-2">
               <label className={`text-sm font-bold text-muted`}>Technical evidence (screenshots / logs)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
@@ -452,22 +461,28 @@ export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFo
               </div>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0 pb-1">
-              {onDiscard && (
+            </CreateOnly>
+
+            <EditOnly>
+            <div className="flex items-center gap-3 shrink-0 pb-1 md:ml-auto">
+              {onDiscard && recordMode === "create" && (
                 <AppButton variant="outline" type="button" onClick={onDiscard} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
                   Discard
                 </AppButton>
               )}
               <AppButton variant="ghost" type="button" onClick={onCancel} className={"text-muted"}>
-                Back
+                {recordMode === "create" ? "Back" : "Cancel"}
               </AppButton>
               <AppButton variant="primary" type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
                 <Send className="h-4 w-4 mr-2" />
-                Initialize workflow
+                {recordMode === "create" ? "Initialize workflow" : "Save changes"}
               </AppButton>
             </div>
+            </EditOnly>
           </div>
+          </RecordFieldset>
         </form>
+        </RecordModeProvider>
     </div>
   );
 }
