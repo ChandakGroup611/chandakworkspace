@@ -202,6 +202,7 @@ const dashboardsNavGroups: NavGroup[] = [
       { label: "Engineering budget", href: "/dashboards/engg", icon: LineChart, permission: "DASH_ENGG_VIEW" },
       { label: "Sales (Salesforce)", href: "/dashboards/sfdc", icon: LineChart, permission: "DASH_SFDC_VIEW" },
       { label: "Organization Budget", href: "/budget", icon: Wallet },
+      { label: "RBAC access policies", href: "/rbac?module=DASHBOARDS", icon: Key, permission: "DASH_ADM_VIEW" },
     ]
   }
 ];
@@ -272,6 +273,7 @@ const meetNavGroups: NavGroup[] = [
     label: "Review & masters",
     items: [
       { label: "Reports & analytics", href: "/meet/reports", icon: LineChart },
+      { label: "RBAC access policies", href: "/meet/settings/rbac", icon: Key },
       { label: "Meet settings & setup", href: "/meet/admin", icon: Settings2 },
     ]
   }
@@ -362,6 +364,20 @@ function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchPa
     const itemAction = getBudgetRouteAction(item.href);
     return Boolean(currentAction && itemAction && currentAction === itemAction);
   }
+
+  const [baseHref, query] = item.href.split("?");
+  if (query) {
+    if (pathname === baseHref) {
+      const itemParams = new URLSearchParams(query);
+      let allMatch = true;
+      itemParams.forEach((val, key) => {
+        if (searchParams?.get(key) !== val) allMatch = false;
+      });
+      return allMatch;
+    }
+    return false;
+  }
+
   switch (item.href) {
     case "/": return pathname === "/";
     case "/meet": return pathname === "/meet";

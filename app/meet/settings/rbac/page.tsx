@@ -1,8 +1,8 @@
 import React from "react";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import { requireMeet } from "@/lib/permissions/meet";
-import { getMeetRbacDataAction } from "@/lib/actions/meet/rbac";
-import MeetRbacClient from "./MeetRbacClient";
+import { getModuleRbacDataAction } from "@/lib/actions/module-rbac";
+import ModuleRbacManager from "@/components/rbac/ModuleRbacManager";
 import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
@@ -38,7 +38,7 @@ export default async function MeetRbacPage() {
     );
   }
 
-  const initialData = await getMeetRbacDataAction();
+  const initialData = await getModuleRbacDataAction("CHANDAK_MEET");
 
   return (
     <div className="space-y-6">
@@ -46,15 +46,19 @@ export default async function MeetRbacPage() {
         title="Meet Module RBAC & Policies"
         description="Independent module-level role definitions, permission matrix, and policy versioning"
         breadcrumbs={[
+          { label: "Meet Overview", href: "/meet" },
           { label: "Settings", href: "/meet/admin" },
-          { label: "Module RBAC" },
+          { label: "RBAC Access Policies" },
         ]}
       />
 
-      <MeetRbacClient
+      <ModuleRbacManager
+        initialModuleCode="CHANDAK_MEET"
         manifest={initialData.manifest}
         initialRoles={initialData.roles || []}
         initialAuditLogs={initialData.auditLogs || []}
+        backHref="/meet/admin"
+        backLabel="Back to Meet Settings"
       />
     </div>
   );
