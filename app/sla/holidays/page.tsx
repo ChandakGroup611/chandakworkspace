@@ -9,7 +9,8 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, Plus, Save, Trash2, MapPin, Clock, Edit2, Shield } from "lucide-react";
+import { Calendar, Plus, Save, Trash2, MapPin, Clock, Edit2, Shield, Pencil } from "lucide-react";
+import { useFlashHighlight } from "@/components/ui/record";
 import { toast } from "react-toastify";
 import { usePermissions } from "@/hooks/usePermissions";
 import ChandakLoader from "@/components/ui/ChandakLoader";
@@ -61,6 +62,18 @@ export default function HolidayCalendar() {
   }, []);
 
   const [newHoliday, setNewHoliday] = useState({ name: "", date: "", region: "India" });
+  // Record standard: a holiday is edited in the same form it was added with.
+  const [editingHolidayId, setEditingHolidayId] = useState<string | null>(null);
+  const [highlightHolidayId, flashHoliday] = useFlashHighlight();
+
+  const startEditHoliday = (h: any) => {
+    setEditingHolidayId(h.id);
+    setNewHoliday({ name: h.name || "", date: (h.date || "").slice(0, 10), region: h.region || "India" });
+  };
+  const cancelEditHoliday = () => {
+    setEditingHolidayId(null);
+    setNewHoliday({ name: "", date: "", region: "India" });
+  };
   
   // Working Hours Modal State
   const [editingWorkingHours, setEditingWorkingHours] = useState<any | null>(null);
@@ -68,6 +81,30 @@ export default function HolidayCalendar() {
   const [scheduleForm, setScheduleForm] = useState({ name: "", timezone: "UTC", schedule: "" });
 
   const handleAddHoliday = async () => {
+    if (editingHolidayId) {
+      if (!canUpdate) {
+        toast.error("You do not have permission to change holidays.");
+        return;
+      }
+      if (!newHoliday.name || !newHoliday.date) {
+        toast.warning("Please enter holiday name and date.");
+        return;
+      }
+      const { data, error } = await supabase.from('sla_holidays').update({
+        holiday_name: newHoliday.name.trim(),
+        holiday_date: newHoliday.date,
+        region: newHoliday.region || 'India'
+      }).eq('id', editingHolidayId).select().single();
+      if (error) {
+        toast.error(error.message || "Failed to update holiday.");
+        return;
+      }
+      setHolidays(holidays.map(h => h.id === editingHolidayId ? { id: data.id, name: data.holiday_name, date: data.holiday_date, region: data.region } : h));
+      flashHoliday(editingHolidayId);
+      cancelEditHoliday();
+      toast.success("Holiday updated.");
+      return;
+    }
     if (!canCreate) {
       toast.error("You do not have permission to add holidays.");
       return;
@@ -89,6 +126,7 @@ export default function HolidayCalendar() {
 
     setHolidays([...holidays, { id: data.id, name: data.holiday_name, date: data.holiday_date, region: data.region }]);
     setNewHoliday({ name: "", date: "", region: "India" });
+    flashHoliday(data.id);
     toast.success("Holiday added to calendar.");
   };
 
@@ -205,11 +243,11 @@ export default function HolidayCalendar() {
       <div className="mt-5">
         {activeTab === "holidays" ? (
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-            {canCreate && (
+            {(canCreate || editingHolidayId) && (
             <div className="space-y-4 lg:col-span-1">
-                <AppCard className="p-0">
+                <AppCard className={`p-0 ${editingHolidayId ? "border-border-active" : ""}`}>
                   <div className="space-y-4 p-4">
-                    <h2 className="text-[14px] font-semibold text-heading">Add a holiday</h2>
+                    <h2 className="text-[14px] font-semibold text-heading">{editingHolidayId ? "Edit holiday" : "Add a holiday"}</h2>
                       <div>
                         <label htmlFor="hol-name" className={LABEL}>Name</label>
                         <AppInput id="hol-name" value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="For example, Diwali" />
@@ -227,15 +265,18 @@ export default function HolidayCalendar() {
                           <option>APAC region</option>
                         </select>
                       </div>
-                      <AppButton variant="primary" className="w-full" onClick={handleAddHoliday} leftIcon={<Plus className="w-4 h-4"/>}>
-                        Add holiday
+                      <AppButton variant="primary" className="w-full" onClick={handleAddHoliday} leftIcon={editingHolidayId ? <Save className="w-4 h-4"/> : <Plus className="w-4 h-4"/>}>
+                        {editingHolidayId ? "Save changes" : "Add holiday"}
                       </AppButton>
+                      {editingHolidayId && (
+                        <AppButton variant="ghost" className="w-full" onClick={cancelEditHoliday}>Cancel</AppButton>
+                      )}
                   </div>
                 </AppCard>
             </div>
             )}
 
-            <div className={canCreate ? "lg:col-span-2" : "lg:col-span-3"}>
+            <div className={canCreate || editingHolidayId ? "lg:col-span-2" : "lg:col-span-3"}>
               <AppCard className="overflow-hidden p-0">
                 <div className="flex items-center justify-between border-b border-border px-4 py-3">
                   <h2 className="text-[14px] font-semibold text-heading">Holidays</h2>
@@ -243,7 +284,12 @@ export default function HolidayCalendar() {
                 </div>
                 <ul className="divide-y divide-border">
                   {holidays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(holiday => (
-                    <li key={holiday.id} className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-surface-hover">
+                    <li
+                      key={holiday.id}
+                      data-record-id={holiday.id}
+                      data-highlight={highlightHolidayId === holiday.id || editingHolidayId === holiday.id || undefined}
+                      className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-surface-hover"
+                    >
                       <div className="min-w-0">
                         <span className="block text-[13.5px] font-medium text-foreground">{holiday.name}</span>
                         <div className="mt-0.5 flex items-center gap-2 text-[12.5px] text-muted">
@@ -252,11 +298,18 @@ export default function HolidayCalendar() {
                           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" aria-hidden /> {holiday.region}</span>
                         </div>
                       </div>
+                      <div className="flex items-center gap-0.5">
+                      {canUpdate && (
+                        <AppButton aria-label={`Edit ${holiday.name}`} title="Edit" variant="ghost" size="icon-sm" className="text-muted hover:text-foreground" onClick={() => startEditHoliday(holiday)}>
+                          <Pencil className="w-4 h-4" />
+                        </AppButton>
+                      )}
                       {canDelete && (
                         <AppButton aria-label={`Remove ${holiday.name}`} title="Remove" variant="ghost" size="icon-sm" className="text-muted hover:bg-danger-soft hover:text-danger-text" onClick={() => handleDeleteHoliday(holiday.id)}>
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       )}
+                      </div>
                     </li>
                   ))}
                 </ul>

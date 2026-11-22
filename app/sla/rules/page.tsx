@@ -9,7 +9,8 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { fetchSLARules, saveSLARule, deleteSLARule } from "@/lib/actions/sla";
 import { toast } from "react-toastify";
-import { Loader2, Plus, Save, Trash2, ShieldAlert, Clock, Play, Shield } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, ShieldAlert, Clock, Play, Shield, Eye, Pencil } from "lucide-react";
+import { RecordModeProvider, RecordFieldset, useFlashHighlight } from "@/components/ui/record";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -27,6 +28,9 @@ export default function SLARuleBuilder() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Record standard: an open card is either viewed (read-only) or edited, in the same form.
+  const [cardMode, setCardMode] = useState<"view" | "edit">("edit");
+  const [highlightId, flashHighlight] = useFlashHighlight();
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const [form, setForm] = useState({
@@ -61,6 +65,21 @@ export default function SLARuleBuilder() {
       return;
     }
     setEditingId(rule.id);
+    setCardMode("edit");
+    setForm({
+      id: rule.id,
+      code: rule.code,
+      name: rule.name,
+      response_target_minutes: rule.response_target_minutes,
+      resolution_target_minutes: rule.resolution_target_minutes,
+      working_hours_code: rule.working_hours_code,
+      escalation_level: rule.escalation_level
+    });
+  };
+
+  const handleView = (rule: any) => {
+    setEditingId(rule.id);
+    setCardMode("view");
     setForm({
       id: rule.id,
       code: rule.code,
@@ -78,6 +97,7 @@ export default function SLARuleBuilder() {
       return;
     }
     setEditingId("new");
+    setCardMode("edit");
     setForm({
       id: "",
       code: "NEW_RULE_" + Date.now().toString().slice(-4),
@@ -108,6 +128,8 @@ export default function SLARuleBuilder() {
       toast.success("SLA rule saved");
       setEditingId(null);
       await loadRules();
+      // Record standard: highlight the rule just created / changed in the list.
+      flashHighlight(form.id || form.code);
     } catch (err: any) {
       toast.error(err.message || "Couldn't save the SLA rule.");
     } finally {
@@ -144,15 +166,28 @@ export default function SLARuleBuilder() {
   const SELECT = "h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring";
   const LABEL = "mb-1.5 block text-[13px] font-medium text-subtle";
 
-  const renderForm = (isNew: boolean) => (
+  const renderForm = (isNew: boolean) => {
+    const mode = isNew ? "create" : cardMode;
+    return (
+    <RecordModeProvider mode={mode}>
     <div className="space-y-4 p-5">
       <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-        <h3 className="text-[15px] font-semibold text-heading">{isNew ? "New SLA rule" : "Edit SLA rule"}</h3>
+        <h3 className="text-[15px] font-semibold text-heading">{isNew ? "New SLA rule" : mode === "view" ? form.name || "SLA rule" : "Edit SLA rule"}</h3>
         <div className="flex gap-2">
-          <AppButton size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancel</AppButton>
-          <AppButton size="sm" variant="primary" onClick={handleSave} disabled={saving} isLoading={saving} leftIcon={<Save className="w-4 h-4"/>}>{isNew ? "Create rule" : "Save"}</AppButton>
+          {mode === "view" ? (
+            <>
+              <AppButton size="sm" variant="ghost" onClick={() => setEditingId(null)}>Close</AppButton>
+              {canUpdate && <AppButton size="sm" variant="primary" onClick={() => setCardMode("edit")} leftIcon={<Pencil className="w-4 h-4" />}>Edit</AppButton>}
+            </>
+          ) : (
+            <>
+              <AppButton size="sm" variant="ghost" onClick={() => (isNew ? setEditingId(null) : setCardMode("view"))}>Cancel</AppButton>
+              <AppButton size="sm" variant="primary" onClick={handleSave} disabled={saving} isLoading={saving} leftIcon={<Save className="w-4 h-4"/>}>{isNew ? "Create rule" : "Save"}</AppButton>
+            </>
+          )}
         </div>
       </div>
+      <RecordFieldset>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="sla-name" className={LABEL}>Name</label>
@@ -190,8 +225,11 @@ export default function SLARuleBuilder() {
           </select>
         </div>
       </div>
+      </RecordFieldset>
     </div>
-  );
+    </RecordModeProvider>
+    );
+  };
 
   if (loading || permsLoading) {
     return (
@@ -247,9 +285,12 @@ export default function SLARuleBuilder() {
           )}
 
           {rules.map(rule => (
-            <AppCard key={rule.id} className={`p-0 ${editingId === rule.id ? 'border-border-active' : ''}`}>
+            <AppCard key={rule.id} data-record-id={rule.id} data-highlight={highlightId === rule.id || highlightId === rule.code || undefined} className={`p-0 ${editingId === rule.id ? 'border-border-active' : ''}`}>
               {editingId === rule.id ? renderForm(false) : (
-                <div className="flex flex-col items-start justify-between gap-4 p-4 sm:flex-row sm:items-center">
+                <div
+                  className="flex cursor-pointer flex-col items-start justify-between gap-4 p-4 sm:flex-row sm:items-center"
+                  onClick={() => handleView(rule)}
+                >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-[14.5px] font-semibold text-heading">{rule.name}</h3>
@@ -273,9 +314,14 @@ export default function SLARuleBuilder() {
                       </div>
                     </dl>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <AppButton aria-label={`View ${rule.name}`} title="View" size="icon-sm" variant="ghost" className="text-muted hover:text-foreground" onClick={() => handleView(rule)}>
+                      <Eye className="w-4 h-4" />
+                    </AppButton>
                     {canUpdate && (
-                      <AppButton size="sm" variant="secondary" onClick={() => handleEdit(rule)}>Edit</AppButton>
+                      <AppButton aria-label={`Edit ${rule.name}`} title="Edit" size="icon-sm" variant="ghost" className="text-muted hover:text-foreground" onClick={() => handleEdit(rule)}>
+                        <Pencil className="w-4 h-4" />
+                      </AppButton>
                     )}
                     {canDelete && (
                       <AppButton aria-label={`Delete ${rule.name}`} title="Delete" size="icon-sm" variant="ghost" className="text-muted hover:bg-danger-soft hover:text-danger-text" onClick={() => handleDelete(rule.id)}>
