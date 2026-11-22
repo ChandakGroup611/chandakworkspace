@@ -5,8 +5,9 @@ export const DESIGN_TRACKING_MODULE = "DESIGN_TRACKING" as const;
 export const DESIGN_ROLES = {
   DESIGN_ADMIN: "DESIGN_ADMIN",
   DESIGN_LEAD: "DESIGN_LEAD",
-  CONTRIBUTOR: "CONTRIBUTOR",
-  VIEWER: "VIEWER", // STANDARD (D8)
+  STANDARD: "STANDARD",
+  CONTRIBUTOR: "STANDARD", // Alias for backward compatibility
+  VIEWER: "VIEWER",
 } as const;
 
 export const DESIGN_PERMISSIONS = {

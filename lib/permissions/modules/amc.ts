@@ -3,6 +3,11 @@ import { TASK_WORKFLOW_MODULE, TASK_PERMISSIONS } from "./tasks";
 
 export const AMC_MODULE = "AMC" as const;
 
+export const AMC_ROLES = {
+  AMC_ADMIN: "AMC_ADMIN",
+  STANDARD: "STANDARD",
+} as const;
+
 export const AMC_PERMISSIONS = {
   AMC_VIEW: TASK_PERMISSIONS.AMC_VIEW,
   AMC_MANAGE: TASK_PERMISSIONS.AMC_MANAGE,

@@ -5,10 +5,22 @@
 
 import type { ModuleManifest } from "./types";
 
+import { default as manifest_amc } from "./manifests/amc.manifest";
+import { default as manifest_budget } from "./manifests/budget.manifest";
+import { default as manifest_dashboards } from "./manifests/dashboards.manifest";
+import { default as manifest_design } from "./manifests/design.manifest";
 import { default as manifest_meet } from "./manifests/meet.manifest";
+import { default as manifest_tasks } from "./manifests/tasks.manifest";
+import { default as manifest_vehicle } from "./manifests/vehicle.manifest";
 
 export const MODULE_REGISTRY: Record<string, ModuleManifest> = {
+  [manifest_amc.code]: manifest_amc,
+  [manifest_budget.code]: manifest_budget,
+  [manifest_dashboards.code]: manifest_dashboards,
+  [manifest_design.code]: manifest_design,
   [manifest_meet.code]: manifest_meet,
+  [manifest_tasks.code]: manifest_tasks,
+  [manifest_vehicle.code]: manifest_vehicle,
 };
 
 export function getRegisteredModules(): ModuleManifest[] {

@@ -1,0 +1,101 @@
+import type { ModuleManifest } from "../types";
+
+/**
+ * Design Tracking — Module Manifest
+ * Governance: Master Architecture Blueprint v2.0
+ */
+export const designManifest: ModuleManifest = {
+  code: "DESIGN_TRACKING",
+  name: "Design & Drawing Tracking",
+  description: "Drawing register, revisions, GFC authorization, RFIs, and transmittals",
+  icon: "Compass",
+  routePath: "/design/matrix",
+  displayOrder: 3,
+  status: "ACTIVE",
+  rbacAdminRoute: "/design/settings/rbac",
+  scopeConfig: {
+    supportedTypes: ["all", "projects"],
+    defaultType: "all",
+    entityLabel: "Project",
+  },
+  roles: [
+    {
+      code: "STANDARD",
+      name: "Design Contributor",
+      description: "Standard design team member who uploads drawings, views registers, and raises RFIs.",
+      isSystem: true,
+    },
+    {
+      code: "DESIGN_LEAD",
+      name: "Design Lead / Architect",
+      description: "Reviews drawings, manages RFIs, and drafts transmittals.",
+      isSystem: false,
+    },
+    {
+      code: "DESIGN_ADMIN",
+      name: "Design Administrator",
+      description: "Full control over drawing matrix, GFC authorization, and project configurations.",
+      isSystem: false,
+    },
+    {
+      code: "VIEWER",
+      name: "Design Viewer",
+      description: "Read-only viewer of drawing registers and published documents.",
+      isSystem: false,
+    },
+  ],
+  permissions: [
+    { code: "DESIGN_PROJECTS_VIEW", name: "View Design Projects", category: "VIEW", description: "View design tracking project list" },
+    { code: "DESIGN_PROJECTS_MANAGE", name: "Manage Projects", category: "ADMINISTER", description: "Create and configure design projects" },
+    { code: "DESIGN_MASTERS_MANAGE", name: "Manage Masters", category: "CONFIGURE", description: "Configure drawing categories, disciplines, and consultants" },
+    { code: "MATRIX_EDIT", name: "Edit Drawing Matrix", category: "EDIT", description: "Edit drawing requirement rows, codes, and deliverables" },
+    { code: "DRAWINGS_VIEW", name: "View Drawings", category: "VIEW", description: "View drawing sheets, revisions, and PDF viewers" },
+    { code: "DRAWINGS_UPLOAD", name: "Upload Drawings", category: "CREATE", description: "Upload new drawing revisions and attachments" },
+    { code: "DRAWINGS_APPROVE_GFC", name: "Approve GFC", category: "APPROVE", description: "Grant Good-For-Construction (GFC) release stamp", isSensitive: true },
+    { code: "TRANSMITTALS_CREATE", name: "Create Transmittals", category: "CREATE", description: "Draft, issue, and distribute drawing transmittals" },
+    { code: "RFIS_VIEW", name: "View RFIs", category: "VIEW", description: "View Requests For Information (RFIs)" },
+    { code: "RFIS_RAISE", name: "Raise RFIs", category: "CREATE", description: "Submit new design RFIs and technical queries" },
+    { code: "RFIS_RESPOND", name: "Respond to RFIs", category: "EDIT", description: "Provide architect/engineer responses and resolutions" },
+    { code: "DESIGN_SETTINGS", name: "Manage Design Settings", category: "CONFIGURE", description: "Configure design module settings and RBAC", isSensitive: true },
+  ],
+  defaultPolicies: {
+    STANDARD: [
+      "DESIGN_PROJECTS_VIEW",
+      "DRAWINGS_VIEW",
+      "DRAWINGS_UPLOAD",
+      "RFIS_VIEW",
+      "RFIS_RAISE",
+    ],
+    VIEWER: [
+      "DESIGN_PROJECTS_VIEW",
+      "DRAWINGS_VIEW",
+      "RFIS_VIEW",
+    ],
+    DESIGN_LEAD: [
+      "DESIGN_PROJECTS_VIEW",
+      "MATRIX_EDIT",
+      "DRAWINGS_VIEW",
+      "DRAWINGS_UPLOAD",
+      "TRANSMITTALS_CREATE",
+      "RFIS_VIEW",
+      "RFIS_RAISE",
+      "RFIS_RESPOND",
+    ],
+    DESIGN_ADMIN: [
+      "DESIGN_PROJECTS_VIEW",
+      "DESIGN_PROJECTS_MANAGE",
+      "DESIGN_MASTERS_MANAGE",
+      "MATRIX_EDIT",
+      "DRAWINGS_VIEW",
+      "DRAWINGS_UPLOAD",
+      "DRAWINGS_APPROVE_GFC",
+      "TRANSMITTALS_CREATE",
+      "RFIS_VIEW",
+      "RFIS_RAISE",
+      "RFIS_RESPOND",
+      "DESIGN_SETTINGS",
+    ],
+  },
+};
+
+export default designManifest;

@@ -5,7 +5,8 @@ export const TASK_WORKFLOW_MODULE = "TASK_WORKFLOW" as const;
 export const TASK_ROLES = {
   WORKSPACE_ADMIN: "WORKSPACE_ADMIN",
   MANAGER: "MANAGER",
-  MEMBER: "MEMBER", // STANDARD (D8)
+  STANDARD: "STANDARD",
+  MEMBER: "STANDARD", // Alias for backward compatibility
   VIEWER: "VIEWER",
 } as const;
 

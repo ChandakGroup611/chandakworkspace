@@ -11,7 +11,8 @@ export type ModuleCode =
   | "DESIGN_TRACKING"
   | "CHANDAK_MEET"
   | "ORG_BUDGET"
-  | "DASHBOARDS";
+  | "DASHBOARDS"
+  | "AMC";
 
 export interface ModuleScope {
   type: "all" | "projects" | "departments" | "workspaces" | "vehicles" | "companies";
@@ -47,6 +48,15 @@ interface ModuleRoleDef {
   name: string;
   permissions: string[];
 }
+
+const CANONICAL_ROLE_ALIASES: Record<string, Record<string, string>> = {
+  CHANDAK_MEET: { PARTICIPANT: "STANDARD" },
+  TASK_WORKFLOW: { MEMBER: "STANDARD" },
+  VEHICLE_DESK: { REQUESTER: "STANDARD" },
+  DESIGN_TRACKING: { CONTRIBUTOR: "STANDARD" },
+  ORG_BUDGET: { VIEWER: "STANDARD" },
+  DASHBOARDS: { VIEWER: "STANDARD" },
+};
 
 // Global in-memory cache for static module roles (24 rows)
 let moduleRolesCache: Map<string, ModuleRoleDef> | null = null;
@@ -179,11 +189,18 @@ async function loadUserModuleContext(userId: string): Promise<UserContextCache> 
       let roleDef = roleRegistry.get(roleKey);
 
       if (!roleDef) {
-        // Dual-read aliasing for CHANDAK_MEET
-        if (row.module_code === "CHANDAK_MEET" && row.role_code === "PARTICIPANT") {
-          roleDef = roleRegistry.get(`${row.module_code}:STANDARD`);
-        } else if (row.module_code === "CHANDAK_MEET" && row.role_code === "STANDARD") {
-          roleDef = roleRegistry.get(`${row.module_code}:PARTICIPANT`);
+        // Dual-read canonical aliasing (forward check: legacy -> STANDARD)
+        const forwardTarget = CANONICAL_ROLE_ALIASES[row.module_code]?.[row.role_code];
+        if (forwardTarget) {
+          roleDef = roleRegistry.get(`${row.module_code}:${forwardTarget}`);
+        } else if (row.role_code === "STANDARD") {
+          // Reverse check: STANDARD -> legacy role in registry
+          const reverseEntry = Object.entries(CANONICAL_ROLE_ALIASES[row.module_code] || {}).find(
+            ([_, std]) => std === "STANDARD"
+          );
+          if (reverseEntry) {
+            roleDef = roleRegistry.get(`${row.module_code}:${reverseEntry[0]}`);
+          }
         }
       }
 

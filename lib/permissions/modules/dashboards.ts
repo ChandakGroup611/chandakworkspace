@@ -4,7 +4,8 @@ export const DASHBOARDS_MODULE = "DASHBOARDS" as const;
 
 export const DASHBOARD_ROLES = {
   EDITOR: "EDITOR",
-  VIEWER: "VIEWER", // STANDARD (D8)
+  STANDARD: "STANDARD",
+  VIEWER: "STANDARD", // Alias for backward compatibility
 } as const;
 
 export const DASHBOARD_PERMISSIONS = {

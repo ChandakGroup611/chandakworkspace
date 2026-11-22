@@ -5,7 +5,8 @@ export const VEHICLE_DESK_MODULE = "VEHICLE_DESK" as const;
 export const VEHICLE_ROLES = {
   FLEET_ADMIN: "FLEET_ADMIN",
   FLEET_LEAD: "FLEET_LEAD",
-  REQUESTER: "REQUESTER", // STANDARD (D8)
+  STANDARD: "STANDARD",
+  REQUESTER: "STANDARD", // Alias for backward compatibility
   VIEWER: "VIEWER",
 } as const;
 
