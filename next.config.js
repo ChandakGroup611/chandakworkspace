@@ -38,6 +38,10 @@ const nextConfig = {
       bodySizeLimit: '30mb',
     },
     agentUpgrade: 'security',
+    // Build workers. Next defaults to (CPU count - 1): 63 on the shared Hostinger server, which
+    // exhausts the account's thread limit ("OS can't spawn worker thread", os error 11), aborts the
+    // build and leaves the live app unable to spawn (503) while it runs. Override with NEXT_BUILD_CPUS.
+    cpus: Number(process.env.NEXT_BUILD_CPUS) || 2,
   },
   webpack: (config, { dev, isServer }) => {
     if (dev) {
