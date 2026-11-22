@@ -13,7 +13,7 @@ export async function GET() {
     {
       status: 'online',
       serverBootTime: SERVER_BOOT_TIME,
-      version: '2.4.0',
+      version: '2.4.1',
       commit: COMMIT_SHA,
       supabaseHost: SUPABASE_HOST,
       timestamp: Date.now()
