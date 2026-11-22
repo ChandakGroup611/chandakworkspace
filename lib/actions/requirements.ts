@@ -893,6 +893,76 @@ export async function updateRequirementIntake(reqId: string, payload: any, perfo
   return { success: true };
 }
 
+/**
+ * Record standard: save a requirement from the same intake form it was raised with
+ * (IT Infrastructure / ERP / Others). Writes the intake columns and merges the intake-only
+ * extras into custom_fields without touching analysis / approval data kept there.
+ */
+export async function updateRequirementIntakeForm(reqId: string, form: Record<string, any>) {
+  const performedBy = await signedInUserId();
+  if (!performedBy) return { error: 'Please sign in again.' };
+  const isAuthorized = await canModifyRequirement(reqId, performedBy);
+  if (!isAuthorized) return { error: 'Unauthorized to update this requirement.' };
+
+  const clean = (v: any) => (typeof v === 'string' ? (v.trim() === '' ? null : v.trim()) : v ?? null);
+  if (!clean(form.priorityId)) return { error: 'Validation Error: Requirement priority cannot be cleared. Priority is mandatory.' };
+  if (!clean(form.subject)) return { error: 'Validation Error: Subject is required.' };
+
+  const { data: existing, error: readErr } = await supabaseAdmin
+    .from('requirements')
+    .select('id, title, priority_id, custom_fields')
+    .eq('id', reqId)
+    .maybeSingle();
+  if (readErr || !existing) return { error: 'Requirement not found.' };
+
+  const EXTRA = ['requirement_domain', 'target_system', 'integrations', 'data_privacy', 'software_cost', 'dev_cost',
+    'target_environment', 'hardware_needs', 'capex_amount', 'opex_amount', 'budget_impact'];
+  const customFields: Record<string, any> = { ...((existing as any).custom_fields || {}) };
+  for (const k of EXTRA) if (form[k] !== undefined) customFields[k] = clean(form[k]);
+  customFields.business_reason = clean(form.business_reason);
+  customFields.requirement_details = clean(form.requirement_description);
+  customFields.issue_type_id = clean(form.issueTypeId);
+  customFields.issue_sub_type_id = clean(form.issueSubtypeId);
+  customFields.asset_id = clean(form.assetId);
+
+  const update: Record<string, any> = {
+    title: clean(form.subject),
+    objective: clean(form.remark) ?? '',
+    functional_scope: clean(form.requirement_description),
+    requirement_reason: clean(form.business_reason),
+    priority_id: clean(form.priorityId),
+    software_system_id: clean(form.systemId),
+    module_id: clean(form.moduleId),
+    sub_module_id: clean(form.submoduleId),
+    category_id: clean(form.categoryId),
+    sub_category_id: clean(form.subcategoryId),
+    custom_fields: customFields,
+  };
+
+  const { error } = await supabaseAdmin.from('requirements').update(update).eq('id', reqId);
+  if (error) return { error: 'Failed to update requirement: ' + error.message };
+
+  if (update.title !== (existing as any).title) {
+    try {
+      await supabaseAdmin.from('activity_events').insert([{
+        module_type: 'REQUIREMENT',
+        record_id: reqId,
+        event_type: 'FIELD_CHANGED',
+        old_value: { field_name: 'Title', old_val: String((existing as any).title || 'None') },
+        new_value: { field_name: 'Title', new_val: String(update.title || 'None') },
+        performed_by: performedBy,
+        performed_at: new Date().toISOString(),
+      }]);
+    } catch (err: any) {
+      console.error('Failed to log field audit event:', err);
+    }
+  }
+  await logActivityEvent('REQUIREMENT', reqId, 'INTAKE_UPDATED', null, { message: 'Requirement intake form updated.' }, performedBy);
+  revalidatePath('/requirements');
+  revalidatePath(`/requirements/${reqId}`);
+  return { success: true };
+}
+
 export async function fetchRequirementAuditLogs(reqId: string) {
   const { unstable_noStore: noStore } = await import('next/cache');
   noStore();

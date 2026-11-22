@@ -1,4 +1,5 @@
 "use client";
+import { useRecordHighlight } from "@/components/ui/record";
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect, useMemo, Suspense } from "react";
@@ -124,6 +125,15 @@ function RequirementsPageContent() {
   const [reqs, setReqs] = useState<RequirementItem[]>([]);
   const [loadingReqs, setLoadingReqs] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
+  // Record standard: highlight the requirement just raised (?created=<code> or this page's wizard).
+  const createdFromUrl = useRecordHighlight();
+  const [createdHere, setCreatedHere] = useState<string | null>(null);
+  useEffect(() => {
+    if (!createdHere) return;
+    const t = window.setTimeout(() => setCreatedHere(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [createdHere]);
+  const highlightId = createdHere || createdFromUrl;
   const [editReqId, setEditReqId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [printTargetReq, setPrintTargetReq] = useState<RequirementItem | null>(null);
@@ -647,8 +657,9 @@ function RequirementsPageContent() {
       {showWizard && (
         <TicketCreationWizard
           onClose={() => setShowWizard(false)}
-          onSuccess={() => {
+          onSuccess={(code) => {
             setShowWizard(false);
+            setCreatedHere(code);
             loadRequirements();
           }}
         />
@@ -1093,10 +1104,10 @@ function RequirementsPageContent() {
                 {visibleReqs.map((r) => {
                   const overdue = isOverdue(r);
                   return (
-                    <li key={r.id} className="theme-card-structural p-4">
+                    <li key={r.id} data-record-id={r.id} data-highlight={highlightId === r.id || highlightId === r.dbId || undefined} className="theme-card-structural p-4">
                       <button
                         type="button"
-                        onClick={() => navigateToRequirement(r.dbId, "tab=analysis")}
+                        onClick={() => navigateToRequirement(r.dbId, "tab=details")}
                         className="w-full space-y-2 text-left"
                       >
                         <div className="flex items-center justify-between gap-2">
@@ -1143,9 +1154,9 @@ function RequirementsPageContent() {
                             <button
                               type="button"
                               className={iconBtn}
-                              title="Edit analysis"
-                              aria-label={`Edit analysis for ${r.id}`}
-                              onClick={() => navigateToRequirement(r.dbId, "tab=analysis")}
+                              title="Edit"
+                              aria-label={`Edit ${r.id}`}
+                              onClick={() => navigateToRequirement(r.dbId, "tab=details&mode=edit")}
                             >
                               <Edit2 className="h-4 w-4" aria-hidden />
                             </button>
@@ -1194,8 +1205,10 @@ function RequirementsPageContent() {
                         return (
                           <AppTableRow
                             key={r.id}
+                            data-record-id={r.id}
+                            data-highlight={highlightId === r.id || highlightId === r.dbId || undefined}
                             className="cursor-pointer"
-                            onClick={() => navigateToRequirement(r.dbId, "tab=analysis")}
+                            onClick={() => navigateToRequirement(r.dbId, "tab=details")}
                           >
                             <AppTableCell className="whitespace-nowrap font-mono text-[12.5px] font-medium text-accent-soft-text">
                               <div className="flex items-center gap-1.5">
@@ -1256,9 +1269,9 @@ function RequirementsPageContent() {
                                   <button
                                     type="button"
                                     className={iconBtn}
-                                    title="Edit analysis"
-                                    aria-label={`Edit analysis for ${r.id}`}
-                                    onClick={() => navigateToRequirement(r.dbId, "tab=analysis")}
+                                    title="Edit"
+                                    aria-label={`Edit ${r.id}`}
+                                    onClick={() => navigateToRequirement(r.dbId, "tab=details&mode=edit")}
                                   >
                                     <Edit2 className="h-4 w-4" aria-hidden />
                                   </button>

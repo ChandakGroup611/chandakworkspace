@@ -29,6 +29,7 @@ import { LazyQuill } from "@/components/ui/LazyQuill";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { RequirementPrintModal } from "@/components/requirements/RequirementPrintModal";
+import { IntakeRecordForm, requirementToFormData, scopeCodeOf } from "@/components/tickets/TicketRecordForm";
 
 const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: string }> }) => {
   const [reqId, setReqId] = useState<string>("");
@@ -1270,6 +1271,22 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
         {activeTab === 'details' && (
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
+            {/* Record standard: the requirement in the intake form it was raised with. */}
+            <IntakeRecordForm
+              scopeCode={scopeCodeOf(requirement)}
+              initialData={requirementToFormData(requirement)}
+              version={requirement.updated_at}
+              canEdit={isEditable}
+              initialMode={searchParams.get('mode') === 'edit' ? 'edit' : 'view'}
+              title="Requirement as raised"
+              onSave={async (form) => {
+                const { updateRequirementIntakeForm } = await import("@/lib/actions/requirements");
+                const res: any = await updateRequirementIntakeForm(requirement.id, form);
+                if (res?.error) throw new Error(res.error);
+                toast.success(`${requirement.code || 'Requirement'} saved`);
+                await loadData();
+              }}
+            />
             {(requirement.requirement_reason || requirement.requirement_details || requirement.objective || requirement.functional_scope || requirement.custom_fields?.business_reason || requirement.custom_fields?.requirement_details) && (
             <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
