@@ -25,6 +25,9 @@ import {
 import { DesignMasterStore } from "../services/designMasterStore";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
 import { WorkingDocumentLayout } from "./DesignTransactionLayout";
+import { UploadDrawingModal } from "./UploadDrawingModal";
+import { useFlashHighlight } from "@/components/ui/record";
+import { Pencil, ExternalLink } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { fetchDesignDrawingSignedUrlAction } from "@/lib/actions/design";
@@ -34,18 +37,24 @@ interface DrawingRegisterProps {
   drawings: DrawingItem[];
   onOpenReviewModal: (drawing: DrawingItem) => void;
   onOpenUploadModal: () => void;
+  /** Record standard: row to highlight after it was just registered. */
+  highlightId?: string | null;
 }
 
 export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
   drawings,
   onOpenReviewModal,
-  onOpenUploadModal
+  onOpenUploadModal,
+  highlightId = null
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDisciplineFilters, setSelectedDisciplineFilters] = useState<string[]>([]);
   const [selectedProjectFilters, setSelectedProjectFilters] = useState<string[]>([]);
   const [selectedStatusFilters, setSelectedStatusFilters] = useState<string[]>([]);
   const [previewDrawing, setPreviewDrawing] = useState<DrawingItem | null>(null);
+  // Record standard: a saved drawing opens in the same form it was registered with.
+  const [drawingForm, setDrawingForm] = useState<{ drawing: DrawingItem; mode: "view" | "edit" } | null>(null);
+  const [editedId, setEditedId] = useFlashHighlight();
 
   const disciplines = useMemo(() => {
     const fromMasters = (DesignMasterStore.getState().disciplines || []).map(d => d.name);
@@ -241,7 +250,21 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
-      {!previewDrawing && (
+      {drawingForm && (
+        <UploadDrawingModal
+          key={`${drawingForm.drawing.id}-${drawingForm.mode}`}
+          isOpen
+          recordMode={drawingForm.mode}
+          drawing={drawingForm.drawing}
+          onClose={() => setDrawingForm(null)}
+          onDrawingUploaded={() => { /* create happens from the register header */ }}
+          onEdit={() => setDrawingForm({ drawing: drawingForm.drawing, mode: "edit" })}
+          onOpenFile={(d) => handleViewDrawing(d)}
+          onDrawingUpdated={(d) => { DesignMasterStore.saveDrawing(d); setEditedId(d.id); }}
+        />
+      )}
+
+      {!previewDrawing && !drawingForm && (
         <>
           {/* Control Header Strip */}
           <div className="p-4 sm:p-5 rounded-lg border border-border bg-surface shadow-xs space-y-3.5">
@@ -438,7 +461,13 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                 </tr>
               ) : (
                 filteredDrawings.map((item) => (
-                  <tr key={item.id} className="hover:bg-sunken transition-colors">
+                  <tr
+                    key={item.id}
+                    data-record-id={item.id}
+                    data-highlight={item.id === highlightId || item.id === editedId || undefined}
+                    onClick={() => setDrawingForm({ drawing: item, mode: "view" })}
+                    className="hover:bg-sunken transition-colors cursor-pointer"
+                  >
                     <td className="p-3.5 whitespace-nowrap min-w-[260px]">
                       <div className="flex items-center gap-2.5 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border whitespace-nowrap shrink-0 ${getDisciplineBadge(item.discipline)}`}>
@@ -500,15 +529,34 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                       )}
                     </td>
                     <td className="p-3.5 text-right whitespace-nowrap min-w-[240px]">
-                      <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        {/* Record standard: View · Edit first, then module actions */}
+                        <button
+                          type="button"
+                          aria-label={`View ${item.code}`}
+                          title="View"
+                          onClick={() => setDrawingForm({ drawing: item, mode: "view" })}
+                          className="h-7 w-7 rounded-lg hover:bg-surface-hover text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Edit ${item.code}`}
+                          title="Edit details"
+                          onClick={() => setDrawingForm({ drawing: item, mode: "edit" })}
+                          className="h-7 w-7 rounded-lg hover:bg-surface-hover text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleViewDrawing(item)}
                           className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-sunken text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
-                          title="View drawing document"
+                          title="Open the drawing file"
                         >
-                          <Eye className="h-3 w-3 shrink-0" />
-                          <span>View</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                          <span>Open file</span>
                         </button>
                         <button
                           type="button"

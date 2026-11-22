@@ -30,6 +30,7 @@ import {
   BookOpen
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useFlashHighlight } from "@/components/ui/record";
 import { AppTableSkeleton } from "@/components/ui/AppSkeleton";
 
 const BuildingSectionMatrix = dynamic(() => import("../../Design_Tracking/src/components/BuildingSectionMatrix").then(m => m.BuildingSectionMatrix), {
@@ -369,12 +370,15 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       }));
   }, [accessibleDrawings]);
 
+  // Record standard: the drawing just registered is highlighted in the register.
+  const [newDrawingId, setNewDrawingId] = useFlashHighlight();
   const handleDrawingUploaded = (newDrawing: Omit<DrawingItem, "id">) => {
     const created: DrawingItem = {
       ...newDrawing,
       id: `drw-${Date.now().toString(36)}`
     };
     DesignMasterStore.saveDrawing(created);
+    setNewDrawingId(created.id);
   };
 
   const handleStatusUpdated = (drawingId: string, newStatus: DrawingStatus) => {
@@ -521,6 +525,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
               drawings={accessibleDrawings}
               onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
               onOpenUploadModal={() => setIsUploadOpen(true)}
+              highlightId={newDrawingId}
             />
           )}
 

@@ -14,8 +14,10 @@ import {
   Trash2, 
   Paperclip,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Pencil
 } from "lucide-react";
+import { RecordModeProvider, RecordFieldset, type RecordMode } from "@/components/ui/record";
 import { TransactionFormLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { uploadDesignDrawingFileAction } from "@/lib/actions/design";
@@ -24,6 +26,15 @@ interface UploadDrawingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDrawingUploaded: (drawing: Omit<DrawingItem, "id">) => void;
+  /** Record standard: the saved drawing, for view / edit in this same form. */
+  drawing?: DrawingItem | null;
+  /** create (default) · view (read-only) · edit (details only; file and revision change through Review) */
+  recordMode?: RecordMode;
+  onDrawingUpdated?: (drawing: DrawingItem) => void;
+  /** View mode: switch to edit. */
+  onEdit?: () => void;
+  /** View / edit mode: open the attached source file. */
+  onOpenFile?: (drawing: DrawingItem) => void;
 }
 
 function formatBytes(bytes: number): string {
@@ -37,17 +48,24 @@ function formatBytes(bytes: number): string {
 export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   isOpen,
   onClose,
-  onDrawingUploaded
+  onDrawingUploaded,
+  drawing = null,
+  recordMode = "create",
+  onDrawingUpdated,
+  onEdit,
+  onOpenFile
 }) => {
   const projects = DesignMasterStore.getUserAccessibleProjects();
-  const [code, setCode] = useState("");
-  const [title, setTitle] = useState("");
-  const [discipline, setDiscipline] = useState<DesignDiscipline>("Architectural");
-  const [project, setProject] = useState(projects[0]?.name || "");
-  const [revision, setRevision] = useState("R0");
-  const [consultant, setConsultant] = useState("");
-  const [description, setDescription] = useState("");
-  const [fileSize, setFileSize] = useState("");
+  const d = recordMode === "create" ? null : drawing;
+  const isCreate = recordMode === "create";
+  const [code, setCode] = useState(d?.code || "");
+  const [title, setTitle] = useState(d?.title || "");
+  const [discipline, setDiscipline] = useState<DesignDiscipline>((d?.discipline as DesignDiscipline) || "Architectural");
+  const [project, setProject] = useState(d?.project || projects[0]?.name || "");
+  const [revision, setRevision] = useState(d?.revision || "R0");
+  const [consultant, setConsultant] = useState(d?.consultant || "");
+  const [description, setDescription] = useState(d?.description || "");
+  const [fileSize, setFileSize] = useState(d?.fileSize || "");
   const [submitting, setSubmitting] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -120,7 +138,23 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (recordMode === "view") { onEdit?.(); return; }
     if (!code.trim() || !title.trim()) return;
+
+    // Edit: details only. The sheet code, revision and file change through Review / a new revision.
+    if (recordMode === "edit" && d) {
+      onDrawingUpdated?.({
+        ...d,
+        title: title.trim(),
+        discipline,
+        project: project || d.project,
+        consultant: consultant.trim() || d.consultant,
+        fileSize: fileSize || d.fileSize,
+        description: description.trim() || undefined,
+      });
+      onClose();
+      return;
+    }
 
     setSubmitting(true);
     setUploadError(null);
@@ -192,27 +226,28 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   };
 
   return (
+    <RecordModeProvider mode={recordMode}>
     <TransactionFormLayout
-      title="Upload drawing sheet"
-      badge="Drawing Register Transaction"
+      title={isCreate ? "Upload drawing sheet" : recordMode === "edit" ? `Edit drawing · ${d?.code ?? ""}` : `${d?.code ?? "Drawing"} · ${d?.title ?? ""}`}
+      badge={isCreate ? "Drawing Register Transaction" : recordMode === "edit" ? "Editing" : d?.status ?? "Viewing"}
       category="Design Tracking"
       icon={Upload}
       iconBg="bg-success-soft text-success-text border-success-border"
       description="Register new CAD, DWG, DXF, STEP, or PDF revision into the official drawing control register."
       breadcrumbs={[
         { label: "Drawing Register", onClick: onClose },
-        { label: "Upload drawing sheet" }
+        { label: isCreate ? "Upload drawing sheet" : d?.code ?? "Drawing" }
       ]}
       onBack={onClose}
       backLabel="Back to Drawing Register"
-      onReset={handleReset}
-      onSave={handleSubmit}
-      saveLabel="Register Drawing"
-      saveIcon={Save}
+      onReset={isCreate ? handleReset : undefined}
+      onSave={recordMode === "view" && !onEdit ? undefined : handleSubmit}
+      saveLabel={isCreate ? "Register Drawing" : recordMode === "edit" ? "Save changes" : "Edit"}
+      saveIcon={recordMode === "view" ? Pencil : Save}
       isSubmitting={submitting}
       isSaveDisabled={!code.trim() || !title.trim()}
     >
-      <div className="space-y-6 max-w-4xl">
+      <RecordFieldset className="space-y-6 max-w-4xl">
         {uploadError && (
           <div className="p-3.5 rounded-lg border border-danger-border bg-danger-soft text-danger-text text-xs font-semibold flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -280,6 +315,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                   type="text"
                   required
                   value={code}
+                  disabled={!isCreate}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="e.g. AR-T1-TYP-101"
                   className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
@@ -292,12 +328,18 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                   type="text"
                   required
                   value={revision}
+                  disabled={!isCreate}
                   onChange={(e) => setRevision(e.target.value)}
                   placeholder="e.g. R0, R1"
-                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary disabled:opacity-70"
                 />
               </div>
             </div>
+            {recordMode === "edit" && (
+              <p className="text-[11px] text-muted-foreground">
+                Sheet code and revision are fixed once registered. A new revision or file goes through Review.
+              </p>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground">Drawing title / description *</label>
@@ -374,7 +416,33 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               className="hidden"
             />
 
-            {!selectedFile ? (
+            {!isCreate ? (
+              <div className="p-4 rounded-lg border border-border bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-lg bg-success-soft text-success-text flex items-center justify-center shrink-0 border border-success-border">
+                    <Paperclip className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold text-foreground truncate">
+                      {d?.fileName || (d?.fileUrl ? "Attached drawing file" : "No file attached")}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                      {d?.fileSize || "—"} · Rev {d?.revision} · submitted {d?.submittedDate}
+                    </div>
+                  </div>
+                </div>
+                {d?.fileUrl && onOpenFile && (
+                  <a
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); onOpenFile(d); }}
+                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>Open file</span>
+                  </a>
+                )}
+              </div>
+            ) : !selectedFile ? (
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -453,8 +521,9 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             )}
           </AppCardContent>
         </AppCard>
-      </div>
+      </RecordFieldset>
     </TransactionFormLayout>
+    </RecordModeProvider>
   );
 };
 

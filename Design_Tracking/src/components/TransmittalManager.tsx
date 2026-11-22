@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   FileCheck2, 
   Send, 
@@ -20,8 +20,10 @@ import {
   Eye,
   UserCheck,
   Download,
-  Trash2
+  Trash2,
+  Pencil
 } from "lucide-react";
+import { RecordModeProvider, RecordFieldset, useFlashHighlight, type RecordMode } from "@/components/ui/record";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { TransmittalItem, TransmittalPurpose } from "../types";
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
@@ -35,7 +37,11 @@ export function TransmittalManager() {
   const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedTransmittal, setSelectedTransmittal] = useState<TransmittalItem | null>(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // Record standard: one transmittal form for create / view / edit.
+  const [trFormMode, setTrFormMode] = useState<RecordMode | null>(null);
+  const [activeTr, setActiveTr] = useState<TransmittalItem | null>(null);
+  const [highlightId, setHighlightId] = useFlashHighlight();
+  const isCreateModalOpen = trFormMode !== null;
   const [isPrintSlipOpen, setIsPrintSlipOpen] = useState(false);
 
   // Form State
@@ -56,13 +62,18 @@ export function TransmittalManager() {
 
   const accessibleProjectIds = useMemo(() => new Set(projects.map(p => p.id)), [projects]);
 
+  // Re-read the store when it changes, so a new / edited transmittal shows in the list straight away.
+  const [storeVersion, setStoreVersion] = useState(0);
+  useEffect(() => DesignMasterStore.subscribe(() => setStoreVersion((v) => v + 1)), []);
+
   const transmittals = useMemo(() => {
+    void storeVersion;
     const all = DesignMasterStore.getTransmittals();
     return all.filter(t => 
       accessibleProjectIds.has(t.projectId) ||
       projects.some(p => p.name.toLowerCase() === (t.projectName || "").toLowerCase())
     );
-  }, [accessibleProjectIds, projects]);
+  }, [accessibleProjectIds, projects, storeVersion]);
 
   const drawings = useMemo(() => {
     const all = DesignMasterStore.getDrawings();
@@ -111,10 +122,36 @@ export function TransmittalManager() {
     });
   }, [transmittals, searchQuery, selectedProjects, selectedPurposes, selectedStatuses]);
 
-  // Handle Create Transmittal
-  const handleCreateTransmittal = (e: React.FormEvent) => {
-    e.preventDefault();
+  const closeTrForm = () => { setTrFormMode(null); setActiveTr(null); setFormError(""); };
+
+  const openTrForm = (t: TransmittalItem | null, mode: RecordMode) => {
     setFormError("");
+    setActiveTr(t);
+    setProjectId(t?.projectId || "");
+    setTowerName(t?.towerName || "");
+    setRecipientAgency(t?.recipientAgency || "");
+    setRecipientContact(t?.recipientContact || "");
+    setPurpose(t?.purpose || "GOOD_FOR_CONSTRUCTION");
+    setIssuedBy(t?.issuedBy || "Lead Design Manager");
+    setSelectedDrawingIds(t?.drawingIds || []);
+    setRemarks(t?.remarks || "");
+    setCopiesPerDrawing(t?.drawingDetails?.[0]?.copiesIssued || 3);
+    setTrFormMode(mode);
+  };
+
+  // A transmittal signed for by the site team is a formal record: view only.
+  const canEditTr = (t: TransmittalItem | null) => !!t && t.status !== "ACKNOWLEDGED";
+
+  // Handle Create / Update Transmittal
+  const handleCreateTransmittal = (e?: React.FormEvent) => {
+    e?.preventDefault?.();
+    setFormError("");
+
+    // View mode: the primary button switches to edit.
+    if (trFormMode === "view") {
+      setTrFormMode("edit");
+      return;
+    }
 
     if (!projectId) {
       setFormError("Please select a project.");
@@ -131,6 +168,33 @@ export function TransmittalManager() {
 
     const proj = projects.find(p => p.id === projectId);
     const attachedDrawings = drawings.filter(d => selectedDrawingIds.includes(d.id));
+
+    if (trFormMode === "edit" && activeTr) {
+      // Drawings outside this user's project scope can't be unticked here, so keep their saved detail.
+      const kept = (activeTr.drawingDetails || []).filter(dd => !drawings.some(d => d.code === dd.drawingCode));
+      DesignMasterStore.saveTransmittal({
+        ...activeTr,
+        projectId,
+        projectName: proj?.name || activeTr.projectName,
+        towerName: towerName.trim() || undefined,
+        purpose,
+        recipientAgency: recipientAgency.trim(),
+        recipientContact: recipientContact.trim() || undefined,
+        issuedBy: issuedBy.trim(),
+        drawingIds: selectedDrawingIds,
+        drawingDetails: [
+          ...kept,
+          ...attachedDrawings.map(d => {
+            const prev = (activeTr.drawingDetails || []).find(dd => dd.drawingCode === d.code);
+            return { drawingCode: d.code, drawingTitle: d.title, revision: d.revision, copiesIssued: copiesPerDrawing, ...(prev?.fileUrl ? { fileUrl: prev.fileUrl } : {}) };
+          }),
+        ],
+        remarks: remarks.trim() || undefined,
+      });
+      setHighlightId(activeTr.id);
+      closeTrForm();
+      return;
+    }
 
     const newTransmittal: TransmittalItem = {
       id: `tr-${Date.now()}`,
@@ -155,9 +219,11 @@ export function TransmittalManager() {
     };
 
     DesignMasterStore.saveTransmittal(newTransmittal);
+    // Record standard: back to the list with the new transmittal highlighted.
+    setHighlightId(newTransmittal.id);
 
     // Reset Form
-    setIsCreateModalOpen(false);
+    closeTrForm();
     setProjectId("");
     setTowerName("");
     setRecipientAgency("");
@@ -206,7 +272,7 @@ export function TransmittalManager() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => openTrForm(null, "create")}
             className="h-8 px-3.5 rounded-lg bg-info hover:bg-info text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -408,7 +474,13 @@ export function TransmittalManager() {
                 filteredTransmittals.map(t => {
                   const pBadge = purposeLabels[t.purpose] || { label: t.purpose, color: "bg-sunken text-subtle" };
                   return (
-                    <tr key={t.id} className="hover:bg-sunken transition-colors">
+                    <tr
+                      key={t.id}
+                      data-record-id={t.id}
+                      data-highlight={highlightId === t.id || undefined}
+                      onClick={() => openTrForm(t, "view")}
+                      className="hover:bg-sunken transition-colors cursor-pointer"
+                    >
                       <td className="p-3.5 pl-4">
                         <div className="font-mono font-semibold text-info-text">{t.transmittalNumber}</div>
                         <div className="text-[11px] text-muted-foreground">By: {t.issuedBy}</div>
@@ -463,7 +535,27 @@ export function TransmittalManager() {
                       </td>
 
                       <td className="p-3.5 pr-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            aria-label={`View ${t.transmittalNumber}`}
+                            title="View"
+                            onClick={() => openTrForm(t, "view")}
+                            className="h-7 w-7 rounded-lg hover:bg-surface-hover text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          {canEditTr(t) && (
+                            <button
+                              type="button"
+                              aria-label={`Edit ${t.transmittalNumber}`}
+                              title="Edit"
+                              onClick={() => openTrForm(t, "edit")}
+                              className="h-7 w-7 rounded-lg hover:bg-surface-hover text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors cursor-pointer"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => openPrintSlip(t)}
@@ -513,20 +605,27 @@ export function TransmittalManager() {
 
       {/* CREATE TRANSMITTAL TRANSACTION CANVAS */}
       {isCreateModalOpen && (
+        <RecordModeProvider mode={trFormMode ?? "create"}>
         <TransactionFormLayout
-          title="Generate document transmittal note"
-          badge="Formal Issuance Record"
+          title={
+            trFormMode === "create"
+              ? "Generate document transmittal note"
+              : trFormMode === "edit"
+                ? `Edit transmittal · ${activeTr?.transmittalNumber ?? ""}`
+                : `Transmittal · ${activeTr?.transmittalNumber ?? ""}`
+          }
+          badge={trFormMode === "create" ? "Formal Issuance Record" : trFormMode === "edit" ? "Editing" : "Viewing"}
           category="Transmittal Control"
           icon={Send}
           iconBg="bg-info-soft text-info-text border-info-border"
           description="Create formal construction issue record with attached drawings schedule and recipient verification."
           breadcrumbs={[
-            { label: "Transmittal Manager", onClick: () => setIsCreateModalOpen(false) },
-            { label: "Generate transmittal note" }
+            { label: "Transmittal Manager", onClick: () => closeTrForm() },
+            { label: trFormMode === "create" ? "Generate transmittal note" : activeTr?.transmittalNumber ?? "Transmittal" }
           ]}
-          onBack={() => setIsCreateModalOpen(false)}
+          onBack={() => closeTrForm()}
           backLabel="Back to Transmittals"
-          onReset={() => {
+          onReset={trFormMode !== "create" ? undefined : () => {
             setTowerName("");
             setPurpose("GOOD_FOR_CONSTRUCTION");
             setRecipientAgency("");
@@ -536,11 +635,27 @@ export function TransmittalManager() {
             setRemarks("");
             setFormError("");
           }}
-          onSave={handleCreateTransmittal}
-          saveLabel="Generate & Dispatch"
-          saveIcon={Send}
+          onSave={trFormMode === "view" && !canEditTr(activeTr) ? undefined : handleCreateTransmittal}
+          saveLabel={trFormMode === "create" ? "Generate & Dispatch" : trFormMode === "edit" ? "Save changes" : "Edit"}
+          saveIcon={trFormMode === "view" ? Pencil : Send}
+          headerActions={trFormMode === "view" && activeTr ? (
+            <button
+              type="button"
+              onClick={() => { const t = activeTr; closeTrForm(); openPrintSlip(t); }}
+              className="h-8 px-3 rounded-lg bg-info-soft text-info-text text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              <span>Print slip</span>
+            </button>
+          ) : undefined}
         >
-          <div className="space-y-6 max-w-4xl">
+          <RecordFieldset className="space-y-6 max-w-4xl">
+            {trFormMode === "view" && activeTr?.status === "ACKNOWLEDGED" && (
+              <div className="p-3.5 rounded-lg bg-success-soft border border-success-border text-success-text text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>Receipt signed{activeTr.acknowledgedBy ? ` by ${activeTr.acknowledgedBy}` : ""}. This transmittal can no longer be edited.</span>
+              </div>
+            )}
             {formError && (
               <div className="p-3.5 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
@@ -729,8 +844,9 @@ export function TransmittalManager() {
                 </div>
               </AppCardContent>
             </AppCard>
-          </div>
+          </RecordFieldset>
         </TransactionFormLayout>
+        </RecordModeProvider>
       )}
 
       {/* OFFICIAL PRINTABLE TRANSMITTAL SLIP WORKING DOCUMENT */}

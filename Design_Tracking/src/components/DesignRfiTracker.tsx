@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   HelpCircle, 
   Search, 
@@ -20,8 +20,11 @@ import {
   Tag,
   CornerDownRight,
   ShieldAlert,
-  Trash2
+  Trash2,
+  Eye,
+  Pencil
 } from "lucide-react";
+import { RecordModeProvider, RecordFieldset, useFlashHighlight, type RecordMode } from "@/components/ui/record";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { RfiItem, RfiPriority, RfiStatus, DesignDiscipline } from "../types";
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
@@ -36,8 +39,11 @@ export function DesignRfiTracker() {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
   
-  // Modals
-  const [isRaiseModalOpen, setIsRaiseModalOpen] = useState(false);
+  // Record standard: one RFI form for create / view / edit.
+  const [rfiFormMode, setRfiFormMode] = useState<RecordMode | null>(null);
+  const [activeRfi, setActiveRfi] = useState<RfiItem | null>(null);
+  const [highlightId, setHighlightId] = useFlashHighlight();
+  const isRaiseModalOpen = rfiFormMode !== null;
   const [selectedRfiForReply, setSelectedRfiForReply] = useState<RfiItem | null>(null);
 
   // Raise Form State
@@ -66,13 +72,18 @@ export function DesignRfiTracker() {
 
   const accessibleProjectIds = useMemo(() => new Set(projects.map(p => p.id)), [projects]);
 
+  // Re-read the store when it changes, so a raised / edited RFI shows in the list straight away.
+  const [storeVersion, setStoreVersion] = useState(0);
+  useEffect(() => DesignMasterStore.subscribe(() => setStoreVersion((v) => v + 1)), []);
+
   const rfis = useMemo(() => {
+    void storeVersion;
     const all = DesignMasterStore.getRfis();
     return all.filter(r => 
       accessibleProjectIds.has(r.projectId) ||
       projects.some(p => p.name.toLowerCase() === (r.projectName || "").toLowerCase())
     );
-  }, [accessibleProjectIds, projects]);
+  }, [accessibleProjectIds, projects, storeVersion]);
 
   const drawings = useMemo(() => {
     const all = DesignMasterStore.getDrawings();
@@ -136,10 +147,35 @@ export function DesignRfiTracker() {
     });
   }, [rfis, searchQuery, selectedProjects, selectedDisciplines, selectedStatuses, selectedPriorities]);
 
-  // Handle Raise RFI
-  const handleRaiseRfi = (e: React.FormEvent) => {
-    e.preventDefault();
+  const closeRfiForm = () => { setRfiFormMode(null); setActiveRfi(null); setFormError(""); };
+
+  const openRfiForm = (r: RfiItem | null, mode: RecordMode) => {
     setFormError("");
+    setActiveRfi(r);
+    setProjectId(r?.projectId || "");
+    setTowerName(r?.towerName || "");
+    setDiscipline((r?.discipline as DesignDiscipline) || "Structural");
+    setDrawingCode(r?.drawingCode || "");
+    setDrawingTitle(r?.drawingTitle || "");
+    setSubject(r?.subject || "");
+    setQueryDescription(r?.queryDescription || "");
+    setRaisedBy(r?.raisedBy || "");
+    setAssignedConsultant(r?.assignedConsultant || "");
+    setPriority(r?.priority || "HIGH");
+    setTargetResolutionDate(r?.targetResolutionDate || "");
+    setRfiFormMode(mode);
+  };
+
+  // Handle Raise / Update RFI
+  const handleRaiseRfi = (e?: React.FormEvent) => {
+    e?.preventDefault?.();
+    setFormError("");
+
+    // View mode: the primary button switches to edit.
+    if (rfiFormMode === "view") {
+      setRfiFormMode("edit");
+      return;
+    }
 
     if (!projectId) {
       setFormError("Please select a project.");
@@ -159,6 +195,27 @@ export function DesignRfiTracker() {
     }
 
     const proj = projects.find(p => p.id === projectId);
+
+    if (rfiFormMode === "edit" && activeRfi) {
+      DesignMasterStore.saveRfi({
+        ...activeRfi,
+        projectId,
+        projectName: proj?.name || activeRfi.projectName,
+        towerName: towerName.trim() || undefined,
+        discipline,
+        drawingCode: drawingCode.trim() || undefined,
+        drawingTitle: drawingTitle.trim() || undefined,
+        subject: subject.trim(),
+        queryDescription: queryDescription.trim(),
+        raisedBy: raisedBy.trim(),
+        assignedConsultant: assignedConsultant.trim(),
+        priority,
+        targetResolutionDate: targetResolutionDate || activeRfi.targetResolutionDate,
+      });
+      setHighlightId(activeRfi.id);
+      closeRfiForm();
+      return;
+    }
 
     const newRfi: RfiItem = {
       id: `rfi-${Date.now()}`,
@@ -180,9 +237,11 @@ export function DesignRfiTracker() {
     };
 
     DesignMasterStore.saveRfi(newRfi);
+    // Record standard: back to the list with the new RFI highlighted.
+    setHighlightId(newRfi.id);
 
     // Reset Form
-    setIsRaiseModalOpen(false);
+    closeRfiForm();
     setProjectId("");
     setTowerName("");
     setDrawingCode("");
@@ -255,7 +314,7 @@ export function DesignRfiTracker() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setIsRaiseModalOpen(true)}
+            onClick={() => openRfiForm(null, "create")}
             className="h-8 px-3.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -472,7 +531,10 @@ export function DesignRfiTracker() {
             return (
               <div
                 key={r.id}
-                className="p-5 rounded-lg border border-border bg-card hover:border-border-active transition-all shadow-sm space-y-3"
+                data-record-id={r.id}
+                data-highlight={highlightId === r.id || undefined}
+                onClick={() => openRfiForm(r, "view")}
+                className="p-5 rounded-lg border border-border bg-card hover:border-border-active transition-all shadow-sm space-y-3 cursor-pointer"
               >
                 {/* Header line */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -556,8 +618,28 @@ export function DesignRfiTracker() {
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                {/* Actions: View · Edit · module action · Delete (record standard) */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    aria-label={`View ${r.rfiNumber}`}
+                    title="View"
+                    onClick={() => openRfiForm(r, "view")}
+                    className="h-7 w-7 rounded-lg hover:bg-surface-hover text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
+                  {r.status !== "CLOSED" && (
+                    <button
+                      type="button"
+                      aria-label={`Edit ${r.rfiNumber}`}
+                      title="Edit"
+                      onClick={() => openRfiForm(r, "edit")}
+                      className="h-7 w-7 rounded-lg hover:bg-surface-hover text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                   {r.status !== "CLARIFIED" && r.status !== "CLOSED" && (
                     <button
                       type="button"
@@ -597,20 +679,27 @@ export function DesignRfiTracker() {
 
       {/* RAISE RFI TRANSACTION CANVAS */}
       {isRaiseModalOpen && (
+        <RecordModeProvider mode={rfiFormMode ?? "create"}>
         <TransactionFormLayout
-          title="Raise site request for information (RFI)"
-          badge="Technical Query Entry"
+          title={
+            rfiFormMode === "create"
+              ? "Raise site request for information (RFI)"
+              : rfiFormMode === "edit"
+                ? `Edit RFI · ${activeRfi?.rfiNumber ?? ""}`
+                : `RFI · ${activeRfi?.rfiNumber ?? ""}`
+          }
+          badge={rfiFormMode === "create" ? "Technical Query Entry" : rfiFormMode === "edit" ? "Editing" : "Viewing"}
           category="RFI & Query Control"
           icon={HelpCircle}
           iconBg="bg-surface text-accent-soft-text border-border"
           description="Log design query, site condition clash, or structural specification ambiguity with consultant assignment."
           breadcrumbs={[
-            { label: "RFI Tracker", onClick: () => setIsRaiseModalOpen(false) },
-            { label: "Raise site RFI" }
+            { label: "RFI Tracker", onClick: () => closeRfiForm() },
+            { label: rfiFormMode === "create" ? "Raise site RFI" : activeRfi?.rfiNumber ?? "RFI" }
           ]}
-          onBack={() => setIsRaiseModalOpen(false)}
+          onBack={() => closeRfiForm()}
           backLabel="Back to RFIs"
-          onReset={() => {
+          onReset={rfiFormMode !== "create" ? undefined : () => {
             setTowerName("");
             setDiscipline("Architectural");
             setPriority("HIGH");
@@ -620,11 +709,11 @@ export function DesignRfiTracker() {
             setTargetResolutionDate("");
             setFormError("");
           }}
-          onSave={handleRaiseRfi}
-          saveLabel="Submit RFI"
-          saveIcon={Send}
+          onSave={rfiFormMode === "view" && activeRfi?.status === "CLOSED" ? undefined : handleRaiseRfi}
+          saveLabel={rfiFormMode === "create" ? "Submit RFI" : rfiFormMode === "edit" ? "Save changes" : "Edit"}
+          saveIcon={rfiFormMode === "view" ? Pencil : Send}
         >
-          <div className="space-y-6 max-w-4xl">
+          <RecordFieldset className="space-y-6 max-w-4xl">
             {formError && (
               <div className="p-3.5 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
@@ -791,8 +880,28 @@ export function DesignRfiTracker() {
                 </div>
               </AppCardContent>
             </AppCard>
-          </div>
+
+            {/* View mode: the consultant's answer under the query, as on the list card */}
+            {rfiFormMode === "view" && activeRfi?.consultantResponse && (
+              <AppCard className="border-success-border shadow-xs">
+                <AppCardHeader className="bg-success-soft border-b border-success-border pb-3">
+                  <AppCardTitle className="text-sm font-semibold flex items-center gap-2 text-success-text">
+                    <CornerDownRight className="h-4 w-4" />
+                    <span>Consultant clarification</span>
+                  </AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="p-5 space-y-2 text-xs">
+                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">{activeRfi.consultantResponse}</p>
+                  <p className="text-muted-foreground">
+                    By {activeRfi.respondedBy} on {activeRfi.respondedDate}
+                    {activeRfi.resolvingRevisionNumber ? ` · resolved in ${activeRfi.resolvingRevisionNumber}` : ""}
+                  </p>
+                </AppCardContent>
+              </AppCard>
+            )}
+          </RecordFieldset>
         </TransactionFormLayout>
+        </RecordModeProvider>
       )}
 
       {/* CONSULTANT CLARIFICATION WORKING CANVAS */}
