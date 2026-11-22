@@ -776,7 +776,7 @@ export async function inviteUserAction(
         let roleCode = "MEMBER";
         if (code === "VEHICLE_DESK") roleCode = "REQUESTER";
         else if (code === "DESIGN_TRACKING") roleCode = "VIEWER";
-        else if (code === "CHANDAK_MEET") roleCode = "PARTICIPANT";
+        else if (code === "CHANDAK_MEET") roleCode = "STANDARD";
         else if (code === "ORG_BUDGET") roleCode = "VIEWER";
         else if (code === "TASK_WORKFLOW") roleCode = "MEMBER";
         return { module_code: code, role_code: roleCode, scope: { type: "all" } };

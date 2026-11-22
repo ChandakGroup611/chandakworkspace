@@ -65,7 +65,7 @@ const MODULE_DEFINITIONS = [
     name: "Chandak Meet", 
     desc: "Meeting cadences, live session running, published MOM & action items", 
     icon: Video, 
-    defaultRole: "PARTICIPANT" 
+    defaultRole: "STANDARD" 
   },
   { 
     code: "ORG_BUDGET", 
@@ -117,7 +117,7 @@ export function UserInviteWizardModal({
     TASK_WORKFLOW: { enabled: true, role_code: "MEMBER", scopeType: "all" },
     VEHICLE_DESK: { enabled: false, role_code: "REQUESTER", scopeType: "all" },
     DESIGN_TRACKING: { enabled: false, role_code: "VIEWER", scopeType: "all" },
-    CHANDAK_MEET: { enabled: true, role_code: "PARTICIPANT", scopeType: "all" },
+    CHANDAK_MEET: { enabled: true, role_code: "STANDARD", scopeType: "all" },
     ORG_BUDGET: { enabled: false, role_code: "VIEWER", scopeType: "all" }
   });
 
@@ -142,7 +142,12 @@ export function UserInviteWizardModal({
 
   // Available module roles per module code
   const getRolesForModule = (modCode: string) => {
-    return moduleRoles.filter(r => r.module_code === modCode);
+    const list = moduleRoles.filter(r => r.module_code === modCode);
+    return [...list].sort((a, b) => {
+      if (a.role_code === "STANDARD") return -1;
+      if (b.role_code === "STANDARD") return 1;
+      return a.name.localeCompare(b.name);
+    });
   };
 
   // Enabled modules list for Step 5 & 6
@@ -541,23 +546,45 @@ export function UserInviteWizardModal({
                         </label>
 
                         {cfg.enabled && (
-                          <div className="flex items-center gap-2">
-                            <label className="text-[11px] text-muted-foreground">Role:</label>
-                            <select
-                              className="text-xs bg-surface border border-border rounded-md px-2 py-1 outline-none focus:border-primary font-medium"
-                              value={cfg.role_code}
-                              onChange={e => {
-                                const newRole = e.target.value;
-                                setModuleConfigs(prev => ({
-                                  ...prev,
-                                  [mod.code]: { ...cfg, role_code: newRole }
-                                }));
-                              }}
-                            >
-                              {rolesForMod.map(r => (
-                                <option key={r.role_code} value={r.role_code}>{r.name}</option>
-                              ))}
-                            </select>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-1.5">
+                              <label className="text-[11px] text-muted-foreground font-medium">Role:</label>
+                              <select
+                                className="text-xs bg-surface border border-border rounded-md px-2 py-1 outline-none focus:border-primary font-medium"
+                                value={cfg.role_code}
+                                onChange={e => {
+                                  const newRole = e.target.value;
+                                  setModuleConfigs(prev => ({
+                                    ...prev,
+                                    [mod.code]: { ...cfg, role_code: newRole }
+                                  }));
+                                }}
+                              >
+                                {rolesForMod.map(r => (
+                                  <option key={r.role_code} value={r.role_code}>
+                                    {r.role_code === "STANDARD" ? `${r.name} (STANDARD)` : r.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <label className="text-[11px] text-muted-foreground font-medium">Scope:</label>
+                              <select
+                                className="text-xs bg-surface border border-border rounded-md px-2 py-1 outline-none focus:border-primary font-medium"
+                                value={cfg.scopeType || "all"}
+                                onChange={e => {
+                                  const newScope = e.target.value;
+                                  setModuleConfigs(prev => ({
+                                    ...prev,
+                                    [mod.code]: { ...cfg, scopeType: newScope }
+                                  }));
+                                }}
+                              >
+                                <option value="all">ALL (Unrestricted)</option>
+                                <option value="departments">SPECIFIC (Department / Scoped)</option>
+                              </select>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -742,9 +769,14 @@ export function UserInviteWizardModal({
                     const cfg = moduleConfigs[mod.code];
                     const roleName = getRolesForModule(mod.code).find(r => r.role_code === cfg.role_code)?.name || cfg.role_code;
                     return (
-                      <div key={mod.code} className="p-2 rounded-md border border-border bg-surface flex items-center justify-between text-xs">
-                        <span className="font-medium text-foreground">{mod.name}</span>
-                        <AppBadge variant="neutral">{roleName}</AppBadge>
+                      <div key={mod.code} className="p-2.5 rounded-md border border-border bg-surface flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground">{mod.name}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase font-mono">[{cfg.scopeType || "all"}]</span>
+                        </div>
+                        <AppBadge variant={cfg.role_code === "STANDARD" ? "success" : "neutral"}>
+                          {cfg.role_code === "STANDARD" ? `${roleName} (STANDARD)` : roleName}
+                        </AppBadge>
                       </div>
                     );
                   })}

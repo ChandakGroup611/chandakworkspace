@@ -60,7 +60,7 @@ const MODULE_DEFINITIONS = [
     name: "Chandak Meet", 
     desc: "Meeting cadences, live session running, published MOM & action items", 
     icon: Video, 
-    defaultRole: "PARTICIPANT" 
+    defaultRole: "STANDARD" 
   },
   { 
     code: "ORG_BUDGET", 
@@ -125,9 +125,12 @@ export function UserModuleAccessModal({
             }
             if (r.is_default) defaultFound = "DASHBOARDS";
           } else if (newModConfigs[r.module_code]) {
+            const resolvedRole = (r.module_code === "CHANDAK_MEET" && r.role_code === "PARTICIPANT")
+              ? "STANDARD"
+              : r.role_code;
             newModConfigs[r.module_code] = {
               enabled: true,
-              role_code: r.role_code,
+              role_code: resolvedRole,
               scopeType: (r.scope as any)?.type || "all"
             };
             if (r.is_default) defaultFound = r.module_code;
@@ -149,7 +152,12 @@ export function UserModuleAccessModal({
   }, [isOpen, user]);
 
   const getRolesForModule = (modCode: string) => {
-    return moduleRoles.filter(r => r.module_code === modCode);
+    const list = moduleRoles.filter(r => r.module_code === modCode);
+    return [...list].sort((a, b) => {
+      if (a.role_code === "STANDARD") return -1;
+      if (b.role_code === "STANDARD") return 1;
+      return a.name.localeCompare(b.name);
+    });
   };
 
   const handleSave = async () => {
@@ -281,23 +289,45 @@ export function UserModuleAccessModal({
                           </label>
 
                           {cfg.enabled && (
-                            <div className="flex items-center gap-2">
-                              <label className="text-[11px] text-muted-foreground">Role:</label>
-                              <select
-                                className="text-xs bg-surface border border-border rounded-md px-2 py-1 outline-none focus:border-primary font-medium"
-                                value={cfg.role_code}
-                                onChange={e => {
-                                  const newRole = e.target.value;
-                                  setModuleConfigs(prev => ({
-                                    ...prev,
-                                    [mod.code]: { ...cfg, role_code: newRole }
-                                  }));
-                                }}
-                              >
-                                {rolesForMod.map(r => (
-                                  <option key={r.role_code} value={r.role_code}>{r.name}</option>
-                                ))}
-                              </select>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <div className="flex items-center gap-1.5">
+                                <label className="text-[11px] text-muted-foreground font-medium">Role:</label>
+                                <select
+                                  className="text-xs bg-surface border border-border rounded-md px-2 py-1 outline-none focus:border-primary font-medium"
+                                  value={cfg.role_code}
+                                  onChange={e => {
+                                    const newRole = e.target.value;
+                                    setModuleConfigs(prev => ({
+                                      ...prev,
+                                      [mod.code]: { ...cfg, role_code: newRole }
+                                    }));
+                                  }}
+                                >
+                                  {rolesForMod.map(r => (
+                                    <option key={r.role_code} value={r.role_code}>
+                                      {r.role_code === "STANDARD" ? `${r.name} (STANDARD)` : r.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <label className="text-[11px] text-muted-foreground font-medium">Scope:</label>
+                                <select
+                                  className="text-xs bg-surface border border-border rounded-md px-2 py-1 outline-none focus:border-primary font-medium"
+                                  value={cfg.scopeType || "all"}
+                                  onChange={e => {
+                                    const newScope = e.target.value;
+                                    setModuleConfigs(prev => ({
+                                      ...prev,
+                                      [mod.code]: { ...cfg, scopeType: newScope }
+                                    }));
+                                  }}
+                                >
+                                  <option value="all">ALL (Unrestricted)</option>
+                                  <option value="departments">SPECIFIC (Department / Scoped)</option>
+                                </select>
+                              </div>
                             </div>
                           )}
                         </div>
