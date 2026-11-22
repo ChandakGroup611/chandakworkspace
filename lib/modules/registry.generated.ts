@@ -5,10 +5,10 @@
 
 import type { ModuleManifest } from "./types";
 
-
+import { default as manifest_meet } from "./manifests/meet.manifest";
 
 export const MODULE_REGISTRY: Record<string, ModuleManifest> = {
-
+  [manifest_meet.code]: manifest_meet,
 };
 
 export function getRegisteredModules(): ModuleManifest[] {

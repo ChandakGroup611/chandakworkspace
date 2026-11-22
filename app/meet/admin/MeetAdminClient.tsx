@@ -552,7 +552,17 @@ export default function MeetAdminClient({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                <Link href="/meet/settings/rbac">
+                  <AppButton
+                    variant="outline"
+                    size="sm"
+                    className="font-semibold text-xs gap-1.5 border-theme-btn-primary/40 text-theme-btn-primary hover:bg-theme-btn-primary/10"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Module RBAC Policy
+                  </AppButton>
+                </Link>
                 <button
                   type="button"
                   onClick={handleResetMatrix}

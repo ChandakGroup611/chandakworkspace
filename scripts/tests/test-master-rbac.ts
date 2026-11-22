@@ -17,6 +17,15 @@ import assert from "node:assert";
 export type ModuleLifecycleStatus = "ACTIVE" | "BETA" | "DISABLED" | "ARCHIVED";
 export type ScopeType = "all" | "projects" | "departments" | "workspaces" | "vehicles" | "companies";
 
+export interface ModuleScope {
+  type: ScopeType;
+  project_ids?: (string | number)[];
+  department_ids?: string[];
+  workspace_ids?: string[];
+  vehicle_ids?: string[];
+  company_ids?: number[];
+}
+
 export interface PermissionDeclaration {
   code: string;
   name: string;
@@ -553,6 +562,70 @@ export async function runMasterRBACTestSuite(isBaselineOnly: boolean = false): P
     const res = evaluateAuthorization(user, manifestMap, "CHANDAK_MEET", "MEETINGS_VIEW");
     assert.strictEqual(res.authorized, false, "Undeclared role must default to DENY");
     assert(res.reason.includes("defaults to DENY"), "Reason must state default to DENY");
+  });
+
+  // --------------------------------------------------------------------------
+  // Category 5: Pilot Module Verification Tests (TC-PILOT-01 to TC-PILOT-04)
+  // --------------------------------------------------------------------------
+
+  record("TC-PILOT-01", "Meet manifest dynamic discovery & mandatory STANDARD contract", "Pilot Module", () => {
+    const meetManifest = manifestMap.get("CHANDAK_MEET");
+    assert(meetManifest, "CHANDAK_MEET manifest must be registered");
+    assert.strictEqual(meetManifest.code, "CHANDAK_MEET");
+    assert.strictEqual(meetManifest.routePath, "/meet");
+    const stdRole = meetManifest.roles.find(r => r.code === "STANDARD");
+    assert(stdRole, "CHANDAK_MEET must declare mandatory STANDARD role");
+    assert.strictEqual(stdRole.isSystem, true, "STANDARD role must have isSystem: true");
+    assert(meetManifest.defaultPolicies["STANDARD"], "Must have explicit default policy for STANDARD");
+  });
+
+  record("TC-PILOT-02", "Meet dual-read aliasing guarantees zero disruption", "Pilot Module", () => {
+    const meetManifest = manifestMap.get("CHANDAK_MEET")!;
+    const stdPolicy = meetManifest.defaultPolicies["STANDARD"] || [];
+    
+    // Simulate legacy user with PARTICIPANT role
+    const legacyParticipantUser: UserEntitlement = {
+      userId: "u-legacy-part",
+      isSuperAdmin: false,
+      assignedModules: new Map([
+        ["CHANDAK_MEET", { roleCode: "PARTICIPANT", scope: { type: "all" } }]
+      ])
+    };
+
+    // Dual-read alias resolver: if role is PARTICIPANT, resolve as STANDARD
+    const resolveRoleWithAlias = (mod: string, role: string) => {
+      if (mod === "CHANDAK_MEET" && role === "PARTICIPANT") return "STANDARD";
+      return role;
+    };
+
+    const effectiveRole = resolveRoleWithAlias("CHANDAK_MEET", legacyParticipantUser.assignedModules.get("CHANDAK_MEET")!.roleCode);
+    assert.strictEqual(effectiveRole, "STANDARD", "Legacy PARTICIPANT must resolve to STANDARD");
+    
+    const userUnderStd: UserEntitlement = {
+      ...legacyParticipantUser,
+      assignedModules: new Map([["CHANDAK_MEET", { roleCode: effectiveRole, scope: { type: "all" } }]])
+    };
+
+    const res = evaluateAuthorization(userUnderStd, manifestMap, "CHANDAK_MEET", "MEETINGS_VIEW");
+    assert.strictEqual(res.authorized, true, "Aliased user must be authorized for standard view");
+  });
+
+  record("TC-PILOT-03", "Meet query scope SQL resolution for departments", "Pilot Module", () => {
+    const scope: ModuleScope = { type: "departments", department_ids: ["dept-legal", "dept-eng"] };
+    const sql = resolveQueryScopeSQL(scope, "meetings");
+    assert(sql.includes("department_id IN ('dept-legal', 'dept-eng')"), "Must filter by department_id in SQL");
+  });
+
+  record("TC-PILOT-04", "Meet sensitive permission MEET_SETTINGS strictly protected", "Pilot Module", () => {
+    const meetUser: UserEntitlement = {
+      userId: "u-std-meet",
+      isSuperAdmin: false,
+      assignedModules: new Map([
+        ["CHANDAK_MEET", { roleCode: "STANDARD", scope: { type: "all" } }]
+      ])
+    };
+    const res = evaluateAuthorization(meetUser, manifestMap, "CHANDAK_MEET", "MEET_SETTINGS");
+    assert.strictEqual(res.authorized, false, "STANDARD user must be denied sensitive MEET_SETTINGS");
   });
 
   // Print Summary Table

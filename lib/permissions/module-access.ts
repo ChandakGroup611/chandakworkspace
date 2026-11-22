@@ -174,8 +174,18 @@ async function loadUserModuleContext(userId: string): Promise<UserContextCache> 
 
   if (accessRes.data) {
     for (const row of accessRes.data) {
-      const roleKey = `${row.module_code}:${row.role_code}`;
-      const roleDef = roleRegistry.get(roleKey);
+      // Dual-read role resolution: if role is PARTICIPANT, check PARTICIPANT or alias STANDARD
+      let roleKey = `${row.module_code}:${row.role_code}`;
+      let roleDef = roleRegistry.get(roleKey);
+
+      if (!roleDef) {
+        // Dual-read aliasing for CHANDAK_MEET
+        if (row.module_code === "CHANDAK_MEET" && row.role_code === "PARTICIPANT") {
+          roleDef = roleRegistry.get(`${row.module_code}:STANDARD`);
+        } else if (row.module_code === "CHANDAK_MEET" && row.role_code === "STANDARD") {
+          roleDef = roleRegistry.get(`${row.module_code}:PARTICIPANT`);
+        }
+      }
 
       const roleObj: UserModuleRole = {
         module_code: row.module_code as ModuleCode,

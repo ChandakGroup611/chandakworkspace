@@ -1,11 +1,12 @@
-import { can, RecordScopeConstraint } from "../module-access";
+import { can, RecordScopeConstraint, ModuleScope } from "../module-access";
 
 export const CHANDAK_MEET_MODULE = "CHANDAK_MEET" as const;
 
 export const MEET_ROLES = {
   MEET_ADMIN: "MEET_ADMIN",
   ORGANISER: "ORGANISER",
-  PARTICIPANT: "PARTICIPANT", // STANDARD (D8)
+  STANDARD: "STANDARD",
+  PARTICIPANT: "STANDARD", // Alias for backward compatibility during migration
   VIEWER: "VIEWER",
 } as const;
 
@@ -31,4 +32,18 @@ export async function canMeet(
   record?: RecordScopeConstraint
 ): Promise<boolean> {
   return can(userId, CHANDAK_MEET_MODULE, permission, record);
+}
+
+/**
+ * Apply query-level scope filter for Chandak Meet.
+ * If user has scoped access (e.g. specific departments), enforces it directly in the Supabase query.
+ */
+export function applyMeetQueryScope<T>(query: T, scope?: ModuleScope | null): T {
+  if (!scope || scope.type === "all") {
+    return query;
+  }
+  if (scope.type === "departments" && scope.department_ids && scope.department_ids.length > 0) {
+    return (query as any).in("department_id", scope.department_ids);
+  }
+  return query;
 }
