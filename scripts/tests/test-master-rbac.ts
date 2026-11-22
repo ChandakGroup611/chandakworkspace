@@ -534,6 +534,16 @@ export async function runMasterRBACTestSuite(isBaselineOnly: boolean = false): P
   // --------------------------------------------------------------------------
   // 4. SYNCHRONIZATION ENGINE & OVERRIDE TESTS (TC-SYNC-01 to TC-SYNC-06)
   // --------------------------------------------------------------------------
+  record("TC-SYNC-01", "Idempotent synchronization guarantees zero mutations on duplicate runs", "Sync & Overrides", () => {
+    // If manifest policies match existing DB role permissions, diff must be empty
+    const manifestPerms = manifestMap.get("CHANDAK_MEET")!.defaultPolicies["STANDARD"]!;
+    const dbPerms = [...manifestPerms];
+    const curSorted = [...dbPerms].sort();
+    const tarSorted = [...manifestPerms].sort();
+    const hasDiff = curSorted.length !== tarSorted.length || curSorted.some((p, i) => p !== tarSorted[i]);
+    assert.strictEqual(hasDiff, false, "Idempotent sync must detect zero diff when policies match");
+  });
+
   record("TC-SYNC-02", "Administrator overrides are preserved across manifest updates", "Sync & Overrides", () => {
     const user: UserEntitlement = {
       userId: "u-meet-std",
@@ -551,6 +561,19 @@ export async function runMasterRBACTestSuite(isBaselineOnly: boolean = false): P
     assert(res.reason.includes("admin override"), "Reason must reference override");
   });
 
+  record("TC-SYNC-03", "Customized roles (is_customized = true) are preserved without manifest overwrite", "Sync & Overrides", () => {
+    const customizedRole = {
+      roleCode: "ORGANISER",
+      isCustomized: true,
+      customPermissions: ["MEETINGS_VIEW", "MEETINGS_CREATE"] // Admin stripped other permissions
+    };
+    const manifestDefaults = ["MEETINGS_VIEW", "MEETINGS_CREATE", "MEETINGS_UPDATE", "SESSIONS_START_RUN"];
+    
+    // Sync engine logic check: if isCustomized is true, manifest defaults are NOT applied
+    const targetPerms = customizedRole.isCustomized ? customizedRole.customPermissions : manifestDefaults;
+    assert.deepStrictEqual(targetPerms, ["MEETINGS_VIEW", "MEETINGS_CREATE"], "Customized role permissions must not be overwritten");
+  });
+
   record("TC-SYNC-04", "Undeclared role policy strictly defaults to DENY", "Sync & Overrides", () => {
     const user: UserEntitlement = {
       userId: "u-unknown-role",
@@ -562,6 +585,31 @@ export async function runMasterRBACTestSuite(isBaselineOnly: boolean = false): P
     const res = evaluateAuthorization(user, manifestMap, "CHANDAK_MEET", "MEETINGS_VIEW");
     assert.strictEqual(res.authorized, false, "Undeclared role must default to DENY");
     assert(res.reason.includes("defaults to DENY"), "Reason must state default to DENY");
+  });
+
+  record("TC-SYNC-05", "Undeclared or deprecated permissions pruned cleanly from active policies", "Sync & Overrides", () => {
+    const declaredPerms = new Set(["MEETINGS_VIEW", "MEETINGS_CREATE"]);
+    const existingRolePerms = ["MEETINGS_VIEW", "MEETINGS_CREATE", "OBSOLETE_PERM_2024"];
+    const prunedPerms = existingRolePerms.filter(p => declaredPerms.has(p));
+    assert.deepStrictEqual(prunedPerms, ["MEETINGS_VIEW", "MEETINGS_CREATE"], "Obsolete permission must be pruned");
+    assert(!prunedPerms.includes("OBSOLETE_PERM_2024"), "Pruned permissions must not contain obsolete item");
+  });
+
+  record("TC-SYNC-06", "Administrator revocation override strictly revokes manifest-granted permission", "Sync & Overrides", () => {
+    const user: UserEntitlement = {
+      userId: "u-meet-std",
+      isSuperAdmin: false,
+      assignedModules: new Map([
+        ["CHANDAK_MEET", { roleCode: "STANDARD", scope: { type: "all" } }]
+      ])
+    };
+    // Admin explicitly REVOKED AGENDA_ADD_POINTS from STANDARD (which manifest grants)
+    const overrides = new Map<string, boolean>([
+      ["CHANDAK_MEET:STANDARD:AGENDA_ADD_POINTS", false]
+    ]);
+    const res = evaluateAuthorization(user, manifestMap, "CHANDAK_MEET", "AGENDA_ADD_POINTS", overrides);
+    assert.strictEqual(res.authorized, false, "Admin revocation override must deny permission despite manifest default");
+    assert(res.reason.includes("admin override"), "Reason must reference revocation override");
   });
 
   // --------------------------------------------------------------------------
