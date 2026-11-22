@@ -114,3 +114,32 @@
     font-weight: 600;
   }
 }
+
+/* ------------------------------------------------------------------------
+ * Record lifecycle standard (components/ui/record, docs/ui-standards/record-lifecycle.md)
+ * View mode = the create form inside <fieldset disabled>. Disabled controls should
+ * read as values, not as greyed-out inputs, so keep full contrast and drop the input chrome.
+ * ---------------------------------------------------------------------- */
+@layer components {
+  .record-readonly :is(input, select, textarea):disabled {
+    opacity: 1;
+    color: var(--text-primary);
+    -webkit-text-fill-color: var(--text-primary);
+    background-color: var(--bg-sunken);
+    border-color: var(--border-subtle);
+    cursor: default;
+    box-shadow: none;
+  }
+  .record-readonly select:disabled { appearance: none; background-image: none; }
+  .record-readonly :is(input, select, textarea):disabled::placeholder { color: transparent; }
+  .record-readonly :is(input[type="checkbox"], input[type="radio"]):disabled { accent-color: var(--accent-primary); }
+  /* Choice cards / toggles built from buttons stay legible; they just stop reacting. */
+  .record-readonly button:disabled { opacity: 1; cursor: default; pointer-events: none; }
+
+  /* Row just created: highlighted for a few seconds after landing on the list. */
+  [data-record-id][data-highlight] {
+    background: var(--accent-soft) !important;
+    box-shadow: inset 3px 0 0 var(--accent-primary);
+    transition: background-color 600ms var(--ease-out, ease-out);
+  }
+}
