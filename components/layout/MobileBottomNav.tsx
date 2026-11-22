@@ -11,7 +11,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, PlusCircle, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, PlusCircle, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart, Video, Wallet, ShieldCheck, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = { label: string; href: string; icon: React.ElementType; match: (p: string) => boolean };
@@ -55,17 +55,15 @@ const TABS: Record<string, Tab[]> = {
 };
 
 function getBudgetTabs(projectId?: string | null): Tab[] {
-  // Budget areas; Setup and Administration open from the Budget page header for people with those rights.
   const p = projectId && /^\d+$/.test(projectId) ? `/budget/${projectId}` : "/budget";
   const to = (t: string) => (p === "/budget" ? `/budget/${t}` : `${p}/${t}`);
   const is = (path: string, tabs: string[]) => tabs.some((t) => path.endsWith(`/${t}`));
   return [
     { label: "Projects", href: "/budget", icon: FolderKanban, match: (path) => path === "/budget" },
-    // Create budget takes Overview's slot on phones (Overview stays in the menu): five tabs plus Menu is the most that fits.
-    { label: "Create", href: "/budget/create", icon: PlusCircle, match: (path) => is(path, ["create"]) },
-    { label: "Prepare", href: to("entry"), icon: Layers, match: (path) => is(path, ["entry", "workings", "schedules", "import", "line"]) },
-    { label: "Actuals", href: to("incurred"), icon: Wallet, match: (path) => is(path, ["incurred"]) },
+    { label: "Registry", href: to("budgets"), icon: FileText, match: (path) => is(path, ["budgets"]) },
+    { label: "Prepare", href: to("entry"), icon: Layers, match: (path) => is(path, ["entry", "workings", "schedules", "import", "line", "create"]) },
     { label: "Reports", href: to("summary"), icon: LineChart, match: (path) => is(path, ["summary", "detail", "compare", "periods"]) },
+    { label: "Masters", href: "/budget/masters", icon: Database, match: (path) => path.startsWith("/budget/masters") || path.startsWith("/budget/admin/masters") },
   ];
 }
 

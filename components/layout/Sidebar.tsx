@@ -114,6 +114,7 @@ const taskNavGroups: NavGroup[] = [
     items: [
       { label: "SLA monitoring", href: "/sla", icon: ShieldAlert, permission: "SLA_VIEW" },
       { label: "AMC and subscriptions", href: "/amc", icon: ShieldCheck, permission: "AMC_VIEW" },
+      { label: "Organization Budget", href: "/budget", icon: Wallet },
       { label: "Users", href: "/users", icon: Users, permission: "USERS_VIEW" },
       { label: "RBAC access policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
       { label: "IAM controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
@@ -131,6 +132,7 @@ const taskNavGroups: NavGroup[] = [
         subItems: [
           { label: "Companies", href: "/masters/companies", permission: "COMPANIES_VIEW" },
           { label: "Vendors", href: "/masters/vendors", permission: "MASTERS_VIEW" },
+          { label: "Budget masters", href: "/budget/masters", permission: "MASTERS_VIEW" },
           { label: "System masters", href: "/masters", permission: "SYSTEM_MASTERS_VIEW" }
         ]
       },
@@ -290,6 +292,7 @@ function getActiveBudgetProject(pathname: string): string | null {
 
 function getBudgetRouteAction(path: string): string {
   if (path === "/budget" || path === "/budget/") return "home";
+  if (path.startsWith("/budget/masters") || path.startsWith("/budget/admin/masters")) return "masters";
   if (path === "/budget/admin" || path === "/budget/admin/") return "admin:masters";
   const adminMatch = path.match(/^\/budget\/admin\/([^/?#]+)/);
   if (adminMatch) return `admin:${adminMatch[1]}`;
@@ -303,18 +306,16 @@ function getBudgetRouteAction(path: string): string {
 }
 
 function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
-  // Mirrors the Budget areas (Create budget · Overview · Prepare budget · Actuals · Reports). Setup and Administration are not
-  // listed here: they appear in the Budget page header only for people with those rights.
   const p = projectId && /^\d+$/.test(projectId) ? `/budget/${projectId}` : "/budget";
   const to = (t: string) => (p === "/budget" ? `/budget/${t}` : `${p}/${t}`);
   return [
     {
       label: "Budget",
       items: [
-        { label: "All projects", href: "/budget", icon: FolderKanban },
-        // Dedicated entry for typing a budget in by hand: choose a project (or make one), then the guided form.
+        { label: "Portfolio overview", href: "/budget", icon: FolderKanban },
+        { label: "Budgets registry", href: to("budgets"), icon: FileText },
         { label: "Create budget", href: "/budget/create", icon: PlusCircle },
-        { label: "Overview", href: to("overview"), icon: LayoutDashboard },
+        { label: "Project overview", href: to("overview"), icon: LayoutDashboard },
       ]
     },
     {
@@ -342,8 +343,11 @@ function getBudgetNavGroups(projectId?: string | null): NavGroup[] {
       ]
     },
     {
-      label: "Help",
+      label: "Masters & setup",
       items: [
+        { label: "Budget masters", href: "/budget/masters", icon: Database },
+        { label: "Project hierarchy", href: to("setup"), icon: Settings2 },
+        { label: "Access & roles", href: "/budget/admin/access", icon: Key },
         { label: "Workflow guide", href: to("guide"), icon: BookOpen },
       ]
     }
@@ -371,6 +375,7 @@ function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchPa
 }
 
 function isSubActive(href: string, pathname: string, sp: URLSearchParams | null) {
+  if (href === "/budget/masters") return pathname.startsWith("/budget/masters") || pathname.startsWith("/budget/admin/masters");
   if (pathname.startsWith("/budget") && href.startsWith("/budget")) {
     const currentAction = getBudgetRouteAction(pathname);
     const hrefAction = getBudgetRouteAction(href);

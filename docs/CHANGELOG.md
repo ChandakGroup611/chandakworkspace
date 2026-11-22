@@ -24,7 +24,8 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
-* **Date:** 2026-11-22 | **Release:** Security upgrade: Next.js updated from 16.4.3 to 16.4.6 (with agentUpgrade: 'security') resolving Next.js security advisory | **Status:** Ready for Deployment
+* **Date:** 2026-11-22 | **Release:** Global Navigation & Budget Visibility: added Budget Masters and Organization Budget directly to main sidebar and module sidebars (Sidebar.tsx), Budgets Registry navigation, and mobile bottom navigation tabs (MobileBottomNav.tsx) | **Status:** Ready for Deployment
+* **Date:** 2026-11-22 | **Release:** Security upgrade: Next.js updated from 16.4.3 to 16.4.6 (with agentUpgrade: 'security') resolving Next.js security advisory | **Commit:** `2af4d464` | **Status:** PASS (Verified Live) [approved]
 * **Date:** 2026-11-22 | **Release:** AMC & Subscription modular restructuring (decomposed monolithic page into Overview, AMC Contracts, Subscriptions, and Reports tabs with URL state; dedicated AMC creation modal with linewise/headwise pricing & Subscription modal with seat utilization tracking; tailored Contract Detail Drawer) and Audit Trail enhancement (rich event cards and diffs across Tickets, Requirements, AMC, and Subscriptions) | **Commit:** `c129d39c` | **Status:** PASS (Verified Live) [approved]
 
 * **Date:** 2026-11-21 | **Release:** Requirements module enhancement (SC1 Requirements List layout optimization, multi-select filters, date modes Created/Due/Both, interactive KPI summary cards, active removable chips, overdue indicators, saved filters with edit option; SC2 Requirement Reports parity with Tasks & Tickets: row selection, select-all across pages, column chooser with persistence, Excel/PDF exports with scope indicator; field-level activity history audit trail; deterministic context-preserving return navigation) | **Status:** Ready for Deployment
