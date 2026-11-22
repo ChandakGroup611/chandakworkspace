@@ -48,7 +48,7 @@ const ADMIN_TABS: { id: string; label: string; href: string; right: (me: Me) => 
 ];
 const TAB_LABEL: Record<string, string> = Object.fromEntries([
   ...AREAS.flatMap((a) => (a.subs ?? []).map((t) => [t.id, t.label] as [string, string])),
-  ["start", "Get started"], ["line", "Budget line"], ["guide", "Workflow guide"], ...ADMIN_TABS.map((t) => [t.id, t.label] as [string, string]),
+  ["start", "Get started"], ["line", "Budget line"], ["guide", "Workflow guide"], ["approvals", "Approvals"], ...ADMIN_TABS.map((t) => [t.id, t.label] as [string, string]),
 ]);
 
 /** Which areas this person may open for the project (the current one is always shown). */
@@ -133,6 +133,7 @@ export function Shell({ me, projects, project, versions, version, tab, children 
                 />
               )}
               <div className="top-links">
+                <Link href="/budget/approvals" className="icon-link" aria-current={tab === "approvals" ? "page" : undefined} title="Budget versions waiting for sign-off, across all projects">Approvals</Link>
                 <Link href={helpHref} className="icon-link" aria-current={area === "help" ? "page" : undefined} title="Workflow guide">? Guide</Link>
                 {can(me, "project.view") && <Link href="/budget/admin/masters" className="icon-link" aria-current={tab === "masters" ? "page" : undefined} title="Budget Masters: Projects, Towers, Building Types, Departments, Cost Heads, GST, Vendors">Masters</Link>}
                 {allowed.admin && <Link href={adminTabs.find((t) => t.id !== "masters")?.href ?? "/budget/admin/access"} className="icon-link" aria-current={area === "admin" && tab !== "masters" ? "page" : undefined} title="Administration: access and custom fields">Admin</Link>}

@@ -445,7 +445,7 @@ function ProjectFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="budget-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             <Building2 className="h-5 w-5 text-primary" />
@@ -782,7 +782,7 @@ function TowerFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="budget-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             <Building2 className="h-5 w-5 text-primary" />
@@ -1241,7 +1241,7 @@ function DepartmentFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="budget-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             <FolderTree className="h-5 w-5 text-primary" />
@@ -1624,7 +1624,7 @@ function CostHeadFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="budget-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             <Layers className="h-5 w-5 text-primary" />
@@ -2083,7 +2083,7 @@ function GstRuleFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="budget-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             <Percent className="h-5 w-5 text-primary" />
@@ -2398,7 +2398,7 @@ function VendorFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="budget-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             <Users className="h-5 w-5 text-primary" />
@@ -2519,7 +2519,7 @@ function DeleteConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="budget-dialog max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold text-bad">
             <Trash2 className="h-5 w-5 text-bad" />

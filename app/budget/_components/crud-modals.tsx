@@ -106,7 +106,7 @@ export function AddTowerModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="budget-dialog max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Building2 className="h-5 w-5 text-primary" />
@@ -301,7 +301,7 @@ export function EditTowerModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="budget-dialog max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Pencil className="h-5 w-5 text-primary" />
@@ -447,7 +447,7 @@ export function DeleteTowerConfirmDialog({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="budget-dialog max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold text-bad">
               <AlertCircle className="h-5 w-5" />
@@ -586,7 +586,7 @@ export function AddCostHeadModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="budget-dialog max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Layers className="h-5 w-5 text-primary" />
@@ -840,7 +840,7 @@ export function EditCostHeadModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="budget-dialog max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Pencil className="h-5 w-5 text-primary" />
@@ -991,7 +991,7 @@ export function DeleteCostHeadConfirmDialog({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="budget-dialog max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold text-bad">
               <AlertCircle className="h-5 w-5" />
@@ -1096,7 +1096,7 @@ export function EditProjectModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="budget-dialog max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Building2 className="h-5 w-5 text-primary" />
@@ -1311,7 +1311,7 @@ export function RecordBillModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="budget-dialog max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Receipt className="h-5 w-5 text-primary" />
@@ -1589,7 +1589,7 @@ export function RecordEntryModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="budget-dialog max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <DollarSign className="h-5 w-5 text-primary" />
@@ -1799,7 +1799,7 @@ export function EditLineModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="budget-dialog max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Calculator className="h-5 w-5 text-primary" />
@@ -2340,7 +2340,7 @@ export function EditBudgetDetailsModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="budget-dialog max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <Calendar className="h-5 w-5 text-primary" />

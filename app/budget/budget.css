@@ -4,7 +4,9 @@
    Colours come from the workspace theme tokens (app/styles/themes.css), so Budget follows the
    chosen theme and light/dark mode like every other module; the hex values are only fallbacks. */
 /* ui-audit-allow hex-literal: fallbacks for when the theme tokens are missing */
-.budget-app {
+/* .budget-dialog: budget modals are portalled to <body>, outside .budget-app, so they need the same tokens. */
+.budget-app,
+.budget-dialog {
   --bg: var(--bg-primary, #ffffff);
   --surface: var(--bg-surface, #ffffff);
   --ink: var(--text-primary, #1c2330);
@@ -1949,13 +1951,15 @@
 /* CRUD Modal Layout */
 .budget-modal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* min(): never wider than the dialog, so no sideways scrollbar in narrow modals */
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: 12px;
 }
 .budget-modal-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 .budget-modal-field label {
   font-size: 12.5px;
@@ -1965,8 +1969,12 @@
 .budget-modal-field input,
 .budget-modal-field select,
 .budget-modal-field textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 36px;
   padding: 7px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 6px;
   background: var(--input);
   font-size: 13.5px;
