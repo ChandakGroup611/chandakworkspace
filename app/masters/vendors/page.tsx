@@ -1,4 +1,6 @@
 "use client";
+import { useFlashHighlight } from "@/components/ui/record";
+import { Eye as RecordEyeIcon, Pencil as RecordPencilIcon } from "lucide-react";
 import { promptAction } from "@/components/ui/feedback/confirm";
 import { toast } from 'react-toastify';
 
@@ -49,6 +51,9 @@ export default function VendorMasterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   
   const [showModal, setShowModal] = useState(false);
+  // Record standard: View opens this same form read-only; Edit switches it on.
+  const [viewOnly, setViewOnly] = useState(false);
+  const [highlightId, flashHighlight] = useFlashHighlight();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -246,11 +251,18 @@ export default function VendorMasterPage() {
   };
 
   const handleOpenCreate = () => {
+    setViewOnly(false);
     resetForm();
     setShowModal(true);
   };
 
+  const handleOpenView = (rec: any) => {
+    handleOpenEdit(rec);
+    setViewOnly(true);
+  };
+
   const handleOpenEdit = (vendor: any) => {
+    setViewOnly(false);
     resetForm();
     setEditId(vendor.id);
     setFormName(vendor.name || "");
@@ -340,6 +352,7 @@ export default function VendorMasterPage() {
       }
       if (!res.success) throw new Error(res.error);
 
+      if (editId) flashHighlight(editId);
       setShowModal(false);
       fetchVendors();
     } catch (err: any) {
@@ -429,7 +442,7 @@ export default function VendorMasterPage() {
                     </AppTableRow>
                   ) : (
                     filtered.map(v => (
-                      <AppTableRow key={v.id} className="hover:bg-accent-soft group">
+                      <AppTableRow key={v.id} className="hover:bg-accent-soft group" data-record-id={v.id} data-highlight={highlightId === v.id || undefined} onClick={() => handleOpenView(v)}>
                         <AppTableCell className="font-semibold text-foreground">{v.name}</AppTableCell>
                         <AppTableCell>{v.contact_name || '-'}</AppTableCell>
                         <AppTableCell>
@@ -443,7 +456,10 @@ export default function VendorMasterPage() {
                         </AppTableCell>
                         <AppTableCell>{v.city || '-'}</AppTableCell>
                         <AppTableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                            <AppButton aria-label="View" title="View" variant="ghost" size="icon-sm" onClick={() => handleOpenView(v)} className="text-muted hover:text-foreground">
+                              <RecordEyeIcon className="h-4 w-4" />
+                            </AppButton>
                             <AppButton aria-label="Edit" variant="secondary" onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-info-soft text-accent hover:bg-info-soft transition-colors">
                               <Edit className="h-4 w-4" />
                             </AppButton>
@@ -468,7 +484,7 @@ export default function VendorMasterPage() {
             
             <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
               <h2 className="text-xl font-semibold text-foreground">
-                {editId ? "Edit Vendor Profile" : "Add New Vendor"}
+                {viewOnly ? "Vendor details" : editId ? "Edit Vendor Profile" : "Add New Vendor"}
               </h2>
               <AppButton aria-label="Close" variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-surface/5 transition-colors">
                 <X className="h-5 w-5 text-muted" />
@@ -477,6 +493,7 @@ export default function VendorMasterPage() {
 
             <div className="flex-1 overflow-y-auto">
               <form id="vendorForm" onSubmit={handleSave} className="p-6 md:p-8 space-y-10">
+              <fieldset disabled={viewOnly} className={viewOnly ? "record-readonly contents" : "contents"}>
                 {errorMsg && (
                   <div className="p-4 rounded-lg bg-danger-soft text-danger-text border border-danger-border text-sm font-semibold">
                     {errorMsg}
@@ -750,16 +767,19 @@ export default function VendorMasterPage() {
                   />
                 </div>
 
+              </fieldset>
               </form>
             </div>
 
               <div className="p-6 border-t border-border shrink-0 flex items-center justify-end gap-4 bg-surface/80 rounded-b-3xl">
-                <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-11 px-8 text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">
-                  Discard
-                </AppButton>
-                <AppButton type="submit" form="vendorForm" disabled={saving} className="h-11 px-8 font-semibold shadow-lg shadow-theme-btn-primary/20">
+                <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-11 px-8 text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">{viewOnly ? "Close" : "Discard"}</AppButton>
+                {viewOnly ? (
+                <AppButton type="button" variant="primary" onClick={() => setViewOnly(false)} leftIcon={<RecordPencilIcon className="h-4 w-4" />}>Edit</AppButton>
+              ) : (
+              <AppButton type="submit" form="vendorForm" disabled={saving} className="h-11 px-8 font-semibold shadow-lg shadow-theme-btn-primary/20">
                 {saving ? "Saving..." : editId ? "Update Profile" : "Create Vendor"}
               </AppButton>
+              )}
             </div>
 
           </div>

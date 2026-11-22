@@ -1,4 +1,5 @@
 "use client";
+import { Eye as RecordEyeIcon, Pencil as RecordPencilIcon } from "lucide-react";
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect, Suspense } from "react";
@@ -335,7 +336,12 @@ function MastersPageContent() {
   // Realtime subscription removed as per Enterprise Polling Governance (P4).
   // Masters change infrequently, rely on manual refresh.
 
+  // Record standard: View opens the same form read-only; Edit switches it on.
+  const [viewOnly, setViewOnly] = useState(false);
+  const openViewModal = (rec: any) => { openEditModal(rec); setViewOnly(true); };
+
   const openCreateModal = () => {
+    setViewOnly(false);
     setEditRecordId(null);
     setFormCode("");
     setFormName("");
@@ -357,6 +363,7 @@ function MastersPageContent() {
   };
 
   const openEditModal = (rec: any) => {
+    setViewOnly(false);
     setEditRecordId(rec.id);
     setFormCode(rec.code || rec.status_code || rec.priority_code || "");
     setFormName(rec.name || rec.status_name || rec.priority_name || "");
@@ -877,7 +884,7 @@ function MastersPageContent() {
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <AppButton variant="secondary"
                                   type="button"
-                                  onClick={() => toggleActive(rec)}
+                                  onClick={(e) => { e.stopPropagation(); toggleActive(rec); }}
                                   disabled={!hasPermission("MASTERS_UPDATE")}
                                   className={`px-2 py-0.5 rounded-md border text-[11px] font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     rec.is_active 
@@ -922,6 +929,13 @@ function MastersPageContent() {
 
                             {/* Bottom Row: Actions */}
                             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40 text-xs">
+                              <AppButton variant="secondary"
+                                type="button"
+                                onClick={() => openViewModal(rec)}
+                                className="px-2.5 py-1 rounded-lg border text-xs text-foreground bg-surface hover:bg-elevated border-border"
+                              >
+                                <RecordEyeIcon className="h-3.5 w-3.5 mr-1" /> View
+                              </AppButton>
                               <AppButton variant="secondary"
                                 type="button"
                                 onClick={() => openEditModal(rec)}
@@ -969,7 +983,7 @@ function MastersPageContent() {
                             </AppTableHeader>
                             <AppTableBody>
                               {filteredDataset.map((rec) => (
-                                <AppTableRow key={rec.id}>
+                                <AppTableRow key={rec.id} className="cursor-pointer" onClick={() => openViewModal(rec)}>
                                   <AppTableCell>
                                     <div className="space-y-0.5">
                                       <span className={`font-mono text-xs font-semibold block text-accent-soft-text`}>{rec.code}</span>
@@ -1052,7 +1066,7 @@ function MastersPageContent() {
                                   <AppTableCell className="text-center">
                                     <AppButton variant="secondary"
                                       type="button"
-                                      onClick={() => toggleActive(rec)}
+                                      onClick={(e) => { e.stopPropagation(); toggleActive(rec); }}
                                       disabled={!hasPermission("MASTERS_UPDATE")}
                                       className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                         rec.is_active 
@@ -1065,7 +1079,15 @@ function MastersPageContent() {
                                   </AppTableCell>
 
                                   <AppTableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-1">
+                                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                      <AppButton aria-label="View record details" variant="secondary"
+                                        type="button"
+                                        onClick={() => openViewModal(rec)}
+                                        className="p-1.5 rounded-lg border transition-colors bg-surface border-border text-muted hover:text-foreground"
+                                        title="View"
+                                      >
+                                        <RecordEyeIcon className="h-3.5 w-3.5" />
+                                      </AppButton>
                                       <AppButton aria-label="Edit record details" variant="secondary"
                                         type="button"
                                         onClick={() => openEditModal(rec)}
@@ -1127,7 +1149,7 @@ function MastersPageContent() {
               <div className="space-y-1">
                 <h3 className="text-lg font-semibold text-foreground tracking-tight flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-primary" />
-                  {editRecordId ? "Edit Details:" : "Add New"} {currentConfig.label}
+                  {viewOnly ? "Details:" : editRecordId ? "Edit Details:" : "Add New"} {currentConfig.label}
                 </h3>
                 <p className="text-xs text-muted font-medium">
                   {editRecordId ? "Modify specific attributes of this pre-existing record." : "Enter the specific details to create this record in the company directory."}
@@ -1144,6 +1166,7 @@ function MastersPageContent() {
 
             {/* Input elements form */}
             <form onSubmit={handleCreate} className="p-6 space-y-6">
+              <fieldset disabled={viewOnly} className={viewOnly ? "record-readonly contents" : "contents"}>
               {/* Code */}
               <div className="space-y-1.5">
                 <label className="text-[0.8rem] font-semibold text-muted block">
@@ -1317,6 +1340,7 @@ function MastersPageContent() {
                 </div>
               )}
 
+              </fieldset>
               {/* Submit / Action buttons */}
               <div className={`flex items-center justify-end gap-2 pt-3 border-t ${
                 "border-border"
@@ -1328,8 +1352,15 @@ function MastersPageContent() {
                   onClick={() => setShowModal(false)}
                   className="text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text"
                 >
-                  Discard
+                  {viewOnly ? "Close" : "Discard"}
                 </AppButton>
+                {viewOnly ? (
+                  hasPermission("MASTERS_UPDATE") ? (
+                    <AppButton type="button" variant="primary" size="sm" onClick={() => setViewOnly(false)} leftIcon={<RecordPencilIcon className="h-3 w-3" />}>
+                      Edit
+                    </AppButton>
+                  ) : null
+                ) : (
                 <AppButton 
                   type="submit" 
                   variant="primary" 
@@ -1338,6 +1369,7 @@ function MastersPageContent() {
                 >
                   {editRecordId ? "Update Record" : "Save Record"}
                 </AppButton>
+                )}
               </div>
             </form>
           </div>

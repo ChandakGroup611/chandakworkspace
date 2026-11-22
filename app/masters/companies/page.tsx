@@ -1,5 +1,7 @@
 "use client";
 
+import { useFlashHighlight } from "@/components/ui/record";
+import { Eye as RecordEyeIcon, Pencil as RecordPencilIcon } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
@@ -42,6 +44,9 @@ export default function CompanyMasterPage() {
   
   // Modals and Alerts
   const [showModal, setShowModal] = useState(false);
+  // Record standard: View opens this same form read-only; Edit switches it on.
+  const [viewOnly, setViewOnly] = useState(false);
+  const [highlightId, flashHighlight] = useFlashHighlight();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
   const [successAlert, setSuccessAlert] = useState<string | null>(null);
@@ -96,6 +101,7 @@ export default function CompanyMasterPage() {
   }, [successAlert, errorAlert]);
 
   const openCreateModal = () => {
+    setViewOnly(false);
     setEditId(null);
     setFormCode("");
     setFormName("");
@@ -107,7 +113,13 @@ export default function CompanyMasterPage() {
     setShowModal(true);
   };
 
+  const handleOpenView = (rec: any) => {
+    openEditModal(rec);
+    setViewOnly(true);
+  };
+
   const openEditModal = (company: any) => {
+    setViewOnly(false);
     setEditId(company.id);
     setFormCode(company.company_code);
     setFormName(company.company_name);
@@ -146,6 +158,7 @@ export default function CompanyMasterPage() {
         if (!res.success) throw new Error(res.error);
         setSuccessAlert("Company successfully created.");
       }
+      if (editId) flashHighlight(editId);
       setShowModal(false);
       fetchCompanies();
     } catch (err: any) {
@@ -281,7 +294,7 @@ export default function CompanyMasterPage() {
               {filteredData.map(c => (
                 <AppTableRow key={c.id} className={`border-b last:border-0 transition-colors ${
                   "border-border hover:bg-elevated"
-                }`}>
+                }`} data-record-id={c.id} data-highlight={highlightId === c.id || undefined} onClick={() => handleOpenView(c)}>
                   <AppTableCell className="py-3 px-4 font-mono text-xs font-semibold text-accent-soft-text">{c.code}</AppTableCell>
                   <AppTableCell className="py-3 px-4">
                     <div className="flex flex-col">
@@ -301,11 +314,14 @@ export default function CompanyMasterPage() {
                     </AppBadge>
                   </AppTableCell>
                   <AppTableCell className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-danger-text hover:bg-danger-soft' : 'text-success-text hover:bg-success-soft'}`}>
                         {c.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                       </AppButton>
-                      <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-accent-soft-text hover:bg-accent-soft transition-colors">
+                      <AppButton aria-label="View" title="View" variant="ghost" size="icon-sm" onClick={() => handleOpenView(c)} className="text-muted hover:text-foreground">
+                              <RecordEyeIcon className="h-4 w-4" />
+                            </AppButton>
+                            <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-accent-soft-text hover:bg-accent-soft transition-colors">
                         Edit
                       </AppButton>
                       <AppButton aria-label="Delete" variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-danger-text hover:bg-danger-soft transition-colors">
@@ -330,8 +346,9 @@ export default function CompanyMasterPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 bg-surface/60 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
           <AppCard className="w-full max-w-xl p-6 shadow-lg border-border-active">
-            <h2 className="text-xl font-semibold text-foreground mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">{viewOnly ? "Company details" : `${editId ? 'Edit' : 'Register'} Company`}</h2>
             <form onSubmit={handleSave} className="space-y-4">
+              <fieldset disabled={viewOnly} className={viewOnly ? "record-readonly contents" : "contents"}>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm text-muted font-semibold">Company code</label>
@@ -379,9 +396,14 @@ export default function CompanyMasterPage() {
                 />
               </div>
 
+              </fieldset>
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-                <AppButton variant="outline" type="button" onClick={() => setShowModal(false)} className="text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">Discard</AppButton>
-                <AppButton variant="primary" type="submit">Save company record</AppButton>
+                <AppButton variant="outline" type="button" onClick={() => setShowModal(false)} className="text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">{viewOnly ? "Close" : "Discard"}</AppButton>
+                {viewOnly ? (
+                <AppButton type="button" variant="primary" onClick={() => setViewOnly(false)} leftIcon={<RecordPencilIcon className="h-4 w-4" />}>Edit</AppButton>
+              ) : (
+              <AppButton variant="primary" type="submit">Save company record</AppButton>
+              )}
               </div>
             </form>
           </AppCard>

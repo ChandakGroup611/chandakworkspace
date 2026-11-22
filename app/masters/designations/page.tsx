@@ -1,4 +1,6 @@
 "use client";
+import { useFlashHighlight } from "@/components/ui/record";
+import { Eye as RecordEyeIcon, Pencil as RecordPencilIcon } from "lucide-react";
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect } from "react";
@@ -22,6 +24,9 @@ export default function DesignationsMasterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   
   const [showModal, setShowModal] = useState(false);
+  // Record standard: View opens this same form read-only; Edit switches it on.
+  const [viewOnly, setViewOnly] = useState(false);
+  const [highlightId, flashHighlight] = useFlashHighlight();
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -76,11 +81,18 @@ export default function DesignationsMasterPage() {
   };
 
   const handleOpenCreate = () => {
+    setViewOnly(false);
     resetForm();
     setShowModal(true);
   };
 
+  const handleOpenView = (rec: any) => {
+    handleOpenEdit(rec);
+    setViewOnly(true);
+  };
+
   const handleOpenEdit = (desig: any) => {
+    setViewOnly(false);
     resetForm();
     setEditId(desig.id);
     setFormName(desig.name || "");
@@ -117,6 +129,7 @@ export default function DesignationsMasterPage() {
       }
       if (!res.success) throw new Error(res.error);
 
+      if (editId) flashHighlight(editId);
       setShowModal(false);
       fetchData();
     } catch (err: any) {
@@ -200,7 +213,7 @@ export default function DesignationsMasterPage() {
                     </AppTableRow>
                   ) : (
                     filtered.map(d => (
-                      <AppTableRow key={d.id} className="hover:bg-accent-soft group">
+                      <AppTableRow key={d.id} className="hover:bg-accent-soft group" data-record-id={d.id} data-highlight={highlightId === d.id || undefined} onClick={() => handleOpenView(d)}>
                         <AppTableCell className="font-mono text-sm font-semibold text-accent-soft-text">{d.code}</AppTableCell>
                         <AppTableCell className="font-semibold text-foreground">{d.name}</AppTableCell>
                         <AppTableCell>{d.departments?.name || <span className="text-muted italic">Unassigned</span>}</AppTableCell>
@@ -210,7 +223,10 @@ export default function DesignationsMasterPage() {
                           </AppBadge>
                         </AppTableCell>
                         <AppTableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                            <AppButton aria-label="View" title="View" variant="ghost" size="icon-sm" onClick={() => handleOpenView(d)} className="text-muted hover:text-foreground">
+                              <RecordEyeIcon className="h-4 w-4" />
+                            </AppButton>
                             <AppButton aria-label="Edit" variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(d)} className="text-accent">
                               <Edit className="h-4 w-4" />
                             </AppButton>
@@ -235,7 +251,7 @@ export default function DesignationsMasterPage() {
             
             <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
               <h2 className="text-xl font-semibold text-foreground">
-                {editId ? "Edit Designation" : "Add Designation"}
+                {viewOnly ? "Designation details" : editId ? "Edit Designation" : "Add Designation"}
               </h2>
               <AppButton aria-label="Close" variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-surface/5 transition-colors">
                 <X className="h-5 w-5 text-muted" />
@@ -244,6 +260,7 @@ export default function DesignationsMasterPage() {
 
             <div className="p-6">
               <form id="desigForm" onSubmit={handleSave} className="space-y-6">
+              <fieldset disabled={viewOnly} className={viewOnly ? "record-readonly contents" : "contents"}>
                 {errorMsg && (
                   <div className="p-3 rounded-lg bg-danger-soft text-danger-text border border-danger-border text-sm font-medium">
                     {errorMsg}
@@ -292,16 +309,19 @@ export default function DesignationsMasterPage() {
                     <span className="text-sm font-medium text-foreground">Active designation</span>
                   </label>
                 </div>
+              </fieldset>
               </form>
             </div>
 
             <div className="p-5 border-t border-border shrink-0 flex items-center justify-end gap-3 bg-surface/50 rounded-b-2xl">
-              <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-10 px-6 text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">
-                Discard
-              </AppButton>
+              <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-10 px-6 text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">{viewOnly ? "Close" : "Discard"}</AppButton>
+              {viewOnly ? (
+                <AppButton type="button" variant="primary" onClick={() => setViewOnly(false)} leftIcon={<RecordPencilIcon className="h-4 w-4" />}>Edit</AppButton>
+              ) : (
               <AppButton type="submit" form="desigForm" disabled={saving} className="h-10 px-8">
                 {saving ? "Saving..." : "Save Designation"}
               </AppButton>
+              )}
             </div>
           </div>
         </div>
