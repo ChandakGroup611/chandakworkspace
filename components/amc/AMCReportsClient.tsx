@@ -59,7 +59,7 @@ interface ReportDef {
   kpis: (rows: Row[]) => { label: string; value: string | number }[];
 }
 
-type ReportId = "contracts" | "invoices" | "renewals" | "transactions" | "allocations";
+export type ReportId = "contracts" | "invoices" | "renewals" | "transactions" | "allocations";
 
 const money = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
@@ -345,7 +345,15 @@ function readSavedColumns(def: ReportDef): string[] {
 
 const EMPTY_DATA: AMCReportData = { contracts: [], invoices: [], renewals: [], transactions: [], allocations: [] };
 
-export default function AMCReportsClient() {
+export default function AMCReportsClient({
+  reportIds,
+  defaultReport,
+}: {
+  /** Limit the ledgers offered (e.g. the Transactions page shows invoices, renewals, add-ons, allocations). */
+  reportIds?: ReportId[];
+  defaultReport?: ReportId;
+} = {}) {
+  const shownReports = useMemo(() => (reportIds?.length ? REPORTS.filter((r) => reportIds.includes(r.id)) : REPORTS), [reportIds]);
   const { hasPermission, roleCode } = usePermissions();
   const canExport =
     roleCode === "SUPER_ADMIN" || hasPermission("AMC_MANAGE") || hasPermission("AMC_EXPORT") || hasPermission("REPORTS_EXPORT");
@@ -354,7 +362,7 @@ export default function AMCReportsClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [reportId, setReportId] = useState<ReportId>("contracts");
+  const [reportId, setReportId] = useState<ReportId>(defaultReport ?? (reportIds?.[0] || "contracts"));
   const def = useMemo(() => REPORTS.find((r) => r.id === reportId)!, [reportId]);
 
   const [query, setQuery] = useState("");
@@ -489,14 +497,14 @@ export default function AMCReportsClient() {
   };
 
   if (loading) return <LoadingState label="Loading AMC & subscription reports…" />;
-  const allEmpty = REPORTS.every((r) => !(data[r.dataKey] || []).length);
+  const allEmpty = shownReports.every((r) => !(data[r.dataKey] || []).length);
   if (error && allEmpty) return <ErrorState message={error} onRetry={load} />;
 
   return (
     <div className="space-y-3">
       {/* Report switcher */}
       <div role="tablist" aria-label="Report" className="flex flex-wrap gap-1 rounded-lg border border-border bg-elevated p-1 w-fit max-w-full">
-        {REPORTS.map((r) => {
+        {shownReports.map((r) => {
           const count = (data[r.dataKey] || []).length;
           const active = r.id === reportId;
           return (

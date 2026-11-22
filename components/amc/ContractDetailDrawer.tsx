@@ -48,6 +48,8 @@ import { AMCTransactionsTab } from "@/components/amc/AMCTransactionsTab";
 interface ContractDetailDrawerProps {
   record: any | null;
   isOpen: boolean;
+  /** "page": the record page /amc/contracts/[id]; "overlay": full-screen overlay. */
+  variant?: "overlay" | "page";
   onClose: () => void;
   onRefresh: () => void;
   onOpenEditForm: (record: any) => void;
@@ -55,6 +57,7 @@ interface ContractDetailDrawerProps {
 }
 
 export function ContractDetailDrawer({
+  variant = "overlay",
   record,
   isOpen,
   onClose,
@@ -103,7 +106,7 @@ export function ContractDetailDrawer({
   const paymentMilestones = Array.isArray(record.payment_terms_json?.milestones) ? record.payment_terms_json.milestones : [];
 
   return (
-    <div className="fixed inset-0 z-[var(--z-modal)] flex flex-col animate-in slide-in-from-bottom-4 duration-300 bg-surface">
+    <div className={variant === "page" ? "flex flex-col rounded-xl border border-border bg-surface" : "fixed inset-0 z-[var(--z-modal)] flex flex-col animate-in slide-in-from-bottom-4 duration-300 bg-surface"}>
       {/* Drawer Top Header */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-5 py-3.5">
         <div className="flex items-center gap-3 min-w-0">

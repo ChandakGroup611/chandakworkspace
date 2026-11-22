@@ -37,9 +37,11 @@ interface AttachmentEntry {
 }
 
 interface SubscriptionContractModalProps {
+  /** "page": full-page create / edit screen; "modal": overlay. */
+  variant?: "modal" | "page";
   isOpen: boolean;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (newRecordId?: string) => void;
   initialRecord?: any;
   vendors: any[];
   departments: any[];
@@ -49,6 +51,7 @@ interface SubscriptionContractModalProps {
 type SubModalStep = "details" | "billing" | "compliance";
 
 export function SubscriptionContractModal({
+  variant = "modal",
   isOpen,
   onClose,
   onSaved,
@@ -318,7 +321,7 @@ export function SubscriptionContractModal({
       }
 
       toast.success(initialRecord ? "Subscription updated successfully!" : "Subscription created successfully!");
-      onSaved();
+      onSaved(recordId);
       onClose();
     } catch (err: any) {
       console.error("Save subscription error:", err);
@@ -335,8 +338,8 @@ export function SubscriptionContractModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-3 sm:p-5 bg-[var(--overlay)] animate-in fade-in duration-200">
-      <div className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-xl overflow-hidden border border-border bg-surface shadow-2xl">
+    <div className={variant === "page" ? "w-full" : "fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-3 sm:p-5 bg-[var(--overlay)] animate-in fade-in duration-200"}>
+      <div className={variant === "page" ? "relative w-full flex flex-col rounded-xl border border-border bg-surface shadow-xs" : "relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-xl overflow-hidden border border-border bg-surface shadow-2xl"}>
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 px-6 border-b shrink-0 border-border bg-elevated">
           <div className="flex items-center gap-3">

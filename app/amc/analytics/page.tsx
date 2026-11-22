@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { AMCShell } from "@/components/amc/AMCShell";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -55,8 +54,8 @@ export default function AMCAnalyticsPage() {
         .select(`
           *,
           departments:cost_center_id(name),
-          vendor_master(name, code),
-          user_master(full_name)
+          vendor_master(name),
+          user_master:assigned_to(full_name)
         `)
         .eq('status', 'Active')
         .eq('is_deleted', false);
@@ -198,18 +197,11 @@ export default function AMCAnalyticsPage() {
   }
 
   return (
-    <PageContainer strict={true}>
-      <PageHeader
-        title="AMC & subscription analytics"
-        icon={<BarChart2 className="h-6 w-6" />}
-        actions={
-          <Link href="/amc">
-            <AppButton variant="outline" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
-              Back to contracts
-            </AppButton>
-          </Link>
-        }
-      />
+    <AMCShell
+      title="Analytics"
+      breadcrumbs={[{ label: "AMC & Subscriptions", href: "/amc" }, { label: "Analytics" }]}
+      showNew={false}
+    >
 
       <div className="space-y-6">
         {/* 5 KPI Stat Cards */}
@@ -361,6 +353,6 @@ export default function AMCAnalyticsPage() {
           </AppCard>
         </div>
       </div>
-    </PageContainer>
+    </AMCShell>
   );
 }

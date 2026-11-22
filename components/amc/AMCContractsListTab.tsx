@@ -339,7 +339,8 @@ export function AMCContractsListTab({
 
                   return (
                     <AppTableRow 
-                      key={rec.id} 
+                      key={rec.id}
+                      data-record-id={rec.id}
                       className="hover:bg-surface-hover/80 transition-colors group cursor-pointer"
                       onClick={handleRowClick}
                     >

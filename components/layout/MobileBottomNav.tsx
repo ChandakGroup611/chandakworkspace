@@ -41,10 +41,11 @@ const TABS: Record<string, Tab[]> = {
     { label: "Marketing", href: "/dashboards/mkt", icon: LineChart, match: (p) => p.startsWith("/dashboards/mkt") },
   ],
   amc: [
-    { label: "Home", href: "/", icon: LayoutDashboard, match: (p) => p === "/" },
-    { label: "Contracts", href: "/amc", icon: ShieldCheck, match: (p) => p === "/amc" },
-    { label: "Analytics", href: "/amc/analytics", icon: LineChart, match: (p) => p.startsWith("/amc/analytics") },
-    { label: "Reports", href: "/amc/reports", icon: FileText, match: (p) => p.startsWith("/amc/reports") },
+    // Each AMC section is its own route (components/amc/AMCShell.tsx); Menu reaches Transactions & Analytics.
+    { label: "Dashboard", href: "/amc", icon: LayoutDashboard, match: (p) => p === "/amc" },
+    { label: "Contracts", href: "/amc/contracts", icon: ShieldCheck, match: (p) => p.startsWith("/amc/contracts") },
+    { label: "Subscriptions", href: "/amc/subscriptions", icon: FileText, match: (p) => p.startsWith("/amc/subscriptions") },
+    { label: "Reports", href: "/amc/reports", icon: LineChart, match: (p) => p.startsWith("/amc/reports") || p.startsWith("/amc/transactions") || p.startsWith("/amc/analytics") },
   ],
   meet: [
     { label: "Overview", href: "/meet", icon: LayoutDashboard, match: (p) => p === "/meet" },

@@ -96,9 +96,9 @@ export function AMCTCOSpendHistoryTab({
         .from('software_amc')
         .select(`
           *,
-          vendor_master(name, code),
-          user_master(full_name, email),
-          departments(name)
+          vendor_master(name),
+          user_master:assigned_to(full_name, email),
+          departments:department_id(name)
         `)
         .eq('id', amcId)
         .single();
