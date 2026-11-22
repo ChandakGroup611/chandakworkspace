@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { AppCard } from "@/components/ui/AppCard";
 import TicketRealtimeChat from "@/components/tickets/TicketRealtimeChat";
+import { TicketActivityStream } from "@/components/tickets/TicketActivityStream";
 import DOMPurify from 'dompurify';
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchAssignees } from "@/lib/actions/users";
@@ -719,10 +720,15 @@ export function TicketWorkspaceConsole({
                   role="tab"
                   aria-selected={isActive}
                   onClick={() => setActiveTab(t.id)}
-                  className={`-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "border-primary text-foreground" : "border-transparent text-muted hover:text-foreground"}`}
+                  className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-all ${
+                    isActive 
+                      ? "bg-accent-soft text-accent-soft-text border border-primary/30 ring-1 ring-primary/20 font-semibold shadow-xs" 
+                      : "border border-transparent text-muted hover:text-foreground hover:bg-surface-hover"
+                  }`}
                 >
                   <t.icon className="h-3.5 w-3.5" aria-hidden />
                   <span>{t.label}</span>
+                  {isActive && <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />}
                   {count !== undefined && count > 0 && (
                     <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">{count}</span>
                   )}
@@ -892,34 +898,8 @@ export function TicketWorkspaceConsole({
 
             {/* Activity (audit) */}
             {activeTab === 'activity' && (
-              <div className="space-y-3">
-                {loadingAudits ? (
-                  <div className="flex items-center justify-center gap-2 py-6">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted" aria-hidden />
-                    <span className="text-[13px] text-muted">Loading activity…</span>
-                  </div>
-                ) : auditLogs.length === 0 ? (
-                  <div className="py-6 text-center text-[13px] text-muted">No activity recorded yet.</div>
-                ) : (
-                  <ol className="relative space-y-4 border-l border-border pl-4">
-                    {auditLogs.map((log: any) => (
-                      <li key={log.id} className="relative">
-                        <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-primary" aria-hidden />
-                        <div className="flex flex-wrap items-center justify-between gap-x-2 text-[13px]">
-                          <span className="font-medium text-foreground">{log.actor?.full_name || "System"} updated the ticket</span>
-                          <span className="text-[12px] text-muted">{formatDateTime(log.created_at)}</span>
-                        </div>
-                        {Array.isArray(log.changed_fields) && log.changed_fields.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {log.changed_fields.map((field: string) => (
-                              <span key={field} className="rounded bg-sunken px-1.5 py-0.5 font-mono text-[11.5px] text-subtle">{field}</span>
-                            ))}
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                )}
+              <div className="pt-2">
+                <TicketActivityStream ticket={ticket} />
               </div>
             )}
 

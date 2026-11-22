@@ -16,6 +16,7 @@ import { AMCTransactionsTab } from "@/components/amc/AMCTransactionsTab";
 import { AMCRenewalsTab } from "@/components/amc/AMCRenewalsTab";
 import { AMCAllocationsTab } from "@/components/amc/AMCAllocationsTab";
 import { AMCAttachmentsTab } from "@/components/amc/AMCAttachmentsTab";
+import { AMCHistoryTab } from "@/components/amc/AMCHistoryTab";
 import { AMCPaymentsTab } from "@/components/amc/AMCPaymentsTab";
 import { AMCImplementationTab } from "@/components/amc/AMCImplementationTab";
 import { AMCTCOSpendHistoryTab } from "@/components/amc/AMCTCOSpendHistoryTab";
@@ -1929,7 +1930,7 @@ export default function AMCPage() {
               {/* Tab Navigation Strip */}
               <div className="shrink-0 border-b border-border bg-surface px-5">
                 <div role="tablist" aria-label="Contract sections" className="flex max-w-full gap-1 overflow-x-auto hide-scrollbar">
-                  {['Master', 'Implementation', 'Spend History (TCO)', 'Transactions', 'Payments', 'Renewals', 'Allocations', 'Attachments'].map(tab => {
+                  {['Master', 'Implementation', 'Spend History (TCO)', 'Transactions', 'Payments', 'Renewals', 'Allocations', 'Attachments', 'History'].map(tab => {
                     let badgeText = null;
                     if (tab === 'Attachments' && existingAttachments.length > 0) {
                       badgeText = `${existingAttachments.length}`;
@@ -1946,10 +1947,13 @@ export default function AMCPage() {
                         role="tab"
                         aria-selected={isActive}
                         onClick={() => setActiveTab(tab)}
-                        className={`-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                          isActive ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'
+                        className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-3.5 py-1.5 my-2 rounded-md text-[13px] font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          isActive 
+                            ? 'bg-accent-soft text-accent-soft-text border border-primary/30 ring-1 ring-primary/20 font-semibold shadow-xs' 
+                            : 'border border-transparent text-muted hover:text-foreground hover:bg-surface-hover'
                         }`}
                       >
+                        {isActive && <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />}
                         <span>{tab === 'Master' ? 'Details' : tab === 'Spend History (TCO)' ? 'Spend history' : tab}</span>
                         {badgeText && (
                           <span className="rounded-full bg-sunken px-1.5 text-[11px] font-medium tabular-nums text-subtle">
@@ -3382,6 +3386,12 @@ export default function AMCPage() {
             {activeTab === 'Attachments' && editRecordId && (
               <div className="p-6 md:p-8">
                 <AMCAttachmentsTab amcId={editRecordId} isLightMode={isLightMode} />
+              </div>
+            )}
+
+            {activeTab === 'History' && editRecordId && (
+              <div className="p-6 md:p-8">
+                <AMCHistoryTab amcId={editRecordId} isLightMode={isLightMode} />
               </div>
             )}
 
