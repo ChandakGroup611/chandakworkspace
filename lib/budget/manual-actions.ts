@@ -21,10 +21,10 @@ async function client() {
   if (!user) return sbUser;
   // Super-admin comes only from the database role (user_master / roles), never from user_metadata or app_metadata or email lists.
   try {
-    const { data: um } = await supabaseAdmin.from("user_master").select("role:roles(code), platform_role").eq("id", user.id).maybeSingle();
+    const { data: um } = await supabaseAdmin.from("user_master").select("role:roles(code)").eq("id", user.id).maybeSingle();
     const role = um?.role as { code?: string } | { code?: string }[] | null | undefined;
     const code = (Array.isArray(role) ? role[0]?.code : role?.code)?.toUpperCase();
-    if ((code && ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(code)) || um?.platform_role === "SUPER_ADMIN") return supabaseAdmin;
+    if ((code && ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(code))) return supabaseAdmin;
   } catch {}
   return sbUser;
 }

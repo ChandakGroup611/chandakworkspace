@@ -87,12 +87,12 @@ export async function getSession() {
     try {
       const { data: um } = await sb
         .from("user_master")
-        .select("full_name, email, role_id, role:roles(code), platform_role")
+        .select("full_name, email, role_id, role:roles(code)") // user_master has no platform_role column
         .eq("id", data.user.id)
         .maybeSingle();
 
       const roleCode = (Array.isArray(um?.role) ? (um?.role[0] as any)?.code : (um?.role as any)?.code)?.toUpperCase();
-      if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode) || um?.platform_role === "SUPER_ADMIN") {
+      if (["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN"].includes(roleCode)) {
         isSuper = true;
       }
     } catch {}

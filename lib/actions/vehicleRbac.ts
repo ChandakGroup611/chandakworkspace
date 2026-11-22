@@ -16,13 +16,12 @@ async function verifyAdminOrFleetLead() {
 
   const { data: profile } = await supabaseAdmin
     .from("user_master")
-    .select("role:roles(code), platform_role")
+    .select("role:roles(code)") // admin comes from the role code; user_master has no platform_role column
     .eq("id", user.id)
     .single();
 
   const roleCode = (profile?.role as any)?.code || "";
-  const platformRole = profile?.platform_role || "";
-  const isAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(roleCode) || platformRole === "SUPER_ADMIN";
+  const isAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(String(roleCode).toUpperCase());
 
   if (isAdmin) return { user, isAdmin: true };
 
@@ -142,7 +141,7 @@ export async function fetchFleetWorkspaceUsersAction(): Promise<{
 
     const workspaceUsers: FleetWorkspaceUser[] = usersData.map((u: any) => {
       const globalRole = roleMap.get(u.role_id);
-      const isGlobalAdmin = globalRole?.code === "SUPER_ADMIN" || globalRole?.code === "ROLE_ADMIN" || u.platform_role === "SUPER_ADMIN";
+      const isGlobalAdmin = globalRole?.code === "SUPER_ADMIN" || globalRole?.code === "ROLE_ADMIN";
       const hasAccess = isGlobalAdmin || usersWithModuleAccess.has(u.id);
 
       return {
@@ -374,7 +373,7 @@ export async function fetchMyFleetAccessAction(): Promise<{
     const [profileRes, fleetAccessRes, umaRes] = await Promise.all([
       supabaseAdmin
         .from("user_master")
-        .select("role:roles(code), platform_role")
+        .select("role:roles(code)") // user_master has no platform_role column
         .eq("id", user.id)
         .single(),
       supabaseAdmin
@@ -391,8 +390,7 @@ export async function fetchMyFleetAccessAction(): Promise<{
     ]);
 
     const globalRoleCode = (profileRes.data?.role as any)?.code || "";
-    const platformRole = profileRes.data?.platform_role || "";
-    const isSuperAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(globalRoleCode.toUpperCase()) || platformRole === "SUPER_ADMIN";
+    const isSuperAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(globalRoleCode.toUpperCase());
 
     let fleetAccess: FleetUserAccessRecord | null = null;
     if (fleetAccessRes.data) {
