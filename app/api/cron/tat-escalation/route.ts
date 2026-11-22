@@ -195,7 +195,7 @@ export async function GET(request: Request) {
       .select(`
         id, code, title, created_at, status_id, current_assignee_id, department_id, creator_id,
         status:status_master!status_id(status_name, is_closed),
-        department:departments(id, name, manager_id)
+        department:departments!requirements_department_id_fkey(id, name, manager_id)
       `)
       .neq('approval_status', 'Approved')
       .eq('is_deleted', false)

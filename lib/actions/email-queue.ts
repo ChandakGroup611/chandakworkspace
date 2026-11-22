@@ -185,8 +185,9 @@ async function alertAdminOnPoisonEmail(item: any, attempts: number, errorMsg: st
     // Alert via notification_queue for Super Admins
     const { data: superAdmins } = await supabaseAdmin
       .from("user_master")
-      .select("id")
-      .eq("role_code", "SUPER_ADMIN")
+      // user_master has no role_code column; the role code lives on roles (role_id)
+      .select("id, role:roles!inner(code)")
+      .eq("role.code", "SUPER_ADMIN")
       .eq("is_active", true)
       .eq("is_deleted", false);
 
