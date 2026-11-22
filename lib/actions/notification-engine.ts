@@ -581,7 +581,8 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
           try {
             const { data: latestComment } = await supabaseAdmin
               .from('ticket_comments')
-              .select('comment')
+              // the column is "content" (aliased so the rest of this block is unchanged)
+              .select('comment:content')
               .eq('ticket_id', payload.entity_id)
               .order('created_at', { ascending: false })
               .limit(1)
@@ -603,7 +604,8 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     try {
       const { data: req } = await supabaseAdmin
         .from('requirements')
-        .select('code, title, description, approval_status, owner_id, requester_id, due_date')
+        // requirements have no "description" column; the objective is the description
+        .select('code, title, description:objective, approval_status, owner_id, requester_id, due_date')
         .eq('id', payload.entity_id)
         .maybeSingle();
       if (req) {

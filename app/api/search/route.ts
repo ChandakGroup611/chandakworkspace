@@ -31,18 +31,23 @@ export async function GET(request: NextRequest) {
     const [ticketsRes, tasksRes, reqsRes, vehiclesRes, meetingsRes, budgetsRes] = await Promise.all([
       supabaseAdmin
         .from("tickets")
-        .select("id, code, title, status, priority, department:departments(name)")
+        // status / priority live in status_master / priority_master (there are no status / priority columns)
+        .select("id, code, title, status:status_master(status_name), priority:priority_master(priority_name), department:departments(name)")
         .or(`title.ilike.${sanitizedTerm},code.ilike.${sanitizedTerm}`)
+        .eq("is_deleted", false)
         .limit(6),
       supabaseAdmin
         .from("tasks")
-        .select("id, code, title, status, priority, workspace:workspaces(name)")
-        .or(`title.ilike.${sanitizedTerm},code.ilike.${sanitizedTerm}`)
+        // tasks use "subject" (not title); workspaces use workspace_name
+        .select("id, code, subject, status:status_master(status_name), priority:priority_master(priority_name), workspace:workspaces(workspace_name)")
+        .or(`subject.ilike.${sanitizedTerm},code.ilike.${sanitizedTerm}`)
+        .eq("is_deleted", false)
         .limit(6),
       supabaseAdmin
         .from("requirements")
-        .select("id, code, title, status, priority")
+        .select("id, code, title, status:status_master(status_name), priority:priority_master!requirements_priority_id_fkey(priority_name)")
         .or(`title.ilike.${sanitizedTerm},code.ilike.${sanitizedTerm}`)
+        .eq("is_deleted", false)
         .limit(6),
       supabaseAdmin
         .from("vehicles")
@@ -123,10 +128,10 @@ export async function GET(request: NextRequest) {
           module: "TICKETS",
           code: t.code || `TCK-${t.id.slice(0, 6)}`,
           title: t.title,
-          status: t.status,
+          status: t.status?.status_name,
           metadata: {
             dept: t.department?.name,
-            priority: t.priority,
+            priority: t.priority?.priority_name,
           },
           url: `/tickets/${t.id}`,
         });
@@ -140,11 +145,11 @@ export async function GET(request: NextRequest) {
           type: "TASK",
           module: "TASKS",
           code: t.code || `TSK-${t.id.slice(0, 6)}`,
-          title: t.title,
-          status: t.status,
+          title: t.subject,
+          status: t.status?.status_name,
           metadata: {
-            workspace: t.workspace?.name,
-            priority: t.priority,
+            workspace: t.workspace?.workspace_name,
+            priority: t.priority?.priority_name,
           },
           url: `/tasks/${t.id}`,
         });
@@ -159,9 +164,9 @@ export async function GET(request: NextRequest) {
           module: "REQUIREMENTS",
           code: r.code || `REQ-${r.id.slice(0, 6)}`,
           title: r.title,
-          status: r.status,
+          status: r.status?.status_name,
           metadata: {
-            priority: r.priority,
+            priority: r.priority?.priority_name,
           },
           url: `/requirements/${r.id}`,
         });

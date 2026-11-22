@@ -376,7 +376,11 @@ export async function saveVendorMaster(
 
 export async function deleteVendorMaster(id: string): Promise<Result> {
   const sb = await createClient();
-  const { data: bills } = await sb.from("budget_vendor_bills").select("id").eq("vendor_id", id).limit(1);
+  // Bills keep the vendor as a name (budget_bills.vendor); there is no budget_vendor_bills table.
+  const { data: vendorRow } = await sb.from("vendor_master").select("name").eq("id", id).maybeSingle();
+  const { data: bills } = vendorRow?.name
+    ? await sb.from("budget_bills").select("id").eq("vendor", vendorRow.name).limit(1)
+    : { data: [] as { id: number }[] };
   if (bills && bills.length > 0) {
     return fail("This vendor has recorded budget bills and cannot be deleted");
   }

@@ -106,7 +106,7 @@ export const getUserScopedWorkspaces = cache(async (userId: string, tenantId: st
   // Example of isolated fetch mapping to a user
   const { data, error } = await supabase
     .from("workspace_members")
-    .select("workspace_id, workspaces(name, status_id)")
+    .select("workspace_id, workspaces(name:workspace_name, status_id)")
     .eq("user_id", userId);
     
   if (error) console.error("[Cache] Failed to fetch user workspaces", error);

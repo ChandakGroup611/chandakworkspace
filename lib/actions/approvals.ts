@@ -25,7 +25,8 @@ export async function fetchPendingApprovals(): Promise<ApprovalItem[]> {
   try {
     const { data: reqs } = await supabaseAdmin
       .from("requirements")
-      .select("id, req_code, title, created_at, created_by, status:status_id(status_name, is_closed)")
+      // requirements: code (not req_code), creator_id (not created_by)
+      .select("id, code, title, created_at, creator_id, status:status_id(status_name, is_closed)")
       .eq("is_deleted", false)
       .limit(30);
 
@@ -38,8 +39,8 @@ export async function fetchPendingApprovals(): Promise<ApprovalItem[]> {
             module: "REQUIREMENTS",
             moduleName: "Requirements",
             title: r.title,
-            code: r.req_code,
-            submittedBy: r.created_by ? "Requester" : "System",
+            code: r.code,
+            submittedBy: r.creator_id ? "Requester" : "System",
             status: (r.status as any)?.status_name,
             createdAt: r.created_at,
             href: `/requirements/${r.id}`,
@@ -55,7 +56,8 @@ export async function fetchPendingApprovals(): Promise<ApprovalItem[]> {
   try {
     const { data: tasks } = await supabaseAdmin
       .from("tasks")
-      .select("id, task_code, title, created_at, created_by, status:status_id(status_name)")
+      // tasks: title is "subject"
+      .select("id, task_code, code, subject, created_at, created_by, status:status_id(status_name)")
       .eq("is_deleted", false)
       .limit(30);
 
@@ -67,8 +69,8 @@ export async function fetchPendingApprovals(): Promise<ApprovalItem[]> {
             id: t.id,
             module: "TASK_WORKFLOW",
             moduleName: "Tasks",
-            title: t.title,
-            code: t.task_code,
+            title: t.subject,
+            code: t.task_code || t.code,
             submittedBy: "Assignee",
             status: (t.status as any)?.status_name,
             createdAt: t.created_at,

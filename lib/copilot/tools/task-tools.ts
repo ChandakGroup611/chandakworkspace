@@ -123,7 +123,7 @@ export const getTaskDetailsTool: ToolDefinition = {
         .maybeSingle(),
       supabaseAdmin
         .from("task_checklists")
-        .select("id, title, is_completed")
+        .select("id, title:label, is_completed")
         .eq("task_id", taskId),
       supabaseAdmin
         .from("task_participants")

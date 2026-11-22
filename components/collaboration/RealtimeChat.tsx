@@ -26,13 +26,21 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
 
     // 1. Fetch initial activity events (Audit logs & chats combined)
     async function loadHistory() {
+      // activity_events.performed_by has no foreign key to user_master, so names are looked up separately.
       const { data } = await supabase
         .from('activity_events')
-        .select('*, performed_by(full_name, profile_photo)')
+        .select('*')
         .eq('record_id', recordId)
         .eq('module_type', moduleType)
         .order('performed_at', { ascending: true });
-      if (data) setMessages(data);
+      if (data) {
+        const ids = Array.from(new Set(data.map((m: any) => m.performed_by).filter(Boolean)));
+        const { data: people } = ids.length
+          ? await supabase.from('user_master').select('id, full_name, profile_photo').in('id', ids)
+          : { data: [] as any[] };
+        const byId = new Map((people || []).map((p: any) => [p.id, p]));
+        setMessages(data.map((m: any) => ({ ...m, performed_by: byId.get(m.performed_by) || null })));
+      }
     }
     loadHistory();
 

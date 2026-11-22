@@ -27,10 +27,11 @@ export async function fetchMyWorkItems(): Promise<MyWorkItem[]> {
   try {
     const { data: tasks } = await supabaseAdmin
       .from("tasks")
-      .select("id, task_code, title, priority, due_date, created_at, status:status_id(status_name, is_closed)")
+      // tasks: title is "subject", due date is end_date, priority is priority_id → priority_master
+      .select("id, task_code, code, subject, end_date, created_at, status:status_id(status_name, is_closed), priority:priority_id(priority_name)")
       .eq("assigned_to", user.id)
       .eq("is_deleted", false)
-      .order("due_date", { ascending: true, nullsFirst: false })
+      .order("end_date", { ascending: true, nullsFirst: false })
       .limit(50);
 
     if (tasks) {
@@ -42,11 +43,11 @@ export async function fetchMyWorkItems(): Promise<MyWorkItem[]> {
             module: "TASK_WORKFLOW",
             moduleName: "Tasks",
             type: "task",
-            title: t.title,
-            code: t.task_code,
+            title: t.subject,
+            code: t.task_code || t.code,
             status: (t.status as any)?.status_name || "Active",
-            priority: t.priority,
-            dueDate: t.due_date,
+            priority: (t.priority as any)?.priority_name,
+            dueDate: t.end_date,
             href: `/tasks/${t.id}`,
             createdAt: t.created_at,
           });
@@ -61,8 +62,9 @@ export async function fetchMyWorkItems(): Promise<MyWorkItem[]> {
   try {
     const { data: tickets } = await supabaseAdmin
       .from("tickets")
-      .select("id, ticket_number, title, priority, created_at, status:status_id(status_name, is_closed)")
-      .or(`assigned_to.eq.${user.id},creator_id.eq.${user.id}`)
+      // tickets: code (not ticket_number), assignee_id (not assigned_to), priority via priority_id
+      .select("id, code, title, due_date, created_at, status:status_id(status_name, is_closed), priority:priority_id(priority_name)")
+      .or(`assignee_id.eq.${user.id},creator_id.eq.${user.id}`)
       .eq("is_deleted", false)
       .order("created_at", { ascending: false })
       .limit(30);
@@ -77,10 +79,10 @@ export async function fetchMyWorkItems(): Promise<MyWorkItem[]> {
             moduleName: "Tickets",
             type: "ticket",
             title: t.title,
-            code: t.ticket_number,
+            code: t.code,
             status: (t.status as any)?.status_name || "Open",
-            priority: t.priority,
-            dueDate: null,
+            priority: (t.priority as any)?.priority_name,
+            dueDate: t.due_date,
             href: `/tickets/${t.id}`,
             createdAt: t.created_at,
           });
@@ -95,8 +97,9 @@ export async function fetchMyWorkItems(): Promise<MyWorkItem[]> {
   try {
     const { data: reqs } = await supabaseAdmin
       .from("requirements")
-      .select("id, req_code, title, priority, created_at, status:status_id(status_name, is_closed)")
-      .or(`created_by.eq.${user.id},owner_id.eq.${user.id}`)
+      // requirements: code (not req_code), creator_id (not created_by), priority via priority_id
+      .select("id, code, title, due_date, created_at, status:status_id(status_name, is_closed), priority:priority_id(priority_name)")
+      .or(`creator_id.eq.${user.id},owner_id.eq.${user.id}`)
       .eq("is_deleted", false)
       .order("created_at", { ascending: false })
       .limit(30);
@@ -111,10 +114,10 @@ export async function fetchMyWorkItems(): Promise<MyWorkItem[]> {
             moduleName: "Requirements",
             type: "requirement",
             title: r.title,
-            code: r.req_code,
+            code: r.code,
             status: (r.status as any)?.status_name || "Draft",
-            priority: r.priority,
-            dueDate: null,
+            priority: (r.priority as any)?.priority_name,
+            dueDate: r.due_date,
             href: `/requirements/${r.id}`,
             createdAt: r.created_at,
           });

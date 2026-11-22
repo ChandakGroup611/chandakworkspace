@@ -242,28 +242,8 @@ export class LifecycleManager {
           };
         }
       }
-    } else if (batch.root_entity_type === 'TICKET') {
-      const { data: ticket } = await supabaseAdmin
-        .from('tickets')
-        .select('workspace_id')
-        .eq('id', batch.root_entity_id)
-        .single();
-
-      if (ticket?.workspace_id) {
-        const { data: ws } = await supabaseAdmin
-          .from('workspaces')
-          .select('is_deleted')
-          .eq('id', ticket.workspace_id)
-          .single();
-
-        if (ws?.is_deleted) {
-          return {
-            success: false,
-            error: "Cannot restore ticket because its workspace is in the trash. Please restore the workspace first."
-          };
-        }
-      }
     }
+    // Tickets are not tied to a workspace (tickets has no workspace_id column), so a ticket has no parent to check.
 
     // 3. Clear metadata across all tables for this batch
     const clearPayload = {

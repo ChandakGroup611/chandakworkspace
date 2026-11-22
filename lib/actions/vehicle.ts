@@ -6871,15 +6871,24 @@ export async function sendVehicleComplianceExpiryReminderAction(
       return { success: false, error: "Vehicle ID is required" };
     }
 
-    const { data: veh, error } = await supabaseAdmin
+    // vehicles has no driver column: the link is drivers.assigned_vehicle_id (as in fetchVehiclesList).
+    const { data: vehRow, error } = await supabaseAdmin
       .from("vehicles")
-      .select("*, assignedDriver:drivers!assigned_driver_id(id, full_name, phone, license_number, license_expiry_date)")
+      .select("*")
       .eq("id", vehicleId)
       .single();
 
-    if (error || !veh) {
+    if (error || !vehRow) {
       return { success: false, error: error?.message || "Vehicle not found" };
     }
+    const { data: assignedDriver } = await supabaseAdmin
+      .from("drivers")
+      .select("id, full_name, phone, license_number, license_expiry_date")
+      .eq("assigned_vehicle_id", vehicleId)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    const veh: any = { ...vehRow, assignedDriver: assignedDriver || null };
 
     const isEv = isElectricFuel(veh.fuel_type);
     if (isEv && (docType.toUpperCase() === "PUC" || docType.toUpperCase().includes("EMISSION"))) {

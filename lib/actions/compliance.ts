@@ -175,7 +175,8 @@ export async function fetchComplianceAmc(isDeleted: boolean = false) {
   await verifyAccess("TRASH_VIEW");
   const { data, error } = await supabaseAdmin
     .from('software_amc')
-    .select('id, software_name, vendor_name, is_deleted, created_at, updated_at, deleted_by, deleted_at, delete_batch_id')
+    // software_amc has no vendor_name column; the vendor name comes from vendor_master.
+    .select('id, software_name, vendor:vendor_master(name), is_deleted, created_at, updated_at, deleted_by, deleted_at, delete_batch_id')
     .eq('is_deleted', isDeleted)
     .order('updated_at', { ascending: false });
 
@@ -183,7 +184,7 @@ export async function fetchComplianceAmc(isDeleted: boolean = false) {
     console.error("Error fetching AMC for compliance:", error);
     throw new Error(`Failed to fetch compliance AMC: ${error.message}`);
   }
-  return await hydrateTrashMetadata(data || []);
+  return await hydrateTrashMetadata((data || []).map(({ vendor, ...r }: any) => ({ ...r, vendor_name: vendor?.name ?? null })));
 }
 
 export async function fetchComplianceMaster(table: string, nameKey: string, codeKey: string, isDeleted: boolean = false) {

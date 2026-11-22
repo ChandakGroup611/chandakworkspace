@@ -807,10 +807,12 @@ export async function updateRequirementIntake(reqId: string, payload: any, perfo
   };
   
   // Conditionally add new fields if provided in payload
+  // story_points, estimated_cost and acceptance_criteria are not columns of requirements
+  // (writing them failed the whole update; reading them failed the change audit below).
   const optionalFields = [
-    'target_release', 'story_points', 'estimated_effort', 'estimated_cost', 
-    'budget_impact', 'start_date', 'expected_completion_date', 
-    'acceptance_criteria', 'dependency_notes', 'requirement_reason'
+    'target_release', 'estimated_effort',
+    'budget_impact', 'start_date', 'expected_completion_date',
+    'dependency_notes', 'requirement_reason'
   ];
   
   optionalFields.forEach(field => {
@@ -823,9 +825,9 @@ export async function updateRequirementIntake(reqId: string, payload: any, perfo
     .from('requirements')
     .select(`
       title, scope, department_id, software_system_id, priority_id,
-      target_release, story_points, estimated_effort, estimated_cost,
+      target_release, estimated_effort,
       budget_impact, start_date, expected_completion_date,
-      acceptance_criteria, dependency_notes, requirement_reason,
+      dependency_notes, requirement_reason,
       department:departments!requirements_department_id_fkey(name),
       priority:priority_master!requirements_priority_id_fkey(name:priority_name),
       software_system:software_systems(name)

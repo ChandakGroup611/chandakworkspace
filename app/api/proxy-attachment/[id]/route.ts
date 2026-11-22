@@ -234,30 +234,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       }
     }
 
-    if (!attachment) {
-      // Check if ID matches an attachment inside vehicle_parts
-      const { data: partRecords } = await supabaseAdmin
-        .from('vehicle_parts')
-        .select('id, attachments')
-        .not('attachments', 'is', null);
-
-      if (partRecords) {
-        for (const pr of partRecords) {
-          const atts = pr.attachments;
-          if (Array.isArray(atts)) {
-            const match = atts.find((a: any) => a.id === id || a.file_name === id);
-            if (match && match.file_url) {
-              attachment = {
-                file_name: match.file_name || 'part_document.pdf',
-                file_url: match.file_url,
-                file_type: match.file_type || null
-              };
-              break;
-            }
-          }
-        }
-      }
-    }
+    // vehicle_parts has no attachments column (part documents are served from vehicle_documents above).
 
     if (!attachment) {
       // Check if ID matches an insurance policy
@@ -314,12 +291,13 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       // Check if ID matches an attachment inside requirements
       const { data: reqWithAtts } = await supabaseAdmin
         .from('requirements')
-        .select('id, attachments, custom_fields')
-        .not('attachments', 'is', null);
+        // requirements has no attachments column; attachments are kept in custom_fields.attachments
+        .select('id, custom_fields')
+        .not('custom_fields->attachments', 'is', null);
 
       if (reqWithAtts) {
         for (const req of reqWithAtts) {
-          const atts = Array.isArray(req.attachments) ? req.attachments : (Array.isArray(req.custom_fields?.attachments) ? req.custom_fields.attachments : []);
+          const atts = Array.isArray(req.custom_fields?.attachments) ? req.custom_fields.attachments : [];
           const match = atts.find((a: any) => a.id === id || a.file_name === id || a.storage_path === id);
           if (match && (match.file_url || match.url || match.storage_path)) {
             attachment = {

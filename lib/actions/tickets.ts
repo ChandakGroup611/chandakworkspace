@@ -1214,7 +1214,7 @@ export async function fetchTicketMetrics() {
     .from('tickets')
     .select(`
       id, created_at, status_id, assignee_id, due_date, priority_id,
-      assignee:user_master!assignee_id(full_name),
+      assignee:user_master!fk_tickets_assignee(full_name),
       status_master(status_name, status_code, is_terminal, is_closed)
     `, { count: 'exact' })
     .eq('is_deleted', false);

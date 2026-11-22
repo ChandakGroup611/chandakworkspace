@@ -1333,7 +1333,7 @@ export async function fetchDesignWorkspaceUsersAction(): Promise<{
     ] = await Promise.all([
       supabase
         .from("user_master")
-        .select("id, full_name, email, user_code, profile_photo, is_active, role_id, department_id, designation_id, platform_role")
+        .select("id, full_name, email, user_code, profile_photo, is_active, role_id, department_id, designation_id") // user_master has no platform_role column
         .eq("is_deleted", false)
         .order("full_name", { ascending: true }),
       supabase.from("departments").select("id, code, name").eq("is_deleted", false),

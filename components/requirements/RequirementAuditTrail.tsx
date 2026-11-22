@@ -16,14 +16,20 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
 
   useEffect(() => {
     async function fetchEvents() {
+      // activity_events.performed_by has no foreign key to user_master, so names are looked up separately.
       const { data } = await supabase
         .from('activity_events')
-        .select('*, user_master!performed_by(full_name, designation_id)')
+        .select('*')
         .eq('module_type', 'REQUIREMENT')
         .eq('record_id', requirementId)
         .order('performed_at', { ascending: false });
-      
-      setEvents(data || []);
+
+      const ids = Array.from(new Set((data || []).map((e: any) => e.performed_by).filter(Boolean)));
+      const { data: people } = ids.length
+        ? await supabase.from('user_master').select('id, full_name, designation_id').in('id', ids)
+        : { data: [] as any[] };
+      const byId = new Map((people || []).map((p: any) => [p.id, p]));
+      setEvents((data || []).map((e: any) => ({ ...e, user_master: byId.get(e.performed_by) || null })));
       setLoading(false);
     }
     fetchEvents();
