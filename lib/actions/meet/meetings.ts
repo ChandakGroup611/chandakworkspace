@@ -480,6 +480,23 @@ export async function updateMeeting(input: {
   defaultDurationMinutes?: number;
   mode?: string;
   videoLink?: string;
+  // Full-form edit (same fields as createMeeting), sent by the shared series form in edit mode.
+  projectId?: string;
+  meetingTypeId?: string;
+  departmentId?: string;
+  chairId?: string;
+  minuteTakerId?: string;
+  videoProvider?: string;
+  defaultStartTime?: string;
+  allowAttendeesAddPoints?: boolean;
+  isConfidential?: boolean;
+  requiresMomApproval?: boolean;
+  preUpdateEnabled?: boolean;
+  /**
+   * Standing attendees ticked in the form. Only "required"/"attendee" user rows are
+   * synced; organizer, chair, minute-taker and guest rows are left alone.
+   */
+  attendeeUserIds?: string[];
 }) {
   try {
     const { userId } = await requireMeet("MEET_UPDATE", { meetingId: input.meetingId, requireOrganizerOrChair: true });
@@ -487,6 +504,18 @@ export async function updateMeeting(input: {
     const updatePayload: any = {
       updated_at: new Date().toISOString(),
     };
+
+    if (input.projectId !== undefined) updatePayload.project_id = input.projectId || null;
+    if (input.meetingTypeId !== undefined && input.meetingTypeId) updatePayload.meeting_type_id = input.meetingTypeId;
+    if (input.departmentId !== undefined) updatePayload.department_id = input.departmentId || null;
+    if (input.chairId !== undefined) updatePayload.chair_id = input.chairId || null;
+    if (input.minuteTakerId !== undefined) updatePayload.default_minute_taker_id = input.minuteTakerId || null;
+    if (input.videoProvider !== undefined) updatePayload.video_provider = input.videoProvider;
+    if (input.defaultStartTime !== undefined && input.defaultStartTime) updatePayload.default_start_time = input.defaultStartTime;
+    if (input.allowAttendeesAddPoints !== undefined) updatePayload.allow_attendees_add_points = input.allowAttendeesAddPoints;
+    if (input.isConfidential !== undefined) updatePayload.is_confidential = input.isConfidential;
+    if (input.requiresMomApproval !== undefined) updatePayload.requires_mom_approval = input.requiresMomApproval;
+    if (input.preUpdateEnabled !== undefined) updatePayload.pre_update_enabled = input.preUpdateEnabled;
 
     if (input.title !== undefined) updatePayload.title = input.title;
     if (input.description !== undefined) updatePayload.description = input.description;
@@ -505,6 +534,27 @@ export async function updateMeeting(input: {
       .single();
 
     if (error) return { success: false, error: error.message };
+
+    if (input.attendeeUserIds) {
+      const SYNCED_ROLES = ["required", "attendee"];
+      const { data: existing } = await supabaseAdmin
+        .from("meet_meeting_members")
+        .select("id, user_id, role")
+        .eq("meeting_id", input.meetingId);
+      const rows = existing || [];
+      const wanted = new Set(input.attendeeUserIds.filter(Boolean));
+      const present = new Set(rows.filter((r: any) => r.user_id).map((r: any) => r.user_id as string));
+
+      const toRemove = rows.filter((r: any) => r.user_id && SYNCED_ROLES.includes(r.role) && !wanted.has(r.user_id)).map((r: any) => r.id);
+      const toAdd = Array.from(wanted).filter((uid) => !present.has(uid));
+
+      if (toRemove.length) await supabaseAdmin.from("meet_meeting_members").delete().in("id", toRemove);
+      if (toAdd.length) {
+        await supabaseAdmin
+          .from("meet_meeting_members")
+          .insert(toAdd.map((uid) => ({ meeting_id: input.meetingId, user_id: uid, role: "required" })));
+      }
+    }
 
     await supabaseAdmin.from("meet_activity_log").insert({
       entity_type: "meeting",

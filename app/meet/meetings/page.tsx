@@ -16,6 +16,7 @@ import { getMeetings } from "@/lib/actions/meet/meetings";
 import { MeetHeader } from "@/components/meet/MeetHeader";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
+import { RecordHighlighter, RecordLinkActions } from "@/components/ui/record";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default async function MeetingsPage({
 
   return (
     <div className="space-y-6">
+      <RecordHighlighter />
       <MeetHeader
         title="Meeting Series"
         description="All standing and recurring review series across Chandak Group entities"
@@ -108,6 +110,7 @@ export default async function MeetingsPage({
           {meetings.map((meeting) => (
             <div
               key={meeting.id}
+              data-record-id={meeting.id}
               className="theme-card-structural p-5 flex flex-col justify-between hover:border-border-active transition-all group"
             >
               <div>
@@ -126,7 +129,7 @@ export default async function MeetingsPage({
                   </div>
                 </div>
 
-                <Link href={`/meet/meetings/${meeting.id}`}>
+                <Link href={`/meet/meetings/${meeting.id}?tab=details`}>
                   <h3 className="text-[15px] font-semibold text-heading group-hover:text-primary transition-colors line-clamp-1">
                     {meeting.title}
                   </h3>
@@ -178,13 +181,14 @@ export default async function MeetingsPage({
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Link href={`/meet/meetings/${meeting.id}`}>
-                    <AppButton variant="outline" size="sm">
-                      Manage
-                    </AppButton>
-                  </Link>
-                  <Link href={`/meet/meetings/${meeting.id}`}>
+                {/* Record standard: View · Edit, then module actions */}
+                <div className="flex items-center gap-1">
+                  <RecordLinkActions
+                    label={meeting.title}
+                    viewHref={`/meet/meetings/${meeting.id}?tab=details`}
+                    editHref={`/meet/meetings/${meeting.id}/edit`}
+                  />
+                  <Link href={`/meet/meetings/${meeting.id}?tab=sessions`}>
                     <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-3 w-3" />}>
                       Session
                     </AppButton>

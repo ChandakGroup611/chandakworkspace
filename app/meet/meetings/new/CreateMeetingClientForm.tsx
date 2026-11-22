@@ -2,8 +2,16 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AppButton } from "@/components/ui/AppButton";
-import { createMeeting } from "@/lib/actions/meet/meetings";
+import { createMeeting, updateMeeting } from "@/lib/actions/meet/meetings";
+import {
+  RecordModeProvider,
+  RecordFieldset,
+  RecordFormActions,
+  CreateOnly,
+  EditOnly,
+  recordCreatedHref,
+  type RecordMode,
+} from "@/components/ui/record";
 import { toast } from "react-toastify";
 import {
   Calendar,
@@ -13,7 +21,6 @@ import {
   MapPin,
   CheckCircle2,
   Layers,
-  ArrowRight,
   Shield,
   FileCheck2,
   Sparkles,
@@ -21,7 +28,7 @@ import {
   Copy,
   Loader2,
 } from "lucide-react";
-import type { MeetingType, MeetingRoom, MeetingTemplate } from "@/types/meet";
+import type { MeetingType, MeetingRoom, MeetingTemplate, MeetingSeries } from "@/types/meet";
 
 interface CreateMeetingClientFormProps {
   masters: {
@@ -33,35 +40,53 @@ interface CreateMeetingClientFormProps {
     users: any[];
     projects?: any[];
   };
+  /** create (default) · view (same form, read-only) · edit (same form, pre-filled) */
+  recordMode?: RecordMode;
+  /** The saved series, required for view / edit. */
+  meeting?: MeetingSeries;
+  /** Whether the viewer may edit (shows the Edit button in view mode). */
+  canEdit?: boolean;
 }
 
-export default function CreateMeetingClientForm({ masters }: CreateMeetingClientFormProps) {
+const SYNCED_MEMBER_ROLES = ["required", "attendee"];
+
+/**
+ * Meeting series form. The same component creates, shows and edits a series so the
+ * user sees a saved series exactly the way they filled it in.
+ */
+export default function CreateMeetingClientForm({ masters, recordMode = "create", meeting, canEdit = true }: CreateMeetingClientFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const m = recordMode === "create" ? undefined : meeting;
 
-  // Form states
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [projectId, setProjectId] = useState("");
-  const [meetingTypeId, setMeetingTypeId] = useState(masters.types[0]?.id || "");
-  const [departmentId, setDepartmentId] = useState("");
-  const [organizerId, setOrganizerId] = useState(masters.users[0]?.id || "");
-  const [chairId, setChairId] = useState("");
-  const [minuteTakerId, setMinuteTakerId] = useState("");
-  const [mode, setMode] = useState<"in_person" | "online" | "hybrid">("hybrid");
-  const [roomId, setRoomId] = useState("");
-  const [videoProvider, setVideoProvider] = useState<"none" | "google_meet" | "teams" | "zoom">("google_meet");
-  const [videoLink, setVideoLink] = useState("");
+  // Form states (seeded from the saved series in view / edit)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(m?.template_id || "");
+  const [title, setTitle] = useState(m?.title || "");
+  const [description, setDescription] = useState(m?.description || "");
+  const [projectId, setProjectId] = useState(m?.project_id || "");
+  const [meetingTypeId, setMeetingTypeId] = useState(m?.meeting_type_id || masters.types[0]?.id || "");
+  const [departmentId, setDepartmentId] = useState(m?.department_id || "");
+  const [organizerId, setOrganizerId] = useState(m?.organizer_id || masters.users[0]?.id || "");
+  const [chairId, setChairId] = useState(m?.chair_id || "");
+  const [minuteTakerId, setMinuteTakerId] = useState(m?.default_minute_taker_id || "");
+  const [mode, setMode] = useState<"in_person" | "online" | "hybrid">((m?.mode as any) || "hybrid");
+  const [roomId, setRoomId] = useState(m?.room_id || "");
+  const [videoProvider, setVideoProvider] = useState<"none" | "google_meet" | "teams" | "zoom">((m?.video_provider as any) || "google_meet");
+  const [videoLink, setVideoLink] = useState(m?.video_link || "");
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
-  const [startTime, setStartTime] = useState("10:00:00");
-  const [duration, setDuration] = useState(60);
-  const [recurrence, setRecurrence] = useState<"none" | "daily" | "weekly" | "biweekly" | "monthly">("weekly");
-  const [allowAddPoints, setAllowAddPoints] = useState(true);
-  const [isConfidential, setIsConfidential] = useState(false);
-  const [requiresMomApproval, setRequiresMomApproval] = useState(false);
-  const [preUpdateEnabled, setPreUpdateEnabled] = useState(true);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [startTime, setStartTime] = useState(m?.default_start_time || "10:00:00");
+  const [duration, setDuration] = useState(m?.default_duration_minutes || 60);
+  const [recurrence, setRecurrence] = useState<"none" | "daily" | "weekly" | "biweekly" | "monthly">((m?.recurrence as any) || "weekly");
+  const [allowAddPoints, setAllowAddPoints] = useState(m?.allow_attendees_add_points ?? true);
+  const [isConfidential, setIsConfidential] = useState(m?.is_confidential ?? false);
+  const [requiresMomApproval, setRequiresMomApproval] = useState(m?.requires_mom_approval ?? false);
+  const [preUpdateEnabled, setPreUpdateEnabled] = useState(m?.pre_update_enabled ?? true);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
+    () =>
+      (m?.members || [])
+        .filter((mb: any) => mb.user?.id && SYNCED_MEMBER_ROLES.includes(mb.role))
+        .map((mb: any) => mb.user.id as string)
+  );
   const [generatingLink, setGeneratingLink] = useState(false);
 
   const handleGenerateTeamsLink = async () => {
@@ -136,6 +161,49 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
       return;
     }
 
+    if (recordMode === "view") return;
+
+    if (recordMode === "edit" && meeting) {
+      try {
+        setSubmitting(true);
+        const res = await updateMeeting({
+          meetingId: meeting.id,
+          title: title.trim(),
+          description: description.trim(),
+          projectId,
+          meetingTypeId,
+          departmentId,
+          organizerId,
+          chairId,
+          minuteTakerId,
+          mode,
+          roomId,
+          videoProvider,
+          videoLink: videoLink.trim(),
+          defaultStartTime: startTime,
+          defaultDurationMinutes: duration,
+          recurrence,
+          allowAttendeesAddPoints: allowAddPoints,
+          isConfidential,
+          requiresMomApproval,
+          preUpdateEnabled,
+          attendeeUserIds: selectedUserIds,
+        });
+        if (res.success) {
+          toast.success(`${meeting.code} updated`);
+          router.push(`/meet/meetings/${meeting.id}?tab=details`);
+          router.refresh();
+        } else {
+          toast.error(res.error || "Failed to update meeting series");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to update meeting series");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -203,9 +271,10 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
         members,
       });
 
-      if (res.success && res.sessionId) {
-        toast.success("Meeting series scheduled and Session S-001 created!");
-        router.push(`/meet/sessions/${res.sessionId}`);
+      if (res.success && res.meetingId) {
+        // Record standard: land on the list with the new series highlighted.
+        toast.success("Meeting series scheduled and first session created");
+        router.push(recordCreatedHref("/meet/meetings", res.meetingId));
       } else {
         toast.error(res.error || "Failed to schedule meeting");
       }
@@ -217,8 +286,11 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
   };
 
   return (
+    <RecordModeProvider mode={recordMode}>
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Template Selection Quick Cards */}
+      <RecordFieldset className="space-y-6">
+      {/* Template Selection Quick Cards (only while creating) */}
+      <CreateOnly>
       <div className="theme-card-structural p-5">
         <label className="block text-[13.5px] font-semibold text-heading mb-3 flex items-center gap-2">
           <Layers className="h-4 w-4 text-primary" />
@@ -255,6 +327,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
           ))}
         </div>
       </div>
+      </CreateOnly>
 
       {/* Basic Meeting Information */}
       <div className="theme-card-structural p-5 space-y-4">
@@ -370,6 +443,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
             </select>
           </div>
 
+          <CreateOnly>
           <div>
             <label className="block text-[12.5px] font-medium text-foreground mb-1">
               First Session Date
@@ -382,6 +456,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-[13px] text-foreground focus:border-primary focus:outline-none"
             />
           </div>
+          </CreateOnly>
 
           <div>
             <label className="block text-[12.5px] font-medium text-foreground mb-1">
@@ -463,6 +538,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
                   Direct Teams Parameters
                 </span>
               </div>
+              <EditOnly>
               <button
                 type="button"
                 onClick={handleGenerateTeamsLink}
@@ -472,6 +548,7 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
                 {generatingLink ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                 <span>{videoLink ? "Regenerate Teams Link" : "Generate Teams Meeting Link"}</span>
               </button>
+              </EditOnly>
             </div>
 
             <div className="flex items-center gap-2">
@@ -657,27 +734,20 @@ export default function CreateMeetingClientForm({ masters }: CreateMeetingClient
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-2">
-        <AppButton
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={() => router.back()}
-          disabled={submitting}
-        >
-          Cancel
-        </AppButton>
-        <AppButton
-          type="submit"
-          variant="primary"
-          size="lg"
-          isLoading={submitting}
-          rightIcon={<ArrowRight className="h-4 w-4" />}
-        >
-          {submitting ? "Scheduling…" : "Schedule Meeting Series"}
-        </AppButton>
-      </div>
+      </RecordFieldset>
+
+      {/* Standard record actions: create → Cancel / Create · view → Back / Edit · edit → Cancel / Save */}
+      <RecordFormActions
+        entity="meeting series"
+        submitLabel={recordMode === "create" ? (submitting ? "Scheduling…" : "Schedule meeting series") : undefined}
+        submitting={submitting}
+        canEdit={canEdit}
+        listHref="/meet/meetings"
+        cancelHref={meeting && recordMode === "edit" ? `/meet/meetings/${meeting.id}?tab=details` : "/meet/meetings"}
+        editHref={meeting ? `/meet/meetings/${meeting.id}/edit` : undefined}
+        className="theme-card-structural"
+      />
     </form>
+    </RecordModeProvider>
   );
 }

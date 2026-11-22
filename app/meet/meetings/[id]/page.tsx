@@ -20,7 +20,9 @@ import {
   FileText,
   Building2,
 } from "lucide-react";
-import MeetingDetailTabs from "./MeetingDetailTabs";
+import MeetingDetailTabs, { type DetailTab } from "./MeetingDetailTabs";
+
+const TABS: DetailTab[] = ["details", "sessions", "members", "points", "settings"];
 
 export const dynamic = "force-dynamic";
 
@@ -34,10 +36,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function MeetingDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const { tab } = await searchParams;
+  const initialTab = TABS.includes(tab as DetailTab) ? (tab as DetailTab) : "details";
   const [meeting, sessions, masters, allPoints] = await Promise.all([
     getMeetingById(id),
     getSessionsForMeeting(id),
@@ -150,6 +156,7 @@ export default async function MeetingDetailPage({
         sessions={sessions}
         masters={masters}
         initialPoints={allPoints}
+        initialTab={initialTab}
       />
     </div>
   );

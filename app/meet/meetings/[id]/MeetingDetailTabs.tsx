@@ -27,7 +27,8 @@ import {
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { createSessionForMeeting } from "@/lib/actions/meet/sessions";
-import { updateMeeting, addMeetingMember, removeMeetingMember } from "@/lib/actions/meet/meetings";
+import { addMeetingMember, removeMeetingMember } from "@/lib/actions/meet/meetings";
+import CreateMeetingClientForm from "../new/CreateMeetingClientForm";
 import { toast } from "react-toastify";
 import type { MeetingSeries, MeetingSession } from "@/types/meet";
 
@@ -40,15 +41,21 @@ interface MeetingDetailTabsProps {
     categories?: any[];
   };
   initialPoints?: any[];
+  /** Tab opened from the URL (?tab=details|sessions|members|points|settings). */
+  initialTab?: DetailTab;
 }
+
+export type DetailTab = "details" | "sessions" | "members" | "points" | "settings";
 
 export default function MeetingDetailTabs({
   meeting,
   sessions: initialSessions,
   masters,
   initialPoints = [],
+  initialTab = "details",
 }: MeetingDetailTabsProps) {
-  const [activeTab, setActiveTab] = useState<"sessions" | "members" | "points" | "settings">("sessions");
+  // Record standard: opening a series shows it the way it was created (Series details) first.
+  const [activeTab, setActiveTab] = useState<DetailTab>(initialTab);
   const [sessions, setSessions] = useState<MeetingSession[]>(initialSessions);
   const [members, setMembers] = useState<any[]>(meeting.members || []);
   const [points, setPoints] = useState<any[]>(initialPoints);
@@ -57,7 +64,6 @@ export default function MeetingDetailTabs({
   // Modals state
   const [isScheduleSessionOpen, setIsScheduleSessionOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [isEditSeriesOpen, setIsEditSeriesOpen] = useState(false);
 
   // Schedule Session Form
   const [sessionStartDate, setSessionStartDate] = useState(new Date().toISOString().split("T")[0]);
@@ -103,13 +109,6 @@ export default function MeetingDetailTabs({
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState("attendee");
 
-  // Edit Series Form
-  const [editTitle, setEditTitle] = useState(meeting.title);
-  const [editDesc, setEditDesc] = useState(meeting.description || "");
-  const [editRecurrence, setEditRecurrence] = useState(meeting.recurrence);
-  const [editOrganizerId, setEditOrganizerId] = useState(meeting.organizer_id);
-  const [editRoomId, setEditRoomId] = useState(meeting.room_id || "");
-  const [editDuration, setEditDuration] = useState(meeting.default_duration_minutes || 60);
 
   // Points filter
   const [pointSearch, setPointSearch] = useState("");
@@ -233,38 +232,23 @@ export default function MeetingDetailTabs({
     });
   };
 
-  const handleEditSeriesSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    startTransition(async () => {
-      try {
-        const res = await updateMeeting({
-          meetingId: meeting.id,
-          title: editTitle,
-          description: editDesc,
-          recurrence: editRecurrence,
-          organizerId: editOrganizerId,
-          roomId: editRoomId || undefined,
-          defaultDurationMinutes: Number(editDuration),
-        });
-
-        if (res.success) {
-          toast.success("Meeting series details updated");
-          setIsEditSeriesOpen(false);
-          window.location.reload();
-        } else {
-          toast.error(res.error || "Failed to update series");
-        }
-      } catch (err: any) {
-        toast.error(err.message || "Failed to update series");
-      }
-    });
-  };
-
   return (
     <div className="space-y-4">
       {/* Tab bar with Action Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border gap-2">
         <div className="flex items-center gap-1 text-[13px] font-medium overflow-x-auto">
+          <button
+            onClick={() => setActiveTab("details")}
+            className={`flex items-center gap-2 border-b-2 px-4 py-2.5 transition-colors whitespace-nowrap ${
+              activeTab === "details"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted hover:text-foreground"
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            Series details
+          </button>
+
           <button
             onClick={() => setActiveTab("sessions")}
             className={`flex items-center gap-2 border-b-2 px-4 py-2.5 transition-colors whitespace-nowrap ${
@@ -338,18 +322,20 @@ export default function MeetingDetailTabs({
             </AppButton>
           )}
 
-          {activeTab === "settings" && (
-            <AppButton
-              variant="outline"
-              size="sm"
-              leftIcon={<Edit className="h-3.5 w-3.5" />}
-              onClick={() => setIsEditSeriesOpen(true)}
-            >
-              Edit Series
-            </AppButton>
+          {(activeTab === "settings" || activeTab === "details") && (
+            <Link href={`/meet/meetings/${meeting.id}/edit`}>
+              <AppButton variant="outline" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />}>
+                Edit series
+              </AppButton>
+            </Link>
           )}
         </div>
       </div>
+
+      {/* Tab 0: Series details — the create form, read-only */}
+      {activeTab === "details" && (
+        <CreateMeetingClientForm masters={masters as any} recordMode="view" meeting={meeting} />
+      )}
 
       {/* Tab 1: Sessions */}
       {activeTab === "sessions" && (
@@ -554,14 +540,11 @@ export default function MeetingDetailTabs({
         <div className="theme-card-structural p-5 space-y-4 text-[13px] text-foreground">
           <div className="flex items-center justify-between">
             <h3 className="text-[14px] font-semibold text-heading">Meeting Policies & Governance</h3>
-            <AppButton
-              variant="outline"
-              size="sm"
-              leftIcon={<Edit className="h-3.5 w-3.5" />}
-              onClick={() => setIsEditSeriesOpen(true)}
-            >
-              Edit Series Details
-            </AppButton>
+            <Link href={`/meet/meetings/${meeting.id}/edit`}>
+              <AppButton variant="outline" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />}>
+                Edit series details
+              </AppButton>
+            </Link>
           </div>
 
           <ul className="space-y-2 text-subtle">
@@ -818,136 +801,6 @@ export default function MeetingDetailTabs({
         </div>
       )}
 
-      {/* Edit Series Modal */}
-      {isEditSeriesOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-[15px] font-semibold text-heading">Edit Meeting Series</h3>
-              <button
-                onClick={() => setIsEditSeriesOpen(false)}
-                className="text-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleEditSeriesSubmit} className="mt-4 space-y-3 text-[13px]">
-              <div>
-                <label className="block text-[12px] font-medium text-foreground mb-1">
-                  Series Title *
-                </label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  required
-                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-medium text-foreground mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                  rows={2}
-                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[12px] font-medium text-foreground mb-1">
-                    Recurrence
-                  </label>
-                  <select
-                    value={editRecurrence}
-                    onChange={(e) => setEditRecurrence(e.target.value as any)}
-                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
-                  >
-                    <option value="none">None (Ad-hoc)</option>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="biweekly">Bi-weekly</option>
-                    <option value="monthly">Monthly</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-medium text-foreground mb-1">
-                    Default Duration (min)
-                  </label>
-                  <input
-                    type="number"
-                    value={editDuration}
-                    onChange={(e) => setEditDuration(Number(e.target.value))}
-                    min={15}
-                    step={15}
-                    className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-medium text-foreground mb-1">
-                  Organizer
-                </label>
-                <select
-                  value={editOrganizerId}
-                  onChange={(e) => setEditOrganizerId(e.target.value)}
-                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
-                >
-                  {masters?.users?.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-medium text-foreground mb-1">
-                  Default Room
-                </label>
-                <select
-                  value={editRoomId}
-                  onChange={(e) => setEditRoomId(e.target.value)}
-                  className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
-                >
-                  <option value="">No Default Room</option>
-                  {masters?.rooms?.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} ({r.location})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mt-5 flex justify-end gap-2 pt-3 border-t border-border">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditSeriesOpen(false)}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  isLoading={isPending}
-                >
-                  Save Changes
-                </AppButton>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
