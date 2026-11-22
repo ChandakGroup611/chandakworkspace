@@ -12,6 +12,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { AppButton } from "@/components/ui/AppButton";
+import { useRecordHighlight } from "@/components/ui/record";
 import * as A from "@/lib/budget/actions";
 import { addTowerFull } from "@/lib/budget/manual-actions";
 import { BUILDING_TYPES, RATE_BASES, fmt, fmtRupees, formatBudgetPeriod, versionTitle, versionSubtitle, dmy } from "@/lib/budget/format";
@@ -2452,6 +2453,8 @@ export function BudgetsRegistryTable({
 }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  // Record standard: the version just saved from the form is highlighted (?created=R<n>).
+  const highlight = useRecordHighlight();
 
   const filtered = rows.filter(({ version: v, totals: t, names }) => {
     if (statusFilter !== "all" && v.status !== statusFilter) return false;
@@ -2558,7 +2561,7 @@ export function BudgetsRegistryTable({
               const isOver = (t?.variance_cr ?? 0) < 0;
 
               return (
-                <tr key={v.id}>
+                <tr key={v.id} data-record-id={`R${v.number}`} data-highlight={highlight === `R${v.number}` || undefined}>
                   <td>
                     <div>
                       <strong className="text-sm text-foreground block">{title}</strong>
@@ -2625,6 +2628,23 @@ export function BudgetsRegistryTable({
                   </td>
                   <td className="actions">
                     <div className="actions-group">
+                      {/* Record standard: open the version in the same 6-step form it was made with */}
+                      <Link
+                        href={`/budget/${project.id}/create?mode=view&v=${v.number}`}
+                        className="btn-action primary"
+                        title="View this budget in the 6-step form it was entered with"
+                      >
+                        View
+                      </Link>
+                      {canManage && v.status === "draft" && (
+                        <Link
+                          href={`/budget/${project.id}/create`}
+                          className="btn-action"
+                          title="Edit this draft in the 6-step form"
+                        >
+                          Edit
+                        </Link>
+                      )}
                       <Link
                         href={`/budget/${project.id}/overview?v=${v.number}`}
                         className="btn-action"

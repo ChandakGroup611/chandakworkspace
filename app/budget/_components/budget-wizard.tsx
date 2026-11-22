@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 import { useEffect, useMemo, useState, useRef } from "react";
 import * as W from "@/lib/budget/wizard-actions";
 import { BUILDING_TYPES, RATE_BASES, fmt } from "@/lib/budget/format";
@@ -22,6 +24,14 @@ export interface WizardProps {
   towers: W.WizardTower[]; departments: Dept[]; lines: WizLine[]; gst: W.WizardGst[];
   deptRemarks: Record<string, string>;
   summaryOptions: Record<string, string[]>; gstRules: { id: number; name: string; rate: number; share: number }[];
+  /**
+   * Record standard: view a saved version in the same 6-step form it was made with.
+   * Steps stay navigable, every input is read-only and add / remove buttons are hidden.
+   */
+  readOnly?: boolean;
+  /** Shown as "Edit" in read-only mode when the viewer may change this version. */
+  editHref?: string;
+  editLabel?: string;
 }
 interface State {
   asOn: string; reason: string; areas: Record<string, string>; commitments: { name: string; area: string }[];
@@ -57,11 +67,15 @@ export function BudgetWizard(props: WizardProps) {
   const [saved, setSaved] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
   const number = props.draftNumber ?? props.nextNumber;
+  const readOnly = !!props.readOnly;
+  const router = useRouter();
+  const registryHref = `/budget/${props.projectId}/budgets`;
 
   // unsaved copy in this browser (a convenience only; the database is the record)
   useEffect(() => {
+    if (readOnly) return;
     try { const raw = localStorage.getItem(store); if (raw) setRestore(JSON.parse(raw)); } catch { }
-  }, [store]);
+  }, [store, readOnly]);
   useEffect(() => {
     if (!dirty) return;
     try { localStorage.setItem(store, JSON.stringify(s)); } catch { }
@@ -71,7 +85,7 @@ export function BudgetWizard(props: WizardProps) {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty, saved]);
-  const up = (f: (x: State) => State) => { setDirty(true); setS(f); };
+  const up = (f: (x: State) => State) => { if (readOnly) return; setDirty(true); setS(f); };
 
   // ---------- calculations shown live (the database works out the stored figures the same way) ----------
   const commitTotal = s.commitments.reduce((t, c) => t + n(c.area), 0);
@@ -140,7 +154,14 @@ export function BudgetWizard(props: WizardProps) {
       asOn: s.asOn, reason: s.reason, areas: s.areas, commitments: s.commitments, towers: s.towers, removed: s.removed, deptRemarks: s.deptRemarks,
       lines: s.lines.map(({ prevCtc: _p, incurredNow: _i, ...l }) => l), gst: s.gst,
     }),
-    (r) => { setSaved(r.versionNumber); setDirty(false); try { localStorage.removeItem(store); } catch { } },
+    (r) => {
+      setDirty(false);
+      try { localStorage.removeItem(store); } catch { }
+      setSaved(r.versionNumber);
+      toast.success(`R${r.versionNumber} saved as a draft. Send it for sign-off from its Overview.`);
+      router.push(`${registryHref}?created=R${r.versionNumber}`);
+      router.refresh();
+    },
   );
 
   const cur = props.departments.find((d) => d.id === dept) ?? props.departments[0];
@@ -170,7 +191,7 @@ export function BudgetWizard(props: WizardProps) {
         {STEPS.map((label, i) => (
           <li key={label} className={i === step ? "current" : i < step ? "done" : ""}>
             <button type="button" onClick={() => go(i)} aria-current={i === step ? "step" : undefined}>
-              <span className="step-badge">{problems[i].length ? "!" : i < step ? "✓" : i + 1}</span>{label}
+              <span className="step-badge">{!readOnly && problems[i].length ? "!" : i < step ? "✓" : i + 1}</span>{label}
             </button>
           </li>
         ))}
@@ -178,16 +199,19 @@ export function BudgetWizard(props: WizardProps) {
 
       <section className="panel wz-body">
         {step === 0 && <>
+          <fieldset disabled={readOnly} className={readOnly ? "wz-ro record-readonly" : "wz-ro"}>
           <h2>Version R{number} · {props.projectName}</h2>
-          <p className="sub">{props.draftNumber ? `You are changing draft R${props.draftNumber}.` : props.baseNumber ? `Saving opens R${number} as a draft, starting from the figures of approved R${props.baseNumber}; change what is different below.` : "This is the first budget of the project."}</p>
+          <p className="sub">{readOnly ? `Viewing R${number} as it was entered${props.baseNumber ? `, starting from R${props.baseNumber}` : ""}. Use Next to walk through every step.` : props.draftNumber ? `You are changing draft R${props.draftNumber}.` : props.baseNumber ? `Saving opens R${number} as a draft, starting from the figures of approved R${props.baseNumber}; change what is different below.` : "This is the first budget of the project."}</p>
           <div className="mg-row">
             <label>Figures as on *<input type="date" value={s.asOn} onChange={(e) => up((x) => ({ ...x, asOn: e.target.value }))} /></label>
             <label style={{ flex: 1, minWidth: 260 }}>Reason for this version<input type="text" value={s.reason} placeholder="For example: Q3 FY2026-27 revision" onChange={(e) => up((x) => ({ ...x, reason: e.target.value }))} /></label>
           </div>
-          <p className="note">Cost incurred counts every entry up to the as-on month. Nothing is saved until the last step.</p>
+          {!readOnly && <p className="note">Cost incurred counts every entry up to the as-on month. Nothing is saved until the last step.</p>}
+          </fieldset>
         </>}
 
         {step === 1 && <>
+          <fieldset disabled={readOnly} className={readOnly ? "wz-ro record-readonly" : "wz-ro"}>
           <h2>Project areas · R{number}</h2>
           <p className="sub">The areas of the workbook header. Rates per sq ft and PSF figures use them.</p>
           <div className="wz-areas">
@@ -205,9 +229,11 @@ export function BudgetWizard(props: WizardProps) {
             <tr className="total"><td>Net sale carpet area (A − commitments)</td><td className="n">{fmt(n(s.areas.total_carpet) - commitTotal)}</td><td></td></tr>
           </tbody></table></div>
           <button className="btn-action" onClick={() => up((x) => ({ ...x, commitments: [...x.commitments, { name: "", area: "" }] }))}>+ Commitment</button>
+          </fieldset>
         </>}
 
         {step === 2 && <>
+          <fieldset disabled={readOnly} className={readOnly ? "wz-ro record-readonly" : "wz-ro"}>
           <h2>Towers and OC dates</h2>
           <p className="sub">Skip this step if the project is not split by building. The building type places a tower&apos;s construction cost on the Summary.</p>
           <div className="scroll"><table className="mg-grid"><thead><tr><th className="label">Tower *</th><th>Building type</th><th className="n">Carpet (sft)</th><th className="n">Construction BUA (sft)</th><th>Planned OC date</th><th></th></tr></thead><tbody>
@@ -225,7 +251,8 @@ export function BudgetWizard(props: WizardProps) {
             {s.towers.length === 0 && <tr><td colSpan={6} className="sub">No towers. Add one, or go on to the budget lines.</td></tr>}
           </tbody></table></div>
           <button className="btn-action" onClick={() => up((x) => ({ ...x, towers: [...x.towers, { id: null, name: `Tower ${String.fromCharCode(65 + x.towers.length)}`, type: "", carpet_area: "", eng_area: "", oc_date: "" }] }))}>+ Tower</button>
-          <p className="note">Existing towers are removed under Project setup, once they carry no figure.</p>
+          {!readOnly && <p className="note">Existing towers are removed under Project setup, once they carry no figure.</p>}
+          </fieldset>
         </>}
 
         {step === 3 && cur && <>
@@ -240,7 +267,7 @@ export function BudgetWizard(props: WizardProps) {
               ))}
               <div className="wz-grand"><span>All departments</span><b>{fmt(grand.ctc)} Cr</b></div>
             </nav>
-            <div className="wz-dept">
+            <fieldset disabled={readOnly} className={readOnly ? "wz-dept wz-ro record-readonly" : "wz-dept wz-ro"}>
               <div className="mg-row mg-toolbar">
                 <h3 style={{ margin: 0 }}>{cur.name}</h3>
                 <button className="btn-action" onClick={() => suggest(cur)}>Fill suggestions</button>
@@ -277,11 +304,12 @@ export function BudgetWizard(props: WizardProps) {
                 </tbody></table></div>
               <label className="wz-remark">Department remark (shown on the Detail report)
                 <input type="text" value={s.deptRemarks[String(cur.id)] ?? ""} onChange={(e) => up((x) => ({ ...x, deptRemarks: { ...x.deptRemarks, [String(cur.id)]: e.target.value } }))} /></label>
-            </div>
+            </fieldset>
           </div>
         </>}
 
         {step === 4 && <>
+          <fieldset disabled={readOnly} className={readOnly ? "wz-ro record-readonly" : "wz-ro"}>
           <h2>GST lines</h2>
           <p className="sub">A GST line is worked out as the CTC of the lines it is charged on × GST % × eligible share %. Leave its amounts blank to calculate them, or type an amount to override.</p>
           {s.gst.map((g, i) => {
@@ -313,28 +341,31 @@ export function BudgetWizard(props: WizardProps) {
             </div>;
           })}
           <button className="btn-action primary" onClick={() => up((x) => ({ ...x, gst: [...x.gst, { key: newKey(), headId: null, departmentId: cur?.id ?? props.departments[0].id, category: "GST", subCategory: "", summary: null, rate: "18", share: "100", base: [], initial: "", ctc: "", remark: "" }] }))}>+ GST line</button>
+          </fieldset>
         </>}
 
         {step === 5 && <>
-          <h2>Review R{number} before saving</h2>
+          <h2>{readOnly ? `Review R${number}` : `Review R${number} before saving`}</h2>
           <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="n">Lines</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th><th className="n">Variance (a−b)</th></tr></thead><tbody>
             {all.filter((x) => x.count).map(({ d, initial, ctc, inc, count }) => <tr key={d.id}><td><button className="link" onClick={() => { setDept(d.id); go(3); }}>{d.name}</button></td><td className="n">{count}</td>
               <td className="n">{fmt(initial)}</td><td className="n">{fmt(ctc)}</td><td className="n">{fmt(inc)}</td><td className="n">{fmt(ctc - inc)}</td><td className="n"><span className={initial - ctc < 0 ? "neg" : ""}>{fmt(initial - ctc)}</span></td></tr>)}
             <tr className="total"><td>Total</td><td className="n">{s.lines.length + s.gst.length}</td><td className="n">{fmt(grand.initial)}</td><td className="n">{fmt(grand.ctc)}</td><td className="n">{fmt(grand.inc)}</td><td className="n">{fmt(grand.ctc - grand.inc)}</td><td className="n">{fmt(grand.initial - grand.ctc)}</td></tr>
           </tbody></table></div>
           <p className="note">As on {s.asOn.split("-").reverse().join("/")} · {s.towers.length} tower(s) · net sale carpet {fmt(n(s.areas.total_carpet) - commitTotal)} sft. Figures here are a preview; the database works out the final ones the same way.</p>
-          {allProblems.length > 0 && <div className="banner error"><div><b>Fix these before saving:</b><ul className="plain">{allProblems.slice(0, 12).map((p) => <li key={p}>{p}</li>)}</ul></div></div>}
-          {warnings.length > 0 && <div className="banner draft"><div><b>Can be saved, but check:</b><ul className="plain">{warnings.slice(0, 12).map((p) => <li key={p}>{p}</li>)}</ul>{warnings.length > 12 && `…and ${warnings.length - 12} more`}</div></div>}
+          {!readOnly && allProblems.length > 0 && <div className="banner error"><div><b>Fix these before saving:</b><ul className="plain">{allProblems.slice(0, 12).map((p) => <li key={p}>{p}</li>)}</ul></div></div>}
+          {!readOnly && warnings.length > 0 && <div className="banner draft"><div><b>Can be saved, but check:</b><ul className="plain">{warnings.slice(0, 12).map((p) => <li key={p}>{p}</li>)}</ul>{warnings.length > 12 && `…and ${warnings.length - 12} more`}</div></div>}
         </>}
 
-        {problems[step]?.length > 0 && step < 5 && <p className="bad-text">{problems[step].slice(0, 4).join(" · ")}</p>}
+        {!readOnly && problems[step]?.length > 0 && step < 5 && <p className="bad-text">{problems[step].slice(0, 4).join(" · ")}</p>}
         <div className="mg-foot">
           <button className="btn-action" disabled={step === 0} onClick={() => go(step - 1)}>← Back</button>
           <span className="note">Step {step + 1} of {STEPS.length} · CTC so far <b>{fmt(grand.ctc)} Cr</b>{dirty ? " · unsaved changes kept on this browser" : ""}</span>
           {/* save without walking to the last step; the same checks as Review apply */}
-          {step < 5 && dirty && <button className="btn-action" disabled={pending || allProblems.length > 0} title={allProblems.length ? `Fix first: ${allProblems[0]}` : undefined} onClick={save}>{pending ? "Saving…" : "Save draft now"}</button>}
+          {!readOnly && step < 5 && dirty && <button className="btn-action" disabled={pending || allProblems.length > 0} title={allProblems.length ? `Fix first: ${allProblems[0]}` : undefined} onClick={save}>{pending ? "Saving…" : "Save draft now"}</button>}
+          {readOnly && <Link className="btn-action" href={registryHref}>Back to registry</Link>}
+          {readOnly && props.editHref && <Link className="btn-action primary" href={props.editHref}>{props.editLabel ?? "Edit"}</Link>}
           {step < 5 ? <button className="primary" onClick={() => go(step + 1)}>Next: {STEPS[step + 1]} →</button>
-            : <button className="primary" disabled={pending || allProblems.length > 0} onClick={save}>{pending ? "Saving…" : props.draftNumber ? `Save draft R${number}` : `Create R${number} as draft`}</button>}
+            : !readOnly && <button className="primary" disabled={pending || allProblems.length > 0} onClick={save}>{pending ? "Saving…" : props.draftNumber ? `Save draft R${number}` : `Create R${number} as draft`}</button>}
         </div>
         {banner}
       </section>

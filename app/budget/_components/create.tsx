@@ -15,9 +15,15 @@ const s = (v: unknown) => (v == null ? "" : String(v));
 export async function CreateBudget(c: Ctx) {
   const { sb, me, project, versions } = c;
   const pid = project.id;
-  const open = versions.find((v) => v.status !== "approved") ?? null;
-  if (open?.status === "in_review") return <Notice kind="draft">R{open.number} is under sign-off, so its figures are locked. <Link href={`/budget/${pid}/overview?v=${open.number}`}>Take it back to draft</Link> from the Overview to change it.</Notice>;
-  if (open ? !D.canChangeDraft(me, open) : !D.can(me, "version.open", pid))
+  const realOpen = versions.find((v) => v.status !== "approved") ?? null;
+  // Record standard: ?mode=view&v=<n> shows that saved version in this same form, read-only.
+  const viewing = c.search?.mode === "view" ? versions.find((v) => String(v.number) === c.search?.v) ?? null : null;
+  const open = viewing ?? realOpen;
+  const canEditViewed = !!viewing && viewing.id === realOpen?.id && viewing.status !== "in_review" && D.canChangeDraft(me, viewing);
+  const canOpenNext = !!viewing && !realOpen && viewing.status === "approved" && D.can(me, "version.open", pid)
+    && viewing.number === Math.max(...versions.filter((v) => v.status === "approved").map((v) => v.number));
+  if (!viewing && open?.status === "in_review") return <Notice kind="draft">R{open.number} is under sign-off, so its figures are locked. <Link href={`/budget/${pid}/overview?v=${open.number}`}>Take it back to draft</Link> from the Overview to change it.</Notice>;
+  if (!viewing && (open ? !D.canChangeDraft(me, open) : !D.can(me, "version.open", pid)))
     return <Notice>The budget preparer or an administrator creates the budget here. {D.can(me, "budget.edit", pid) && open ? <>You can type your department&apos;s lines on the <Link href={`/budget/${pid}/entry?v=${open.number}&mode=form`}>budget entry</Link>.</> : null}</Notice>;
   const base = versions.filter((v) => v.status === "approved").pop() ?? null;
   const source = open ?? base;
@@ -78,7 +84,9 @@ export async function CreateBudget(c: Ctx) {
       <section className="panel guide-head">
         <div>
           <h2>
-            {open
+            {viewing
+              ? `${viewing.number === 1 ? "Original Baseline Budget" : `Revision ${viewing.number - 1}`} (R${viewing.number}) · ${viewing.status.replace("_", " ")}`
+              : open
               ? open.number === 1
                 ? "Edit Original Baseline Budget Draft"
                 : `Edit Revision ${open.number - 1} Draft (R${open.number})`
@@ -92,10 +100,14 @@ export async function CreateBudget(c: Ctx) {
               : "Every input of the detail budget workbook, step by step: version, project areas, towers, budget lines by department, GST and cost incurred."}
           </p>
         </div>
-        <div className="actions-group">
+        {!viewing && <div className="actions-group">
           {open && <Link className="btn-action" href={`/budget/${pid}/entry?v=${open.number}&mode=form`}>Line by line instead</Link>}
           <Link className="btn-action" href={`/budget/${pid}/import${open ? `?v=${open.number}` : ""}`}>Import Excel instead</Link>
-        </div>
+        </div>}
+        {viewing && <div className="actions-group">
+          <Link className="btn-action" href={`/budget/${pid}/overview?v=${viewing.number}`}>Overview</Link>
+          <Link className="btn-action" href={`/budget/${pid}/entry?v=${viewing.number}`}>Budget sheet</Link>
+        </div>}
       </section>
       {lines.some((l) => l.headId && figs.find((f) => `l${f.line_id}` === l.key)?.ctc_rule === "balance") &&
         <Notice>Lines set as &quot;balance of a total&quot; are shown with their current CTC; saving here keeps that amount as a typed CTC.</Notice>}
@@ -107,6 +119,9 @@ export async function CreateBudget(c: Ctx) {
         departments={depts.map((d) => ({ id: d.id, name: d.name, summary_category: d.summary_category }))}
         lines={lines} gst={gst} deptRemarks={Object.fromEntries(Object.entries(source?.department_remarks ?? {}).map(([k, v]) => [k, String(v)]))}
         summaryOptions={summaryOptions} gstRules={gstRules}
+        readOnly={!!viewing}
+        editHref={canEditViewed || canOpenNext ? `/budget/${pid}/create` : undefined}
+        editLabel={canEditViewed ? `Edit R${viewing?.number}` : canOpenNext ? `Start R${next} from these figures` : undefined}
       />
     </>
   );
