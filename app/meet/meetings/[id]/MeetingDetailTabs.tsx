@@ -537,7 +537,7 @@ export default function MeetingDetailTabs({
                         <StatusBadge status={pt.status} />
                         <StatusBadge status={pt.priority} type="priority" />
                       </div>
-                      <h4 className="text-[13.5px] font-semibold text-heading">{pt.title}</h4>
+                      <h4 className="text-[13.5px] font-semibold text-heading"><Link href={`/meet/points/${pt.id}`} className="hover:underline">{pt.title}</Link></h4>
                       {pt.description && (
                         <p className="text-[12px] text-muted line-clamp-1">{pt.description}</p>
                       )}

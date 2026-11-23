@@ -23,6 +23,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const ROOT = process.cwd();
 const QUEUE = path.join(ROOT, ".deploy-queue");
@@ -155,22 +156,27 @@ async function handle(file) {
 
   writeResult(id, { status: "pushed_waiting_for_deploy", commit: short });
   // Watch production in the background so the next request isn't held up.
-  waitForProduction(short).then((live) =>
-    writeResult(id, { status: live ? "deployed" : "pushed_deploy_not_confirmed", commit: short,
-      note: live ? "Production /api/version shows this commit." : "Pushed to main, but production did not show this commit within 15 minutes. Check GitHub Actions." })
-  );
+  watchers++;
+  waitForProduction(short)
+    .then((live) =>
+      writeResult(id, { status: live ? "deployed" : "pushed_deploy_not_confirmed", commit: short,
+        note: live ? "Production /api/version shows this commit." : "Pushed to main, but production did not show this commit within 15 minutes. Check GitHub Actions." })
+    )
+    .finally(() => { watchers--; });
 }
 
 const SELF = fileURLToPath(import.meta.url);
-let selfMtime = 0;
-try { selfMtime = fs.statSync(SELF).mtimeMs; } catch {}
+// Compare CONTENT, not modified time: git checkout touches the file without changing it.
+const selfHash = () => { try { return createHash("sha1").update(fs.readFileSync(SELF)).digest("hex"); } catch { return ""; } };
+const startHash = selfHash();
+let watchers = 0; // production checks still running in the background
 
 let busy = false;
 async function tick() {
   if (busy) return;
   // Claude updated this helper: hand over to the new version (the supervisor restarts it).
   try {
-    if (process.env.AUTO_DEPLOY_CHILD === "1" && fs.statSync(SELF).mtimeMs !== selfMtime) {
+    if (process.env.AUTO_DEPLOY_CHILD === "1" && watchers === 0 && selfHash() !== startHash) {
       log("Helper was updated, restarting with the new version...");
       process.exit(75);
     }
