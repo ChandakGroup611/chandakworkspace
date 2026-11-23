@@ -39,18 +39,10 @@ export async function getDashboardAccess(userId: string, def: DashboardDef): Pro
   const isSuperAdminRole = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN"].includes(roleCode || "");
   const isSuperAdmin = isSuperAdminRole && (await hasPermission(userId, "SUPER_ADMIN"));
 
-  if (isSuperAdmin) {
-    return {
-      perms: ["view", "details", "export", "schedule", "chat", "admin"],
-      companies: null, // all companies
-    };
-  }
-
   // 2. User-wise dashboard access check:
-  // A non-Super-Admin sees a dashboard ONLY if it is ticked for that user (user-wise dashboard access,
-  // i.e. the same source the sidebar and Users → Assign modules use).
-  // Role permissions (DASH_*_VIEW/EXPORT/…) only decide the ACTIONS inside a ticked dashboard, never add extra dashboards.
-  const [legacyRes, umaRes] = await Promise.all([
+  // Query both legacy dashboard_user_access and unified user_module_access.
+  // Also check if this user has explicit custom dashboard assignments in user_module_access.
+  const [legacyRes, umaRes, userDashboardEntriesRes] = await Promise.all([
     supabaseAdmin
       .from("dashboard_user_access")
       .select("company_ids")
@@ -63,10 +55,31 @@ export async function getDashboardAccess(userId: string, def: DashboardDef): Pro
       .eq("user_id", userId)
       .eq("module_code", "DASHBOARDS")
       .eq("dashboard_key", def.key)
-      .maybeSingle()
+      .maybeSingle(),
+    supabaseAdmin
+      .from("user_module_access")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("module_code", "DASHBOARDS")
   ]);
 
+  const hasExplicitDashboardConfig = (userDashboardEntriesRes.count ?? 0) > 0;
   const isTicked = Boolean(legacyRes.data || umaRes.data);
+
+  if (isSuperAdmin) {
+    // If the Super Admin has explicit dashboard configurations in User Master,
+    // enforce the selection: unticked dashboards are strictly denied.
+    if (hasExplicitDashboardConfig && !isTicked) {
+      return { perms: [], companies: [] };
+    }
+    // Default unconfigured Super Admin OR explicitly ticked dashboard:
+    // universal access, all capabilities, and unrestricted company scope across the allowed dashboard
+    return {
+      perms: ["view", "details", "export", "schedule", "chat", "admin"],
+      companies: null, // all companies
+    };
+  }
+
   if (!isTicked) {
     // Unticked dashboard: strictly forbidden regardless of role permissions
     return { perms: [], companies: [] };

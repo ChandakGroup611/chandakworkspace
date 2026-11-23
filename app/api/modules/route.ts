@@ -194,7 +194,12 @@ export async function GET(request: NextRequest) {
     let allowedModules = allActive
       .filter(m => {
         if (!ALLOWED_CORE_MODULE_CODES.has(m.code)) return false;
-        if (isAdmin) return true;
+        if (isAdmin) {
+          if (assignedModuleCodes.size > 0 || assignedModuleIds.size > 0) {
+            return assignedModuleCodes.has(m.code) || assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code);
+          }
+          return true;
+        }
         if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
         // Strict: Non-admin users with no assignments get TASK_WORKFLOW
         if (assignedModuleCodes.size === 0 && assignedModuleIds.size === 0) return m.code === "TASK_WORKFLOW";

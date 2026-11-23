@@ -32,12 +32,12 @@ export default async function DashboardsPage({
 
   // Verify DASHBOARDS module authorization
   const userModules = await getUserAllowedModules(user.id);
-  const canAccessDashboards = userModules.isAdmin || userModules.modules.some((m) => m.code === "DASHBOARDS");
+  const canAccessDashboards = userModules.modules.some((m) => m.code === "DASHBOARDS");
   if (!canAccessDashboards) {
     redirect("/select-module");
   }
 
-  const canAccessOrgBudget = userModules.isAdmin || userModules.modules.some((m) => m.code === "ORG_BUDGET");
+  const canAccessOrgBudget = userModules.modules.some((m) => m.code === "ORG_BUDGET");
 
   const dashboards = await listAccessibleDashboards(user.id);
 

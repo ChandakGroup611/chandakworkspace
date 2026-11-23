@@ -257,6 +257,19 @@ export async function can(
 
   // 1. Root Super Admin Global Override
   if (ctx.isSuperAdmin) {
+    // If the Super Admin has explicit module assignments configured in user_module_access,
+    // enforce module and dashboard scoping:
+    if (ctx.modules.size > 0) {
+      if (moduleCode === "DASHBOARDS" && record?.dashboard_key) {
+        const hasDash = ctx.modules.has(`DASHBOARDS:${record.dashboard_key}`);
+        const hasAnyDashConfig = Array.from(ctx.modules.keys()).some(k => k.startsWith("DASHBOARDS:"));
+        if (hasAnyDashConfig && !hasDash) {
+          return false;
+        }
+      } else if (!ctx.modules.has(moduleCode)) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -325,6 +338,18 @@ export async function getModuleRole(
   const ctx = await loadUserModuleContext(userId);
 
   if (ctx.isSuperAdmin) {
+    if (ctx.modules.size > 0) {
+      if (moduleCode === "DASHBOARDS" && dashboardKey) {
+        const hasDash = ctx.modules.has(`DASHBOARDS:${dashboardKey}`);
+        const hasAnyDashConfig = Array.from(ctx.modules.keys()).some(k => k.startsWith("DASHBOARDS:"));
+        if (hasAnyDashConfig && !hasDash) {
+          return null;
+        }
+      } else if (!ctx.modules.has(moduleCode)) {
+        return null;
+      }
+    }
+
     if (moduleCode === "DASHBOARDS") {
       return {
         module_code: "DASHBOARDS",

@@ -24,7 +24,7 @@ export default async function DesignModulePage({ params }: PageProps) {
 
   // Verify module access
   const allowed = await getUserAllowedModules(user.id);
-  const hasDesignAccess = allowed.isAdmin || allowed.modules.some(m => m.code === "DESIGN_TRACKING");
+  const hasDesignAccess = allowed.modules.some(m => m.code === "DESIGN_TRACKING");
 
   if (!hasDesignAccess) {
     redirect("/select-module");

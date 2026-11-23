@@ -66,6 +66,15 @@ export async function runDashboardsAccessTest() {
     logFail('DASHBOARD_USER_QUARANTINE', 'Dashboard user quarantine check failed', err.message);
   }
 
+  // Test 6: Scoped Super Admin entitlement support
+  try {
+    assert(accessContent.includes('hasExplicitDashboardConfig'), 'getDashboardAccess lacks explicit dashboard configuration check for scoped Super Admin');
+    assert(accessContent.includes('hasExplicitDashboardConfig && !isTicked'), 'getDashboardAccess does not enforce unticked dashboard denial for scoped Super Admin');
+    logPass('DASHBOARD_SCOPED_SUPER_ADMIN_SUPPORT', 'Super Admin with explicit user_module_access selections is strictly scoped to configured dashboards');
+  } catch (err) {
+    logFail('DASHBOARD_SCOPED_SUPER_ADMIN_SUPPORT', 'Scoped Super Admin support check failed', err.message);
+  }
+
   return results;
 }
 

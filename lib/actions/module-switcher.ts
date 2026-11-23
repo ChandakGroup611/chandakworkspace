@@ -210,7 +210,12 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     let allowedModules: ModuleInfo[] = (allActiveModules || DEFAULT_FALLBACK_MODULES)
       .filter(m => {
         if (!ALLOWED_CORE_MODULE_CODES.has(m.code)) return false;
-        if (isAdmin) return true;
+        if (isAdmin) {
+          if (assignedModuleCodes.size > 0) {
+            return assignedModuleCodes.has(m.code);
+          }
+          return true;
+        }
         if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
         if (assignedModuleCodes.size === 0) return m.code === "TASK_WORKFLOW";
         return assignedModuleCodes.has(m.code);

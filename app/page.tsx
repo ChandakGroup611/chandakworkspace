@@ -49,7 +49,7 @@ export default async function Page() {
 
   // Strict Module Gate: verify user has entitlement for TASK_WORKFLOW
   const allowed = await getUserAllowedModules(user.id);
-  const canAccessTaskWorkflow = allowed.isAdmin || allowed.modules.some((m) => m.code === "TASK_WORKFLOW");
+  const canAccessTaskWorkflow = allowed.modules.some((m) => m.code === "TASK_WORKFLOW");
   if (!canAccessTaskWorkflow) {
     const dest = (allowed.defaultModule && allowed.defaultModule.code !== "TASK_WORKFLOW" && allowed.defaultModule.route_path)
       ? allowed.defaultModule.route_path
