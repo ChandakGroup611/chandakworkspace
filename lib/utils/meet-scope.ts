@@ -40,3 +40,31 @@ export async function getHiddenConfidentialMeetingIds(
       .map((m) => m.id)
   );
 }
+
+/**
+ * Meetings and sessions the user takes part in: organiser, chair, minute taker,
+ * a standing member of the meeting, or an attendee on a session.
+ * Used by personal screens (Meet home, Live mode) so they never show other people's meetings.
+ */
+export async function getMyMeetScope(
+  userId: string
+): Promise<{ meetingIds: Set<string>; sessionIds: Set<string> }> {
+  const [ownedRes, memberRes, attendeeRes] = await Promise.all([
+    supabaseAdmin
+      .from("meet_meetings")
+      .select("id")
+      .eq("is_deleted", false)
+      .or(`organizer_id.eq.${userId},chair_id.eq.${userId},default_minute_taker_id.eq.${userId}`),
+    supabaseAdmin.from("meet_meeting_members").select("meeting_id").eq("user_id", userId),
+    supabaseAdmin.from("meet_session_attendees").select("session_id").eq("user_id", userId),
+  ]);
+
+  const meetingIds = new Set<string>();
+  (ownedRes.data || []).forEach((m: any) => m?.id && meetingIds.add(m.id));
+  (memberRes.data || []).forEach((m: any) => m?.meeting_id && meetingIds.add(m.meeting_id));
+
+  const sessionIds = new Set<string>();
+  (attendeeRes.data || []).forEach((a: any) => a?.session_id && sessionIds.add(a.session_id));
+
+  return { meetingIds, sessionIds };
+}

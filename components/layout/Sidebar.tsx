@@ -113,7 +113,19 @@ const taskNavGroups: NavGroup[] = [
     label: "Governance and analysis",
     items: [
       { label: "SLA monitoring", href: "/sla", icon: ShieldAlert, permission: "SLA_VIEW" },
-      { label: "AMC and subscriptions", href: "/amc", icon: ShieldCheck, permission: "AMC_VIEW" },
+      { 
+        label: "AMC & subscriptions", 
+        href: "/amc", 
+        icon: ShieldCheck, 
+        permission: "AMC_VIEW",
+        subItems: [
+          { label: "Dashboard", href: "/amc", permission: "AMC_VIEW" },
+          { label: "AMC contracts", href: "/amc/contracts", permission: "AMC_VIEW" },
+          { label: "Subscriptions", href: "/amc/subscriptions", permission: "AMC_VIEW" },
+          { label: "Transactions", href: "/amc/transactions", permission: "AMC_VIEW" },
+          { label: "Reports and analytics", href: "/amc/reports", permission: "AMC_VIEW" }
+        ]
+      },
       { label: "Organization Budget", href: "/budget", icon: Wallet },
       { label: "Users", href: "/users", icon: Users, permission: "USERS_VIEW" },
       { label: "RBAC access policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
@@ -259,23 +271,24 @@ const designNavGroups: NavGroup[] = [
 
 const meetNavGroups: NavGroup[] = [
   {
-    label: "Meeting hub",
+    // Chandak Meet redesign: one short menu. "Live session mode" is no longer a menu item —
+    // people join from Home or the meeting page (the /meet/live route still works).
+    label: "Meetings",
     items: [
-      { label: "Meet dashboard", href: "/meet", icon: LayoutDashboard },
-      { label: "Meeting series", href: "/meet/meetings", icon: Calendar },
-      { label: "Live session mode", href: "/meet/live", icon: Video },
-      { label: "My work & items", href: "/meet/my-work", icon: CheckCircle2 },
-      { label: "Meeting calendar", href: "/meet/calendar", icon: Clock },
-      { label: "Meeting notes", href: "/meet/notes", icon: StickyNote },
-      { label: "Decisions register", href: "/meet/decisions", icon: ShieldCheck },
+      { label: "Home", href: "/meet", icon: LayoutDashboard },
+      { label: "Meetings", href: "/meet/meetings", icon: Video },
+      { label: "Calendar", href: "/meet/calendar", icon: Calendar },
+      { label: "Points & tasks", href: "/meet/my-work", icon: CheckCircle2 },
+      { label: "Minutes & notes", href: "/meet/notes", icon: StickyNote },
+      { label: "Decisions", href: "/meet/decisions", icon: ShieldCheck },
     ]
   },
   {
-    label: "Review & masters",
+    label: "Admin",
     items: [
-      { label: "Reports & analytics", href: "/meet/reports", icon: LineChart },
-      { label: "RBAC access policies", href: "/meet/settings/rbac", icon: Key },
-      { label: "Meet settings & setup", href: "/meet/admin", icon: Settings2 },
+      { label: "Reports", href: "/meet/reports", icon: LineChart },
+      { label: "Settings", href: "/meet/admin", icon: Settings2 },
+      { label: "Access & roles", href: "/meet/settings/rbac", icon: Key },
     ]
   }
 ];
@@ -386,12 +399,19 @@ function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchPa
     case "/vehicle": return pathname === "/vehicle" || pathname === "/vehicle/dashboard";
     case "/design/masters":
       return ["/design/masters", "/design/projects", "/design/sub-projects", "/design/categories", "/design/packages", "/design/sub-packages", "/design/authorities", "/design/templates"].includes(pathname);
+    case "/amc":
+      return pathname.startsWith("/amc");
     default:
       return pathname === item.href || pathname.startsWith(item.href + "/");
   }
 }
 
 function isSubActive(href: string, pathname: string, sp: URLSearchParams | null) {
+  if (href === "/amc") return pathname === "/amc";
+  if (href === "/amc/contracts") return pathname.startsWith("/amc/contracts");
+  if (href === "/amc/subscriptions") return pathname.startsWith("/amc/subscriptions");
+  if (href === "/amc/transactions") return pathname.startsWith("/amc/transactions");
+  if (href === "/amc/reports") return pathname.startsWith("/amc/reports") || pathname.startsWith("/amc/analytics");
   if (href === "/budget/masters") return pathname.startsWith("/budget/masters") || pathname.startsWith("/budget/admin/masters");
   if (pathname.startsWith("/budget") && href.startsWith("/budget")) {
     const currentAction = getBudgetRouteAction(pathname);
