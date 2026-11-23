@@ -128,7 +128,8 @@ export function UserInviteWizardModal({
     mkt: { enabled: false, role_code: "VIEWER" },
     adm: { enabled: false, role_code: "VIEWER" },
     engg: { enabled: false, role_code: "VIEWER" },
-    sfdc: { enabled: false, role_code: "VIEWER" }
+    sfdc: { enabled: false, role_code: "VIEWER" },
+    cws: { enabled: false, role_code: "VIEWER" }
   });
 
   // Step 5: Default Landing

@@ -201,6 +201,7 @@ const dashboardsNavGroups: NavGroup[] = [
       { label: "Admin access", href: "/dashboards/adm", icon: LineChart, permission: "DASH_ADM_VIEW" },
       { label: "Engineering budget", href: "/dashboards/engg", icon: LineChart, permission: "DASH_ENGG_VIEW" },
       { label: "Sales (Salesforce)", href: "/dashboards/sfdc", icon: LineChart, permission: "DASH_SFDC_VIEW" },
+      { label: "Workspace admin", href: "/dashboards/cws", icon: LineChart, permission: "DASH_CWS_VIEW" },
       { label: "Organization Budget", href: "/budget", icon: Wallet },
       { label: "RBAC access policies", href: "/rbac?module=DASHBOARDS", icon: Key, permission: "DASH_ADM_VIEW" },
     ]
