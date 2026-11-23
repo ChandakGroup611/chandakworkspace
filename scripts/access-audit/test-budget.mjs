@@ -32,9 +32,11 @@ export async function runBudgetAccessTest() {
       const content = fs.readFileSync(f, 'utf8');
       assert(content.includes('from("user_master")') || content.includes('from(\'user_master\')'), `${f} does not query database user_master`);
       assert(content.includes('SUPER_ADMIN'), `${f} does not verify SUPER_ADMIN code from database`);
-      assert(content.includes('platform_role === "SUPER_ADMIN"'), `${f} missing platform_role check`);
+      // user_master has no platform_role column (ea3cbe0): the admin role comes from user_master.role_id -> roles.code
+      assert(content.includes('role:roles(code)'), `${f} does not read the role code from the roles table`);
+      assert(!/\.select\([^)]*platform_role/.test(content), `${f} selects user_master.platform_role, which does not exist`);
     }
-    logPass('BUDGET_DB_ROLE_EXTRACTION', 'Super Admin privileges in Budget derived strictly from database user_master, platform_role, and roles tables');
+    logPass('BUDGET_DB_ROLE_EXTRACTION', 'Super Admin privileges in Budget derived strictly from database user_master and roles tables');
   } catch (err) {
     logFail('BUDGET_DB_ROLE_EXTRACTION', 'DB role extraction check failed', err.message);
   }
