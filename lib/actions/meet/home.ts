@@ -3,30 +3,14 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
 import { getMyMeetScope } from "@/lib/utils/meet-scope";
+import { SESSION_ROW_SELECT, loadSessionCounts, mapSessionRow, myScopeFilter, type MeetSessionRow } from "@/lib/utils/meet-session-map";
 
 /**
  * Data for the redesigned Meet home: only the signed-in user's own meetings and items.
  * Read-only. Uses the same tables as the existing dashboard (meet_sessions, meet_points, meet_tasks).
  */
 
-export interface MeetHomeSession {
-  id: string;
-  code: string;
-  scheduled_start: string;
-  scheduled_end: string | null;
-  status: string;
-  video_link: string | null;
-  room_name: string | null;
-  meeting_id: string | null;
-  meeting_title: string;
-  meeting_code: string | null;
-  recurrence: string | null;
-  mode: string | null;
-  invited: number;
-  accepted: number;
-  carried_points: number;
-  i_am_organizer: boolean;
-}
+export type MeetHomeSession = MeetSessionRow;
 
 export interface MeetHomeNeed {
   kind: "approve_minutes" | "write_minutes" | "overdue_task" | "overdue_point";
@@ -86,10 +70,7 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
     const base = EMPTY(firstName);
 
     const { meetingIds, sessionIds } = await getMyMeetScope(userId);
-    const scopeParts: string[] = [];
-    if (meetingIds.size) scopeParts.push(`meeting_id.in.(${Array.from(meetingIds).join(",")})`);
-    if (sessionIds.size) scopeParts.push(`id.in.(${Array.from(sessionIds).join(",")})`);
-    const scope = scopeParts.join(",");
+    const scope = myScopeFilter(meetingIds, sessionIds) || "";
 
     const today = istDay(new Date());
     const tomorrow = addDays(today, 1);
@@ -101,11 +82,7 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
     const monday = addDays(today, 1 - dow);
     const nextMonday = addDays(monday, 7);
 
-    const sessionSelect = `
-      id, code, scheduled_start, scheduled_end, status, video_link, minute_taker_id,
-      room:meet_rooms(name),
-      meeting:meet_meetings(id, title, code, recurrence, mode, video_link, organizer_id, chair_id)
-    `;
+    const sessionSelect = SESSION_ROW_SELECT;
 
     const [windowRes, nextRes, weekRes, myTasksRes, myPointsRes, doneTasksRes, momRes] = await Promise.all([
       scope
@@ -181,46 +158,8 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
     const nextRows: any[] = (nextRes as any).data || [];
     const allIds = Array.from(new Set([...windowRows, ...nextRows].map((s) => s.id)));
 
-    // Invite counts and carried-forward points for the sessions on screen
-    const inviteMap = new Map<string, { invited: number; accepted: number }>();
-    const carriedMap = new Map<string, number>();
-    if (allIds.length) {
-      const [attRes, carryRes] = await Promise.all([
-        supabaseAdmin.from("meet_session_attendees").select("session_id, invite_status").in("session_id", allIds),
-        supabaseAdmin.from("meet_session_points").select("session_id").eq("entry_type", "carried_forward").in("session_id", allIds),
-      ]);
-      (attRes.data || []).forEach((a: any) => {
-        const cur = inviteMap.get(a.session_id) || { invited: 0, accepted: 0 };
-        cur.invited += 1;
-        if (a.invite_status === "accepted") cur.accepted += 1;
-        inviteMap.set(a.session_id, cur);
-      });
-      (carryRes.data || []).forEach((c: any) => carriedMap.set(c.session_id, (carriedMap.get(c.session_id) || 0) + 1));
-    }
-
-    const toSession = (s: any): MeetHomeSession => {
-      const m = one<any>(s.meeting);
-      const r = one<any>(s.room);
-      const inv = inviteMap.get(s.id) || { invited: 0, accepted: 0 };
-      return {
-        id: s.id,
-        code: s.code,
-        scheduled_start: s.scheduled_start,
-        scheduled_end: s.scheduled_end || null,
-        status: s.status,
-        video_link: s.video_link || m?.video_link || null,
-        room_name: r?.name || null,
-        meeting_id: m?.id || null,
-        meeting_title: m?.title || "Meeting",
-        meeting_code: m?.code || null,
-        recurrence: m?.recurrence || null,
-        mode: m?.mode || null,
-        invited: inv.invited,
-        accepted: inv.accepted,
-        carried_points: carriedMap.get(s.id) || 0,
-        i_am_organizer: m?.organizer_id === userId || m?.chair_id === userId,
-      };
-    };
+    const counts = await loadSessionCounts(allIds);
+    const toSession = (s: any): MeetHomeSession => mapSessionRow(s, userId, counts);
 
     const todayList = windowRows.filter((s) => istDay(new Date(s.scheduled_start)) === today).map(toSession);
     const tomorrowList = windowRows.filter((s) => istDay(new Date(s.scheduled_start)) === tomorrow).map(toSession);

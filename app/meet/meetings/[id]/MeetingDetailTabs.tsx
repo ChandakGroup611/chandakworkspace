@@ -41,18 +41,21 @@ interface MeetingDetailTabsProps {
     categories?: any[];
   };
   initialPoints?: any[];
-  /** Tab opened from the URL (?tab=details|sessions|members|points|settings). */
+  /** Tab opened from the URL (?tab=dashboard|details|sessions|members|points|settings). */
   initialTab?: DetailTab;
+  /** Redesign: the meeting dashboard, rendered on the server and shown in the first tab. */
+  dashboard?: React.ReactNode;
 }
 
-export type DetailTab = "details" | "sessions" | "members" | "points" | "settings";
+export type DetailTab = "dashboard" | "details" | "sessions" | "members" | "points" | "settings";
 
 export default function MeetingDetailTabs({
   meeting,
   sessions: initialSessions,
   masters,
   initialPoints = [],
-  initialTab = "details",
+  initialTab = "dashboard",
+  dashboard,
 }: MeetingDetailTabsProps) {
   // Record standard: opening a series shows it the way it was created (Series details) first.
   const [activeTab, setActiveTab] = useState<DetailTab>(initialTab);
@@ -236,7 +239,22 @@ export default function MeetingDetailTabs({
     <div className="space-y-4">
       {/* Tab bar with Action Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border gap-2">
-        <div className="flex items-center gap-1 text-[13px] font-medium overflow-x-auto">
+        <div role="tablist" aria-label="Meeting sections" className="flex items-center gap-1 text-[13.5px] font-medium overflow-x-auto">
+          {dashboard && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "dashboard"}
+              onClick={() => setActiveTab("dashboard")}
+              className={`flex items-center gap-2 border-b-2 px-4 py-2.5 transition-colors whitespace-nowrap ${
+                activeTab === "dashboard"
+                  ? "border-primary text-primary font-semibold"
+                  : "border-transparent text-muted hover:text-foreground"
+              }`}
+            >
+              Dashboard
+            </button>
+          )}
           <button
             onClick={() => setActiveTab("details")}
             className={`flex items-center gap-2 border-b-2 px-4 py-2.5 transition-colors whitespace-nowrap ${
@@ -246,7 +264,7 @@ export default function MeetingDetailTabs({
             }`}
           >
             <FileText className="h-4 w-4" />
-            Series details
+            Details
           </button>
 
           <button
@@ -258,7 +276,7 @@ export default function MeetingDetailTabs({
             }`}
           >
             <Calendar className="h-4 w-4" />
-            Sessions ({sessions.length})
+            Meetings ({sessions.length})
           </button>
 
           <button
@@ -270,7 +288,7 @@ export default function MeetingDetailTabs({
             }`}
           >
             <Users className="h-4 w-4" />
-            Standing Members ({members.length})
+            Members ({members.length})
           </button>
 
           <button
@@ -282,7 +300,7 @@ export default function MeetingDetailTabs({
             }`}
           >
             <FileText className="h-4 w-4" />
-            All Points ({points.length})
+            Points &amp; tasks ({points.length})
           </button>
 
           <button
@@ -294,7 +312,7 @@ export default function MeetingDetailTabs({
             }`}
           >
             <Shield className="h-4 w-4" />
-            Rules & Governance
+            Rules
           </button>
         </div>
 
@@ -307,7 +325,7 @@ export default function MeetingDetailTabs({
               leftIcon={<Plus className="h-3.5 w-3.5" />}
               onClick={() => setIsScheduleSessionOpen(true)}
             >
-              Schedule Session
+              Schedule next meeting
             </AppButton>
           )}
 
@@ -325,12 +343,14 @@ export default function MeetingDetailTabs({
           {(activeTab === "settings" || activeTab === "details") && (
             <Link href={`/meet/meetings/${meeting.id}/edit`}>
               <AppButton variant="outline" size="sm" leftIcon={<Edit className="h-3.5 w-3.5" />}>
-                Edit series
+                Edit meeting
               </AppButton>
             </Link>
           )}
         </div>
       </div>
+
+      {activeTab === "dashboard" && dashboard}
 
       {/* Tab 0: Series details — the create form, read-only */}
       {activeTab === "details" && (
@@ -581,7 +601,7 @@ export default function MeetingDetailTabs({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-[15px] font-semibold text-heading">Schedule Session</h3>
+              <h3 className="text-[15px] font-semibold text-heading">Schedule next meeting</h3>
               <button
                 onClick={() => setIsScheduleSessionOpen(false)}
                 className="text-muted hover:text-foreground"
@@ -719,7 +739,7 @@ export default function MeetingDetailTabs({
                   size="sm"
                   isLoading={isPending}
                 >
-                  Schedule Session
+                  Schedule meeting
                 </AppButton>
               </div>
             </form>

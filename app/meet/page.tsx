@@ -13,7 +13,19 @@ import {
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
-import { getMeetHomeData, type MeetHomeSession, type MeetHomeNeed } from "@/lib/actions/meet/home";
+import { getMeetHomeData, type MeetHomeNeed } from "@/lib/actions/meet/home";
+import {
+  IST,
+  btnPrimary,
+  btnSecondary,
+  timeOf,
+  recurrenceLabel,
+  statusOf,
+  actionFor,
+  toneClass,
+  whereOf,
+  SessionTimeRow,
+} from "@/components/meet/session-ui";
 
 export const dynamic = "force-dynamic";
 
@@ -21,133 +33,6 @@ export const metadata = {
   title: "Home · Chandak Meet",
   description: "Your meetings today, what needs you, and how the week is going",
 };
-
-const IST = "Asia/Kolkata";
-
-const btnPrimary =
-  "inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md bg-primary text-primary-foreground text-[14px] font-semibold transition-colors hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-const btnSecondary =
-  "inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md border border-border bg-surface text-foreground text-[14px] font-semibold transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-function timeOf(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-IN", { timeZone: IST, hour: "numeric", minute: "2-digit" });
-}
-
-function minutesBetween(a?: string | null, b?: string | null) {
-  if (!a || !b) return null;
-  const m = Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000);
-  return m > 0 ? m : null;
-}
-
-function durationLabel(s: MeetHomeSession) {
-  const m = minutesBetween(s.scheduled_start, s.scheduled_end);
-  if (!m) return "";
-  return m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`;
-}
-
-function recurrenceLabel(r: string | null) {
-  switch (r) {
-    case "daily": return "Repeats daily";
-    case "weekly": return "Repeats weekly";
-    case "biweekly": return "Repeats every 2 weeks";
-    case "monthly": return "Repeats monthly";
-    case "custom": return "Repeats";
-    default: return "One-off";
-  }
-}
-
-/** One status label + colour per session, the same everywhere on this page. */
-function statusOf(s: MeetHomeSession): { label: string; tone: "live" | "soon" | "scheduled" | "minutes" | "done" } {
-  const now = Date.now();
-  const start = new Date(s.scheduled_start).getTime();
-  switch (s.status) {
-    case "in_progress": return { label: "Live now", tone: "live" };
-    case "completed":
-    case "mom_draft": return { label: "Needs minutes", tone: "minutes" };
-    case "mom_pending_approval": return { label: "Minutes waiting for approval", tone: "minutes" };
-    case "mom_published": return { label: "Minutes sent", tone: "done" };
-    default: {
-      const mins = Math.round((start - now) / 60000);
-      if (mins <= 0 && mins > -60) return { label: "Starting now", tone: "live" };
-      if (mins > 0 && mins <= 60) return { label: `Starts in ${mins} min`, tone: "soon" };
-      return { label: "Scheduled", tone: "scheduled" };
-    }
-  }
-}
-
-const toneClass: Record<string, string> = {
-  live: "bg-success-soft text-success-text",
-  soon: "bg-success-soft text-success-text",
-  scheduled: "bg-info-soft text-info-text",
-  minutes: "bg-warning-soft text-warning-text",
-  done: "bg-sunken text-subtle",
-};
-const toneBar: Record<string, string> = {
-  live: "bg-success",
-  soon: "bg-primary",
-  scheduled: "bg-primary",
-  minutes: "bg-warning",
-  done: "bg-border",
-};
-
-/** The one main action for a meeting row. */
-function actionFor(s: MeetHomeSession): { label: string; href: string; external?: boolean; primary: boolean } {
-  const tone = statusOf(s).tone;
-  if (tone === "minutes" || tone === "done") {
-    return { label: tone === "done" ? "View minutes" : "Review minutes", href: `/meet/sessions/${s.id}`, primary: tone === "minutes" };
-  }
-  if (tone === "live" || tone === "soon") {
-    if (s.video_link) return { label: "Join", href: s.video_link, external: true, primary: true };
-    return { label: s.i_am_organizer ? "Start" : "Open", href: s.i_am_organizer ? `/meet/live/${s.id}` : `/meet/sessions/${s.id}`, primary: true };
-  }
-  return { label: "Prepare", href: `/meet/sessions/${s.id}`, primary: false };
-}
-
-function where(s: MeetHomeSession) {
-  const parts: string[] = [];
-  if (s.video_link) parts.push("Teams");
-  if (s.room_name) parts.push(s.room_name);
-  if (!parts.length) parts.push(s.mode === "in_person" ? "In person" : "Online");
-  return parts.join(" + ");
-}
-
-function ActionLink({ s, className }: { s: MeetHomeSession; className?: string }) {
-  const a = actionFor(s);
-  const cls = `${a.primary ? btnPrimary : btnSecondary} h-9 text-[13px] ${className || ""}`;
-  return a.external ? (
-    <a href={a.href} target="_blank" rel="noopener noreferrer" className={cls}>
-      {a.label}
-    </a>
-  ) : (
-    <Link href={a.href} className={cls}>
-      {a.label}
-    </Link>
-  );
-}
-
-function SessionRow({ s }: { s: MeetHomeSession }) {
-  const st = statusOf(s);
-  return (
-    <li className="flex items-center gap-4 border-t border-border px-5 py-3.5">
-      <div className="w-[72px] shrink-0">
-        <div className="text-[14px] font-semibold text-foreground">{timeOf(s.scheduled_start)}</div>
-        <div className="text-[12.5px] text-muted">{durationLabel(s)}</div>
-      </div>
-      <span aria-hidden className={`w-[3px] self-stretch rounded-full ${toneBar[st.tone]}`} />
-      <div className="min-w-0 flex-1">
-        <Link href={`/meet/sessions/${s.id}`} className="block truncate text-[14.5px] font-semibold text-heading hover:underline">
-          {s.meeting_title}
-        </Link>
-        <div className="truncate text-[13px] text-muted">
-          {where(s)}
-          {s.invited ? ` · ${s.invited} people` : ""}
-        </div>
-      </div>
-      <span className={`hidden shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-semibold sm:inline ${toneClass[st.tone]}`}>{st.label}</span>
-      <ActionLink s={s} className="shrink-0" />
-    </li>
-  );
-}
 
 const needIcon: Record<MeetHomeNeed["kind"], { icon: React.ElementType; cls: string }> = {
   approve_minutes: { icon: FileText, cls: "bg-warning-soft text-warning-text" },
@@ -208,7 +93,7 @@ export default async function MeetHomePage() {
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     {next.video_link ? <Video className="h-4 w-4" aria-hidden /> : <MapPin className="h-4 w-4" aria-hidden />}
-                    {where(next)}
+                    {whereOf(next)}
                   </span>
                   {next.carried_points > 0 && (
                     <span className="inline-flex items-center gap-1.5">
@@ -263,13 +148,13 @@ export default async function MeetHomePage() {
             {d.today.length === 0 ? (
               <p className="border-t border-border px-5 py-4 text-[13.5px] text-muted">No meetings today.</p>
             ) : (
-              <ul>{d.today.map((s) => <SessionRow key={s.id} s={s} />)}</ul>
+              <ul>{d.today.map((s) => <SessionTimeRow key={s.id} s={s} />)}</ul>
             )}
             <div className="border-t border-border bg-sunken px-5 py-2 text-[12px] font-semibold text-muted">Tomorrow</div>
             {d.tomorrow.length === 0 ? (
               <p className="border-t border-border px-5 py-4 text-[13.5px] text-muted">No meetings tomorrow.</p>
             ) : (
-              <ul>{d.tomorrow.map((s) => <SessionRow key={s.id} s={s} />)}</ul>
+              <ul>{d.tomorrow.map((s) => <SessionTimeRow key={s.id} s={s} />)}</ul>
             )}
           </section>
         </div>
