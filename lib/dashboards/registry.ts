@@ -67,6 +67,15 @@ export const DASHBOARDS: DashboardDef[] = [
     defaultEngineUrl: "https://v9tbp89l-8085.inc1.devtunnels.ms",
     accent: "#0F977B",
   },
+  {
+    key: "cws",
+    name: "Chandak Workspace Admin",
+    description: "Who can sign in to Chandak Workspace, their roles, permissions, modules, sign-ins and an access review.",
+    permissionPrefix: "DASH_CWS",
+    engineUrlEnv: "DASHBOARD_ENGINE_URL_CWS",
+    defaultEngineUrl: "https://v9tbp89l-8086.inc1.devtunnels.ms",
+    accent: "#7C3AED",
+  },
 ];
 
 export function getDashboard(key: string): DashboardDef | undefined {
