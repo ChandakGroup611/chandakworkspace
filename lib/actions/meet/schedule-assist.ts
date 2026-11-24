@@ -27,6 +27,8 @@ export async function getScheduleAssist(input: {
   startTime: string; // HH:MM or HH:MM:SS
   durationMinutes: number;
   userIds: string[];
+  /** editing: ignore this session's own booking and attendance */
+  excludeSessionId?: string;
 }): Promise<ScheduleAssist> {
   const auth = await requireMeet("MEET_VIEW");
   const empty: ScheduleAssist = { busy: {}, rooms: [] };
@@ -51,14 +53,14 @@ export async function getScheduleAssist(input: {
       supabaseAdmin.from("meet_rooms").select("id, name, capacity, facilities, m365_email").eq("is_active", true).order("name"),
       supabaseAdmin
         .from("meet_room_bookings")
-        .select("room_id, session:meet_sessions(meeting:meet_meetings(title, is_confidential))")
+        .select("room_id, session_id, session:meet_sessions(meeting:meet_meetings(title, is_confidential))")
         .in("status", ["confirmed", "pending", "checked_in", "tentative"])
         .lt("start_at", slotEnd)
         .gt("end_at", slotStart),
     ]);
 
     const busy: Record<string, BusyBlock[]> = {};
-    const list = sessions || [];
+    const list = (sessions || []).filter((x: any) => x.id !== input.excludeSessionId);
     if (ids.length && list.length) {
       const { data: att } = await supabaseAdmin
         .from("meet_session_attendees")
@@ -89,7 +91,7 @@ export async function getScheduleAssist(input: {
     }
 
     const taken = new Map<string, string>();
-    for (const b of bookings || []) {
+    for (const b of (bookings || []).filter((x: any) => x.session_id !== input.excludeSessionId)) {
       const m = one(one((b as any).session)?.meeting);
       taken.set((b as any).room_id, m?.is_confidential ? "Booked" : m?.title || "Booked");
     }

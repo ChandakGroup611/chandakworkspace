@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { ChevronLeft, X, Plus, Search, Loader2, CheckCircle2, AlertTriangle, Video, DoorOpen, Trash2 } from "lucide-react";
-import { createMeeting } from "@/lib/actions/meet/meetings";
+import { createMeeting, updateMeeting } from "@/lib/actions/meet/meetings";
+import { rescheduleSession } from "@/lib/actions/meet/sessions";
 import { bookRoomForSession } from "@/lib/actions/meet/rooms";
 import { getScheduleAssist, type ScheduleAssist } from "@/lib/actions/meet/schedule-assist";
 import type { MeetingType, MeetingRoom, MeetingTemplate } from "@/types/meet";
@@ -28,6 +29,9 @@ interface Props {
     projects?: any[];
   };
   currentUserId: string;
+  /** Edit mode: the saved series, and its next scheduled session (date, time and room changes apply to it). */
+  meeting?: any;
+  nextSession?: { id: string; scheduled_start: string; scheduled_end: string | null; room_id: string | null } | null;
 }
 
 type Mode = "in_person" | "online" | "hybrid";
@@ -61,6 +65,14 @@ function nextHalfHour() {
   if (h >= DAY_END) return "10:00";
   if (h < DAY_START) return "10:00";
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function istDate(iso: string) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: IST, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+}
+
+function istTime(iso: string) {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: IST, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 }
 
 function weekdayName(date: string) {
@@ -99,7 +111,9 @@ function Section({ n, title, children }: { n: number; title: string; children: R
   );
 }
 
-export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
+export default function ScheduleMeetingForm({ masters, currentUserId, meeting, nextSession }: Props) {
+  const isEdit = !!meeting;
+  const m0: any = meeting || {};
   const router = useRouter();
   const users = masters.users || [];
   const userById = useMemo(() => new Map<string, any>(users.map((u: any) => [u.id, u] as [string, any])), [users]);
@@ -107,30 +121,32 @@ export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
 
   // 1. What
   const [templateId, setTemplateId] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [meetingTypeId, setMeetingTypeId] = useState(masters.types[0]?.id || "");
-  const [projectId, setProjectId] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
+  const [title, setTitle] = useState<string>(m0.title || "");
+  const [description, setDescription] = useState<string>(m0.description || "");
+  const [meetingTypeId, setMeetingTypeId] = useState<string>(m0.meeting_type_id || masters.types[0]?.id || "");
+  const [projectId, setProjectId] = useState<string>(m0.project_id || "");
+  const [departmentId, setDepartmentId] = useState<string>(m0.department_id || "");
 
   // 2. When
-  const [date, setDate] = useState(todayIST());
-  const [time, setTime] = useState(nextHalfHour());
-  const [duration, setDuration] = useState(60);
-  const [recurrence, setRecurrence] = useState<Recurrence>("none");
+  const [date, setDate] = useState<string>(nextSession ? istDate(nextSession.scheduled_start) : todayIST());
+  const [time, setTime] = useState<string>(nextSession ? istTime(nextSession.scheduled_start) : m0.default_start_time ? String(m0.default_start_time).slice(0, 5) : nextHalfHour());
+  const [duration, setDuration] = useState<number>(Number(m0.default_duration_minutes) || 60);
+  const [recurrence, setRecurrence] = useState<Recurrence>((m0.recurrence as Recurrence) || "none");
 
   // 3. Who
-  const [organizerId, setOrganizerId] = useState(me);
-  const [chairId, setChairId] = useState(me);
-  const [minuteTakerId, setMinuteTakerId] = useState("");
-  const [people, setPeople] = useState<string[]>([]);
+  const [organizerId, setOrganizerId] = useState<string>(m0.organizer_id || me);
+  const [chairId, setChairId] = useState<string>(isEdit ? m0.chair_id || "" : me);
+  const [minuteTakerId, setMinuteTakerId] = useState<string>(m0.default_minute_taker_id || "");
+  const [people, setPeople] = useState<string[]>(() =>
+    (m0.members || []).filter((mb: any) => mb.user?.id && ["required", "attendee"].includes(mb.role)).map((mb: any) => mb.user.id as string)
+  );
   const [query, setQuery] = useState("");
 
   // 4. Where
-  const [mode, setMode] = useState<Mode>("online");
-  const [roomId, setRoomId] = useState("");
-  const [ownLink, setOwnLink] = useState("");
-  const [showOwnLink, setShowOwnLink] = useState(false);
+  const [mode, setMode] = useState<Mode>((m0.mode as Mode) || "online");
+  const [roomId, setRoomId] = useState<string>(nextSession?.room_id || m0.room_id || "");
+  const [ownLink, setOwnLink] = useState<string>(m0.video_link && !/teams\.microsoft\.com\/l\/(meeting\/new|call\/)/i.test(m0.video_link) ? m0.video_link : "");
+  const [showOwnLink, setShowOwnLink] = useState<boolean>(!!(m0.video_link && !/teams\.microsoft\.com\/l\/(meeting\/new|call\/)/i.test(m0.video_link)));
 
   // 5. Agenda
   const [agenda, setAgenda] = useState<{ title: string; min: number }[]>([
@@ -140,10 +156,10 @@ export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
   ]);
 
   // More options
-  const [preUpdate, setPreUpdate] = useState(true);
-  const [allowAddPoints, setAllowAddPoints] = useState(true);
-  const [momApproval, setMomApproval] = useState(false);
-  const [confidential, setConfidential] = useState(false);
+  const [preUpdate, setPreUpdate] = useState<boolean>(m0.pre_update_enabled ?? true);
+  const [allowAddPoints, setAllowAddPoints] = useState<boolean>(m0.allow_attendees_add_points ?? true);
+  const [momApproval, setMomApproval] = useState<boolean>(m0.requires_mom_approval ?? false);
+  const [confidential, setConfidential] = useState<boolean>(m0.is_confidential ?? false);
   const [showMore, setShowMore] = useState(false);
 
   const [assist, setAssist] = useState<ScheduleAssist | null>(null);
@@ -162,7 +178,7 @@ export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
     setAssistLoading(true);
     const t = setTimeout(async () => {
       try {
-        const r = await getScheduleAssist({ date, startTime: time, durationMinutes: duration, userIds: everyone });
+        const r = await getScheduleAssist({ date, startTime: time, durationMinutes: duration, userIds: everyone, excludeSessionId: nextSession?.id });
         if (!cancelled) setAssist(r);
       } catch {
         if (!cancelled) setAssist(null);
@@ -268,6 +284,59 @@ export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
       return;
     }
     setSubmitting(true);
+    if (isEdit) {
+      try {
+        const res = await updateMeeting({
+          meetingId: m0.id,
+          title: title.trim(),
+          description: description.trim(),
+          projectId,
+          meetingTypeId,
+          departmentId,
+          organizerId,
+          chairId,
+          minuteTakerId,
+          mode,
+          roomId: needRoom ? roomId : "",
+          videoProvider: needTeams ? "teams" : "none",
+          videoLink: needTeams ? ownLink.trim() : "",
+          defaultStartTime: `${time}:00`,
+          defaultDurationMinutes: duration,
+          recurrence,
+          allowAttendeesAddPoints: allowAddPoints,
+          isConfidential: confidential,
+          requiresMomApproval: momApproval,
+          preUpdateEnabled: preUpdate,
+          attendeeUserIds: people,
+        });
+        if (!res.success) {
+          toast.error(res.error || "Couldn't save the changes");
+          return;
+        }
+        // Date, time and room changes apply to the next scheduled session (and its Outlook event)
+        if (nextSession) {
+          const newStart = new Date(`${date}T${time}:00+05:30`).toISOString();
+          const oldMin = nextSession.scheduled_end ? Math.round((new Date(nextSession.scheduled_end).getTime() - new Date(nextSession.scheduled_start).getTime()) / 60000) : duration;
+          if (newStart !== new Date(nextSession.scheduled_start).toISOString() || oldMin !== duration) {
+            const rr = await rescheduleSession({ sessionId: nextSession.id, scheduledStart: newStart, durationMinutes: duration, reason: "Changed on the edit page" });
+            if (!rr.success) toast.warn(`Saved, but the next meeting's time wasn't changed: ${rr.error || "not allowed"}`);
+          }
+          if (needRoom && roomId && roomId !== nextSession.room_id) {
+            const endIso = new Date(new Date(newStart).getTime() + duration * 60000).toISOString();
+            const b = await bookRoomForSession(nextSession.id, roomId, newStart, endIso).catch(() => null);
+            if (b && !b.success) toast.warn(`Saved, but the room wasn't booked: ${b.error || "it's taken"}`);
+          }
+        }
+        toast.success("Changes saved");
+        router.push(`/meet/meetings/${m0.id}`);
+        router.refresh();
+      } catch (err: any) {
+        toast.error(err?.message || "Couldn't save the changes");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
     try {
       const startTime = `${time}:00`;
       const res = await createMeeting({
@@ -334,10 +403,11 @@ export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
           <Link href="/meet/meetings" className="inline-flex items-center gap-1 text-[13.5px] font-medium text-muted hover:text-foreground">
             <ChevronLeft className="h-4 w-4" aria-hidden /> Meetings
           </Link>
-          <h1 className="mt-1 text-[24px] font-bold tracking-[-0.01em] text-heading">Schedule a meeting</h1>
+          <h1 className="mt-1 text-[24px] font-bold tracking-[-0.01em] text-heading">{isEdit ? `Edit · ${m0.title}` : "Schedule a meeting"}</h1>
+          {isEdit && <p className="mt-1 text-[13.5px] text-subtle">Changes apply to future meetings in this series{nextSession ? "; date, time and room change the next one" : ""}.</p>}
         </div>
         <div className="flex gap-2">
-          <Link href="/meet/meetings" className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-4 text-[14px] font-semibold text-foreground hover:bg-surface-hover">
+          <Link href={isEdit ? `/meet/meetings/${m0.id}` : "/meet/meetings"} className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-4 text-[14px] font-semibold text-foreground hover:bg-surface-hover">
             Cancel
           </Link>
           <button
@@ -346,7 +416,7 @@ export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-5 text-[14px] font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-            {submitting ? "Scheduling…" : "Schedule and send invites"}
+            {submitting ? (isEdit ? "Saving…" : "Scheduling…") : isEdit ? "Save changes" : "Schedule and send invites"}
           </button>
         </div>
       </div>
@@ -355,7 +425,7 @@ export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
         <div className="min-w-0 space-y-5">
           {/* 1. What */}
           <Section n={1} title="What">
-            {masters.templates.length > 0 && (
+            {!isEdit && masters.templates.length > 0 && (
               <div className="mb-4">
                 <span className={label}>Start from</span>
                 <div className="flex flex-wrap gap-2">
@@ -698,54 +768,69 @@ export default function ScheduleMeetingForm({ masters, currentUserId }: Props) {
             )}
           </Section>
 
+          {isEdit ? (
+            <Section n={5} title="Agenda">
+              <p className="text-[13.5px] text-subtle">
+                Each meeting keeps its own agenda.{" "}
+                {nextSession ? (
+                  <Link href={`/meet/sessions/${nextSession.id}`} className="font-semibold text-primary hover:underline">Edit the next meeting&apos;s agenda</Link>
+                ) : (
+                  "Open a meeting to change its agenda."
+                )}
+              </p>
+            </Section>
+          ) : (
+            <>
           {/* 5. Agenda */}
-          <Section n={5} title="Agenda">
-            <p className={`mb-3 text-[13px] ${plannedMin > duration ? "text-warning-text" : "text-muted"}`}>
-              {plannedMin} of {duration} min planned
-            </p>
-            <ol className="space-y-2">
-              {agenda.map((a, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="w-6 shrink-0 text-center text-[13px] font-semibold text-muted">{i + 1}</span>
-                  <input
-                    value={a.title}
-                    onChange={(e) => setAgenda((list) => list.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}
-                    aria-label={`Agenda item ${i + 1}`}
-                    placeholder="What to discuss"
-                    className={`${input} flex-1`}
-                  />
-                  <input
-                    type="number"
-                    min={1}
-                    max={600}
-                    value={a.min}
-                    onChange={(e) => setAgenda((list) => list.map((x, j) => (j === i ? { ...x, min: Number(e.target.value) || 0 } : x)))}
-                    aria-label={`Minutes for item ${i + 1}`}
-                    className={`${input} w-20 text-right`}
-                  />
-                  <span className="text-[13px] text-muted">min</span>
-                  <button
-                    type="button"
-                    onClick={() => setAgenda((list) => list.filter((_, j) => j !== i))}
-                    aria-label={`Remove agenda item ${i + 1}`}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-danger-text"
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden />
-                  </button>
-                </li>
-              ))}
-            </ol>
-            <button
-              type="button"
-              onClick={() => setAgenda((list) => [...list, { title: "", min: 10 }])}
-              className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-primary hover:underline"
-            >
-              <Plus className="h-4 w-4" aria-hidden /> Add agenda item
-            </button>
-            {recurrence !== "none" && (
-              <p className="mt-3 text-[13px] text-muted">From the second meeting on, open points from the last meeting are added at the top automatically.</p>
-            )}
-          </Section>
+            <Section n={5} title="Agenda">
+              <p className={`mb-3 text-[13px] ${plannedMin > duration ? "text-warning-text" : "text-muted"}`}>
+                {plannedMin} of {duration} min planned
+              </p>
+              <ol className="space-y-2">
+                {agenda.map((a, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <span className="w-6 shrink-0 text-center text-[13px] font-semibold text-muted">{i + 1}</span>
+                    <input
+                      value={a.title}
+                      onChange={(e) => setAgenda((list) => list.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}
+                      aria-label={`Agenda item ${i + 1}`}
+                      placeholder="What to discuss"
+                      className={`${input} flex-1`}
+                    />
+                    <input
+                      type="number"
+                      min={1}
+                      max={600}
+                      value={a.min}
+                      onChange={(e) => setAgenda((list) => list.map((x, j) => (j === i ? { ...x, min: Number(e.target.value) || 0 } : x)))}
+                      aria-label={`Minutes for item ${i + 1}`}
+                      className={`${input} w-20 text-right`}
+                    />
+                    <span className="text-[13px] text-muted">min</span>
+                    <button
+                      type="button"
+                      onClick={() => setAgenda((list) => list.filter((_, j) => j !== i))}
+                      aria-label={`Remove agenda item ${i + 1}`}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-danger-text"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <button
+                type="button"
+                onClick={() => setAgenda((list) => [...list, { title: "", min: 10 }])}
+                className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-primary hover:underline"
+              >
+                <Plus className="h-4 w-4" aria-hidden /> Add agenda item
+              </button>
+              {recurrence !== "none" && (
+                <p className="mt-3 text-[13px] text-muted">From the second meeting on, open points from the last meeting are added at the top automatically.</p>
+              )}
+            </Section>
+            </>
+          )}
 
           {/* More options */}
           <section className="rounded-xl border border-border bg-surface">
