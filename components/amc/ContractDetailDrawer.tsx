@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { AMCRenewalModal } from "@/components/amc/AMCRenewalModal";
 import { 
   X, 
   FileText, 
@@ -66,6 +68,26 @@ export function ContractDetailDrawer({
   isLightMode = false
 }: ContractDetailDrawerProps) {
   const [activeTab, setActiveTab] = useState("Overview");
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [nextPay, setNextPay] = useState<{ amount: number; due: string } | null>(null);
+  const [paidTerm, setPaidTerm] = useState<number>(0);
+
+  // Next pending payment and what's been paid (summary cards)
+  useEffect(() => {
+    if (!record?.id) return;
+    const supabase = createClient();
+    supabase
+      .from("amc_invoices")
+      .select("amount, due_date, status")
+      .eq("amc_id", record.id)
+      .order("due_date", { ascending: true })
+      .then(({ data }) => {
+        const rows = data || [];
+        const pending = rows.find((r: any) => r.status === "Pending");
+        setNextPay(pending ? { amount: Number(pending.amount) || 0, due: pending.due_date } : null);
+        setPaidTerm(rows.filter((r: any) => r.status === "Paid").reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0));
+      });
+  }, [record?.id, activeTab]);
 
   if (!isOpen || !record) return null;
 
@@ -74,26 +96,28 @@ export function ContractDetailDrawer({
   // Type-tailored tab list with Overview as the primary tab
   const tabList = isSubscription
     ? [
-        { id: "Overview", label: "Subscription Overview", icon: FileText },
-        { id: "Allocations", label: "Seat Allocations", icon: Users },
+        { id: "Overview", label: "Overview", icon: FileText },
+        { id: "Payments", label: "Payments", icon: CreditCard },
         { id: "Renewals", label: "Renewals", icon: RotateCcw },
-        { id: "Attachments", label: "Attachments", icon: Paperclip },
-        { id: "Spend History (TCO)", label: "Spend History", icon: TrendingUp },
-        { id: "History", label: "Audit Changelog", icon: Clock },
+        { id: "Allocations", label: "Seats", icon: Users },
+        { id: "Attachments", label: "Documents", icon: Paperclip },
+        { id: "History", label: "History", icon: Clock },
       ]
     : [
-        { id: "Overview", label: "Contract & Line Items", icon: FileText },
-        { id: "Implementation", label: "Implementation Lifecycle", icon: Layers },
-        { id: "Spend History (TCO)", label: "Spend History (TCO)", icon: TrendingUp },
-        { id: "Transactions", label: "Add-ons & Scope", icon: Boxes },
-        { id: "Payments", label: "Payment Milestones", icon: CreditCard },
+        { id: "Overview", label: "Overview", icon: FileText },
+        { id: "Payments", label: "Payments", icon: CreditCard },
         { id: "Renewals", label: "Renewals", icon: RotateCcw },
-        { id: "Allocations", label: "Allocations", icon: Users },
-        { id: "Attachments", label: "Attachments", icon: Paperclip },
-        { id: "History", label: "Audit Changelog", icon: Clock },
+        { id: "Transactions", label: "Items and add-ons", icon: Boxes },
+        { id: "Implementation", label: "Implementation", icon: Layers },
+        { id: "Allocations", label: "Seats", icon: Users },
+        { id: "Attachments", label: "Documents", icon: Paperclip },
+        { id: "History", label: "History", icon: Clock },
       ];
 
   const cost = Number(record.total_cost || record.cost || 0);
+  const daysLeft = record.expiry_date
+    ? Math.round((new Date(String(record.expiry_date).slice(0, 10)).getTime() - new Date(new Date().toISOString().slice(0, 10)).getTime()) / 86400000)
+    : null;
 
   const handleExportDossier = () => {
     window.print();
@@ -142,80 +166,65 @@ export function ContractDetailDrawer({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <AppButton
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={() => onOpenEditForm(record)}
-            leftIcon={<Edit className="h-3.5 w-3.5" />}
-            className="text-xs font-semibold"
-          >
-            Edit {isSubscription ? "Subscription" : "Contract"}
+        <div className="flex flex-wrap items-center gap-2">
+          <AppButton type="button" variant="outline" size="sm" onClick={() => onOpenEditForm(record)} leftIcon={<Edit className="h-3.5 w-3.5" />} className="text-xs font-semibold">
+            Edit
           </AppButton>
-          <AppButton
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleExportDossier}
-            leftIcon={<FileText className="h-3.5 w-3.5" />}
-            className="text-xs hidden sm:inline-flex"
-          >
-            Export Dossier
+          <AppButton type="button" variant="outline" size="sm" onClick={() => setActiveTab("Payments")} leftIcon={<CreditCard className="h-3.5 w-3.5" />} className="text-xs font-semibold">
+            Record payment
           </AppButton>
-          <AppButton 
-            aria-label="Close contract drawer" 
-            title="Close" 
-            variant="ghost" 
-            size="icon-sm" 
-            onClick={onClose} 
-            className="text-muted hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
+          <AppButton type="button" variant="primary" size="sm" onClick={() => setRenewOpen(true)} leftIcon={<RotateCcw className="h-3.5 w-3.5" />} className="text-xs font-semibold">
+            Renew
           </AppButton>
+          <AppButton type="button" variant="ghost" size="sm" onClick={handleExportDossier} leftIcon={<FileText className="h-3.5 w-3.5" />} className="hidden text-xs sm:inline-flex">
+            Print summary
+          </AppButton>
+          {variant !== "page" && (
+            <AppButton aria-label="Close" title="Close" variant="ghost" size="icon-sm" onClick={onClose} className="text-muted hover:text-foreground">
+              <X className="h-5 w-5" />
+            </AppButton>
+          )}
         </div>
       </div>
 
-      {/* TCO Summary Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-sunken px-5 py-2 text-[12.5px]">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-1.5 text-muted">
-            <span>Contract Value:</span>
-            <span className="font-semibold tabular-nums text-foreground">
-              {record.currency || "INR"} {cost.toLocaleString()}
-            </span>
-          </div>
-          {record.po_number && (
-            <>
-              <div className="h-3 w-[1px] bg-border hidden sm:block"></div>
-              <div className="flex items-center gap-1.5 text-muted">
-                <span>PO:</span>
-                <span className="font-mono text-foreground font-medium">{record.po_number}</span>
-              </div>
-            </>
-          )}
-          {record.total_licenses ? (
-            <>
-              <div className="h-3 w-[1px] bg-border hidden sm:block"></div>
-              <div className="flex items-center gap-1.5 text-muted">
-                <span>Seats:</span>
-                <span className="font-mono text-foreground font-medium">
-                  {record.used_licenses || 0} / {record.total_licenses}
-                </span>
-              </div>
-            </>
-          ) : null}
+      {/* Summary: value, term, paid, next payment, seats */}
+      <div className="grid grid-cols-2 gap-3 border-b border-border bg-sunken px-5 py-4 lg:grid-cols-4">
+        <div className="rounded-lg border border-border bg-surface px-3.5 py-3">
+          <div className="text-[12.5px] text-muted">Contract value</div>
+          <div className="mt-0.5 text-[19px] font-bold tabular-nums text-heading">{record.currency || "INR"} {cost.toLocaleString("en-IN")}</div>
           {record.monthly_amortized_cost ? (
-            <>
-              <div className="h-3 w-[1px] bg-border hidden sm:block"></div>
-              <div className="flex items-center gap-1.5 text-muted">
-                <span>Monthly Burn:</span>
-                <span className="font-mono text-foreground font-medium">
-                  {record.currency || "INR"} {Number(record.monthly_amortized_cost).toLocaleString()}/mo
-                </span>
-              </div>
-            </>
+            <div className="text-[12px] text-muted">{record.currency || "INR"} {Number(record.monthly_amortized_cost).toLocaleString("en-IN")} a month</div>
           ) : null}
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3.5 py-3">
+          <div className="text-[12.5px] text-muted">Term</div>
+          <div className="mt-0.5 text-[15px] font-bold text-heading">
+            {record.purchase_date ? formatDate(record.purchase_date) : "—"} – {record.expiry_date ? formatDate(record.expiry_date) : "open"}
+          </div>
+          {daysLeft !== null && (
+            <div className={`text-[12px] font-semibold ${daysLeft < 0 ? "text-danger-text" : daysLeft <= 30 ? "text-warning-text" : "text-muted"}`}>
+              {daysLeft < 0 ? `ended ${-daysLeft} days ago` : daysLeft === 0 ? "ends today" : `${daysLeft} days left`}
+            </div>
+          )}
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3.5 py-3">
+          <div className="text-[12.5px] text-muted">Paid so far</div>
+          <div className="mt-0.5 text-[19px] font-bold tabular-nums text-heading">{record.currency || "INR"} {paidTerm.toLocaleString("en-IN")}</div>
+          {cost > 0 && (
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-border" aria-hidden>
+              <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (paidTerm / cost) * 100)}%` }} />
+            </div>
+          )}
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3.5 py-3">
+          <div className="text-[12.5px] text-muted">{record.total_licenses ? "Next payment · seats" : "Next payment"}</div>
+          <div className="mt-0.5 text-[19px] font-bold tabular-nums text-heading">
+            {nextPay ? `${record.currency || "INR"} ${nextPay.amount.toLocaleString("en-IN")}` : "Nothing due"}
+          </div>
+          <div className="text-[12px] text-muted">
+            {nextPay ? `due ${formatDate(nextPay.due)}` : ""}
+            {record.total_licenses ? `${nextPay ? " · " : ""}${record.used_licenses || 0} of ${record.total_licenses} seats used` : ""}
+          </div>
         </div>
       </div>
 
@@ -494,6 +503,13 @@ export function ContractDetailDrawer({
           </div>
         )}
 
+        {activeTab === 'Overview' && (
+          <section aria-label="Spend over the years" className="mt-6">
+            <h3 className="mb-3 text-[15px] font-semibold text-heading">Spend over the years</h3>
+            <AMCTCOSpendHistoryTab amcId={record.id} isLightMode={isLightMode} currency={record.currency || "INR"} record={record} onRefresh={onRefresh} />
+          </section>
+        )}
+
         {activeTab === 'Implementation' && (
           <AMCImplementationTab 
             amcId={record.id} 
@@ -563,6 +579,19 @@ export function ContractDetailDrawer({
           />
         )}
       </div>
+
+      {renewOpen && (
+        <AMCRenewalModal
+          amcData={record}
+          isLightMode={isLightMode}
+          onClose={() => setRenewOpen(false)}
+          onRenewed={() => {
+            setRenewOpen(false);
+            onRefresh();
+            setActiveTab("Renewals");
+          }}
+        />
+      )}
     </div>
   );
 }
