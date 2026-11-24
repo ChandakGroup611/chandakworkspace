@@ -20,13 +20,14 @@ export const MEET_EVENTS = [
   "Room declined",
   "Invite declined",
   "Meeting cancelled",
+  "Decision recorded",
 ] as const;
 
 export type MeetEventName = (typeof MEET_EVENTS)[number];
 
 export const REMINDER_EVENTS: MeetEventName[] = ["Reminder 1", "Reminder 2", "Reminder 3"];
 
-export const MEET_RECIPIENTS = ["Organiser (creator)", "Chair", "Minute taker", "Everyone invited", "Point owner", "Task owner"] as const;
+export const MEET_RECIPIENTS = ["Organiser (creator)", "Chair", "Minute taker", "Everyone invited", "Point owner", "Task owner", "People the decision applies to"] as const;
 
 export type MeetRecipientRole = (typeof MEET_RECIPIENTS)[number];
 
@@ -46,6 +47,7 @@ export const MEET_EVENT_INFO: Record<MeetEventName, { when: string; roles: MeetR
   Overdue: { when: "The day a point or task passes its due date", roles: ["Point owner", "Task owner", "Chair", "Organiser (creator)"] },
   "Room declined": { when: "When a room's Outlook calendar turns down the booking", roles: ["Organiser (creator)", "Minute taker", "Chair"] },
   "Invite declined": { when: "When someone says they can't attend (with their reason)", roles: ["Organiser (creator)", "Chair", "Minute taker"] },
+  "Decision recorded": { when: "When a decision is recorded, to the people and departments it applies to", roles: ["People the decision applies to", "Organiser (creator)", "Chair"] },
   "Meeting cancelled": { when: "When a meeting date is cancelled or the meeting is deleted", roles: ["Organiser (creator)", "Chair", "Minute taker", "Everyone invited"] },
 };
 
@@ -87,6 +89,12 @@ export const MEET_MERGE_TAGS = [
   "carry_count",
   "person_name",
   "reason",
+  "minutes_text",
+  "decision_code",
+  "decision_text",
+  "decision_type",
+  "applies_to",
+  "effective_from",
 ];
 
 /**
@@ -129,7 +137,7 @@ export const MEET_EMAIL_STARTERS: Record<MeetEventName, { subject: string; body:
   },
   "Minutes sent": {
     subject: "Minutes: {{meeting_title}} ({{session_code}})",
-    body: "Dear {{recipient_name}},\n\nThe minutes of {{meeting_title}} are ready, with decisions, open points and who does what by when:\n{{link}}\n\nRegards,\n{{organiser_name}}",
+    body: "{{minutes_text}}\n\nOpen the minutes in Chandak Meet:\n{{link}}",
     recipients: ["Everyone invited"],
   },
   "Minutes not sent": {
@@ -166,6 +174,11 @@ export const MEET_EMAIL_STARTERS: Record<MeetEventName, { subject: string; body:
     subject: "{{person_name}} can't attend {{meeting_title}}",
     body: "Dear {{recipient_name}},\n\n{{person_name}} can't attend {{meeting_title}} on {{start_time}}.\nReason: {{reason}}\n\nSee who is coming:\n{{link}}\n\nChandak Meet",
     recipients: ["Organiser (creator)"],
+  },
+  "Decision recorded": {
+    subject: "Decision {{decision_code}}: {{decision_text}}",
+    body: "Dear {{recipient_name}},\n\nThe following decision has been recorded and applies to {{applies_to}}:\n\n{{decision_text}}\n\nType: {{decision_type}}\nIn force from: {{effective_from}}\nMeeting: {{meeting_title}}\n\nPlease open it, read any attached documents and mark it as noted:\n{{link}}\n\nRegards,\n{{organiser_name}}",
+    recipients: ["People the decision applies to"],
   },
   "Meeting cancelled": {
     subject: "Cancelled: {{meeting_title}} on {{start_time}}",

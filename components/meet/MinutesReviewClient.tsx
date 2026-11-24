@@ -4,10 +4,11 @@ import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { Sparkles, Loader2, CheckCircle2, RotateCcw, Send, ChevronLeft } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2, RotateCcw, Send } from "lucide-react";
 import { generateAIMinutes, updateAIMinutes, approveAndSendMoM } from "@/lib/actions/meet/ai-minutes";
 import { convertBlockToItem, updateNoteBlock } from "@/lib/actions/meet/notes";
 import type { MinutesReview, ReviewSuggestion } from "@/lib/actions/meet/review";
+import { minutesAsText } from "@/lib/utils/meet-minutes-text";
 
 const IST = "Asia/Kolkata";
 const btnPrimary =
@@ -153,7 +154,6 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
   const remaining = review.suggestions.filter((s) => !gone.has(s.blockId));
   const resolved = review.points.filter((p) => !p.carried);
   const carried = review.points.filter((p) => p.carried);
-  const when = new Date(review.session.scheduledStart).toLocaleDateString("en-IN", { timeZone: IST, day: "numeric", month: "short", year: "numeric" });
 
   const generate = () =>
     start(async () => {
@@ -199,26 +199,34 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
     router.refresh();
   };
 
+  const d = review.doc;
+  const hrs = (min: number) => (min >= 60 ? `${Math.floor(min / 60)} h ${min % 60 ? `${min % 60} min` : ""}`.trim() : `${min} min`);
+  const nextLabel = review.nextSession
+    ? new Date(review.nextSession.scheduledStart).toLocaleString("en-IN", { timeZone: IST, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })
+    : null;
+  const due = (x: string | null) => (x ? new Date(`${String(x).slice(0, 10)}T12:00:00+05:30`).toLocaleDateString("en-IN", { timeZone: IST, day: "numeric", month: "short" }) : "—");
+  const ATT: Record<string, string> = { present: "Attended", late: "Came late", absent: "Absent", excused: "Excused", declined: "Couldn't attend", left_early: "Left early" };
+
+  // Email version of the minutes, ready to copy into Outlook
+  const email = minutesAsText(review, overview);
+
+  const card = "theme-card-structural p-5";
+  const h2 = "text-[16px] font-semibold text-heading";
+
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-5 pb-6 print:space-y-3">
+      {/* 1. Title and actions */}
       <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
-        <Link
-          href={review.session.meetingId ? `/meet/meetings/${review.session.meetingId}` : "/meet"}
-          className="inline-flex items-center gap-1 text-[13.5px] font-medium text-muted hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4" aria-hidden /> {review.session.meetingCode ? `${review.session.meetingCode} ` : ""}
-          {review.session.meetingTitle}
-        </Link>
-        <h1 className="text-[20px] font-bold text-heading">Minutes · {when}</h1>
-        <span
-          className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${
-            sent ? "bg-success-soft text-success-text" : m ? "bg-warning-soft text-warning-text" : "bg-sunken text-subtle"
-          }`}
-        >
+        <div className="min-w-0">
+          <p className="text-[13px] font-medium text-muted">Minutes of meeting{review.session.meetingCode ? ` · ${review.session.meetingCode}` : ""}</p>
+          <h1 className="text-[22px] font-bold text-heading">{review.session.meetingTitle}</h1>
+        </div>
+        <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${sent ? "bg-success-soft text-success-text" : m ? "bg-warning-soft text-warning-text" : "bg-sunken text-subtle"}`}>
           {sent ? "Sent" : m ? "Draft · waiting for approval" : "Not drafted yet"}
         </span>
-        <div className="ml-auto flex flex-wrap gap-2">
-          <Link href={`/meet/sessions/${review.session.id}`} className={btnSecondary}>Open meeting workspace</Link>
+        <div className="ml-auto flex flex-wrap gap-2 print:hidden">
+          <button type="button" onClick={() => window.print()} className={btnSecondary}>Print / PDF</button>
+          {review.session.meetingId && <Link href={`/meet/meetings/${review.session.meetingId}`} className={btnSecondary}>Meeting page</Link>}
           {review.canEdit && !sent && (
             <button type="button" onClick={generate} disabled={pending} className={btnSecondary}>
               {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RotateCcw className="h-4 w-4" aria-hidden />}
@@ -233,133 +241,233 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
         </div>
       </div>
 
-      {/* What the draft is built from */}
-      <section aria-label="What the minutes use" className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      {/* 2. Meeting in short */}
+      <section className={`${card} grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4`} aria-label="Meeting details">
         {[
-          { n: review.counts.points, l: "points discussed" },
-          { n: review.counts.tasks, l: "action items" },
-          { n: review.counts.decisions, l: "decisions" },
-          { n: review.counts.noteLines, l: "note lines" },
-          { n: `${review.counts.present}/${review.counts.invited}`, l: "attended" },
-        ].map((c) => (
-          <div key={c.l} className="theme-card-structural flex items-baseline gap-2 p-3.5">
-            <span className="text-[20px] font-bold text-primary">{c.n}</span>
-            <span className="text-[12.5px] text-subtle">{c.l}</span>
+          ["Date", d.info.date],
+          ["Time", `${d.info.start}${d.info.end ? ` – ${d.info.end}` : ""}`],
+          ["Where", d.info.where],
+          ["Meeting type", d.info.type || "—"],
+          ["Organiser", d.info.organiser || "—"],
+          ["Chair", d.info.chair || "—"],
+          ["Minutes by", d.info.minuteTaker || "—"],
+          ["Project", d.info.project || "—"],
+        ].map(([k, v]) => (
+          <div key={k}>
+            <p className="text-[12px] font-medium text-muted">{k}</p>
+            <p className="text-[14.5px] font-semibold text-foreground">{v}</p>
           </div>
         ))}
       </section>
 
-      <div className="flex flex-wrap items-start gap-5">
-        <div className="min-w-0 flex-[999_1_560px] space-y-5">
-          {/* Summary */}
-          <section className="theme-card-structural space-y-3 p-5" aria-labelledby="mr-sum">
-            <div className="flex items-center justify-between gap-2">
-              <h2 id="mr-sum" className="flex items-center gap-2 text-[16px] font-semibold text-heading">
-                <Sparkles className="h-4 w-4 text-primary" aria-hidden /> Summary
-              </h2>
-              {m?.model && <span className="text-[12px] text-muted">{m.model === "offline-synthesis" ? "Drafted from meeting data" : `Drafted with AI (${m.model})`}</span>}
-            </div>
-            {m ? (
-              <>
-                <label htmlFor="mr-overview" className="sr-only">Summary</label>
-                <textarea
-                  id="mr-overview"
-                  value={overview}
-                  onChange={(e) => setOverview(e.target.value)}
-                  readOnly={!review.canEdit || sent}
-                  className="min-h-[110px] w-full resize-y rounded-md border border-border bg-surface p-3 text-[14.5px] leading-relaxed text-foreground focus:border-primary focus:outline-none"
-                />
-                {review.canEdit && !sent && overview !== savedOverview && (
-                  <div className="flex justify-end">
-                    <button type="button" onClick={saveOverview} disabled={pending} className={btnSecondary}>Save summary</button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="rounded-lg bg-sunken p-5 text-center">
-                <p className="text-[14px] text-subtle">No draft yet. It's built from the points, action items, decisions and notes captured in the meeting.</p>
-                {review.canEdit && (
-                  <button type="button" onClick={generate} disabled={pending} className={`${btnPrimary} mt-3`}>
-                    {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />} Draft minutes now
-                  </button>
-                )}
-              </div>
-            )}
-          </section>
+      {/* 3. Numbers at a glance */}
+      <section aria-label="At a glance" className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        {[
+          { n: d.totals.durationMin ? hrs(d.totals.durationMin) : "—", l: "Meeting time" },
+          { n: `${d.totals.present}/${d.totals.invited}`, l: "Attended" },
+          { n: d.totals.points, l: `Points (${d.totals.newPoints} new)` },
+          { n: d.totals.tasks, l: "Tasks created" },
+          { n: d.totals.decisions, l: "Decisions" },
+          { n: d.totals.closed, l: "Points closed" },
+          { n: carried.length, l: nextLabel ? "To next meeting" : "Still open" },
+        ].map((c) => (
+          <div key={c.l} className="theme-card-structural p-3.5">
+            <div className="text-[20px] font-bold text-primary">{c.n}</div>
+            <div className="text-[12.5px] text-subtle">{c.l}</div>
+          </div>
+        ))}
+      </section>
 
-          {/* Suggestions */}
-          {review.canEdit && !sent && (
-            <section className="theme-card-structural overflow-hidden p-0" aria-labelledby="mr-sug">
-              <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
-                <h2 id="mr-sug" className="text-[16px] font-semibold text-heading">Found in the notes. Keep what's right.</h2>
-                <span className="text-[13px] text-subtle">{remaining.length} to review</span>
-              </div>
-              {remaining.length === 0 ? (
-                <p className="flex items-center gap-2 border-t border-border px-5 py-4 text-[13.5px] text-subtle">
-                  <CheckCircle2 className="h-4 w-4 text-success-text" aria-hidden /> Nothing left to review. Every action line in the notes is either added or discarded.
-                </p>
-              ) : (
-                <ul>
-                  {remaining.map((s) => (
-                    <SuggestionRow key={s.blockId} s={s} review={review} onDone={onDone(s.blockId)} />
+      {/* 4. Summary */}
+      <section className={`${card} space-y-3`} aria-labelledby="mr-sum">
+        <div className="flex items-center justify-between gap-2">
+          <h2 id="mr-sum" className={`${h2} flex items-center gap-2`}><Sparkles className="h-4 w-4 text-primary" aria-hidden /> Summary</h2>
+          {m?.model && <span className="text-[12px] text-muted print:hidden">{m.model === "offline-synthesis" ? "Drafted from meeting data" : "Drafted with AI"}</span>}
+        </div>
+        {m ? (
+          review.canEdit && !sent ? (
+            <>
+              <label htmlFor="mr-overview" className="sr-only">Summary</label>
+              <textarea id="mr-overview" value={overview} onChange={(e) => setOverview(e.target.value)} className="min-h-[110px] w-full resize-y rounded-md border border-border bg-surface p-3 text-[14.5px] leading-relaxed text-foreground focus:border-primary focus:outline-none" />
+              {overview !== savedOverview && (
+                <div className="flex justify-end"><button type="button" onClick={saveOverview} disabled={pending} className={btnSecondary}>Save summary</button></div>
+              )}
+            </>
+          ) : (
+            <p className="whitespace-pre-wrap text-[14.5px] leading-relaxed text-foreground">{overview || "—"}</p>
+          )
+        ) : (
+          <div className="rounded-lg bg-sunken p-5 text-center">
+            <p className="text-[14px] text-subtle">No draft yet. It's built from the points, tasks, decisions and notes captured in the meeting.</p>
+            {review.canEdit && (
+              <button type="button" onClick={generate} disabled={pending} className={`${btnPrimary} mt-3`}>
+                {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />} Draft minutes now
+              </button>
+            )}
+          </div>
+        )}
+        {d.closedRemarks && <p className="border-l-[3px] border-border pl-3 text-[13.5px] text-subtle">Closing remarks: {d.closedRemarks}</p>}
+      </section>
+
+      {/* Review tools (only while it's a draft) */}
+      {review.canEdit && !sent && (
+        <section className="theme-card-structural overflow-hidden p-0 print:hidden" aria-labelledby="mr-sug">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
+            <h2 id="mr-sug" className={h2}>Found in the notes. Keep what's right.</h2>
+            <span className="text-[13px] text-subtle">{remaining.length} to review</span>
+          </div>
+          {remaining.length === 0 ? (
+            <p className="flex items-center gap-2 border-t border-border px-5 py-4 text-[13.5px] text-subtle">
+              <CheckCircle2 className="h-4 w-4 text-success-text" aria-hidden /> Nothing left to review.
+            </p>
+          ) : (
+            <ul>{remaining.map((x) => <SuggestionRow key={x.blockId} s={x} review={review} onDone={onDone(x.blockId)} />)}</ul>
+          )}
+        </section>
+      )}
+
+      {/* 5. Decisions */}
+      <section className={`${card} space-y-2`} aria-labelledby="mr-dec">
+        <h2 id="mr-dec" className={h2}>Decisions taken ({d.decisions.length})</h2>
+        {d.decisions.length === 0 ? (
+          <p className="text-[13.5px] text-muted">No decisions were recorded in this meeting.</p>
+        ) : (
+          <ol className="space-y-2">
+            {d.decisions.map((x, i) => (
+              <li key={x.id} className="flex gap-3 text-[14px]">
+                <span className="w-6 shrink-0 font-semibold text-muted">{i + 1}.</span>
+                <span className="min-w-0">
+                  <Link href={`/meet/decisions/${x.id}`} className="font-medium text-foreground hover:underline">{x.text}</Link>
+                  <span className="block text-[12.5px] text-muted">{x.code}{x.by ? ` · decided by ${x.by}` : ""}{x.point ? ` · on ${x.point}` : ""}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
+      {/* 6. Who does what */}
+      <section className={`${card} space-y-3`} aria-labelledby="mr-who">
+        <h2 id="mr-who" className={h2}>Who does what</h2>
+        {d.byPerson.length === 0 ? (
+          <p className="text-[13.5px] text-muted">No points or tasks were assigned.</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {d.byPerson.map((p) => (
+              <div key={p.name} className="rounded-lg border border-border p-3.5">
+                <p className="text-[14.5px] font-semibold text-heading">{p.name}</p>
+                <p className="mb-2 text-[12.5px] text-muted">{p.points.length} point{p.points.length === 1 ? "" : "s"} · {p.tasks.length} task{p.tasks.length === 1 ? "" : "s"}</p>
+                <ul className="space-y-1 text-[13.5px]">
+                  {p.tasks.map((t) => (
+                    <li key={t.code} className="text-foreground"><span className="font-semibold text-primary">Task</span> {t.title} <span className="text-muted">· by {due(t.due)}</span></li>
+                  ))}
+                  {p.points.map((x) => (
+                    <li key={x.code} className="text-foreground"><span className="font-semibold text-subtle">Point</span> {x.title} <span className="text-muted">· {String(x.status).replace(/_/g, " ")}{x.due ? ` · due ${due(x.due)}` : ""}</span></li>
                   ))}
                 </ul>
-              )}
-            </section>
-          )}
-
-          {/* Per-point minutes */}
-          {m && (m.items_json || []).length > 0 && (
-            <section className="theme-card-structural p-5" aria-labelledby="mr-items">
-              <h2 id="mr-items" className="mb-3 text-[16px] font-semibold text-heading">Point by point</h2>
-              <ol className="space-y-4">
-                {(m.items_json || []).map((it) => (
-                  <li key={it.point_id} className="text-[14px]">
-                    <div className="font-semibold text-heading">
-                      <Link href={`/meet/points/${it.point_id}`} className="mr-2 text-primary hover:underline">{it.point_code}</Link>
-                      {it.title}
-                    </div>
-                    <p className="mt-1 leading-relaxed text-foreground">{it.text}</p>
-                    {(it.tasks || []).length > 0 && (
-                      <ul className="mt-1 list-disc pl-5 text-[13.5px] text-subtle">
-                        {(it.tasks || []).map((t, i) => <li key={i}>{t.title} · {t.owner}{t.due_date ? ` · due ${t.due_date}` : ""}</li>)}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
-        </div>
-
-        <aside className="min-w-0 flex-[1_1_300px] space-y-5">
-          <section className="theme-card-structural space-y-2 p-4" aria-labelledby="mr-res">
-            <h2 id="mr-res" className="text-[15px] font-semibold text-heading">Resolved in this meeting ({resolved.length})</h2>
-            {resolved.length === 0 ? <p className="text-[13.5px] text-muted">None.</p> : resolved.slice(0, 8).map((p) => (
-              <p key={p.id} className="text-[13.5px] text-success-text">{p.code} {p.title}</p>
+              </div>
             ))}
-          </section>
-          <section className="theme-card-structural space-y-2 p-4" aria-labelledby="mr-carry">
-            <h2 id="mr-carry" className="text-[15px] font-semibold text-heading">
-              {review.nextSession ? "Goes to the next meeting" : "Still open"} ({carried.length})
-            </h2>
-            {carried.length === 0 ? <p className="text-[13.5px] text-muted">Nothing carried forward.</p> : carried.slice(0, 8).map((p) => (
-              <p key={p.id} className="text-[13.5px] text-foreground">{p.code} {p.title}{p.owner ? <span className="text-muted"> · {p.owner}</span> : null}</p>
+          </div>
+        )}
+      </section>
+
+      {/* 7. Action items */}
+      <section className={`${card} overflow-x-auto`} aria-labelledby="mr-act">
+        <h2 id="mr-act" className={`${h2} mb-2`}>Action items ({d.tasks.length})</h2>
+        {d.tasks.length === 0 ? (
+          <p className="text-[13.5px] text-muted">No tasks were created in this meeting.</p>
+        ) : (
+          <table className="w-full min-w-[620px] border-collapse text-[14px]">
+            <thead>
+              <tr className="bg-sunken text-left text-[12.5px] font-semibold text-subtle">
+                <th className="px-3 py-2">#</th><th className="px-3 py-2">Task</th><th className="px-3 py-2">Owner</th><th className="px-3 py-2">Due</th><th className="px-3 py-2">Point</th><th className="px-3 py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.tasks.map((t, i) => (
+                <tr key={t.id} className="border-t border-border">
+                  <td className="px-3 py-2 text-muted">{i + 1}</td>
+                  <td className="px-3 py-2"><Link href={`/meet/tasks/${t.id}`} className="font-medium text-foreground hover:underline">{t.title}</Link></td>
+                  <td className="px-3 py-2 text-subtle">{t.owner || <span className="text-warning-text">Not assigned</span>}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-subtle">{due(t.due)}</td>
+                  <td className="px-3 py-2 text-subtle">{t.point || "—"}</td>
+                  <td className="px-3 py-2 capitalize text-subtle">{t.status.replace(/_/g, " ")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* 8. Point by point */}
+      {m && (m.items_json || []).length > 0 && (
+        <section className={card} aria-labelledby="mr-items">
+          <h2 id="mr-items" className={`${h2} mb-3`}>What was discussed, point by point</h2>
+          <ol className="space-y-4">
+            {(m.items_json || []).map((it) => (
+              <li key={it.point_id} className="text-[14px]">
+                <div className="font-semibold text-heading">
+                  <Link href={`/meet/points/${it.point_id}`} className="mr-2 text-primary hover:underline">{it.point_code}</Link>
+                  {it.title}
+                </div>
+                <p className="mt-1 leading-relaxed text-foreground">{it.text}</p>
+              </li>
             ))}
-            <p className="text-[12.5px] text-muted">
-              {review.nextSession
-                ? `They'll be on the agenda of ${new Date(review.nextSession.scheduledStart).toLocaleDateString("en-IN", { timeZone: IST, day: "numeric", month: "short" })} automatically.`
-                : "No next meeting is scheduled, so these stay open in Points & tasks until they're closed."}
-            </p>
-          </section>
-          <section className="theme-card-structural space-y-1.5 p-4" aria-labelledby="mr-rules">
-            <h2 id="mr-rules" className="text-[15px] font-semibold text-heading">How this works</h2>
-            <p className="text-[13px] leading-relaxed text-subtle">
-              Nothing is created until someone accepts it. Approving sends the minutes by email and in-app to everyone in the meeting, and saves each point's summary to its history.
-            </p>
-          </section>
-        </aside>
+          </ol>
+        </section>
+      )}
+
+      {/* 9. Closed and open */}
+      <div className="grid gap-5 md:grid-cols-2">
+        <section className={`${card} space-y-2`} aria-labelledby="mr-res">
+          <h2 id="mr-res" className={h2}>Closed in this meeting ({resolved.length})</h2>
+          {resolved.length === 0 ? <p className="text-[13.5px] text-muted">None.</p> : resolved.map((p) => (
+            <p key={p.id} className="text-[13.5px] text-success-text">{p.code} {p.title}</p>
+          ))}
+        </section>
+        <section className={`${card} space-y-2`} aria-labelledby="mr-carry">
+          <h2 id="mr-carry" className={h2}>{nextLabel ? "Goes to the next meeting" : "Still open"} ({carried.length})</h2>
+          {carried.length === 0 ? <p className="text-[13.5px] text-muted">Nothing left open.</p> : carried.map((p) => (
+            <p key={p.id} className="text-[13.5px] text-foreground">{p.code} {p.title}{p.owner ? <span className="text-muted"> · {p.owner}</span> : null}</p>
+          ))}
+          <p className="text-[12.5px] text-muted">{nextLabel ? `On the agenda of ${nextLabel} automatically.` : "No next meeting is booked; these stay open in Points until closed."}</p>
+        </section>
       </div>
+
+      {/* 10. Attendance */}
+      <section className={`${card} space-y-2`} aria-labelledby="mr-att">
+        <h2 id="mr-att" className={h2}>Attendance ({d.totals.present} of {d.totals.invited})</h2>
+        <ul className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+          {d.attendance.map((a, i) => (
+            <li key={`${a.name}-${i}`} className="flex flex-wrap justify-between gap-2 text-[13.5px]">
+              <span className="text-foreground">{a.name}</span>
+              <span className={a.status === "present" || a.status === "late" ? "text-success-text" : "text-muted"}>
+                {ATT[a.status] || a.status}{a.reason && a.status !== "present" ? ` · ${a.reason}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* 11. Next meeting */}
+      <section className={`${card}`} aria-label="Next meeting">
+        <p className="text-[14px] text-foreground"><span className="font-semibold text-heading">Next meeting: </span>{nextLabel || "Not booked yet"}</p>
+      </section>
+
+      {/* 12. Email version */}
+      <section className={`${card} space-y-2 print:hidden`} aria-labelledby="mr-mail">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="mr-mail" className={h2}>Minutes as an email</h2>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard.writeText(email).then(() => toast.success("Copied. Paste it into Outlook.")).catch(() => toast.error("Couldn't copy."))}
+            className={btnSecondary}
+          >
+            Copy email
+          </button>
+        </div>
+        <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-md bg-sunken p-4 font-sans text-[13.5px] leading-relaxed text-foreground">{email}</pre>
+      </section>
     </div>
   );
 }

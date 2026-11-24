@@ -367,15 +367,10 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
           </AppButton>
 
           {/* Record Decision */}
-          <AppButton
-            variant="primary"
-            size="sm"
-            onClick={() => setIsRecordModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs"
-          >
+          <Link href="/meet/decisions/new" className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover">
             <Plus className="w-3.5 h-3.5" />
-            <span>Record Decision</span>
-          </AppButton>
+            <span>Record decision</span>
+          </Link>
         </div>
       </div>
 

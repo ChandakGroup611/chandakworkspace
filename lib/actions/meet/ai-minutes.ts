@@ -377,6 +377,23 @@ export async function approveAndSendMoM(
 
     }
 
+    // The full minutes as text, for the {{minutes_text}} placeholder in the template
+    let minutesText = "";
+    try {
+      const { getMinutesReview } = await import("@/lib/actions/meet/review");
+      const { minutesAsText } = await import("@/lib/utils/meet-minutes-text");
+      const rv = await getMinutesReview(sessionId);
+      if (rv) {
+        // Emails are HTML: escape the text and keep the line breaks
+        minutesText = minutesAsText(rv, String(customOverview ?? aiMin.overview ?? ""))
+          .replace(/^Subject:.*\n+/, "")
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/\n/g, "<br>");
+      }
+    } catch {
+      minutesText = "";
+    }
+
     // Minutes go out through the admin's "Minutes sent" template (Settings › Communication)
     await sendMeetEmail("Minutes sent", {
       entityId: sessionId,
@@ -387,7 +404,8 @@ export async function approveAndSendMoM(
       data: {
         meeting_title: meetingTitle,
         session_code: sessionCode,
-        link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}`,
+        minutes_text: minutesText,
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}/review`,
       },
     });
 

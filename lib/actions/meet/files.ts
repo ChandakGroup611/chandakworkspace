@@ -11,7 +11,7 @@ import { requireMeet } from "@/lib/permissions/meet";
 
 const BUCKET = "meet-attachments";
 const MAX = 20 * 1024 * 1024;
-type Entity = "session" | "point" | "task";
+type Entity = "session" | "point" | "task" | "decision";
 const one = (v: any) => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 
 async function ensureBucket() {
@@ -47,7 +47,7 @@ export async function uploadMeetFile(form: FormData): Promise<{ success: boolean
   const entityType = String(form.get("entityType") || "") as Entity;
   const entityId = String(form.get("entityId") || "");
   const file = form.get("file") as File | null;
-  if (!["session", "point", "task"].includes(entityType) || !/^[0-9a-f-]{36}$/i.test(entityId)) return { success: false, error: "Unknown record." };
+  if (!["session", "point", "task", "decision"].includes(entityType) || !/^[0-9a-f-]{36}$/i.test(entityId)) return { success: false, error: "Unknown record." };
   if (!file || typeof file === "string" || !file.size) return { success: false, error: "Pick a file." };
   if (file.size > MAX) return { success: false, error: "Files can be up to 20 MB." };
   try {
@@ -63,7 +63,7 @@ export async function uploadMeetFile(form: FormData): Promise<{ success: boolean
     });
     if (error) return { success: false, error: error.message };
     await supabaseAdmin.from("meet_activity_log").insert({ entity_type: entityType, entity_id: entityId, action: "file_added", field: "file", new_value: file.name.slice(0, 200), user_id: auth.userId, channel: "web" });
-    revalidatePath(entityType === "task" ? `/meet/tasks/${entityId}` : entityType === "point" ? `/meet/points/${entityId}` : `/meet/sessions/${entityId}`);
+    revalidatePath(entityType === "task" ? `/meet/tasks/${entityId}` : entityType === "point" ? `/meet/points/${entityId}` : entityType === "decision" ? `/meet/decisions/${entityId}` : `/meet/sessions/${entityId}`);
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || "Upload failed." };

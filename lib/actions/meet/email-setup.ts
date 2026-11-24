@@ -161,6 +161,9 @@ const SAMPLE: Record<string, string> = {
   task_title: "Share dealer-wise collection report",
   due_date: "28 Nov 2026",
   carry_count: "3",
+  person_name: "Rohit Kale",
+  reason: "On a site visit that day",
+  minutes_text: "Dear all,<br><br>Please find below the minutes of Weekly Sales Review…<br><br>SUMMARY<br>…<br><br>DECISIONS<br>1. …<br><br>ACTION ITEMS<br>1. …",
 };
 
 /** Sends the template, filled with sample values, to the signed-in admin only. */

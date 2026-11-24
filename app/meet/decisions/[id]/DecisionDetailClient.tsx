@@ -36,13 +36,13 @@ export default function DecisionDetailClient({ id, status, reviewDate, sessionId
   return (
     <div className="space-y-5">
       <section className="theme-card-structural space-y-3 p-5" aria-labelledby="nx-task">
-        <h2 id="nx-task" className="text-[15px] font-semibold text-heading">Someone has to act on it?</h2>
-        <input value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} placeholder="Task, e.g. Update dealer credit limits in SAP" className={input} />
+        <h2 id="nx-task" className="text-[15px] font-semibold text-heading">Ask someone to act on it</h2>
+        <input value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} placeholder="What they must do, e.g. Update dealer credit limits in SAP" className={input} />
         <div className="grid grid-cols-[1fr_80px] gap-2">
           <PersonPicker people={users} value={owner} onChange={setOwner} placeholder="Owner" />
           <input type="number" min={1} max={60} value={days} onChange={(e) => setDays(Number(e.target.value))} aria-label="Days to finish" className={input} />
         </div>
-        <button disabled={pending || taskTitle.trim().length < 3} onClick={() => run(() => addDecisionTask({ id, title: taskTitle, ownerId: owner || undefined, days }), "Follow-up task created", () => { setTaskTitle(""); setOwner(""); })} className={btn}>Create follow-up task</button>
+        <button disabled={pending || taskTitle.trim().length < 3} onClick={() => run(() => addDecisionTask({ id, title: taskTitle, ownerId: owner || undefined, days }), "Task created for them", () => { setTaskTitle(""); setOwner(""); })} className={btn}>Assign action</button>
       </section>
 
       {canManage && active && (

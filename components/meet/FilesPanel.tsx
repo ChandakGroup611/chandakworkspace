@@ -8,7 +8,7 @@ import { getMeetFiles, uploadMeetFile, type MeetFile } from "@/lib/actions/meet/
 const size = (b: number) => (b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 /** Files attached to a meeting date (pre-reads), a point or a task. */
-export default function FilesPanel({ entityType, entityId, title = "Files", canAdd = true }: { entityType: "session" | "point" | "task"; entityId: string; title?: string; canAdd?: boolean }) {
+export default function FilesPanel({ entityType, entityId, title = "Files", canAdd = true }: { entityType: "session" | "point" | "task" | "decision"; entityId: string; title?: string; canAdd?: boolean }) {
   const [list, setList] = useState<MeetFile[] | null>(null);
   const [pending, start] = useTransition();
   const ref = useRef<HTMLInputElement>(null);

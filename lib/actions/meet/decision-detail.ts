@@ -97,3 +97,131 @@ export async function addDecisionTask(input: { id: string; title: string; ownerI
   revalidatePath(`/meet/decisions/${d.id}`);
   return { success: true };
 }
+
+/* ---------------------------------------------------------- Record a decision */
+
+export async function getDecisionFormData() {
+  await requireMeet("MEET_VIEW");
+  const since = new Date(Date.now() - 120 * 86400000).toISOString();
+  const [sRes, dRes, uRes] = await Promise.all([
+    supabaseAdmin
+      .from("meet_sessions")
+      .select("id, code, scheduled_start, status, meeting:meet_meetings(id, title, code, is_deleted)")
+      .eq("is_deleted", false)
+      .neq("status", "cancelled")
+      .gte("scheduled_start", since)
+      .order("scheduled_start", { ascending: false })
+      .limit(150),
+    supabaseAdmin.from("departments").select("id, name").eq("is_deleted", false).order("name"),
+    supabaseAdmin.from("user_master").select("id, full_name, email").eq("is_deleted", false).eq("is_active", true).order("full_name").limit(2000),
+  ]);
+  const sessions = ((sRes.data || []) as any[])
+    .filter((s) => one(s.meeting) && !one(s.meeting).is_deleted)
+    .filter((s) => new Date(s.scheduled_start).getTime() <= Date.now() + 86400000)
+    .map((s) => ({
+      id: s.id,
+      meetingId: one(s.meeting).id,
+      label: `${one(s.meeting).title} · ${new Date(s.scheduled_start).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}`,
+    }));
+  return {
+    sessions,
+    departments: ((dRes.data || []) as any[]).map((d) => ({ id: d.id, name: d.name })),
+    people: ((uRes.data || []) as any[]).map((u) => ({ id: u.id, full_name: u.full_name || u.email, email: u.email || null })),
+  };
+}
+
+export async function getSessionPoints(sessionId: string) {
+  await requireMeet("MEET_VIEW", { sessionId });
+  const { data } = await supabaseAdmin.from("meet_session_points").select("point:meet_points(id, code, title, is_deleted)").eq("session_id", sessionId);
+  return ((data || []) as any[]).map((r) => one(r.point)).filter((p) => p && !p.is_deleted).map((p) => ({ id: p.id, label: `${p.code} ${p.title}` }));
+}
+
+export async function recordManagementDecision(input: {
+  sessionId: string;
+  pointId?: string;
+  text: string;
+  background?: string;
+  kind: string;
+  decidedBy?: string;
+  effectiveFrom?: string;
+  reviewDate?: string;
+  appliesTo: "everyone" | "departments" | "people" | "mixed";
+  departmentIds?: string[];
+  personIds?: string[];
+  needsAck?: boolean;
+  followUp?: { title: string; ownerId?: string; days?: number } | null;
+}): Promise<{ success: boolean; error?: string; id?: string }> {
+  const auth = await requireMeet("MEET_DECISION_MANAGE", { sessionId: input.sessionId });
+  const text = String(input.text || "").trim();
+  if (text.length < 5) return { success: false, error: "Write the decision." };
+  if (!input.sessionId) return { success: false, error: "Pick the meeting it was taken in." };
+  const depts = Array.from(new Set(input.departmentIds || []));
+  const persons = Array.from(new Set(input.personIds || []));
+  if (input.appliesTo !== "everyone" && !depts.length && !persons.length) return { success: false, error: "Pick the departments or people it applies to." };
+  const { recordDecision } = await import("@/lib/actions/meet/decisions");
+  const r: any = await recordDecision({
+    sessionId: input.sessionId,
+    pointId: input.pointId || undefined,
+    text,
+    decidedBy: String(input.decidedBy || "").trim() || "Management",
+    effectiveFrom: input.effectiveFrom || undefined,
+    reviewDate: input.reviewDate || undefined,
+    tags: [input.kind].filter(Boolean),
+  });
+  if (!r?.success || !r.decision?.id) return { success: false, error: r?.error || "Couldn't record the decision." };
+  const id = r.decision.id as string;
+  const { writeDecisionScope, decisionAudience } = await import("@/lib/utils/meet-decision-scope");
+  const scope = {
+    kind: input.kind || "Other",
+    appliesTo: input.appliesTo,
+    departmentIds: input.appliesTo === "everyone" ? [] : depts,
+    personIds: input.appliesTo === "everyone" ? [] : persons,
+    background: String(input.background || "").trim() || null,
+    needsAck: !!input.needsAck,
+    noted: [],
+  };
+  await writeDecisionScope(id, scope, auth.userId);
+
+  if (input.followUp?.title?.trim()) {
+    await addDecisionTask({ id, title: input.followUp.title, ownerId: input.followUp.ownerId, days: input.followUp.days });
+  }
+
+  // "Decision recorded" email (goes out only if that email is written and switched on)
+  const audience = input.appliesTo === "everyone" ? [] : await decisionAudience(scope);
+  const { data: s } = await supabaseAdmin.from("meet_sessions").select("meeting_id, meeting:meet_meetings(title)").eq("id", input.sessionId).maybeSingle();
+  const deptNames = depts.length ? ((await supabaseAdmin.from("departments").select("name").in("id", depts)).data || []).map((d: any) => d.name) : [];
+  const { sendMeetEmail } = await import("@/lib/utils/meet-email");
+  await sendMeetEmail("Decision recorded", {
+    entityId: id,
+    sessionId: input.sessionId,
+    meetingId: s?.meeting_id,
+    actorId: auth.userId,
+    recipients: { "People the decision applies to": audience },
+    link: `/meet/decisions/${id}`,
+    data: {
+      decision_code: r.decision.code,
+      decision_text: text,
+      decision_type: scope.kind,
+      applies_to: input.appliesTo === "everyone" ? "everyone" : [...deptNames, persons.length ? `${persons.length} named ${persons.length === 1 ? "person" : "people"}` : ""].filter(Boolean).join(", "),
+      effective_from: input.effectiveFrom || new Date().toISOString().slice(0, 10),
+      meeting_title: one((s as any)?.meeting)?.title || "",
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/decisions/${id}`,
+    },
+  });
+  revalidatePath("/meet/decisions");
+  return { success: true, id };
+}
+
+/** "Noted" by someone the decision applies to. */
+export async function noteDecision(id: string): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireMeet("MEET_VIEW");
+  const { readDecisionScope, writeDecisionScope } = await import("@/lib/utils/meet-decision-scope");
+  const scope = await readDecisionScope(id);
+  if (!scope) return { success: false, error: "This decision has no audience set." };
+  if (scope.noted?.some((n) => n.userId === auth.userId)) return { success: true };
+  scope.noted = [...(scope.noted || []), { userId: auth.userId, at: new Date().toISOString() }];
+  await writeDecisionScope(id, scope, auth.userId);
+  await supabaseAdmin.from("meet_activity_log").insert({ entity_type: "decision", entity_id: id, action: "noted", field: "noted", new_value: "Noted", user_id: auth.userId, channel: "web" });
+  revalidatePath(`/meet/decisions/${id}`);
+  return { success: true };
+}

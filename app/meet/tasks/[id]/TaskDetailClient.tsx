@@ -102,7 +102,7 @@ export default function TaskDetailClient({ detail, users }: { detail: TaskDetail
               <input type="range" min={0} max={100} step={5} value={progress} onChange={(e) => setProgress(Number(e.target.value))} className="flex-1 accent-[var(--color-primary,#c2410c)]" aria-label="Progress" />
               <span className="w-12 text-right text-[15px] font-semibold text-foreground">{progress}%</span>
             </div>
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Short note (optional), e.g. waiting on bank" className={input} />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="What was done (optional), e.g. Limits updated in SAP for 12 dealers" className={input} />
             <button disabled={pending} onClick={() => run(() => updateTaskProgress({ taskId: t.id, progress, note }), "Progress saved")} className={btn}>Save progress</button>
           </section>
         )}
