@@ -6,7 +6,6 @@
  * a record just created is highlighted (?created=<id>).
  */
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Trash2, RefreshCw } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
@@ -14,20 +13,18 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { deleteAMCEntity } from "@/lib/actions/amc-client";
 import { RecordHighlighter } from "@/components/ui/record";
-import { AMCContractsListTab } from "./AMCContractsListTab";
-import { AMCSubscriptionsListTab } from "./AMCSubscriptionsListTab";
+import { AMCRegisterTable } from "./AMCRegisterTable";
 import { AMCHistoryModal } from "./AMCHistoryModal";
 import { AMCRenewalModal } from "./AMCRenewalModal";
 import { AMCShell } from "./AMCShell";
-import { useAMCData, amcRecordHref } from "./useAMCData";
+import { useAMCData } from "./useAMCData";
 
-export function AMCRegisterPage({ kind }: { kind: "amc" | "subscription" }) {
-  const router = useRouter();
+export function AMCRegisterPage({ kind }: { kind: "amc" | "subscription" | "all" }) {
   const { hasPermission } = usePermissions();
   let isLightMode = false;
   try { isLightMode = useTheme().isLight; } catch {}
 
-  const { records, vendors, departments, loading, fetchRecords } = useAMCData();
+  const { records, vendors, departments, users, loading, fetchRecords } = useAMCData();
   const [renewRecord, setRenewRecord] = useState<any | null>(null);
   const [historyRecordId, setHistoryRecordId] = useState<string | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<any | null>(null);
@@ -37,8 +34,6 @@ export function AMCRegisterPage({ kind }: { kind: "amc" | "subscription" }) {
   const [ready, setReady] = useState(false);
   useEffect(() => { if (!loading) setReady(true); }, [loading]);
 
-  const isSub = kind === "subscription";
-  const section = isSub ? "/amc/subscriptions" : "/amc/contracts";
   const amcCount = records.filter((r) => r.contract_type !== "Subscription").length;
   const subCount = records.filter((r) => r.contract_type === "Subscription").length;
 
@@ -58,26 +53,14 @@ export function AMCRegisterPage({ kind }: { kind: "amc" | "subscription" }) {
     }
   };
 
-  const listProps = {
-    records,
-    vendors,
-    departments,
-    loading,
-    onRefresh: fetchRecords,
-    onOpenCreate: () => router.push(`${section}/new`),
-    onOpenView: (rec: any) => router.push(amcRecordHref(rec)),
-    onOpenEdit: (rec: any) => router.push(amcRecordHref(rec, "/edit")),
-    onOpenRenew: (rec: any) => setRenewRecord(rec),
-    onOpenHistory: (id: string) => setHistoryRecordId(id),
-    onDelete: (rec: any) => setDeleteCandidate(rec),
-    hasPermission,
-  };
+
 
   return (
     <AMCShell
-      title={isSub ? "Subscriptions" : "AMC contracts"}
-      breadcrumbs={[{ label: "AMC & Subscriptions", href: "/amc" }, { label: isSub ? "Subscriptions" : "AMC contracts" }]}
-      counts={{ "/amc/contracts": amcCount, "/amc/subscriptions": subCount }}
+      title="Register"
+      description="Every AMC and subscription we pay for, in one list."
+      breadcrumbs={[{ label: "AMC & Subscriptions", href: "/amc" }, { label: "Register" }]}
+      counts={{ "/amc/register": amcCount + subCount }}
       actions={
         <AppButton variant="outline" size="sm" onClick={fetchRecords} leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />} className="h-9 text-xs" aria-label="Refresh records">
           Refresh
@@ -85,7 +68,19 @@ export function AMCRegisterPage({ kind }: { kind: "amc" | "subscription" }) {
       }
     >
       {ready && <RecordHighlighter />}
-      {isSub ? <AMCSubscriptionsListTab {...listProps} /> : <AMCContractsListTab {...listProps} />}
+      <AMCRegisterTable
+        records={records}
+        vendors={vendors}
+        departments={departments}
+        users={users}
+        loading={loading}
+        initialType={kind === "subscription" ? "sub" : kind === "amc" ? "amc" : "all"}
+        onRenew={(rec: any) => setRenewRecord(rec)}
+        onHistory={(id: string) => setHistoryRecordId(id)}
+        onDelete={(rec: any) => setDeleteCandidate(rec)}
+        canEdit
+        canDelete={hasPermission("AMC_DELETE")}
+      />
 
       {renewRecord && (
         <AMCRenewalModal
@@ -107,7 +102,7 @@ export function AMCRegisterPage({ kind }: { kind: "amc" | "subscription" }) {
               <div className="rounded-full bg-danger-soft p-2.5 text-danger-text">
                 <Trash2 className="h-5 w-5" />
               </div>
-              <h3 className="text-base font-semibold text-foreground">Delete {isSub ? "subscription" : "contract"}?</h3>
+              <h3 className="text-base font-semibold text-foreground">Delete {deleteCandidate.contract_type === "Subscription" ? "subscription" : "contract"}?</h3>
             </div>
             <p className="text-sm text-foreground">
               <strong>{deleteCandidate.software_name}</strong> will be moved to deleted records.

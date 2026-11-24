@@ -24,9 +24,8 @@ import { cn } from "@/lib/utils";
 
 export const AMC_SECTIONS = [
   { href: "/amc", label: "Home", icon: BarChart3, match: (p: string) => p === "/amc" },
-  { href: "/amc/contracts", label: "AMC contracts", icon: ShieldCheck, match: (p: string) => p.startsWith("/amc/contracts") },
-  { href: "/amc/subscriptions", label: "Subscriptions", icon: Zap, match: (p: string) => p.startsWith("/amc/subscriptions") },
-  { href: "/amc/transactions", label: "Transactions", icon: Receipt, match: (p: string) => p.startsWith("/amc/transactions") },
+  { href: "/amc/register", label: "Register", icon: ShieldCheck, match: (p: string) => p.startsWith("/amc/register") || p.startsWith("/amc/contracts") || p.startsWith("/amc/subscriptions") },
+  { href: "/amc/transactions", label: "Payments & renewals", icon: Receipt, match: (p: string) => p.startsWith("/amc/transactions") },
   { href: "/amc/reports", label: "Reports", icon: FileBarChart, match: (p: string) => p.startsWith("/amc/reports") },
   { href: "/amc/analytics", label: "Analytics", icon: LineChart, match: (p: string) => p.startsWith("/amc/analytics") },
 ] as const;

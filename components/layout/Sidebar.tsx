@@ -119,10 +119,9 @@ const taskNavGroups: NavGroup[] = [
         icon: ShieldCheck, 
         permission: "AMC_VIEW",
         subItems: [
-          { label: "Dashboard", href: "/amc", permission: "AMC_VIEW" },
-          { label: "AMC contracts", href: "/amc/contracts", permission: "AMC_VIEW" },
-          { label: "Subscriptions", href: "/amc/subscriptions", permission: "AMC_VIEW" },
-          { label: "Transactions", href: "/amc/transactions", permission: "AMC_VIEW" },
+          { label: "Home", href: "/amc", permission: "AMC_VIEW" },
+          { label: "Register", href: "/amc/register", permission: "AMC_VIEW" },
+          { label: "Payments & renewals", href: "/amc/transactions", permission: "AMC_VIEW" },
           { label: "Reports and analytics", href: "/amc/reports", permission: "AMC_VIEW" }
         ]
       },
@@ -410,8 +409,7 @@ function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchPa
 
 function isSubActive(href: string, pathname: string, sp: URLSearchParams | null) {
   if (href === "/amc") return pathname === "/amc";
-  if (href === "/amc/contracts") return pathname.startsWith("/amc/contracts");
-  if (href === "/amc/subscriptions") return pathname.startsWith("/amc/subscriptions");
+  if (href === "/amc/register") return pathname.startsWith("/amc/register") || pathname.startsWith("/amc/contracts") || pathname.startsWith("/amc/subscriptions");
   if (href === "/amc/transactions") return pathname.startsWith("/amc/transactions");
   if (href === "/amc/reports") return pathname.startsWith("/amc/reports") || pathname.startsWith("/amc/analytics");
   if (href === "/budget/masters") return pathname.startsWith("/budget/masters") || pathname.startsWith("/budget/admin/masters");
