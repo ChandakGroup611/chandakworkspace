@@ -92,6 +92,9 @@ jobs:
         run: npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund
 
       - name: Run TypeScript Validation (tsc --noEmit)
+        env:
+          # The full check needs a little over 2 GB; the runner's default heap is right at that edge.
+          NODE_OPTIONS: --max-old-space-size=6144
         run: npx tsc --noEmit
 
   lint:
