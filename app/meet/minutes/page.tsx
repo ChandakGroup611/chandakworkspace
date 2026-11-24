@@ -4,6 +4,7 @@ import { FileText } from "lucide-react";
 import { listMinutes, type ShowScope } from "@/lib/actions/meet/lists";
 import ListFilters from "@/components/meet/lists/ListFilters";
 import ExportCsvButton from "@/components/meet/lists/ExportCsvButton";
+import ClickableRow from "@/components/meet/lists/ClickableRow";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Minutes (MoM) · Chandak Meet", description: "Minutes of every meeting that has been held" };
@@ -94,7 +95,7 @@ export default async function MinutesListPage({ searchParams }: { searchParams: 
               {data.rows.map((r) => {
                 const st = STATE[r.state];
                 return (
-                  <tr key={r.session_id} className="border-t border-border align-top hover:bg-surface-hover">
+                  <ClickableRow key={r.session_id} href={`/meet/sessions/${r.session_id}/review`} className="border-t border-border align-top">
                     <td className="max-w-[420px] px-4 py-3">
                       <Link href={`/meet/sessions/${r.session_id}/review`} className="font-semibold text-heading hover:underline">{r.meeting_title}</Link>
                       <div className="text-[12.5px] text-muted">{r.session_code || r.meeting_code}{r.organiser ? ` · Organiser ${r.organiser}` : ""}</div>
@@ -113,7 +114,7 @@ export default async function MinutesListPage({ searchParams }: { searchParams: 
                         {r.state === "sent" ? "Read" : r.state === "draft" ? "Review and send" : "Write minutes"}
                       </Link>
                     </td>
-                  </tr>
+                  </ClickableRow>
                 );
               })}
             </tbody>

@@ -7,6 +7,7 @@ import { pointStatus, PriorityText, DueHint, shortDate } from "@/components/meet
 import PointActions from "./PointActions";
 import PointUpdateForm from "./PointUpdateForm";
 import PointMoveCard from "./PointMoveCard";
+import BackLink from "@/components/meet/BackLink";
 import CommentsPanel from "@/components/meet/CommentsPanel";
 import FilesPanel from "@/components/meet/FilesPanel";
 
@@ -50,6 +51,7 @@ export default async function PointPage({ params, searchParams }: { params: Prom
   return (
     <div className="flex flex-wrap gap-5 pb-6">
       {/* Left: other open points of this meeting (Zoho-style list) */}
+      <div className="basis-full"><BackLink href="/meet/points" label="Back" /></div>
       <aside aria-label="Open points in this meeting" className="flex-[1_1_260px] max-w-[320px] space-y-2">
         <Link href={d.meeting ? `/meet/meetings/${d.meeting.id}?tab=points` : "/meet/points?show=mine"} className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-heading hover:underline">
           <ChevronLeft className="h-4 w-4" aria-hidden /> {d.meeting?.title || "Points"}
@@ -228,6 +230,11 @@ export default async function PointPage({ params, searchParams }: { params: Prom
         {d.canEdit && !["closed", "dropped"].includes(p.status) && (
           <Link href={`/meet/tasks/new?point=${p.id}&back=${encodeURIComponent(`/meet/points/${p.id}`)}`} className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-surface px-4 text-[14px] font-semibold text-foreground hover:bg-surface-hover">
             + Add a task to this point
+          </Link>
+        )}
+        {d.canEdit && (
+          <Link href={`/meet/points/${p.id}/delete`} className="ml-2 inline-flex h-10 items-center rounded-md border border-border bg-surface px-4 text-[14px] font-semibold text-danger-text hover:bg-surface-hover">
+            Delete point
           </Link>
         )}
         {d.canEdit && <PointMoveCard pointId={p.id} meetingId={d.meeting?.id || null} />}

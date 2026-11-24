@@ -4,6 +4,8 @@ import { ClipboardList } from "lucide-react";
 import { listPoints, type ShowScope } from "@/lib/actions/meet/lists";
 import ListFilters from "@/components/meet/lists/ListFilters";
 import ExportCsvButton from "@/components/meet/lists/ExportCsvButton";
+import ClickableRow from "@/components/meet/lists/ClickableRow";
+import RowMenu from "@/components/meet/lists/RowMenu";
 import { pointStatus, PriorityText, DueHint, shortDate } from "@/components/meet/point-ui";
 
 export const dynamic = "force-dynamic";
@@ -111,6 +113,7 @@ export default async function PointsListPage({ searchParams }: { searchParams: P
                 <th scope="col" className="px-4 py-2.5">Due</th>
                 <th scope="col" className="px-4 py-2.5">Open tasks</th>
                 <th scope="col" className="px-4 py-2.5">Carried</th>
+                <th scope="col" className="px-4 py-2.5"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -118,7 +121,7 @@ export default async function PointsListPage({ searchParams }: { searchParams: P
                 const st = pointStatus(r.status);
                 const closed = r.status === "closed" || r.status === "dropped";
                 return (
-                  <tr key={r.id} className="border-t border-border hover:bg-surface-hover">
+                  <ClickableRow key={r.id} href={`/meet/points/${r.id}`} className="border-t border-border">
                     <td className="px-4 py-3">
                       <Link href={`/meet/points/${r.id}`} className="text-[13px] font-semibold text-primary hover:underline">{r.code}</Link>
                     </td>
@@ -146,7 +149,17 @@ export default async function PointsListPage({ searchParams }: { searchParams: P
                         <span className="text-[13px] text-muted">{r.carry_forward_count ? `${r.carry_forward_count}×` : "New"}</span>
                       )}
                     </td>
-                  </tr>
+                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                      <RowMenu
+                        open={`/meet/points/${r.id}`}
+                        items={[
+                          ...(closed ? [] : [{ label: "Add a task", href: `/meet/tasks/new?point=${r.id}&back=${encodeURIComponent("/meet/points")}` }]),
+                          { label: "Open the meeting", href: `/meet/meetings/${r.meeting_id}` },
+                          { label: "Delete point", href: `/meet/points/${r.id}/delete`, danger: true },
+                        ]}
+                      />
+                    </td>
+                  </ClickableRow>
                 );
               })}
             </tbody>

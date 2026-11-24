@@ -49,7 +49,7 @@ export default function MeetingActions({ meetingId, title, archived, canDelete }
               <Archive className="h-4 w-4" /> Archive
             </button>
           )}
-          <button className={`${item} text-danger-text`} onClick={() => { setOpen(false); setConfirm(true); }}>
+          <button className={`${item} text-danger-text`} onClick={() => { setOpen(false); router.push(`/meet/meetings/${meetingId}/delete`); }}>
             <Trash2 className="h-4 w-4" /> Delete meeting
           </button>
         </div>

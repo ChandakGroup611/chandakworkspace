@@ -4,6 +4,7 @@ import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { bulkUpdateTasks } from "@/lib/actions/meet/task-detail";
+import ClickableRow from "@/components/meet/lists/ClickableRow";
 import {
   CheckCircle2,
   Clock,
@@ -408,7 +409,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
                       effectiveDue < todayStr;
 
                     return (
-                      <tr key={task.id} className="hover:bg-sunken/20 transition-colors">
+                      <ClickableRow key={task.id} href={`/meet/tasks/${task.id}`}>
                         <td className="py-3 pl-4"><input type="checkbox" aria-label={`Select ${task.code}`} checked={selected.has(task.id)} onChange={() => toggleSel(task.id)} /></td>
                         <td className="py-3 px-4 font-mono font-medium text-primary">
                           <Link href={`/meet/tasks/${task.id}`} className="hover:underline">{task.code}</Link>
@@ -476,6 +477,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="inline-flex items-center gap-2">
+                            <Link href={`/meet/tasks/${task.id}`} className="inline-flex h-8 items-center rounded-md border border-border bg-surface px-3 text-[12.5px] font-semibold text-foreground hover:bg-surface-hover">Open</Link>
                             <button
                               type="button"
                               onClick={() => {
@@ -484,7 +486,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
                               }}
                               className="text-[11.5px] font-medium text-primary hover:underline"
                             >
-                              Extension
+                              More time
                             </button>
                             <button
                               type="button"
@@ -496,7 +498,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
                             </button>
                           </div>
                         </td>
-                      </tr>
+                      </ClickableRow>
                     );
                   })}
                 </tbody>

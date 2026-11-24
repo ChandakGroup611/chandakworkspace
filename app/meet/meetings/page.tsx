@@ -8,6 +8,7 @@ import ListFilters from "@/components/meet/lists/ListFilters";
 import InviteReplyButtons from "@/components/meet/InviteReplyButtons";
 import MeetingActions from "@/components/meet/MeetingActions";
 import MeetNowButton from "@/components/meet/MeetNowButton";
+import ClickableRow from "@/components/meet/lists/ClickableRow";
 import { requireMeet } from "@/lib/permissions/meet";
 import { RecordHighlighter, RecordLinkActions } from "@/components/ui/record";
 import {
@@ -165,7 +166,7 @@ export default async function MeetingsPage({
                 </thead>
                 <tbody>
                   {sessionData.rows.map((s) => (
-                    <tr key={s.id} className="border-t border-border align-middle">
+                    <ClickableRow key={s.id} href={s.meeting_id ? `/meet/meetings/${s.meeting_id}` : `/meet/sessions/${s.id}`} className="border-t border-border align-middle">
                       <td className="px-4 py-3">
                         <Link href={s.meeting_id ? `/meet/meetings/${s.meeting_id}` : `/meet/sessions/${s.id}`} className="font-semibold text-heading hover:underline">
                           {s.meeting_title}
@@ -194,8 +195,13 @@ export default async function MeetingsPage({
                         )}
                       </td>
                       <td className="px-4 py-3"><StatusChip s={s} /></td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right"><ActionLink s={s} /></td>
-                    </tr>
+                      <td className="whitespace-nowrap px-4 py-3 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <ActionLink s={s} />
+                          <Link href={`/meet/sessions/${s.id}`} className={`${btnSecondary} h-9 px-3 text-[13px]`}>Open</Link>
+                        </div>
+                      </td>
+                    </ClickableRow>
                   ))}
                 </tbody>
               </table>
@@ -221,7 +227,7 @@ export default async function MeetingsPage({
               </thead>
               <tbody>
                 {series.map((m: any) => (
-                  <tr key={m.id} data-record-id={m.id} className="border-t border-border align-middle">
+                  <ClickableRow key={m.id} href={`/meet/meetings/${m.id}`} className="border-t border-border align-middle">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[12px] font-semibold text-muted">{m.code}</span>
@@ -251,7 +257,7 @@ export default async function MeetingsPage({
                         <MeetingActions meetingId={m.id} title={m.title} archived={m.status === "archived"} canDelete={isAdmin || m.organizer_id === auth.userId} />
                       </div>
                     </td>
-                  </tr>
+                  </ClickableRow>
                 ))}
               </tbody>
             </table>

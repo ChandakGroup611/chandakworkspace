@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import ClickableRow from "@/components/meet/lists/ClickableRow";
 import {
   FileCheck2,
   Search,
@@ -411,7 +412,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                     decision.status === "active";
 
                   return (
-                    <tr key={decision.id} className="hover:bg-elevated/40 transition-colors">
+                    <ClickableRow key={decision.id} href={`/meet/decisions/${decision.id}`}>
                       {/* Code */}
                       <td className="py-3.5 px-4 font-mono font-semibold whitespace-nowrap">
                         <Link href={`/meet/decisions/${decision.id}`} className="text-primary hover:underline">{decision.code}</Link>
@@ -519,7 +520,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                           <span className="text-[12.5px] text-subtle/60 italic">Archived</span>
                         )}
                       </td>
-                    </tr>
+                    </ClickableRow>
                   );
                 })
               )}
