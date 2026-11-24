@@ -178,9 +178,9 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
       const isMinuteTaker = s.minute_taker_id === userId;
       const when = new Intl.DateTimeFormat("en-IN", { timeZone: IST, day: "numeric", month: "short" }).format(new Date(s.scheduled_start));
       if (s.status === "mom_pending_approval" && isOrgOrChair) {
-        needs.push({ kind: "approve_minutes", title: "Approve minutes", detail: `${m?.title || "Meeting"} · ${when}`, href: `/meet/sessions/${s.id}` });
+        needs.push({ kind: "approve_minutes", title: "Approve minutes", detail: `${m?.title || "Meeting"} · ${when}`, href: `/meet/sessions/${s.id}/review` });
       } else if ((s.status === "completed" || s.status === "mom_draft") && (isOrgOrChair || isMinuteTaker)) {
-        needs.push({ kind: "write_minutes", title: "Finish and send minutes", detail: `${m?.title || "Meeting"} · ${when}`, href: `/meet/sessions/${s.id}` });
+        needs.push({ kind: "write_minutes", title: "Finish and send minutes", detail: `${m?.title || "Meeting"} · ${when}`, href: `/meet/sessions/${s.id}/review` });
       }
       if (needs.length >= 4) break;
     }

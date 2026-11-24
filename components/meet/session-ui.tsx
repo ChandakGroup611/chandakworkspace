@@ -102,7 +102,7 @@ export function actionFor(s: MeetSessionRow): { label: string; href: string; ext
   const tone = statusOf(s).tone;
   if (tone === "cancelled") return { label: "View", href: `/meet/sessions/${s.id}`, primary: false };
   if (tone === "minutes" || tone === "done") {
-    return { label: tone === "done" ? "View minutes" : "Review minutes", href: `/meet/sessions/${s.id}`, primary: tone === "minutes" };
+    return { label: tone === "done" ? "View minutes" : "Review minutes", href: `/meet/sessions/${s.id}/review`, primary: tone === "minutes" };
   }
   if (tone === "live" || tone === "soon") {
     // Everyone goes through the join screen: camera/mic check, Teams link, attendance, admit.

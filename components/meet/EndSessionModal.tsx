@@ -54,7 +54,8 @@ export function EndSessionModal({
           `Meeting concluded! ${res.carriedCount} open items carried forward to Session ${res.nextSessionNo}`
         );
         onOpenChange(false);
-        router.push(`/meet/sessions/${sessionId}`);
+        // Redesign: ending a meeting goes straight to reviewing and sending the minutes
+        router.push(`/meet/sessions/${sessionId}/review`);
       } else {
         toast.error(res.error || "Failed to finalize session");
       }
