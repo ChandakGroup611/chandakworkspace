@@ -341,7 +341,7 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
           </section>
           <section className="theme-card-structural space-y-2 p-4" aria-labelledby="mr-carry">
             <h2 id="mr-carry" className="text-[15px] font-semibold text-heading">
-              Goes to the next meeting ({carried.length})
+              {review.nextSession ? "Goes to the next meeting" : "Still open"} ({carried.length})
             </h2>
             {carried.length === 0 ? <p className="text-[13.5px] text-muted">Nothing carried forward.</p> : carried.slice(0, 8).map((p) => (
               <p key={p.id} className="text-[13.5px] text-foreground">{p.code} {p.title}{p.owner ? <span className="text-muted"> · {p.owner}</span> : null}</p>
@@ -349,7 +349,7 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
             <p className="text-[12.5px] text-muted">
               {review.nextSession
                 ? `They'll be on the agenda of ${new Date(review.nextSession.scheduledStart).toLocaleDateString("en-IN", { timeZone: IST, day: "numeric", month: "short" })} automatically.`
-                : "They'll be added to the next meeting automatically when it's scheduled."}
+                : "No next meeting is scheduled, so these stay open in Points & tasks until they're closed."}
             </p>
           </section>
           <section className="theme-card-structural space-y-1.5 p-4" aria-labelledby="mr-rules">

@@ -29,7 +29,7 @@ export function EndSessionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openLoopsCount, setOpenLoopsCount] = useState(0);
   // After the meeting is ended: a short checklist instead of a dialog that looks frozen
-  const [progress, setProgress] = useState<null | { carried: number; nextNo: number | null; drafting: "running" | "done" | "failed" }>(null);
+  const [progress, setProgress] = useState<null | { carried: number; open: number; nextNo: number | null; drafting: "running" | "done" | "failed" }>(null);
 
   // Check open loops on open
   React.useEffect(() => {
@@ -52,7 +52,7 @@ export function EndSessionModal({
       const res = await endSessionAndCarryForward(sessionId, summaryNotes);
 
       if (res.success) {
-        setProgress({ carried: res.carriedCount || 0, nextNo: res.nextSessionNo ?? null, drafting: "running" });
+        setProgress({ carried: res.carriedCount || 0, open: (res as any).stillOpenCount || 0, nextNo: res.nextSessionNo ?? null, drafting: "running" });
         // Draft the minutes automatically, then open the review screen
         let drafted = true;
         try {
@@ -93,7 +93,9 @@ export function EndSessionModal({
                   <CheckCircle2 className="h-4 w-4" aria-hidden />
                   {progress.carried > 0
                     ? `${progress.carried} open point${progress.carried === 1 ? "" : "s"} carried to ${progress.nextNo ? `session ${progress.nextNo}` : "the next meeting"}`
-                    : "No open points to carry forward"}
+                    : progress.open > 0
+                      ? `${progress.open} open point${progress.open === 1 ? "" : "s"} stay open in Points & tasks (one-off meeting)`
+                      : "No open points to carry forward"}
                 </li>
                 <li className={`flex items-center gap-2.5 ${progress.drafting === "failed" ? "text-warning-text" : progress.drafting === "done" ? "text-success-text" : "font-semibold text-foreground"}`}>
                   {progress.drafting === "running" ? (
@@ -116,7 +118,7 @@ export function EndSessionModal({
                 End the meeting?
               </Dialog.Title>
               <Dialog.Description className="mt-0.5 text-[12.5px] text-muted">
-                {sessionCode} · Open points move to the next meeting automatically
+                {sessionCode} · Open points stay open until they're closed
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
@@ -136,7 +138,7 @@ export function EndSessionModal({
 
               <div className="rounded-lg border border-warning-border bg-warning-soft p-3.5 text-center">
                 <span className="text-[20px] font-bold text-warning-text">{openPoints.length}</span>
-                <p className="mt-0.5 text-[12px] font-medium text-warning-text">Go to the next meeting</p>
+                <p className="mt-0.5 text-[12px] font-medium text-warning-text">Still open</p>
               </div>
             </div>
 

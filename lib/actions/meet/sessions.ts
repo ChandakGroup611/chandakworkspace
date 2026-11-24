@@ -351,8 +351,10 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
       .maybeSingle();
 
     let nextSessionId = existingNext?.id;
+    // A one-off meeting has no "next meeting": open points just stay open in Points & tasks.
+    const isOneOff = !meeting.recurrence || meeting.recurrence === "none";
 
-    if (!nextSessionId) {
+    if (!nextSessionId && !isOneOff) {
       // Calculate next scheduled start based on recurrence
       const currentStart = new Date(currentSession.scheduled_start);
       let nextStart = new Date(currentStart);
@@ -497,10 +499,11 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
     revalidatePath(`/meet/live/${sessionId}`);
     return {
       success: true,
-      carriedCount: openPointsToCarry.length,
+      carriedCount: nextSessionId ? openPointsToCarry.length : 0,
+      stillOpenCount: openPointsToCarry.length,
       closedCount,
       nextSessionId,
-      nextSessionNo,
+      nextSessionNo: nextSessionId ? nextSessionNo : null,
     };
   } catch (err: any) {
     console.error("Error in endSessionAndCarryForward:", err);
