@@ -4,6 +4,7 @@ import { Zap, CheckCircle2, Clock } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
 import { getAlertRules } from "@/lib/actions/meet/sla";
+import { getTeamsConnection } from "@/lib/actions/meet/teams-sync";
 import AlertRuleToggle from "./AlertRuleToggle";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export default async function AutomationsPage() {
   const auth = await requireMeet("MEET_VIEW");
   const isAdmin = auth.isSuperAdmin || auth.isMeetAdmin;
 
-  const [rules, lastReminder] = await Promise.all([
+  const [rules, lastReminder, teams] = await Promise.all([
     getAlertRules(),
     supabaseAdmin
       .from("meet_sessions")
@@ -41,6 +42,7 @@ export default async function AutomationsPage() {
       .limit(1)
       .maybeSingle()
       .then((r) => (r.data as any)?.reminder_1h_sent_at as string | undefined, () => undefined),
+    getTeamsConnection().catch(() => null),
   ]);
 
   const lastRun = lastReminder
@@ -59,6 +61,37 @@ export default async function AutomationsPage() {
           {lastRun ? `Scheduled jobs last sent a reminder on ${lastRun}` : "Scheduled jobs haven't sent a reminder yet"}
         </p>
       </div>
+
+      {teams && (
+        <section aria-labelledby="grp-teams" className="rounded-xl border border-border bg-surface p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h2 id="grp-teams" className="text-[14.5px] font-semibold text-foreground">Microsoft Teams connection</h2>
+              <p className="mt-0.5 text-[13.5px] text-subtle">{teams.message}</p>
+            </div>
+            <span
+              className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${
+                teams.signedIn && teams.missing.length === 0 ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text"
+              }`}
+            >
+              {teams.signedIn && teams.missing.length === 0 ? "Ready" : "Needs setup"}
+            </span>
+          </div>
+          {isAdmin && teams.missing.length > 0 && (
+            <div className="mt-3 rounded-lg bg-sunken p-3 text-[13px] text-subtle">
+              <p className="font-semibold text-foreground">For the Microsoft 365 admin</p>
+              <ol className="mt-1 list-decimal space-y-1 pl-5">
+                {!teams.configured && <li>Register an app in Microsoft Entra and add its tenant ID, client ID and secret to the server settings.</li>}
+                <li>
+                  Give the app these Microsoft Graph application permissions and grant admin consent:{" "}
+                  <span className="font-mono text-[12.5px] text-foreground">{teams.missing.join(", ")}</span>
+                </li>
+                <li>Allow the app to read users&apos; Teams meetings with a Teams application access policy.</li>
+              </ol>
+            </div>
+          )}
+        </section>
+      )}
 
       {groups.map((g) => (
         <section key={g} aria-labelledby={`grp-${g}`}>

@@ -2,6 +2,7 @@ import React from "react";
 import { notFound } from "next/navigation";
 import { getMinutesReview } from "@/lib/actions/meet/review";
 import MinutesReviewClient from "@/components/meet/MinutesReviewClient";
+import TeamsImportCard from "@/components/meet/TeamsImportCard";
 
 export const dynamic = "force-dynamic";
 
@@ -13,5 +14,10 @@ export default async function MinutesReviewPage({ params }: { params: Promise<{ 
   const { sessionId } = await params;
   const review = await getMinutesReview(sessionId);
   if (!review) notFound();
-  return <MinutesReviewClient review={review} />;
+  return (
+    <>
+      {review.canEdit && review.session.status !== "mom_published" && <TeamsImportCard sessionId={sessionId} />}
+      <MinutesReviewClient review={review} />
+    </>
+  );
 }
