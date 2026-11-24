@@ -81,6 +81,9 @@ export default function SessionWorkspaceClient({
   const [points, setPoints] = useState<MeetingPoint[]>(initialPoints);
   const [agenda, setAgenda] = useState<AgendaItem[]>(initialAgenda);
   const [taskModalPoint, setTaskModalPoint] = useState<MeetingPoint | null>(null);
+  // New tasks open on their own page (Chandak Meet task form), then come back here
+  const goNewTask = (pt: MeetingPoint) =>
+    window.location.assign(`/meet/tasks/new?point=${pt.id}&session=${session.id}&back=${encodeURIComponent(`/meet/sessions/${session.id}`)}`);
   const [generatingMoM, setGeneratingMoM] = useState(false);
   const [publishingMoM, setPublishingMoM] = useState(false);
   const [momSnapshot, setMomSnapshot] = useState<any>(null);
@@ -763,7 +766,7 @@ export default function SessionWorkspaceClient({
                       variant="outline"
                       size="sm"
                       leftIcon={<Plus className="h-3 w-3" />}
-                      onClick={() => setTaskModalPoint(pt)}
+                      onClick={() => goNewTask(pt)}
                     >
                       Action Item
                     </AppButton>
@@ -879,7 +882,7 @@ export default function SessionWorkspaceClient({
                       variant="outline"
                       size="sm"
                       leftIcon={<Plus className="h-3 w-3" />}
-                      onClick={() => setTaskModalPoint(pt)}
+                      onClick={() => goNewTask(pt)}
                     >
                       Action Item
                     </AppButton>

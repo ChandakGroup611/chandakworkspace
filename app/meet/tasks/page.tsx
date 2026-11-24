@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { listTasks, type ShowScope } from "@/lib/actions/meet/lists";
 import ListFilters from "@/components/meet/lists/ListFilters";
 import MyWorkClient from "../my-work/MyWorkClient";
@@ -37,9 +38,12 @@ export default async function TasksListPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-4 pb-6">
-      <div className="border-b border-border pb-4">
-        <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Tasks</h1>
-        <p className="mt-0.5 text-[13.5px] text-muted">Action items from meetings. Click a task to open it, update progress, ask for more time or give it to someone else.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+        <div>
+          <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Tasks</h1>
+          <p className="mt-0.5 text-[13.5px] text-muted">Chandak Meet tasks: action items from meetings. Click a task to open it, update progress, ask for more time or give it to someone else.</p>
+        </div>
+        <Link href="/meet/tasks/new?back=%2Fmeet%2Ftasks" className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-[14px] font-semibold text-primary-foreground hover:bg-primary-hover">+ New task</Link>
       </div>
 
       <ListFilters

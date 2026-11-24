@@ -225,6 +225,11 @@ export default async function PointPage({ params, searchParams }: { params: Prom
               ))}
           </div>
         </section>
+        {d.canEdit && !["closed", "dropped"].includes(p.status) && (
+          <Link href={`/meet/tasks/new?point=${p.id}&back=${encodeURIComponent(`/meet/points/${p.id}`)}`} className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-surface px-4 text-[14px] font-semibold text-foreground hover:bg-surface-hover">
+            + Add a task to this point
+          </Link>
+        )}
         {d.canEdit && <PointMoveCard pointId={p.id} meetingId={d.meeting?.id || null} />}
         <FilesPanel entityType="point" entityId={p.id} canAdd={d.canEdit} />
         <CommentsPanel entityType="point" entityId={p.id} />

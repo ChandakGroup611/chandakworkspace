@@ -334,7 +334,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
             variant="primary"
             size="sm"
             leftIcon={<Plus className="h-3.5 w-3.5" />}
-            onClick={() => setIsCreateTaskOpen(true)}
+            onClick={() => router.push("/meet/tasks/new?back=%2Fmeet%2Ftasks")}
           >
             New task
           </AppButton>
@@ -379,7 +379,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
                   variant="primary"
                   size="sm"
                   leftIcon={<Plus className="h-3.5 w-3.5" />}
-                  onClick={() => setIsCreateTaskOpen(true)}
+                  onClick={() => router.push("/meet/tasks/new?back=%2Fmeet%2Ftasks")}
                 >
                   Create First Action Item
                 </AppButton>

@@ -68,6 +68,9 @@ export default function LiveMeetingClient({
   const [attendees, setAttendees] = useState<SessionAttendee[]>(initialAttendees);
   const [activeAgendaIdx, setActiveAgendaIdx] = useState(0);
   const [taskModalPoint, setTaskModalPoint] = useState<MeetingPoint | null>(null);
+  // New tasks open on their own page (Chandak Meet task form), then come back here
+  const goNewTask = (pt: MeetingPoint) =>
+    window.location.assign(`/meet/tasks/new?point=${pt.id}&session=${session.id}&back=${encodeURIComponent(`/meet/live/${session.id}`)}`);
   const [endSessionOpen, setEndSessionOpen] = useState(false);
   const [quickDecisionText, setQuickDecisionText] = useState("");
   const [decisions, setDecisions] = useState<any[]>([]);
@@ -409,7 +412,7 @@ export default function LiveMeetingClient({
           <Link href={`/meet/points/${pt.id}`} target="_blank" className="inline-flex h-8 items-center rounded-md px-2 text-[12.5px] font-semibold text-subtle hover:text-foreground">
             New date
           </Link>
-          <button type="button" onClick={() => setTaskModalPoint(pt)} className="ml-auto inline-flex h-8 items-center gap-1 text-[12.5px] font-semibold text-primary hover:underline">
+          <button type="button" onClick={() => goNewTask(pt)} className="ml-auto inline-flex h-8 items-center gap-1 text-[12.5px] font-semibold text-primary hover:underline">
             <Plus className="h-3.5 w-3.5" aria-hidden /> Add task
           </button>
         </div>
@@ -642,7 +645,7 @@ export default function LiveMeetingClient({
                 focusedPointId={focusedPoint?.id}
                 focusedPointCode={focusedPoint?.code}
                 onOpenConvert={() => {
-                  if (focusedPoint) setTaskModalPoint(focusedPoint);
+                  if (focusedPoint) goNewTask(focusedPoint);
                 }}
               />
             )}
@@ -787,7 +790,7 @@ export default function LiveMeetingClient({
         focusedPointId={focusedPoint?.id}
         focusedPointCode={focusedPoint?.code}
         onOpenConvert={(block) => {
-          if (focusedPoint) setTaskModalPoint(focusedPoint);
+          if (focusedPoint) goNewTask(focusedPoint);
         }}
       />
     </div>
