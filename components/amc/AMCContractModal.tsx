@@ -95,6 +95,8 @@ export function AMCContractModal({
 }: AMCContractModalProps) {
   const supabase = createClient();
   const [activeStep, setActiveStep] = useState<ModalStep>("details");
+  // On the full-page form (/new, /edit) every section shows at once, with a live summary.
+  const onePage = variant === "page";
 
   // Step 1: Basic & Vendor Information
   const [softwareName, setSoftwareName] = useState("");
@@ -555,6 +557,7 @@ export function AMCContractModal({
               </p>
             </div>
           </div>
+          {!onePage && (
           <AppButton 
             variant="ghost" 
             size="icon-sm"
@@ -564,10 +567,11 @@ export function AMCContractModal({
           >
             <X className="h-5 w-5" />
           </AppButton>
+          )}
         </div>
 
-        {/* Step Navigation Bar */}
-        <div className="border-b border-border bg-surface px-6">
+        {/* Step Navigation Bar (modal only) */}
+        <div className={onePage ? "hidden" : "border-b border-border bg-surface px-6"}>
           <div role="tablist" aria-label="AMC Form Steps" className="flex max-w-full gap-2 overflow-x-auto hide-scrollbar py-2">
             {stepsList.map(step => {
               const isActive = activeStep === step.id;
@@ -603,12 +607,13 @@ export function AMCContractModal({
           )}
 
           {/* STEP 1: Details & Vendor Profile */}
-          {activeStep === "details" && (
+          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">1. What is it</h3>}
+          {(onePage || activeStep === "details") && (
             <div className="space-y-5 animate-in fade-in duration-150">
               <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-                    <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" /> Contract Identification
+                    <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />Basics
                   </h3>
                   <AppButton
                     type="button"
@@ -625,7 +630,7 @@ export function AMCContractModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-xs font-semibold text-foreground">
-                      Contract / Software System Name <span className="text-danger">*</span>
+                      Name <span className="text-danger">*</span>
                     </label>
                     <AppInput
                       placeholder="e.g. SAP ERP Enterprise AMC, Data Center Network AMC"
@@ -768,11 +773,12 @@ export function AMCContractModal({
           )}
 
           {/* STEP 2: Commercials & Line-Item Transactions */}
-          {activeStep === "commercials" && (
+          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">2. Term and cost</h3>}
+          {(onePage || activeStep === "commercials") && (
             <div className="space-y-5 animate-in fade-in duration-150">
               <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-                  <DollarSign className="h-3.5 w-3.5 text-theme-icon" /> Commercial Terms & Dates
+                  <DollarSign className="h-3.5 w-3.5 text-theme-icon" /> Term and cost
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -878,7 +884,7 @@ export function AMCContractModal({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-                      <Boxes className="h-3.5 w-3.5 text-theme-icon" /> Solution Line-Items / Transactions
+                      <Boxes className="h-3.5 w-3.5 text-theme-icon" /> Items
                     </h3>
                     <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer ml-3 bg-surface px-2.5 py-1 rounded border border-border">
                       <input
@@ -887,7 +893,7 @@ export function AMCContractModal({
                         onChange={(e) => setIsLineItemWise(e.target.checked)}
                         className="rounded border-border text-primary"
                       />
-                      <span className="font-medium">Enable Line-Item Wise Pricing</span>
+                      <span className="font-medium">Price by item</span>
                     </label>
                   </div>
                   <AppButton
@@ -920,7 +926,7 @@ export function AMCContractModal({
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs items-center">
                           <div className="sm:col-span-5 space-y-1">
-                            <label className="text-[11px] text-muted">Resolution / Item Name *</label>
+                            <label className="text-[11px] text-muted">Item *</label>
                             <AppInput
                               placeholder="Item name"
                               value={item.resolutionName}
@@ -1024,11 +1030,12 @@ export function AMCContractModal({
           )}
 
           {/* STEP 3: SLAs & Service Levels */}
-          {activeStep === "sla" && (
+          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">3. Support and coverage</h3>}
+          {(onePage || activeStep === "sla") && (
             <div className="space-y-5 animate-in fade-in duration-150">
               <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-                  <Boxes className="h-3.5 w-3.5 text-theme-icon" /> Service Level Commitments
+                  <Boxes className="h-3.5 w-3.5 text-theme-icon" /> Support level
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1047,7 +1054,7 @@ export function AMCContractModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">SLA Uptime (%)</label>
+                    <label className="text-xs font-semibold text-foreground">Uptime promised (%)</label>
                     <AppInput
                       type="number"
                       step="0.1"
@@ -1058,7 +1065,7 @@ export function AMCContractModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">Ticket TAT / Resolution</label>
+                    <label className="text-xs font-semibold text-foreground">Fix time</label>
                     <AppInput
                       placeholder="e.g. 4 Hours"
                       value={slaTat}
@@ -1069,7 +1076,7 @@ export function AMCContractModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground">Scope Specifications & SLAs</label>
+                  <label className="text-xs font-semibold text-foreground">What's covered</label>
                   <textarea
                     rows={3}
                     placeholder="Describe maintenance scope, preventative maintenance visits, and escalation matrix."
@@ -1094,7 +1101,8 @@ export function AMCContractModal({
           )}
 
           {/* STEP 4: Mandatory Documents & Review */}
-          {activeStep === "documents" && (
+          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">4. Documents</h3>}
+          {(onePage || activeStep === "documents") && (
             <div className="space-y-5 animate-in fade-in duration-150">
               <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
                 <div className="flex items-center justify-between">
@@ -1189,10 +1197,19 @@ export function AMCContractModal({
             </div>
           )}
 
+          {onePage && (
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-sunken p-4 sm:grid-cols-4" aria-label="Summary">
+              <div><div className="text-[12px] text-muted">Contract value</div><div className="text-[16px] font-bold tabular-nums text-heading">{currency} {(Number(cost) || 0).toLocaleString("en-IN")}</div></div>
+              <div><div className="text-[12px] text-muted">Per month (approx.)</div><div className="text-[16px] font-bold tabular-nums text-heading">{currency} {Math.round((Number(cost) || 0) / Math.max(1, purchaseDate && expiryDate ? Math.max(1, Math.round((new Date(expiryDate).getTime() - new Date(purchaseDate).getTime()) / (30.44 * 86400000))) : 12)).toLocaleString("en-IN")}</div></div>
+              <div><div className="text-[12px] text-muted">Ends</div><div className="text-[16px] font-bold text-heading">{expiryDate ? new Date(expiryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Not set"}</div></div>
+              <div><div className="text-[12px] text-muted">Checks</div><div className="text-[13px] font-semibold">{!softwareName.trim() ? <span className="text-warning-text">Add a name</span> : !expiryDate ? <span className="text-warning-text">Add an end date</span> : purchaseDate && expiryDate && expiryDate < purchaseDate ? <span className="text-danger-text">End is before start</span> : <span className="text-success-text">Looks complete</span>}</div></div>
+            </div>
+          )}
+
           {/* Modal Footer */}
           <div className="flex items-center justify-between gap-3 pt-4 border-t border-border bg-surface">
             <div>
-              {activeStep !== "details" ? (
+              {!onePage && activeStep !== "details" ? (
                 <AppButton
                   type="button"
                   variant="outline"
@@ -1205,7 +1222,7 @@ export function AMCContractModal({
                   leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}
                   className="text-xs"
                 >
-                  Previous Step
+                  Back
                 </AppButton>
               ) : null}
             </div>
@@ -1221,7 +1238,7 @@ export function AMCContractModal({
                 Cancel
               </AppButton>
 
-              {activeStep !== "documents" ? (
+              {!onePage && activeStep !== "documents" ? (
                 <AppButton
                   type="button"
                   variant="outline"
@@ -1233,7 +1250,7 @@ export function AMCContractModal({
                   rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
                   className="text-xs font-medium"
                 >
-                  Next Step
+                  Next
                 </AppButton>
               ) : null}
 

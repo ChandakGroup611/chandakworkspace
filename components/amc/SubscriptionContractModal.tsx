@@ -62,6 +62,8 @@ export function SubscriptionContractModal({
 }: SubscriptionContractModalProps) {
   const supabase = createClient();
   const [activeStep, setActiveStep] = useState<SubModalStep>("details");
+  // On the full-page form (/new, /edit) every section shows at once, with a live summary.
+  const onePage = variant === "page";
 
   // Step 1: Details & Ownership
   const [softwareName, setSoftwareName] = useState("");
@@ -355,6 +357,7 @@ export function SubscriptionContractModal({
               </p>
             </div>
           </div>
+          {!onePage && (
           <AppButton 
             variant="ghost" 
             size="icon-sm"
@@ -364,10 +367,11 @@ export function SubscriptionContractModal({
           >
             <X className="h-5 w-5" />
           </AppButton>
+          )}
         </div>
 
-        {/* Step Navigation Bar */}
-        <div className="border-b border-border bg-surface px-6">
+        {/* Step Navigation Bar (modal only) */}
+        <div className={onePage ? "hidden" : "border-b border-border bg-surface px-6"}>
           <div role="tablist" aria-label="Subscription Form Steps" className="flex max-w-full gap-2 overflow-x-auto hide-scrollbar py-2">
             {stepsList.map(step => {
               const isActive = activeStep === step.id;
@@ -403,16 +407,17 @@ export function SubscriptionContractModal({
           )}
 
           {/* STEP 1: Details & Ownership */}
-          {activeStep === "details" && (
+          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">1. What is it</h3>}
+          {(onePage || activeStep === "details") && (
             <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-                <Zap className="h-3.5 w-3.5 text-warning-text" /> SaaS Tool Identification
+                <Zap className="h-3.5 w-3.5 text-warning-text" /> Basics
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-xs font-semibold text-foreground">
-                    Software / Service Name <span className="text-danger">*</span>
+                    Name <span className="text-danger">*</span>
                   </label>
                   <AppInput
                     placeholder="e.g. Figma Enterprise, Slack, Zoom Pro, AWS Cloud"
@@ -493,10 +498,11 @@ export function SubscriptionContractModal({
           )}
 
           {/* STEP 2: Plan, Billing & Seats */}
-          {activeStep === "billing" && (
+          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">2. Plan, cost and seats</h3>}
+          {(onePage || activeStep === "billing") && (
             <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
-                <DollarSign className="h-3.5 w-3.5 text-theme-icon" /> Billing & License Capacity
+                <DollarSign className="h-3.5 w-3.5 text-theme-icon" /> Plan, cost and seats
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -565,7 +571,7 @@ export function SubscriptionContractModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground">Renewal Notice Lead Time (Days)</label>
+                  <label className="text-xs font-semibold text-foreground">Remind me before (days)</label>
                   <AppInput
                     type="number"
                     value={notifyBeforeDays}
@@ -604,7 +610,7 @@ export function SubscriptionContractModal({
                       onChange={(e) => setAutoRenewal(e.target.checked)}
                       className="rounded border-border text-primary"
                     />
-                    <span>Automatic Renewal Enabled</span>
+                    <span>Renews automatically</span>
                   </label>
                 </div>
               </div>
@@ -614,7 +620,7 @@ export function SubscriptionContractModal({
                 <div className="mt-3 p-3 rounded-lg border border-border bg-surface flex flex-wrap gap-4 text-xs">
                   {costPerSeat && (
                     <div className="flex items-center gap-1.5 text-muted">
-                      <span>Derived Cost Per Seat:</span>
+                      <span>Cost per seat:</span>
                       <span className="font-mono font-semibold text-foreground">
                         {currency} {Number(costPerSeat).toLocaleString()}
                       </span>
@@ -622,7 +628,7 @@ export function SubscriptionContractModal({
                   )}
                   {monthlyBurn && (
                     <div className="flex items-center gap-1.5 text-muted">
-                      <span>Monthly Amortized Burn:</span>
+                      <span>Cost per month:</span>
                       <span className="font-mono font-semibold text-foreground">
                         {currency} {Number(monthlyBurn).toLocaleString()} / month
                       </span>
@@ -634,7 +640,8 @@ export function SubscriptionContractModal({
           )}
 
           {/* STEP 3: Compliance & Documents */}
-          {activeStep === "compliance" && (
+          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">3. Security and documents</h3>}
+          {(onePage || activeStep === "compliance") && (
             <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
                 <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" /> Security & Mandatory Documents
@@ -786,10 +793,19 @@ export function SubscriptionContractModal({
             </div>
           )}
 
+          {onePage && (
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-sunken p-4 sm:grid-cols-4" aria-label="Summary">
+              <div><div className="text-[12px] text-muted">Total cost</div><div className="text-[16px] font-bold tabular-nums text-heading">{currency} {(Number(totalCost) || 0).toLocaleString("en-IN")}</div></div>
+              <div><div className="text-[12px] text-muted">Per seat</div><div className="text-[16px] font-bold tabular-nums text-heading">{Number(totalLicenses) > 0 ? `${currency} ${Math.round((Number(totalCost) || 0) / Number(totalLicenses)).toLocaleString("en-IN")}` : "—"}</div></div>
+              <div><div className="text-[12px] text-muted">Owner reminded on</div><div className="text-[16px] font-bold text-heading">{expiryDate ? new Date(new Date(expiryDate).getTime() - (parseInt(notifyBeforeDays) || 30) * 86400000).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Set an end date"}</div></div>
+              <div><div className="text-[12px] text-muted">Seats used</div><div className="text-[16px] font-bold text-heading">{Number(totalLicenses) > 0 ? `${Number(usedLicenses) || 0} of ${Number(totalLicenses)}` : "—"}</div></div>
+            </div>
+          )}
+
           {/* Modal Footer */}
           <div className="flex items-center justify-between gap-3 pt-4 border-t border-border bg-surface">
             <div>
-              {activeStep !== "details" ? (
+              {!onePage && activeStep !== "details" ? (
                 <AppButton
                   type="button"
                   variant="outline"
@@ -801,7 +817,7 @@ export function SubscriptionContractModal({
                   leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}
                   className="text-xs"
                 >
-                  Previous Step
+                  Back
                 </AppButton>
               ) : null}
             </div>
@@ -817,7 +833,7 @@ export function SubscriptionContractModal({
                 Cancel
               </AppButton>
 
-              {activeStep !== "compliance" ? (
+              {!onePage && activeStep !== "compliance" ? (
                 <AppButton
                   type="button"
                   variant="outline"
@@ -828,7 +844,7 @@ export function SubscriptionContractModal({
                   rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
                   className="text-xs font-medium"
                 >
-                  Next Step
+                  Next
                 </AppButton>
               ) : null}
 
