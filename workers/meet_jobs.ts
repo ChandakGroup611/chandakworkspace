@@ -24,6 +24,8 @@ export interface MeetJobsResult {
   roomsReleased: number;
   slaOpened: number;
   slaClosed: number;
+  updateRequests: number;
+  minutesReminders: number;
   errors: string[];
 }
 
@@ -34,6 +36,8 @@ export async function runMeetJobs(now = new Date()): Promise<MeetJobsResult> {
     roomsReleased: 0,
     slaOpened: 0,
     slaClosed: 0,
+    updateRequests: 0,
+    minutesReminders: 0,
     errors: [],
   };
 
@@ -62,7 +66,167 @@ export async function runMeetJobs(now = new Date()): Promise<MeetJobsResult> {
     result.slaClosed = r.closed;
   });
 
+  await step("owner-update-requests", async () => {
+    result.updateRequests = await sendOwnerUpdateRequests(now);
+  });
+  await step("minutes-reminders", async () => {
+    result.minutesReminders = await sendMinutesReminders(now);
+  });
+
   return result;
+}
+
+/**
+ * Claims a one-time job for a session by writing an activity-log row first. Returns false if
+ * that job was already done for the session, so a re-run never sends twice.
+ */
+async function claimSessionJob(sessionId: string, action: string): Promise<boolean> {
+  const { data: done } = await supabaseAdmin
+    .from("meet_activity_log")
+    .select("id")
+    .eq("entity_type", "session")
+    .eq("entity_id", sessionId)
+    .eq("action", action)
+    .limit(1)
+    .maybeSingle();
+  if (done) return false;
+  const { error } = await supabaseAdmin.from("meet_activity_log").insert({
+    entity_type: "session",
+    entity_id: sessionId,
+    action,
+    channel: "system",
+  });
+  return !error;
+}
+
+/**
+ * About a day before a meeting (when the series asks for it), email each owner of an open point
+ * a link to send a short update, so the meeting starts from fresh status instead of a round-robin.
+ */
+async function sendOwnerUpdateRequests(now: Date): Promise<number> {
+  const from = new Date(now.getTime() + 20 * 3600000).toISOString();
+  const to = new Date(now.getTime() + 26 * 3600000).toISOString();
+  const { data: sessions, error } = await supabaseAdmin
+    .from("meet_sessions")
+    .select("id, code, scheduled_start, meeting_id, meeting:meet_meetings(title, pre_update_enabled, is_deleted)")
+    .eq("status", "scheduled")
+    .eq("is_deleted", false)
+    .gt("scheduled_start", from)
+    .lte("scheduled_start", to);
+  if (error) throw error;
+
+  let sent = 0;
+  for (const s of sessions || []) {
+    const meeting: any = one(s.meeting as any);
+    if (!meeting || meeting.is_deleted || meeting.pre_update_enabled === false) continue;
+
+    const { data: points } = await supabaseAdmin
+      .from("meet_points")
+      .select("id, code, title, due_date, owner:user_master!meet_points_owner_id_fkey(id, email, full_name)")
+      .eq("meeting_id", s.meeting_id)
+      .eq("is_deleted", false)
+      .not("status", "in", '("closed","dropped")')
+      .limit(300);
+    if (!points || points.length === 0) continue;
+    if (!(await claimSessionJob(s.id, "owner_update_requests_sent"))) continue;
+
+    const { data: already } = await supabaseAdmin.from("meet_pre_updates").select("user_id, point_id").eq("session_id", s.id);
+    const have = new Set((already || []).map((r: any) => `${r.user_id}:${r.point_id}`));
+
+    const byOwner = new Map<string, { email: string; name: string; points: any[] }>();
+    for (const p of points as any[]) {
+      const o: any = one(p.owner);
+      if (!o?.email || have.has(`${o.id}:${p.id}`)) continue;
+      if (!byOwner.has(o.id)) byOwner.set(o.id, { email: o.email, name: o.full_name || "Colleague", points: [] });
+      byOwner.get(o.id)!.points.push(p);
+    }
+
+    const emails: any[] = [];
+    for (const o of byOwner.values()) {
+      emails.push({
+        to_email: o.email,
+        subject: `Update needed before ${meeting.title}`,
+        body_text: [
+          `Dear ${o.name},`,
+          "",
+          `${meeting.title} is on ${fmtIST(s.scheduled_start)} IST. Please send a one-line update on ${o.points.length === 1 ? "your open point" : `your ${o.points.length} open points`} so the meeting can start from where things stand:`,
+          "",
+          ...o.points.slice(0, 20).map((p: any) => `• ${p.code} ${p.title}${p.due_date ? ` (due ${p.due_date})` : ""}\n  ${SITE_URL}/meet/points/${p.id}#send-update`),
+          o.points.length > 20 ? `…and ${o.points.length - 20} more in ${SITE_URL}/meet/my-work` : null,
+          "",
+          "Chandak Meet",
+        ]
+          .filter((l) => l !== null)
+          .join("\n"),
+        status: "pending",
+        retry_count: 0,
+      });
+    }
+    if (emails.length) {
+      const { error: qErr } = await supabaseAdmin.from("email_queue").insert(emails);
+      if (qErr) throw qErr;
+      sent += emails.length;
+    }
+  }
+  return sent;
+}
+
+/**
+ * Three hours after a meeting ends, if the minutes still haven't gone out, remind the organiser
+ * and the minute taker once, with a link straight to the review screen.
+ */
+async function sendMinutesReminders(now: Date): Promise<number> {
+  const olderThan = new Date(now.getTime() - 3 * 3600000).toISOString();
+  const notBefore = new Date(now.getTime() - 3 * 24 * 3600000).toISOString();
+  const { data: sessions, error } = await supabaseAdmin
+    .from("meet_sessions")
+    .select(
+      `id, code, actual_end, scheduled_end, minute_taker_id,
+       meeting:meet_meetings(title, is_deleted, organizer:user_master!meet_meetings_organizer_id_fkey(id, email, full_name))`
+    )
+    .in("status", ["completed", "mom_draft"])
+    .eq("is_deleted", false)
+    .lte("scheduled_end", olderThan)
+    .gte("scheduled_end", notBefore);
+  if (error) throw error;
+
+  let sent = 0;
+  for (const s of sessions || []) {
+    const ended = (s as any).actual_end || (s as any).scheduled_end;
+    if (ended && ended > olderThan) continue;
+    const meeting: any = one((s as any).meeting);
+    if (!meeting || meeting.is_deleted) continue;
+    if (!(await claimSessionJob(s.id, "minutes_reminder_sent"))) continue;
+
+    const people: { email: string; name: string }[] = [];
+    const org: any = one(meeting.organizer);
+    if (org?.email) people.push({ email: org.email, name: org.full_name || "Colleague" });
+    if ((s as any).minute_taker_id && (s as any).minute_taker_id !== org?.id) {
+      const { data: mt } = await supabaseAdmin.from("user_master").select("email, full_name").eq("id", (s as any).minute_taker_id).maybeSingle();
+      if (mt?.email) people.push({ email: mt.email, name: mt.full_name || "Colleague" });
+    }
+    if (!people.length) continue;
+
+    const { error: qErr } = await supabaseAdmin.from("email_queue").insert(
+      people.map((p) => ({
+        to_email: p.email,
+        subject: `Minutes not sent yet: ${meeting.title}`,
+        body_text: [
+          `Dear ${p.name},`,
+          "",
+          `The minutes for ${meeting.title} (${s.code}) are drafted but haven't been sent. Review and send them here:`,
+          `${SITE_URL}/meet/sessions/${s.id}/review`,
+          "",
+          "Chandak Meet",
+        ].join("\n"),
+        status: "pending",
+        retry_count: 0,
+      }))
+    );
+    if (qErr) throw qErr;
+    sent += people.length;
+  }
+  return sent;
 }
 
 /** Remind attendees of sessions starting within `leadMin` minutes (but after `minLeadMin`, if set). */

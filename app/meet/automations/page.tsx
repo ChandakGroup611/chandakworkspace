@@ -19,12 +19,14 @@ const IST = "Asia/Kolkata";
 /** Built-in automations: each one is real code that already runs. */
 const BUILT_IN: { when: string; name: string; detail: string; scheduled?: boolean }[] = [
   { when: "Before", name: "Reminder a day before", detail: "Emails everyone invited 24 hours before the meeting, with the agenda and points carried forward.", scheduled: true },
+  { when: "Before", name: "Ask owners for an update", detail: "About a day before, owners of open points get an email asking for a one-line update, if the series has this on.", scheduled: true },
   { when: "Before", name: "Reminder an hour before", detail: "A last reminder 1 hour before, with the join link and room.", scheduled: true },
   { when: "During", name: "Ask to join", detail: "People who weren't invited can ask; the organiser, chair or minute taker admits or denies them.", },
   { when: "During", name: "Release unused rooms", detail: "If nobody checks in to a booked room, the room is freed for others.", scheduled: true },
   { when: "After", name: "Carry forward open points", detail: "When a meeting ends, every point that isn't closed moves to the next meeting in the series." },
   { when: "After", name: "Draft the minutes", detail: "When a meeting ends, minutes are drafted from the notes, points and decisions, ready to review." },
   { when: "After", name: "Send minutes on approval", detail: "Approving the minutes emails them to everyone who attended or was invited." },
+  { when: "After", name: "Nudge if minutes aren't sent", detail: "Three hours after a meeting ends, if the minutes still haven't gone out, the organiser and minute taker get one reminder.", scheduled: true },
   { when: "After", name: "Overdue points tracked", detail: "Points past their due date open an SLA record and show as overdue until they're closed.", scheduled: true },
 ];
 

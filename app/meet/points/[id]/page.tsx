@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { getPointDetail } from "@/lib/actions/meet/points-view";
 import { pointStatus, PriorityText, DueHint, shortDate } from "@/components/meet/point-ui";
 import PointActions from "./PointActions";
+import PointUpdateForm from "./PointUpdateForm";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,14 @@ export default async function PointPage({ params, searchParams }: { params: Prom
           <h2 id="pt-update" className="mb-3 text-[15px] font-semibold text-heading">Update</h2>
           <PointActions pointId={p.id} status={p.status} progress={Number(p.progress_percent) || 0} dueDate={p.due_date} canEdit={d.canEdit} />
         </section>
+
+        {p.status !== "closed" && p.status !== "dropped" && (
+          <section id="send-update" className="theme-card-structural scroll-mt-4 p-5" aria-labelledby="pt-send-update">
+            <h2 id="pt-send-update" className="mb-1 text-[15px] font-semibold text-heading">Send an update for the next meeting</h2>
+            <p className="mb-3 text-[13px] text-muted">Shared with everyone in the meeting before it starts.</p>
+            <PointUpdateForm pointId={p.id} progress={Number(p.progress_percent) || 0} />
+          </section>
+        )}
 
         <section className="theme-card-structural px-5 py-3" aria-labelledby="pt-details">
           <h2 id="pt-details" className="mb-1 mt-1 text-[15px] font-semibold text-heading">Details</h2>

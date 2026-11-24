@@ -242,3 +242,45 @@ export async function changePointDueDate(input: { pointId: string; newDueDate: s
     return { success: false, error: err?.message || "Could not change the date." };
   }
 }
+
+/**
+ * Owner sends a short update for the next meeting (the link in the "update needed" email).
+ * Saved as a pre-meeting update on the point's next scheduled session; it shows in the point's
+ * history and on the meeting dashboard.
+ */
+export async function sendPointUpdate(input: { pointId: string; text: string; progress?: number }): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireMeet("MEET_VIEW", { pointId: input.pointId });
+  const text = String(input.text || "").trim().slice(0, 2000);
+  if (!text) return { success: false, error: "Write a short update first." };
+  try {
+    const { data: p } = await supabaseAdmin.from("meet_points").select("id, meeting_id, status").eq("id", input.pointId).eq("is_deleted", false).maybeSingle();
+    if (!p) return { success: false, error: "Point not found." };
+    const { data: next } = await supabaseAdmin
+      .from("meet_sessions")
+      .select("id")
+      .eq("meeting_id", p.meeting_id)
+      .eq("is_deleted", false)
+      .in("status", ["scheduled", "in_progress"])
+      .gte("scheduled_start", new Date(Date.now() - 6 * 3600000).toISOString())
+      .order("scheduled_start", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (!next) return { success: false, error: "This meeting has nothing scheduled, so there's no next meeting to send the update to." };
+
+    const progress = input.progress === undefined ? null : Math.min(Math.max(Math.round(Number(input.progress) || 0), 0), 100);
+    const { error } = await supabaseAdmin.from("meet_pre_updates").insert({
+      session_id: next.id,
+      point_id: p.id,
+      user_id: auth.userId,
+      progress_proposed: progress,
+      status_proposed: p.status,
+      text,
+      channel: "web",
+    });
+    if (error) return { success: false, error: error.message };
+    revalidatePath(`/meet/points/${p.id}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Couldn't send the update." };
+  }
+}
