@@ -24,7 +24,7 @@ import {
   ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
   Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
   FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X, Tag,
-  Video, StickyNote, Wallet,
+  Video, StickyNote, Wallet, DoorOpen, Zap,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
@@ -287,6 +287,8 @@ const meetNavGroups: NavGroup[] = [
     label: "Admin",
     items: [
       { label: "Reports", href: "/meet/reports", icon: LineChart },
+      { label: "Rooms", href: "/meet/rooms", icon: DoorOpen },
+      { label: "Automations", href: "/meet/automations", icon: Zap },
       { label: "Settings", href: "/meet/admin", icon: Settings2 },
       { label: "Access & roles", href: "/meet/settings/rbac", icon: Key },
     ]

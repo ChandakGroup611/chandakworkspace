@@ -53,8 +53,15 @@ export function EndSessionModal({
         toast.success(
           `Meeting concluded! ${res.carriedCount} open items carried forward to Session ${res.nextSessionNo}`
         );
+        // Redesign: draft the minutes automatically, then open the review screen
+        try {
+          toast.info("Drafting the minutes…");
+          const { generateAIMinutes } = await import("@/lib/actions/meet/ai-minutes");
+          await generateAIMinutes(sessionId);
+        } catch {
+          // The review screen has a "Draft minutes" button if this didn't work
+        }
         onOpenChange(false);
-        // Redesign: ending a meeting goes straight to reviewing and sending the minutes
         router.push(`/meet/sessions/${sessionId}/review`);
       } else {
         toast.error(res.error || "Failed to finalize session");
