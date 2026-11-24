@@ -212,6 +212,7 @@ export async function createTask(input: CreateTaskInput) {
       await sendMeetEmail("Task assigned", {
         entityId: task.id,
         actorId: userId,
+        meetingId: (fullTask as any)?.point?.meeting?.id || (fullTask as any)?.point?.meeting_id,
         recipients: { "Task owner": [(fullTask as any).owner_id || (fullTask as any).owner?.id] },
         link: `/meet/my-work?tab=tasks`,
         data: {

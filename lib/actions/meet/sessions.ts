@@ -251,7 +251,7 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
         // Escalate points carried >= 3 times to organizer & department head (P5)
         const { data: escalatedPoints } = await supabaseAdmin
           .from("meet_points")
-          .select("id, code, title, carry_forward_count, meeting:meet_meetings(id, title, organizer:user_master!meet_meetings_organizer_id_fkey(id, email))")
+          .select("id, code, title, owner_id, carry_forward_count, meeting:meet_meetings(id, title, organizer:user_master!meet_meetings_organizer_id_fkey(id, email))")
           .gte("carry_forward_count", 3)
           .eq("meeting_id", (await supabaseAdmin.from("meet_sessions").select("meeting_id").eq("id", sessionId).single()).data?.meeting_id)
           .not("status", "in", '("closed","dropped")');
@@ -260,7 +260,8 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
           await sendMeetEmail("Point escalated", {
             entityId: ep.id,
             actorId: userId,
-            recipients: { Organiser: [(ep as any)?.meeting?.organizer?.id] },
+            meetingId: (ep as any)?.meeting?.id,
+            recipients: { "Point owner": [(ep as any)?.owner_id] },
             link: `/meet/points/${ep.id}`,
             data: {
               point_code: ep.code,
@@ -446,7 +447,8 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
           await sendMeetEmail("Point escalated", {
             entityId: pt.id,
             actorId: userId,
-            recipients: { Organiser: [meeting.organizer?.id || meeting.organizer_id] },
+            meetingId: meeting.id,
+            recipients: { "Point owner": [(pt as any).owner_id || (pt as any).owner?.id] },
             link: `/meet/points/${pt.id}`,
             data: { point_code: pt.code, point_title: pt.title, carry_count: newCarryCount, meeting_title: meeting.title || "", link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/points/${pt.id}` },
           });

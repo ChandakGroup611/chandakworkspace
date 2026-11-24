@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Zap, CheckCircle2, Clock } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
-import { MEET_EVENTS } from "@/lib/utils/meet-email-config";
+import { getMeetEmailSetup } from "@/lib/actions/meet/email-setup";
 import { getTeamsConnection } from "@/lib/actions/meet/teams-sync";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +17,8 @@ const IST = "Asia/Kolkata";
 
 /** Built-in automations: each one is real code that already runs. */
 const BUILT_IN: { when: string; name: string; detail: string; scheduled?: boolean }[] = [
-  { when: "Before", name: "Reminder a day before", detail: "24 hours before, everyone invited gets your \"Reminder (1 day before)\" email.", scheduled: true },
+  { when: "Before", name: "Reminders", detail: "Up to three reminders before each meeting, at the times you choose (e.g. 1 day and 1 hour before).", scheduled: true },
   { when: "Before", name: "Ask owners for an update", detail: "About a day before, owners of open points get an email asking for a one-line update, if the series has this on.", scheduled: true },
-  { when: "Before", name: "Reminder an hour before", detail: "1 hour before, your \"Reminder (1 hour before)\" email with the join link and room.", scheduled: true },
   { when: "During", name: "Ask to join", detail: "People who weren't invited can ask; the organiser, chair or minute taker admits or denies them.", },
   { when: "During", name: "Release unused rooms", detail: "If nobody checks in to a booked room, the room is freed for others.", scheduled: true },
   { when: "After", name: "Carry forward open points", detail: "When a meeting ends, every point that isn't closed moves to the next meeting in the series." },
@@ -34,18 +33,15 @@ export default async function AutomationsPage() {
   const isAdmin = auth.isSuperAdmin || auth.isMeetAdmin;
 
   const [emailSetup, lastReminder, teams] = await Promise.all([
-    Promise.all([
-      supabaseAdmin.from("notification_rules").select("event, is_active, recipient_type").ilike("module", "meet"),
-      supabaseAdmin.from("email_templates").select("event, is_active, html_body").ilike("module", "meet"),
-    ]).then(([r, t]) => ({ rules: (r.data || []) as any[], templates: (t.data || []) as any[] }), () => ({ rules: [] as any[], templates: [] as any[] })),
+    getMeetEmailSetup().catch(() => ({ items: [] as any[], canEdit: false, smtpReady: false })),
     supabaseAdmin
-      .from("meet_sessions")
-      .select("reminder_1h_sent_at")
-      .not("reminder_1h_sent_at", "is", null)
-      .order("reminder_1h_sent_at", { ascending: false })
+      .from("meet_activity_log")
+      .select("created_at")
+      .eq("channel", "system")
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
-      .then((r) => (r.data as any)?.reminder_1h_sent_at as string | undefined, () => undefined),
+      .then((r) => (r.data as any)?.created_at as string | undefined, () => undefined),
     getTeamsConnection().catch(() => null),
   ]);
 
@@ -62,7 +58,7 @@ export default async function AutomationsPage() {
         <p className="mt-1 text-[14px] text-subtle">What Chandak Meet does on its own, so nobody has to chase.</p>
         <p className="mt-2 inline-flex items-center gap-1.5 text-[13px] text-muted">
           <Clock className="h-3.5 w-3.5" aria-hidden />
-          {lastRun ? `Scheduled jobs last sent a reminder on ${lastRun}` : "Scheduled jobs haven't sent a reminder yet"}
+          {lastRun ? `Scheduled emails last went out on ${lastRun}` : "No scheduled email has gone out yet"}
         </p>
       </div>
 
@@ -124,36 +120,31 @@ export default async function AutomationsPage() {
       <section aria-labelledby="grp-emails">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <h2 id="grp-emails" className="text-[13px] font-semibold uppercase tracking-wide text-muted">Emails</h2>
-          {isAdmin && (
-            <span className="flex gap-4 text-[13.5px] font-semibold">
-              <Link href="/settings/communication/templates" className="text-primary hover:underline">Write templates</Link>
-              <Link href="/settings/communication/rules" className="text-primary hover:underline">Set who gets them</Link>
-            </span>
-          )}
+          <Link href="/meet/automations/emails" className="text-[13.5px] font-semibold text-primary hover:underline">
+            {emailSetup.canEdit ? "Write and set up emails" : "See emails"}
+          </Link>
         </div>
         <p className="mb-3 text-[13.5px] text-subtle">
-          Chandak Meet has no built-in email text. An email goes out only when you have written its template and turned on a rule for it,
-          and it is sent through your own SMTP (Settings › Communication › Providers).
+          No built-in email text. Each event sends only the email you wrote, to the people you chose, through your own SMTP.
         </p>
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
-          {MEET_EVENTS.map((ev) => {
-            const rule = emailSetup.rules.find((r) => String(r.event).toLowerCase() === ev.toLowerCase() && r.is_active);
-            const tpl = emailSetup.templates.find((t) => String(t.event).toLowerCase() === ev.toLowerCase() && t.is_active && String(t.html_body || "").trim());
-            const ready = !!rule && !!tpl;
-            return (
-              <li key={ev} className="flex flex-wrap items-center gap-3 p-4">
+          {emailSetup.items.map((it: any) => (
+            <li key={it.event}>
+              <Link href="/meet/automations/emails" className="flex flex-wrap items-center gap-3 p-4 hover:bg-surface-hover">
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14.5px] font-semibold text-foreground">{ev}</span>
+                  <span className="block text-[14.5px] font-semibold text-foreground">{it.event}</span>
                   <span className="mt-0.5 block text-[13px] text-subtle">
-                    {tpl ? "Template written" : "No template"} · {rule ? `Sent to ${(rule.recipient_type || []).join(", ") || "nobody yet"}` : "No rule"}
+                    {it.template ? "Written" : "Not written"}
+                    {it.rule?.recipients?.length ? ` · to ${it.rule.recipients.join(", ")}` : ""}
+                    {it.isReminder && it.rule?.timingMinutes ? ` · ${it.rule.timingMinutes >= 1440 ? `${it.rule.timingMinutes / 1440} day(s)` : it.rule.timingMinutes >= 60 ? `${it.rule.timingMinutes / 60} hour(s)` : `${it.rule.timingMinutes} min`} before` : ""}
                   </span>
                 </span>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${ready ? "bg-success-soft text-success-text" : "bg-sunken text-subtle"}`}>
-                  {ready ? "Sending" : "Off"}
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${it.sending ? "bg-success-soft text-success-text" : "bg-sunken text-subtle"}`}>
+                  {it.sending ? "On" : "Off"}
                 </span>
-              </li>
-            );
-          })}
+              </Link>
+            </li>
+          ))}
         </ul>
       </section>
     </div>

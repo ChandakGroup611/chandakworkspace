@@ -210,7 +210,8 @@ export async function publishMoM(sessionId: string, version: number = 1) {
     await sendMeetEmail("Minutes sent", {
       entityId: sessionId,
       actorId: userId,
-      recipients: { Attendees: (attendees || []).map((a: any) => a.user_id) },
+      sessionId,
+      recipients: { "Everyone invited": (attendees || []).map((a: any) => a.user_id) },
       link: `/meet/sessions/${sessionId}`,
       data: {
         meeting_title: (session as any)?.meeting?.title || "Meeting",

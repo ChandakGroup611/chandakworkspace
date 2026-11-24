@@ -6,13 +6,14 @@ import { Plus, Trash2, Save, Filter, Users, Send, Loader2, Workflow } from "luci
 import { saveSettingsEntity, deleteSettingsEntity } from "@/lib/actions/settings";
 import { createClient } from "@/utils/supabase/client";
 import { confirmAction } from "@/components/ui/feedback/confirm";
-import { MEET_EVENTS, MEET_RECIPIENTS } from "@/lib/utils/meet-email-config";
+import { MEET_EVENTS, MEET_RECIPIENTS, REMINDER_TIMINGS, reminderTrigger } from "@/lib/utils/meet-email-config";
 
 // Define available modules and their events/statuses
 const MODULE_CONFIG: Record<string, { events: string[], statuses: string[] }> = {
   "Meet": {
     events: [...MEET_EVENTS],
-    statuses: ["ANY"]
+    // Reminder rules keep their timing here ("BEFORE:<minutes>"); easier to edit in Meet › Automations › Emails
+    statuses: ["ANY", ...REMINDER_TIMINGS.map((t) => reminderTrigger(t.minutes))]
   },
   "Task": {
     events: ["Created", "Assigned", "Reassigned", "Status Changed", "Delayed", "Completed", "Closed"],

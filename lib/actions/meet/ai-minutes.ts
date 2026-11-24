@@ -375,7 +375,8 @@ export async function approveAndSendMoM(
     await sendMeetEmail("Minutes sent", {
       entityId: sessionId,
       actorId: userId,
-      recipients: { Attendees: Array.from(recipientSet) },
+      sessionId,
+      recipients: { "Everyone invited": Array.from(recipientSet) },
       link: `/meet/sessions/${sessionId}`,
       data: {
         meeting_title: meetingTitle,

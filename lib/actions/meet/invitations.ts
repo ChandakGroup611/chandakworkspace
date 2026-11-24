@@ -270,7 +270,8 @@ export async function sendRSVPReminders(sessionId: string): Promise<{ success: b
     await sendMeetEmail("RSVP reminder", {
       entityId: sessionId,
       actorId: auth.userId,
-      recipients: { Attendees: nonResponders.map((nr: any) => nr.user_id) },
+      sessionId,
+      recipients: { "Everyone invited": nonResponders.map((nr: any) => nr.user_id) },
       link: `/meet/sessions/${sessionId}`,
       data: {
         meeting_title: meetingTitle,

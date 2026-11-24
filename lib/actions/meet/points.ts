@@ -140,6 +140,7 @@ export async function createPoint(input: CreatePointInput) {
       await sendMeetEmail("Point assigned", {
         entityId: point.id,
         actorId: userId,
+        meetingId: (point as any).meeting_id,
         recipients: { "Point owner": [(point.owner as any).id] },
         link: `/meet/points/${point.id}`,
         data: { point_code: point.code, point_title: point.title, due_date: dueDate, link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/points/${point.id}` },
@@ -357,7 +358,7 @@ export async function reassignPointOwner(input: {
     const [pointRes, newOwnerRes] = await Promise.all([
       supabaseAdmin
         .from("meet_points")
-        .select("id, code, title, owner_id, owner:user_master!meet_points_owner_id_fkey(full_name)")
+        .select("id, code, title, meeting_id, owner_id, owner:user_master!meet_points_owner_id_fkey(full_name)")
         .eq("id", input.pointId)
         .single(),
       supabaseAdmin
@@ -407,6 +408,7 @@ export async function reassignPointOwner(input: {
     await sendMeetEmail("Point assigned", {
       entityId: input.pointId,
       actorId: user?.id || null,
+      meetingId: (point as any).meeting_id,
       recipients: { "Point owner": [input.newOwnerId] },
       link: `/meet/points/${input.pointId}`,
       data: { point_code: point.code, point_title: point.title, link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/points/${input.pointId}` },

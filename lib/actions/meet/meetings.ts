@@ -403,12 +403,13 @@ export async function createMeeting(input: CreateMeetingInput) {
         });
 
         void icsString; // not attached: template emails are HTML only
-        await sendMeetEmail("Invited", {
+        await sendMeetEmail("Meeting created", {
           entityId: session.id,
+          sessionId: session.id,
           actorId: userId,
           recipients: {
-            Attendees: membersToInsert.map((m) => m.user_id),
-            Organiser: [input.organizer_id],
+            "Everyone invited": membersToInsert.map((m) => m.user_id),
+            "Organiser (creator)": [input.organizer_id],
             Chair: [input.chair_id],
             "Minute taker": [input.default_minute_taker_id],
           },

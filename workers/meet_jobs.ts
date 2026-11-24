@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { todayIST } from "@/lib/utils/date-utils";
 import { sendMeetEmail } from "@/lib/utils/meet-email";
+import { REMINDER_EVENTS, parseReminderTrigger, reminderTrigger } from "@/lib/utils/meet-email-config";
 
 /**
  * Chandak Meet scheduled jobs. Invoked by /api/cron/meet-jobs (CRON_SECRET), every 5–15 min.
@@ -20,8 +21,7 @@ const fmtIST = (iso: string) =>
 const one = <T,>(v: T | T[] | null | undefined): T | undefined => (Array.isArray(v) ? v[0] : v ?? undefined);
 
 export interface MeetJobsResult {
-  reminders1h: number;
-  reminders24h: number;
+  reminders: number;
   roomsReleased: number;
   slaOpened: number;
   slaClosed: number;
@@ -32,8 +32,7 @@ export interface MeetJobsResult {
 
 export async function runMeetJobs(now = new Date()): Promise<MeetJobsResult> {
   const result: MeetJobsResult = {
-    reminders1h: 0,
-    reminders24h: 0,
+    reminders: 0,
     roomsReleased: 0,
     slaOpened: 0,
     slaClosed: 0,
@@ -51,12 +50,8 @@ export async function runMeetJobs(now = new Date()): Promise<MeetJobsResult> {
     }
   };
 
-  // 1h first, so a session created at short notice gets only the 1h reminder.
-  await step("reminders-1h", async () => {
-    result.reminders1h = await sendSessionReminders(now, 60, "reminder_1h_sent_at", null);
-  });
-  await step("reminders-24h", async () => {
-    result.reminders24h = await sendSessionReminders(now, 24 * 60, "reminder_24h_sent_at", 60);
+  await step("reminders", async () => {
+    result.reminders = await sendConfiguredReminders(now);
   });
   await step("room-no-show", async () => {
     result.roomsReleased = await releaseNoShowRooms(now);
@@ -145,6 +140,7 @@ async function sendOwnerUpdateRequests(now: Date): Promise<number> {
     for (const [ownerId, o] of byOwner.entries()) {
       await sendMeetEmail("Update requested", {
         entityId: s.id,
+        sessionId: s.id,
         recipients: { "Point owner": [ownerId] },
         link: `/meet/my-work`,
         data: {
@@ -191,10 +187,9 @@ async function sendMinutesReminders(now: Date): Promise<number> {
     if (!meeting || meeting.is_deleted) continue;
     if (!(await claimSessionJob(s.id, "minutes_reminder_sent"))) continue;
 
-    const org: any = one(meeting.organizer);
     await sendMeetEmail("Minutes not sent", {
       entityId: s.id,
-      recipients: { Organiser: [org?.id], "Minute taker": [(s as any).minute_taker_id] },
+      sessionId: s.id,
       link: `/meet/sessions/${s.id}/review`,
       data: { meeting_title: meeting.title, session_code: s.code, link: `${SITE_URL}/meet/sessions/${s.id}/review` },
     });
@@ -203,69 +198,58 @@ async function sendMinutesReminders(now: Date): Promise<number> {
   return sent;
 }
 
-/** Remind attendees of sessions starting within `leadMin` minutes (but after `minLeadMin`, if set). */
-async function sendSessionReminders(
-  now: Date,
-  leadMin: number,
-  column: "reminder_1h_sent_at" | "reminder_24h_sent_at",
-  minLeadMin: number | null
-): Promise<number> {
-  const from = new Date(now.getTime() + (minLeadMin ?? 0) * 60000).toISOString();
-  const to = new Date(now.getTime() + leadMin * 60000).toISOString();
-
-  const { data: due, error } = await supabaseAdmin
-    .from("meet_sessions")
-    .select("id")
-    .eq("status", "scheduled")
-    .eq("is_deleted", false)
-    .is(column, null)
-    .gt("scheduled_start", from)
-    .lte("scheduled_start", to);
+/**
+ * Reminders the admin set up: each active Meet rule for "Reminder 1/2/3" carries its timing
+ * ("BEFORE:<minutes>"). A reminder goes out once per meeting, in the hour after its time comes,
+ * and only while the meeting is still ahead (a meeting booked at short notice skips the ones
+ * whose time had already passed).
+ */
+async function sendConfiguredReminders(now: Date): Promise<number> {
+  const { data: rules, error } = await supabaseAdmin
+    .from("notification_rules")
+    .select("event, status_trigger, is_active")
+    .ilike("module", "meet")
+    .eq("is_active", true)
+    .in("event", REMINDER_EVENTS as string[]);
   if (error) throw error;
-  if (!due || due.length === 0) return 0;
-
-  // Claim atomically: only rows still unstamped are returned, so overlapping runs cannot double-send.
-  const stamp: Record<string, string> = { [column]: now.toISOString() };
-  if (column === "reminder_1h_sent_at") stamp.reminder_24h_sent_at = now.toISOString();
-  const { data: claimed, error: claimErr } = await supabaseAdmin
-    .from("meet_sessions")
-    .update(stamp)
-    .in(
-      "id",
-      due.map((s) => s.id)
-    )
-    .is(column, null)
-    .select(
-      `id, code, scheduled_start, scheduled_end, video_link,
-       meeting:meet_meetings(title, code, video_link, is_deleted, organizer_id),
-       room:meet_rooms(name, location),
-       attendees:meet_session_attendees(user_id, role, invite_status)`
-    );
-  if (claimErr) throw claimErr;
 
   let sent = 0;
-  for (const s of claimed || []) {
-    const meeting: any = one(s.meeting as any);
-    if (!meeting || meeting.is_deleted) continue;
-    const room: any = one(s.room as any);
-    const attendees = ((s as any).attendees || []).filter(
-      (a: any) => a.user_id && a.invite_status !== "declined" && a.role !== "requested" && a.role !== "denied"
-    );
-    await sendMeetEmail(leadMin <= 60 ? "Reminder (1 hour before)" : "Reminder (1 day before)", {
-      entityId: s.id,
-      recipients: { Attendees: attendees.map((a: any) => a.user_id), Organiser: [meeting.organizer_id] },
-      link: `/meet/join/${s.id}`,
-      data: {
-        meeting_title: meeting.title,
-        meeting_code: meeting.code,
-        session_code: s.code,
-        start_time: `${fmtIST(s.scheduled_start)} IST`,
-        room: [room?.name, room?.location].filter(Boolean).join(", "),
-        join_link: (s as any).video_link || meeting.video_link || "",
-        link: `${SITE_URL}/meet/join/${s.id}`,
-      },
-    });
-    sent++;
+  for (const rule of rules || []) {
+    const minutes = parseReminderTrigger((rule as any).status_trigger);
+    if (!minutes) continue;
+    const latest = new Date(now.getTime() + minutes * 60000);
+    const earliest = new Date(Math.max(now.getTime(), latest.getTime() - 60 * 60000));
+    const { data: sessions, error: sErr } = await supabaseAdmin
+      .from("meet_sessions")
+      .select("id, code, scheduled_start, video_link, meeting:meet_meetings(title, code, video_link, is_deleted), room:meet_rooms(name, location)")
+      .eq("status", "scheduled")
+      .eq("is_deleted", false)
+      .gt("scheduled_start", earliest.toISOString())
+      .lte("scheduled_start", latest.toISOString());
+    if (sErr) throw sErr;
+
+    for (const s of sessions || []) {
+      const meeting: any = one((s as any).meeting);
+      if (!meeting || meeting.is_deleted) continue;
+      if (!(await claimSessionJob(s.id, `reminder:${(rule as any).event}:${minutes}`))) continue;
+      const room: any = one((s as any).room);
+      await sendMeetEmail((rule as any).event, {
+        entityId: s.id,
+        sessionId: s.id,
+        trigger: reminderTrigger(minutes),
+        link: `/meet/join/${s.id}`,
+        data: {
+          meeting_title: meeting.title,
+          meeting_code: meeting.code,
+          session_code: (s as any).code,
+          start_time: `${fmtIST((s as any).scheduled_start)} IST`,
+          room: [room?.name, room?.location].filter(Boolean).join(", "),
+          join_link: (s as any).video_link || meeting.video_link || "",
+          link: `${SITE_URL}/meet/join/${s.id}`,
+        },
+      });
+      sent++;
+    }
   }
   return sent;
 }
@@ -400,9 +384,9 @@ async function syncOverdueSla(now: Date): Promise<{ opened: number; closed: numb
     if (!created.has(`${i.type}:${i.id}`)) continue;
     await sendMeetEmail("Overdue", {
       entityId: i.id,
+      meetingId: i.meeting?.id,
       recipients: {
         [i.type === "task" ? "Task owner" : "Point owner"]: [i.ownerId],
-        Chair: [escalateTo(i)],
       } as any,
       link: i.type === "task" ? `/meet/my-work?tab=tasks` : `/meet/points/${i.id}`,
       data: {
