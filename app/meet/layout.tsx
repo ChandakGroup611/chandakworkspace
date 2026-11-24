@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { getUserAllowedModules } from "@/lib/actions/module-switcher";
 import NavTracker from "@/components/meet/NavTracker";
+import LiveDock from "@/components/meet/LiveDock";
 
 export default async function MeetLayout({
   children,
@@ -25,6 +26,7 @@ export default async function MeetLayout({
     <>
       <NavTracker />
       {children}
+      <LiveDock />
     </>
   );
 }

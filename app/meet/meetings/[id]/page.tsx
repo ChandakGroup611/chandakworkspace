@@ -45,6 +45,7 @@ function stepOf(status?: string | null) {
     case "completed":
     case "mom_draft":
     case "mom_pending_approval": return 3;
+    case "published":
     case "mom_published": return 4;
     default: return 1;
   }

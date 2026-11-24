@@ -6,6 +6,7 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingTask, TaskStatus, PointPriority } from "@/types/meet";
 import { requireMeet } from "@/lib/permissions/meet";
+import { addPeopleToMeeting } from "@/lib/utils/meet-people";
 import { getHiddenConfidentialMeetingIds } from "@/lib/utils/meet-scope";
 
 export interface CreateTaskInput {
@@ -195,6 +196,10 @@ export async function createTask(input: CreateTaskInput) {
       `)
       .eq("id", task.id)
       .single();
+
+    // Someone who isn't in the meeting yet gets added to it, so they can see where the task came from
+    const taskMeetingId = (fullTask as any)?.point?.meeting_id || (fullTask as any)?.point?.meeting?.id;
+    if (input.owner_id && taskMeetingId) await addPeopleToMeeting(taskMeetingId, [input.owner_id]).catch(() => 0);
 
     // Audit log
     await supabaseAdmin.from("meet_activity_log").insert({

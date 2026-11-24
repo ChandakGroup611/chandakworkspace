@@ -148,7 +148,7 @@ export async function requestToJoin(sessionId: string): Promise<{ success: boole
   const auth = await requireMeet("MEET_VIEW");
   const s = await loadSession(sessionId);
   if (!s) return { success: false, error: "Meeting not found." };
-  if (["cancelled", "mom_published"].includes(s.status)) return { success: false, error: "This meeting is over." };
+  if (["cancelled", "mom_published", "published"].includes(s.status)) return { success: false, error: "This meeting is over." };
 
   const { canEnter, attRow } = await roleFor(auth.userId, s, auth.isSuperAdmin || auth.isMeetAdmin);
   if (canEnter) return { success: true, status: "admitted" };

@@ -283,6 +283,10 @@ export async function approveAndSendMoM(
       .single();
 
     if (!aiMin) return { success: false, sentCount: 0, error: "AI minutes record not found" };
+    // The minutes can't go out without a meeting summary
+    if (!String(customOverview ?? aiMin.overview ?? "").trim()) {
+      return { success: false, sentCount: 0, error: "Write the meeting summary before sending the minutes." };
+    }
 
     const items = (aiMin.items_json || []) as any[];
 

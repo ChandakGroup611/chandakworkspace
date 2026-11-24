@@ -149,7 +149,7 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
   const [gone, setGone] = useState<Set<string>>(new Set());
 
   const m = review.minutes;
-  const sent = !!m?.sent_at || review.session.status === "mom_published";
+  const sent = !!m?.sent_at || ["mom_published", "published"].includes(review.session.status);
   const remaining = review.suggestions.filter((s) => !gone.has(s.blockId));
   const resolved = review.points.filter((p) => !p.carried);
   const carried = review.points.filter((p) => p.carried);

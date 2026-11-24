@@ -15,6 +15,16 @@ export function StatusBadge({ status, priority, type = "point", className }: Sta
   let label = activeStatus.replace(/_/g, " ");
   // Capitalize words
   label = label.charAt(0).toUpperCase() + label.slice(1);
+  // Plain words for meeting states
+  const PLAIN: Record<string, string> = {
+    mom_draft: "Ended · minutes pending",
+    completed: type === "session" ? "Ended · minutes pending" : "Completed",
+    mom_pending_approval: "Minutes waiting for approval",
+    mom_published: "Minutes sent",
+    published: "Minutes sent",
+    in_progress: type === "session" ? "Live now" : "In progress",
+  };
+  if (PLAIN[activeStatus.toLowerCase()]) label = PLAIN[activeStatus.toLowerCase()];
 
   let colorClasses = "bg-surface-elevated text-subtle border-border";
 
@@ -31,6 +41,7 @@ export function StatusBadge({ status, priority, type = "point", className }: Sta
     case "completed":
     case "closed":
     case "mom_published":
+    case "published":
     case "active":
       colorClasses = "bg-success-soft text-success-text border-success-border";
       break;

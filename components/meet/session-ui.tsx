@@ -61,9 +61,11 @@ export function statusOf(s: Pick<MeetSessionRow, "status" | "scheduled_start">):
   const mins = Math.round((new Date(s.scheduled_start).getTime() - Date.now()) / 60000);
   switch (s.status) {
     case "in_progress": return { label: "Live now", tone: "live" };
+    // A meeting only counts as finished once its minutes are sent
     case "completed":
-    case "mom_draft": return { label: "Needs minutes", tone: "minutes" };
+    case "mom_draft": return { label: "Ended · minutes pending", tone: "minutes" };
     case "mom_pending_approval": return { label: "Minutes waiting for approval", tone: "minutes" };
+    case "published":
     case "mom_published": return { label: "Minutes sent", tone: "done" };
     case "cancelled": return { label: "Cancelled", tone: "cancelled" };
     default:

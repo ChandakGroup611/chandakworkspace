@@ -208,7 +208,7 @@ export async function pullTeamsTranscript(sessionId: string, actorId: string | n
   const auth = { userId: actorId };
   try {
     const s = await loadSessionForTeams(sessionId);
-    if (s?.status === "mom_published") return { success: false, error: "The minutes are already sent, so the notes are locked." };
+    if (s?.status === "mom_published" || s?.status === "published") return { success: false, error: "The minutes are already sent, so the notes are locked." };
 
     const f = await findOnlineMeeting(sessionId);
     if (f.error || !f.token) return { success: false, error: f.error };

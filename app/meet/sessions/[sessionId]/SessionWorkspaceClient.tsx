@@ -1366,7 +1366,7 @@ export default function SessionWorkspaceClient({
       )}
 
       {/* Draggable High-Visibility Floating Live Notes Action Widget */}
-      {isOpen && <DraggableLiveNotesWidget sessionId={session.id} />}
+      {session.status === "scheduled" && <DraggableLiveNotesWidget sessionId={session.id} />}
     </div>
   );
 }

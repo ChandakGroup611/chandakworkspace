@@ -106,7 +106,7 @@ export default function JoinScreen({ ctx, initials }: { ctx: JoinContext; initia
     start.toLocaleTimeString("en-IN", { timeZone: IST, hour: "numeric", minute: "2-digit" }) +
     (ctx.scheduledEnd ? ` – ${new Date(ctx.scheduledEnd).toLocaleTimeString("en-IN", { timeZone: IST, hour: "numeric", minute: "2-digit" })}` : "");
 
-  const ended = ["mom_published", "cancelled"].includes(ctx.status);
+  const ended = ["mom_published", "published", "cancelled"].includes(ctx.status);
 
   return (
     <div className="space-y-5 pb-6">

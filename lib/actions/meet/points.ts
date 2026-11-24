@@ -6,6 +6,7 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingPoint, PointPriority, PointType, PointStatus } from "@/types/meet";
 import { requireMeet } from "@/lib/permissions/meet";
+import { addPeopleToMeeting } from "@/lib/utils/meet-people";
 
 export interface CreatePointInput {
   meeting_id: string;
@@ -83,6 +84,9 @@ export async function createPoint(input: CreatePointInput) {
       console.error("Error creating point:", ptErr);
       return { success: false, error: ptErr?.message || "Failed to create point" };
     }
+
+    // Owner not in the meeting yet: add them, so the point is visible to them
+    if (input.owner_id) await addPeopleToMeeting(input.meeting_id, [input.owner_id]).catch(() => 0);
 
     // 3. Link into current session's meet_session_points
     await supabaseAdmin.from("meet_session_points").insert({
@@ -377,6 +381,7 @@ export async function reassignPointOwner(input: {
     if (!newOwner) return { success: false, error: "New owner not found" };
 
     const oldOwnerId = point.owner_id;
+    await addPeopleToMeeting(point.meeting_id, [input.newOwnerId]).catch(() => 0);
 
     // 2. Update point owner
     const { data: updatedPoint, error: updErr } = await supabaseAdmin

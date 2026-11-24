@@ -16,7 +16,7 @@ export default async function MinutesReviewPage({ params }: { params: Promise<{ 
   if (!review) notFound();
   return (
     <>
-      {review.canEdit && review.session.status !== "mom_published" && <TeamsImportCard sessionId={sessionId} />}
+      {review.canEdit && !["mom_published", "published"].includes(review.session.status) && <TeamsImportCard sessionId={sessionId} />}
       <MinutesReviewClient review={review} />
     </>
   );

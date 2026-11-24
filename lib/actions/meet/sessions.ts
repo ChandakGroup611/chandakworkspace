@@ -233,13 +233,19 @@ export async function startSession(sessionId: string) {
  * Executes atomic database transaction procedure fn_meet_end_session_and_carry_forward
  * with fallback, checks all write errors, and triggers 3x carry-forward escalation alerts (P5).
  */
-export async function endSessionAndCarryForward(sessionId: string, summaryNotes?: string) {
+export async function endSessionAndCarryForward(
+  sessionId: string,
+  summaryNotes?: string,
+  opts?: { followUpStart?: string | null }
+) {
   try {
     const { userId } = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
     const now = new Date().toISOString();
+    const followUpStart = opts?.followUpStart && !isNaN(new Date(opts.followUpStart).getTime()) ? new Date(opts.followUpStart) : null;
 
-    // 1. Try atomic PostgreSQL transaction function first (S7)
-    try {
+    // 1. Try atomic PostgreSQL transaction function first (S7).
+    //    A one-off meeting with a follow-up date goes straight to the JS path, which books it.
+    if (!followUpStart) try {
       const { data: rpcResult, error: rpcErr } = await supabaseAdmin.rpc("fn_meet_end_session_and_carry_forward", {
         p_session_id: sessionId,
         p_ended_by: userId,
@@ -354,13 +360,15 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
     // A one-off meeting has no "next meeting": open points just stay open in Points & tasks.
     const isOneOff = !meeting.recurrence || meeting.recurrence === "none";
 
-    if (!nextSessionId && !isOneOff) {
-      // Calculate next scheduled start based on recurrence
+    if (!nextSessionId && (!isOneOff || followUpStart)) {
+      // Calculate next scheduled start based on recurrence (or the follow-up date picked for a one-off)
       const currentStart = new Date(currentSession.scheduled_start);
       let nextStart = new Date(currentStart);
       const recurrence = meeting.recurrence || "weekly";
 
-      if (recurrence === "daily") {
+      if (followUpStart) {
+        nextStart = new Date(followUpStart);
+      } else if (recurrence === "daily") {
         nextStart.setDate(nextStart.getDate() + 1);
       } else if (recurrence === "weekly") {
         nextStart.setDate(nextStart.getDate() + 7);
