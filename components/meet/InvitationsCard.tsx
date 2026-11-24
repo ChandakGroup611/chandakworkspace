@@ -125,9 +125,9 @@ export default function InvitationsCard({
   const myResponse = data.currentUserInvite?.response || "pending";
 
   return (
-    <div className="rounded-lg border border-border bg-surface-elevated overflow-hidden shadow-sm">
+    <div className="rounded-lg border border-border bg-elevated overflow-hidden shadow-sm">
       {/* Header with RSVP Counters */}
-      <div className="p-4 border-b border-border bg-surface-elevated/80 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-4 border-b border-border bg-elevated/80 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
             <Calendar className="w-4 h-4 text-theme-btn-primary" />
@@ -170,7 +170,7 @@ export default function InvitationsCard({
                 ? "bg-warning-soft text-warning-text"
                 : myResponse === "proposed"
                 ? "bg-accent-soft text-accent-soft-text"
-                : "bg-surface-elevated text-muted"
+                : "bg-elevated text-muted"
             }`}
           >
             {myResponse}
@@ -183,8 +183,8 @@ export default function InvitationsCard({
             disabled={isPending}
             className={`px-3 py-1 rounded font-semibold transition-all ${
               myResponse === "accepted"
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "bg-surface-elevated hover:bg-success-soft text-success-text border border-success-border"
+                ? "bg-success text-white shadow-sm"
+                : "bg-elevated hover:bg-success-soft text-success-text border border-success-border"
             }`}
           >
             Accept
@@ -194,8 +194,8 @@ export default function InvitationsCard({
             disabled={isPending}
             className={`px-3 py-1 rounded font-semibold transition-all ${
               myResponse === "tentative"
-                ? "bg-amber-600 text-white shadow-sm"
-                : "bg-surface-elevated hover:bg-warning-soft text-warning-text border border-warning-border"
+                ? "bg-warning text-white shadow-sm"
+                : "bg-elevated hover:bg-warning-soft text-warning-text border border-warning-border"
             }`}
           >
             Maybe
@@ -205,8 +205,8 @@ export default function InvitationsCard({
             disabled={isPending}
             className={`px-3 py-1 rounded font-semibold transition-all ${
               myResponse === "declined"
-                ? "bg-rose-600 text-white shadow-sm"
-                : "bg-surface-elevated hover:bg-danger-soft text-danger-text border border-danger-border"
+                ? "bg-danger-solid text-white shadow-sm"
+                : "bg-elevated hover:bg-danger-soft text-danger-text border border-danger-border"
             }`}
           >
             Decline...
@@ -216,8 +216,8 @@ export default function InvitationsCard({
             disabled={isPending}
             className={`px-3 py-1 rounded font-semibold transition-all ${
               myResponse === "proposed"
-                ? "bg-blue-600 text-white shadow-sm"
-                : "bg-surface-elevated hover:bg-accent-soft text-accent-soft-text border border-primary/30"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-elevated hover:bg-accent-soft text-accent-soft-text border border-primary/30"
             }`}
           >
             Propose New Time...
@@ -235,7 +235,7 @@ export default function InvitationsCard({
             <button
               onClick={handleRemindNonResponders}
               disabled={isPending}
-              className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold flex items-center gap-1"
+              className="px-2.5 py-1 rounded bg-primary hover:bg-primary-hover text-primary-foreground font-semibold flex items-center gap-1"
             >
               <Send className="w-3 h-3" /> Remind Now
             </button>
@@ -270,7 +270,7 @@ export default function InvitationsCard({
                   </div>
                   {inv.note && <p className="text-[12.5px] text-muted italic mt-0.5">&quot;{inv.note}&quot;</p>}
                   {inv.delegate && (
-                    <p className="text-[12.5px] text-purple-400 mt-0.5">
+                    <p className="text-[12.5px] text-info-text mt-0.5">
                       Delegated to: {inv.delegate.full_name}
                     </p>
                   )}
@@ -287,7 +287,7 @@ export default function InvitationsCard({
                 <button
                   onClick={() => handleAcceptProposal(inv.proposed_start!)}
                   disabled={isPending}
-                  className="px-2.5 py-1 text-[12.5px] font-semibold rounded bg-blue-600 hover:bg-blue-500 text-white shrink-0"
+                  className="px-2.5 py-1 text-[12.5px] font-semibold rounded bg-primary hover:bg-primary-hover text-primary-foreground shrink-0"
                 >
                   Move Meeting Here
                 </button>
@@ -300,7 +300,7 @@ export default function InvitationsCard({
       {/* Decline with Reason & Delegate Modal */}
       {isDeclineModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
+          <div className="bg-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-sm font-bold text-foreground">Decline Meeting</h3>
               <button onClick={() => setIsDeclineModalOpen(false)} className="text-muted hover:text-foreground">
@@ -348,7 +348,7 @@ export default function InvitationsCard({
               <button
                 onClick={handleConfirmDecline}
                 disabled={isPending}
-                className="px-4 py-1.5 text-xs font-semibold rounded bg-rose-600 hover:bg-rose-500 text-white"
+                className="px-4 py-1.5 text-xs font-semibold rounded bg-danger-solid hover:opacity-90 text-white"
               >
                 Confirm Decline
               </button>
@@ -360,7 +360,7 @@ export default function InvitationsCard({
       {/* Propose New Time Modal */}
       {isProposeModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
+          <div className="bg-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-sm font-bold text-foreground">Propose New Meeting Time</h3>
               <button onClick={() => setIsProposeModalOpen(false)} className="text-muted hover:text-foreground">
@@ -399,7 +399,7 @@ export default function InvitationsCard({
               <button
                 onClick={handleConfirmPropose}
                 disabled={isPending || !proposedDateTime}
-                className="px-4 py-1.5 text-xs font-semibold rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-semibold rounded bg-primary hover:bg-primary-hover text-primary-foreground disabled:opacity-50"
               >
                 Submit Proposal
               </button>

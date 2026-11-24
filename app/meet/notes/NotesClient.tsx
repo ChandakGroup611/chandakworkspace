@@ -297,7 +297,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)] bg-surface text-foreground">
-      <div className="p-4 sm:p-6 border-b border-border bg-surface-elevated">
+      <div className="p-4 sm:p-6 border-b border-border bg-elevated">
         <MeetHeader
           title="Notes"
           description="Meeting notes and your own notes. Lines that sound like an action can be turned into a task or point."
@@ -328,13 +328,13 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                 placeholder="Search notes"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-surface-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
               />
             </div>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1 p-2 border-b border-border bg-surface-elevated/40 text-xs">
+          <div className="flex items-center gap-1 p-2 border-b border-border bg-elevated/40 text-xs">
             {[
               { id: "all", label: "All" },
               { id: "meetings", label: "Meetings" },
@@ -352,8 +352,8 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                   activeTab === tab.id
                     ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
                     : tab.alert
-                    ? "text-warning-text hover:bg-surface-elevated"
-                    : "text-muted hover:text-foreground hover:bg-surface-elevated"
+                    ? "text-warning-text hover:bg-elevated"
+                    : "text-muted hover:text-foreground hover:bg-elevated"
                 }`}
               >
                 {tab.label}
@@ -378,7 +378,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                     className={`w-full text-left p-3.5 transition-colors flex flex-col gap-1.5 ${
                       isSelected
                         ? "bg-theme-btn-primary/10 border-l-2 border-theme-btn-primary"
-                        : "hover:bg-surface-elevated/50"
+                        : "hover:bg-elevated/50"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -415,7 +415,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
           {selectedNote ? (
             <>
               {/* Note Header */}
-              <div className="p-4 border-b border-border bg-surface-elevated flex items-center justify-between gap-4">
+              <div className="p-4 border-b border-border bg-elevated flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="p-2 rounded bg-surface border border-border">
                     {selectedNote.kind === "session" ? (
@@ -446,7 +446,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                   {selectedNote.kind === "session" && (
                     <button
                       onClick={handleOpenSummary}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-foreground"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-border hover:bg-elevated text-foreground"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-warning-text" />
                       Summary
@@ -485,7 +485,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                         className={`group p-2.5 rounded border transition-all flex items-start gap-3 ${
                           looksAction
                             ? "bg-warning-soft border-warning-border"
-                            : "bg-surface-elevated/40 border-border hover:border-border-hover"
+                            : "bg-elevated/40 border-border hover:border-border-active"
                         }`}
                       >
                         {/* Block Type Trigger */}
@@ -549,19 +549,19 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                             <>
                               <button
                                 onClick={() => openConversion(block, "task")}
-                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-accent-soft-text"
+                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-elevated text-accent-soft-text"
                               >
                                 → Task
                               </button>
                               <button
                                 onClick={() => openConversion(block, "point")}
-                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-purple-400"
+                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-elevated text-purple-400"
                               >
                                 → Point
                               </button>
                               <button
                                 onClick={() => openConversion(block, "decision")}
-                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-warning-text"
+                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-elevated text-warning-text"
                               >
                                 → Decision
                               </button>
@@ -582,7 +582,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
               </div>
 
               {/* Fast Line Input Bar */}
-              <div className="p-4 border-t border-border bg-surface-elevated">
+              <div className="p-4 border-t border-border bg-elevated">
                 <div className="flex items-center gap-2">
                   <input
                     ref={inputRef}
@@ -628,7 +628,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
       {/* Convert Line Modal */}
       {convertBlock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
+          <div className="bg-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-sm font-bold text-foreground">
                 Convert Note Line to {convertType.toUpperCase()}
@@ -740,7 +740,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
       {/* Structured Summary Modal (D2.7) */}
       {isSummaryOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated border border-border rounded-lg max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col">
+          <div className="bg-elevated border border-border rounded-lg max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-warning-text" />
@@ -771,7 +771,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                         <div key={pt.id} className="p-2.5 rounded bg-surface border border-border">
                           <div className="flex items-center justify-between">
                             <span className="font-semibold text-foreground">{pt.code}: {pt.title}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-surface-elevated text-[12px] text-muted capitalize">
+                            <span className="px-1.5 py-0.5 rounded bg-elevated text-[12px] text-muted capitalize">
                               {pt.status}
                             </span>
                           </div>

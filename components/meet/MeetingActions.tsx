@@ -58,7 +58,7 @@ export default function MeetingActions({ meetingId, title, archived, canDelete }
       <Dialog.Root open={confirm} onOpenChange={setConfirm}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(92vw,460px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(92vw,460px)] -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <Dialog.Title className="text-[17px] font-semibold text-heading">Delete "{title}"?</Dialog.Title>
               <Dialog.Close className="rounded p-1 text-muted hover:bg-sunken hover:text-foreground" aria-label="Close"><X className="h-4 w-4" /></Dialog.Close>

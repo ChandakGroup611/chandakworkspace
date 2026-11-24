@@ -1180,7 +1180,7 @@ function VoicePlayer({ url, isSender }: { url: string; isSender: boolean }) {
       <button
         type="button"
         onClick={togglePlay}
-        className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 hover:opacity-90 shadow-xs ${isSender ? "bg-white text-blue-600" : "bg-primary text-primary-contrast"
+        className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 hover:opacity-90 shadow-xs ${isSender ? "bg-white text-blue-600" : "bg-primary text-primary-foreground"
           }`}
       >
         {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}

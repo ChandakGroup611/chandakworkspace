@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   FileCheck2,
   Search,
@@ -254,7 +255,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
             <p className="text-[13px] font-medium text-subtle">Total Decisions</p>
             <p className="text-2xl font-bold text-heading mt-1">{decisions.length}</p>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-surface-elevated flex items-center justify-center text-foreground">
+          <div className="w-10 h-10 rounded-lg bg-elevated flex items-center justify-center text-foreground">
             <FileCheck2 className="w-5 h-5" />
           </div>
         </div>
@@ -262,9 +263,9 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
         <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-[13px] font-medium text-subtle">Active & Binding</p>
-            <p className="text-2xl font-bold text-emerald-500 mt-1">{activeCount}</p>
+            <p className="text-2xl font-bold text-success-text mt-1">{activeCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-success-soft flex items-center justify-center text-emerald-500">
+          <div className="w-10 h-10 rounded-lg bg-success-soft flex items-center justify-center text-success-text">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
@@ -272,9 +273,9 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
         <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-[13px] font-medium text-subtle">Superseded</p>
-            <p className="text-2xl font-bold text-amber-500 mt-1">{supersededCount}</p>
+            <p className="text-2xl font-bold text-warning-text mt-1">{supersededCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-warning-soft flex items-center justify-center text-amber-500">
+          <div className="w-10 h-10 rounded-lg bg-warning-soft flex items-center justify-center text-warning-text">
             <History className="w-5 h-5" />
           </div>
         </div>
@@ -282,9 +283,9 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
         <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-[13px] font-medium text-subtle">Revoked</p>
-            <p className="text-2xl font-bold text-rose-500 mt-1">{revokedCount}</p>
+            <p className="text-2xl font-bold text-danger-text mt-1">{revokedCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-danger-soft flex items-center justify-center text-rose-500">
+          <div className="w-10 h-10 rounded-lg bg-danger-soft flex items-center justify-center text-danger-text">
             <AlertCircle className="w-5 h-5" />
           </div>
         </div>
@@ -293,7 +294,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
       {/* Control Bar: Filters, Search & Actions */}
       <div className="bg-surface border border-border rounded-xl p-4 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 bg-surface-elevated p-1 rounded-lg border border-border overflow-x-auto">
+        <div className="flex items-center gap-1 bg-elevated p-1 rounded-lg border border-border overflow-x-auto">
           {(
             [
               { key: "all", label: "All Decisions", count: decisions.length },
@@ -315,7 +316,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
               <span
                 className={`text-[12px] px-1.5 py-0.2 rounded-full ${
                   statusFilter === tab.key
-                    ? "bg-black/20 text-white"
+                    ? "bg-black/20 text-theme-btn-primary-text"
                     : "bg-surface text-subtle"
                 }`}
               >
@@ -335,7 +336,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
               placeholder="Search decision, code, tag..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-border-strong"
+              className="w-full pl-9 pr-3 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-border-active"
             />
           </div>
 
@@ -343,7 +344,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
           <select
             value={selectedMeetingId}
             onChange={(e) => setSelectedMeetingId(e.target.value)}
-            className="px-2.5 py-1.5 bg-surface-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
+            className="px-2.5 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
           >
             <option value="all">All Meeting Series</option>
             {meetingOptions.map((m) => (
@@ -382,7 +383,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
       <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-surface-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
+            <thead className="bg-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
               <tr>
                 <th className="py-3 px-4">Code</th>
                 <th className="py-3 px-4">Decision & Policy Details</th>
@@ -415,21 +416,21 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                     decision.status === "active";
 
                   return (
-                    <tr key={decision.id} className="hover:bg-surface-elevated/40 transition-colors">
+                    <tr key={decision.id} className="hover:bg-elevated/40 transition-colors">
                       {/* Code */}
-                      <td className="py-3.5 px-4 font-mono font-semibold text-heading whitespace-nowrap">
-                        {decision.code}
+                      <td className="py-3.5 px-4 font-mono font-semibold whitespace-nowrap">
+                        <Link href={`/meet/decisions/${decision.id}`} className="text-primary hover:underline">{decision.code}</Link>
                       </td>
 
                       {/* Text & Tags */}
                       <td className="py-3.5 px-4 max-w-md">
-                        <p className="text-sm font-medium text-foreground leading-snug">{decision.text}</p>
+                        <Link href={`/meet/decisions/${decision.id}`} className="text-sm font-medium text-foreground leading-snug hover:underline">{decision.text}</Link>
                         {decision.tags && decision.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {decision.tags.map((t, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] bg-surface-elevated border border-border text-subtle font-medium"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] bg-elevated border border-border text-subtle font-medium"
                               >
                                 <Tag className="w-2.5 h-2.5 text-subtle/70" />
                                 {t}
@@ -448,7 +449,11 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                       {/* Origin / Meeting */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="font-medium text-foreground">
-                          {decision.session?.meeting?.title || "Meeting Series"}
+                          {decision.session?.meeting?.id ? (
+                            <Link href={`/meet/meetings/${decision.session.meeting.id}`} className="hover:text-primary hover:underline">{decision.session.meeting.title}</Link>
+                          ) : (
+                            decision.session?.meeting?.title || "Meeting"
+                          )}
                         </div>
                         <div className="text-[12.5px] text-subtle font-mono">
                           {decision.session?.code || "Session"}
@@ -470,7 +475,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                         {decision.review_date ? (
                           <span
                             className={`inline-flex items-center gap-1 ${
-                              isReviewDue ? "text-amber-500 font-semibold" : "text-subtle"
+                              isReviewDue ? "text-warning-text font-semibold" : "text-subtle"
                             }`}
                           >
                             <Calendar className="w-3 h-3" />
@@ -509,7 +514,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                             </button>
                             <button
                               onClick={() => handleRevoke(decision.id)}
-                              className="px-2 py-1 text-[12.5px] font-medium text-rose-500 hover:bg-danger-soft rounded transition-colors"
+                              className="px-2 py-1 text-[12.5px] font-medium text-danger-text hover:bg-danger-soft rounded transition-colors"
                               title="Withdraw this decision"
                             >
                               Revoke
@@ -548,12 +553,12 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
             <form onSubmit={handleRecordSubmit} className="mt-4 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-subtle mb-1">
-                  Target Session & Meeting <span className="text-rose-500">*</span>
+                  Target Session & Meeting <span className="text-danger-text">*</span>
                 </label>
                 <select
                   value={selectedSessionId}
                   onChange={(e) => setSelectedSessionId(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-border-strong"
+                  className="w-full px-3 py-2 bg-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-border-active"
                   required
                 >
                   {sessions.map((s) => (
@@ -566,14 +571,14 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
 
               <div>
                 <label className="block text-xs font-medium text-subtle mb-1">
-                  Decision Text <span className="text-rose-500">*</span>
+                  Decision Text <span className="text-danger-text">*</span>
                 </label>
                 <textarea
                   rows={3}
                   value={decisionText}
                   onChange={(e) => setDecisionText(e.target.value)}
                   placeholder="State the agreed decision, policy resolution, or ratified mandate..."
-                  className="w-full px-3 py-2 bg-surface-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-border-strong"
+                  className="w-full px-3 py-2 bg-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-border-active"
                   required
                 />
               </div>
@@ -586,7 +591,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                     value={decidedBy}
                     onChange={(e) => setDecidedBy(e.target.value)}
                     placeholder="e.g. Sales Committee"
-                    className="w-full px-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
                   />
                 </div>
                 <div>
@@ -595,7 +600,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                     type="date"
                     value={effectiveFrom}
                     onChange={(e) => setEffectiveFrom(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
                   />
                 </div>
               </div>
@@ -607,7 +612,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                     type="date"
                     value={reviewDate}
                     onChange={(e) => setReviewDate(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
                   />
                 </div>
                 <div>
@@ -617,7 +622,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                     value={tagsInput}
                     onChange={(e) => setTagsInput(e.target.value)}
                     placeholder="Commercial, Policy, Q3"
-                    className="w-full px-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
                   />
                 </div>
               </div>
@@ -651,7 +656,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
           <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 relative">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
-                <History className="w-5 h-5 text-amber-500" />
+                <History className="w-5 h-5 text-warning-text" />
                 <h3 className="text-base font-semibold text-heading">Supersede Decision</h3>
               </div>
               <button
@@ -662,7 +667,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
               </button>
             </div>
 
-            <div className="mt-3 p-3 bg-surface-elevated border border-border rounded-lg">
+            <div className="mt-3 p-3 bg-elevated border border-border rounded-lg">
               <span className="text-[12px] font-mono uppercase text-subtle font-semibold">
                 Current Decision ({supersedeModalTarget.code})
               </span>
@@ -672,12 +677,12 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
             <form onSubmit={handleSupersedeSubmit} className="mt-4 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-subtle mb-1">
-                  Session Ratifying the Change <span className="text-rose-500">*</span>
+                  Session Ratifying the Change <span className="text-danger-text">*</span>
                 </label>
                 <select
                   value={supersedeSessionId}
                   onChange={(e) => setSupersedeSessionId(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                  className="w-full px-3 py-2 bg-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
                   required
                 >
                   {sessions.map((s) => (
@@ -690,14 +695,14 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
 
               <div>
                 <label className="block text-xs font-medium text-subtle mb-1">
-                  Replacement Decision Text <span className="text-rose-500">*</span>
+                  Replacement Decision Text <span className="text-danger-text">*</span>
                 </label>
                 <textarea
                   rows={3}
                   value={supersedeText}
                   onChange={(e) => setSupersedeText(e.target.value)}
                   placeholder="State the updated resolution replacing the previous one..."
-                  className="w-full px-3 py-2 bg-surface-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none"
+                  className="w-full px-3 py-2 bg-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none"
                   required
                 />
               </div>
@@ -709,7 +714,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                   value={supersedeDecidedBy}
                   onChange={(e) => setSupersedeDecidedBy(e.target.value)}
                   placeholder="e.g. Sales Committee"
-                  className="w-full px-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
+                  className="w-full px-3 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground focus:outline-none"
                 />
               </div>
 

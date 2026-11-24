@@ -324,7 +324,7 @@ export function ChandakMessengerDrawer({
                   <button
                     type="button"
                     onClick={() => setShowNewChat(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-contrast hover:opacity-90 transition-opacity shadow-xs"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity shadow-xs"
                   >
                     <MessageSquarePlus className="h-4 w-4" />
                     <span>Start Direct Chat</span>

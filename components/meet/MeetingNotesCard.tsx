@@ -73,7 +73,7 @@ export default function MeetingNotesCard({ sessionId }: Props) {
   const blocks = note?.blocks || [];
 
   return (
-    <div className="rounded-lg border border-border bg-surface-elevated overflow-hidden shadow-sm">
+    <div className="rounded-lg border border-border bg-elevated overflow-hidden shadow-sm">
       <div className="p-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <StickyNote className="w-4 h-4 text-theme-btn-primary" />
@@ -82,7 +82,7 @@ export default function MeetingNotesCard({ sessionId }: Props) {
         </div>
         <button
           onClick={handleOpenSummary}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-foreground"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-surface border border-border hover:bg-elevated text-foreground"
         >
           <Sparkles className="w-3.5 h-3.5 text-warning-text" />
           Summary
@@ -116,7 +116,7 @@ export default function MeetingNotesCard({ sessionId }: Props) {
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isPending}
-          className="flex-1 px-2.5 py-1.5 text-xs bg-surface-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
+          className="flex-1 px-2.5 py-1.5 text-xs bg-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
         />
         <button
           onClick={() => {
@@ -134,7 +134,7 @@ export default function MeetingNotesCard({ sessionId }: Props) {
       {/* Summary Dialog */}
       {isSummaryOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated border border-border rounded-lg max-w-lg w-full p-5 shadow-2xl space-y-4">
+          <div className="bg-elevated border border-border rounded-lg max-w-lg w-full p-5 shadow-2xl space-y-4">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-warning-text" /> Session Summary
             </h3>

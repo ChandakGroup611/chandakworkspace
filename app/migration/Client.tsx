@@ -344,7 +344,7 @@ export default function MigrationClient() {
                  }
                }}
                // ui-audit-ignore-next-line file-dropzone
-               className={`border-2 border-dashed ${isUploading ? 'border-primary bg-primary-soft' : 'border-border hover:border-border-strong hover:bg-sunken cursor-pointer transition-all'} rounded-lg p-8 flex flex-col items-center justify-center text-center`}
+               className={`border-2 border-dashed ${isUploading ? 'border-primary bg-primary-soft' : 'border-border hover:border-border-active hover:bg-sunken cursor-pointer transition-all'} rounded-lg p-8 flex flex-col items-center justify-center text-center`}
                onClick={() => !isUploading && fileInputRef.current?.click()}
                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                onDrop={(e) => {

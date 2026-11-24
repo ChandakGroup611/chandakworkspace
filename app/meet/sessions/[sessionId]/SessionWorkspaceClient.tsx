@@ -988,7 +988,7 @@ export default function SessionWorkspaceClient({
       {/* Reschedule Modal */}
       {isRescheduleOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-[15px] font-semibold text-heading">Reschedule Session</h3>
               <button
@@ -1065,7 +1065,7 @@ export default function SessionWorkspaceClient({
       {/* Cancel Session Modal */}
       {isCancelOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-[15px] font-semibold text-danger-text flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" /> Cancel Review Session
@@ -1123,7 +1123,7 @@ export default function SessionWorkspaceClient({
       {/* Add Agenda Item Modal */}
       {isAddAgendaOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-[15px] font-semibold text-heading">Add Agenda Item</h3>
               <button
@@ -1209,7 +1209,7 @@ export default function SessionWorkspaceClient({
       {/* Edit Point Modal */}
       {editingPoint && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-[15px] font-semibold text-heading">
                 Edit Point ({editingPoint.code})
@@ -1310,7 +1310,7 @@ export default function SessionWorkspaceClient({
       {/* Closure Remarks Modal (Spec P6) */}
       {closingPoint && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-[15px] font-semibold text-heading flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-success-text" /> Close Point ({closingPoint.code})

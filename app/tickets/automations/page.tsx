@@ -122,7 +122,7 @@ export default function TicketAutomationsBuilder() {
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 editingId === rule.id 
                   ? "border-primary bg-primary-soft shadow-xs" 
-                  : "border-border bg-surface hover:border-border-strong"
+                  : "border-border bg-surface hover:border-border-active"
               }`}
             >
               <div className="flex justify-between items-start mb-2">

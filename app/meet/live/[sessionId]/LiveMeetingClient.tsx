@@ -714,7 +714,7 @@ export default function LiveMeetingClient({
       {/* Set/Edit Video Call Modal */}
       {showVideoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl space-y-4">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
                 <Video className="h-4 w-4 text-emerald-500" />
@@ -768,7 +768,7 @@ export default function LiveMeetingClient({
                 <button
                   type="submit"
                   disabled={savingVideoLink}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-contrast font-medium text-xs hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium text-xs hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
                 >
                   {savingVideoLink && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   <span>Save Video Link</span>

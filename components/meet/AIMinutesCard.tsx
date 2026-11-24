@@ -72,8 +72,8 @@ export default function AIMinutesCard({
   const isPublished = Boolean(aiMinutes?.sent_at);
 
   return (
-    <div className="rounded-lg border border-border bg-surface-elevated overflow-hidden shadow-sm">
-      <div className="p-4 border-b border-border bg-surface-elevated/80 flex items-center justify-between gap-3">
+    <div className="rounded-lg border border-border bg-elevated overflow-hidden shadow-sm">
+      <div className="p-4 border-b border-border bg-elevated/80 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded bg-warning-soft text-warning-text">
             <Sparkles className="w-4 h-4" />
@@ -126,7 +126,7 @@ export default function AIMinutesCard({
                   rows={3}
                   value={overview}
                   onChange={(e) => setOverview(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-surface-elevated border border-border rounded text-foreground text-xs focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-2.5 py-1.5 bg-elevated border border-border rounded text-foreground text-xs focus:outline-none focus:border-theme-btn-primary"
                 />
               ) : (
                 <p className="text-foreground leading-relaxed">{overview}</p>
@@ -165,7 +165,7 @@ export default function AIMinutesCard({
                         newItems[idx].text = e.target.value;
                         setItems(newItems);
                       }}
-                      className="w-full px-2 py-1 bg-surface-elevated border border-border rounded text-foreground text-xs focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full px-2 py-1 bg-elevated border border-border rounded text-foreground text-xs focus:outline-none focus:border-theme-btn-primary"
                     />
                   ) : (
                     <p className="text-muted leading-relaxed">{item.text}</p>
@@ -201,7 +201,7 @@ export default function AIMinutesCard({
                 {isEditing && (
                   <button
                     onClick={handleSaveEdits}
-                    className="px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-foreground"
+                    className="px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-border hover:bg-elevated text-foreground"
                   >
                     Save Changes
                   </button>

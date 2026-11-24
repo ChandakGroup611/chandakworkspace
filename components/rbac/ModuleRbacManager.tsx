@@ -330,7 +330,7 @@ export default function ModuleRbacManager({
                       {mod.description}
                     </p>
 
-                    <div className="grid grid-cols-3 gap-2 py-2.5 px-3 bg-surface-elevated/50 rounded-lg text-center mb-4 border border-border/50">
+                    <div className="grid grid-cols-3 gap-2 py-2.5 px-3 bg-elevated/50 rounded-lg text-center mb-4 border border-border/50">
                       <div>
                         <span className="block text-[10px] text-subtle">Roles</span>
                         <span className="text-xs font-bold text-heading">{mod.totalRoles}</span>
@@ -446,7 +446,7 @@ export default function ModuleRbacManager({
                   className={`p-4 rounded-xl border text-left transition-all relative cursor-pointer ${
                     isSelected
                       ? "bg-theme-btn-primary/10 border-theme-btn-primary ring-1 ring-theme-btn-primary"
-                      : "bg-surface border-border hover:bg-surface-elevated"
+                      : "bg-surface border-border hover:bg-elevated"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -541,7 +541,7 @@ export default function ModuleRbacManager({
                               className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                                 isGranted
                                   ? "bg-theme-btn-primary/5 border-theme-btn-primary/40 text-foreground"
-                                  : "bg-surface-elevated/40 border-border hover:bg-surface-elevated text-muted"
+                                  : "bg-elevated/40 border-border hover:bg-elevated text-muted"
                               }`}
                             >
                               <input

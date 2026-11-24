@@ -113,8 +113,8 @@ export default function DraggableLiveNotesWidget({
           onClick={handleButtonClick}
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full shadow-xl transition-all duration-150 cursor-grab active:cursor-grabbing font-medium text-[13px] border ${
             isOpen
-              ? "bg-amber-600 text-white border-amber-400 ring-4 ring-amber-500/20 shadow-amber-500/40"
-              : "bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 text-white border-amber-300/40 hover:scale-105 active:scale-95 shadow-amber-600/30 hover:shadow-amber-600/50"
+              ? "bg-primary-hover text-primary-foreground border-primary ring-4 ring-primary/20"
+              : "bg-primary text-primary-foreground border-primary hover:scale-105 active:scale-95"
           }`}
           title="Drag to reposition · Click to open Live Notes"
         >
@@ -133,7 +133,7 @@ export default function DraggableLiveNotesWidget({
           <span className="font-semibold tracking-wide drop-shadow-xs">Live Notes</span>
 
           {focusedPointCode && (
-            <span className="ml-0.5 rounded bg-black/25 px-1.5 py-0.2 text-[10.5px] font-mono font-bold text-amber-100">
+            <span className="ml-0.5 rounded bg-black/25 px-1.5 py-0.2 text-[10.5px] font-mono font-bold text-primary-foreground">
               {focusedPointCode}
             </span>
           )}
@@ -158,13 +158,13 @@ export default function DraggableLiveNotesWidget({
           {/* Window Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-sunken/40">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning-soft text-warning-text border border-warning-border">
                 <StickyNote className="h-4 w-4" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-[13.5px] font-semibold text-heading">Live Running Notes</h3>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10.5px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10.5px] font-semibold bg-success-soft text-success-text border border-success-border">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     Live
                   </span>

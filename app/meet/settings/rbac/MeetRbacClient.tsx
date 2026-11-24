@@ -190,7 +190,7 @@ export default function MeetRbacClient({
               className={`p-4 rounded-xl border text-left transition-all relative cursor-pointer ${
                 isSelected
                   ? "bg-theme-btn-primary/10 border-theme-btn-primary ring-1 ring-theme-btn-primary"
-                  : "bg-surface border-border hover:bg-surface-elevated"
+                  : "bg-surface border-border hover:bg-elevated"
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -283,7 +283,7 @@ export default function MeetRbacClient({
                           className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                             isGranted
                               ? "bg-theme-btn-primary/5 border-theme-btn-primary/40 text-foreground"
-                              : "bg-surface-elevated/40 border-border hover:bg-surface-elevated text-muted"
+                              : "bg-elevated/40 border-border hover:bg-elevated text-muted"
                           }`}
                         >
                           <input

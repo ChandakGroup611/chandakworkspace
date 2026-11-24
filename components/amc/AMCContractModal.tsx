@@ -586,7 +586,7 @@ export function AMCContractModal({
                   onClick={() => setActiveStep(step.id)}
                   className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     isActive
-                      ? "bg-primary text-primary-contrast font-semibold shadow-xs hover:bg-primary"
+                      ? "bg-primary text-primary-foreground font-semibold shadow-xs hover:bg-primary"
                       : "text-muted hover:text-foreground hover:bg-surface-hover"
                   }`}
                 >

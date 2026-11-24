@@ -16088,7 +16088,7 @@ export default function FleetDeskHost({
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                         docVaultCategoryFilter === cat.id
                           ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
-                          : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                          : "bg-surface hover:bg-elevated text-muted-foreground hover:text-foreground border border-border"
                       }`}
                     >
                       <span>{cat.label}</span>
@@ -18104,7 +18104,7 @@ export default function FleetDeskHost({
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   fleetSettingsTab === "TEMPLATES"
                     ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
-                    : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                    : "bg-surface hover:bg-elevated text-muted-foreground hover:text-foreground border border-border"
                 }`}
               >
                 <Mail className="h-4 w-4" />
@@ -18117,7 +18117,7 @@ export default function FleetDeskHost({
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   fleetSettingsTab === "THRESHOLDS"
                     ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
-                    : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                    : "bg-surface hover:bg-elevated text-muted-foreground hover:text-foreground border border-border"
                 }`}
               >
                 <ShieldAlert className="h-4 w-4" />
@@ -18130,7 +18130,7 @@ export default function FleetDeskHost({
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   fleetSettingsTab === "VENDORS"
                     ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
-                    : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                    : "bg-surface hover:bg-elevated text-muted-foreground hover:text-foreground border border-border"
                 }`}
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -24908,7 +24908,7 @@ export default function FleetDeskHost({
                   </div>
 
                   {/* View Switcher: Tabs vs Mirror (Side-by-Side) */}
-                  <div className="flex items-center gap-1 p-1 bg-surface-elevated/70 dark:bg-surface-elevated rounded-lg border border-border self-start sm:self-auto">
+                  <div className="flex items-center gap-1 p-1 bg-elevated/70 dark:bg-elevated rounded-lg border border-border self-start sm:self-auto">
                     <button
                       type="button"
                       onClick={() => setInsuranceModalViewMode("TABS")}
@@ -28357,7 +28357,7 @@ export default function FleetDeskHost({
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "VEHICLE"
                   ? "border-theme-btn-primary bg-accent-soft ring-1 ring-theme-btn-primary/30"
-                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
+                  : "border-border bg-surface hover:border-border hover:bg-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -28381,7 +28381,7 @@ export default function FleetDeskHost({
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "SERVICES"
                   ? "border-theme-btn-primary bg-accent-soft ring-1 ring-theme-btn-primary/30"
-                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
+                  : "border-border bg-surface hover:border-border hover:bg-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -28405,7 +28405,7 @@ export default function FleetDeskHost({
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "PARTS"
                   ? "border-theme-btn-primary bg-accent-soft ring-1 ring-theme-btn-primary/30"
-                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
+                  : "border-border bg-surface hover:border-border hover:bg-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -28429,7 +28429,7 @@ export default function FleetDeskHost({
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "OVERVIEW"
                   ? "border-theme-btn-primary bg-accent-soft ring-1 ring-theme-btn-primary/30"
-                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
+                  : "border-border bg-surface hover:border-border hover:bg-elevated"
               }`}
               title={`Total Cost: Purchase (₹${dossierData.purchasePrice.toLocaleString("en-IN")}) + Services (₹${dossierData.totalServiceSpend.toLocaleString("en-IN")}) + Parts (₹${dossierData.totalPartsValue.toLocaleString("en-IN")})`}
             >
@@ -28454,7 +28454,7 @@ export default function FleetDeskHost({
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "DOCS"
                   ? "border-theme-btn-primary bg-accent-soft ring-1 ring-theme-btn-primary/30"
-                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
+                  : "border-border bg-surface hover:border-border hover:bg-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -28482,7 +28482,7 @@ export default function FleetDeskHost({
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "TRIPS"
                   ? "border-theme-btn-primary bg-accent-soft ring-1 ring-theme-btn-primary/30"
-                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
+                  : "border-border bg-surface hover:border-border hover:bg-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -29588,7 +29588,7 @@ export default function FleetDeskHost({
                 </div>
 
                 {/* Total Lifetime Vehicle Investment (Purchase + Services + Parts) */}
-                <div className="mt-3 p-3 rounded-lg border border-border bg-surface-elevated flex items-center justify-between flex-wrap gap-2 text-xs">
+                <div className="mt-3 p-3 rounded-lg border border-border bg-elevated flex items-center justify-between flex-wrap gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <Calculator className="h-4 w-4 text-theme-btn-primary" />
                     <span className="font-bold text-foreground">Total investment &amp; expenses:</span>

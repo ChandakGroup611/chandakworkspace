@@ -564,7 +564,7 @@ export function SystemMessengerNotifier() {
           <button
             type="button"
             onClick={() => handleOpenConversation(activeToast.conversationId)}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-primary text-primary-contrast text-xs font-semibold hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
           >
             <Reply className="h-3 w-3" />
             <span>Reply</span>

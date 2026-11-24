@@ -165,7 +165,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
               className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
                 isActive
                   ? "bg-theme-btn-primary/10 border-theme-btn-primary text-theme-btn-primary shadow-sm"
-                  : "bg-surface border-border text-foreground hover:bg-surface-elevated"
+                  : "bg-surface border-border text-foreground hover:bg-elevated"
               }`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -173,7 +173,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                   className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
                     isActive
                       ? "bg-theme-btn-primary text-theme-btn-primary-text"
-                      : "bg-surface-elevated text-subtle"
+                      : "bg-elevated text-subtle"
                   }`}
                 >
                   {tab.code}
@@ -198,7 +198,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
             placeholder="Search report records..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none"
+            className="w-full pl-9 pr-3 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none"
           />
         </div>
 
@@ -221,7 +221,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
         {activeTab === "r1" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
+              <thead className="bg-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Session Code</th>
                   <th className="py-3 px-4">Meeting Series</th>
@@ -247,7 +247,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                         : true
                     )
                     .map((mom) => (
-                      <tr key={mom.id} className="hover:bg-surface-elevated/40 transition-colors">
+                      <tr key={mom.id} className="hover:bg-elevated/40 transition-colors">
                         <td className="py-3.5 px-4 font-mono font-semibold text-heading">
                           {mom.session?.code}
                         </td>
@@ -264,7 +264,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                         <td className="py-3.5 px-4 text-right">
                           <button
                             onClick={() => setSelectedMoM(mom)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-surface-elevated hover:bg-surface border border-border text-xs text-foreground font-medium transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-elevated hover:bg-surface border border-border text-xs text-foreground font-medium transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5 text-subtle" />
                             <span>View MoM</span>
@@ -282,7 +282,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
         {activeTab === "r2" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
+              <thead className="bg-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Series Code</th>
                   <th className="py-3 px-4">Meeting Title</th>
@@ -303,14 +303,14 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                       : true
                   )
                   .map((m, idx) => (
-                    <tr key={idx} className="hover:bg-surface-elevated/40 transition-colors">
+                    <tr key={idx} className="hover:bg-elevated/40 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-semibold text-heading">{m.code}</td>
                       <td className="py-3.5 px-4 font-medium text-foreground">{m.title}</td>
                       <td className="py-3.5 px-4 text-subtle">{m.department}</td>
                       <td className="py-3.5 px-4 text-foreground">{m.organizer}</td>
                       <td className="py-3.5 px-4 capitalize text-subtle">{m.recurrence}</td>
                       <td className="py-3.5 px-4 font-mono text-foreground">{m.sessions_held}</td>
-                      <td className="py-3.5 px-4 font-semibold text-emerald-500">{m.avg_score}%</td>
+                      <td className="py-3.5 px-4 font-semibold text-success-text">{m.avg_score}%</td>
                     </tr>
                   ))}
               </tbody>
@@ -322,7 +322,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
         {activeTab === "r3" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
+              <thead className="bg-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Point Code</th>
                   <th className="py-3 px-4">Point Title</th>
@@ -345,7 +345,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                       : true
                   )
                   .map((p, idx) => (
-                    <tr key={idx} className="hover:bg-surface-elevated/40 transition-colors">
+                    <tr key={idx} className="hover:bg-elevated/40 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-semibold text-heading">{p.code}</td>
                       <td className="py-3.5 px-4 font-medium text-foreground max-w-xs truncate">{p.title}</td>
                       <td className="py-3.5 px-4 text-subtle">{p.meeting}</td>
@@ -357,7 +357,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                         <StatusBadge status={p.status} />
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className={p.overdue ? "text-rose-500 font-semibold" : "text-subtle"}>
+                        <span className={p.overdue ? "text-danger-text font-semibold" : "text-subtle"}>
                           {p.due_date} {p.overdue && "(Overdue)"}
                         </span>
                       </td>
@@ -366,8 +366,8 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                           <span
                             className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                               p.carry_count >= 3
-                                ? "bg-rose-500/10 text-rose-500 border border-rose-500/30"
-                                : "bg-amber-500/10 text-amber-500"
+                                ? "bg-danger-soft text-danger-text border border-danger-border"
+                                : "bg-warning-soft text-warning-text"
                             }`}
                           >
                             {p.carry_count}x Carried
@@ -388,7 +388,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
         {activeTab === "r4" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
+              <thead className="bg-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Code</th>
                   <th className="py-3 px-4">Carried Point Title</th>
@@ -410,20 +410,20 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                       : true
                   )
                   .map((p, idx) => (
-                    <tr key={idx} className="hover:bg-surface-elevated/40 transition-colors">
+                    <tr key={idx} className="hover:bg-elevated/40 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-semibold text-heading">{p.code}</td>
                       <td className="py-3.5 px-4 font-medium text-foreground max-w-sm truncate">{p.title}</td>
                       <td className="py-3.5 px-4 text-subtle">{p.meeting}</td>
                       <td className="py-3.5 px-4 text-foreground">{p.owner}</td>
-                      <td className="py-3.5 px-4 font-bold text-amber-500">{p.carry_count} Sessions</td>
+                      <td className="py-3.5 px-4 font-bold text-warning-text">{p.carry_count} Sessions</td>
                       <td className="py-3.5 px-4">
                         {p.is_escalated ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-danger-soft text-danger-text border border-danger-border">
                             <AlertCircle className="w-3 h-3" />
                             CRITICAL (3+ CARRIES)
                           </span>
                         ) : (
-                          <span className="text-[10px] text-amber-500 font-medium">Standard Carry</span>
+                          <span className="text-[10px] text-warning-text font-medium">Standard Carry</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
@@ -441,7 +441,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
         {activeTab === "r5" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
+              <thead className="bg-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Task Code</th>
                   <th className="py-3 px-4">Action Item</th>
@@ -463,7 +463,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                       : true
                   )
                   .map((t, idx) => (
-                    <tr key={idx} className="hover:bg-surface-elevated/40 transition-colors">
+                    <tr key={idx} className="hover:bg-elevated/40 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-semibold text-heading">{t.code}</td>
                       <td className="py-3.5 px-4 font-medium text-foreground max-w-xs truncate">{t.title}</td>
                       <td className="py-3.5 px-4 text-subtle">{t.meeting}</td>
@@ -472,11 +472,11 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                       <td className="py-3.5 px-4 text-subtle">{t.due_date}</td>
                       <td className="py-3.5 px-4">
                         {t.tat_result === "within_tat" ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-500 font-semibold text-[11px]">
+                          <span className="inline-flex items-center gap-1 text-success-text font-semibold text-[11px]">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Within TAT
                           </span>
                         ) : t.tat_result === "breached" ? (
-                          <span className="inline-flex items-center gap-1 text-rose-500 font-semibold text-[11px]">
+                          <span className="inline-flex items-center gap-1 text-danger-text font-semibold text-[11px]">
                             <AlertCircle className="w-3.5 h-3.5" /> Breached
                           </span>
                         ) : (
@@ -495,7 +495,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
         {activeTab === "r6" && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
+              <thead className="bg-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Action Item Owner</th>
                   <th className="py-3 px-4">Total Assigned</th>
@@ -511,16 +511,16 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                 {initialReportData.r6OwnerPerformance
                   .filter((o) => (search ? o.owner.toLowerCase().includes(search.toLowerCase()) : true))
                   .map((o, idx) => (
-                    <tr key={idx} className="hover:bg-surface-elevated/40 transition-colors">
+                    <tr key={idx} className="hover:bg-elevated/40 transition-colors">
                       <td className="py-3.5 px-4 font-semibold text-heading">{o.owner}</td>
                       <td className="py-3.5 px-4 font-mono text-foreground">{o.total_assigned}</td>
-                      <td className="py-3.5 px-4 font-mono text-emerald-500 font-semibold">{o.completed}</td>
-                      <td className="py-3.5 px-4 font-mono text-emerald-500">{o.within_tat}</td>
-                      <td className="py-3.5 px-4 font-mono text-rose-500">{o.breached}</td>
-                      <td className="py-3.5 px-4 font-mono text-amber-500">{o.open}</td>
+                      <td className="py-3.5 px-4 font-mono text-success-text font-semibold">{o.completed}</td>
+                      <td className="py-3.5 px-4 font-mono text-success-text">{o.within_tat}</td>
+                      <td className="py-3.5 px-4 font-mono text-danger-text">{o.breached}</td>
+                      <td className="py-3.5 px-4 font-mono text-warning-text">{o.open}</td>
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 bg-surface-elevated rounded-full overflow-hidden">
+                          <div className="w-16 h-2 bg-elevated rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
                                 o.tat_compliance >= 80 ? "bg-emerald-500" : o.tat_compliance >= 60 ? "bg-amber-500" : "bg-rose-500"
@@ -545,7 +545,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-surface border border-border rounded-xl w-full max-w-3xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-elevated">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-elevated">
               <div>
                 <h3 className="text-base font-bold text-heading">
                   Minutes of Meeting (MoM) — {selectedMoM.session?.code}
@@ -574,7 +574,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 text-xs text-foreground">
               {/* MoM Metadata Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-surface-elevated rounded-lg border border-border">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-elevated rounded-lg border border-border">
                 <div>
                   <span className="text-[10px] uppercase font-semibold text-subtle block">Meeting Title</span>
                   <span className="font-semibold">{selectedMoM.snapshot?.meeting_title || selectedMoM.session?.meeting?.title}</span>
@@ -598,7 +598,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                 <h4 className="text-xs font-bold uppercase tracking-wider text-heading mb-2">1. Attendance Roster</h4>
                 <div className="border border-border rounded-lg overflow-hidden">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-surface-elevated text-subtle uppercase">
+                    <thead className="bg-elevated text-subtle uppercase">
                       <tr>
                         <th className="py-2 px-3">Name</th>
                         <th className="py-2 px-3">Role</th>
@@ -628,10 +628,10 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                 ) : (
                   <div className="space-y-2">
                     {selectedMoM.snapshot.backup_points.map((pt: any, idx: number) => (
-                      <div key={idx} className="p-3 bg-surface-elevated border border-border rounded-lg">
+                      <div key={idx} className="p-3 bg-elevated border border-border rounded-lg">
                         <div className="flex items-center justify-between">
                           <span className="font-mono font-semibold text-heading">{pt.code}: {pt.title}</span>
-                          <span className="text-amber-500 font-bold">{pt.carry_count}x Carried</span>
+                          <span className="text-warning-text font-bold">{pt.carry_count}x Carried</span>
                         </div>
                         <p className="text-subtle mt-1">{pt.discussion_notes || "No discussion notes recorded."}</p>
                       </div>
@@ -648,7 +648,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                 ) : (
                   <div className="space-y-2">
                     {selectedMoM.snapshot.decisions.map((dec: any, idx: number) => (
-                      <div key={idx} className="p-3 bg-surface-elevated border border-border rounded-lg">
+                      <div key={idx} className="p-3 bg-elevated border border-border rounded-lg">
                         <span className="font-mono font-bold text-heading">{dec.code}</span>
                         <p className="mt-1 font-medium">{dec.text}</p>
                         <span className="text-[10px] text-subtle block mt-1">Decided by: {dec.decided_by}</span>

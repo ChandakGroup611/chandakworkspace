@@ -610,7 +610,7 @@ export default function MeetAdminClient({
       {activeTab === "roles" && (
         <div className="space-y-6">
           {/* RBAC Header & Actions */}
-          <div className="p-5 rounded-xl border border-border bg-surface-elevated">
+          <div className="p-5 rounded-xl border border-border bg-elevated">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
               <div>
                 <div className="flex items-center gap-2">
@@ -680,7 +680,7 @@ export default function MeetAdminClient({
                       className={`text-left p-3 rounded-lg border transition-all ${
                         isSelected
                           ? "bg-theme-btn-primary/10 border-theme-btn-primary shadow-xs ring-1 ring-theme-btn-primary/30"
-                          : "bg-surface border-border hover:bg-surface-elevated hover:border-border/80"
+                          : "bg-surface border-border hover:bg-elevated hover:border-border/80"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1 mb-1">
@@ -875,7 +875,7 @@ export default function MeetAdminClient({
           </div>
 
           {/* People in Chandak Meet */}
-          <div className="p-4 rounded-xl border border-border bg-surface-elevated">
+          <div className="p-4 rounded-xl border border-border bg-elevated">
             <h3 className="text-sm font-bold text-foreground mb-1">Active Users in Chandak Meet</h3>
             <p className="text-xs text-muted mb-4">Assign dedicated module roles and operational scopes.</p>
 
@@ -914,7 +914,7 @@ export default function MeetAdminClient({
 
       {/* TAB 2: Policies (Section E1.3) */}
       {activeTab === "policies" && (
-        <div className="p-6 rounded-xl border border-border bg-surface-elevated space-y-6 max-w-2xl">
+        <div className="p-6 rounded-xl border border-border bg-elevated space-y-6 max-w-2xl">
           <div>
             <h3 className="text-sm font-bold text-foreground">Module Meeting Policies</h3>
             <p className="text-xs text-muted mt-0.5">Enforced across all server actions and workflows.</p>
@@ -929,7 +929,7 @@ export default function MeetAdminClient({
               <select
                 value={policyWhoCreates}
                 onChange={(e) => setPolicyWhoCreates(e.target.value)}
-                className="bg-surface-elevated border border-border rounded px-2.5 py-1 text-xs text-foreground"
+                className="bg-elevated border border-border rounded px-2.5 py-1 text-xs text-foreground"
               >
                 <option value="all_meet_users">All Meet Users</option>
                 <option value="dept_heads_only">Department Heads Only</option>
@@ -984,7 +984,7 @@ export default function MeetAdminClient({
               <select
                 value={policyWhoApprovesExtensions}
                 onChange={(e) => setPolicyWhoApprovesExtensions(e.target.value)}
-                className="bg-surface-elevated border border-border rounded px-2.5 py-1 text-xs text-foreground"
+                className="bg-elevated border border-border rounded px-2.5 py-1 text-xs text-foreground"
               >
                 <option value="organizer">Meeting Organizer</option>
                 <option value="reporting_manager">Reporting Manager</option>
@@ -1018,7 +1018,7 @@ export default function MeetAdminClient({
               <span className="text-2xl font-bold text-purple-400">{escalatedCount}</span>
               <p className="text-xs text-purple-300 font-medium mt-1">Escalated L2+</p>
             </div>
-            <div className="p-4 rounded-xl border border-border bg-surface-elevated text-center">
+            <div className="p-4 rounded-xl border border-border bg-elevated text-center">
               <span className="text-2xl font-bold text-foreground">{alertRules.length}</span>
               <p className="text-xs text-muted font-medium mt-1">Active Alert Rules</p>
             </div>
@@ -1026,7 +1026,7 @@ export default function MeetAdminClient({
 
           {/* Active Escalated Items (Acknowledge / Reassign) */}
           {slaInstances.length > 0 && (
-            <div className="p-4 rounded-xl border border-border bg-surface-elevated">
+            <div className="p-4 rounded-xl border border-border bg-elevated">
               <h3 className="text-sm font-bold text-foreground mb-2">Escalated Items Queue (Section E2.3)</h3>
               <div className="divide-y divide-border text-xs">
                 {slaInstances.map((ins) => (
@@ -1063,7 +1063,7 @@ export default function MeetAdminClient({
           )}
 
           {/* SLA Policies Table */}
-          <div className="p-4 rounded-xl border border-border bg-surface-elevated">
+          <div className="p-4 rounded-xl border border-border bg-elevated">
             <h3 className="text-sm font-bold text-foreground mb-1">Standard SLA Clocks & Escalation Matrix</h3>
             <p className="text-xs text-muted mb-4">Calculated strictly in working days (skipping Sundays and holidays).</p>
 
@@ -1096,7 +1096,7 @@ export default function MeetAdminClient({
           </div>
 
           {/* Alert Rules Section */}
-          <div className="p-4 rounded-xl border border-border bg-surface-elevated flex items-center justify-between">
+          <div className="p-4 rounded-xl border border-border bg-elevated flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-foreground">Configured Alert Rules</h3>
               <p className="text-xs text-muted">Every alert sends from a custom template with 4h throttling.</p>
@@ -1120,7 +1120,7 @@ export default function MeetAdminClient({
             They go out through your own SMTP. The old templates below are no longer used for sending.
           </div>
           {/* Header Action Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-surface-elevated">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-elevated">
             <div>
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary" />
@@ -1153,7 +1153,7 @@ export default function MeetAdminClient({
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Templates List */}
-            <div className="p-4 rounded-xl border border-border bg-surface-elevated flex flex-col">
+            <div className="p-4 rounded-xl border border-border bg-elevated flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
                   Available Templates ({emailTemplates.length})
@@ -1205,7 +1205,7 @@ export default function MeetAdminClient({
 
             {/* Template Editor & Live Preview Panel */}
             {selectedTemplate && (
-              <div className="lg:col-span-2 p-5 rounded-xl border border-border bg-surface-elevated flex flex-col gap-4">
+              <div className="lg:col-span-2 p-5 rounded-xl border border-border bg-elevated flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-border gap-2">
                   <div>
                     <h3 className="text-sm font-bold text-foreground">{selectedTemplate.name}</h3>
@@ -1268,7 +1268,7 @@ export default function MeetAdminClient({
                             key={field}
                             type="button"
                             onClick={() => setTemplateBody((b) => `${b} ${field}`)}
-                            className="px-2 py-0.5 rounded bg-surface border border-border hover:bg-surface-elevated text-[12.5px] font-mono text-theme-btn-primary transition-colors cursor-pointer"
+                            className="px-2 py-0.5 rounded bg-surface border border-border hover:bg-elevated text-[12.5px] font-mono text-theme-btn-primary transition-colors cursor-pointer"
                           >
                             {field}
                           </button>
@@ -1520,7 +1520,7 @@ export default function MeetAdminClient({
                 max={10}
                 value={carryEscalationCount}
                 onChange={(e) => setCarryEscalationCount(Number(e.target.value))}
-                className="w-24 px-3 py-1.5 bg-surface-elevated border border-border rounded text-xs text-foreground font-mono"
+                className="w-24 px-3 py-1.5 bg-elevated border border-border rounded text-xs text-foreground font-mono"
               />
             </div>
           </div>
@@ -1536,7 +1536,7 @@ export default function MeetAdminClient({
       {/* New Alert Rule Modal */}
       {isAlertModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
+          <div className="bg-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-sm font-bold text-foreground">Create New Alert Rule</h3>
               <button onClick={() => setIsAlertModalOpen(false)} className="text-muted hover:text-foreground">
@@ -1583,7 +1583,7 @@ export default function MeetAdminClient({
       {/* Masters Modals (Room, Type, Category) */}
       {isRoomModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
+          <div className="bg-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <h3 className="text-sm font-bold text-foreground mb-3">Add Meeting Room</h3>
             <form onSubmit={handleAddRoom} className="space-y-3 text-xs">
               <input
@@ -1626,7 +1626,7 @@ export default function MeetAdminClient({
       {/* Create New Notification Template Modal */}
       {isNewTemplateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in-0">
-          <div className="bg-surface-elevated border border-border rounded-xl max-w-xl w-full p-5 shadow-2xl animate-in zoom-in-95">
+          <div className="bg-elevated border border-border rounded-xl max-w-xl w-full p-5 shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
                 <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -1730,7 +1730,7 @@ export default function MeetAdminClient({
                       key={field}
                       type="button"
                       onClick={() => setNewTplBody((b) => `${b} ${field}`)}
-                      className="px-1.5 py-0.5 rounded bg-surface border border-border text-[12px] font-mono text-theme-btn-primary hover:bg-surface-elevated"
+                      className="px-1.5 py-0.5 rounded bg-surface border border-border text-[12px] font-mono text-theme-btn-primary hover:bg-elevated"
                     >
                       {field}
                     </button>
@@ -1784,7 +1784,7 @@ export default function MeetAdminClient({
       {/* Rendered Mail Body Preview Modal (View Mail Body After Create & Anytime) */}
       {isPreviewModalOpen && previewTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in-0">
-          <div className="bg-surface-elevated border border-border rounded-xl max-w-2xl w-full p-6 shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90vh]">
+          <div className="bg-elevated border border-border rounded-xl max-w-2xl w-full p-6 shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90vh]">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>

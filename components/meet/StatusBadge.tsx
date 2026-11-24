@@ -26,7 +26,7 @@ export function StatusBadge({ status, priority, type = "point", className }: Sta
   };
   if (PLAIN[activeStatus.toLowerCase()]) label = PLAIN[activeStatus.toLowerCase()];
 
-  let colorClasses = "bg-surface-elevated text-subtle border-border";
+  let colorClasses = "bg-elevated text-subtle border-border";
 
   switch (activeStatus.toLowerCase()) {
     // Points & Tasks Statuses
@@ -57,7 +57,7 @@ export function StatusBadge({ status, priority, type = "point", className }: Sta
     case "reopened":
     case "mom_draft":
     case "mom_pending_approval":
-      colorClasses = "bg-accent-soft text-accent-soft-text border-accent-border";
+      colorClasses = "bg-accent-soft text-accent-soft-text border-border";
       break;
 
     // Priority
@@ -71,7 +71,7 @@ export function StatusBadge({ status, priority, type = "point", className }: Sta
       colorClasses = "bg-info-soft text-info-text border-info-border";
       break;
     case "low":
-      colorClasses = "bg-surface-elevated text-subtle border-border";
+      colorClasses = "bg-elevated text-subtle border-border";
       break;
 
     // TAT result

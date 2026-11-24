@@ -123,11 +123,11 @@ export function CreateTaskModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs animate-in fade-in-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-6 shadow-xl animate-in fade-in-0 zoom-in-95">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-6 shadow-xl animate-in fade-in-0 zoom-in-95">
           <div className="flex items-start justify-between border-b border-border pb-3">
             <div>
               <Dialog.Title className="text-[17px] font-semibold text-heading">
-                Create Action Item
+                New task
               </Dialog.Title>
               <Dialog.Description className="mt-0.5 text-[12.5px] text-muted">
                 Under Point {pointCode} · Action item with TAT in working days
@@ -256,7 +256,7 @@ export function CreateTaskModal({
                   <Clock className="h-3 w-3 text-muted" /> Mon–Sat calendar
                 </span>
                 {skippedDays > 0 && (
-                  <span className="inline-flex items-center gap-1 text-amber-500 font-medium bg-amber-500/10 px-1.5 py-0.5 rounded">
+                  <span className="inline-flex items-center gap-1 text-warning-text font-medium bg-warning-soft px-1.5 py-0.5 rounded">
                     ⚡ {skippedDays} non-working {skippedDays === 1 ? "day" : "days"} skipped (Sundays / statutory holidays)
                   </span>
                 )}

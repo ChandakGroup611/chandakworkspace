@@ -503,7 +503,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
       {/* Extension Modal */}
       {extensionTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-[15px] font-semibold text-heading">Request TAT Extension</h3>
               <button
@@ -569,7 +569,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
       {/* New Task Modal */}
       {isCreateTaskOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-[15px] font-semibold text-heading">Create Action Item</h3>
               <button

@@ -108,7 +108,7 @@ export default function RunningNotesCard({
   const blocks = note?.blocks || [];
 
   return (
-    <div className="rounded-lg border border-border bg-surface-elevated flex flex-col h-full shadow-sm">
+    <div className="rounded-lg border border-border bg-elevated flex flex-col h-full shadow-sm">
       {/* Header */}
       <div className="p-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export default function RunningNotesCard({
                 className={`group p-2 rounded text-xs flex items-start gap-2 border transition-all ${
                   isAction
                     ? "bg-warning-soft border-warning-border"
-                    : "bg-surface border-border hover:border-border-hover"
+                    : "bg-surface border-border hover:border-border-active"
                 }`}
               >
                 {block.type === "todo" ? (
@@ -175,7 +175,7 @@ export default function RunningNotesCard({
                   {onOpenConvert && !block.linked_type && (
                     <button
                       onClick={() => onOpenConvert(block)}
-                      className="px-1.5 py-0.5 text-[12px] font-semibold rounded bg-surface-elevated border border-border hover:bg-surface text-theme-btn-primary"
+                      className="px-1.5 py-0.5 text-[12px] font-semibold rounded bg-elevated border border-border hover:bg-surface text-theme-btn-primary"
                     >
                       Convert
                     </button>
@@ -204,7 +204,7 @@ export default function RunningNotesCard({
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isPending}
-          className="flex-1 px-2.5 py-1.5 text-xs bg-surface-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
+          className="flex-1 px-2.5 py-1.5 text-xs bg-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
         />
         <button
           onClick={() => {
