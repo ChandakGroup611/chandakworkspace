@@ -23,7 +23,7 @@ import ChandakLoader from "@/components/ui/ChandakLoader";
 import { cn } from "@/lib/utils";
 
 export const AMC_SECTIONS = [
-  { href: "/amc", label: "Dashboard", icon: BarChart3, match: (p: string) => p === "/amc" },
+  { href: "/amc", label: "Home", icon: BarChart3, match: (p: string) => p === "/amc" },
   { href: "/amc/contracts", label: "AMC contracts", icon: ShieldCheck, match: (p: string) => p.startsWith("/amc/contracts") },
   { href: "/amc/subscriptions", label: "Subscriptions", icon: Zap, match: (p: string) => p.startsWith("/amc/subscriptions") },
   { href: "/amc/transactions", label: "Transactions", icon: Receipt, match: (p: string) => p.startsWith("/amc/transactions") },
