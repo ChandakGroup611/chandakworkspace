@@ -38,6 +38,7 @@ export default async function AutomationsPage() {
       .from("meet_activity_log")
       .select("created_at")
       .eq("channel", "system")
+      .neq("action", "jobs_tick")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
