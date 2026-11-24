@@ -29,6 +29,7 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { createClient } from "@/utils/supabase/client";
 import { saveAMCEntity } from "@/lib/actions/amc-client";
 import { toast } from "react-toastify";
+import { cn } from "@/lib/utils";
 
 interface AttachmentEntry {
   id: string;
@@ -343,32 +344,32 @@ export function SubscriptionContractModal({
     <div className={variant === "page" ? "w-full" : "fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-3 sm:p-5 bg-[var(--overlay)] animate-in fade-in duration-200"}>
       <div className={variant === "page" ? "relative w-full flex flex-col rounded-xl border border-border bg-surface shadow-xs" : "relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-xl overflow-hidden border border-border bg-surface shadow-2xl"}>
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 px-6 border-b shrink-0 border-border bg-elevated">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-warning-soft text-warning-text border border-warning-border">
-              <Zap className="h-5 w-5" />
+        {!onePage && (
+          <div className="flex items-center justify-between p-4 px-6 border-b shrink-0 border-border bg-elevated">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-warning-soft text-warning-text border border-warning-border">
+                <Zap className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-foreground">
+                  {initialRecord ? `Edit Subscription: ${initialRecord.software_name}` : "New Software Subscription"}
+                </h2>
+                <p className="text-xs text-muted">
+                  {initialRecord ? "Update recurring SaaS tool, seat allocations, and compliance in exact saved state." : "Track recurring SaaS tools, seat counts, and automatic renewal dates."}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-semibold text-foreground">
-                {initialRecord ? `Edit Subscription: ${initialRecord.software_name}` : "New Software Subscription"}
-              </h2>
-              <p className="text-xs text-muted">
-                {initialRecord ? "Update recurring SaaS tool, seat allocations, and compliance in exact saved state." : "Track recurring SaaS tools, seat counts, and automatic renewal dates."}
-              </p>
-            </div>
+            <AppButton 
+              variant="ghost" 
+              size="icon-sm"
+              aria-label="Close subscription modal"
+              onClick={onClose} 
+              className="text-muted hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </AppButton>
           </div>
-          {!onePage && (
-          <AppButton 
-            variant="ghost" 
-            size="icon-sm"
-            aria-label="Close subscription modal"
-            onClick={onClose} 
-            className="text-muted hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </AppButton>
-          )}
-        </div>
+        )}
 
         {/* Step Navigation Bar (modal only) */}
         <div className={onePage ? "hidden" : "border-b border-border bg-surface px-6"}>
@@ -398,7 +399,7 @@ export function SubscriptionContractModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSubmit} className={cn("p-6 space-y-6", !onePage && "flex-1 overflow-y-auto")}>
           {errorMsg && (
             <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-danger-border bg-danger-soft p-3 text-xs text-danger-text">
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -803,7 +804,7 @@ export function SubscriptionContractModal({
           )}
 
           {/* Modal Footer */}
-          <div className="flex items-center justify-between gap-3 pt-4 border-t border-border bg-surface">
+          <div className={cn("flex items-center justify-between gap-3 pt-4 border-t border-border bg-surface", onePage && "sticky bottom-0 -mx-6 -mb-6 px-6 py-4 rounded-b-xl bg-surface/95 backdrop-blur-xs z-10 shadow-xs")}>
             <div>
               {!onePage && activeStep !== "details" ? (
                 <AppButton

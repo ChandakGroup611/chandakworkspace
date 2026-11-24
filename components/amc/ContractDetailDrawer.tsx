@@ -36,6 +36,7 @@ import {
   AppTableCell 
 } from "@/components/ui/AppTable";
 import { formatDate } from "@/components/ui/data";
+import { cn } from "@/lib/utils";
 
 // Sub-tabs
 import { AMCRenewalsTab } from "@/components/amc/AMCRenewalsTab";
@@ -260,7 +261,7 @@ export function ContractDetailDrawer({
       </div>
 
       {/* Tab Content Panes */}
-      <div className="flex-1 overflow-y-auto p-5 md:p-8">
+      <div className={cn("p-5 md:p-8", variant !== "page" && "flex-1 overflow-y-auto")}>
         {/* Tab: Overview (Mirrors the exact state entered during creation) */}
         {activeTab === 'Overview' && (
           <div className="space-y-6 max-w-5xl mx-auto">

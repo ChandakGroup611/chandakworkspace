@@ -86,7 +86,7 @@ export function AMCRecordFormPage({ kind, id }: { kind: Kind; id?: string }) {
   }
 
   return (
-    <AMCShell title={title} breadcrumbs={crumbs} showNew={false}>
+    <AMCShell title={title} breadcrumbs={crumbs} showNew={false} showNav={false} strict={false}>
       {body}
     </AMCShell>
   );
@@ -106,6 +106,8 @@ export function AMCRecordViewPage({ kind, id }: { kind: Kind; id: string }) {
       title={record?.software_name || labelOf(kind)}
       breadcrumbs={[{ label: "AMC & Subscriptions", href: "/amc" }, { label: labelOf(kind), href: section }, { label: record?.software_name || "Record" }]}
       showNew={false}
+      showNav={false}
+      strict={false}
       actions={
         <Link href={section} className="inline-flex h-9 items-center gap-1.5 text-[13px] font-medium text-accent-soft-text hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden /> Back to {labelOf(kind).toLowerCase()}

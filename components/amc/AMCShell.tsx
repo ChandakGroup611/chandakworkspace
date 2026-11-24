@@ -70,6 +70,8 @@ export function AMCShell({
   actions,
   counts,
   showNew = true,
+  showNav = true,
+  strict = false,
   children,
 }: {
   title: string;
@@ -79,6 +81,8 @@ export function AMCShell({
   actions?: React.ReactNode;
   counts?: Partial<Record<string, number>>;
   showNew?: boolean;
+  showNav?: boolean;
+  strict?: boolean;
   children: React.ReactNode;
 }) {
   const { hasPermission, loading } = usePermissions();
@@ -97,7 +101,7 @@ export function AMCShell({
   }
 
   return (
-    <PageContainer strict={true}>
+    <PageContainer strict={strict} className={cn(!strict && "pb-12")}>
       <PageHeader
         title={title}
         description={description}
@@ -123,7 +127,7 @@ export function AMCShell({
           </div>
         }
       />
-      <AMCSectionNav counts={counts} />
+      {showNav && <AMCSectionNav counts={counts} />}
       {children}
     </PageContainer>
   );
