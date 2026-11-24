@@ -101,7 +101,9 @@ export async function getSessionById(sessionId: string): Promise<{
         *,
         user:user_master!meet_session_attendees_user_id_fkey(id, full_name, email, profile_photo)
       `)
-      .eq("session_id", sessionId);
+      .eq("session_id", sessionId)
+      // Pending / denied join requests are shown in the host's admit panel, not as attendees
+      .not("role", "in", '("requested","denied")');
 
     // Agenda Items
     const { data: agenda } = await supabaseAdmin

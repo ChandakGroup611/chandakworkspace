@@ -54,6 +54,7 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
           )
         `)
         .eq("id", sessionId)
+        .not("attendees.role", "in", '("requested","denied")')
         .single(),
       supabaseAdmin
         .from("meet_session_points")
@@ -349,7 +350,8 @@ export async function approveAndSendMoM(
       supabaseAdmin
         .from("meet_session_attendees")
         .select("user_id, attendance, user:user_master!meet_session_attendees_user_id_fkey(id, full_name, email)")
-        .eq("session_id", sessionId),
+        .eq("session_id", sessionId)
+        .not("role", "in", '("requested","denied")'),
       supabaseAdmin
         .from("meet_sessions")
         .select("id, code, meeting:meet_meetings(id, title, code)")

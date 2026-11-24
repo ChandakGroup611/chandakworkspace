@@ -27,7 +27,9 @@ export async function generateMoMSnapshot(sessionId: string) {
       supabaseAdmin
         .from("meet_session_attendees")
         .select("*, user:user_master!meet_session_attendees_user_id_fkey(full_name, email)")
-        .eq("session_id", sessionId),
+        .eq("session_id", sessionId)
+        // Join requests that were never admitted are not attendees
+        .not("role", "in", '("requested","denied")'),
       supabaseAdmin
         .from("meet_session_points")
         .select(`
@@ -201,7 +203,8 @@ export async function publishMoM(sessionId: string, version: number = 1) {
     const { data: attendees } = await supabaseAdmin
       .from("meet_session_attendees")
       .select("user_id, guest_email, user:user_master!meet_session_attendees_user_id_fkey(id, full_name, email)")
-      .eq("session_id", sessionId);
+      .eq("session_id", sessionId)
+      .not("role", "in", '("requested","denied")');
 
     const emailRows: any[] = [];
     for (const att of attendees || []) {

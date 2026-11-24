@@ -5,6 +5,7 @@ import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import { getSessionInvitations } from "@/lib/actions/meet/invitations";
 import { getAIMinutes } from "@/lib/actions/meet/ai-minutes";
 import SessionWorkspaceClient from "./SessionWorkspaceClient";
+import JoinRequestsPanel from "@/components/meet/JoinRequestsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export default async function SessionWorkspacePage({
 
   return (
     <div className="space-y-6">
+      <JoinRequestsPanel sessionId={sessionId} />
       <SessionWorkspaceClient
         session={session}
         points={points}

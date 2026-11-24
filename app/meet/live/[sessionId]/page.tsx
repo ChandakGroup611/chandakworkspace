@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getSessionById } from "@/lib/actions/meet/sessions";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import LiveMeetingClient from "./LiveMeetingClient";
+import JoinRequestsPanel from "@/components/meet/JoinRequestsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function LiveMeetingSessionPage({
 
   return (
     <div className="h-[calc(100dvh-120px)] flex flex-col">
+      <JoinRequestsPanel sessionId={sessionId} />
       <LiveMeetingClient
         session={session}
         points={points}

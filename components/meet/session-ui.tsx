@@ -105,8 +105,9 @@ export function actionFor(s: MeetSessionRow): { label: string; href: string; ext
     return { label: tone === "done" ? "View minutes" : "Review minutes", href: `/meet/sessions/${s.id}`, primary: tone === "minutes" };
   }
   if (tone === "live" || tone === "soon") {
-    if (s.video_link) return { label: "Join", href: s.video_link, external: true, primary: true };
-    return { label: s.i_am_organizer ? "Start" : "Open", href: s.i_am_organizer ? `/meet/live/${s.id}` : `/meet/sessions/${s.id}`, primary: true };
+    // Everyone goes through the join screen: camera/mic check, Teams link, attendance, admit.
+    if (s.i_am_organizer && !s.video_link) return { label: "Start", href: `/meet/live/${s.id}`, primary: true };
+    return { label: "Join", href: `/meet/join/${s.id}`, primary: true };
   }
   return { label: "Prepare", href: `/meet/sessions/${s.id}`, primary: false };
 }

@@ -41,7 +41,11 @@ export async function loadSessionCounts(sessionIds: string[]) {
   const carriedMap = new Map<string, number>();
   if (!sessionIds.length) return { inviteMap, carriedMap };
   const [attRes, carryRes] = await Promise.all([
-    supabaseAdmin.from("meet_session_attendees").select("session_id, invite_status").in("session_id", sessionIds),
+    supabaseAdmin
+      .from("meet_session_attendees")
+      .select("session_id, invite_status")
+      .in("session_id", sessionIds)
+      .not("role", "in", '("requested","denied")'),
     supabaseAdmin.from("meet_session_points").select("session_id").eq("entry_type", "carried_forward").in("session_id", sessionIds),
   ]);
   (attRes.data || []).forEach((a: any) => {

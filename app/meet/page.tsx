@@ -59,7 +59,17 @@ export default async function MeetHomePage() {
             {greet}{d.userFirstName ? `, ${d.userFirstName}` : ""}
           </h1>
         </div>
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <form action="/meet/join" className="flex items-center gap-2">
+            <label htmlFor="home-join-code" className="sr-only">Meeting ID</label>
+            <input
+              id="home-join-code"
+              name="code"
+              placeholder="Meeting ID"
+              className="h-10 w-[140px] rounded-md border border-border bg-surface px-3 text-[14px] uppercase text-foreground placeholder:normal-case placeholder:text-muted focus:border-primary focus:outline-none"
+            />
+            <button type="submit" className={btnSecondary}>Join</button>
+          </form>
           <Link href="/meet/meetings" className={btnSecondary}>
             <Calendar className="h-4 w-4" aria-hidden /> All meetings
           </Link>
