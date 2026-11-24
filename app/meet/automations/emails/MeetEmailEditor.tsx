@@ -3,8 +3,8 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Mail, Send, CheckCircle2, Clock } from "lucide-react";
-import { saveMeetEmail, sendMeetTestEmail, type MeetEmailSetup } from "@/lib/actions/meet/email-setup";
-import { MEET_MERGE_TAGS, REMINDER_TIMINGS } from "@/lib/utils/meet-email-config";
+import { saveMeetEmail, sendMeetTestEmail, addSuggestedEmailDrafts, type MeetEmailSetup } from "@/lib/actions/meet/email-setup";
+import { MEET_MERGE_TAGS, REMINDER_TIMINGS, MEET_EMAIL_STARTERS, type MeetEventName } from "@/lib/utils/meet-email-config";
 
 const input =
   "w-full rounded-lg border border-border bg-background px-3 py-2.5 text-[14px] text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -43,7 +43,7 @@ export default function MeetEmailEditor({ items, canEdit, smtpReady }: { items: 
   const item = useMemo(() => items.find((i) => i.event === selected) || items[0], [items, selected]);
 
   const [form, setForm] = useState(() => formFor(items[0]));
-  const [busy, setBusy] = useState<"save" | "test" | null>(null);
+  const [busy, setBusy] = useState<"save" | "test" | "drafts" | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const bodyRef = React.useRef<HTMLTextAreaElement | null>(null);
 
@@ -77,6 +77,34 @@ export default function MeetEmailEditor({ items, canEdit, smtpReady }: { items: 
     });
   };
 
+  const useSuggested = () => {
+    if (!item) return;
+    const st = MEET_EMAIL_STARTERS[item.event as MeetEventName];
+    if (!st) return;
+    if ((form.subject.trim() || form.body.trim()) && !window.confirm("Replace what's written with the suggested text?")) return;
+    setForm((f) => ({
+      ...f,
+      subject: st.subject,
+      body: st.body,
+      recipients: f.recipients.length ? f.recipients : [...st.recipients],
+      timing: item.isReminder && st.timingMinutes ? st.timingMinutes : f.timing,
+    }));
+    setMsg({ ok: true, text: "Suggested text added. Edit it as you like, then Save. It's sent only when 'Send this email' is ticked." });
+  };
+
+  const addAllDrafts = async () => {
+    setBusy("drafts");
+    setMsg(null);
+    const r = await addSuggestedEmailDrafts();
+    setBusy(null);
+    setMsg(
+      r.success
+        ? { ok: true, text: r.added ? `Suggested text added to ${r.added} email${r.added === 1 ? "" : "s"}. They are all switched off until you turn them on.` : "Every email already has its own text." }
+        : { ok: false, text: r.error || "Couldn't add the suggested emails." }
+    );
+    if (r.success) router.refresh();
+  };
+
   const save = async () => {
     if (!item) return;
     setBusy("save");
@@ -104,7 +132,25 @@ export default function MeetEmailEditor({ items, canEdit, smtpReady }: { items: 
 
   if (!item) return null;
 
+  const unwritten = items.filter((i) => !i.template?.body?.trim()).length;
+
   return (
+    <div className="space-y-4">
+    {canEdit && unwritten > 0 && (
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface p-4">
+        <p className="min-w-0 flex-1 text-[13.5px] text-subtle">
+          {unwritten} of {items.length} emails have no text yet. Start them all from our suggested wording; they stay switched off until you review and turn each one on.
+        </p>
+        <button
+          type="button"
+          onClick={addAllDrafts}
+          disabled={!!busy}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3.5 text-[13.5px] font-semibold text-foreground hover:bg-surface-hover disabled:opacity-60"
+        >
+          {busy === "drafts" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Add suggested text to all
+        </button>
+      </div>
+    )}
     <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
       {/* Events */}
       <nav aria-label="Meet emails" className="rounded-xl border border-border bg-surface p-2 lg:self-start">
@@ -225,7 +271,14 @@ export default function MeetEmailEditor({ items, canEdit, smtpReady }: { items: 
         </div>
 
         <div>
-          <label htmlFor="ed-body" className="mb-1.5 block text-[13px] font-semibold text-foreground">Message</label>
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor="ed-body" className="block text-[13px] font-semibold text-foreground">Message</label>
+            {canEdit && (
+              <button type="button" onClick={useSuggested} className="text-[13px] font-semibold text-primary hover:underline">
+                Use suggested text
+              </button>
+            )}
+          </div>
           <textarea
             id="ed-body"
             ref={bodyRef}
@@ -285,6 +338,7 @@ export default function MeetEmailEditor({ items, canEdit, smtpReady }: { items: 
           <p className="border-t border-border pt-4 text-[13px] text-muted">Only a Meet admin can change emails.</p>
         )}
       </section>
+    </div>
     </div>
   );
 }

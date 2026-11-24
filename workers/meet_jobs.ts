@@ -2,6 +2,8 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { todayIST } from "@/lib/utils/date-utils";
 import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { outlookConfigured, syncSessionEvent, readRoomResponse } from "@/lib/integrations/outlook-events";
+import { teamsConnectionStatus, pullTeamsAttendance, pullTeamsTranscript } from "@/lib/integrations/teams-artifacts";
+import { readMeetSwitches } from "@/lib/utils/meet-switches";
 import { REMINDER_EVENTS, parseReminderTrigger, reminderTrigger } from "@/lib/utils/meet-email-config";
 
 /**
@@ -28,6 +30,7 @@ export interface MeetJobsResult {
   slaClosed: number;
   updateRequests: number;
   outlookCreated: number;
+  teamsPulled: number;
   roomAnswers: number;
   minutesReminders: number;
   errors: string[];
@@ -41,6 +44,7 @@ export async function runMeetJobs(now = new Date()): Promise<MeetJobsResult> {
     slaClosed: 0,
     updateRequests: 0,
     outlookCreated: 0,
+    teamsPulled: 0,
     roomAnswers: 0,
     minutesReminders: 0,
     errors: [],
@@ -74,6 +78,9 @@ export async function runMeetJobs(now = new Date()): Promise<MeetJobsResult> {
     const r = await syncOutlook(now);
     result.outlookCreated = r.created;
     result.roomAnswers = r.answers;
+  });
+  await step("teams-auto-pull", async () => {
+    result.teamsPulled = await autoPullTeams(now);
   });
   await step("minutes-reminders", async () => {
     result.minutesReminders = await sendMinutesReminders(now);
@@ -122,7 +129,7 @@ async function syncOutlook(now: Date): Promise<{ created: number; answers: numbe
 
   const { data: pending } = await supabaseAdmin
     .from("meet_room_bookings")
-    .select("id, session_id, room:meet_rooms(name)")
+    .select("id, session_id, start_at, room:meet_rooms(name), session:meet_sessions(meeting:meet_meetings(title))")
     .eq("status", "pending")
     .not("external_event_id", "is", null)
     .gt("end_at", now.toISOString())
@@ -141,12 +148,57 @@ async function syncOutlook(now: Date): Promise<{ created: number; answers: numbe
           entityId: (b as any).session_id,
           sessionId: (b as any).session_id,
           link: `/meet/sessions/${(b as any).session_id}`,
-          data: { room: room?.name || "", link: `${SITE_URL}/meet/sessions/${(b as any).session_id}` },
+          data: {
+            room: room?.name || "",
+            meeting_title: one(one((b as any).session)?.meeting)?.title || "",
+            start_time: `${fmtIST((b as any).start_at)} IST`,
+            link: `${SITE_URL}/meet/sessions/${(b as any).session_id}`,
+          },
         });
       }
     }
   }
   return { created, answers };
+}
+
+/**
+ * Optional (Automations switches, off by default): after a Teams meeting ends, pull attendance and
+ * transcript action lines. Tried each round from 20 minutes after the end for 24 hours, until it
+ * works once; skipped entirely while the Microsoft permissions are missing.
+ */
+async function autoPullTeams(now: Date): Promise<number> {
+  const sw = await readMeetSwitches();
+  if (!sw.teams_auto_attendance && !sw.teams_auto_transcript) return 0;
+  const conn = await teamsConnectionStatus();
+  if (!conn.signedIn) return 0;
+  const { data: sessions } = await supabaseAdmin
+    .from("meet_sessions")
+    .select("id, video_link, scheduled_end, actual_end, status")
+    .in("status", ["completed", "mom_draft"])
+    .eq("is_deleted", false)
+    .lte("scheduled_end", new Date(now.getTime() - 20 * 60000).toISOString())
+    .gte("scheduled_end", new Date(now.getTime() - 24 * 3600000).toISOString())
+    .limit(20);
+  let n = 0;
+  for (const s of sessions || []) {
+    if (!/teams\.microsoft\.com\/l\/meetup-join/i.test(String((s as any).video_link || ""))) continue;
+    const { data: logs } = await supabaseAdmin
+      .from("meet_activity_log")
+      .select("action")
+      .eq("entity_type", "session")
+      .eq("entity_id", s.id)
+      .in("action", ["teams_attendance_imported", "teams_transcript_imported"]);
+    const done = new Set((logs || []).map((l: any) => l.action));
+    if (sw.teams_auto_attendance && !done.has("teams_attendance_imported")) {
+      const r = await pullTeamsAttendance(s.id, null);
+      if (r.success) n++;
+    }
+    if (sw.teams_auto_transcript && !done.has("teams_transcript_imported")) {
+      const r = await pullTeamsTranscript(s.id, null);
+      if (r.success) n++;
+    }
+  }
+  return n;
 }
 
 /**

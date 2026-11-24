@@ -7,6 +7,7 @@ import {
   MEET_EVENTS,
   MEET_EVENT_INFO,
   REMINDER_EVENTS,
+  MEET_EMAIL_STARTERS,
   reminderTrigger,
   parseReminderTrigger,
   type MeetEventName,
@@ -178,4 +179,53 @@ export async function sendMeetTestEmail(input: { subject: string; body: string }
   if (error) return { success: false, error: error.message };
   import("@/lib/actions/email-queue").then((m) => m.processEmailQueueAsync().catch(() => null)).catch(() => null);
   return { success: true, to: me.email };
+}
+
+
+/**
+ * Adds the suggested wording to every Meet email that hasn't been written yet. Each one is saved
+ * switched OFF, so nothing is sent until the admin reviews it and turns it on. Emails already
+ * written are never touched.
+ */
+export async function addSuggestedEmailDrafts(): Promise<{ success: boolean; added?: number; error?: string }> {
+  const auth = await requireMeet("MEET_VIEW");
+  if (!(auth.isSuperAdmin || auth.isMeetAdmin)) return { success: false, error: "Only a Meet admin can change emails." };
+  try {
+    const [{ data: tpls }, { data: rules }] = await Promise.all([
+      supabaseAdmin.from("email_templates").select("id, event, html_body").ilike("module", "meet"),
+      supabaseAdmin.from("notification_rules").select("id, event").ilike("module", "meet"),
+    ]);
+    const written = new Set((tpls || []).filter((t: any) => String(t.html_body || "").trim()).map((t: any) => String(t.event).toLowerCase()));
+    const hasRule = new Set((rules || []).map((r: any) => String(r.event).toLowerCase()));
+    const now = new Date().toISOString();
+    let added = 0;
+    for (const event of MEET_EVENTS) {
+      if (written.has(event.toLowerCase())) continue;
+      const st = MEET_EMAIL_STARTERS[event];
+      const existing = (tpls || []).find((t: any) => String(t.event).toLowerCase() === event.toLowerCase());
+      const tplPayload = { module: "Meet", event, template_name: `Meet · ${event}`, subject: st.subject, html_body: toHtml(st.body), is_active: false, updated_at: now };
+      const { error: tErr } = existing
+        ? await supabaseAdmin.from("email_templates").update(tplPayload).eq("id", (existing as any).id)
+        : await supabaseAdmin.from("email_templates").insert(tplPayload);
+      if (tErr) return { success: false, error: tErr.message };
+      if (!hasRule.has(event.toLowerCase())) {
+        const { error: rErr } = await supabaseAdmin.from("notification_rules").insert({
+          module: "Meet",
+          event,
+          status_trigger: REMINDER_EVENTS.includes(event) ? reminderTrigger(st.timingMinutes || 1440) : "ANY",
+          recipient_type: st.recipients,
+          delivery_method: ["EMAIL"],
+          is_active: false,
+          updated_at: now,
+        });
+        if (rErr) return { success: false, error: rErr.message };
+      }
+      added++;
+    }
+    revalidatePath("/meet/automations");
+    revalidatePath("/meet/automations/emails");
+    return { success: true, added };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Couldn't add the suggested emails." };
+  }
 }

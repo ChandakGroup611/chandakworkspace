@@ -5,6 +5,9 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
 import { getMeetEmailSetup } from "@/lib/actions/meet/email-setup";
 import { getTeamsConnection } from "@/lib/actions/meet/teams-sync";
+import { getMeetSwitches } from "@/lib/actions/meet/switches";
+import { MEET_SWITCHES } from "@/lib/utils/meet-switches";
+import SwitchToggle from "./SwitchToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +48,7 @@ export default async function AutomationsPage() {
       .then((r) => (r.data as any)?.created_at as string | undefined, () => undefined),
     getTeamsConnection().catch(() => null),
   ]);
+  const switches = await getMeetSwitches().catch(() => null);
 
   const lastRun = lastReminder
     ? new Date(lastReminder).toLocaleString("en-IN", { timeZone: IST, day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })
@@ -91,6 +95,23 @@ export default async function AutomationsPage() {
               </ol>
             </div>
           )}
+          {switches && (
+            <ul className="mt-4 divide-y divide-border border-t border-border">
+              {(Object.keys(MEET_SWITCHES) as (keyof typeof MEET_SWITCHES)[]).map((k) => (
+                <li key={k} className="flex flex-wrap items-center gap-3 pt-3 first:pt-3 [&:not(:first-child)]:mt-3">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-semibold text-foreground">{MEET_SWITCHES[k].name}</span>
+                    <span className="mt-0.5 block text-[13px] text-subtle">
+                      {MEET_SWITCHES[k].detail}
+                      {teams.missing.length > 0 ? " Works once the permissions above are granted." : ""}
+                    </span>
+                  </span>
+                  <SwitchToggle k={k} label={MEET_SWITCHES[k].name} initial={!!switches[k]} canEdit={isAdmin} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 text-[12.5px] text-muted">The same can always be done by hand from a meeting&apos;s minutes review (&ldquo;Bring in from Teams&rdquo;).</p>
         </section>
       )}
 

@@ -82,3 +82,78 @@ export const MEET_MERGE_TAGS = [
   "due_date",
   "carry_count",
 ];
+
+/**
+ * Suggested wording for each email. Never sent on its own: the admin chooses to start from it in
+ * the email editor (or adds it to all unwritten emails, which stay switched off until reviewed).
+ */
+export const MEET_EMAIL_STARTERS: Record<MeetEventName, { subject: string; body: string; recipients: MeetRecipientRole[]; timingMinutes?: number }> = {
+  "Meeting created": {
+    subject: "Invitation: {{meeting_title}} on {{start_time}}",
+    body: "Dear {{recipient_name}},\n\nYou are invited to {{meeting_title}} ({{meeting_code}}).\n\nWhen: {{start_time}}\nWhere: {{room}}\nTeams: {{join_link}}\n\nThe agenda, open points and notes are in Chandak Meet:\n{{link}}\n\nRegards,\n{{organiser_name}}",
+    recipients: ["Everyone invited"],
+  },
+  "Reminder 1": {
+    subject: "Tomorrow: {{meeting_title}} at {{start_time}}",
+    body: "Dear {{recipient_name}},\n\nA reminder that {{meeting_title}} is on {{start_time}}.\nWhere: {{room}}\nTeams: {{join_link}}\n\nPlease update your open points before the meeting:\n{{link}}\n\nRegards,\nChandak Meet",
+    recipients: ["Everyone invited"],
+    timingMinutes: 1440,
+  },
+  "Reminder 2": {
+    subject: "In 1 hour: {{meeting_title}}",
+    body: "Dear {{recipient_name}},\n\n{{meeting_title}} starts at {{start_time}}.\nJoin on Teams: {{join_link}}\nRoom: {{room}}\n\n{{link}}",
+    recipients: ["Everyone invited"],
+    timingMinutes: 60,
+  },
+  "Reminder 3": {
+    subject: "Starting soon: {{meeting_title}}",
+    body: "Dear {{recipient_name}},\n\n{{meeting_title}} starts in 15 minutes.\nJoin: {{join_link}}",
+    recipients: ["Everyone invited"],
+    timingMinutes: 15,
+  },
+  "RSVP reminder": {
+    subject: "Please reply: {{meeting_title}} on {{start_time}}",
+    body: "Dear {{recipient_name}},\n\nWe haven't had your reply for {{meeting_title}} on {{start_time}}. Please let us know if you can attend:\n{{link}}\n\nRegards,\n{{organiser_name}}",
+    recipients: ["Everyone invited"],
+  },
+  "Update requested": {
+    subject: "Update needed before {{meeting_title}}",
+    body: "Dear {{recipient_name}},\n\n{{meeting_title}} is on {{start_time}}. Please send a one-line update on your open points so the meeting can start from where things stand:\n\n{{points_list}}\n\nRegards,\nChandak Meet",
+    recipients: ["Point owner"],
+  },
+  "Minutes sent": {
+    subject: "Minutes: {{meeting_title}} ({{session_code}})",
+    body: "Dear {{recipient_name}},\n\nThe minutes of {{meeting_title}} are ready, with decisions, open points and who does what by when:\n{{link}}\n\nRegards,\n{{organiser_name}}",
+    recipients: ["Everyone invited"],
+  },
+  "Minutes not sent": {
+    subject: "Minutes not sent yet: {{meeting_title}}",
+    body: "Dear {{recipient_name}},\n\nThe minutes for {{meeting_title}} ({{session_code}}) are drafted but haven't been sent. Review and send them here:\n{{link}}\n\nChandak Meet",
+    recipients: ["Organiser (creator)", "Minute taker"],
+  },
+  "Point assigned": {
+    subject: "You own {{point_code}}: {{point_title}}",
+    body: "Dear {{recipient_name}},\n\nYou are now the owner of {{point_code}}: {{point_title}}.\nDue: {{due_date}}\n\nOpen it here:\n{{link}}\n\nChandak Meet",
+    recipients: ["Point owner"],
+  },
+  "Task assigned": {
+    subject: "New task {{task_code}}: {{task_title}}",
+    body: "Dear {{recipient_name}},\n\nYou have a new task from {{meeting_title}}:\n{{task_code}} {{task_title}}\nDue: {{due_date}}\n\n{{link}}\n\nChandak Meet",
+    recipients: ["Task owner"],
+  },
+  "Point escalated": {
+    subject: "Carried {{carry_count}} times: {{point_code}} {{point_title}}",
+    body: "Dear {{recipient_name}},\n\n{{point_code}} {{point_title}} in {{meeting_title}} has now been carried forward {{carry_count}} times without closing. Please review it:\n{{link}}\n\nChandak Meet",
+    recipients: ["Organiser (creator)", "Chair"],
+  },
+  Overdue: {
+    subject: "Overdue: {{point_code}}{{task_code}} {{point_title}}{{task_title}}",
+    body: "Dear {{recipient_name}},\n\nThis item from {{meeting_title}} was due on {{due_date}} and is still open:\n{{point_code}}{{task_code}} {{point_title}}{{task_title}}\n\nPlease update it or ask for a new date:\n{{link}}\n\nChandak Meet",
+    recipients: ["Point owner", "Task owner"],
+  },
+  "Room declined": {
+    subject: "Room not available: {{room}} for {{meeting_title}}",
+    body: "Dear {{recipient_name}},\n\n{{room}} turned down the booking for {{meeting_title}} on {{start_time}}; it is probably taken at that time. Please pick another room:\n{{link}}\n\nChandak Meet",
+    recipients: ["Organiser (creator)"],
+  },
+};
