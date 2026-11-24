@@ -253,10 +253,23 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       };
     });
 
-    // 6. Async Batch Insert into Queue (valid columns only)
-    const { error } = await supabaseAdmin.from("email_queue").insert(queueInserts);
+    // 6. Async Batch Insert into Queue (valid columns only).
+    //    Chandak Meet can have its own mail server: when it's on, Meet emails go out through it
+    //    (falling back to this queue if it fails).
+    let sentByMeet = false;
+    if (String(moduleName).toLowerCase() === "meet" && queueInserts.length) {
+      try {
+        const { sendMeetRows } = await import("@/lib/utils/meet-smtp");
+        sentByMeet = await sendMeetRows(queueInserts as any[]);
+      } catch (e) {
+        console.error("[NotificationEngine] Meet mail server failed, using the Workspace queue", e);
+      }
+    }
+    const { error } = sentByMeet ? { error: null } : await supabaseAdmin.from("email_queue").insert(queueInserts);
     
-    if (error) {
+    if (sentByMeet) {
+      // already sent (or handed to the queue for retry) by the Meet mail server
+    } else if (error) {
       console.error("[NotificationEngine] Failed to insert into queue", error);
     } else {
       // Trigger background processor asynchronously (fire and forget)

@@ -62,7 +62,8 @@ type AdminTab =
   | "categories"
   | "templates"
   | "settings"
-  | "projects";
+  | "projects"
+  | "email";
 
 const SECTIONS: { id: AdminTab; label: string; hint: string }[] = [
   { id: "policies", label: "Meeting rules", hint: "Who can create meetings, add points and write notes." },
@@ -74,6 +75,7 @@ const SECTIONS: { id: AdminTab; label: string; hint: string }[] = [
   { id: "templates", label: "Meeting templates", hint: "Ready-made agendas for regular meetings." },
   { id: "rooms", label: "Rooms and door screens", hint: "Meeting rooms and the tablets outside them." },
   { id: "roles", label: "What each role can do", hint: "The permissions behind each Meet role." },
+  { id: "email", label: "Email sending (SMTP)", hint: "Chandak Meet's own mail server. Email wording and who gets each email are in Automations › Emails." },
   { id: "templates_email", label: "Older email templates", hint: "Meet emails are now set up in Automations › Emails." },
 ];
 

@@ -216,7 +216,7 @@ async function alertAdminOnPoisonEmail(item: any, attempts: number, errorMsg: st
   }
 }
 
-async function dispatchEmail(item: any, provider: any) {
+export async function dispatchEmail(item: any, provider: any) {
   if (!provider.config) throw new Error("Invalid provider configuration.");
   
   if (provider.provider_name === "SMTP" || provider.provider_name === "Microsoft 365" || provider.provider_name === "Resend" || provider.provider_name === "SendGrid") {

@@ -173,12 +173,10 @@ export async function sendMeetTestEmail(input: { subject: string; body: string }
   const { data: me } = await supabaseAdmin.from("user_master").select("email, full_name").eq("id", auth.userId).maybeSingle();
   if (!me?.email) return { success: false, error: "Your account has no email address." };
   const fill = (t: string) => String(t || "").replace(/{{\s*([a-z_]+)\s*}}/gi, (_m, k) => (k === "recipient_name" ? me.full_name || SAMPLE.recipient_name : SAMPLE[k.toLowerCase()] ?? ""));
-  const { error } = await supabaseAdmin.from("email_queue").insert({
-    recipient_email: me.email,
-    subject: `[Test] ${fill(input.subject) || "Meet email"}`.slice(0, 250),
-    body_template: toHtml(fill(input.body)),
-    is_sent: false,
-  });
+  const row = { recipient_email: me.email, subject: `[Test] ${fill(input.subject) || "Meet email"}`.slice(0, 250), body_template: toHtml(fill(input.body)) };
+  const { sendMeetRows } = await import("@/lib/utils/meet-smtp");
+  if (await sendMeetRows([row]).catch(() => false)) return { success: true, to: me.email };
+  const { error } = await supabaseAdmin.from("email_queue").insert({ ...row, is_sent: false });
   if (error) return { success: false, error: error.message };
   import("@/lib/actions/email-queue").then((m) => m.processEmailQueueAsync().catch(() => null)).catch(() => null);
   return { success: true, to: me.email };

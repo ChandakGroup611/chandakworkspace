@@ -312,6 +312,7 @@ const meetNavGroups: NavGroup[] = [
           { label: "Projects", href: "/meet/admin?section=projects" },
           { label: "Meeting templates", href: "/meet/admin?section=templates" },
           { label: "Rooms and door screens", href: "/meet/admin?section=rooms" },
+          { label: "Email sending (SMTP)", href: "/meet/admin?section=email" },
         ],
       },
       {
