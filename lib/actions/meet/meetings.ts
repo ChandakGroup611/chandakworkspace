@@ -39,6 +39,8 @@ export interface CreateMeetingInput {
     guest_name?: string;
     guest_email?: string;
   }[];
+  /** Agenda typed on the Schedule page; used instead of the template / default agenda when given. */
+  agenda_items?: { title: string; planned_minutes: number }[];
 }
 
 export async function getMeetings(filters?: {
@@ -343,8 +345,22 @@ export async function createMeeting(input: CreateMeetingInput) {
         );
       }
 
-      // 5. If Template was selected, copy agenda items
-      if (input.template_id) {
+      // 5. Agenda: what was typed on the Schedule page, else the template's, else the standard one
+      const typedAgenda = (input.agenda_items || [])
+        .map((a) => ({ title: String(a.title || "").trim().slice(0, 300), planned_minutes: Math.min(Math.max(Number(a.planned_minutes) || 10, 1), 600) }))
+        .filter((a) => a.title)
+        .slice(0, 40);
+      if (typedAgenda.length > 0) {
+        await supabaseAdmin.from("meet_agenda_items").insert(
+          typedAgenda.map((a, idx) => ({
+            session_id: session.id,
+            title: a.title,
+            planned_minutes: a.planned_minutes,
+            sort_order: idx + 1,
+            status: "pending",
+          }))
+        );
+      } else if (input.template_id) {
         const { data: template } = await supabaseAdmin
           .from("meet_templates")
           .select("agenda_items")
