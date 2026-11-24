@@ -105,9 +105,10 @@ export async function createPoint(input: CreatePointInput) {
       });
     }
 
-    // 5. If initial task title provided, create child task
-    if (input.initial_task_title || input.point_type === "action") {
-      const taskTitle = input.initial_task_title || input.title;
+    // 5. Only when a first task was actually given. (Previously every action point was copied
+    //    into a task with the same title and no owner, which doubled up in Points & tasks.)
+    if (input.initial_task_title && String(input.initial_task_title).trim()) {
+      const taskTitle = String(input.initial_task_title).trim();
       await supabaseAdmin.from("meet_tasks").insert({
         point_id: point.id,
         session_id: input.session_id,

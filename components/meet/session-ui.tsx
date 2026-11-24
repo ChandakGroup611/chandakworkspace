@@ -101,6 +101,10 @@ export function StatusChip({ s, className = "" }: { s: Pick<MeetSessionRow, "sta
 export function actionFor(s: MeetSessionRow): { label: string; href: string; external?: boolean; primary: boolean } {
   const tone = statusOf(s).tone;
   if (tone === "cancelled") return { label: "View", href: `/meet/sessions/${s.id}`, primary: false };
+  // Time has passed but the meeting was never started: open it to start, reschedule or cancel
+  if (s.status === "scheduled" && new Date(s.scheduled_start).getTime() < Date.now() - 60 * 60000) {
+    return { label: "Start or reschedule", href: `/meet/sessions/${s.id}`, primary: false };
+  }
   if (tone === "minutes" || tone === "done") {
     return { label: tone === "done" ? "View minutes" : "Review minutes", href: `/meet/sessions/${s.id}/review`, primary: tone === "minutes" };
   }

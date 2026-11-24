@@ -879,7 +879,7 @@ export default function ScheduleMeetingForm({ masters, currentUserId, meeting, n
               </li>
             </ul>
             <p className="mt-3 border-t border-border pt-3 text-[12.5px] text-muted">
-              People get an email with the details and a calendar file, plus a notification here.
+              Everyone invited gets a notification here. An email goes out too if the “Meeting created” email is switched on in Automations › Emails.
             </p>
           </div>
 

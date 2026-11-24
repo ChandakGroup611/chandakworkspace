@@ -114,17 +114,17 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
       } else if (sp.discussion_notes) {
         summaryText = sp.discussion_notes;
       } else {
-        summaryText = `Point ${pt.code} (${pt.title}) was examined under ${pt.priority} priority by owner ${pt.owner?.full_name || "Unassigned"}. Current status maintained as ${sp.status_at_end || pt.status}.`;
+        summaryText = `Discussed. Owner: ${pt.owner?.full_name || "not set"}. Status: ${String(sp.status_at_end || pt.status || "open").replace(/_/g, " ")}.`;
       }
 
       if (ptTasks.length > 0) {
-        const taskTitles = ptTasks.map((t: any) => `${t.code} (${t.owner?.full_name || "Unassigned"})`).join(", ");
-        summaryText += ` Concrete action items delegated: ${taskTitles}.`;
+        const taskTitles = ptTasks.map((t: any) => `${t.code} ${t.title} (${t.owner?.full_name || "no owner yet"})`).join(", ");
+        summaryText += ` Tasks: ${taskTitles}.`;
       }
 
       if (ptDecisions.length > 0) {
         const decTitles = ptDecisions.map((d: any) => d.text).join("; ");
-        summaryText += ` Resolved: ${decTitles}.`;
+        summaryText += ` Decided: ${decTitles}.`;
       }
 
       // Trim to ~80 words
@@ -147,15 +147,17 @@ export async function generateAIMinutes(sessionId: string): Promise<{ success: b
       };
     });
 
-    let overview = `Official executive minutes for ${session.meeting?.title} (Session ${session.code}). Attendance quorum recorded ${presentCount} of ${attendees.length} active delegates. System finalized review of ${pointsRes.data?.length || 0} agenda items with immediate creation of ${tasksRes.data?.length || 0} trackable action items and ${decisionsRes.data?.length || 0} governing decisions.`;
+    const nP = pointsRes.data?.length || 0, nT = tasksRes.data?.length || 0, nD = decisionsRes.data?.length || 0;
+    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+    let overview = `${session.meeting?.title} (${session.code}): ${presentCount} of ${attendees.length} people attended. We went through ${plural(nP, "point")}, agreed ${plural(nD, "decision")} and set ${plural(nT, "task")}.`;
     let modelName = "offline-synthesis";
 
     // If an LLM API key exists, request high-quality executive synthesis
     if (process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) {
       try {
-        const prompt = `Synthesize an authoritative, professional 2-3 sentence executive overview for the minutes of meeting.
+        const prompt = `Write a plain, 2-3 sentence summary of this meeting for the minutes. Use simple everyday English, no jargon.
 Meeting: ${session.meeting?.title} (Session: ${session.code})
-Quorum: ${presentCount} present out of ${attendees.length} members.
+Attended: ${presentCount} out of ${attendees.length} members.
 Agenda Points: ${(pointsRes.data || []).map((p: any) => p.point?.title).join(", ") || "None"}
 Key Decisions: ${(decisionsRes.data || []).map((d: any) => d.text).join(", ") || "None"}
 Action Items: ${(tasksRes.data || []).map((t: any) => t.title).join(", ") || "None"}
@@ -165,7 +167,7 @@ Please respond with ONLY the executive overview paragraph without formatting or 
         const result = await streamLLMResponse({
           prompt,
           history: [],
-          systemInstruction: "You are an executive corporate secretary writing official minutes of meeting for Chandak Group.",
+          systemInstruction: "You write short, plain-English meeting minutes for Chandak Group. Never invent facts.",
           onToken: (tok) => {
             streamedText += tok;
           },

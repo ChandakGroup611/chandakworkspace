@@ -113,10 +113,10 @@ export function EndSessionModal({
           <div className="flex items-start justify-between border-b border-border pb-3">
             <div>
               <Dialog.Title className="text-[17px] font-semibold text-heading">
-                Conclude Meeting & Carry Forward
+                End the meeting?
               </Dialog.Title>
               <Dialog.Description className="mt-0.5 text-[12.5px] text-muted">
-                {sessionCode} · Finalize session and carry forward unresolved items
+                {sessionCode} · Open points move to the next meeting automatically
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
@@ -131,12 +131,12 @@ export function EndSessionModal({
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-success-border bg-success-soft p-3.5 text-center">
                 <span className="text-[20px] font-bold text-success-text">{closedPoints.length}</span>
-                <p className="mt-0.5 text-[12px] font-medium text-success-text">Closed in this Session</p>
+                <p className="mt-0.5 text-[12px] font-medium text-success-text">Closed in this meeting</p>
               </div>
 
               <div className="rounded-lg border border-warning-border bg-warning-soft p-3.5 text-center">
                 <span className="text-[20px] font-bold text-warning-text">{openPoints.length}</span>
-                <p className="mt-0.5 text-[12px] font-medium text-warning-text">Carried to Next Session</p>
+                <p className="mt-0.5 text-[12px] font-medium text-warning-text">Go to the next meeting</p>
               </div>
             </div>
 
@@ -144,9 +144,9 @@ export function EndSessionModal({
               <div className="flex items-start gap-2.5 rounded-lg border border-danger-border bg-danger-soft p-3 text-[12.5px] text-danger-text">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold">{escalatedPoints.length} Repeatedly Carried Points:</span>
+                  <span className="font-semibold">{escalatedPoints.length} point{escalatedPoints.length > 1 ? "s" : ""} carried 3 times or more</span>
                   <p className="mt-0.5">
-                    Items carried 3+ times will be flagged for management escalation per Chandak Governance SOP.
+                    These will be flagged to management.
                   </p>
                 </div>
               </div>
@@ -156,9 +156,9 @@ export function EndSessionModal({
               <div className="flex items-start gap-2.5 rounded-lg border border-warning-border bg-warning-soft p-3 text-[12.5px] text-warning-text">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-warning-text" />
                 <div>
-                  <span className="font-semibold">{openLoopsCount} Unconverted Open Loop{openLoopsCount > 1 ? "s" : ""}:</span>
+                  <span className="font-semibold">{openLoopsCount} note line{openLoopsCount > 1 ? "s" : ""} to check</span>
                   <p className="mt-0.5 text-[12px] text-warning-text">
-                    {openLoopsCount} note line{openLoopsCount > 1 ? "s" : ""} look like action items but have not been converted into tasks or points yet.
+                    They look like action items. You can turn them into tasks on the minutes review, or discard them.
                   </p>
                 </div>
               </div>
@@ -166,13 +166,13 @@ export function EndSessionModal({
 
             <div>
               <label className="block text-[12.5px] font-medium text-foreground mb-1">
-                Executive Meeting Summary / Notes (Included in MoM)
+                Closing remarks (optional, goes into the minutes)
               </label>
               <textarea
                 value={summaryNotes}
                 onChange={(e) => setSummaryNotes(e.target.value)}
                 rows={3}
-                placeholder="Key outcomes, overall consensus, or remarks for next review..."
+                placeholder="What was agreed overall, or anything to look at next time"
                 className="w-full rounded-md border border-border bg-background p-2.5 text-[13px] text-foreground placeholder:text-muted focus:border-primary focus:outline-none"
               />
             </div>
@@ -196,7 +196,7 @@ export function EndSessionModal({
               onClick={handleConfirmEnd}
               rightIcon={<ArrowRight className="h-4 w-4" />}
             >
-              {isSubmitting ? "Finalizing…" : "Confirm & Conclude"}
+              {isSubmitting ? "Ending…" : "End meeting"}
             </AppButton>
           </div>
           </>

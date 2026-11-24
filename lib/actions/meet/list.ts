@@ -8,7 +8,8 @@ import { SESSION_ROW_SELECT, loadSessionCounts, mapSessionRow, myScopeFilter, ty
 /**
  * Meetings list (redesign): the signed-in user's own meeting occurrences.
  * "upcoming" = not finished yet (from 3 hours ago onwards), soonest first.
- * "past"     = already held, newest first (last 120 days).
+ * "past"     = everything else from the last 120 days, newest first: held meetings, cancelled ones,
+ *              and ones whose time passed without being started.
  */
 export async function getMyMeetingRows(
   kind: "upcoming" | "past",
@@ -51,9 +52,9 @@ export async function getMyMeetingRows(
     const [listRes, upCount, pastCount] = await Promise.all([
       kind === "upcoming"
         ? base().in("status", ["scheduled", "in_progress"]).gte("scheduled_start", from).order("scheduled_start", { ascending: true }).limit(100)
-        : base().not("status", "in", '("scheduled","in_progress")').gte("scheduled_start", pastFrom).order("scheduled_start", { ascending: false }).limit(100),
+        : base().or(`scheduled_start.lt.${from},status.not.in.(scheduled,in_progress)`).gte("scheduled_start", pastFrom).order("scheduled_start", { ascending: false }).limit(100),
       countBase().in("status", ["scheduled", "in_progress"]).gte("scheduled_start", from),
-      countBase().not("status", "in", '("scheduled","in_progress")').gte("scheduled_start", pastFrom),
+      countBase().or(`scheduled_start.lt.${from},status.not.in.(scheduled,in_progress)`).gte("scheduled_start", pastFrom),
     ]);
 
     const data: any[] = (listRes as any).data || [];

@@ -270,7 +270,9 @@ export default function MeetCalendarClient({ sessions }: { sessions: CalSession[
 
 function SessionRow({ s, compact }: { s: CalSession; compact?: boolean }) {
   const st = STATUS[s.status] || { label: s.status, cls: "bg-sunken text-subtle" };
-  const joinable = s.status === "scheduled" || s.status === "in_progress";
+  // A scheduled meeting whose start passed over an hour ago without starting isn't "joinable"
+  const missed = s.status === "scheduled" && new Date(s.start).getTime() < Date.now() - 60 * 60 * 1000;
+  const joinable = s.status === "in_progress" || (s.status === "scheduled" && !missed);
   return (
     <div className={`flex flex-wrap items-center gap-3 px-4 py-3 ${compact ? "" : "sm:flex-nowrap"}`}>
       <span className="w-20 shrink-0 text-[13px] font-semibold tabular-nums text-foreground">
@@ -292,6 +294,8 @@ function SessionRow({ s, compact }: { s: CalSession; compact?: boolean }) {
       <span className={`inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-[12px] font-semibold ${st.cls}`}>{st.label}</span>
       {joinable ? (
         <Link href={`/meet/join/${s.id}`} className="inline-flex h-8 shrink-0 items-center rounded-lg bg-primary px-3 text-[13px] font-semibold text-primary-foreground hover:bg-primary-hover">Join</Link>
+      ) : missed ? (
+        <Link href={`/meet/sessions/${s.id}`} className="inline-flex h-8 shrink-0 items-center rounded-lg border border-border px-3 text-[13px] font-semibold text-foreground hover:bg-surface-hover">Start or reschedule</Link>
       ) : s.status === "mom_draft" || s.status === "completed" ? (
         <Link href={`/meet/sessions/${s.id}/review`} className="inline-flex h-8 shrink-0 items-center rounded-lg border border-border px-3 text-[13px] font-semibold text-foreground hover:bg-surface-hover">Minutes</Link>
       ) : null}
