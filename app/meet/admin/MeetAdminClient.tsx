@@ -495,15 +495,15 @@ export default function MeetAdminClient({
       {/* Navigation Tabs */}
       <div className="flex items-center gap-1 bg-surface border border-border p-1.5 rounded-xl overflow-x-auto">
         {[
-          { id: "roles", label: "Roles & Access", icon: Key },
-          { id: "policies", label: "Meeting Policies", icon: ShieldCheck },
-          { id: "sla", label: "Alerts & SLA Engine", icon: Bell, badge: warningCount + breachedCount },
-          { id: "templates_email", label: "Email & WhatsApp Templates", icon: Mail },
-          { id: "rooms", label: "Rooms & Kiosk Displays", icon: Tablet, count: rooms.length },
-          { id: "types", label: "Meeting Types", icon: Layers, count: types.length },
-          { id: "categories", label: "Point Categories", icon: Tag, count: categories.length },
-          { id: "templates", label: "Meeting Templates", icon: FileSpreadsheet, count: templates.length },
-          { id: "settings", label: "TAT & SLA Settings", icon: Sliders },
+          { id: "roles", label: "Access", icon: Key },
+          { id: "policies", label: "Rules", icon: ShieldCheck },
+          { id: "sla", label: "Overdue alerts", icon: Bell, badge: warningCount + breachedCount },
+          { id: "templates_email", label: "Emails", icon: Mail },
+          { id: "rooms", label: "Rooms and door screens", icon: Tablet, count: rooms.length },
+          { id: "types", label: "Meeting types", icon: Layers, count: types.length },
+          { id: "categories", label: "Point categories", icon: Tag, count: categories.length },
+          { id: "templates", label: "Meeting templates", icon: FileSpreadsheet, count: templates.length },
+          { id: "settings", label: "Due dates and working days", icon: Sliders },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -1043,10 +1043,9 @@ export default function MeetAdminClient({
       {activeTab === "templates_email" && (
         <div className="space-y-4">
           <div role="note" className="rounded-xl border border-warning-border bg-warning-soft p-4 text-[13.5px] text-warning-text">
-            Chandak Meet emails are now written and sent from{" "}
-            <a href="/settings/communication/templates" className="font-semibold underline">Settings › Communication › Templates</a> (module “Meet”), with{" "}
-            <a href="/settings/communication/rules" className="font-semibold underline">Rules</a> deciding who gets each one, through your own SMTP.
-            The templates on this tab are no longer used for sending.
+            Chandak Meet emails are written in{" "}
+            <a href="/meet/automations/emails" className="font-semibold underline">Automations › Emails</a>: pick the event, who gets it and when, and write the message.
+            They go out through your own SMTP. The old templates below are no longer used for sending.
           </div>
           {/* Header Action Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-surface-elevated">

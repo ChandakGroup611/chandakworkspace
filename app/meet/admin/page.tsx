@@ -53,8 +53,8 @@ export default async function MeetAdminPage() {
   return (
     <div className="space-y-6">
       <MeetHeader
-        title="Meet Settings & Governance Hub"
-        description="Module-level roles & access, meeting policies, SLA escalation matrix, custom email templates, and room displays"
+        title="Meet settings"
+        description="Who can do what, meeting rules, rooms, meeting types and templates, due dates and overdue alerts."
         breadcrumbs={[{ label: "Meet Settings" }]}
       />
 

@@ -79,6 +79,17 @@ export default async function MeetHomePage() {
         </div>
       </div>
 
+      <form action="/meet/ask" role="search" className="flex gap-2">
+        <label htmlFor="home-ask" className="sr-only">Ask about your meetings</label>
+        <input
+          id="home-ask"
+          name="q"
+          placeholder="Ask Meet: what did we decide about…, open points on…"
+          className="h-11 min-w-0 flex-1 rounded-lg border border-border bg-surface px-4 text-[14.5px] text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        <button type="submit" className={btnSecondary}>Ask</button>
+      </form>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           {/* Next meeting */}
