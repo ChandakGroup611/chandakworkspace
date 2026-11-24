@@ -251,7 +251,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider font-semibold text-subtle">Total Decisions</p>
+            <p className="text-[13px] font-medium text-subtle">Total Decisions</p>
             <p className="text-2xl font-bold text-heading mt-1">{decisions.length}</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-surface-elevated flex items-center justify-center text-foreground">
@@ -261,30 +261,30 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
 
         <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider font-semibold text-subtle">Active & Binding</p>
+            <p className="text-[13px] font-medium text-subtle">Active & Binding</p>
             <p className="text-2xl font-bold text-emerald-500 mt-1">{activeCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+          <div className="w-10 h-10 rounded-lg bg-success-soft flex items-center justify-center text-emerald-500">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
 
         <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider font-semibold text-subtle">Superseded</p>
+            <p className="text-[13px] font-medium text-subtle">Superseded</p>
             <p className="text-2xl font-bold text-amber-500 mt-1">{supersededCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+          <div className="w-10 h-10 rounded-lg bg-warning-soft flex items-center justify-center text-amber-500">
             <History className="w-5 h-5" />
           </div>
         </div>
 
         <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider font-semibold text-subtle">Revoked</p>
+            <p className="text-[13px] font-medium text-subtle">Revoked</p>
             <p className="text-2xl font-bold text-rose-500 mt-1">{revokedCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500">
+          <div className="w-10 h-10 rounded-lg bg-danger-soft flex items-center justify-center text-rose-500">
             <AlertCircle className="w-5 h-5" />
           </div>
         </div>
@@ -313,7 +313,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
             >
               <span>{tab.label}</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                className={`text-[12px] px-1.5 py-0.2 rounded-full ${
                   statusFilter === tab.key
                     ? "bg-black/20 text-white"
                     : "bg-surface text-subtle"
@@ -429,7 +429,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                             {decision.tags.map((t, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-surface-elevated border border-border text-subtle font-medium"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[12px] bg-surface-elevated border border-border text-subtle font-medium"
                               >
                                 <Tag className="w-2.5 h-2.5 text-subtle/70" />
                                 {t}
@@ -438,7 +438,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                           </div>
                         )}
                         {decision.point && (
-                          <div className="mt-1 text-[11px] text-subtle flex items-center gap-1">
+                          <div className="mt-1 text-[12.5px] text-subtle flex items-center gap-1">
                             <span className="font-mono text-foreground font-medium">{decision.point.code}:</span>
                             <span className="truncate max-w-xs">{decision.point.title}</span>
                           </div>
@@ -450,7 +450,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                         <div className="font-medium text-foreground">
                           {decision.session?.meeting?.title || "Meeting Series"}
                         </div>
-                        <div className="text-[11px] text-subtle font-mono">
+                        <div className="text-[12.5px] text-subtle font-mono">
                           {decision.session?.code || "Session"}
                         </div>
                       </td>
@@ -475,7 +475,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                           >
                             <Calendar className="w-3 h-3" />
                             {decision.review_date}
-                            {isReviewDue && <span className="text-[10px] bg-amber-500/10 px-1 rounded">Due</span>}
+                            {isReviewDue && <span className="text-[12px] bg-warning-soft px-1 rounded">Due</span>}
                           </span>
                         ) : (
                           <span className="text-subtle/50">None</span>
@@ -486,7 +486,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <StatusBadge status={decision.status} />
                         {decision.superseded_by_id && (
-                          <span className="block text-[10px] text-subtle mt-0.5 font-mono">
+                          <span className="block text-[12px] text-subtle mt-0.5 font-mono">
                             Replaced
                           </span>
                         )}
@@ -502,21 +502,21 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
                                 setSupersedeText("");
                                 setSupersedeSessionId(decision.session_id || sessions[0]?.id || "");
                               }}
-                              className="px-2 py-1 text-[11px] font-medium text-theme-btn-primary-text bg-theme-btn-primary hover:opacity-90 rounded border border-transparent transition-opacity"
-                              title="Supersede with replacement policy"
+                              className="px-2 py-1 text-[12.5px] font-medium text-theme-btn-primary-text bg-theme-btn-primary hover:opacity-90 rounded border border-transparent transition-opacity"
+                              title="Replace with a new decision"
                             >
                               Supersede
                             </button>
                             <button
                               onClick={() => handleRevoke(decision.id)}
-                              className="px-2 py-1 text-[11px] font-medium text-rose-500 hover:bg-rose-500/10 rounded transition-colors"
-                              title="Revoke decision"
+                              className="px-2 py-1 text-[12.5px] font-medium text-rose-500 hover:bg-danger-soft rounded transition-colors"
+                              title="Withdraw this decision"
                             >
                               Revoke
                             </button>
                           </div>
                         ) : (
-                          <span className="text-[11px] text-subtle/60 italic">Archived</span>
+                          <span className="text-[12.5px] text-subtle/60 italic">Archived</span>
                         )}
                       </td>
                     </tr>
@@ -663,7 +663,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
             </div>
 
             <div className="mt-3 p-3 bg-surface-elevated border border-border rounded-lg">
-              <span className="text-[10px] font-mono uppercase text-subtle font-semibold">
+              <span className="text-[12px] font-mono uppercase text-subtle font-semibold">
                 Current Decision ({supersedeModalTarget.code})
               </span>
               <p className="text-xs text-foreground mt-1">{supersedeModalTarget.text}</p>

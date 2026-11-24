@@ -158,8 +158,8 @@ export default function MeetRbacClient({
         <div
           className={`p-3.5 rounded-lg border text-xs flex items-center gap-2 ${
             statusMessage.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-              : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+              ? "bg-success-soft border-success-border text-success-text"
+              : "bg-danger-soft border-danger-border text-danger-text"
           }`}
         >
           {statusMessage.type === "success" ? (
@@ -196,17 +196,17 @@ export default function MeetRbacClient({
               <div className="flex items-center justify-between gap-2 mb-1.5">
                 <span className="font-semibold text-sm text-heading">{r.name}</span>
                 {r.role_code === "STANDARD" ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-[12px] font-bold bg-success-soft text-success-text border border-success-border">
                     CANONICAL STANDARD
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sunken text-muted">
+                  <span className="px-2 py-0.5 rounded-full text-[12px] font-medium bg-sunken text-muted">
                     v{r.policy_version}
                   </span>
                 )}
               </div>
               <p className="text-xs text-muted line-clamp-2 mb-3">{r.description}</p>
-              <div className="flex items-center justify-between text-[11px] text-subtle border-t border-border/50 pt-2">
+              <div className="flex items-center justify-between text-[12.5px] text-subtle border-t border-border/50 pt-2">
                 <span>{r.permissions.length} permissions</span>
                 <span className="font-medium text-heading">
                   {r.user_count} user{r.user_count !== 1 ? "s" : ""} assigned
@@ -227,7 +227,7 @@ export default function MeetRbacClient({
                   {activeRole.name} ({activeRole.role_code})
                 </h3>
                 {activeRole.is_customized && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-[12px] font-medium bg-warning-soft text-warning-text border border-warning-border">
                     Customized Policy
                   </span>
                 )}
@@ -270,7 +270,7 @@ export default function MeetRbacClient({
 
               return (
                 <div key={cat} className="space-y-2.5">
-                  <h4 className="text-[11px] font-bold text-muted uppercase tracking-wider">
+                  <h4 className="text-[12.5px] font-bold text-muted uppercase tracking-wider">
                     {cat} Operations
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
@@ -302,16 +302,16 @@ export default function MeetRbacClient({
                                 {perm.name}
                               </span>
                               {perm.isSensitive && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[12px] font-bold bg-danger-soft text-danger-text border border-danger-border">
                                   <Lock className="h-2.5 w-2.5" />
                                   Sensitive
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-subtle mt-0.5 leading-relaxed">
+                            <p className="text-[12.5px] text-subtle mt-0.5 leading-relaxed">
                               {perm.description}
                             </p>
-                            <span className="text-[10px] text-muted/60 font-mono mt-1 block">
+                            <span className="text-[12px] text-muted/60 font-mono mt-1 block">
                               {perm.code}
                             </span>
                           </div>
@@ -353,16 +353,16 @@ export default function MeetRbacClient({
                       {new Date(log.executed_at).toLocaleString()}
                     </AppTableCell>
                     <AppTableCell>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                      <span className="inline-flex items-center gap-1 text-[12.5px] font-bold text-success-text">
                         <ShieldCheck className="h-3 w-3" />
                         {log.sync_status}
                       </span>
                     </AppTableCell>
-                    <AppTableCell className="font-mono text-[11px]">v{log.new_version}</AppTableCell>
+                    <AppTableCell className="font-mono text-[12.5px]">v{log.new_version}</AppTableCell>
                     <AppTableCell>
                       {(log.modified_roles || []).join(", ") || "—"}
                     </AppTableCell>
-                    <AppTableCell className="text-muted font-mono text-[11px]">
+                    <AppTableCell className="text-muted font-mono text-[12.5px]">
                       {log.executed_by}
                     </AppTableCell>
                   </AppTableRow>

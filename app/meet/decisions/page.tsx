@@ -6,8 +6,8 @@ import { getDecisions, getDecisionEligibleSessions } from "@/lib/actions/meet/de
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Decisions Register · Chandak Meet",
-  description: "Enterprise register of standing decisions and ratified policies across Chandak Group meetings",
+  title: "Decisions · Chandak Meet",
+  description: "Every decision taken in Chandak Meet meetings",
 };
 
 export default async function DecisionsPage() {
@@ -19,9 +19,9 @@ export default async function DecisionsPage() {
   return (
     <div className="space-y-6">
       <MeetHeader
-        title="Decisions & Policy Register"
-        description="Searchable central record of standing resolutions, committee mandates, and active policies"
-        breadcrumbs={[{ label: "Decisions Register" }]}
+        title="Decisions"
+        description="Every decision taken in a meeting: search it, see where it came from, and mark it replaced or withdrawn."
+        breadcrumbs={[{ label: "Decisions" }]}
       />
 
       <DecisionsClient

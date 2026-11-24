@@ -75,14 +75,14 @@ export default function AIMinutesCard({
     <div className="rounded-lg border border-border bg-surface-elevated overflow-hidden shadow-sm">
       <div className="p-4 border-b border-border bg-surface-elevated/80 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded bg-amber-500/10 text-amber-400">
+          <div className="p-1.5 rounded bg-warning-soft text-warning-text">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+            <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
               AI Minutes & Auto MoM Distribution
             </h3>
-            <p className="text-[11px] text-muted">
+            <p className="text-[12.5px] text-muted">
               Per-point executive summaries synthesized without hallucination from running notes.
             </p>
           </div>
@@ -92,7 +92,7 @@ export default function AIMinutesCard({
           {aiMinutes && !isPublished && (
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="px-2.5 py-1 text-xs rounded border border-border hover:bg-surface text-slate-300 flex items-center gap-1"
+              className="px-2.5 py-1 text-xs rounded border border-border hover:bg-surface text-subtle flex items-center gap-1"
             >
               <Edit2 className="w-3 h-3" /> {isEditing ? "Done Editing" : "Edit Summaries"}
             </button>
@@ -100,7 +100,7 @@ export default function AIMinutesCard({
           <button
             onClick={handleGenerate}
             disabled={isPending}
-            className="px-2.5 py-1 text-xs rounded border border-border hover:bg-surface text-slate-300 flex items-center gap-1 disabled:opacity-50"
+            className="px-2.5 py-1 text-xs rounded border border-border hover:bg-surface text-subtle flex items-center gap-1 disabled:opacity-50"
           >
             <RefreshCw className={`w-3 h-3 ${isPending ? "animate-spin" : ""}`} />
             {aiMinutes ? "Regenerate" : "Generate AI Minutes"}
@@ -111,8 +111,8 @@ export default function AIMinutesCard({
       <div className="p-4 space-y-4">
         {!aiMinutes ? (
           <div className="py-8 text-center text-muted text-xs">
-            <p className="font-medium text-slate-200">AI Minutes not generated yet for this session.</p>
-            <p className="text-[11px] mt-1 max-w-md mx-auto">
+            <p className="font-medium text-foreground">AI Minutes not generated yet for this session.</p>
+            <p className="text-[12.5px] mt-1 max-w-md mx-auto">
               Click &quot;Generate AI Minutes&quot; to automatically review running notes, status changes, tasks and decisions into structured points.
             </p>
           </div>
@@ -120,33 +120,33 @@ export default function AIMinutesCard({
           <>
             {/* Overview Section */}
             <div className="p-3.5 rounded bg-surface border border-border text-xs">
-              <span className="text-[11px] font-bold text-amber-400 block mb-1">Executive Overview</span>
+              <span className="text-[12.5px] font-bold text-warning-text block mb-1">Executive Overview</span>
               {isEditing ? (
                 <textarea
                   rows={3}
                   value={overview}
                   onChange={(e) => setOverview(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-surface-elevated border border-border rounded text-slate-100 text-xs focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-2.5 py-1.5 bg-surface-elevated border border-border rounded text-foreground text-xs focus:outline-none focus:border-theme-btn-primary"
                 />
               ) : (
-                <p className="text-slate-200 leading-relaxed">{overview}</p>
+                <p className="text-foreground leading-relaxed">{overview}</p>
               )}
             </div>
 
             {/* Per-Point Summaries */}
             <div className="space-y-2.5">
-              <span className="text-xs font-bold text-slate-200 block">
+              <span className="text-xs font-bold text-foreground block">
                 Points Discussed ({items.length})
               </span>
               {items.map((item, idx) => (
                 <div key={item.point_id || idx} className="p-3 rounded bg-surface border border-border text-xs">
                   <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="font-semibold text-slate-100">
+                    <span className="font-semibold text-foreground">
                       {item.point_code}: {item.title}
                     </span>
-                    <div className="flex items-center gap-1.5 text-[10px]">
+                    <div className="flex items-center gap-1.5 text-[12px]">
                       {item.carry_forward && (
-                        <span className="px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 font-bold">
+                        <span className="px-1.5 py-0.2 rounded bg-warning-soft text-warning-text font-bold">
                           Carried Forward
                         </span>
                       )}
@@ -165,15 +165,15 @@ export default function AIMinutesCard({
                         newItems[idx].text = e.target.value;
                         setItems(newItems);
                       }}
-                      className="w-full px-2 py-1 bg-surface-elevated border border-border rounded text-slate-100 text-xs focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full px-2 py-1 bg-surface-elevated border border-border rounded text-foreground text-xs focus:outline-none focus:border-theme-btn-primary"
                     />
                   ) : (
                     <p className="text-muted leading-relaxed">{item.text}</p>
                   )}
 
                   {item.tasks && item.tasks.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-border/50 text-[11px] text-slate-300">
-                      <span className="font-semibold text-blue-400">Action: </span>
+                    <div className="mt-2 pt-2 border-t border-border/50 text-[12.5px] text-subtle">
+                      <span className="font-semibold text-accent-soft-text">Action: </span>
                       {item.tasks.map((t: any, tidx: number) => (
                         <span key={tidx} className="mr-2">
                           {t.title} → {t.owner} (Due: {t.due_date})
@@ -187,9 +187,9 @@ export default function AIMinutesCard({
 
             {/* Bottom Actions */}
             <div className="pt-3 border-t border-border flex items-center justify-between">
-              <span className="text-[11px] text-muted">
+              <span className="text-[12.5px] text-muted">
                 {isPublished ? (
-                  <span className="text-emerald-400 flex items-center gap-1 font-semibold">
+                  <span className="text-success-text flex items-center gap-1 font-semibold">
                     <Check className="w-3.5 h-3.5" /> Published & sent on {new Date(aiMinutes.sent_at!).toLocaleString()}
                   </span>
                 ) : (
@@ -201,7 +201,7 @@ export default function AIMinutesCard({
                 {isEditing && (
                   <button
                     onClick={handleSaveEdits}
-                    className="px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-slate-200"
+                    className="px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-foreground"
                   >
                     Save Changes
                   </button>

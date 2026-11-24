@@ -520,12 +520,12 @@ export default function MeetAdminClient({
               <Icon className="w-4 h-4" />
               <span>{tab.label}</span>
               {"count" in tab && (
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${isActive ? "bg-black/20" : "bg-sunken"}`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[12px] ${isActive ? "bg-black/20" : "bg-sunken"}`}>
                   {tab.count}
                 </span>
               )}
               {"badge" in tab && typeof (tab as any).badge === "number" && (tab as any).badge > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500 text-white font-bold">
+                <span className="px-1.5 py-0.2 rounded-full text-[12px] bg-rose-500 text-white font-bold">
                   {(tab as any).badge}
                 </span>
               )}
@@ -543,7 +543,7 @@ export default function MeetAdminClient({
               <div>
                 <div className="flex items-center gap-2">
                   <Key className="w-5 h-5 text-primary" />
-                  <h3 className="text-base font-bold text-slate-100">
+                  <h3 className="text-base font-bold text-foreground">
                     Chandak Meet Granular RBAC Permissions Matrix
                   </h3>
                 </div>
@@ -585,7 +585,7 @@ export default function MeetAdminClient({
 
             {/* Role Selector Tabs */}
             <div className="mt-4">
-              <span className="text-[11.5px] font-semibold text-muted uppercase tracking-wider block mb-2">
+              <span className="text-[12.5px] font-semibold text-muted uppercase tracking-wider block mb-2">
                 Select Role to Configure Permissions
               </span>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
@@ -612,16 +612,16 @@ export default function MeetAdminClient({
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="text-xs font-bold text-slate-100 truncate">
+                        <span className="text-xs font-bold text-foreground truncate">
                           {r.label}
                         </span>
                       </div>
-                      <span className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded bg-sunken text-muted mb-1.5">
+                      <span className="inline-block text-[12px] font-semibold px-1.5 py-0.5 rounded bg-sunken text-muted mb-1.5">
                         {r.badge}
                       </span>
-                      <div className="flex items-center justify-between text-[10.5px]">
+                      <div className="flex items-center justify-between text-[12px]">
                         <span className="text-muted">Active CRUD:</span>
-                        <span className={`font-mono font-bold ${activeCount > 0 ? "text-emerald-400" : "text-subtle"}`}>
+                        <span className={`font-mono font-bold ${activeCount > 0 ? "text-success-text" : "text-subtle"}`}>
                           {activeCount} / 40
                         </span>
                       </div>
@@ -648,30 +648,30 @@ export default function MeetAdminClient({
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-theme-btn-primary" />
                     <div>
-                      <span className="text-xs font-bold text-slate-100">
+                      <span className="text-xs font-bold text-foreground">
                         {currentRoleObj?.label} ({currentRoleObj?.badge})
                       </span>
-                      <span className="text-[11px] text-muted ml-2">
+                      <span className="text-[12.5px] text-muted ml-2">
                         {currentRoleObj?.description}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="text-muted text-[11px] mr-1">
+                    <span className="text-muted text-[12.5px] mr-1">
                       {activeCount} of 40 permissions granted
                     </span>
                     <button
                       type="button"
                       onClick={() => handleToggleRoleAll(selectedRole, true)}
-                      className="px-2.5 py-1 text-[11px] font-semibold rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+                      className="px-2.5 py-1 text-[12.5px] font-semibold rounded bg-success-soft text-success-text border border-success-border hover:bg-success-soft"
                     >
                       Grant All
                     </button>
                     <button
                       type="button"
                       onClick={() => handleToggleRoleAll(selectedRole, false)}
-                      className="px-2.5 py-1 text-[11px] font-semibold rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20"
+                      className="px-2.5 py-1 text-[12.5px] font-semibold rounded bg-danger-soft text-danger-text border border-danger-border hover:bg-danger-soft"
                     >
                       Revoke All
                     </button>
@@ -708,10 +708,10 @@ export default function MeetAdminClient({
                     return (
                       <tr key={resource.key} className="hover:bg-surface/50 transition-colors">
                         <td className="py-2.5 px-3">
-                          <span className="font-bold text-slate-100 block">
+                          <span className="font-bold text-foreground block">
                             {resource.label}
                           </span>
-                          <span className="text-[11px] text-muted">
+                          <span className="text-[12.5px] text-muted">
                             {resource.description}
                           </span>
                         </td>
@@ -727,7 +727,7 @@ export default function MeetAdminClient({
                               }
                               className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer accent-theme-btn-primary"
                             />
-                            <span className={`ml-1.5 text-[11px] font-semibold ${resPerm.create ? "text-emerald-400" : "text-muted"}`}>
+                            <span className={`ml-1.5 text-[12.5px] font-semibold ${resPerm.create ? "text-success-text" : "text-muted"}`}>
                               Create
                             </span>
                           </label>
@@ -744,7 +744,7 @@ export default function MeetAdminClient({
                               }
                               className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer accent-theme-btn-primary"
                             />
-                            <span className={`ml-1.5 text-[11px] font-semibold ${resPerm.read ? "text-sky-400" : "text-muted"}`}>
+                            <span className={`ml-1.5 text-[12.5px] font-semibold ${resPerm.read ? "text-accent-soft-text" : "text-muted"}`}>
                               View
                             </span>
                           </label>
@@ -761,7 +761,7 @@ export default function MeetAdminClient({
                               }
                               className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer accent-theme-btn-primary"
                             />
-                            <span className={`ml-1.5 text-[11px] font-semibold ${resPerm.update ? "text-amber-400" : "text-muted"}`}>
+                            <span className={`ml-1.5 text-[12.5px] font-semibold ${resPerm.update ? "text-warning-text" : "text-muted"}`}>
                               Edit
                             </span>
                           </label>
@@ -778,7 +778,7 @@ export default function MeetAdminClient({
                               }
                               className="h-4 w-4 rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer accent-theme-btn-primary"
                             />
-                            <span className={`ml-1.5 text-[11px] font-semibold ${resPerm.delete ? "text-rose-400" : "text-muted"}`}>
+                            <span className={`ml-1.5 text-[12.5px] font-semibold ${resPerm.delete ? "text-danger-text" : "text-muted"}`}>
                               Delete
                             </span>
                           </label>
@@ -789,7 +789,7 @@ export default function MeetAdminClient({
                           <button
                             type="button"
                             onClick={() => handleToggleRowAll(selectedRole, resource.key)}
-                            className="px-2 py-0.5 text-[10.5px] rounded font-medium border border-border hover:bg-sunken text-muted hover:text-foreground"
+                            className="px-2 py-0.5 text-[12px] rounded font-medium border border-border hover:bg-sunken text-muted hover:text-foreground"
                           >
                             {allChecked ? "Clear" : "All"}
                           </button>
@@ -804,7 +804,7 @@ export default function MeetAdminClient({
 
           {/* People in Chandak Meet */}
           <div className="p-4 rounded-xl border border-border bg-surface-elevated">
-            <h3 className="text-sm font-bold text-slate-100 mb-1">Active Users in Chandak Meet</h3>
+            <h3 className="text-sm font-bold text-foreground mb-1">Active Users in Chandak Meet</h3>
             <p className="text-xs text-muted mb-4">Assign dedicated module roles and operational scopes.</p>
 
             <div className="overflow-x-auto">
@@ -820,10 +820,10 @@ export default function MeetAdminClient({
                 <tbody className="divide-y divide-border">
                   {(initialMasters.users || []).slice(0, 8).map((u: any) => (
                     <tr key={u.id} className="hover:bg-surface/50">
-                      <td className="py-2 px-3 font-semibold text-slate-100">{u.full_name}</td>
+                      <td className="py-2 px-3 font-semibold text-foreground">{u.full_name}</td>
                       <td className="py-2 px-3 text-muted">{u.email}</td>
                       <td className="py-2 px-3">
-                        <select className="bg-surface border border-border rounded px-2 py-1 text-xs text-slate-100">
+                        <select className="bg-surface border border-border rounded px-2 py-1 text-xs text-foreground">
                           <option>Meet User</option>
                           <option>Department Head</option>
                           <option>Plant Supervisor</option>
@@ -844,20 +844,20 @@ export default function MeetAdminClient({
       {activeTab === "policies" && (
         <div className="p-6 rounded-xl border border-border bg-surface-elevated space-y-6 max-w-2xl">
           <div>
-            <h3 className="text-sm font-bold text-slate-100">Module Meeting Policies</h3>
+            <h3 className="text-sm font-bold text-foreground">Module Meeting Policies</h3>
             <p className="text-xs text-muted mt-0.5">Enforced across all server actions and workflows.</p>
           </div>
 
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border">
               <div>
-                <span className="font-semibold text-slate-100 block">Who Can Create Meetings</span>
-                <span className="text-[11px] text-muted">Controls visibility of Create Meeting actions</span>
+                <span className="font-semibold text-foreground block">Who Can Create Meetings</span>
+                <span className="text-[12.5px] text-muted">Controls visibility of Create Meeting actions</span>
               </div>
               <select
                 value={policyWhoCreates}
                 onChange={(e) => setPolicyWhoCreates(e.target.value)}
-                className="bg-surface-elevated border border-border rounded px-2.5 py-1 text-xs text-slate-100"
+                className="bg-surface-elevated border border-border rounded px-2.5 py-1 text-xs text-foreground"
               >
                 <option value="all_meet_users">All Meet Users</option>
                 <option value="dept_heads_only">Department Heads Only</option>
@@ -867,8 +867,8 @@ export default function MeetAdminClient({
 
             <div className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border">
               <div>
-                <span className="font-semibold text-slate-100 block">Attendees Can Add Points in Meeting</span>
-                <span className="text-[11px] text-muted">Allows meeting attendees to add new items in live session</span>
+                <span className="font-semibold text-foreground block">Attendees Can Add Points in Meeting</span>
+                <span className="text-[12.5px] text-muted">Allows meeting attendees to add new items in live session</span>
               </div>
               <input
                 type="checkbox"
@@ -880,8 +880,8 @@ export default function MeetAdminClient({
 
             <div className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border">
               <div>
-                <span className="font-semibold text-slate-100 block">Attendees Can Write in Running Notes</span>
-                <span className="text-[11px] text-muted">Allow non-organizers to contribute to session running notes</span>
+                <span className="font-semibold text-foreground block">Attendees Can Write in Running Notes</span>
+                <span className="text-[12.5px] text-muted">Allow non-organizers to contribute to session running notes</span>
               </div>
               <input
                 type="checkbox"
@@ -893,8 +893,8 @@ export default function MeetAdminClient({
 
             <div className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border">
               <div>
-                <span className="font-semibold text-slate-100 block">Department Heads See All Department Meetings</span>
-                <span className="text-[11px] text-muted">Automatic read visibility for department leadership</span>
+                <span className="font-semibold text-foreground block">Department Heads See All Department Meetings</span>
+                <span className="text-[12.5px] text-muted">Automatic read visibility for department leadership</span>
               </div>
               <input
                 type="checkbox"
@@ -906,13 +906,13 @@ export default function MeetAdminClient({
 
             <div className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border">
               <div>
-                <span className="font-semibold text-slate-100 block">Who Approves TAT Extensions</span>
-                <span className="text-[11px] text-muted">Workflow authority for due date extensions</span>
+                <span className="font-semibold text-foreground block">Who Approves TAT Extensions</span>
+                <span className="text-[12.5px] text-muted">Workflow authority for due date extensions</span>
               </div>
               <select
                 value={policyWhoApprovesExtensions}
                 onChange={(e) => setPolicyWhoApprovesExtensions(e.target.value)}
-                className="bg-surface-elevated border border-border rounded px-2.5 py-1 text-xs text-slate-100"
+                className="bg-surface-elevated border border-border rounded px-2.5 py-1 text-xs text-foreground"
               >
                 <option value="organizer">Meeting Organizer</option>
                 <option value="reporting_manager">Reporting Manager</option>
@@ -934,20 +934,20 @@ export default function MeetAdminClient({
         <div className="space-y-6">
           {/* Live SLA Counters */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-center">
-              <span className="text-2xl font-bold text-amber-400">{warningCount}</span>
-              <p className="text-xs text-amber-300 font-medium mt-1">In Warning Now</p>
+            <div className="p-4 rounded-xl border border-warning-border bg-warning-soft text-center">
+              <span className="text-2xl font-bold text-warning-text">{warningCount}</span>
+              <p className="text-xs text-warning-text font-medium mt-1">In Warning Now</p>
             </div>
-            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-center">
-              <span className="text-2xl font-bold text-rose-400">{breachedCount}</span>
-              <p className="text-xs text-rose-300 font-medium mt-1">SLA Breached</p>
+            <div className="p-4 rounded-xl border border-danger-border bg-danger-soft text-center">
+              <span className="text-2xl font-bold text-danger-text">{breachedCount}</span>
+              <p className="text-xs text-danger-text font-medium mt-1">SLA Breached</p>
             </div>
             <div className="p-4 rounded-xl border border-purple-500/30 bg-purple-500/10 text-center">
               <span className="text-2xl font-bold text-purple-400">{escalatedCount}</span>
               <p className="text-xs text-purple-300 font-medium mt-1">Escalated L2+</p>
             </div>
             <div className="p-4 rounded-xl border border-border bg-surface-elevated text-center">
-              <span className="text-2xl font-bold text-slate-100">{alertRules.length}</span>
+              <span className="text-2xl font-bold text-foreground">{alertRules.length}</span>
               <p className="text-xs text-muted font-medium mt-1">Active Alert Rules</p>
             </div>
           </div>
@@ -955,20 +955,20 @@ export default function MeetAdminClient({
           {/* Active Escalated Items (Acknowledge / Reassign) */}
           {slaInstances.length > 0 && (
             <div className="p-4 rounded-xl border border-border bg-surface-elevated">
-              <h3 className="text-sm font-bold text-slate-100 mb-2">Escalated Items Queue (Section E2.3)</h3>
+              <h3 className="text-sm font-bold text-foreground mb-2">Escalated Items Queue (Section E2.3)</h3>
               <div className="divide-y divide-border text-xs">
                 {slaInstances.map((ins) => (
                   <div key={ins.id} className="py-2.5 flex items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400">
+                        <span className="px-2 py-0.5 rounded text-[12px] font-bold bg-danger-soft text-danger-text">
                           Escalated L{ins.current_level}
                         </span>
-                        <span className="font-semibold text-slate-100 capitalize">
+                        <span className="font-semibold text-foreground capitalize">
                           {ins.item_type} · State: {ins.state}
                         </span>
                       </div>
-                      <span className="text-[11px] text-muted">
+                      <span className="text-[12.5px] text-muted">
                         Due: {new Date(ins.due_at).toLocaleDateString()} · Delay: {ins.delay_working_hours} working hrs
                       </span>
                     </div>
@@ -982,7 +982,7 @@ export default function MeetAdminClient({
                         Acknowledge
                       </button>
                     ) : (
-                      <span className="text-emerald-400 font-semibold text-xs">✓ Acknowledged</span>
+                      <span className="text-success-text font-semibold text-xs">✓ Acknowledged</span>
                     )}
                   </div>
                 ))}
@@ -992,7 +992,7 @@ export default function MeetAdminClient({
 
           {/* SLA Policies Table */}
           <div className="p-4 rounded-xl border border-border bg-surface-elevated">
-            <h3 className="text-sm font-bold text-slate-100 mb-1">Standard SLA Clocks & Escalation Matrix</h3>
+            <h3 className="text-sm font-bold text-foreground mb-1">Standard SLA Clocks & Escalation Matrix</h3>
             <p className="text-xs text-muted mb-4">Calculated strictly in working days (skipping Sundays and holidays).</p>
 
             <div className="overflow-x-auto">
@@ -1009,13 +1009,13 @@ export default function MeetAdminClient({
                 <tbody className="divide-y divide-border">
                   {slaPolicies.map((pol) => (
                     <tr key={pol.id} className="hover:bg-surface/50">
-                      <td className="py-2.5 px-3 font-bold text-slate-100">{pol.name}</td>
+                      <td className="py-2.5 px-3 font-bold text-foreground">{pol.name}</td>
                       <td className="py-2.5 px-3 text-muted">{pol.time_limit_hours} hours ({pol.time_limit_unit})</td>
-                      <td className="py-2.5 px-3 text-amber-400 font-semibold">At {pol.warning_percent}% TAT</td>
+                      <td className="py-2.5 px-3 text-warning-text font-semibold">At {pol.warning_percent}% TAT</td>
                       <td className="py-2.5 px-3 text-muted">
                         L1: Owner → L2: Manager (+1d) → L3: Dept Head (+2d) → L4: Mgmt (+4d)
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-muted">{pol.channels?.join(", ")}</td>
+                      <td className="py-2.5 px-3 font-mono text-[12.5px] text-muted">{pol.channels?.join(", ")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1026,7 +1026,7 @@ export default function MeetAdminClient({
           {/* Alert Rules Section */}
           <div className="p-4 rounded-xl border border-border bg-surface-elevated flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-100">Configured Alert Rules</h3>
+              <h3 className="text-sm font-bold text-foreground">Configured Alert Rules</h3>
               <p className="text-xs text-muted">Every alert sends from a custom template with 4h throttling.</p>
             </div>
             <button
@@ -1051,7 +1051,7 @@ export default function MeetAdminClient({
           {/* Header Action Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-surface-elevated">
             <div>
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary" />
                 Notification & Mail Templates
               </h3>
@@ -1066,7 +1066,7 @@ export default function MeetAdminClient({
                 disabled={!selectedTemplate}
                 className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken text-muted hover:text-foreground flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
-                <Eye className="w-3.5 h-3.5 text-sky-400" />
+                <Eye className="w-3.5 h-3.5 text-accent-soft-text" />
                 View Mail Body
               </button>
               <button
@@ -1084,7 +1084,7 @@ export default function MeetAdminClient({
             {/* Templates List */}
             <div className="p-4 rounded-xl border border-border bg-surface-elevated flex flex-col">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
                   Available Templates ({emailTemplates.length})
                 </h4>
               </div>
@@ -1107,14 +1107,14 @@ export default function MeetAdminClient({
                       }}
                       className="flex-1 text-left"
                     >
-                      <span className="font-bold text-slate-100 block">{tmpl.name}</span>
-                      <div className="flex items-center gap-2 text-[11px] text-muted mt-1">
-                        <span className="capitalize px-1.5 py-0.2 rounded bg-sunken font-mono text-[10px]">
+                      <span className="font-bold text-foreground block">{tmpl.name}</span>
+                      <div className="flex items-center gap-2 text-[12.5px] text-muted mt-1">
+                        <span className="capitalize px-1.5 py-0.2 rounded bg-sunken font-mono text-[12px]">
                           {tmpl.channel}
                         </span>
                         <span>Ver {tmpl.version || 1}</span>
                         {tmpl.attach_mom && (
-                          <span className="text-emerald-400 font-medium">📎 MoM PDF</span>
+                          <span className="text-success-text font-medium">📎 MoM PDF</span>
                         )}
                       </div>
                     </button>
@@ -1123,7 +1123,7 @@ export default function MeetAdminClient({
                       type="button"
                       title="View Rendered Mail Body"
                       onClick={() => handleOpenPreview(tmpl)}
-                      className="p-1.5 rounded hover:bg-surface text-muted hover:text-sky-400 transition-colors"
+                      className="p-1.5 rounded hover:bg-surface text-muted hover:text-accent-soft-text transition-colors"
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </button>
@@ -1137,8 +1137,8 @@ export default function MeetAdminClient({
               <div className="lg:col-span-2 p-5 rounded-xl border border-border bg-surface-elevated flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-border gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-100">{selectedTemplate.name}</h3>
-                    <span className="text-[11px] text-muted font-mono">Event: {selectedTemplate.event_key}</span>
+                    <h3 className="text-sm font-bold text-foreground">{selectedTemplate.name}</h3>
+                    <span className="text-[12.5px] text-muted font-mono">Event: {selectedTemplate.event_key}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1184,7 +1184,7 @@ export default function MeetAdminClient({
                   <div className="space-y-4">
                     {/* Clickable Merge Fields Palette */}
                     <div>
-                      <span className="text-xs font-semibold text-slate-200 block mb-1.5">
+                      <span className="text-xs font-semibold text-foreground block mb-1.5">
                         Clickable Dynamic Merge Fields:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
@@ -1197,7 +1197,7 @@ export default function MeetAdminClient({
                             key={field}
                             type="button"
                             onClick={() => setTemplateBody((b) => `${b} ${field}`)}
-                            className="px-2 py-0.5 rounded bg-surface border border-border hover:bg-surface-elevated text-[11px] font-mono text-theme-btn-primary transition-colors cursor-pointer"
+                            className="px-2 py-0.5 rounded bg-surface border border-border hover:bg-surface-elevated text-[12.5px] font-mono text-theme-btn-primary transition-colors cursor-pointer"
                           >
                             {field}
                           </button>
@@ -1211,7 +1211,7 @@ export default function MeetAdminClient({
                         type="text"
                         value={templateSubject}
                         onChange={(e) => setTemplateSubject(e.target.value)}
-                        className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-slate-100 focus:outline-none focus:border-theme-btn-primary font-medium"
+                        className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-theme-btn-primary font-medium"
                       />
                     </div>
 
@@ -1230,7 +1230,7 @@ export default function MeetAdminClient({
                         rows={9}
                         value={templateBody}
                         onChange={(e) => setTemplateBody(e.target.value)}
-                        className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-slate-100 focus:outline-none focus:border-theme-btn-primary font-sans leading-relaxed"
+                        className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-theme-btn-primary font-sans leading-relaxed"
                       />
                     </div>
 
@@ -1258,42 +1258,42 @@ export default function MeetAdminClient({
                     <div className="border-b border-border pb-3 text-xs space-y-1.5">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-muted w-14">From:</span>
-                        <span className="text-slate-200 font-mono">Chandak Meet &lt;notifications@chandakgroup.tech&gt;</span>
+                        <span className="text-foreground font-mono">Chandak Meet &lt;notifications@chandakgroup.tech&gt;</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-muted w-14">To:</span>
-                        <span className="text-slate-200 font-mono">avinash.pise@chandakgroup.com</span>
+                        <span className="text-foreground font-mono">avinash.pise@chandakgroup.com</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-muted w-14">Subject:</span>
-                        <span className="text-slate-100 font-bold">{renderSampleEmail(templateSubject)}</span>
+                        <span className="text-foreground font-bold">{renderSampleEmail(templateSubject)}</span>
                       </div>
                     </div>
 
                     {/* Rendered Email Body Box */}
-                    <div className="rounded-lg border border-border/80 bg-background p-5 text-xs text-slate-200 whitespace-pre-line leading-relaxed font-sans shadow-inner">
+                    <div className="rounded-lg border border-border/80 bg-background p-5 text-xs text-foreground whitespace-pre-line leading-relaxed font-sans shadow-inner">
                       {renderSampleEmail(templateBody)}
                     </div>
 
                     {selectedTemplate.attach_mom && (
-                      <div className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+                      <div className="p-3 rounded-lg border border-success-border bg-success-soft flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 text-success-text font-semibold">
                           <FileText className="w-4 h-4" />
                           <span>Minutes_of_Meeting_Approved.pdf</span>
-                          <span className="text-muted text-[11px]">(142 KB · Signed by Chair)</span>
+                          <span className="text-muted text-[12.5px]">(142 KB · Signed by Chair)</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => toast.info("Opening MoM PDF in secure viewer...")}
-                            className="px-2.5 py-1 text-[11px] font-medium rounded border border-border bg-surface hover:bg-sunken text-foreground"
+                            className="px-2.5 py-1 text-[12.5px] font-medium rounded border border-border bg-surface hover:bg-sunken text-foreground"
                           >
                             View
                           </button>
                           <button
                             type="button"
                             onClick={() => toast.success("Downloading MoM PDF...")}
-                            className="px-2.5 py-1 text-[11px] font-medium rounded bg-primary text-primary-foreground hover:brightness-110 flex items-center gap-1"
+                            className="px-2.5 py-1 text-[12.5px] font-medium rounded bg-primary text-primary-foreground hover:brightness-110 flex items-center gap-1"
                           >
                             <Download className="w-3 h-3" /> Download
                           </button>
@@ -1326,7 +1326,7 @@ export default function MeetAdminClient({
                 <div className="flex items-start justify-between">
                   <div>
                     <h4 className="text-[14px] font-semibold text-heading">{room.name}</h4>
-                    <span className="text-[11.5px] text-muted">{room.location}</span>
+                    <span className="text-[12.5px] text-muted">{room.location}</span>
                   </div>
                   <span className="text-[12px] font-mono bg-sunken px-2 py-0.5 rounded text-foreground">
                     {room.capacity} seats
@@ -1366,7 +1366,7 @@ export default function MeetAdminClient({
                   <div>
                     <span className="font-semibold text-sm text-heading">{type.name}</span>
                     {type.is_board_mode && (
-                      <span className="ml-2 text-[10.5px] text-primary font-bold uppercase">Board</span>
+                      <span className="ml-2 text-[12px] text-primary font-bold uppercase">Board</span>
                     )}
                   </div>
                 </div>
@@ -1467,8 +1467,8 @@ export default function MeetAdminClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-sm font-bold text-slate-100">Create New Alert Rule</h3>
-              <button onClick={() => setIsAlertModalOpen(false)} className="text-muted hover:text-slate-100">
+              <h3 className="text-sm font-bold text-foreground">Create New Alert Rule</h3>
+              <button onClick={() => setIsAlertModalOpen(false)} className="text-muted hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1480,7 +1480,7 @@ export default function MeetAdminClient({
                   value={alertName}
                   onChange={(e) => setAlertName(e.target.value)}
                   placeholder="e.g. Critical Task Warning to Manager"
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                 />
               </div>
               <div>
@@ -1488,7 +1488,7 @@ export default function MeetAdminClient({
                 <select
                   value={alertEvent}
                   onChange={(e) => setAlertEvent(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                 >
                   <option value="meet.task.assigned">Task Assigned</option>
                   <option value="meet.sla.warning">SLA Warning (50% TAT)</option>
@@ -1498,7 +1498,7 @@ export default function MeetAdminClient({
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-3 border-t border-border">
-              <button onClick={() => setIsAlertModalOpen(false)} className="px-3 py-1.5 text-xs rounded border border-border text-slate-300">
+              <button onClick={() => setIsAlertModalOpen(false)} className="px-3 py-1.5 text-xs rounded border border-border text-subtle">
                 Cancel
               </button>
               <button onClick={handleCreateAlertRule} className="px-4 py-1.5 text-xs font-bold rounded bg-theme-btn-primary text-theme-btn-primary-text">
@@ -1513,14 +1513,14 @@ export default function MeetAdminClient({
       {isRoomModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
-            <h3 className="text-sm font-bold text-slate-100 mb-3">Add Meeting Room</h3>
+            <h3 className="text-sm font-bold text-foreground mb-3">Add Meeting Room</h3>
             <form onSubmit={handleAddRoom} className="space-y-3 text-xs">
               <input
                 type="text"
                 placeholder="Room name (e.g. Board Room HO)"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
-                className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100"
+                className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground"
                 required
               />
               <input
@@ -1528,7 +1528,7 @@ export default function MeetAdminClient({
                 placeholder="Location / Floor"
                 value={roomLocation}
                 onChange={(e) => setRoomLocation(e.target.value)}
-                className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100"
+                className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground"
                 required
               />
               <input
@@ -1536,11 +1536,11 @@ export default function MeetAdminClient({
                 placeholder="Capacity"
                 value={roomCapacity}
                 onChange={(e) => setRoomCapacity(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100"
+                className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground"
                 required
               />
               <div className="flex justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsRoomModalOpen(false)} className="px-3 py-1.5 text-xs rounded border border-border text-slate-300">
+                <button type="button" onClick={() => setIsRoomModalOpen(false)} className="px-3 py-1.5 text-xs rounded border border-border text-subtle">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-1.5 text-xs font-bold rounded bg-theme-btn-primary text-theme-btn-primary-text">
@@ -1558,18 +1558,18 @@ export default function MeetAdminClient({
           <div className="bg-surface-elevated border border-border rounded-xl max-w-xl w-full p-5 shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Mail className="w-4 h-4 text-primary" />
                   Create Notification Template
                 </h3>
-                <p className="text-[11.5px] text-muted mt-0.5">
+                <p className="text-[12.5px] text-muted mt-0.5">
                   Configure custom notification content and trigger rules for Chandak Meet.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewTemplateModalOpen(false)}
-                className="text-muted hover:text-slate-100 p-1"
+                className="text-muted hover:text-foreground p-1"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1585,7 +1585,7 @@ export default function MeetAdminClient({
                     value={newTplName}
                     onChange={(e) => setNewTplName(e.target.value)}
                     placeholder="e.g. Action Item Due Soon Alert"
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground focus:outline-none focus:border-theme-btn-primary"
                   />
                 </div>
                 <div>
@@ -1595,7 +1595,7 @@ export default function MeetAdminClient({
                     value={newTplKey}
                     onChange={(e) => setNewTplKey(e.target.value)}
                     placeholder="e.g. meet.task.due_soon"
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 font-mono text-[11px] focus:outline-none focus:border-theme-btn-primary"
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground font-mono text-[12.5px] focus:outline-none focus:border-theme-btn-primary"
                   />
                 </div>
               </div>
@@ -1606,7 +1606,7 @@ export default function MeetAdminClient({
                   <select
                     value={newTplEvent}
                     onChange={(e) => setNewTplEvent(e.target.value)}
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground focus:outline-none focus:border-theme-btn-primary"
                   >
                     <option value="meet.task.assigned">Task Assigned</option>
                     <option value="meet.task.due_soon">Task Due Soon (TAT approaching)</option>
@@ -1624,7 +1624,7 @@ export default function MeetAdminClient({
                   <select
                     value={newTplChannel}
                     onChange={(e) => setNewTplChannel(e.target.value)}
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground focus:outline-none focus:border-theme-btn-primary"
                   >
                     <option value="email">Email (HTML)</option>
                     <option value="whatsapp">WhatsApp Business</option>
@@ -1641,14 +1641,14 @@ export default function MeetAdminClient({
                   value={newTplSubject}
                   onChange={(e) => setNewTplSubject(e.target.value)}
                   placeholder="e.g. Action Required: {{item.code}} from {{meeting.title}}"
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary font-medium"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground focus:outline-none focus:border-theme-btn-primary font-medium"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-muted font-medium">Mail Body *</label>
-                  <span className="text-[11px] text-muted">Supports dynamic tags</span>
+                  <span className="text-[12.5px] text-muted">Supports dynamic tags</span>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
                   {[
@@ -1659,7 +1659,7 @@ export default function MeetAdminClient({
                       key={field}
                       type="button"
                       onClick={() => setNewTplBody((b) => `${b} ${field}`)}
-                      className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10.5px] font-mono text-theme-btn-primary hover:bg-surface-elevated"
+                      className="px-1.5 py-0.5 rounded bg-surface border border-border text-[12px] font-mono text-theme-btn-primary hover:bg-surface-elevated"
                     >
                       {field}
                     </button>
@@ -1671,7 +1671,7 @@ export default function MeetAdminClient({
                   value={newTplBody}
                   onChange={(e) => setNewTplBody(e.target.value)}
                   placeholder="Enter email content with merge fields..."
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-slate-100 focus:outline-none focus:border-theme-btn-primary font-sans leading-relaxed"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground focus:outline-none focus:border-theme-btn-primary font-sans leading-relaxed"
                 />
               </div>
 
@@ -1691,7 +1691,7 @@ export default function MeetAdminClient({
                 <button
                   type="button"
                   onClick={() => setIsNewTemplateModalOpen(false)}
-                  className="px-3.5 py-1.5 text-xs rounded-lg border border-border bg-surface text-slate-300 hover:text-foreground"
+                  className="px-3.5 py-1.5 text-xs rounded-lg border border-border bg-surface text-subtle hover:text-foreground"
                 >
                   Cancel
                 </button>
@@ -1717,12 +1717,12 @@ export default function MeetAdminClient({
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-sky-400" />
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-accent-soft-text" />
                   Rendered Mail Body Preview
                 </h3>
-                <p className="text-[11.5px] text-muted mt-0.5">
-                  Template: <span className="font-semibold text-slate-200">{previewTemplate.name}</span> · Event: <span className="font-mono">{previewTemplate.event_key}</span>
+                <p className="text-[12.5px] text-muted mt-0.5">
+                  Template: <span className="font-semibold text-foreground">{previewTemplate.name}</span> · Event: <span className="font-mono">{previewTemplate.event_key}</span>
                 </p>
               </div>
 
@@ -1756,7 +1756,7 @@ export default function MeetAdminClient({
                 <button
                   type="button"
                   onClick={() => setIsPreviewModalOpen(false)}
-                  className="text-muted hover:text-slate-100 p-1"
+                  className="text-muted hover:text-foreground p-1"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1771,19 +1771,19 @@ export default function MeetAdminClient({
                   <div className="border-b border-border pb-3.5 text-xs space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-muted w-16">From:</span>
-                      <span className="text-slate-100 font-mono text-[11.5px]">
+                      <span className="text-foreground font-mono text-[12.5px]">
                         Chandak Meet Notifications &lt;notifications@chandakgroup.tech&gt;
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-muted w-16">To:</span>
-                      <span className="text-slate-100 font-mono text-[11.5px]">
+                      <span className="text-foreground font-mono text-[12.5px]">
                         avinash.pise@chandakgroup.com (Assigned Member)
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-muted w-16">Date:</span>
-                      <span className="text-muted text-[11.5px]">
+                      <span className="text-muted text-[12.5px]">
                         {new Date().toLocaleDateString("en-IN", {
                           weekday: "short",
                           year: "numeric",
@@ -1794,7 +1794,7 @@ export default function MeetAdminClient({
                     </div>
                     <div className="flex items-center gap-2 pt-1 border-t border-border/50">
                       <span className="font-semibold text-muted w-16">Subject:</span>
-                      <span className="text-slate-100 font-bold text-[13px]">
+                      <span className="text-foreground font-bold text-[13px]">
                         {renderSampleEmail(previewTemplate.subject)}
                       </span>
                     </div>
@@ -1806,26 +1806,26 @@ export default function MeetAdminClient({
                       <span className="font-bold text-xs text-theme-btn-primary tracking-wide">
                         CHANDAK MEET
                       </span>
-                      <span className="text-[11px] text-muted">| Enterprise Governance Notice</span>
+                      <span className="text-[12.5px] text-muted">| Enterprise Governance Notice</span>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface border border-border text-muted">
+                    <span className="text-[12px] font-mono px-2 py-0.5 rounded bg-surface border border-border text-muted">
                       Confidential
                     </span>
                   </div>
 
                   {/* Rendered Email Content */}
-                  <div className="rounded-lg border border-border/80 bg-background p-5 text-[12.5px] text-slate-100 whitespace-pre-line leading-relaxed font-sans shadow-inner">
+                  <div className="rounded-lg border border-border/80 bg-background p-5 text-[12.5px] text-foreground whitespace-pre-line leading-relaxed font-sans shadow-inner">
                     {renderSampleEmail(previewTemplate.body)}
                   </div>
 
                   {/* Attachment Pill if applicable */}
                   {previewTemplate.attach_mom && (
-                    <div className="p-3.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2.5 text-emerald-400 font-semibold">
+                    <div className="p-3.5 rounded-lg border border-success-border bg-success-soft flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2.5 text-success-text font-semibold">
                         <FileText className="w-4 h-4" />
                         <div>
                           <span className="block">Minutes_of_Meeting_Approved.pdf</span>
-                          <span className="text-muted text-[10.5px] font-normal">
+                          <span className="text-muted text-[12px] font-normal">
                             142 KB · Approved & digitally signed by Chair
                           </span>
                         </div>
@@ -1834,14 +1834,14 @@ export default function MeetAdminClient({
                         <button
                           type="button"
                           onClick={() => toast.info("Opening signed MoM PDF...")}
-                          className="px-2.5 py-1 text-[11px] font-semibold rounded border border-border bg-surface hover:bg-sunken text-foreground"
+                          className="px-2.5 py-1 text-[12.5px] font-semibold rounded border border-border bg-surface hover:bg-sunken text-foreground"
                         >
                           View
                         </button>
                         <button
                           type="button"
                           onClick={() => toast.success("Downloading signed MoM PDF...")}
-                          className="px-2.5 py-1 text-[11px] font-semibold rounded bg-primary text-primary-foreground hover:brightness-110 flex items-center gap-1"
+                          className="px-2.5 py-1 text-[12.5px] font-semibold rounded bg-primary text-primary-foreground hover:brightness-110 flex items-center gap-1"
                         >
                           <Download className="w-3 h-3" /> Download
                         </button>
@@ -1850,11 +1850,11 @@ export default function MeetAdminClient({
                   )}
 
                   {/* Corporate Email Footer */}
-                  <div className="pt-3 border-t border-border text-[11px] text-muted space-y-1">
+                  <div className="pt-3 border-t border-border text-[12.5px] text-muted space-y-1">
                     <p>
                       This is an automated system dispatch from Chandak Meet Platform. Please do not reply directly to this email.
                     </p>
-                    <p className="text-[10px] text-subtle">
+                    <p className="text-[12px] text-subtle">
                       Chandak Group · Enterprise Infrastructure & Manufacturing Governance
                     </p>
                   </div>
@@ -1866,7 +1866,7 @@ export default function MeetAdminClient({
                     <label className="block text-xs font-semibold text-muted mb-1">
                       Raw Subject Template
                     </label>
-                    <pre className="p-3 rounded-lg bg-background border border-border text-xs text-amber-300 font-mono overflow-x-auto">
+                    <pre className="p-3 rounded-lg bg-background border border-border text-xs text-warning-text font-mono overflow-x-auto">
                       {previewTemplate.subject}
                     </pre>
                   </div>
@@ -1875,7 +1875,7 @@ export default function MeetAdminClient({
                     <label className="block text-xs font-semibold text-muted mb-1">
                       Raw Body Template
                     </label>
-                    <pre className="p-3 rounded-lg bg-background border border-border text-xs text-slate-200 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                    <pre className="p-3 rounded-lg bg-background border border-border text-xs text-foreground font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
                       {previewTemplate.body}
                     </pre>
                   </div>
@@ -1885,7 +1885,7 @@ export default function MeetAdminClient({
 
             {/* Modal Footer */}
             <div className="pt-3 border-t border-border flex items-center justify-between">
-              <span className="text-[11px] text-muted">
+              <span className="text-[12.5px] text-muted">
                 Sample merge tags substituted dynamically with simulated production payload.
               </span>
               <button

@@ -129,25 +129,25 @@ export default function InvitationsCard({
       {/* Header with RSVP Counters */}
       <div className="p-4 border-b border-border bg-surface-elevated/80 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+          <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
             <Calendar className="w-4 h-4 text-theme-btn-primary" />
             Meeting Invitations & RSVP
           </h3>
-          <p className="text-[11px] text-muted mt-0.5">Track attendance confirmation and time change proposals.</p>
+          <p className="text-[12.5px] text-muted mt-0.5">Track attendance confirmation and time change proposals.</p>
         </div>
 
         {/* Counts Badges */}
         <div className="flex items-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-semibold">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success-soft text-success-text font-semibold">
             <CheckCircle2 className="w-3.5 h-3.5" /> {data.counts.accepted} Accepted
           </span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-semibold">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-warning-soft text-warning-text font-semibold">
             <HelpCircle className="w-3.5 h-3.5" /> {data.counts.maybe} Maybe
           </span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 font-semibold">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-danger-soft text-danger-text font-semibold">
             <XCircle className="w-3.5 h-3.5" /> {data.counts.declined} Declined
           </span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-semibold">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent-soft text-accent-soft-text font-semibold">
             <Clock className="w-3.5 h-3.5" /> {data.counts.proposed} Proposed
           </span>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface border border-border text-muted">
@@ -159,17 +159,17 @@ export default function InvitationsCard({
       {/* User Response Action Bar */}
       <div className="p-3 bg-surface border-b border-border flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs">
-          <span className="font-semibold text-slate-200">Your RSVP:</span>
+          <span className="font-semibold text-foreground">Your RSVP:</span>
           <span
-            className={`px-2 py-0.5 rounded font-bold capitalize text-[11px] ${
+            className={`px-2 py-0.5 rounded font-bold capitalize text-[12.5px] ${
               myResponse === "accepted"
-                ? "bg-emerald-500/20 text-emerald-400"
+                ? "bg-success-soft text-success-text"
                 : myResponse === "declined"
-                ? "bg-rose-500/20 text-rose-400"
+                ? "bg-danger-soft text-danger-text"
                 : myResponse === "tentative"
-                ? "bg-amber-500/20 text-amber-400"
+                ? "bg-warning-soft text-warning-text"
                 : myResponse === "proposed"
-                ? "bg-blue-500/20 text-blue-400"
+                ? "bg-accent-soft text-accent-soft-text"
                 : "bg-surface-elevated text-muted"
             }`}
           >
@@ -184,7 +184,7 @@ export default function InvitationsCard({
             className={`px-3 py-1 rounded font-semibold transition-all ${
               myResponse === "accepted"
                 ? "bg-emerald-600 text-white shadow-sm"
-                : "bg-surface-elevated hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                : "bg-surface-elevated hover:bg-success-soft text-success-text border border-success-border"
             }`}
           >
             Accept
@@ -195,7 +195,7 @@ export default function InvitationsCard({
             className={`px-3 py-1 rounded font-semibold transition-all ${
               myResponse === "tentative"
                 ? "bg-amber-600 text-white shadow-sm"
-                : "bg-surface-elevated hover:bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                : "bg-surface-elevated hover:bg-warning-soft text-warning-text border border-warning-border"
             }`}
           >
             Maybe
@@ -206,7 +206,7 @@ export default function InvitationsCard({
             className={`px-3 py-1 rounded font-semibold transition-all ${
               myResponse === "declined"
                 ? "bg-rose-600 text-white shadow-sm"
-                : "bg-surface-elevated hover:bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                : "bg-surface-elevated hover:bg-danger-soft text-danger-text border border-danger-border"
             }`}
           >
             Decline...
@@ -217,7 +217,7 @@ export default function InvitationsCard({
             className={`px-3 py-1 rounded font-semibold transition-all ${
               myResponse === "proposed"
                 ? "bg-blue-600 text-white shadow-sm"
-                : "bg-surface-elevated hover:bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                : "bg-surface-elevated hover:bg-accent-soft text-accent-soft-text border border-primary/30"
             }`}
           >
             Propose New Time...
@@ -228,8 +228,8 @@ export default function InvitationsCard({
       {/* Organizer Tools & List of Attendees */}
       <div className="p-4 space-y-3">
         {isOrganizer && data.counts.pending > 0 && (
-          <div className="p-2.5 rounded bg-blue-500/10 border border-blue-500/20 flex items-center justify-between text-xs">
-            <span className="text-blue-300">
+          <div className="p-2.5 rounded bg-accent-soft border border-primary/30 flex items-center justify-between text-xs">
+            <span className="text-accent-soft-text">
               {data.counts.pending} member{data.counts.pending > 1 ? "s" : ""} haven&apos;t replied yet.
             </span>
             <button
@@ -246,36 +246,36 @@ export default function InvitationsCard({
           {data.invitations.map((inv) => (
             <div key={inv.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-full bg-surface border border-border flex items-center justify-center font-bold text-muted shrink-0 text-[10px]">
+                <div className="w-7 h-7 rounded-full bg-surface border border-border flex items-center justify-center font-bold text-muted shrink-0 text-[12px]">
                   {inv.user?.full_name?.charAt(0) || "U"}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-100 truncate">{inv.user?.full_name}</span>
+                    <span className="font-semibold text-foreground truncate">{inv.user?.full_name}</span>
                     <span
-                      className={`px-1.5 py-0.2 rounded text-[10px] font-bold capitalize ${
+                      className={`px-1.5 py-0.2 rounded text-[12px] font-bold capitalize ${
                         inv.response === "accepted"
-                          ? "text-emerald-400"
+                          ? "text-success-text"
                           : inv.response === "declined"
-                          ? "text-rose-400"
+                          ? "text-danger-text"
                           : inv.response === "tentative"
-                          ? "text-amber-400"
+                          ? "text-warning-text"
                           : inv.response === "proposed"
-                          ? "text-blue-400"
+                          ? "text-accent-soft-text"
                           : "text-muted"
                       }`}
                     >
                       {inv.response}
                     </span>
                   </div>
-                  {inv.note && <p className="text-[11px] text-muted italic mt-0.5">&quot;{inv.note}&quot;</p>}
+                  {inv.note && <p className="text-[12.5px] text-muted italic mt-0.5">&quot;{inv.note}&quot;</p>}
                   {inv.delegate && (
-                    <p className="text-[11px] text-purple-400 mt-0.5">
+                    <p className="text-[12.5px] text-purple-400 mt-0.5">
                       Delegated to: {inv.delegate.full_name}
                     </p>
                   )}
                   {inv.proposed_start && (
-                    <p className="text-[11px] text-blue-400 mt-0.5">
+                    <p className="text-[12.5px] text-accent-soft-text mt-0.5">
                       Proposed: {new Date(inv.proposed_start).toLocaleString()}
                     </p>
                   )}
@@ -287,7 +287,7 @@ export default function InvitationsCard({
                 <button
                   onClick={() => handleAcceptProposal(inv.proposed_start!)}
                   disabled={isPending}
-                  className="px-2.5 py-1 text-[11px] font-semibold rounded bg-blue-600 hover:bg-blue-500 text-white shrink-0"
+                  className="px-2.5 py-1 text-[12.5px] font-semibold rounded bg-blue-600 hover:bg-blue-500 text-white shrink-0"
                 >
                   Move Meeting Here
                 </button>
@@ -302,8 +302,8 @@ export default function InvitationsCard({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-sm font-bold text-slate-100">Decline Meeting</h3>
-              <button onClick={() => setIsDeclineModalOpen(false)} className="text-muted hover:text-slate-100">
+              <h3 className="text-sm font-bold text-foreground">Decline Meeting</h3>
+              <button onClick={() => setIsDeclineModalOpen(false)} className="text-muted hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -315,7 +315,7 @@ export default function InvitationsCard({
                   value={declineReason}
                   onChange={(e) => setDeclineReason(e.target.value)}
                   placeholder="e.g. Prior customer site visit in Akola"
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                 />
               </div>
 
@@ -324,7 +324,7 @@ export default function InvitationsCard({
                 <select
                   value={delegateId}
                   onChange={(e) => setDelegateId(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                 >
                   <option value="">No delegate</option>
                   {usersList.map((u) => (
@@ -333,7 +333,7 @@ export default function InvitationsCard({
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-muted mt-1">
+                <p className="text-[12px] text-muted mt-1">
                   The selected delegate will be invited automatically with delegate permissions.
                 </p>
               </div>
@@ -341,7 +341,7 @@ export default function InvitationsCard({
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
               <button
                 onClick={() => setIsDeclineModalOpen(false)}
-                className="px-3 py-1.5 text-xs rounded border border-border text-slate-300"
+                className="px-3 py-1.5 text-xs rounded border border-border text-subtle"
               >
                 Cancel
               </button>
@@ -362,8 +362,8 @@ export default function InvitationsCard({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-sm font-bold text-slate-100">Propose New Meeting Time</h3>
-              <button onClick={() => setIsProposeModalOpen(false)} className="text-muted hover:text-slate-100">
+              <h3 className="text-sm font-bold text-foreground">Propose New Meeting Time</h3>
+              <button onClick={() => setIsProposeModalOpen(false)} className="text-muted hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -374,7 +374,7 @@ export default function InvitationsCard({
                   type="datetime-local"
                   value={proposedDateTime}
                   onChange={(e) => setProposedDateTime(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                 />
               </div>
 
@@ -385,14 +385,14 @@ export default function InvitationsCard({
                   value={proposeNote}
                   onChange={(e) => setProposeNote(e.target.value)}
                   placeholder="e.g. Clashes with monthly review call, free after 3 PM"
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                 />
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
               <button
                 onClick={() => setIsProposeModalOpen(false)}
-                className="px-3 py-1.5 text-xs rounded border border-border text-slate-300"
+                className="px-3 py-1.5 text-xs rounded border border-border text-subtle"
               >
                 Cancel
               </button>

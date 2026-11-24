@@ -153,11 +153,11 @@ export function EndSessionModal({
             )}
 
             {openLoopsCount > 0 && (
-              <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[12.5px] text-amber-300">
-                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
+              <div className="flex items-start gap-2.5 rounded-lg border border-warning-border bg-warning-soft p-3 text-[12.5px] text-warning-text">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-warning-text" />
                 <div>
                   <span className="font-semibold">{openLoopsCount} Unconverted Open Loop{openLoopsCount > 1 ? "s" : ""}:</span>
-                  <p className="mt-0.5 text-[12px] text-amber-200/90">
+                  <p className="mt-0.5 text-[12px] text-warning-text">
                     {openLoopsCount} note line{openLoopsCount > 1 ? "s" : ""} look like action items but have not been converted into tasks or points yet.
                   </p>
                 </div>

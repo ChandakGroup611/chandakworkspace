@@ -113,14 +113,14 @@ export default function RunningNotesCard({
       <div className="p-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <StickyNote className="w-4 h-4 text-theme-btn-primary" />
-          <h3 className="text-xs font-bold text-slate-100">Live Running Notes</h3>
+          <h3 className="text-xs font-bold text-foreground">Live Running Notes</h3>
           {focusedPointCode && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 font-medium">
+            <span className="text-[12px] px-1.5 py-0.5 rounded bg-accent-soft text-accent-soft-text font-medium">
               Tagging: {focusedPointCode}
             </span>
           )}
         </div>
-        <span className="text-[10px] text-muted">{blocks.length} lines</span>
+        <span className="text-[12px] text-muted">{blocks.length} lines</span>
       </div>
 
       {/* Stream of Notes */}
@@ -138,14 +138,14 @@ export default function RunningNotesCard({
                 key={block.id}
                 className={`group p-2 rounded text-xs flex items-start gap-2 border transition-all ${
                   isAction
-                    ? "bg-amber-500/5 border-amber-500/30"
+                    ? "bg-warning-soft border-warning-border"
                     : "bg-surface border-border hover:border-border-hover"
                 }`}
               >
                 {block.type === "todo" ? (
                   <button
                     onClick={() => handleToggleDone(block)}
-                    className={`mt-0.5 text-muted hover:text-slate-100 ${block.done ? "text-emerald-400" : ""}`}
+                    className={`mt-0.5 text-muted hover:text-foreground ${block.done ? "text-success-text" : ""}`}
                   >
                     <CheckSquare className="w-3.5 h-3.5" />
                   </button>
@@ -154,19 +154,19 @@ export default function RunningNotesCard({
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <p className={`${block.done ? "line-through text-muted" : "text-slate-100"}`}>{block.text}</p>
-                  <div className="flex items-center gap-2 mt-1 text-[10px] text-muted">
+                  <p className={`${block.done ? "line-through text-muted" : "text-foreground"}`}>{block.text}</p>
+                  <div className="flex items-center gap-2 mt-1 text-[12px] text-muted">
                     <span>{new Date(block.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                     {block.point?.code && (
-                      <span className="text-blue-400 font-medium">[{block.point.code}]</span>
+                      <span className="text-accent-soft-text font-medium">[{block.point.code}]</span>
                     )}
                     {isAction && (
-                      <span className="text-amber-400 font-semibold flex items-center gap-0.5">
+                      <span className="text-warning-text font-semibold flex items-center gap-0.5">
                         <AlertCircle className="w-2.5 h-2.5" /> Action loop
                       </span>
                     )}
                     {block.linked_type && (
-                      <span className="text-emerald-400 font-bold">✓ {block.linked_type}</span>
+                      <span className="text-success-text font-bold">✓ {block.linked_type}</span>
                     )}
                   </div>
                 </div>
@@ -175,14 +175,14 @@ export default function RunningNotesCard({
                   {onOpenConvert && !block.linked_type && (
                     <button
                       onClick={() => onOpenConvert(block)}
-                      className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-surface-elevated border border-border hover:bg-surface text-theme-btn-primary"
+                      className="px-1.5 py-0.5 text-[12px] font-semibold rounded bg-surface-elevated border border-border hover:bg-surface text-theme-btn-primary"
                     >
                       Convert
                     </button>
                   )}
                   <button
                     onClick={() => handleDelete(block.id)}
-                    className="p-1 text-muted hover:text-rose-400"
+                    className="p-1 text-muted hover:text-danger-text"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -204,7 +204,7 @@ export default function RunningNotesCard({
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isPending}
-          className="flex-1 px-2.5 py-1.5 text-xs bg-surface-elevated border border-border rounded text-slate-100 placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
+          className="flex-1 px-2.5 py-1.5 text-xs bg-surface-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
         />
         <button
           onClick={() => {

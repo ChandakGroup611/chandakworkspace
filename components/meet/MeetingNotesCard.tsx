@@ -77,14 +77,14 @@ export default function MeetingNotesCard({ sessionId }: Props) {
       <div className="p-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <StickyNote className="w-4 h-4 text-theme-btn-primary" />
-          <h3 className="text-xs font-bold text-slate-100">Meeting Notes</h3>
-          <span className="text-[10px] text-muted">({blocks.length} entries)</span>
+          <h3 className="text-xs font-bold text-foreground">Meeting Notes</h3>
+          <span className="text-[12px] text-muted">({blocks.length} entries)</span>
         </div>
         <button
           onClick={handleOpenSummary}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-slate-200"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-foreground"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <Sparkles className="w-3.5 h-3.5 text-warning-text" />
           Summary
         </button>
       </div>
@@ -97,10 +97,10 @@ export default function MeetingNotesCard({ sessionId }: Props) {
             <div key={b.id} className="p-2 rounded bg-surface border border-border flex items-start gap-2">
               <div className="mt-1.5 w-1 h-1 rounded-full bg-muted shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-slate-100">{b.text}</p>
-                <div className="flex items-center gap-2 mt-1 text-[10px] text-muted">
+                <p className="text-foreground">{b.text}</p>
+                <div className="flex items-center gap-2 mt-1 text-[12px] text-muted">
                   <span>{new Date(b.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                  {b.point?.code && <span className="text-blue-400 font-medium">[{b.point.code}]</span>}
+                  {b.point?.code && <span className="text-accent-soft-text font-medium">[{b.point.code}]</span>}
                 </div>
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function MeetingNotesCard({ sessionId }: Props) {
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isPending}
-          className="flex-1 px-2.5 py-1.5 text-xs bg-surface-elevated border border-border rounded text-slate-100 placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
+          className="flex-1 px-2.5 py-1.5 text-xs bg-surface-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
         />
         <button
           onClick={() => {
@@ -135,8 +135,8 @@ export default function MeetingNotesCard({ sessionId }: Props) {
       {isSummaryOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface-elevated border border-border rounded-lg max-w-lg w-full p-5 shadow-2xl space-y-4">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-amber-400" /> Session Summary
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-warning-text" /> Session Summary
             </h3>
             <p className="text-xs text-muted leading-relaxed">
               {summaryData?.overview || "Generating summary..."}
@@ -149,14 +149,14 @@ export default function MeetingNotesCard({ sessionId }: Props) {
                     toast.success("Copied");
                   }
                 }}
-                className="px-3 py-1.5 text-xs rounded border border-border text-slate-300 flex items-center gap-1"
+                className="px-3 py-1.5 text-xs rounded border border-border text-subtle flex items-center gap-1"
               >
                 <Copy className="w-3.5 h-3.5" /> Copy
               </button>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsSummaryOpen(false)}
-                  className="px-3 py-1.5 text-xs rounded border border-border text-slate-300"
+                  className="px-3 py-1.5 text-xs rounded border border-border text-subtle"
                 >
                   Close
                 </button>

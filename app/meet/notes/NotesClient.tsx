@@ -131,7 +131,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
   };
 
   const handleCreatePersonalNote = () => {
-    const title = prompt("Enter title for new personal note:", "New Personal Note");
+    const title = prompt("Enter title for new personal note:", "New note");
     if (!title) return;
 
     startTransition(async () => {
@@ -296,11 +296,11 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
   const totalOpenLoops = notes.reduce((acc, n) => acc + (n.open_loops_count || 0), 0);
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-64px)] bg-surface text-slate-100">
+    <div className="flex flex-col min-h-[calc(100vh-64px)] bg-surface text-foreground">
       <div className="p-4 sm:p-6 border-b border-border bg-surface-elevated">
         <MeetHeader
-          title="Meeting & Personal Notes"
-          description="High-speed capture layer: running session notes, personal scratchpads, open loops detection, and one-click item conversion."
+          title="Notes"
+          description="Meeting notes and your own notes. Lines that sound like an action can be turned into a task or point."
           actions={
             <div className="flex items-center gap-2">
               <button
@@ -325,10 +325,10 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted" />
               <input
                 type="text"
-                placeholder="Search notes or line text..."
+                placeholder="Search notes"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-surface-elevated border border-border rounded text-slate-100 placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-surface-elevated border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary"
               />
             </div>
           </div>
@@ -352,8 +352,8 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                   activeTab === tab.id
                     ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
                     : tab.alert
-                    ? "text-amber-400 hover:bg-surface-elevated"
-                    : "text-muted hover:text-slate-200 hover:bg-surface-elevated"
+                    ? "text-warning-text hover:bg-surface-elevated"
+                    : "text-muted hover:text-foreground hover:bg-surface-elevated"
                 }`}
               >
                 {tab.label}
@@ -383,23 +383,23 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        {note.pinned && <Pin className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                        {note.pinned && <Pin className="w-3.5 h-3.5 text-warning-text shrink-0" />}
                         {note.kind === "session" ? (
-                          <Video className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                          <Video className="w-3.5 h-3.5 text-accent-soft-text shrink-0" />
                         ) : (
-                          <StickyNote className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <StickyNote className="w-3.5 h-3.5 text-success-text shrink-0" />
                         )}
-                        <span className="text-xs font-semibold text-slate-100 truncate">
+                        <span className="text-xs font-semibold text-foreground truncate">
                           {note.title}
                         </span>
                       </div>
                       {openLoops > 0 && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-500/20 text-amber-400 shrink-0">
+                        <span className="px-1.5 py-0.5 text-[12px] font-bold rounded bg-warning-soft text-warning-text shrink-0">
                           {openLoops} loop{openLoops > 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted">
+                    <div className="flex items-center justify-between text-[12.5px] text-muted">
                       <span>{note.kind === "session" ? "Session Note" : "Personal Note"}</span>
                       <span>{new Date(note.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                     </div>
@@ -419,13 +419,13 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="p-2 rounded bg-surface border border-border">
                     {selectedNote.kind === "session" ? (
-                      <Video className="w-4 h-4 text-blue-400" />
+                      <Video className="w-4 h-4 text-accent-soft-text" />
                     ) : (
-                      <StickyNote className="w-4 h-4 text-emerald-400" />
+                      <StickyNote className="w-4 h-4 text-success-text" />
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-sm font-bold text-slate-100 truncate">{selectedNote.title}</h2>
+                    <h2 className="text-sm font-bold text-foreground truncate">{selectedNote.title}</h2>
                     <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
                       <span>{selectedNote.kind === "session" ? "Shared Session Notes" : "Private Scratchpad"}</span>
                       {selectedNote.session && (
@@ -446,9 +446,9 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                   {selectedNote.kind === "session" && (
                     <button
                       onClick={handleOpenSummary}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-slate-200"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-foreground"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <Sparkles className="w-3.5 h-3.5 text-warning-text" />
                       Summary
                     </button>
                   )}
@@ -470,7 +470,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                   <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-muted">
                     <StickyNote className="w-8 h-8 mb-2 opacity-40" />
                     <p className="text-xs font-medium">No notes written yet.</p>
-                    <p className="text-[11px] mt-1 max-w-sm">
+                    <p className="text-[12.5px] mt-1 max-w-sm">
                       Type below and press Enter. Use inline commands <code className="text-theme-btn-primary">/task</code>,{" "}
                       <code className="text-theme-btn-primary">/point</code>, or <code className="text-theme-btn-primary">[]</code> to capture actions instantly.
                     </p>
@@ -484,7 +484,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                         key={block.id}
                         className={`group p-2.5 rounded border transition-all flex items-start gap-3 ${
                           looksAction
-                            ? "bg-amber-500/5 border-amber-500/30"
+                            ? "bg-warning-soft border-warning-border"
                             : "bg-surface-elevated/40 border-border hover:border-border-hover"
                         }`}
                       >
@@ -492,8 +492,8 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                         {block.type === "todo" ? (
                           <button
                             onClick={() => handleToggleDone(block)}
-                            className={`mt-0.5 rounded text-muted hover:text-slate-100 ${
-                              block.done ? "text-emerald-400" : ""
+                            className={`mt-0.5 rounded text-muted hover:text-foreground ${
+                              block.done ? "text-success-text" : ""
                             }`}
                           >
                             <CheckSquare className="w-4 h-4" />
@@ -504,11 +504,11 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
 
                         {/* Text and Badges */}
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs ${block.done ? "line-through text-muted" : "text-slate-100"}`}>
+                          <p className={`text-xs ${block.done ? "line-through text-muted" : "text-foreground"}`}>
                             {block.text}
                           </p>
 
-                          <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[10px]">
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[12px]">
                             <span className="text-muted">
                               {new Date(block.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             </span>
@@ -516,26 +516,26 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                               <span className="text-muted">by {block.author.full_name}</span>
                             )}
                             {block.point && (
-                              <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 font-medium">
+                              <span className="px-1.5 py-0.5 rounded bg-accent-soft text-accent-soft-text font-medium">
                                 {block.point.code} ({block.point.title})
                               </span>
                             )}
                             {looksAction && (
                               <div className="flex items-center gap-1.5">
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-semibold">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-warning-soft text-warning-text font-semibold">
                                   <AlertCircle className="w-3 h-3" />
                                   Looks like an action
                                 </span>
                                 <button
                                   onClick={() => handleDismissAction(block)}
-                                  className="text-muted hover:text-slate-200 underline"
+                                  className="text-muted hover:text-foreground underline"
                                 >
                                   Not an action
                                 </button>
                               </div>
                             )}
                             {block.linked_type && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-success-soft text-success-text font-bold">
                                 <CheckCircle2 className="w-3 h-3" />
                                 Converted to {block.linked_type}
                               </span>
@@ -549,19 +549,19 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                             <>
                               <button
                                 onClick={() => openConversion(block, "task")}
-                                className="px-2 py-1 text-[10px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-blue-400"
+                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-accent-soft-text"
                               >
                                 → Task
                               </button>
                               <button
                                 onClick={() => openConversion(block, "point")}
-                                className="px-2 py-1 text-[10px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-purple-400"
+                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-purple-400"
                               >
                                 → Point
                               </button>
                               <button
                                 onClick={() => openConversion(block, "decision")}
-                                className="px-2 py-1 text-[10px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-amber-400"
+                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-surface-elevated text-warning-text"
                               >
                                 → Decision
                               </button>
@@ -569,7 +569,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                           )}
                           <button
                             onClick={() => handleDeleteBlock(block.id)}
-                            className="p-1 text-muted hover:text-rose-400 rounded"
+                            className="p-1 text-muted hover:text-danger-text rounded"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -592,7 +592,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isPending}
-                    className="flex-1 px-3 py-2 text-xs bg-surface border border-border rounded text-slate-100 placeholder:text-muted focus:outline-none focus:border-theme-btn-primary shadow-inner"
+                    className="flex-1 px-3 py-2 text-xs bg-surface border border-border rounded text-foreground placeholder:text-muted focus:outline-none focus:border-theme-btn-primary shadow-inner"
                   />
                   <button
                     onClick={() => {
@@ -607,9 +607,9 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                     Send
                   </button>
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-muted mt-2 px-1">
+                <div className="flex items-center justify-between text-[12.5px] text-muted mt-2 px-1">
                   <span>Fast capture: Enter saves line · /task opens task modal · /point creates point</span>
-                  <span className="flex items-center gap-1 text-emerald-400">
+                  <span className="flex items-center gap-1 text-success-text">
                     <Check className="w-3 h-3" /> Autosaved
                   </span>
                 </div>
@@ -618,7 +618,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted">
               <StickyNote className="w-12 h-12 mb-3 opacity-30" />
-              <p className="text-sm font-semibold text-slate-200">No Note Selected</p>
+              <p className="text-sm font-semibold text-foreground">No Note Selected</p>
               <p className="text-xs mt-1">Select a note from the left sidebar or create a new personal note.</p>
             </div>
           )}
@@ -630,10 +630,10 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface-elevated border border-border rounded-lg max-w-md w-full p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-sm font-bold text-slate-100">
+              <h3 className="text-sm font-bold text-foreground">
                 Convert Note Line to {convertType.toUpperCase()}
               </h3>
-              <button onClick={() => setConvertBlock(null)} className="text-muted hover:text-slate-100">
+              <button onClick={() => setConvertBlock(null)} className="text-muted hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -645,7 +645,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                   type="text"
                   value={convertTitle}
                   onChange={(e) => setConvertTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                 />
               </div>
 
@@ -656,7 +656,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                     <select
                       value={convertPointId}
                       onChange={(e) => setConvertPointId(e.target.value)}
-                      className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                     >
                       <option value="">Select point...</option>
                       {(selectedNote?.blocks || [])
@@ -674,7 +674,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                     <select
                       value={convertOwnerId}
                       onChange={(e) => setConvertOwnerId(e.target.value)}
-                      className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                     >
                       <option value="">Assign to...</option>
                       {(masters.users || []).map((u: any) => (
@@ -693,7 +693,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                       max={30}
                       value={convertTat}
                       onChange={(e) => setConvertTat(parseInt(e.target.value, 10) || 1)}
-                      className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                      className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                     />
                   </div>
                 </>
@@ -705,7 +705,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                   <select
                     value={convertOwnerId}
                     onChange={(e) => setConvertOwnerId(e.target.value)}
-                    className="w-full px-3 py-2 bg-surface border border-border rounded text-slate-100 focus:outline-none focus:border-theme-btn-primary"
+                    className="w-full px-3 py-2 bg-surface border border-border rounded text-foreground focus:outline-none focus:border-theme-btn-primary"
                   >
                     <option value="">Assign to...</option>
                     {(masters.users || []).map((u: any) => (
@@ -721,7 +721,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
               <button
                 onClick={() => setConvertBlock(null)}
-                className="px-3 py-1.5 text-xs rounded border border-border hover:bg-surface text-slate-300"
+                className="px-3 py-1.5 text-xs rounded border border-border hover:bg-surface text-subtle"
               >
                 Cancel
               </button>
@@ -743,10 +743,10 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
           <div className="bg-surface-elevated border border-border rounded-lg max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-400" />
-                <h3 className="text-sm font-bold text-slate-100">Automated Meeting Summary</h3>
+                <Sparkles className="w-5 h-5 text-warning-text" />
+                <h3 className="text-sm font-bold text-foreground">Automated Meeting Summary</h3>
               </div>
-              <button onClick={() => setIsSummaryOpen(false)} className="text-muted hover:text-slate-100">
+              <button onClick={() => setIsSummaryOpen(false)} className="text-muted hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -760,23 +760,23 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
               ) : summaryData ? (
                 <>
                   <div className="p-3 rounded bg-surface border border-border">
-                    <h4 className="font-bold text-slate-100 mb-1">Executive Overview</h4>
+                    <h4 className="font-bold text-foreground mb-1">Executive Overview</h4>
                     <p className="text-muted leading-relaxed">{summaryData.overview}</p>
                   </div>
 
                   <div>
-                    <h4 className="font-bold text-slate-200 mb-2">Points Discussed ({summaryData.pointsDiscussed?.length || 0})</h4>
+                    <h4 className="font-bold text-foreground mb-2">Points Discussed ({summaryData.pointsDiscussed?.length || 0})</h4>
                     <div className="space-y-2">
                       {summaryData.pointsDiscussed?.map((pt: any) => (
                         <div key={pt.id} className="p-2.5 rounded bg-surface border border-border">
                           <div className="flex items-center justify-between">
-                            <span className="font-semibold text-slate-100">{pt.code}: {pt.title}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-surface-elevated text-[10px] text-muted capitalize">
+                            <span className="font-semibold text-foreground">{pt.code}: {pt.title}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-surface-elevated text-[12px] text-muted capitalize">
                               {pt.status}
                             </span>
                           </div>
                           {pt.tagged_notes?.length > 0 && (
-                            <ul className="list-disc pl-4 mt-1.5 text-[11px] text-muted space-y-0.5">
+                            <ul className="list-disc pl-4 mt-1.5 text-[12.5px] text-muted space-y-0.5">
                               {pt.tagged_notes.map((noteText: string, idx: number) => (
                                 <li key={idx}>{noteText}</li>
                               ))}
@@ -789,11 +789,11 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
 
                   {summaryData.decisions?.length > 0 && (
                     <div>
-                      <h4 className="font-bold text-slate-200 mb-2">Decisions Taken ({summaryData.decisions.length})</h4>
+                      <h4 className="font-bold text-foreground mb-2">Decisions Taken ({summaryData.decisions.length})</h4>
                       <div className="space-y-1.5">
                         {summaryData.decisions.map((d: any) => (
                           <div key={d.id} className="p-2 rounded bg-surface border border-border flex items-center justify-between">
-                            <span className="font-medium text-slate-100">{d.code}: {d.text}</span>
+                            <span className="font-medium text-foreground">{d.code}: {d.text}</span>
                           </div>
                         ))}
                       </div>
@@ -802,12 +802,12 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
 
                   {summaryData.actionItems?.length > 0 && (
                     <div>
-                      <h4 className="font-bold text-slate-200 mb-2">Action Items ({summaryData.actionItems.length})</h4>
+                      <h4 className="font-bold text-foreground mb-2">Action Items ({summaryData.actionItems.length})</h4>
                       <div className="space-y-1.5">
                         {summaryData.actionItems.map((t: any) => (
                           <div key={t.id} className="p-2 rounded bg-surface border border-border flex items-center justify-between">
-                            <span className="font-medium text-slate-100">{t.code}: {t.title}</span>
-                            <span className="text-[10px] text-muted">Due: {t.due_date} ({t.owner?.full_name || "Unassigned"})</span>
+                            <span className="font-medium text-foreground">{t.code}: {t.title}</span>
+                            <span className="text-[12px] text-muted">Due: {t.due_date} ({t.owner?.full_name || "Unassigned"})</span>
                           </div>
                         ))}
                       </div>
@@ -825,7 +825,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                     toast.success("Summary overview copied to clipboard");
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-surface text-slate-300"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-surface text-subtle"
               >
                 <Copy className="w-3.5 h-3.5" />
                 Copy Overview
@@ -834,7 +834,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsSummaryOpen(false)}
-                  className="px-3 py-1.5 text-xs rounded border border-border hover:bg-surface text-slate-300"
+                  className="px-3 py-1.5 text-xs rounded border border-border hover:bg-surface text-subtle"
                 >
                   Close
                 </button>
