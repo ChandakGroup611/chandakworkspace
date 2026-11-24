@@ -7,6 +7,7 @@ import BackLink from "@/components/meet/BackLink";
 import TaskDetailClient from "./TaskDetailClient";
 import SubtasksPanel from "@/components/meet/SubtasksPanel";
 import CommentsPanel from "@/components/meet/CommentsPanel";
+import FilesPanel from "@/components/meet/FilesPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       <TaskDetailClient detail={d} users={masters.users as any} />
       <div className="grid gap-5 lg:grid-cols-2">
         {!d.task.parent_task_id && <SubtasksPanel taskId={d.task.id} canAdd={d.canEdit} />}
+        <FilesPanel entityType="task" entityId={d.task.id} canAdd={d.canEdit} />
         <CommentsPanel entityType="task" entityId={d.task.id} />
       </div>
     </div>

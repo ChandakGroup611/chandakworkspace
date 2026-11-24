@@ -8,6 +8,7 @@ import PointActions from "./PointActions";
 import PointUpdateForm from "./PointUpdateForm";
 import PointMoveCard from "./PointMoveCard";
 import CommentsPanel from "@/components/meet/CommentsPanel";
+import FilesPanel from "@/components/meet/FilesPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -225,6 +226,7 @@ export default async function PointPage({ params, searchParams }: { params: Prom
           </div>
         </section>
         {d.canEdit && <PointMoveCard pointId={p.id} meetingId={d.meeting?.id || null} />}
+        <FilesPanel entityType="point" entityId={p.id} canAdd={d.canEdit} />
         <CommentsPanel entityType="point" entityId={p.id} />
       </main>
     </div>
