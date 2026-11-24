@@ -5,6 +5,7 @@ import { getMeetingMasters, getMeetSettings, getMeetRoleMatrix } from "@/lib/act
 import { getSLAPolicies, getSLAInstances, getAlertRules, getNotificationTemplates } from "@/lib/actions/meet/sla";
 
 import { requireMeet } from "@/lib/permissions/meet";
+import { readMeetProjects } from "@/lib/utils/meet-projects";
 import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
@@ -16,7 +17,8 @@ export const metadata = {
   description: "Roles & permissions, meeting policies, alerts & SLA engine, custom templates, rooms, and masters.",
 };
 
-export default async function MeetAdminPage() {
+export default async function MeetAdminPage({ searchParams }: { searchParams: Promise<{ section?: string }> }) {
+  const { section } = await searchParams;
   try {
     await requireMeet("MEET_ADMIN", { requireAdmin: true });
   } catch (err: any) {
@@ -40,7 +42,7 @@ export default async function MeetAdminPage() {
     );
   }
 
-  const [masters, settings, roleMatrix, slaPolicies, slaInstances, alertRules, templates] = await Promise.all([
+  const [masters, settings, roleMatrix, slaPolicies, slaInstances, alertRules, templates, projects] = await Promise.all([
     getMeetingMasters(),
     getMeetSettings(),
     getMeetRoleMatrix(),
@@ -48,14 +50,15 @@ export default async function MeetAdminPage() {
     getSLAInstances(),
     getAlertRules(),
     getNotificationTemplates(),
+    readMeetProjects(),
   ]);
 
   return (
     <div className="space-y-6">
       <MeetHeader
-        title="Meet settings"
-        description="Who can do what, meeting rules, rooms, meeting types and templates, due dates and overdue alerts."
-        breadcrumbs={[{ label: "Meet Settings" }]}
+        title="Settings"
+        description="Pick a section under Settings in the menu on the left."
+        breadcrumbs={[{ label: "Settings" }]}
       />
 
       <MeetAdminClient
@@ -66,6 +69,8 @@ export default async function MeetAdminPage() {
         initialSLAInstances={slaInstances}
         initialAlertRules={alertRules}
         initialTemplates={templates}
+        initialProjects={projects}
+        section={section}
       />
     </div>
   );

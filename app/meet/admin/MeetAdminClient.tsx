@@ -14,6 +14,7 @@ import {
   saveMeetingTemplate, saveMeetSettings,
   saveMeetRoleMatrix,
 } from "@/lib/actions/meet/masters";
+import { saveMeetProject } from "@/lib/actions/meet/projects";
 import { saveAlertRule, saveNotificationTemplate, acknowledgeEscalation } from "@/lib/actions/meet/sla";
 import { toast } from "react-toastify";
 import {
@@ -46,6 +47,9 @@ interface MeetAdminClientProps {
   initialSLAInstances?: MeetSLAInstance[];
   initialAlertRules?: any[];
   initialTemplates?: MeetNotificationTemplate[];
+  /** Which section to show; picked from the sidebar (Settings › …) via ?section= */
+  section?: string;
+  initialProjects?: { id: string; name: string; code: string | null; active: boolean }[];
 }
 
 type AdminTab =
@@ -57,7 +61,21 @@ type AdminTab =
   | "types"
   | "categories"
   | "templates"
-  | "settings";
+  | "settings"
+  | "projects";
+
+const SECTIONS: { id: AdminTab; label: string; hint: string }[] = [
+  { id: "policies", label: "Meeting rules", hint: "Who can create meetings, add points and write notes." },
+  { id: "settings", label: "Due dates and working days", hint: "Working days, holidays and when items count as due soon." },
+  { id: "sla", label: "Overdue alerts", hint: "When overdue points and tasks are flagged and escalated." },
+  { id: "types", label: "Meeting types", hint: "The kinds of meetings people can schedule." },
+  { id: "categories", label: "Point categories", hint: "Categories for points, each with a default number of days to finish." },
+  { id: "projects", label: "Projects", hint: "Chandak Meet's own project list, used to group meetings." },
+  { id: "templates", label: "Meeting templates", hint: "Ready-made agendas for regular meetings." },
+  { id: "rooms", label: "Rooms and door screens", hint: "Meeting rooms and the tablets outside them." },
+  { id: "roles", label: "What each role can do", hint: "The permissions behind each Meet role." },
+  { id: "templates_email", label: "Older email templates", hint: "Meet emails are now set up in Automations › Emails." },
+];
 
 export default function MeetAdminClient({
   initialMasters,
@@ -67,8 +85,13 @@ export default function MeetAdminClient({
   initialSLAInstances = [],
   initialAlertRules = [],
   initialTemplates = [],
+  section,
+  initialProjects = [],
 }: MeetAdminClientProps) {
-  const [activeTab, setActiveTab] = useState<AdminTab>("roles");
+  const activeTab: AdminTab = (SECTIONS.some((x) => x.id === section) ? section : "policies") as AdminTab;
+  const current = SECTIONS.find((x) => x.id === activeTab)!;
+  const [projects, setProjects] = useState(initialProjects);
+  const [projDraft, setProjDraft] = useState<{ id?: string; name: string; code: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   // Local state for lists
@@ -492,47 +515,96 @@ export default function MeetAdminClient({
 
   return (
     <div className="space-y-6">
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-1 bg-surface border border-border p-1.5 rounded-xl overflow-x-auto">
-        {[
-          { id: "roles", label: "Access", icon: Key },
-          { id: "policies", label: "Rules", icon: ShieldCheck },
-          { id: "sla", label: "Overdue alerts", icon: Bell, badge: warningCount + breachedCount },
-          { id: "templates_email", label: "Emails", icon: Mail },
-          { id: "rooms", label: "Rooms and door screens", icon: Tablet, count: rooms.length },
-          { id: "types", label: "Meeting types", icon: Layers, count: types.length },
-          { id: "categories", label: "Point categories", icon: Tag, count: categories.length },
-          { id: "templates", label: "Meeting templates", icon: FileSpreadsheet, count: templates.length },
-          { id: "settings", label: "Due dates and working days", icon: Sliders },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-                isActive
-                  ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
-                  : "text-subtle hover:text-foreground"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-              {"count" in tab && (
-                <span className={`px-1.5 py-0.2 rounded-full text-[12px] ${isActive ? "bg-black/20" : "bg-sunken"}`}>
-                  {tab.count}
-                </span>
-              )}
-              {"badge" in tab && typeof (tab as any).badge === "number" && (tab as any).badge > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[12px] bg-rose-500 text-white font-bold">
-                  {(tab as any).badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* Section header (sections are picked from the sidebar: Settings › …) */}
+      <div className="border-b border-border pb-3">
+        <h2 className="text-[18px] font-bold text-heading">{current.label}</h2>
+        <p className="mt-0.5 text-[13.5px] text-muted">{current.hint}</p>
+        {activeTab === "sla" && warningCount + breachedCount > 0 && (
+          <p className="mt-1 text-[13px] font-semibold text-danger-text">{warningCount + breachedCount} item{warningCount + breachedCount === 1 ? "" : "s"} need attention</p>
+        )}
       </div>
+
+      {activeTab === "projects" && (
+        <div className="theme-card-structural space-y-4 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[13.5px] text-subtle">{projects.length} project{projects.length === 1 ? "" : "s"}. These show in the Project list when scheduling a meeting.</p>
+            <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => setProjDraft({ name: "", code: "" })}>
+              Add project
+            </AppButton>
+          </div>
+          {projDraft && (
+            <form
+              className="grid gap-3 rounded-lg border border-border bg-sunken p-4 sm:grid-cols-[1fr_160px_auto]"
+              onSubmit={(e) => {
+                e.preventDefault();
+                startTransition(async () => {
+                  const res = await saveMeetProject({ id: projDraft.id, name: projDraft.name, code: projDraft.code });
+                  if (!res.success) { toast.error(res.error || "Couldn't save."); return; }
+                  setProjects(res.items || []);
+                  setProjDraft(null);
+                  toast.success("Project saved");
+                });
+              }}
+            >
+              <label className="text-[13px] font-medium text-foreground">
+                Name
+                <input autoFocus value={projDraft.name} onChange={(e) => setProjDraft({ ...projDraft, name: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-surface px-3 text-[14px] text-foreground focus:border-primary focus:outline-none" />
+              </label>
+              <label className="text-[13px] font-medium text-foreground">
+                Code <span className="font-normal text-muted">(optional)</span>
+                <input value={projDraft.code} onChange={(e) => setProjDraft({ ...projDraft, code: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-surface px-3 text-[14px] text-foreground focus:border-primary focus:outline-none" />
+              </label>
+              <div className="flex items-end gap-2">
+                <AppButton type="submit" variant="primary" size="sm" isLoading={isPending}>Save</AppButton>
+                <AppButton type="button" variant="outline" size="sm" onClick={() => setProjDraft(null)}>Cancel</AppButton>
+              </div>
+            </form>
+          )}
+          {projects.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-6 text-center text-[13.5px] text-muted">No projects yet.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full border-collapse text-[14px]">
+                <thead>
+                  <tr className="bg-sunken text-left text-[12.5px] font-semibold text-subtle">
+                    <th className="px-4 py-2.5">Code</th>
+                    <th className="px-4 py-2.5">Project</th>
+                    <th className="px-4 py-2.5">Status</th>
+                    <th className="px-4 py-2.5"><span className="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.map((p) => (
+                    <tr key={p.id} className="border-t border-border">
+                      <td className="px-4 py-2.5 text-[13px] text-muted">{p.code || "—"}</td>
+                      <td className="px-4 py-2.5 font-medium text-foreground">{p.name}</td>
+                      <td className="px-4 py-2.5 text-[13px]">{p.active ? <span className="text-success-text">In use</span> : <span className="text-muted">Hidden</span>}</td>
+                      <td className="px-4 py-2.5 text-right">
+                        <div className="inline-flex gap-2">
+                          <AppButton variant="outline" size="sm" onClick={() => setProjDraft({ id: p.id, name: p.name, code: p.code || "" })}>Edit</AppButton>
+                          <AppButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              startTransition(async () => {
+                                const res = await saveMeetProject({ id: p.id, name: p.name, code: p.code || "", active: !p.active });
+                                if (!res.success) { toast.error(res.error || "Couldn't update."); return; }
+                                setProjects(res.items || []);
+                              })
+                            }
+                          >
+                            {p.active ? "Hide" : "Show"}
+                          </AppButton>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: Roles & Access (Section E1) - Granular Interactive RBAC Matrix */}
       {activeTab === "roles" && (

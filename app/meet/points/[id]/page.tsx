@@ -48,7 +48,7 @@ export default async function PointPage({ params, searchParams }: { params: Prom
     <div className="flex flex-wrap gap-5 pb-6">
       {/* Left: other open points of this meeting (Zoho-style list) */}
       <aside aria-label="Open points in this meeting" className="flex-[1_1_260px] max-w-[320px] space-y-2">
-        <Link href={d.meeting ? `/meet/meetings/${d.meeting.id}?tab=points` : "/meet/my-work"} className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-heading hover:underline">
+        <Link href={d.meeting ? `/meet/meetings/${d.meeting.id}?tab=points` : "/meet/points?show=mine"} className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-heading hover:underline">
           <ChevronLeft className="h-4 w-4" aria-hidden /> {d.meeting?.title || "Points"}
         </Link>
         <ul className="space-y-2">

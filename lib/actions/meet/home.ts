@@ -200,7 +200,7 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
         kind: "overdue_task",
         title: overdueTasks.length === 1 ? "1 action item overdue" : `${overdueTasks.length} action items overdue`,
         detail: `${t.title} · ${late} day${late === 1 ? "" : "s"} late`,
-        href: "/meet/my-work",
+        href: "/meet/points?show=mine",
       });
     }
     if (overduePoints.length) {
@@ -210,7 +210,7 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
         kind: "overdue_point",
         title: overduePoints.length === 1 ? "1 point overdue" : `${overduePoints.length} points overdue`,
         detail: `${p.title} · ${late} day${late === 1 ? "" : "s"} late`,
-        href: "/meet/my-work",
+        href: "/meet/points?show=mine",
       });
     }
 

@@ -7,7 +7,12 @@ import { getSessionsForMeeting } from "@/lib/actions/meet/sessions";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import { getMeetingOverview } from "@/lib/actions/meet/overview";
 import MeetingDashboard from "@/components/meet/MeetingDashboard";
-import { Building2, Check, ChevronLeft, Video } from "lucide-react";
+import { Building2, Check, Video } from "lucide-react";
+import BackLink from "@/components/meet/BackLink";
+import MeetingActions from "@/components/meet/MeetingActions";
+import RsvpPanel from "@/components/meet/RsvpPanel";
+import { getSessionReplies } from "@/lib/actions/meet/rsvp";
+import { requireMeet } from "@/lib/permissions/meet";
 import MeetingDetailTabs, { type DetailTab } from "./MeetingDetailTabs";
 import {
   btnPrimary,
@@ -67,7 +72,10 @@ export default async function MeetingDetailPage({
     notFound();
   }
 
+  const auth = await requireMeet("MEET_VIEW", { meetingId: id });
+  const canDelete = auth.isSuperAdmin || auth.isMeetAdmin || (meeting as any).organizer_id === auth.userId;
   const focus = overview.focus;
+  const replies = focus && (focus.status === "scheduled" || focus.status === "in_progress") ? await getSessionReplies(focus.id) : null;
   const action = focus ? actionFor(focus) : null;
   const step = stepOf(focus?.status);
 
@@ -75,9 +83,7 @@ export default async function MeetingDetailPage({
     <div className="space-y-5 pb-6">
       {/* Header — like a Zoho project: code + name, one line of facts, one main button */}
       <div className="space-y-4 border-b border-border pb-4">
-        <Link href="/meet/meetings" className="inline-flex items-center gap-1 text-[13px] font-medium text-muted hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" aria-hidden /> Meetings
-        </Link>
+        <BackLink href="/meet/meetings" label="Meetings" />
         <div className="flex flex-wrap items-start gap-3">
           <div className="min-w-0 flex-[1_1_420px]">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -108,6 +114,7 @@ export default async function MeetingDetailPage({
             )}
           </div>
           <div className="flex shrink-0 gap-2.5">
+            {meeting.status === "archived" && <span className="inline-flex h-10 items-center rounded-md bg-sunken px-3 text-[13px] font-semibold text-subtle">Archived</span>}
             <Link href={`/meet/meetings/${meeting.id}/edit`} className={btnSecondary}>Edit</Link>
             {focus && action && (
               action.external ? (
@@ -120,6 +127,7 @@ export default async function MeetingDetailPage({
                 </Link>
               )
             )}
+            <MeetingActions meetingId={meeting.id} title={meeting.title} archived={meeting.status === "archived"} canDelete={canDelete} />
           </div>
         </div>
 
@@ -148,6 +156,17 @@ export default async function MeetingDetailPage({
           </ol>
         )}
       </div>
+
+      {focus && replies && (
+        <RsvpPanel
+          sessionId={focus.id}
+          dateLabel={`${relativeDay(focus.scheduled_start)}, ${timeOf(focus.scheduled_start)}`}
+          people={replies.people}
+          mine={replies.mine}
+          canReply={!!replies.mine && meeting.organizer_id !== auth.userId}
+          users={(masters.users || []) as any}
+        />
+      )}
 
       <MeetingDetailTabs
         meeting={meeting}

@@ -785,6 +785,7 @@ export async function cancelSession(input: {
       .from("meet_sessions")
       .update({
         status: "cancelled",
+        cancel_reason: input.reason?.trim() || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", input.sessionId);
@@ -797,13 +798,19 @@ export async function cancelSession(input: {
       action: "cancelled",
       field: "status",
       old_value: session.status,
-      new_value: "cancelled",
+      new_value: input.reason?.trim() ? `cancelled · ${input.reason.trim().slice(0, 300)}` : "cancelled",
       user_id: userId,
       channel: "web",
     });
 
-    // Cancel the Outlook / Teams event and free the room
+    // Cancel the Outlook / Teams event, and free the room in Chandak Meet either way
     await cancelSessionEvent(input.sessionId, input.reason).catch(() => null);
+    await supabaseAdmin
+      .from("meet_room_bookings")
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("session_id", input.sessionId)
+      .neq("status", "cancelled");
+    await notifyCancelled(input.sessionId, input.reason, userId);
 
     revalidatePath(`/meet/sessions/${input.sessionId}`);
     revalidatePath(`/meet/meetings/${session.meeting_id}`);
@@ -929,5 +936,33 @@ export async function updateSessionVideoLink(input: {
   } catch (err: any) {
     console.error("updateSessionVideoLink error:", err);
     return { success: false, error: err.message || "Failed to update video link" };
+  }
+}
+
+/** "Meeting cancelled" email (only goes out if that email is written and switched on). */
+async function notifyCancelled(sessionId: string, reason: string | undefined, actorId: string) {
+  try {
+    const { data: s } = await supabaseAdmin
+      .from("meet_sessions")
+      .select("id, code, scheduled_start, meeting_id, meeting:meet_meetings(title)")
+      .eq("id", sessionId)
+      .maybeSingle();
+    if (!s) return;
+    const m: any = Array.isArray((s as any).meeting) ? (s as any).meeting[0] : (s as any).meeting;
+    await sendMeetEmail("Meeting cancelled", {
+      entityId: sessionId,
+      sessionId,
+      meetingId: s.meeting_id,
+      actorId,
+      link: `/meet/meetings/${s.meeting_id}`,
+      data: {
+        meeting_title: m?.title || "",
+        session_code: s.code || "",
+        start_time: new Date(s.scheduled_start).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }),
+        reason: reason?.trim() || "Not given",
+      },
+    });
+  } catch (err) {
+    console.error("[notifyCancelled]", err);
   }
 }

@@ -124,7 +124,7 @@ export default function ScheduleMeetingForm({ masters, currentUserId, meeting, n
   const [title, setTitle] = useState<string>(m0.title || "");
   const [description, setDescription] = useState<string>(m0.description || "");
   const [meetingTypeId, setMeetingTypeId] = useState<string>(m0.meeting_type_id || masters.types[0]?.id || "");
-  const [projectId, setProjectId] = useState<string>(m0.project_id || "");
+  const [projectId, setProjectId] = useState<string>((m0 as any).meet_project_id || "");
   const [departmentId, setDepartmentId] = useState<string>(m0.department_id || "");
 
   // 2. When
@@ -473,6 +473,9 @@ export default function ScheduleMeetingForm({ masters, currentUserId, meeting, n
                       <option key={p.id} value={p.id}>{p.code ? `${p.code} · ` : ""}{p.name}</option>
                     ))}
                   </select>
+                  {(masters.projects || []).length === 0 && (
+                    <p className="mt-1 text-[12px] text-muted">No Meet projects yet. An admin can add them in Settings › Projects.</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="dept" className={label}>Department <span className="font-normal text-muted">(optional)</span></label>

@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { getMeetHomeData, type MeetHomeNeed } from "@/lib/actions/meet/home";
+import { getInvitesWaitingForMe } from "@/lib/actions/meet/rsvp";
 import {
   IST,
   btnPrimary,
@@ -42,7 +43,7 @@ const needIcon: Record<MeetHomeNeed["kind"], { icon: React.ElementType; cls: str
 };
 
 export default async function MeetHomePage() {
-  const d = await getMeetHomeData();
+  const [d, invites] = await Promise.all([getMeetHomeData(), getInvitesWaitingForMe().catch(() => [])]);
   const hour = Number(new Intl.DateTimeFormat("en-IN", { timeZone: IST, hour: "numeric", hour12: false }).format(new Date()));
   const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const next = d.next;
@@ -181,6 +182,27 @@ export default async function MeetHomePage() {
         </div>
 
         <aside className="space-y-6">
+          {/* Invites waiting for a reply */}
+          {invites.length > 0 && (
+            <section aria-labelledby="inv-h" className="theme-card-structural p-4">
+              <h2 id="inv-h" className="mb-1 px-1 text-[16px] font-semibold text-heading">Waiting for your reply</h2>
+              <p className="mb-2 px-1 text-[12.5px] text-muted">Say if you'll attend. If you can't, give a reason so the organiser knows.</p>
+              <ul className="space-y-1">
+                {invites.map((i) => (
+                  <li key={i.session_id}>
+                    <Link href={`/meet/meetings/${i.meeting_id}`} className="block rounded-md p-2.5 transition-colors hover:bg-surface-hover">
+                      <span className="block text-[14px] font-semibold text-foreground">{i.title}</span>
+                      <span className="block text-[13px] text-muted">
+                        {new Date(i.start).toLocaleString("en-IN", { timeZone: IST, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                        {i.organiser ? ` · from ${i.organiser}` : ""}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {/* Needs you */}
           <section aria-labelledby="needs-h" className="theme-card-structural p-4">
             <h2 id="needs-h" className="mb-2 px-1 text-[16px] font-semibold text-heading">Needs you</h2>
@@ -233,7 +255,9 @@ export default async function MeetHomePage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-[13.5px] font-medium">
-              <Link href="/meet/my-work" className="text-primary hover:underline">My points &amp; tasks</Link>
+              <Link href="/meet/points?show=mine" className="text-primary hover:underline">My points</Link>
+              <Link href="/meet/tasks?show=mine" className="text-primary hover:underline">My tasks</Link>
+              <Link href="/meet/minutes" className="text-primary hover:underline">Minutes</Link>
               <Link href="/meet/reports" className="text-primary hover:underline">Reports</Link>
             </div>
           </section>

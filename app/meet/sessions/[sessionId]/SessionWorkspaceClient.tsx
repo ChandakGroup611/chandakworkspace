@@ -472,15 +472,18 @@ export default function SessionWorkspaceClient({
     minute: "2-digit",
   });
 
+  const isOpen = session.status === "scheduled" || session.status === "in_progress";
+  const isEnded = !isOpen && session.status !== "cancelled";
+
   return (
     <div className="space-y-6">
       <MeetHeader
         title={session.meeting?.title || "Meeting Workspace"}
         description={`${session.code} · Scheduled for ${dateFormatted}`}
         breadcrumbs={[
-          { label: "Meeting Series", href: "/meet/meetings" },
-          { label: session.meeting?.code || "Series", href: `/meet/meetings/${session.meeting_id}` },
-          { label: session.code },
+          { label: "Meetings", href: "/meet/meetings" },
+          { label: session.meeting?.title || session.meeting?.code || "Meeting", href: `/meet/meetings/${session.meeting_id}` },
+          { label: dateFormatted },
         ]}
         badge={<StatusBadge status={session.status} type="session" />}
         actions={
@@ -506,44 +509,53 @@ export default function SessionWorkspaceClient({
               </>
             )}
 
-            <AppButton
-              variant="outline"
-              size="md"
-              leftIcon={<Download className="h-4 w-4" />}
-              onClick={handleExportPDF}
-            >
-              Export PDF
-            </AppButton>
-            <AppButton
-              variant="outline"
-              size="md"
-              leftIcon={<FileText className="h-4 w-4" />}
-              isLoading={generatingMoM}
-              onClick={handleGenerateMoM}
-            >
-              Generate MoM
-            </AppButton>
-            <Link href={`/meet/live/${session.id}`}>
-              <AppButton variant="primary" size="md" leftIcon={<Video className="h-4 w-4" />}>
-                Launch Live Mode
-              </AppButton>
-            </Link>
+            {isEnded && (
+              <>
+                <AppButton
+                  variant="outline"
+                  size="md"
+                  leftIcon={<Download className="h-4 w-4" />}
+                  onClick={handleExportPDF}
+                >
+                  Export PDF
+                </AppButton>
+                <Link href={`/meet/sessions/${session.id}/review`}>
+                  <AppButton variant="primary" size="md" leftIcon={<FileText className="h-4 w-4" />}>
+                    Minutes
+                  </AppButton>
+                </Link>
+              </>
+            )}
+            {isOpen && (
+              <Link href={`/meet/live/${session.id}`}>
+                <AppButton variant="primary" size="md" leftIcon={<Video className="h-4 w-4" />}>
+                  {session.status === "in_progress" ? "Open live meeting" : "Start meeting"}
+                </AppButton>
+              </Link>
+            )}
           </div>
         }
       />
 
+      {session.status === "cancelled" && (
+        <div role="status" className="rounded-lg border border-danger-border bg-danger-soft p-4 text-[14px] text-danger-text">
+          <strong>This meeting was cancelled.</strong>
+          {(session as any).cancel_reason ? ` Reason: ${(session as any).cancel_reason}` : ""}
+        </div>
+      )}
+
       {/* Readiness & Session Quick Bar */}
-      <div className="theme-card-structural p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-primary/5 border-primary/20">
+      <div className={`${isOpen ? "" : "hidden"} theme-card-structural p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-primary/5 border-primary/20`}>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[12px] font-semibold text-primary uppercase tracking-wider">
-              Session Execution
+            <span className="text-[12px] font-semibold text-primary">
+              This meeting
             </span>
             <p className="text-[13px] font-medium text-foreground">
-              {attendees.length} Attendees Invited · {backupPoints.length} Carried Points to Review
+              {attendees.length} invited · {backupPoints.length} open point{backupPoints.length === 1 ? "" : "s"} from earlier meetings
             </p>
           </div>
         </div>
@@ -1354,7 +1366,7 @@ export default function SessionWorkspaceClient({
       )}
 
       {/* Draggable High-Visibility Floating Live Notes Action Widget */}
-      <DraggableLiveNotesWidget sessionId={session.id} />
+      {isOpen && <DraggableLiveNotesWidget sessionId={session.id} />}
     </div>
   );
 }

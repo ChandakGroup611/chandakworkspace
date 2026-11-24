@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import { requireMeet } from "@/lib/permissions/meet";
+import { readMeetProjects, readMeetingProjectMap, setMeetingProject } from "@/lib/utils/meet-projects";
 import { generateICS } from "@/lib/utils/ics";
 import type { MeetingSeries, MeetingMember } from "@/types/meet";
 
@@ -128,8 +129,13 @@ export async function getMeetings(filters?: {
       pointCountMap[p.meeting_id] = (pointCountMap[p.meeting_id] || 0) + 1;
     }
 
+    const [projList, projMap] = await Promise.all([readMeetProjects(), readMeetingProjectMap(meetingIds)]);
+    const projById = new Map(projList.map((p) => [p.id, p]));
     return (data || []).map((m: any) => ({
       ...m,
+      // Meet's own project (Settings › Projects), not a Workspace task project
+      project: projMap.get(m.id) ? projById.get(projMap.get(m.id)!) || null : null,
+      meet_project_id: projMap.get(m.id) || null,
       video_link: sanitizeTeamsUrl(
         m.video_link,
         (m.members || []).map((mb: any) => mb.user?.email || mb.guest_email).filter(Boolean),
@@ -172,8 +178,12 @@ export async function getMeetingById(id: string): Promise<MeetingSeries | null> 
     }
 
     const attendeeEmails = ((data as any).members || []).map((mb: any) => mb.user?.email || mb.guest_email).filter(Boolean);
+    const [projList, projMap] = await Promise.all([readMeetProjects(), readMeetingProjectMap([id])]);
+    const pid = projMap.get(id) || null;
     return {
       ...data,
+      project: pid ? projList.find((p) => p.id === pid) || null : null,
+      meet_project_id: pid,
       video_link: sanitizeTeamsUrl((data as any).video_link, attendeeEmails, (data as any).title),
     } as MeetingSeries;
   } catch (err: any) {
@@ -244,7 +254,7 @@ export async function createMeeting(input: CreateMeetingInput) {
       .insert({
         title: input.title,
         description: input.description,
-        project_id: input.project_id || null,
+        project_id: null, // Meet projects are stored separately (lib/utils/meet-projects.ts)
         company_id: input.company_id || null,
         department_id: input.department_id || null,
         meeting_type_id: input.meeting_type_id,
@@ -274,6 +284,7 @@ export async function createMeeting(input: CreateMeetingInput) {
       console.error("Error creating meeting:", meetingError);
       return { success: false, error: meetingError?.message || "Failed to create meeting series" };
     }
+    if (input.project_id) await setMeetingProject(meeting.id, input.project_id, userId);
 
     // 2. Insert Members (Ensure Organizer, Chair and Minute Taker roles are explicitly mapped without dropping organizer)
     const membersMap = new Map<string, { user_id?: string; role: string; guest_name?: string; guest_email?: string }>();
@@ -483,6 +494,59 @@ export async function archiveMeeting(meetingId: string) {
   }
 }
 
+/** Bring an archived meeting back to the active list. */
+export async function restoreMeeting(meetingId: string) {
+  try {
+    const { userId } = await requireMeet("MEET_DELETE", { meetingId, requireOrganizerOrChair: true });
+    const { error } = await supabaseAdmin.from("meet_meetings").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", meetingId);
+    if (error) return { success: false, error: error.message };
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "meeting", entity_id: meetingId, action: "status_changed", field: "status", old_value: "archived", new_value: "active", user_id: userId, channel: "web",
+    });
+    revalidatePath("/meet/meetings");
+    revalidatePath(`/meet/meetings/${meetingId}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Delete a meeting. Only its organiser or a Meet admin can. Upcoming dates are cancelled
+ * (rooms freed, Outlook/Teams events cancelled, "Meeting cancelled" email if switched on) and
+ * the meeting is hidden everywhere. Nothing is erased: minutes, points, tasks and decisions
+ * already recorded stay in the history and the activity log keeps who deleted it and why.
+ */
+export async function deleteMeeting(input: { meetingId: string; reason: string }) {
+  try {
+    const auth = await requireMeet("MEET_DELETE", { meetingId: input.meetingId });
+    const reason = String(input.reason || "").trim();
+    if (reason.length < 3) return { success: false, error: "Please give a reason." };
+    const { data: m } = await supabaseAdmin.from("meet_meetings").select("id, organizer_id, title, is_deleted").eq("id", input.meetingId).maybeSingle();
+    if (!m || m.is_deleted) return { success: false, error: "Meeting not found." };
+    if (!(auth.isSuperAdmin || auth.isMeetAdmin || m.organizer_id === auth.userId)) {
+      return { success: false, error: "Only the organiser or a Meet admin can delete this meeting." };
+    }
+    const { data: running } = await supabaseAdmin.from("meet_sessions").select("id").eq("meeting_id", input.meetingId).eq("status", "in_progress").eq("is_deleted", false).limit(1);
+    if (running && running.length) return { success: false, error: "This meeting is running right now. End it first." };
+
+    const { data: upcoming } = await supabaseAdmin.from("meet_sessions").select("id").eq("meeting_id", input.meetingId).eq("status", "scheduled").eq("is_deleted", false);
+    const { cancelSession } = await import("@/lib/actions/meet/sessions");
+    for (const s of upcoming || []) await cancelSession({ sessionId: s.id, reason: `Meeting deleted: ${reason}` });
+
+    const { error } = await supabaseAdmin.from("meet_meetings").update({ is_deleted: true, status: "archived", updated_at: new Date().toISOString() }).eq("id", input.meetingId);
+    if (error) return { success: false, error: error.message };
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "meeting", entity_id: input.meetingId, action: "deleted", field: "is_deleted", old_value: "false", new_value: `true · ${reason.slice(0, 300)}`, user_id: auth.userId, channel: "web",
+    });
+    revalidatePath("/meet");
+    revalidatePath("/meet/meetings");
+    return { success: true, cancelled: (upcoming || []).length };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 /**
  * Update an existing meeting series (M1/M8)
  */
@@ -521,7 +585,10 @@ export async function updateMeeting(input: {
       updated_at: new Date().toISOString(),
     };
 
-    if (input.projectId !== undefined) updatePayload.project_id = input.projectId || null;
+    if (input.projectId !== undefined) {
+      updatePayload.project_id = null;
+      await setMeetingProject(input.meetingId, input.projectId || null, userId);
+    }
     if (input.meetingTypeId !== undefined && input.meetingTypeId) updatePayload.meeting_type_id = input.meetingTypeId;
     if (input.departmentId !== undefined) updatePayload.department_id = input.departmentId || null;
     if (input.chairId !== undefined) updatePayload.chair_id = input.chairId || null;

@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import { requireMeet } from "@/lib/permissions/meet";
+import { readMeetProjects } from "@/lib/utils/meet-projects";
 import {
   DEFAULT_MEET_ROLE_MATRIX,
   type MeetingType,
@@ -23,7 +24,7 @@ export async function getMeetingMasters() {
       supabaseAdmin.from("meet_templates").select("*").eq("is_active", true).order("name"),
       supabaseAdmin.from("departments").select("id, name, code").eq("is_deleted", false).order("name"),
       supabaseAdmin.from("user_master").select("id, full_name, email, user_code, profile_photo, department_id").eq("is_deleted", false).eq("is_active", true).order("full_name"),
-      supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").eq("is_deleted", false).order("workspace_name")
+      readMeetProjects(),
     ]);
 
     return {
@@ -33,11 +34,8 @@ export async function getMeetingMasters() {
       templates: (templatesRes.data || []) as MeetingTemplate[],
       departments: deptsRes.data || [],
       users: usersRes.data || [],
-      projects: (projectsRes.data || []).map((p: any) => ({
-        id: p.id,
-        name: p.name || p.workspace_name,
-        code: p.code || p.workspace_code,
-      })),
+      // Chandak Meet's own project master (Settings › Projects), not Workspace task projects
+      projects: (projectsRes || []).filter((p) => p.active !== false).map((p) => ({ id: p.id, name: p.name, code: p.code })),
     };
   } catch (err: any) {
     console.error("Error fetching meet masters:", err);

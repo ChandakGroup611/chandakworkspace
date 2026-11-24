@@ -50,7 +50,7 @@ const TABS: Record<string, Tab[]> = {
   meet: [
     { label: "Overview", href: "/meet", icon: LayoutDashboard, match: (p) => p === "/meet" },
     { label: "Meetings", href: "/meet/meetings", icon: Video, match: (p) => p.startsWith("/meet/meetings") || p.startsWith("/meet/sessions") || p.startsWith("/meet/live") },
-    { label: "My Work", href: "/meet/my-work", icon: CheckCircle2, match: (p) => p.startsWith("/meet/my-work") },
+    { label: "Tasks", href: "/meet/tasks", icon: CheckCircle2, match: (p) => p.startsWith("/meet/tasks") || p.startsWith("/meet/points") },
     { label: "Calendar", href: "/meet/calendar", icon: Calendar, match: (p) => p.startsWith("/meet/calendar") },
   ],
 };

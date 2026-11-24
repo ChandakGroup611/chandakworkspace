@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   CheckCircle2,
   Clock,
@@ -34,9 +35,11 @@ import type { MeetingTask, TaskStatus, PointPriority } from "@/types/meet";
 interface MyWorkClientProps {
   initialTasks: MeetingTask[];
   users?: any[];
+  /** The page already filtered the tasks (Tasks list page): hide the built-in status tabs and search. */
+  serverFiltered?: boolean;
 }
 
-export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientProps) {
+export default function MyWorkClient({ initialTasks, users = [], serverFiltered = false }: MyWorkClientProps) {
   const [tasks, setTasks] = useState<MeetingTask[]>(initialTasks);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [statusTab, setStatusTab] = useState<"all" | "overdue" | "due_soon" | "open" | "completed">("all");
@@ -235,6 +238,7 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
   const kanbanColumns: { status: TaskStatus; label: string }[] = [
     { status: "not_started", label: "Not Started" },
     { status: "in_progress", label: "In Progress" },
+    { status: "on_hold" as TaskStatus, label: "On Hold" },
     { status: "completed", label: "Completed" },
   ];
 
@@ -243,7 +247,7 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
       {/* Control Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Status Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px]">
+        <div className={`flex flex-wrap items-center gap-1.5 text-[12.5px] ${serverFiltered ? "hidden" : ""}`}>
           {(["all", "overdue", "due_soon", "open", "completed"] as const).map((tab) => (
             <button
               key={tab}
@@ -261,7 +265,8 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
 
         {/* View Mode Toggle, Search, and + New Task Action */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
+          {serverFiltered && <span className="text-[13px] text-muted">{filteredTasks.length} task{filteredTasks.length === 1 ? "" : "s"}</span>}
+          <div className={`relative ${serverFiltered ? "hidden" : ""}`}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
             <input
               type="text"
@@ -344,13 +349,13 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
                     return (
                       <tr key={task.id} className="hover:bg-sunken/20 transition-colors">
                         <td className="py-3 px-4 font-mono font-medium text-primary">
-                          {task.code}
+                          <Link href={`/meet/tasks/${task.id}`} className="hover:underline">{task.code}</Link>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium text-foreground">{task.title}</div>
+                          <Link href={`/meet/tasks/${task.id}`} className="font-medium text-foreground hover:underline">{task.title}</Link>
                           {task.point && (
-                            <div className="text-[11px] text-muted flex items-center gap-1 mt-0.5">
-                              <span className="font-mono">{task.point.code}</span>
+                            <div className="text-[12px] text-muted flex items-center gap-1 mt-0.5">
+                              <Link href={`/meet/points/${task.point.id}`} className="font-mono hover:text-primary hover:underline">{task.point.code}</Link>
                               <span>·</span>
                               <span>{(task.point as any)?.meeting?.title || "Meeting"}</span>
                             </div>
@@ -402,6 +407,7 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
                           >
                             <option value="not_started">Not Started</option>
                             <option value="in_progress">In Progress</option>
+                            <option value="on_hold">On Hold</option>
                             <option value="completed">Completed</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
@@ -440,7 +446,7 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
 
       {/* Kanban View */}
       {viewMode === "kanban" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {kanbanColumns.map((col) => {
             const colTasks = filteredTasks.filter((t) => t.status === col.status);
             return (
@@ -464,11 +470,27 @@ export default function MyWorkClient({ initialTasks, users = [] }: MyWorkClientP
                         <span className="font-mono text-primary font-semibold">{task.code}</span>
                         <StatusBadge status={task.priority} type="priority" />
                       </div>
-                      <h4 className="text-[13px] font-semibold text-heading">{task.title}</h4>
-                      <div className="flex items-center justify-between text-[11px] text-muted pt-2 border-t border-border">
+                      <h4 className="text-[13px] font-semibold text-heading">
+                        <Link href={`/meet/tasks/${task.id}`} className="hover:underline">{task.title}</Link>
+                      </h4>
+                      <div className="flex items-center justify-between text-[12px] text-muted pt-2 border-t border-border">
                         <span>{task.owner?.full_name || "Unassigned"}</span>
                         <span>{task.revised_due_date || task.due_date}</span>
                       </div>
+                      <label className="block">
+                        <span className="sr-only">Move to</span>
+                        <select
+                          value={task.status}
+                          onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
+                          className="w-full rounded border border-border bg-surface px-2 py-1 text-[12px] text-foreground focus:border-primary focus:outline-none"
+                        >
+                          <option value="not_started">Not Started</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="on_hold">On Hold</option>
+                          <option value="completed">Completed</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </label>
                     </div>
                   ))}
                 </div>

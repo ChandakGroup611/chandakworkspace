@@ -1,8 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { Plus, Search, Calendar } from "lucide-react";
+import { Plus, Calendar } from "lucide-react";
 import { getMeetings } from "@/lib/actions/meet/meetings";
 import { getMyMeetingRows } from "@/lib/actions/meet/list";
+import { getMeetingMasters } from "@/lib/actions/meet/masters";
+import ListFilters from "@/components/meet/lists/ListFilters";
+import { ReplyChip } from "@/components/meet/RsvpPanel";
+import MeetingActions from "@/components/meet/MeetingActions";
+import { requireMeet } from "@/lib/permissions/meet";
 import { RecordHighlighter, RecordLinkActions } from "@/components/ui/record";
 import {
   btnPrimary,
@@ -34,25 +39,44 @@ const TABS: { id: Tab; label: string }[] = [
 export default async function MeetingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; tab?: string; status?: string }>;
+  searchParams: Promise<{ search?: string; q?: string; tab?: string; status?: string; show?: string; type?: string; department?: string; organiser?: string; from?: string; to?: string }>;
 }) {
   const sp = await searchParams;
   // Old links used ?status=archived; keep them working.
   const tab: Tab = (TABS.some((t) => t.id === sp.tab) ? sp.tab : sp.status === "archived" ? "archived" : "upcoming") as Tab;
-  const search = sp.search?.trim() || "";
+  const search = (sp.q || sp.search || "").trim();
 
   const isSessionTab = tab === "upcoming" || tab === "past";
-  const [sessionData, allSeries] = await Promise.all([
-    getMyMeetingRows(tab === "past" ? "past" : "upcoming", search),
-    isSessionTab ? Promise.resolve([] as any[]) : getMeetings({ search }),
+  const filters = {
+    search,
+    show: sp.show === "all" ? ("all" as const) : ("mine" as const),
+    type: sp.type,
+    department: sp.department,
+    organiser: sp.organiser,
+    from: sp.from,
+    to: sp.to,
+    status: isSessionTab ? sp.status : undefined,
+  };
+  const [sessionData, allSeries, masters, auth] = await Promise.all([
+    getMyMeetingRows(tab === "past" ? "past" : "upcoming", filters),
+    isSessionTab ? Promise.resolve([] as any[]) : getMeetings({ search, typeId: sp.type, departmentId: sp.department }),
+    getMeetingMasters(),
+    requireMeet("MEET_VIEW"),
   ]);
+  const isAdmin = auth.isSuperAdmin || auth.isMeetAdmin;
   // "All meetings" = active and paused; "Archived" = archived only.
-  const series = (allSeries as any[]).filter((m) => (tab === "archived" ? m.status === "archived" : m.status !== "archived"));
+  const series = (allSeries as any[])
+    .filter((m) => (tab === "archived" ? m.status === "archived" : m.status !== "archived"))
+    .filter((m) => !sp.organiser || m.organizer_id === sp.organiser);
 
   const countFor = (t: Tab) =>
     t === "upcoming" ? sessionData.counts.upcoming : t === "past" ? sessionData.counts.past : t === tab ? series.length : null;
 
-  const href = (t: Tab) => `/meet/meetings?tab=${t}${search ? `&search=${encodeURIComponent(search)}` : ""}`;
+  const keep = new URLSearchParams(Object.entries({ q: search, show: sp.show, type: sp.type, department: sp.department, organiser: sp.organiser }).filter(([, v]) => !!v) as [string, string][]);
+  const href = (t: Tab) => `/meet/meetings?tab=${t}${keep.toString() ? `&${keep}` : ""}`;
+  const statusOpts = tab === "past"
+    ? [{ id: "ended", label: "Held" }, { id: "missed", label: "Missed (never started)" }, { id: "cancelled", label: "Cancelled" }]
+    : [{ id: "scheduled", label: "Scheduled" }, { id: "in_progress", label: "Running now" }];
 
   return (
     <div className="space-y-5 pb-6">
@@ -88,22 +112,25 @@ export default async function MeetingsPage({
           })}
         </nav>
 
-        <form className="flex flex-wrap items-center gap-2 px-4 py-3">
-          <input type="hidden" name="tab" value={tab} />
-          <label className="relative flex-1 min-w-[220px] max-w-md">
-            <span className="sr-only">Search meetings</span>
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input
-              type="search"
-              name="search"
-              defaultValue={search}
-              placeholder="Search by title or meeting code"
-              className="h-10 w-full rounded-md border border-border bg-surface pl-9 pr-3 text-[14px] text-foreground placeholder:text-muted focus:border-primary focus:outline-none"
-            />
-          </label>
-          <button type="submit" className={`${btnSecondary} h-10`}>Search</button>
-          {search && <Link href={href(tab).replace(/&search=.*/, "")} className="text-[13px] font-medium text-primary hover:underline">Clear</Link>}
-        </form>
+        <div className="border-b border-border p-3">
+          <ListFilters
+            action="/meet/meetings"
+            hidden={{ tab }}
+            search={search}
+            searchPlaceholder="Title or meeting code"
+            fields={[
+              ...(isAdmin && isSessionTab ? [{ name: "show", label: "Whose", type: "select" as const, value: filters.show, options: [{ id: "mine", label: "Meetings I'm in" }, { id: "all", label: "All meetings" }] }] : []),
+              ...(isSessionTab ? [{ name: "status", label: "Status", type: "select" as const, value: sp.status, anyLabel: "Any", options: statusOpts }] : []),
+              { name: "type", label: "Type", type: "select" as const, value: sp.type, anyLabel: "Any type", options: (masters.types || []).map((t: any) => ({ id: t.id, label: t.name })) },
+              { name: "department", label: "Department", type: "select" as const, value: sp.department, anyLabel: "Any department", options: (masters.departments || []).map((d: any) => ({ id: d.id, label: d.name })) },
+              { name: "organiser", label: "Organiser", type: "select" as const, value: sp.organiser, anyLabel: "Anyone", options: (masters.users || []).map((u: any) => ({ id: u.id, label: u.full_name })) },
+              ...(isSessionTab ? [
+                { name: "from", label: "From", type: "date" as const, value: sp.from },
+                { name: "to", label: "To", type: "date" as const, value: sp.to },
+              ] : []),
+            ]}
+          />
+        </div>
 
         {isSessionTab ? (
           sessionData.rows.length === 0 ? (
@@ -127,6 +154,7 @@ export default async function MeetingsPage({
                     <th scope="col" className="px-4 py-2.5">When</th>
                     <th scope="col" className="px-4 py-2.5">Where</th>
                     <th scope="col" className="px-4 py-2.5">People</th>
+                    <th scope="col" className="px-4 py-2.5">Your reply</th>
                     <th scope="col" className="px-4 py-2.5">Status</th>
                     <th scope="col" className="px-4 py-2.5"><span className="sr-only">Action</span></th>
                   </tr>
@@ -140,8 +168,10 @@ export default async function MeetingsPage({
                         </Link>
                         <div className="mt-0.5 text-[12.5px] text-muted">
                           {recurrenceLabel(s.recurrence)}
+                          {s.type_name ? ` · ${s.type_name}` : ""}
                           {s.department_name ? ` · ${s.department_name}` : ""}
                           {s.meeting_code ? ` · ${s.meeting_code}` : ""}
+                          {s.organiser_name ? ` · ${s.organiser_name}` : ""}
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
@@ -149,7 +179,10 @@ export default async function MeetingsPage({
                         <div className="text-[12.5px] text-muted">{timeOf(s.scheduled_start)}{durationLabel(s) ? ` · ${durationLabel(s)}` : ""}</div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-subtle">{whereOf(s)}</td>
-                      <td className="px-4 py-3 text-subtle">{s.invited || "—"}</td>
+                      <td className="px-4 py-3 text-subtle">{s.invited ? `${s.accepted}/${s.invited} coming` : "—"}</td>
+                      <td className="px-4 py-3">
+                        {s.i_am_organizer ? <span className="text-[12.5px] text-muted">Organiser</span> : s.my_reply ? <Link href={`/meet/meetings/${s.meeting_id}`} title="Reply on the meeting page"><ReplyChip reply={s.my_reply} /></Link> : <span className="text-[12.5px] text-muted">—</span>}
+                      </td>
                       <td className="px-4 py-3"><StatusChip s={s} /></td>
                       <td className="whitespace-nowrap px-4 py-3 text-right"><ActionLink s={s} /></td>
                     </tr>
@@ -205,6 +238,7 @@ export default async function MeetingsPage({
                         <Link href={`/meet/meetings/${m.id}?tab=sessions`} className={`${btnSecondary} h-8 px-3 text-[12.5px]`}>
                           Schedule next
                         </Link>
+                        <MeetingActions meetingId={m.id} title={m.title} archived={m.status === "archived"} canDelete={isAdmin || m.organizer_id === auth.userId} />
                       </div>
                     </td>
                   </tr>

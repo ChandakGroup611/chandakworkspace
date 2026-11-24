@@ -270,15 +270,17 @@ const designNavGroups: NavGroup[] = [
 
 const meetNavGroups: NavGroup[] = [
   {
-    // Chandak Meet redesign: one short menu. "Live session mode" is no longer a menu item —
-    // people join from Home or the meeting page (the /meet/live route still works).
+    // Chandak Meet: each kind of record has its own list page (meetings, points, tasks, minutes,
+    // decisions); clicking a row opens its detail page.
     label: "Meetings",
     items: [
       { label: "Home", href: "/meet", icon: LayoutDashboard },
       { label: "Meetings", href: "/meet/meetings", icon: Video },
       { label: "Calendar", href: "/meet/calendar", icon: Calendar },
-      { label: "Points & tasks", href: "/meet/my-work", icon: CheckCircle2 },
-      { label: "Minutes & notes", href: "/meet/notes", icon: StickyNote },
+      { label: "Points", href: "/meet/points", icon: Tag },
+      { label: "Tasks", href: "/meet/tasks", icon: CheckCircle2 },
+      { label: "Minutes (MoM)", href: "/meet/minutes", icon: FileText },
+      { label: "Notes", href: "/meet/notes", icon: StickyNote },
       { label: "Decisions", href: "/meet/decisions", icon: ShieldCheck },
       { label: "Ask Meet", href: "/meet/ask", icon: Search },
     ]
@@ -288,9 +290,39 @@ const meetNavGroups: NavGroup[] = [
     items: [
       { label: "Reports", href: "/meet/reports", icon: LineChart },
       { label: "Rooms", href: "/meet/rooms", icon: DoorOpen },
-      { label: "Automations", href: "/meet/automations", icon: Zap },
-      { label: "Settings", href: "/meet/admin", icon: Settings2 },
-      { label: "Access & roles", href: "/meet/settings/rbac", icon: Key },
+      {
+        label: "Automations",
+        href: "/meet/automations",
+        icon: Zap,
+        subItems: [
+          { label: "Rules and switches", href: "/meet/automations" },
+          { label: "Emails", href: "/meet/automations/emails" },
+        ],
+      },
+      {
+        label: "Settings",
+        href: "/meet/admin",
+        icon: Settings2,
+        subItems: [
+          { label: "Meeting rules", href: "/meet/admin?section=policies" },
+          { label: "Due dates and working days", href: "/meet/admin?section=settings" },
+          { label: "Overdue alerts", href: "/meet/admin?section=sla" },
+          { label: "Meeting types", href: "/meet/admin?section=types" },
+          { label: "Point categories", href: "/meet/admin?section=categories" },
+          { label: "Projects", href: "/meet/admin?section=projects" },
+          { label: "Meeting templates", href: "/meet/admin?section=templates" },
+          { label: "Rooms and door screens", href: "/meet/admin?section=rooms" },
+        ],
+      },
+      {
+        label: "Access & roles",
+        href: "/meet/settings/rbac",
+        icon: Key,
+        subItems: [
+          { label: "People and roles", href: "/meet/settings/rbac" },
+          { label: "What each role can do", href: "/meet/admin?section=roles" },
+        ],
+      },
     ]
   }
 ];
@@ -409,6 +441,11 @@ function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchPa
 }
 
 function isSubActive(href: string, pathname: string, sp: URLSearchParams | null) {
+  // Meet settings sections live on one page, picked by ?section= (no section = "policies")
+  if (href.startsWith("/meet/admin?")) {
+    const want = new URLSearchParams(href.split("?")[1]).get("section");
+    return pathname === "/meet/admin" && (sp?.get("section") || "policies") === want;
+  }
   if (href === "/amc") return pathname === "/amc";
   if (href === "/amc/register") return pathname.startsWith("/amc/register") || pathname.startsWith("/amc/contracts") || pathname.startsWith("/amc/subscriptions");
   if (href === "/amc/transactions") return pathname.startsWith("/amc/transactions");

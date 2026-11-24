@@ -241,7 +241,8 @@ export async function updatePointStatus(input: {
       revalidatePath(`/meet/sessions/${input.sessionId}`);
       revalidatePath(`/meet/live/${input.sessionId}`);
     }
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     return { success: true, point: updatedPoint };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -330,7 +331,8 @@ export async function updatePoint(input: {
       revalidatePath(`/meet/sessions/${input.sessionId}`);
       revalidatePath(`/meet/live/${input.sessionId}`);
     }
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     return { success: true, point: updatedPoint };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -419,7 +421,8 @@ export async function reassignPointOwner(input: {
       revalidatePath(`/meet/sessions/${input.sessionId}`);
       revalidatePath(`/meet/live/${input.sessionId}`);
     }
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     return { success: true, point: updatedPoint as any };
   } catch (err: any) {
     return { success: false, error: err.message };

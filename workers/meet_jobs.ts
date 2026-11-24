@@ -271,7 +271,7 @@ async function sendOwnerUpdateRequests(now: Date): Promise<number> {
         entityId: s.id,
         sessionId: s.id,
         recipients: { "Point owner": [ownerId] },
-        link: `/meet/my-work`,
+        link: `/meet/tasks?show=mine`,
         data: {
           meeting_title: meeting.title,
           session_code: s.code,
@@ -280,7 +280,7 @@ async function sendOwnerUpdateRequests(now: Date): Promise<number> {
             .slice(0, 20)
             .map((p: any) => `${p.code} ${p.title}${p.due_date ? ` (due ${p.due_date})` : ""}: ${SITE_URL}/meet/points/${p.id}#send-update`)
             .join("\n"),
-          link: `${SITE_URL}/meet/my-work`,
+          link: `${SITE_URL}/meet/tasks?show=mine`,
         },
       });
       sent++;
@@ -517,13 +517,13 @@ async function syncOverdueSla(now: Date): Promise<{ opened: number; closed: numb
       recipients: {
         [i.type === "task" ? "Task owner" : "Point owner"]: [i.ownerId],
       } as any,
-      link: i.type === "task" ? `/meet/my-work?tab=tasks` : `/meet/points/${i.id}`,
+      link: i.type === "task" ? `/meet/tasks/${i.id}` : `/meet/points/${i.id}`,
       data: {
         meeting_title: i.meeting?.title || "",
         [i.type === "task" ? "task_code" : "point_code"]: i.code,
         [i.type === "task" ? "task_title" : "point_title"]: i.title,
         due_date: i.due,
-        link: i.type === "task" ? `${SITE_URL}/meet/my-work?tab=tasks` : `${SITE_URL}/meet/points/${i.id}`,
+        link: i.type === "task" ? `${SITE_URL}/meet/tasks/${i.id}` : `${SITE_URL}/meet/points/${i.id}`,
       },
     });
   }

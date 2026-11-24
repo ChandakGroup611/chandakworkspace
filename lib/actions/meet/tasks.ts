@@ -214,19 +214,20 @@ export async function createTask(input: CreateTaskInput) {
         actorId: userId,
         meetingId: (fullTask as any)?.point?.meeting?.id || (fullTask as any)?.point?.meeting_id,
         recipients: { "Task owner": [(fullTask as any).owner_id || (fullTask as any).owner?.id] },
-        link: `/meet/my-work?tab=tasks`,
+        link: `/meet/tasks/${task.id}`,
         data: {
           task_code: fullTask.code,
           task_title: fullTask.title,
           due_date: dueDate,
           point_code: (fullTask as any)?.point?.code || "",
           meeting_title: (fullTask as any)?.point?.meeting?.title || "",
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/my-work?tab=tasks`,
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/tasks/${task.id}`,
         },
       });
     }
 
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     if (input.session_id) {
       revalidatePath(`/meet/sessions/${input.session_id}`);
       revalidatePath(`/meet/live/${input.session_id}`);
@@ -313,7 +314,8 @@ export async function updateTaskStatus(input: {
       channel: "web",
     });
 
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     return { success: true, task: updatedTask };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -352,7 +354,8 @@ export async function toggleTaskChecklist(checklistId: string, isDone: boolean) 
       .eq("id", checklistId);
 
     if (error) return { success: false, error: error.message };
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -406,7 +409,8 @@ export async function requestTaskExtension(input: {
       channel: "web",
     });
 
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     return { success: true, extension: ext };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -481,7 +485,8 @@ export async function decideTaskExtension(input: {
       channel: "web",
     });
 
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -520,7 +525,8 @@ export async function deleteTask(taskId: string) {
       channel: "web",
     });
 
-    revalidatePath("/meet/my-work");
+    revalidatePath("/meet/tasks");
+    revalidatePath("/meet/points");
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };

@@ -18,6 +18,8 @@ export const MEET_EVENTS = [
   "Point escalated",
   "Overdue",
   "Room declined",
+  "Invite declined",
+  "Meeting cancelled",
 ] as const;
 
 export type MeetEventName = (typeof MEET_EVENTS)[number];
@@ -43,6 +45,8 @@ export const MEET_EVENT_INFO: Record<MeetEventName, { when: string; roles: MeetR
   "Point escalated": { when: "When a point is carried forward 3 times", roles: ["Organiser (creator)", "Chair", "Point owner"] },
   Overdue: { when: "The day a point or task passes its due date", roles: ["Point owner", "Task owner", "Chair", "Organiser (creator)"] },
   "Room declined": { when: "When a room's Outlook calendar turns down the booking", roles: ["Organiser (creator)", "Minute taker", "Chair"] },
+  "Invite declined": { when: "When someone says they can't attend (with their reason)", roles: ["Organiser (creator)", "Chair", "Minute taker"] },
+  "Meeting cancelled": { when: "When a meeting date is cancelled or the meeting is deleted", roles: ["Organiser (creator)", "Chair", "Minute taker", "Everyone invited"] },
 };
 
 /** Reminder timings offered in the editor, in minutes before the meeting starts. */
@@ -81,6 +85,8 @@ export const MEET_MERGE_TAGS = [
   "task_title",
   "due_date",
   "carry_count",
+  "person_name",
+  "reason",
 ];
 
 /**
@@ -155,5 +161,15 @@ export const MEET_EMAIL_STARTERS: Record<MeetEventName, { subject: string; body:
     subject: "Room not available: {{room}} for {{meeting_title}}",
     body: "Dear {{recipient_name}},\n\n{{room}} turned down the booking for {{meeting_title}} on {{start_time}}; it is probably taken at that time. Please pick another room:\n{{link}}\n\nChandak Meet",
     recipients: ["Organiser (creator)"],
+  },
+  "Invite declined": {
+    subject: "{{person_name}} can't attend {{meeting_title}}",
+    body: "Dear {{recipient_name}},\n\n{{person_name}} can't attend {{meeting_title}} on {{start_time}}.\nReason: {{reason}}\n\nSee who is coming:\n{{link}}\n\nChandak Meet",
+    recipients: ["Organiser (creator)"],
+  },
+  "Meeting cancelled": {
+    subject: "Cancelled: {{meeting_title}} on {{start_time}}",
+    body: "Dear {{recipient_name}},\n\n{{meeting_title}} on {{start_time}} has been cancelled.\nReason: {{reason}}\n\nRegards,\n{{organiser_name}}",
+    recipients: ["Everyone invited"],
   },
 };

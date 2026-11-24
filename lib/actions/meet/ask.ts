@@ -150,7 +150,7 @@ export async function askMeet(question: string): Promise<AskResult> {
     if (!allowedMeeting(m?.id)) continue;
     sources.push({
       kind: "Task", code: t.code, title: t.title, snippet: clip(t.description || ""), meeting: m?.title || "", date: day(t.due_date), status: t.status,
-      href: `/meet/my-work?tab=tasks`, score: score(`${t.title} ${t.description || ""}`), when: t.updated_at || "",
+      href: `/meet/tasks/${t.id}`, score: score(`${t.title} ${t.description || ""}`), when: t.updated_at || "",
     });
   }
   for (const mm of (mRes.data || []) as any[]) {
