@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import { requireMeet } from "@/lib/permissions/meet";
+import { autoCheckIn, settleUnjoined } from "@/lib/utils/meet-attendance";
 import type { MeetingSession, SessionAttendee, AgendaItem, MeetingPoint } from "@/types/meet";
 import { sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 
@@ -207,6 +208,10 @@ export async function startSession(sessionId: string) {
 
     if (error || !session) return { success: false, error: error?.message || "Failed to start session" };
 
+    // Attendance: whoever starts it is checked in; everyone not joined yet shows Absent until they join
+    await autoCheckIn(sessionId, userId, "host").catch(() => null);
+    await settleUnjoined(sessionId).catch(() => null);
+
     // Record Activity
     await supabaseAdmin.from("meet_activity_log").insert({
       entity_type: "session",
@@ -241,6 +246,8 @@ export async function endSessionAndCarryForward(
   try {
     const { userId } = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
     const now = new Date().toISOString();
+    // Anyone who never joined and wasn't marked by hand: Absent / Excused
+    await settleUnjoined(sessionId).catch(() => null);
     const followUpStart = opts?.followUpStart && !isNaN(new Date(opts.followUpStart).getTime()) ? new Date(opts.followUpStart) : null;
 
     // 1. Try atomic PostgreSQL transaction function first (S7).
@@ -524,11 +531,28 @@ export async function updateSessionAttendance(
   attendeesList: { id: string; attendance: string }[]
 ) {
   try {
+    // Marking by hand: only the organiser, chair or minute taker. The mark is kept as manual.
+    const { userId } = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
+    const allowed = ["present", "late", "absent", "excused", "left_early"];
+    const now = new Date().toISOString();
     for (const item of attendeesList) {
+      if (!allowed.includes(item.attendance)) continue;
+      const { data: cur } = await supabaseAdmin.from("meet_session_attendees").select("check_in_at, attendance").eq("id", item.id).eq("session_id", sessionId).maybeSingle();
+      if (!cur) continue;
+      const here = item.attendance === "present" || item.attendance === "late";
       await supabaseAdmin
         .from("meet_session_attendees")
-        .update({ attendance: item.attendance })
-        .eq("id", item.id);
+        .update({
+          attendance: item.attendance,
+          marked_by: userId,
+          ...(here && !cur.check_in_at ? { check_in_at: now, check_in_method: "manual" } : {}),
+        })
+        .eq("id", item.id)
+        .eq("session_id", sessionId);
+      await supabaseAdmin.from("meet_activity_log").insert({
+        entity_type: "session", entity_id: sessionId, action: "attendance_marked", field: "attendance",
+        old_value: cur.attendance, new_value: `${item.attendance} (by hand)`, user_id: userId, channel: "web",
+      });
     }
     revalidatePath(`/meet/sessions/${sessionId}`);
     revalidatePath(`/meet/live/${sessionId}`);

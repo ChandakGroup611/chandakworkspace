@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
+import { autoCheckIn, classifyJoin, graceMinutes } from "@/lib/utils/meet-attendance";
 
 /**
  * Join screen, "Ask to join" and "Admit / Deny" (Chandak Meet redesign, stage 4).
@@ -203,12 +204,8 @@ export async function markJoined(sessionId: string): Promise<{ success: boolean 
     .eq("user_id", auth.userId)
     .maybeSingle();
   if (!att || att.role === "requested" || att.role === "denied") return { success: false };
-  if (!att.check_in_at) {
-    await supabaseAdmin
-      .from("meet_session_attendees")
-      .update({ attendance: "present", check_in_at: new Date().toISOString(), check_in_method: "video_join" })
-      .eq("id", att.id);
-  }
+  // Present / Late from the time they joined (see lib/utils/meet-attendance.ts)
+  if (!att.check_in_at) await autoCheckIn(sessionId, auth.userId, "video_join");
   return { success: true };
 }
 
@@ -274,7 +271,7 @@ export async function decideJoinRequest(
 
   const patch =
     decision === "admit"
-      ? { role: "optional", invite_status: "accepted", attendance: "present", check_in_at: new Date().toISOString(), check_in_method: "admitted", marked_by: auth.userId }
+      ? { role: "optional", invite_status: "accepted", attendance: "present", check_in_at: new Date().toISOString(), check_in_method: "admitted" }
       : { role: "denied", invite_status: "declined", attendance: "absent", marked_by: auth.userId };
 
   const { error } = await supabaseAdmin
@@ -283,6 +280,14 @@ export async function decideJoinRequest(
     .eq("session_id", sessionId)
     .eq("role", "requested")
     .in("id", ids);
+  // Admitted after the grace minutes: Late
+  if (!error && decision === "admit") {
+    const { data: s } = await supabaseAdmin.from("meet_sessions").select("scheduled_start").eq("id", sessionId).maybeSingle();
+    if (s) {
+      const c = classifyJoin(new Date().toISOString(), s.scheduled_start, await graceMinutes());
+      if (c.attendance === "late") await supabaseAdmin.from("meet_session_attendees").update({ attendance: "late", late_minutes: c.late_minutes }).eq("session_id", sessionId).in("id", ids);
+    }
+  }
   if (error) return { success: false, error: error.message };
 
   await supabaseAdmin.from("meet_activity_log").insert(

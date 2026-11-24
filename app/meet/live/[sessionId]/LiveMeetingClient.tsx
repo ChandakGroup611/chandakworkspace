@@ -277,9 +277,11 @@ export default function LiveMeetingClient({
   };
 
   const handleToggleAttendance = async (attendeeId: string, currentStatus: string) => {
-    const nextStatus = currentStatus === "present" ? "absent" : currentStatus === "absent" ? "late" : "present";
+    // Marking by hand: Present → Late → Absent → Excused → Present
+    const order = ["present", "late", "absent", "excused"];
+    const nextStatus = order[(order.indexOf(currentStatus) + 1) % order.length] || "present";
     setAttendees((prev) =>
-      prev.map((a) => (a.id === attendeeId ? { ...a, attendance: nextStatus as any } : a))
+      prev.map((a) => (a.id === attendeeId ? { ...a, attendance: nextStatus as any, marked_by: "me" } as any : a))
     );
 
     await updateSessionAttendance(session.id, [{ id: attendeeId, attendance: nextStatus }]);
@@ -464,7 +466,7 @@ export default function LiveMeetingClient({
 
           <h2 className="mb-2 mt-6 flex items-center justify-between text-[12px] font-semibold uppercase tracking-wide text-muted">
             <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" aria-hidden /> People ({attendees.length})</span>
-            <span className="font-normal normal-case tracking-normal">tap to change</span>
+            <span className="font-normal normal-case tracking-normal">marked when they join · tap to change</span>
           </h2>
           <ul className="space-y-1">
             {attendees.map((a) => {
@@ -482,13 +484,15 @@ export default function LiveMeetingClient({
                       {online && <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-success" aria-label="on this page" />}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-[13.5px] text-foreground">{name}</span>
-                    <span
-                      className={`shrink-0 text-[12px] font-semibold ${
-                        a.attendance === "present" ? "text-success-text" : a.attendance === "late" ? "text-warning-text" : "text-danger-text"
-                      }`}
-                    >
-                      {a.attendance === "present" ? "Present" : a.attendance === "late" ? "Late" : "Absent"}
-                    </span>
+                    {(() => {
+                      const att = attendanceLabel(a, session);
+                      return (
+                        <span className={`shrink-0 text-right text-[12px] font-semibold ${att.cls}`}>
+                          {att.label}
+                          {att.sub && <span className="block text-[11px] font-normal text-muted">{att.sub}</span>}
+                        </span>
+                      );
+                    })()}
                   </button>
                 </li>
               );
@@ -795,4 +799,17 @@ export default function LiveMeetingClient({
       />
     </div>
   );
+}
+
+/** How a person's attendance reads: from their join time, or as marked by hand. */
+function attendanceLabel(a: any, session: any): { label: string; sub: string | null; cls: string } {
+  const t = (iso: string) => new Date(iso).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" });
+  const byHand = !!a.marked_by && a.check_in_method !== "video_join" && a.check_in_method !== "host";
+  if (!a.check_in_at && !a.marked_by && session?.status === "scheduled") return { label: "Not joined", sub: null, cls: "text-muted" };
+  if (a.attendance === "excused") return { label: "Excused", sub: byHand ? "by hand" : "said can't attend", cls: "text-subtle" };
+  if (a.attendance === "absent" || (!a.check_in_at && a.attendance !== "late")) return { label: "Absent", sub: byHand ? "by hand" : "not joined", cls: "text-danger-text" };
+  const joined = a.check_in_at ? `joined ${t(a.check_in_at)}` : null;
+  if (a.attendance === "late") return { label: a.late_minutes ? `Late ${a.late_minutes} min` : "Late", sub: [joined, byHand ? "by hand" : null].filter(Boolean).join(" · ") || null, cls: "text-warning-text" };
+  const early = a.check_in_at && session?.scheduled_start ? Math.round((new Date(session.scheduled_start).getTime() - new Date(a.check_in_at).getTime()) / 60000) : 0;
+  return { label: early > 0 ? `Early ${early} min` : "On time", sub: [joined, byHand ? "by hand" : null].filter(Boolean).join(" · ") || null, cls: "text-success-text" };
 }

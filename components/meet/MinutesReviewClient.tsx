@@ -442,7 +442,10 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
             <li key={`${a.name}-${i}`} className="flex flex-wrap justify-between gap-2 text-[13.5px]">
               <span className="text-foreground">{a.name}</span>
               <span className={a.status === "present" || a.status === "late" ? "text-success-text" : "text-muted"}>
-                {ATT[a.status] || a.status}{a.reason && a.status !== "present" ? ` · ${a.reason}` : ""}
+                {ATT[a.status] || a.status}
+                {a.joinedAt ? ` · joined ${a.joinedAt}` : ""}
+                {a.note ? ` (${a.note})` : ""}
+                {a.reason && a.status !== "present" && a.status !== "late" ? ` · ${a.reason}` : ""}
               </span>
             </li>
           ))}

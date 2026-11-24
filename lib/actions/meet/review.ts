@@ -64,7 +64,7 @@ export interface MinutesDoc {
     project: string | null;
   };
   totals: { durationMin: number; present: number; invited: number; points: number; newPoints: number; carriedIn: number; tasks: number; decisions: number; closed: number };
-  attendance: { name: string; status: string; reason: string | null }[];
+  attendance: { name: string; status: string; reason: string | null; joinedAt: string | null; note: string | null }[];
   decisions: { id: string; code: string; text: string; by: string | null; point: string | null }[];
   tasks: { id: string; code: string; title: string; owner: string | null; due: string | null; status: string; point: string | null }[];
   byPerson: { name: string; points: { code: string; title: string; status: string; due: string | null }[]; tasks: { code: string; title: string; due: string | null; status: string }[] }[];
@@ -105,7 +105,7 @@ export async function getMinutesReview(sessionId: string): Promise<MinutesReview
       .maybeSingle(),
     supabaseAdmin
       .from("meet_session_attendees")
-      .select("user_id, guest_name, attendance, invite_status, check_in_at, role, user:user_master!meet_session_attendees_user_id_fkey(id, full_name)")
+      .select("user_id, guest_name, attendance, invite_status, check_in_at, late_minutes, marked_by, role, user:user_master!meet_session_attendees_user_id_fkey(id, full_name)")
       .eq("session_id", sessionId)
       .not("role", "in", '("requested","denied")'),
     m?.id
@@ -238,8 +238,10 @@ async function buildDoc(s: any, m: any, sps: any[], tasks: any[], decs: any[], a
   const where = [room, s.video_link || m?.video_link ? "Microsoft Teams" : null].filter(Boolean).join(" + ") || (m?.mode === "in_person" ? "In person" : "Online");
 
   const attendance = att.map((a: any) => {
-    const st = a.invite_status === "declined" ? "declined" : a.check_in_at || a.attendance === "present" ? "present" : a.attendance || "absent";
-    return { name: one(a.user)?.full_name || a.guest_name || "Guest", status: st, reason: a.user_id ? reasons.get(a.user_id) || null : null };
+    const st = a.attendance === "late" ? "late" : a.invite_status === "declined" && !a.check_in_at ? "declined" : a.check_in_at || (a.marked_by && a.attendance === "present") ? "present" : a.attendance === "excused" ? "excused" : "absent";
+    const early = a.check_in_at ? Math.round((new Date(start).getTime() - new Date(a.check_in_at).getTime()) / 60000) : 0;
+    const note = st === "late" && a.late_minutes ? `${a.late_minutes} min late` : st === "present" && early > 0 ? `${early} min early` : st === "present" && a.check_in_at ? "on time" : null;
+    return { name: one(a.user)?.full_name || a.guest_name || "Guest", status: st, reason: a.user_id ? reasons.get(a.user_id) || null : null, joinedAt: a.check_in_at ? fmtTime(a.check_in_at) : null, note };
   }).sort((a: any, b: any) => (a.status === "present" ? 0 : 1) - (b.status === "present" ? 0 : 1) || a.name.localeCompare(b.name));
 
   const pts = sps.map((r: any) => ({ r, p: one(r.point) })).filter((x) => x.p);

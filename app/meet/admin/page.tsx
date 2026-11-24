@@ -6,6 +6,8 @@ import { getSLAPolicies, getSLAInstances, getAlertRules, getNotificationTemplate
 
 import { requireMeet } from "@/lib/permissions/meet";
 import { readMeetProjects } from "@/lib/utils/meet-projects";
+import { graceMinutes } from "@/lib/utils/meet-attendance";
+import AttendanceRulesCard from "@/components/meet/AttendanceRulesCard";
 import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
@@ -72,6 +74,7 @@ export default async function MeetAdminPage({ searchParams }: { searchParams: Pr
         initialProjects={projects}
         section={section}
       />
+      {(!section || section === "policies") && <AttendanceRulesCard grace={await graceMinutes()} />}
     </div>
   );
 }
