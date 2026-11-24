@@ -5,10 +5,9 @@ name: Chandak Meet scheduled jobs
 # The call is signed (see app/api/cron/meet-jobs/route.ts); no key is sent.
 
 on:
-  # Emails only go out for events that have an admin-written template and an active rule
-  # (Settings › Communication); nothing is sent with built-in text.
-  schedule:
-    - cron: '*/10 * * * *'
+  # No GitHub schedule: the website runs these checks itself every 10 minutes
+  # (instrumentation.ts -> lib/server/meet-scheduler.ts), so this costs no Actions minutes.
+  # Kept only as a manual "Run workflow" button for testing.
   workflow_dispatch:
 
 permissions:
