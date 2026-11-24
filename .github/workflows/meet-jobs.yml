@@ -5,9 +5,10 @@ name: Chandak Meet scheduled jobs
 # The call is signed (see app/api/cron/meet-jobs/route.ts); no key is sent.
 
 on:
-  # Paused until every Meet email uses the admin's own templates (no built-in text).
-  # schedule:
-  #   - cron: '*/10 * * * *'
+  # Emails only go out for events that have an admin-written template and an active rule
+  # (Settings › Communication); nothing is sent with built-in text.
+  schedule:
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 permissions:

@@ -3,9 +3,8 @@ import Link from "next/link";
 import { Zap, CheckCircle2, Clock } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
-import { getAlertRules } from "@/lib/actions/meet/sla";
+import { MEET_EVENTS } from "@/lib/utils/meet-email-config";
 import { getTeamsConnection } from "@/lib/actions/meet/teams-sync";
-import AlertRuleToggle from "./AlertRuleToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +17,9 @@ const IST = "Asia/Kolkata";
 
 /** Built-in automations: each one is real code that already runs. */
 const BUILT_IN: { when: string; name: string; detail: string; scheduled?: boolean }[] = [
-  { when: "Before", name: "Reminder a day before", detail: "Emails everyone invited 24 hours before the meeting, with the agenda and points carried forward.", scheduled: true },
+  { when: "Before", name: "Reminder a day before", detail: "24 hours before, everyone invited gets your \"Reminder (1 day before)\" email.", scheduled: true },
   { when: "Before", name: "Ask owners for an update", detail: "About a day before, owners of open points get an email asking for a one-line update, if the series has this on.", scheduled: true },
-  { when: "Before", name: "Reminder an hour before", detail: "A last reminder 1 hour before, with the join link and room.", scheduled: true },
+  { when: "Before", name: "Reminder an hour before", detail: "1 hour before, your \"Reminder (1 hour before)\" email with the join link and room.", scheduled: true },
   { when: "During", name: "Ask to join", detail: "People who weren't invited can ask; the organiser, chair or minute taker admits or denies them.", },
   { when: "During", name: "Release unused rooms", detail: "If nobody checks in to a booked room, the room is freed for others.", scheduled: true },
   { when: "After", name: "Carry forward open points", detail: "When a meeting ends, every point that isn't closed moves to the next meeting in the series." },
@@ -34,8 +33,11 @@ export default async function AutomationsPage() {
   const auth = await requireMeet("MEET_VIEW");
   const isAdmin = auth.isSuperAdmin || auth.isMeetAdmin;
 
-  const [rules, lastReminder, teams] = await Promise.all([
-    getAlertRules(),
+  const [emailSetup, lastReminder, teams] = await Promise.all([
+    Promise.all([
+      supabaseAdmin.from("notification_rules").select("event, is_active, recipient_type").ilike("module", "meet"),
+      supabaseAdmin.from("email_templates").select("event, is_active, html_body").ilike("module", "meet"),
+    ]).then(([r, t]) => ({ rules: (r.data || []) as any[], templates: (t.data || []) as any[] }), () => ({ rules: [] as any[], templates: [] as any[] })),
     supabaseAdmin
       .from("meet_sessions")
       .select("reminder_1h_sent_at")
@@ -119,33 +121,40 @@ export default async function AutomationsPage() {
         </section>
       ))}
 
-      <section aria-labelledby="grp-rules">
+      <section aria-labelledby="grp-emails">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
-          <h2 id="grp-rules" className="text-[13px] font-semibold uppercase tracking-wide text-muted">Alert rules</h2>
+          <h2 id="grp-emails" className="text-[13px] font-semibold uppercase tracking-wide text-muted">Emails</h2>
           {isAdmin && (
-            <Link href="/meet/admin" className="text-[13.5px] font-semibold text-primary hover:underline">
-              Add or edit rules in Settings
-            </Link>
+            <span className="flex gap-4 text-[13.5px] font-semibold">
+              <Link href="/settings/communication/templates" className="text-primary hover:underline">Write templates</Link>
+              <Link href="/settings/communication/rules" className="text-primary hover:underline">Set who gets them</Link>
+            </span>
           )}
         </div>
-        {rules.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-surface p-6 text-center text-[13.5px] text-subtle">No alert rules yet.</p>
-        ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
-            {rules.map((r: any) => (
-              <li key={r.id} className="flex flex-wrap items-center gap-3 p-4">
+        <p className="mb-3 text-[13.5px] text-subtle">
+          Chandak Meet has no built-in email text. An email goes out only when you have written its template and turned on a rule for it,
+          and it is sent through your own SMTP (Settings › Communication › Providers).
+        </p>
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+          {MEET_EVENTS.map((ev) => {
+            const rule = emailSetup.rules.find((r) => String(r.event).toLowerCase() === ev.toLowerCase() && r.is_active);
+            const tpl = emailSetup.templates.find((t) => String(t.event).toLowerCase() === ev.toLowerCase() && t.is_active && String(t.html_body || "").trim());
+            const ready = !!rule && !!tpl;
+            return (
+              <li key={ev} className="flex flex-wrap items-center gap-3 p-4">
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14.5px] font-semibold text-foreground">{r.name}</span>
+                  <span className="block text-[14.5px] font-semibold text-foreground">{ev}</span>
                   <span className="mt-0.5 block text-[13px] text-subtle">
-                    {(r.channels || ["email"]).join(", ")} · {r.timing || "immediate"}
-                    {r.throttle_hours ? ` · at most every ${r.throttle_hours}h` : ""}
+                    {tpl ? "Template written" : "No template"} · {rule ? `Sent to ${(rule.recipient_type || []).join(", ") || "nobody yet"}` : "No rule"}
                   </span>
                 </span>
-                <AlertRuleToggle rule={r} canEdit={isAdmin} />
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${ready ? "bg-success-soft text-success-text" : "bg-sunken text-subtle"}`}>
+                  {ready ? "Sending" : "Off"}
+                </span>
               </li>
-            ))}
-          </ul>
-        )}
+            );
+          })}
+        </ul>
       </section>
     </div>
   );

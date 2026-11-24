@@ -1,5 +1,6 @@
 "use server";
 
+import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
@@ -255,8 +256,6 @@ export async function sendRSVPReminders(sessionId: string): Promise<{ success: b
     const session = sessionRes.data;
     const meetingTitle = (session?.meeting as any)?.title || "Meeting";
 
-    const emailQueueBatch: any[] = [];
-
     for (const nr of nonResponders) {
       await supabaseAdmin
         .from("meet_invitations")
@@ -266,37 +265,20 @@ export async function sendRSVPReminders(sessionId: string): Promise<{ success: b
         })
         .eq("id", nr.id);
 
-      const targetEmail = (nr.user as any)?.email;
-      const targetName = (nr.user as any)?.full_name || "Colleague";
-
-      if (targetEmail) {
-        emailQueueBatch.push({
-          to_email: targetEmail,
-          subject: `[RSVP Reminder] Invitation to ${meetingTitle} - Session ${session?.code}`,
-          body_text: `Dear ${targetName},
-
-This is a reminder to submit your RSVP for the upcoming meeting session:
-Meeting: ${meetingTitle}
-Session: ${session?.code}
-Scheduled Time: ${session?.scheduled_start ? new Date(session.scheduled_start).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "Scheduled"}
-
-Please confirm your attendance or propose a delegate directly:
-${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}
-
-Chandak Workspace Meet Committee`,
-          status: "pending",
-          retry_count: 0,
-        });
-      }
     }
 
-    if (emailQueueBatch.length > 0) {
-      try {
-        await supabaseAdmin.from("email_queue").insert(emailQueueBatch);
-      } catch (qErr) {
-        console.warn("Could not batch insert RSVP reminder emails:", qErr);
-      }
-    }
+    await sendMeetEmail("RSVP reminder", {
+      entityId: sessionId,
+      actorId: auth.userId,
+      recipients: { Attendees: nonResponders.map((nr: any) => nr.user_id) },
+      link: `/meet/sessions/${sessionId}`,
+      data: {
+        meeting_title: meetingTitle,
+        session_code: session?.code || "",
+        start_time: session?.scheduled_start ? new Date(session.scheduled_start).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST" : "",
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}`,
+      },
+    });
 
     return { success: true, remindedCount: nonResponders.length };
   } catch (err: any) {

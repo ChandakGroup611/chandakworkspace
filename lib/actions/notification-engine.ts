@@ -81,6 +81,9 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       }
     }
 
+    // Chandak Meet sends only what the admin wrote: no template, no email (no built-in text).
+    if (moduleName === "Meet" && !(template?.html_body && String(template.html_body).trim())) return;
+
     // 3. Resolve all recipients across all matched rules
     const recipientUserIds = new Set<string>();
     
@@ -816,6 +819,12 @@ function hydrateTemplate(text: string, data: any): string {
 // ---------------------------------------------------------------------------
 async function resolveRecipientType(type: string, moduleName: string, payload: any): Promise<string[]> {
   const ids: string[] = [];
+
+  // Chandak Meet: the event says who each role is (attendees, organiser, point owner…)
+  if (moduleName === "Meet") {
+    const list = payload?.meet_recipients?.[type];
+    return Array.isArray(list) ? list.filter(Boolean) : [];
+  }
 
   switch (type) {
     case "Creator":

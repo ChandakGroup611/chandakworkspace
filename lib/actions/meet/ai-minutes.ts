@@ -1,5 +1,6 @@
 "use server";
 
+import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
@@ -364,53 +365,24 @@ export async function approveAndSendMoM(
     const sessionCode = sessionRes.data?.code || "Session";
 
     const recipientSet = new Set<string>();
-    const emailQueueBatch: any[] = [];
 
     for (const a of attendees) {
       if (a.user_id) recipientSet.add(a.user_id);
 
-      const targetEmail = (a.user as any)?.email;
-      const targetName = (a.user as any)?.full_name || "Team Member";
-      if (targetEmail) {
-        const isAbsent = a.attendance === "absent" || a.attendance === "excused";
-        const subject = isAbsent
-          ? `[MoM - You Missed] Minutes of Meeting: ${meetingTitle} - Session ${sessionCode}`
-          : `[MoM Published] Minutes of Meeting: ${meetingTitle} - Session ${sessionCode}`;
-
-        const body = `Dear ${targetName},
-
-The official Minutes of Meeting (v${nextVersion}) for "${meetingTitle}" (Session ${sessionCode}) have been reviewed, approved and published.
-${isAbsent ? "\nYou were recorded as absent/excused for this session. Please review the minutes and action items assigned." : ""}
-
-Executive Overview:
-${customOverview || aiMin.overview}
-
-You can access the full session minutes, action points, and decisions directly on Chandak Meet:
-${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}
-
-Please log in and submit your formal acknowledgement.
-
-Best regards,
-Chandak Workspace Meet Committee`;
-
-        emailQueueBatch.push({
-          to_email: targetEmail,
-          subject,
-          body_text: body,
-          status: "pending",
-          retry_count: 0,
-        });
-      }
     }
 
-    // Queue emails
-    if (emailQueueBatch.length > 0) {
-      try {
-        await supabaseAdmin.from("email_queue").insert(emailQueueBatch);
-      } catch (qErr) {
-        console.warn("Could not queue MoM notification emails:", qErr);
-      }
-    }
+    // Minutes go out through the admin's "Minutes sent" template (Settings › Communication)
+    await sendMeetEmail("Minutes sent", {
+      entityId: sessionId,
+      actorId: userId,
+      recipients: { Attendees: Array.from(recipientSet) },
+      link: `/meet/sessions/${sessionId}`,
+      data: {
+        meeting_title: meetingTitle,
+        session_code: sessionCode,
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}`,
+      },
+    });
 
     // Seed MoM acknowledgements for all attendees with composite key (session_id, mom_version, user_id)
     for (const recId of recipientSet) {

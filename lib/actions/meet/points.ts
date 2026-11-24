@@ -1,5 +1,6 @@
 "use server";
 
+import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
@@ -135,28 +136,14 @@ export async function createPoint(input: CreatePointInput) {
     });
 
     // 7. Queue assignment notification to owner if specified
-    if (point.owner?.email) {
-      try {
-        await supabaseAdmin.from("email_queue").insert({
-          to_email: point.owner.email,
-          subject: `[Point Assigned] Point ${point.code}: ${point.title}`,
-          body_text: `Dear ${point.owner.full_name},
-
-You have been assigned as the owner of Meeting Point ${point.code}: "${point.title}".
-
-Priority: ${point.priority}
-Due Date: ${dueDate} (TAT: ${tatDays} working days)
-
-Please review the point details and take necessary action:
-${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/my-work
-
-Chandak Workspace Meet Committee`,
-          status: "pending",
-          retry_count: 0,
-        });
-      } catch (qErr) {
-        console.warn("Could not queue point assignment email:", qErr);
-      }
+    if ((point.owner as any)?.id) {
+      await sendMeetEmail("Point assigned", {
+        entityId: point.id,
+        actorId: userId,
+        recipients: { "Point owner": [(point.owner as any).id] },
+        link: `/meet/points/${point.id}`,
+        data: { point_code: point.code, point_title: point.title, due_date: dueDate, link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/points/${point.id}` },
+      });
     }
 
     revalidatePath(`/meet/sessions/${input.session_id}`);
@@ -417,27 +404,13 @@ export async function reassignPointOwner(input: {
     });
 
     // 4. Send notification email to the new owner
-    if (newOwner.email) {
-      try {
-        await supabaseAdmin.from("email_queue").insert({
-          to_email: newOwner.email,
-          subject: `[Point Reassigned] Point ${point.code}: ${point.title}`,
-          body_text: `Dear ${newOwner.full_name},
-
-You have been reassigned as the primary owner for Meeting Point ${point.code}: "${point.title}".
-Previous Owner: ${(point.owner as any)?.full_name || "Unassigned"}
-${input.reason ? `Reason: ${input.reason}\n` : ""}
-Please access your workspace to review action items and deadlines:
-${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/my-work
-
-Chandak Workspace Meet Committee`,
-          status: "pending",
-          retry_count: 0,
-        });
-      } catch (emailErr) {
-        console.warn("Could not queue reassignment email:", emailErr);
-      }
-    }
+    await sendMeetEmail("Point assigned", {
+      entityId: input.pointId,
+      actorId: user?.id || null,
+      recipients: { "Point owner": [input.newOwnerId] },
+      link: `/meet/points/${input.pointId}`,
+      data: { point_code: point.code, point_title: point.title, link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/points/${input.pointId}` },
+    });
 
     if (input.sessionId) {
       revalidatePath(`/meet/sessions/${input.sessionId}`);

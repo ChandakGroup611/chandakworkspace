@@ -1042,6 +1042,12 @@ export default function MeetAdminClient({
       {/* TAB 4: Custom Email & WhatsApp Templates (Section E3) */}
       {activeTab === "templates_email" && (
         <div className="space-y-4">
+          <div role="note" className="rounded-xl border border-warning-border bg-warning-soft p-4 text-[13.5px] text-warning-text">
+            Chandak Meet emails are now written and sent from{" "}
+            <a href="/settings/communication/templates" className="font-semibold underline">Settings › Communication › Templates</a> (module “Meet”), with{" "}
+            <a href="/settings/communication/rules" className="font-semibold underline">Rules</a> deciding who gets each one, through your own SMTP.
+            The templates on this tab are no longer used for sending.
+          </div>
           {/* Header Action Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-surface-elevated">
             <div>

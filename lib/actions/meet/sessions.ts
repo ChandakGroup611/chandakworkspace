@@ -1,5 +1,6 @@
 "use server";
 
+import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
@@ -256,16 +257,19 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
           .not("status", "in", '("closed","dropped")');
 
         for (const ep of escalatedPoints || []) {
-          if ((ep as any)?.meeting?.organizer?.email) {
-            await supabaseAdmin.from("email_queue").insert({
-              recipient_email: (ep as any).meeting.organizer.email,
-              subject: `[Escalation Alert] Point ${ep.code} Carried Forward ${ep.carry_forward_count}×`,
-              body: `<p>Attention: Meeting Point <strong>${ep.code}: ${ep.title}</strong> has now been carried forward ${ep.carry_forward_count} times without closure. Immediate action is required.</p>`,
-              event_type: "meet.point.escalated",
-              status: "pending",
-              metadata: { point_id: ep.id, carry_count: ep.carry_forward_count },
-            });
-          }
+          await sendMeetEmail("Point escalated", {
+            entityId: ep.id,
+            actorId: userId,
+            recipients: { Organiser: [(ep as any)?.meeting?.organizer?.id] },
+            link: `/meet/points/${ep.id}`,
+            data: {
+              point_code: ep.code,
+              point_title: ep.title,
+              carry_count: ep.carry_forward_count,
+              meeting_title: (ep as any)?.meeting?.title || "",
+              link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/points/${ep.id}`,
+            },
+          });
         }
 
         revalidatePath("/meet");
@@ -438,17 +442,14 @@ export async function endSessionAndCarryForward(sessionId: string, summaryNotes?
           .eq("id", pt.id);
 
         // If carried 3+ times, trigger executive notification (P5)
-        if (isRepeatedlyCarried && meeting.organizer?.email) {
-          try {
-            await supabaseAdmin.from("email_queue").insert({
-              recipient_email: meeting.organizer.email,
-              subject: `[Escalation Alert] Point ${pt.code} Carried Forward ${newCarryCount}×`,
-              body: `<p>Attention: Point <strong>${pt.code}: ${pt.title}</strong> has been carried forward ${newCarryCount} times without closure. Immediate action is required.</p>`,
-              event_type: "meet.point.escalated",
-              status: "pending",
-              metadata: { point_id: pt.id, carry_count: newCarryCount },
-            });
-          } catch {}
+        if (isRepeatedlyCarried) {
+          await sendMeetEmail("Point escalated", {
+            entityId: pt.id,
+            actorId: userId,
+            recipients: { Organiser: [meeting.organizer?.id || meeting.organizer_id] },
+            link: `/meet/points/${pt.id}`,
+            data: { point_code: pt.code, point_title: pt.title, carry_count: newCarryCount, meeting_title: meeting.title || "", link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/points/${pt.id}` },
+          });
         }
 
         // Link into next session's meet_session_points

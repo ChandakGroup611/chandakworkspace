@@ -1,5 +1,6 @@
 "use server";
 
+import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
@@ -207,28 +208,21 @@ export async function createTask(input: CreateTaskInput) {
     });
 
     // Notify task owner if assigned
-    if (fullTask?.owner?.email) {
-      try {
-        await supabaseAdmin.from("email_queue").insert({
-          to_email: fullTask.owner.email,
-          subject: `[Task Assigned] Task ${fullTask.code}: ${fullTask.title}`,
-          body_text: `Dear ${fullTask.owner.full_name},
-
-You have been assigned a new task: "${fullTask.title}" (${fullTask.code}).
-
-Priority: ${fullTask.priority}
-Due Date: ${dueDate}
-${input.description ? `Details: ${input.description}\n` : ""}
-Please access your work console:
-${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/my-work
-
-Chandak Workspace Meet Committee`,
-          status: "pending",
-          retry_count: 0,
-        });
-      } catch (emailErr) {
-        console.warn("Could not queue task assignment email:", emailErr);
-      }
+    if ((fullTask as any)?.owner_id || (fullTask as any)?.owner?.id) {
+      await sendMeetEmail("Task assigned", {
+        entityId: task.id,
+        actorId: userId,
+        recipients: { "Task owner": [(fullTask as any).owner_id || (fullTask as any).owner?.id] },
+        link: `/meet/my-work?tab=tasks`,
+        data: {
+          task_code: fullTask.code,
+          task_title: fullTask.title,
+          due_date: dueDate,
+          point_code: (fullTask as any)?.point?.code || "",
+          meeting_title: (fullTask as any)?.point?.meeting?.title || "",
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/my-work?tab=tasks`,
+        },
+      });
     }
 
     revalidatePath("/meet/my-work");

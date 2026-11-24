@@ -1,5 +1,6 @@
 "use server";
 
+import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
@@ -206,26 +207,17 @@ export async function publishMoM(sessionId: string, version: number = 1) {
       .eq("session_id", sessionId)
       .not("role", "in", '("requested","denied")');
 
-    const emailRows: any[] = [];
-    for (const att of attendees || []) {
-      const u = att.user as any;
-      const email = (Array.isArray(u) ? u[0]?.email : u?.email) || att.guest_email;
-      if (email) {
-        emailRows.push({
-          recipient_email: email,
-          subject: `Minutes of Meeting Published: ${(session as any)?.meeting?.title || "Meeting"}`,
-          html_body: `<p>The official Minutes of Meeting have been published.</p><p><a href="https://chandakgroup.tech/meet/sessions/${sessionId}">Click here to view MoM and acknowledge receipt</a>.</p>`,
-          body_template: `The official Minutes of Meeting have been published. View MoM: https://chandakgroup.tech/meet/sessions/${sessionId}`,
-          module: "meet",
-          event: "meet.mom.published",
-          status: "PENDING",
-        });
-      }
-    }
-
-    if (emailRows.length > 0) {
-      await supabaseAdmin.from("email_queue").insert(emailRows);
-    }
+    await sendMeetEmail("Minutes sent", {
+      entityId: sessionId,
+      actorId: userId,
+      recipients: { Attendees: (attendees || []).map((a: any) => a.user_id) },
+      link: `/meet/sessions/${sessionId}`,
+      data: {
+        meeting_title: (session as any)?.meeting?.title || "Meeting",
+        session_code: (session as any)?.code || "",
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/sessions/${sessionId}`,
+      },
+    });
 
     revalidatePath(`/meet/sessions/${sessionId}`);
     return { success: true };

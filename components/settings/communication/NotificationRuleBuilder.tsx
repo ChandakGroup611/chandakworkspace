@@ -6,9 +6,14 @@ import { Plus, Trash2, Save, Filter, Users, Send, Loader2, Workflow } from "luci
 import { saveSettingsEntity, deleteSettingsEntity } from "@/lib/actions/settings";
 import { createClient } from "@/utils/supabase/client";
 import { confirmAction } from "@/components/ui/feedback/confirm";
+import { MEET_EVENTS, MEET_RECIPIENTS } from "@/lib/utils/meet-email-config";
 
 // Define available modules and their events/statuses
 const MODULE_CONFIG: Record<string, { events: string[], statuses: string[] }> = {
+  "Meet": {
+    events: [...MEET_EVENTS],
+    statuses: ["ANY"]
+  },
   "Task": {
     events: ["Created", "Assigned", "Reassigned", "Status Changed", "Delayed", "Completed", "Closed"],
     statuses: ["ANY", "NEW", "IN_PROGRESS", "IN_REVIEW", "COMPLETED", "CLOSED", "DELAYED"]
@@ -211,7 +216,7 @@ export default function NotificationRuleBuilder() {
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
-                    {RECIPIENT_TYPES.map(type => {
+                    {(rule.module === "Meet" ? [...MEET_RECIPIENTS] : RECIPIENT_TYPES).map(type => {
                       const isSelected = rule.recipient_type.includes(type);
                       return (
                         <button

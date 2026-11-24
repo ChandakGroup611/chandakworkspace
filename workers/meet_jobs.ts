@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { todayIST } from "@/lib/utils/date-utils";
+import { sendMeetEmail } from "@/lib/utils/meet-email";
 
 /**
  * Chandak Meet scheduled jobs. Invoked by /api/cron/meet-jobs (CRON_SECRET), every 5–15 min.
@@ -141,31 +142,23 @@ async function sendOwnerUpdateRequests(now: Date): Promise<number> {
       byOwner.get(o.id)!.points.push(p);
     }
 
-    const emails: any[] = [];
-    for (const o of byOwner.values()) {
-      emails.push({
-        to_email: o.email,
-        subject: `Update needed before ${meeting.title}`,
-        body_text: [
-          `Dear ${o.name},`,
-          "",
-          `${meeting.title} is on ${fmtIST(s.scheduled_start)} IST. Please send a one-line update on ${o.points.length === 1 ? "your open point" : `your ${o.points.length} open points`} so the meeting can start from where things stand:`,
-          "",
-          ...o.points.slice(0, 20).map((p: any) => `• ${p.code} ${p.title}${p.due_date ? ` (due ${p.due_date})` : ""}\n  ${SITE_URL}/meet/points/${p.id}#send-update`),
-          o.points.length > 20 ? `…and ${o.points.length - 20} more in ${SITE_URL}/meet/my-work` : null,
-          "",
-          "Chandak Meet",
-        ]
-          .filter((l) => l !== null)
-          .join("\n"),
-        status: "pending",
-        retry_count: 0,
+    for (const [ownerId, o] of byOwner.entries()) {
+      await sendMeetEmail("Update requested", {
+        entityId: s.id,
+        recipients: { "Point owner": [ownerId] },
+        link: `/meet/my-work`,
+        data: {
+          meeting_title: meeting.title,
+          session_code: s.code,
+          start_time: `${fmtIST(s.scheduled_start)} IST`,
+          points_list: o.points
+            .slice(0, 20)
+            .map((p: any) => `${p.code} ${p.title}${p.due_date ? ` (due ${p.due_date})` : ""}: ${SITE_URL}/meet/points/${p.id}#send-update`)
+            .join("\n"),
+          link: `${SITE_URL}/meet/my-work`,
+        },
       });
-    }
-    if (emails.length) {
-      const { error: qErr } = await supabaseAdmin.from("email_queue").insert(emails);
-      if (qErr) throw qErr;
-      sent += emails.length;
+      sent++;
     }
   }
   return sent;
@@ -182,7 +175,7 @@ async function sendMinutesReminders(now: Date): Promise<number> {
     .from("meet_sessions")
     .select(
       `id, code, actual_end, scheduled_end, minute_taker_id,
-       meeting:meet_meetings(title, is_deleted, organizer:user_master!meet_meetings_organizer_id_fkey(id, email, full_name))`
+       meeting:meet_meetings(title, is_deleted, organizer_id, organizer:user_master!meet_meetings_organizer_id_fkey(id, email, full_name))`
     )
     .in("status", ["completed", "mom_draft"])
     .eq("is_deleted", false)
@@ -198,33 +191,14 @@ async function sendMinutesReminders(now: Date): Promise<number> {
     if (!meeting || meeting.is_deleted) continue;
     if (!(await claimSessionJob(s.id, "minutes_reminder_sent"))) continue;
 
-    const people: { email: string; name: string }[] = [];
     const org: any = one(meeting.organizer);
-    if (org?.email) people.push({ email: org.email, name: org.full_name || "Colleague" });
-    if ((s as any).minute_taker_id && (s as any).minute_taker_id !== org?.id) {
-      const { data: mt } = await supabaseAdmin.from("user_master").select("email, full_name").eq("id", (s as any).minute_taker_id).maybeSingle();
-      if (mt?.email) people.push({ email: mt.email, name: mt.full_name || "Colleague" });
-    }
-    if (!people.length) continue;
-
-    const { error: qErr } = await supabaseAdmin.from("email_queue").insert(
-      people.map((p) => ({
-        to_email: p.email,
-        subject: `Minutes not sent yet: ${meeting.title}`,
-        body_text: [
-          `Dear ${p.name},`,
-          "",
-          `The minutes for ${meeting.title} (${s.code}) are drafted but haven't been sent. Review and send them here:`,
-          `${SITE_URL}/meet/sessions/${s.id}/review`,
-          "",
-          "Chandak Meet",
-        ].join("\n"),
-        status: "pending",
-        retry_count: 0,
-      }))
-    );
-    if (qErr) throw qErr;
-    sent += people.length;
+    await sendMeetEmail("Minutes not sent", {
+      entityId: s.id,
+      recipients: { Organiser: [org?.id], "Minute taker": [(s as any).minute_taker_id] },
+      link: `/meet/sessions/${s.id}/review`,
+      data: { meeting_title: meeting.title, session_code: s.code, link: `${SITE_URL}/meet/sessions/${s.id}/review` },
+    });
+    sent++;
   }
   return sent;
 }
@@ -262,53 +236,38 @@ async function sendSessionReminders(
     )
     .is(column, null)
     .select(
-      `id, code, scheduled_start, scheduled_end,
-       meeting:meet_meetings(title, video_link, is_deleted),
+      `id, code, scheduled_start, scheduled_end, video_link,
+       meeting:meet_meetings(title, code, video_link, is_deleted, organizer_id),
        room:meet_rooms(name, location),
-       attendees:meet_session_attendees(invite_status, user:user_master!meet_session_attendees_user_id_fkey(email, full_name))`
+       attendees:meet_session_attendees(user_id, role, invite_status)`
     );
   if (claimErr) throw claimErr;
 
-  const emails: any[] = [];
+  let sent = 0;
   for (const s of claimed || []) {
     const meeting: any = one(s.meeting as any);
     if (!meeting || meeting.is_deleted) continue;
     const room: any = one(s.room as any);
-    const when = leadMin <= 60 ? "in about 1 hour" : "tomorrow";
-    const where = [room?.name, room?.location].filter(Boolean).join(", ");
-
-    for (const a of (s.attendees as any[]) || []) {
-      if (a.invite_status === "declined") continue;
-      const u: any = one(a.user);
-      if (!u?.email) continue;
-      emails.push({
-        to_email: u.email,
-        subject: `Reminder: ${meeting.title} starts ${when}`,
-        body_text: [
-          `Dear ${u.full_name || "Colleague"},`,
-          "",
-          `${meeting.title} (${s.code}) starts ${when}.`,
-          `Time: ${fmtIST(s.scheduled_start)} IST`,
-          where ? `Room: ${where}` : null,
-          meeting.video_link ? `Join online: ${meeting.video_link}` : null,
-          "",
-          `Agenda and points: ${SITE_URL}/meet/sessions/${s.id}`,
-          "",
-          "Chandak Meet",
-        ]
-          .filter((l) => l !== null)
-          .join("\n"),
-        status: "pending",
-        retry_count: 0,
-      });
-    }
+    const attendees = ((s as any).attendees || []).filter(
+      (a: any) => a.user_id && a.invite_status !== "declined" && a.role !== "requested" && a.role !== "denied"
+    );
+    await sendMeetEmail(leadMin <= 60 ? "Reminder (1 hour before)" : "Reminder (1 day before)", {
+      entityId: s.id,
+      recipients: { Attendees: attendees.map((a: any) => a.user_id), Organiser: [meeting.organizer_id] },
+      link: `/meet/join/${s.id}`,
+      data: {
+        meeting_title: meeting.title,
+        meeting_code: meeting.code,
+        session_code: s.code,
+        start_time: `${fmtIST(s.scheduled_start)} IST`,
+        room: [room?.name, room?.location].filter(Boolean).join(", "),
+        join_link: (s as any).video_link || meeting.video_link || "",
+        link: `${SITE_URL}/meet/join/${s.id}`,
+      },
+    });
+    sent++;
   }
-
-  if (emails.length > 0) {
-    const { error: qErr } = await supabaseAdmin.from("email_queue").insert(emails);
-    if (qErr) throw qErr;
-  }
-  return emails.length;
+  return sent;
 }
 
 /** Release confirmed room bookings nobody checked in to within the grace period. */
@@ -368,6 +327,7 @@ async function syncOverdueSla(now: Date): Promise<{ opened: number; closed: numb
     code: string;
     title: string;
     due: string;
+    ownerId?: string | null;
     owner?: { email?: string; full_name?: string };
     meeting?: { id: string; title: string; chair_id?: string; organizer_id?: string; is_deleted?: boolean };
   };
@@ -382,6 +342,7 @@ async function syncOverdueSla(now: Date): Promise<{ opened: number; closed: numb
       code: t.code,
       title: t.title,
       due,
+      ownerId: t.owner_id || null,
       owner: one(t.owner),
       meeting: one(one<any>(t.point)?.meeting),
     });
@@ -393,6 +354,7 @@ async function syncOverdueSla(now: Date): Promise<{ opened: number; closed: numb
       code: p.code,
       title: p.title,
       due: p.due_date,
+      ownerId: p.owner_id || null,
       owner: one(p.owner),
       meeting: one(p.meeting),
     });
@@ -433,60 +395,24 @@ async function syncOverdueSla(now: Date): Promise<{ opened: number; closed: numb
     else if (insErr.code !== "23505") throw insErr;
   }
 
-  // Notify only for records this run actually created
-  const chairIds = Array.from(new Set(fresh.map(escalateTo).filter(Boolean))) as string[];
-  const { data: chairs } = chairIds.length
-    ? await supabaseAdmin.from("user_master").select("id, email, full_name").in("id", chairIds)
-    : { data: [] as any[] };
-  const chairMap = new Map((chairs || []).map((c: any) => [c.id, c]));
-
-  const emails: any[] = [];
+  // Notify only for records this run actually created (through the admin's "Overdue" template)
   for (const i of fresh) {
     if (!created.has(`${i.type}:${i.id}`)) continue;
-    const label = i.type === "task" ? "Task" : "Point";
-    const link = i.type === "task" ? `${SITE_URL}/meet/my-work` : `${SITE_URL}/meet/meetings/${i.meeting?.id}`;
-    const lines = (name: string, intro: string) =>
-      [
-        `Dear ${name},`,
-        "",
-        intro,
-        `${label}: ${i.code} — ${i.title}`,
-        i.meeting?.title ? `Meeting: ${i.meeting.title}` : null,
-        `Due: ${i.due}`,
-        "",
-        link,
-        "",
-        "Chandak Meet",
-      ]
-        .filter((l) => l !== null)
-        .join("\n");
-
-    if (i.owner?.email) {
-      emails.push({
-        to_email: i.owner.email,
-        subject: `Overdue: ${label} ${i.code} — ${i.title}`,
-        body_text: lines(i.owner.full_name || "Colleague", `This ${label.toLowerCase()} assigned to you is past its due date.`),
-        status: "pending",
-        retry_count: 0,
-      });
-    }
-    const chair: any = chairMap.get(escalateTo(i) || "");
-    if (chair?.email && chair.email !== i.owner?.email) {
-      emails.push({
-        to_email: chair.email,
-        subject: `Escalation: ${label} ${i.code} is overdue`,
-        body_text: lines(
-          chair.full_name || "Chair",
-          `${i.owner?.full_name || "The owner"} has an overdue ${label.toLowerCase()} in your meeting.`
-        ),
-        status: "pending",
-        retry_count: 0,
-      });
-    }
-  }
-  if (emails.length > 0) {
-    const { error: qErr } = await supabaseAdmin.from("email_queue").insert(emails);
-    if (qErr) throw qErr;
+    await sendMeetEmail("Overdue", {
+      entityId: i.id,
+      recipients: {
+        [i.type === "task" ? "Task owner" : "Point owner"]: [i.ownerId],
+        Chair: [escalateTo(i)],
+      } as any,
+      link: i.type === "task" ? `/meet/my-work?tab=tasks` : `/meet/points/${i.id}`,
+      data: {
+        meeting_title: i.meeting?.title || "",
+        [i.type === "task" ? "task_code" : "point_code"]: i.code,
+        [i.type === "task" ? "task_title" : "point_title"]: i.title,
+        due_date: i.due,
+        link: i.type === "task" ? `${SITE_URL}/meet/my-work?tab=tasks` : `${SITE_URL}/meet/points/${i.id}`,
+      },
+    });
   }
 
   return { opened: created.size, closed: toClose.length };

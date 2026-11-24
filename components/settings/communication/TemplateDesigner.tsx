@@ -9,6 +9,7 @@ import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate, ArrowLef
 import { saveSettingsEntity, deleteSettingsEntity, getTemplates, saveTemplateAndRules } from "@/lib/actions/settings";
 import { previewEmailTemplate } from "@/lib/actions/email-config";
 import { confirmAction } from "@/components/ui/feedback/confirm";
+import { MEET_EVENTS, MEET_RECIPIENTS, MEET_MERGE_TAGS } from "@/lib/utils/meet-email-config";
 
 const RECIPIENT_OPTIONS = [
   "Creator",
@@ -34,6 +35,7 @@ export const VEHICLE_RECIPIENT_OPTIONS = [
 
 export function getRecipientsForModule(moduleName?: string): string[] {
   const mod = (moduleName || "").toLowerCase();
+  if (mod === "meet") return [...MEET_RECIPIENTS];
   if (mod.includes("vehicle") || mod.includes("fleet")) {
     return VEHICLE_RECIPIENT_OPTIONS;
   }
@@ -83,6 +85,7 @@ export function getRecipientsForModule(moduleName?: string): string[] {
 }
 
 const MODULES = [
+  "Meet",
   "Task", 
   "Workspace", 
   "Ticket", 
@@ -122,6 +125,7 @@ export const VEHICLE_EVENTS = [
 
 export function getEventsForModule(moduleName?: string): string[] {
   const mod = (moduleName || "").toLowerCase();
+  if (mod === "meet") return [...MEET_EVENTS];
   if (mod.includes("vehicle") || mod.includes("fleet")) {
     return VEHICLE_EVENTS;
   }
@@ -381,6 +385,7 @@ const MERGE_TAGS = [
 ];
 
 export function getAvailableMergeTags(moduleName?: string): string[] {
+  if (moduleName === "Meet") return MEET_MERGE_TAGS;
   if (moduleName === "Vehicle" || moduleName === "Vehicle (FleetDesk)") {
     return VEHICLE_MERGE_TAGS;
   }

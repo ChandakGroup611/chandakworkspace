@@ -1,5 +1,6 @@
 "use server";
 
+import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
@@ -401,32 +402,26 @@ export async function createMeeting(input: CreateMeetingInput) {
           url: input.video_link || undefined,
         });
 
-        const userIds = membersToInsert.filter((m) => m.user_id).map((m) => m.user_id as string);
-        if (userIds.length > 0) {
-          const { data: profiles } = await supabaseAdmin
-            .from("user_master")
-            .select("id, full_name, email")
-            .in("id", userIds);
-
-          const emailRows = (profiles || [])
-            .filter((p) => p.email)
-            .map((p) => ({
-              recipient_email: p.email,
-              subject: `Invitation: ${meeting.title} - Session 1`,
-              body: `<p>Dear ${p.full_name},</p><p>You are invited to attend <strong>${meeting.title}</strong>.</p><p><strong>Date & Time:</strong> ${input.start_date} from ${input.default_start_time}</p><p>Please find the calendar invite attached.</p>`,
-              event_type: "meet.session.invited",
-              status: "pending",
-              metadata: {
-                meeting_id: meeting.id,
-                session_id: session.id,
-                ics_data: icsString,
-              },
-            }));
-
-          if (emailRows.length > 0) {
-            await supabaseAdmin.from("email_queue").insert(emailRows);
-          }
-        }
+        void icsString; // not attached: template emails are HTML only
+        await sendMeetEmail("Invited", {
+          entityId: session.id,
+          actorId: userId,
+          recipients: {
+            Attendees: membersToInsert.map((m) => m.user_id),
+            Organiser: [input.organizer_id],
+            Chair: [input.chair_id],
+            "Minute taker": [input.default_minute_taker_id],
+          },
+          link: `/meet/join/${session.id}`,
+          data: {
+            meeting_title: meeting.title,
+            meeting_code: meeting.code,
+            session_code: session.code,
+            start_time: `${new Date(scheduledStart).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST`,
+            join_link: effectiveVideoLink || "",
+            link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/join/${session.id}`,
+          },
+        });
       } catch (calErr) {
         console.warn("Failed to generate .ics or queue email invite:", calErr);
       }
