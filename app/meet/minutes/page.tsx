@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FileText } from "lucide-react";
 import { listMinutes, type ShowScope } from "@/lib/actions/meet/lists";
 import ListFilters from "@/components/meet/lists/ListFilters";
+import ExportCsvButton from "@/components/meet/lists/ExportCsvButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Minutes (MoM) · Chandak Meet", description: "Minutes of every meeting that has been held" };
@@ -32,9 +33,16 @@ export default async function MinutesListPage({ searchParams }: { searchParams: 
 
   return (
     <div className="space-y-4 pb-6">
-      <div className="border-b border-border pb-4">
-        <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Minutes (MoM)</h1>
-        <p className="mt-0.5 text-[13.5px] text-muted">The minutes of every meeting that has been held. Click a row to read them, or to finish and send a draft.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+        <div>
+          <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Minutes (MoM)</h1>
+          <p className="mt-0.5 text-[13.5px] text-muted">The minutes of every meeting that has been held. Click a row to read them, or to finish and send a draft.</p>
+        </div>
+        <ExportCsvButton
+          filename="meet-minutes"
+          header={["Meeting", "Code", "Held on", "Minutes", "Sent on", "Points", "Tasks", "Decisions", "Summary"]}
+          rows={data.rows.map((r) => [r.meeting_title, r.session_code || "", r.date.slice(0, 10), r.state, r.sent_at ? r.sent_at.slice(0, 10) : "", r.points, r.tasks, r.decisions, r.overview || ""])}
+        />
       </div>
 
       <div className="flex flex-wrap gap-3">

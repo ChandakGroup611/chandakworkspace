@@ -7,6 +7,7 @@ import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import ListFilters from "@/components/meet/lists/ListFilters";
 import { ReplyChip } from "@/components/meet/RsvpPanel";
 import MeetingActions from "@/components/meet/MeetingActions";
+import MeetNowButton from "@/components/meet/MeetNowButton";
 import { requireMeet } from "@/lib/permissions/meet";
 import { RecordHighlighter, RecordLinkActions } from "@/components/ui/record";
 import {
@@ -86,9 +87,12 @@ export default async function MeetingsPage({
           <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Meetings</h1>
           <p className="mt-0.5 text-[13.5px] text-muted">Meetings you organise or attend. Recurring meetings show each date separately.</p>
         </div>
-        <Link href="/meet/meetings/new" className={btnPrimary}>
-          <Plus className="h-4 w-4" aria-hidden /> Schedule meeting
-        </Link>
+        <div className="flex gap-2">
+          <MeetNowButton />
+          <Link href="/meet/meetings/new" className={btnPrimary}>
+            <Plus className="h-4 w-4" aria-hidden /> Schedule meeting
+          </Link>
+        </div>
       </div>
 
       <div className="theme-card-structural overflow-hidden p-0">

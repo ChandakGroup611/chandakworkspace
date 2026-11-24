@@ -5,6 +5,7 @@ import { getDecisionDetail } from "@/lib/actions/meet/decision-detail";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import BackLink from "@/components/meet/BackLink";
 import DecisionDetailClient from "./DecisionDetailClient";
+import CommentsPanel from "@/components/meet/CommentsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +95,8 @@ export default async function DecisionPage({ params }: { params: Promise<{ id: s
               </ul>
             )}
           </section>
+
+          <CommentsPanel entityType="decision" entityId={x.d.id} />
 
           <section className="theme-card-structural space-y-2 p-5" aria-label="Activity">
             <h2 className="text-[15px] font-semibold text-heading">History</h2>

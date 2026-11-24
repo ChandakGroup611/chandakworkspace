@@ -148,3 +148,48 @@ export async function reassignTask(input: { taskId: string; ownerId: string; add
   revalidatePath("/meet/tasks");
   return { success: true };
 }
+
+/** Change status, owner or due date on many tasks at once (Tasks list). Each change is logged. */
+export async function bulkUpdateTasks(input: { taskIds: string[]; status?: string; ownerId?: string; dueDate?: string; reason?: string }): Promise<{ success: boolean; updated?: number; skipped?: number; error?: string }> {
+  const auth = await requireMeet("MEET_VIEW");
+  const ids = Array.from(new Set((input.taskIds || []).filter((x) => /^[0-9a-f-]{36}$/i.test(x)))).slice(0, 200);
+  if (!ids.length) return { success: false, error: "Select some tasks first." };
+  const validStatus = ["not_started", "in_progress", "on_hold", "completed", "cancelled"];
+  if (input.status && !validStatus.includes(input.status)) return { success: false, error: "Unknown status." };
+  if (input.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate)) return { success: false, error: "Pick a valid date." };
+  if (input.dueDate && String(input.reason || "").trim().length < 3) return { success: false, error: "Give a reason for the new due date." };
+  if (!input.status && !input.ownerId && !input.dueDate) return { success: false, error: "Choose what to change." };
+
+  const { data: rows } = await supabaseAdmin
+    .from("meet_tasks")
+    .select("id, owner_id, status, due_date, revised_due_date, point:meet_points(meeting_id, meeting:meet_meetings(organizer_id, chair_id))")
+    .in("id", ids)
+    .eq("is_deleted", false);
+  const isAdmin = auth.isSuperAdmin || auth.isMeetAdmin;
+  let updated = 0, skipped = 0;
+  const now = new Date().toISOString();
+  for (const t of (rows || []) as any[]) {
+    const m = one(one(t.point)?.meeting);
+    const isOrg = m?.organizer_id === auth.userId || m?.chair_id === auth.userId;
+    const allowed = isAdmin || isOrg || (t.owner_id === auth.userId && !input.ownerId);
+    if (!allowed) { skipped++; continue; }
+    const patch: any = { updated_at: now };
+    if (input.status) {
+      patch.status = input.status;
+      if (input.status === "completed") { patch.completed_at = now; patch.progress_percent = 100; }
+    }
+    if (input.ownerId) patch.owner_id = input.ownerId;
+    if (input.dueDate) patch.revised_due_date = input.dueDate;
+    const { error } = await supabaseAdmin.from("meet_tasks").update(patch).eq("id", t.id);
+    if (error) { skipped++; continue; }
+    updated++;
+    if (input.ownerId && one(t.point)?.meeting_id) await addPeopleToMeeting(one(t.point).meeting_id, [input.ownerId]).catch(() => 0);
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "task", entity_id: t.id, action: "bulk_updated", field: Object.keys(patch).filter((k) => k !== "updated_at").join(","),
+      new_value: [input.status && `status ${input.status}`, input.ownerId && "owner changed", input.dueDate && `due ${input.dueDate} · ${String(input.reason || "").trim().slice(0, 200)}`].filter(Boolean).join(" · "),
+      user_id: auth.userId, channel: "web",
+    });
+  }
+  revalidatePath("/meet/tasks");
+  return { success: true, updated, skipped };
+}

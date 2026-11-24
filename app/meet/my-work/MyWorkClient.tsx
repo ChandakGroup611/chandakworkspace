@@ -2,6 +2,8 @@
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { bulkUpdateTasks } from "@/lib/actions/meet/task-detail";
 import {
   CheckCircle2,
   Clock,
@@ -40,6 +42,7 @@ interface MyWorkClientProps {
 }
 
 export default function MyWorkClient({ initialTasks, users = [], serverFiltered = false }: MyWorkClientProps) {
+  const router = useRouter();
   const [tasks, setTasks] = useState<MeetingTask[]>(initialTasks);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [statusTab, setStatusTab] = useState<"all" | "overdue" | "due_soon" | "open" | "completed">("all");
@@ -49,6 +52,11 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
   const [extensionReason, setExtensionReason] = useState("");
   const [isSubmittingExt, setIsSubmittingExt] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkOwner, setBulkOwner] = useState("");
+  const [bulkDue, setBulkDue] = useState("");
+  const [bulkReason, setBulkReason] = useState("");
 
   const todayStr = new Date().toISOString().split("T")[0];
   const tomorrow = new Date();
@@ -242,6 +250,29 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
     { status: "completed", label: "Completed" },
   ];
 
+  const toggleSel = (id: string) => setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const allSel = filteredTasks.length > 0 && filteredTasks.every((t) => selected.has(t.id));
+  const applyBulk = () =>
+    startTransition(async () => {
+      const r = await bulkUpdateTasks({ taskIds: Array.from(selected), status: bulkStatus || undefined, ownerId: bulkOwner || undefined, dueDate: bulkDue || undefined, reason: bulkReason || undefined });
+      if (!r.success) { toast.error(r.error || "Couldn't update."); return; }
+      toast.success(`${r.updated} updated${r.skipped ? `, ${r.skipped} skipped (no permission)` : ""}`);
+      setSelected(new Set()); setBulkStatus(""); setBulkOwner(""); setBulkDue(""); setBulkReason("");
+      router.refresh();
+    });
+  const exportCsv = () => {
+    const esc = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [["Task", "Title", "Point", "Meeting", "Owner", "Priority", "Status", "Due", "Progress %"]].concat(
+      filteredTasks.map((t: any) => [t.code, t.title, t.point?.code || "", t.point?.meeting?.title || "", t.owner?.full_name || "", t.priority, t.status, t.revised_due_date || t.due_date || "", t.progress_percent ?? 0])
+    );
+    const blob = new Blob([rows.map((r) => r.map(esc).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `meet-tasks-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   return (
     <div className="space-y-4">
       {/* Control Bar */}
@@ -296,16 +327,45 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
             </button>
           </div>
 
+          <AppButton variant="outline" size="sm" onClick={exportCsv}>
+            Export (Excel)
+          </AppButton>
           <AppButton
             variant="primary"
             size="sm"
             leftIcon={<Plus className="h-3.5 w-3.5" />}
             onClick={() => setIsCreateTaskOpen(true)}
           >
-            New Action Item
+            New task
           </AppButton>
         </div>
       </div>
+
+      {selected.size > 0 && (
+        <div className="theme-card-structural flex flex-wrap items-end gap-2.5 border-primary p-3" role="region" aria-label="Change selected tasks">
+          <p className="basis-full text-[13.5px] font-semibold text-heading">{selected.size} selected · change them all at once</p>
+          <label className="text-[12px] font-medium text-muted">Status
+            <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="mt-1 block h-9 rounded-md border border-border bg-surface px-2 text-[13.5px] text-foreground">
+              <option value="">Keep</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="on_hold">On hold</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+            </select>
+          </label>
+          <label className="text-[12px] font-medium text-muted">Owner
+            <select value={bulkOwner} onChange={(e) => setBulkOwner(e.target.value)} className="mt-1 block h-9 max-w-[200px] rounded-md border border-border bg-surface px-2 text-[13.5px] text-foreground">
+              <option value="">Keep</option>{users.map((u: any) => <option key={u.id} value={u.id}>{u.full_name}</option>)}
+            </select>
+          </label>
+          <label className="text-[12px] font-medium text-muted">New due date
+            <input type="date" value={bulkDue} onChange={(e) => setBulkDue(e.target.value)} className="mt-1 block h-9 rounded-md border border-border bg-surface px-2 text-[13.5px] text-foreground" />
+          </label>
+          {bulkDue && (
+            <label className="text-[12px] font-medium text-muted">Reason
+              <input value={bulkReason} onChange={(e) => setBulkReason(e.target.value)} className="mt-1 block h-9 rounded-md border border-border bg-surface px-2 text-[13.5px] text-foreground" />
+            </label>
+          )}
+          <AppButton variant="primary" size="sm" isLoading={isPending} onClick={applyBulk}>Apply</AppButton>
+          <AppButton variant="outline" size="sm" onClick={() => setSelected(new Set())}>Clear selection</AppButton>
+        </div>
+      )}
 
       {/* List View */}
       {viewMode === "list" && (
@@ -328,12 +388,13 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-[13px]">
-                <thead className="border-b border-border bg-sunken/40 text-[11.5px] uppercase font-semibold text-muted">
+                <thead className="border-b border-border bg-sunken text-[12.5px] font-semibold text-subtle">
                   <tr>
-                    <th className="py-2.5 px-4">Task Code</th>
-                    <th className="py-2.5 px-4">Title & Context</th>
+                    <th className="py-2.5 pl-4 w-8"><input type="checkbox" aria-label="Select all" checked={allSel} onChange={() => setSelected(allSel ? new Set() : new Set(filteredTasks.map((t) => t.id)))} /></th>
+                    <th className="py-2.5 px-4">Task</th>
+                    <th className="py-2.5 px-4">Title and point</th>
                     <th className="py-2.5 px-4">Owner</th>
-                    <th className="py-2.5 px-4">TAT Due Date</th>
+                    <th className="py-2.5 px-4">Due</th>
                     <th className="py-2.5 px-4">Status</th>
                     <th className="py-2.5 px-4 text-right">Actions</th>
                   </tr>
@@ -348,6 +409,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
 
                     return (
                       <tr key={task.id} className="hover:bg-sunken/20 transition-colors">
+                        <td className="py-3 pl-4"><input type="checkbox" aria-label={`Select ${task.code}`} checked={selected.has(task.id)} onChange={() => toggleSel(task.id)} /></td>
                         <td className="py-3 px-4 font-mono font-medium text-primary">
                           <Link href={`/meet/tasks/${task.id}`} className="hover:underline">{task.code}</Link>
                         </td>

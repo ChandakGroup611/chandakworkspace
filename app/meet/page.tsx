@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { getMeetHomeData, type MeetHomeNeed } from "@/lib/actions/meet/home";
 import { getInvitesWaitingForMe } from "@/lib/actions/meet/rsvp";
+import MeetNowButton from "@/components/meet/MeetNowButton";
 import {
   IST,
   btnPrimary,
@@ -74,6 +75,7 @@ export default async function MeetHomePage() {
           <Link href="/meet/meetings" className={btnSecondary}>
             <Calendar className="h-4 w-4" aria-hidden /> All meetings
           </Link>
+          <MeetNowButton />
           <Link href="/meet/meetings/new" className={btnPrimary}>
             <Plus className="h-4 w-4" aria-hidden /> Schedule meeting
           </Link>

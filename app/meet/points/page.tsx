@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { listPoints, type ShowScope } from "@/lib/actions/meet/lists";
 import ListFilters from "@/components/meet/lists/ListFilters";
+import ExportCsvButton from "@/components/meet/lists/ExportCsvButton";
 import { pointStatus, PriorityText, DueHint, shortDate } from "@/components/meet/point-ui";
 
 export const dynamic = "force-dynamic";
@@ -47,9 +48,16 @@ export default async function PointsListPage({ searchParams }: { searchParams: P
 
   return (
     <div className="space-y-4 pb-6">
-      <div className="border-b border-border pb-4">
-        <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Points</h1>
-        <p className="mt-0.5 text-[13.5px] text-muted">Every point raised in your meetings. Open points come back to the next meeting until they're closed. Click a point to open it.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+        <div>
+          <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Points</h1>
+          <p className="mt-0.5 text-[13.5px] text-muted">Every point raised in your meetings. Open points come back to the next meeting until they're closed. Click a point to open it.</p>
+        </div>
+        <ExportCsvButton
+          filename="meet-points"
+          header={["Point", "Title", "Meeting", "Owner", "Status", "Priority", "Due", "Open tasks", "Times carried"]}
+          rows={data.rows.map((r) => [r.code, r.title, r.meeting_title, r.owner_name || "", r.status, r.priority, r.due_date || "", r.open_tasks, r.carry_forward_count])}
+        />
       </div>
 
       <div className="flex flex-wrap gap-3">

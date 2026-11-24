@@ -6,6 +6,8 @@ import { getPointDetail } from "@/lib/actions/meet/points-view";
 import { pointStatus, PriorityText, DueHint, shortDate } from "@/components/meet/point-ui";
 import PointActions from "./PointActions";
 import PointUpdateForm from "./PointUpdateForm";
+import PointMoveCard from "./PointMoveCard";
+import CommentsPanel from "@/components/meet/CommentsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -222,6 +224,8 @@ export default async function PointPage({ params, searchParams }: { params: Prom
               ))}
           </div>
         </section>
+        {d.canEdit && <PointMoveCard pointId={p.id} meetingId={d.meeting?.id || null} />}
+        <CommentsPanel entityType="point" entityId={p.id} />
       </main>
     </div>
   );
