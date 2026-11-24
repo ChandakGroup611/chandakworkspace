@@ -115,7 +115,9 @@ export function actionFor(s: MeetSessionRow): { label: string; href: string; ext
     if (s.i_am_organizer && !s.video_link) return { label: "Start", href: `/meet/live/${s.id}`, primary: true };
     return { label: "Join", href: `/meet/join/${s.id}`, primary: true };
   }
-  return { label: "Prepare", href: `/meet/sessions/${s.id}`, primary: false };
+  // Later today or another day: Join is still offered, so it's always clear where to join.
+  // The join page shows the start time, the Teams link and (for the organiser) Start.
+  return { label: "Join", href: `/meet/join/${s.id}`, primary: false };
 }
 
 export function whereOf(s: Pick<MeetSessionRow, "video_link" | "room_name" | "mode">) {

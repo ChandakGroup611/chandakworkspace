@@ -5,7 +5,7 @@ import { getMeetings } from "@/lib/actions/meet/meetings";
 import { getMyMeetingRows } from "@/lib/actions/meet/list";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import ListFilters from "@/components/meet/lists/ListFilters";
-import { ReplyChip } from "@/components/meet/RsvpPanel";
+import InviteReplyButtons from "@/components/meet/InviteReplyButtons";
 import MeetingActions from "@/components/meet/MeetingActions";
 import MeetNowButton from "@/components/meet/MeetNowButton";
 import { requireMeet } from "@/lib/permissions/meet";
@@ -185,7 +185,13 @@ export default async function MeetingsPage({
                       <td className="whitespace-nowrap px-4 py-3 text-subtle">{whereOf(s)}</td>
                       <td className="px-4 py-3 text-subtle">{s.invited ? `${s.accepted}/${s.invited} coming` : "—"}</td>
                       <td className="px-4 py-3">
-                        {s.i_am_organizer ? <span className="text-[12.5px] text-muted">Organiser</span> : s.my_reply ? <Link href={`/meet/meetings/${s.meeting_id}`} title="Reply on the meeting page"><ReplyChip reply={s.my_reply} /></Link> : <span className="text-[12.5px] text-muted">—</span>}
+                        {s.i_am_organizer ? (
+                          <span className="text-[12.5px] text-muted">You organise</span>
+                        ) : s.my_reply && (s.status === "scheduled" || s.status === "in_progress") ? (
+                          <InviteReplyButtons sessionId={s.id} reply={s.my_reply} compact />
+                        ) : (
+                          <span className="text-[12.5px] text-muted">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3"><StatusChip s={s} /></td>
                       <td className="whitespace-nowrap px-4 py-3 text-right"><ActionLink s={s} /></td>

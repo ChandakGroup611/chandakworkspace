@@ -16,6 +16,7 @@ import {
 import { getMeetHomeData, type MeetHomeNeed } from "@/lib/actions/meet/home";
 import { getInvitesWaitingForMe } from "@/lib/actions/meet/rsvp";
 import MeetNowButton from "@/components/meet/MeetNowButton";
+import InviteReplyButtons from "@/components/meet/InviteReplyButtons";
 import {
   IST,
   btnPrimary,
@@ -191,14 +192,15 @@ export default async function MeetHomePage() {
               <p className="mb-2 px-1 text-[12.5px] text-muted">Say if you'll attend. If you can't, give a reason so the organiser knows.</p>
               <ul className="space-y-1">
                 {invites.map((i) => (
-                  <li key={i.session_id}>
-                    <Link href={`/meet/meetings/${i.meeting_id}`} className="block rounded-md p-2.5 transition-colors hover:bg-surface-hover">
-                      <span className="block text-[14px] font-semibold text-foreground">{i.title}</span>
+                  <li key={i.session_id} className="space-y-1.5 rounded-md p-2.5 hover:bg-surface-hover">
+                    <Link href={`/meet/meetings/${i.meeting_id}`} className="block">
+                      <span className="block text-[14px] font-semibold text-foreground hover:underline">{i.title}</span>
                       <span className="block text-[13px] text-muted">
                         {new Date(i.start).toLocaleString("en-IN", { timeZone: IST, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
                         {i.organiser ? ` · from ${i.organiser}` : ""}
                       </span>
                     </Link>
+                    <InviteReplyButtons sessionId={i.session_id} reply="invited" />
                   </li>
                 ))}
               </ul>

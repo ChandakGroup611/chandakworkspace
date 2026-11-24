@@ -4,6 +4,8 @@ import { getJoinContext } from "@/lib/actions/meet/join";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import JoinScreen from "@/components/meet/JoinScreen";
+import MyBriefPanel from "@/components/meet/MyBriefPanel";
+import { getMyBrief } from "@/lib/actions/meet/my-brief";
 
 export const dynamic = "force-dynamic";
 
@@ -29,5 +31,11 @@ export default async function JoinMeetingPage({ params }: { params: Promise<{ se
       .toUpperCase();
   }
 
-  return <JoinScreen ctx={ctx} initials={initials || "ME"} />;
+  const brief = await getMyBrief(sessionId).catch(() => null);
+  return (
+    <div className="space-y-5">
+      <JoinScreen ctx={ctx} initials={initials || "ME"} />
+      {brief && <MyBriefPanel brief={brief} />}
+    </div>
+  );
 }
