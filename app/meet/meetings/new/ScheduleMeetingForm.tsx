@@ -730,11 +730,16 @@ export default function ScheduleMeetingForm({ masters, currentUserId, meeting, n
               </div>
             )}
 
-            {needRoom && (
+            {(
               <div>
-                <span className={label}>Room</span>
+                <span className={label}>
+                  Meeting room {!needRoom && <span className="font-normal text-muted">(optional: pick one if some people will sit together in the office)</span>}
+                </span>
                 {(assist?.rooms || masters.rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity, hasTeams: false, free: true, busyWith: null }))).length === 0 ? (
-                  <p className="text-[13.5px] text-subtle">No rooms have been added yet.</p>
+                  <p className="text-[13.5px] text-subtle">
+                    No rooms have been added yet. An admin can add them in{" "}
+                    <Link href="/meet/admin?section=rooms" className="font-semibold text-primary hover:underline">Settings › Rooms and door screens</Link>.
+                  </p>
                 ) : (
                   <ul className="grid gap-2 sm:grid-cols-2">
                     {(assist?.rooms || masters.rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity, hasTeams: false, free: true, busyWith: null }))).map((r) => {
@@ -743,7 +748,11 @@ export default function ScheduleMeetingForm({ masters, currentUserId, meeting, n
                         <li key={r.id}>
                           <button
                             type="button"
-                            onClick={() => setRoomId(roomId === r.id ? "" : r.id)}
+                            onClick={() => {
+                              setRoomId(roomId === r.id ? "" : r.id);
+                              // Picking a room for a Teams meeting makes it Teams + room
+                              if (roomId !== r.id && mode === "online") setMode("hybrid");
+                            }}
                             disabled={!r.free}
                             aria-pressed={roomId === r.id}
                             className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${

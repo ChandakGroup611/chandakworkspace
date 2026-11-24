@@ -30,6 +30,7 @@ import { EndSessionModal } from "@/components/meet/EndSessionModal";
 import RunningNotesCard from "@/components/meet/RunningNotesCard";
 import { sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 import DraggableLiveNotesWidget from "@/components/meet/DraggableLiveNotesWidget";
+import SessionRoomCard from "@/components/meet/SessionRoomCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus, updateSessionPointNotes } from "@/lib/actions/meet/points";
 import { updateSessionAttendance, startSession, updateSessionVideoLink } from "@/lib/actions/meet/sessions";
@@ -685,8 +686,9 @@ export default function LiveMeetingClient({
         </div>
 
         {/* Right: agenda + attendance */}
-        <aside className="hidden w-80 shrink-0 flex-col overflow-y-auto border-l border-border bg-surface p-4 lg:flex">
+        <aside className="hidden w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-border bg-surface p-4 lg:flex">
           {sidePanel}
+          <SessionRoomCard sessionId={session.id} />
         </aside>
       </div>
 

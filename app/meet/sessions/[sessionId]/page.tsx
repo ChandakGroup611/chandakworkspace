@@ -8,6 +8,7 @@ import { getAIMinutes } from "@/lib/actions/meet/ai-minutes";
 import SessionWorkspaceClient from "./SessionWorkspaceClient";
 import JoinRequestsPanel from "@/components/meet/JoinRequestsPanel";
 import FilesPanel from "@/components/meet/FilesPanel";
+import SessionRoomCard from "@/components/meet/SessionRoomCard";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,7 @@ export default async function SessionWorkspacePage({
         invitationsData={invitationsData}
         initialAIMinutes={aiMinutes}
       />
+      {["scheduled", "in_progress"].includes((session as any).status) && <SessionRoomCard sessionId={sessionId} />}
       <FilesPanel entityType="session" entityId={sessionId} title="Pre-reads and files" />
     </div>
   );

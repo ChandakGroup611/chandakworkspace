@@ -11,6 +11,7 @@ import { Building2, Check, Video } from "lucide-react";
 import BackLink from "@/components/meet/BackLink";
 import MeetingActions from "@/components/meet/MeetingActions";
 import RsvpPanel from "@/components/meet/RsvpPanel";
+import SessionRoomCard from "@/components/meet/SessionRoomCard";
 import { getSessionReplies } from "@/lib/actions/meet/rsvp";
 import { requireMeet } from "@/lib/permissions/meet";
 import MeetingDetailTabs, { type DetailTab } from "./MeetingDetailTabs";
@@ -157,6 +158,8 @@ export default async function MeetingDetailPage({
           </ol>
         )}
       </div>
+
+      {focus && replies && <SessionRoomCard sessionId={focus.id} dateLabel={`${relativeDay(focus.scheduled_start)}, ${timeOf(focus.scheduled_start)}`} />}
 
       {focus && replies && (
         <RsvpPanel
