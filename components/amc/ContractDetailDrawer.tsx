@@ -72,6 +72,7 @@ export function ContractDetailDrawer({
   const [renewOpen, setRenewOpen] = useState(false);
   const [nextPay, setNextPay] = useState<{ amount: number; due: string } | null>(null);
   const [paidTerm, setPaidTerm] = useState<number>(0);
+  const [paidAll, setPaidAll] = useState<number>(0);
 
   // Next pending payment and what's been paid (summary cards)
   useEffect(() => {
@@ -86,9 +87,19 @@ export function ContractDetailDrawer({
         const rows = data || [];
         const pending = rows.find((r: any) => r.status === "Pending");
         setNextPay(pending ? { amount: Number(pending.amount) || 0, due: pending.due_date } : null);
-        setPaidTerm(rows.filter((r: any) => r.status === "Paid").reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0));
+        // "Paid this term": only invoices dated inside the current start and end dates
+        const from = record.purchase_date ? String(record.purchase_date).slice(0, 10) : null;
+        const to = record.expiry_date ? String(record.expiry_date).slice(0, 10) : null;
+        const paid = rows.filter((r: any) => r.status === "Paid");
+        const inTerm = paid.filter((r: any) => {
+          const d = r.due_date ? String(r.due_date).slice(0, 10) : null;
+          if (!d) return false;
+          return (!from || d >= from) && (!to || d <= to);
+        });
+        setPaidTerm(inTerm.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0));
+        setPaidAll(paid.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0));
       });
-  }, [record?.id, activeTab]);
+  }, [record?.id, record?.purchase_date, record?.expiry_date, activeTab]);
 
   if (!isOpen || !record) return null;
 
@@ -209,12 +220,18 @@ export function ContractDetailDrawer({
           )}
         </div>
         <div className="rounded-lg border border-border bg-surface px-3.5 py-3">
-          <div className="text-[12.5px] text-muted">Paid so far</div>
-          <div className="mt-0.5 text-[19px] font-bold tabular-nums text-heading">{record.currency || "INR"} {paidTerm.toLocaleString("en-IN")}</div>
+          <div className="text-[12.5px] text-muted">Paid this term</div>
+          <div className="mt-0.5 text-[19px] font-bold tabular-nums text-heading">
+            {record.currency || "INR"} {paidTerm.toLocaleString("en-IN")}
+            {cost > 0 && <span className="text-[13px] font-medium text-muted"> of {cost.toLocaleString("en-IN")}</span>}
+          </div>
           {cost > 0 && (
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-border" aria-hidden>
               <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (paidTerm / cost) * 100)}%` }} />
             </div>
+          )}
+          {paidAll > paidTerm && (
+            <div className="mt-1 text-[12px] text-muted">{record.currency || "INR"} {paidAll.toLocaleString("en-IN")} paid in all</div>
           )}
         </div>
         <div className="rounded-lg border border-border bg-surface px-3.5 py-3">

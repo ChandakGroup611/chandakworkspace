@@ -26,6 +26,8 @@ export interface AMCHomeData {
   activeCount: number;
   activeValue: number;
   currency: string;
+  /** Contracts in other currencies are never added to rupee totals. */
+  otherCurrencies: { currency: string; amount: number; count: number }[];
   renewals: AMCHomeRow[];
   payments: (AMCHomeRow & { invoice: string })[];
   overdueCount: number;
@@ -119,19 +121,29 @@ export async function getAMCHome(): Promise<AMCHomeData | null> {
     .sort((a, b) => b.unused - a.unused);
 
   const byDeptMap = new Map<string, number>();
-  for (const r of active) {
+  const isInr = (r: any) => !r.currency || String(r.currency).toUpperCase() === "INR";
+  const others = new Map<string, { amount: number; count: number }>();
+  for (const r of active.filter((x) => !isInr(x))) {
+    const c = String(r.currency).toUpperCase();
+    const o = others.get(c) || { amount: 0, count: 0 };
+    o.amount += Number(r.cost) || 0;
+    o.count += 1;
+    others.set(c, o);
+  }
+  for (const r of active.filter(isInr)) {
     const k = depts.get(r.department_id) || "No department";
     byDeptMap.set(k, (byDeptMap.get(k) || 0) + (Number(r.cost) || 0));
   }
 
   return {
     activeCount: active.length,
-    activeValue: active.reduce((s, r) => s + (Number(r.cost) || 0), 0),
+    activeValue: active.filter(isInr).reduce((s, r) => s + (Number(r.cost) || 0), 0),
+    otherCurrencies: Array.from(others.entries()).map(([currency, o]) => ({ currency, ...o })),
     currency: "INR",
     renewals,
     payments,
     overdueCount: payments.filter((p) => (p.days ?? 0) < 0).length,
-    dueValue: payments.reduce((s, p) => s + p.amount, 0),
+    dueValue: payments.filter((p) => !p.currency || p.currency.toUpperCase() === "INR").reduce((s, p) => s + p.amount, 0),
     unusedSeats: seats.reduce((s, r) => s + r.unused, 0),
     unusedSeatsValue: seats.reduce((s, r) => s + r.unused * r.perSeat, 0),
     seatsTop: seats.slice(0, 5).map(({ perSeat: _p, ...r }) => r),

@@ -408,10 +408,10 @@ export function SubscriptionContractModal({
           )}
 
           {/* STEP 1: Details & Ownership */}
-          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">1. What is it</h3>}
+          {onePage && <h3 className="flex items-center gap-2 border-t border-border pt-6 text-[17px] font-bold text-heading first:border-t-0 first:pt-0">1. What is it</h3>}
           {(onePage || activeStep === "details") && (
-            <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+            <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150"}>
+              <h3 className={onePage ? "hidden" : "text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2"}>
                 <Zap className="h-3.5 w-3.5 text-warning-text" /> Basics
               </h3>
 
@@ -439,7 +439,7 @@ export function SubscriptionContractModal({
                     className="h-9 w-full rounded-md border border-border bg-surface px-3 text-xs text-foreground outline-none"
                     required
                   >
-                    <option value="">Select Vendor…</option>
+                    <option value="">Choose a vendor</option>
                     {vendors.map(v => (
                       <option key={v.id} value={v.id}>{v.vendor_name || v.name}</option>
                     ))}
@@ -456,7 +456,7 @@ export function SubscriptionContractModal({
                     className="h-9 w-full rounded-md border border-border bg-surface px-3 text-xs text-foreground outline-none"
                     required
                   >
-                    <option value="">Select Department…</option>
+                    <option value="">Choose a department</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id}>{d.name || d.department_name}</option>
                     ))}
@@ -473,7 +473,7 @@ export function SubscriptionContractModal({
                     className="h-9 w-full rounded-md border border-border bg-surface px-3 text-xs text-foreground outline-none"
                     required
                   >
-                    <option value="">Select Owner…</option>
+                    <option value="">Choose a person</option>
                     {users.map(u => (
                       <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
                     ))}
@@ -499,10 +499,10 @@ export function SubscriptionContractModal({
           )}
 
           {/* STEP 2: Plan, Billing & Seats */}
-          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">2. Plan, cost and seats</h3>}
+          {onePage && <h3 className="flex items-center gap-2 border-t border-border pt-6 text-[17px] font-bold text-heading first:border-t-0 first:pt-0">2. Plan, cost and seats</h3>}
           {(onePage || activeStep === "billing") && (
-            <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+            <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150"}>
+              <h3 className={onePage ? "hidden" : "text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2"}>
                 <DollarSign className="h-3.5 w-3.5 text-theme-icon" /> Plan, cost and seats
               </h3>
 
@@ -641,10 +641,10 @@ export function SubscriptionContractModal({
           )}
 
           {/* STEP 3: Compliance & Documents */}
-          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">3. Security and documents</h3>}
+          {onePage && <h3 className="flex items-center gap-2 border-t border-border pt-6 text-[17px] font-bold text-heading first:border-t-0 first:pt-0">3. Security and documents</h3>}
           {(onePage || activeStep === "compliance") && (
-            <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+            <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4 animate-in fade-in duration-150"}>
+              <h3 className={onePage ? "flex items-center gap-2 text-[14px] font-semibold text-foreground" : "text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2"}>
                 <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" /> Security & Mandatory Documents
               </h3>
 

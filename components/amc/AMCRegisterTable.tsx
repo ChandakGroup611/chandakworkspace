@@ -32,7 +32,7 @@ const statusOf = (r: any) => String(r.status || "").toLowerCase();
 const TABS: { id: Tab; label: string }[] = [
   { id: "active", label: "Active" },
   { id: "soon", label: "Renewing in 60 days" },
-  { id: "due", label: "Payment due" },
+  { id: "due", label: "Payment due in 30 days" },
   { id: "expired", label: "Expired" },
   { id: "draft", label: "Draft" },
   { id: "all", label: "All" },
@@ -104,7 +104,7 @@ export function AMCRegisterTable({
         const st = statusOf(r);
         if (tab === "active" && st !== "active") return false;
         if (tab === "soon" && !(st === "active" && days !== null && days >= 0 && days <= 60)) return false;
-        if (tab === "due" && !pay) return false;
+        if (tab === "due" && !(pay && daysTo(pay.due) !== null && (daysTo(pay.due) as number) <= 30)) return false;
         if (tab === "expired" && !(st === "expired" || (days !== null && days < 0))) return false;
         if (tab === "draft" && !(st === "draft" || st.includes("review") || st.includes("trial"))) return false;
         if (dept !== "all" && r.department_id !== dept) return false;
@@ -127,7 +127,7 @@ export function AMCRegisterTable({
       const d = daysTo(r.expiry_date);
       if (t === "active") return st === "active";
       if (t === "soon") return st === "active" && d !== null && d >= 0 && d <= 60;
-      if (t === "due") return nextPay.has(r.id);
+      if (t === "due") { const p = nextPay.get(r.id); const d = p ? daysTo(p.due) : null; return d !== null && d <= 30; }
       if (t === "expired") return st === "expired" || (d !== null && d < 0);
       if (t === "draft") return st === "draft" || st.includes("review") || st.includes("trial");
       return true;
@@ -198,55 +198,74 @@ export function AMCRegisterTable({
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-        <table className="w-full min-w-[1040px] border-collapse text-left">
+        <table className="w-full min-w-[760px] border-collapse text-left">
           <thead>
             <tr className="border-b border-border text-[12.5px] font-semibold text-muted">
               <th className="px-4 py-2.5">Name</th>
               <th className="px-3 py-2.5">Type</th>
-              <th className="px-3 py-2.5">Department · owner</th>
               <th className="px-3 py-2.5 text-right">Value</th>
               <th className="px-3 py-2.5">Ends</th>
-              <th className="px-3 py-2.5">Seats</th>
               <th className="px-3 py-2.5">Next payment</th>
               <th className="px-3 py-2.5">Status</th>
-              <th className="px-3 py-2.5"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9} className="px-4 py-10 text-center text-[14px] text-muted">Loading…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-[14px] text-muted">Loading…</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={9} className="px-4 py-10 text-center text-[14px] text-muted">Nothing matches.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-[14px] text-muted">Nothing matches.</td></tr>
             ) : (
               rows.map(({ r, days, pay, payDays }) => {
                 const isSub = r.contract_type === "Subscription";
                 const st = statusOf(r);
                 const total = Number(r.total_licenses) || 0;
                 return (
-                  <tr key={r.id} data-record-id={r.id} className="border-b border-border last:border-0 hover:bg-surface-hover">
+                  <tr key={r.id} data-record-id={r.id} className="group border-b border-border align-top last:border-0 hover:bg-surface-hover focus-within:bg-surface-hover">
                     <td className="px-4 py-3">
                       <Link href={amcRecordHref(r)} className="text-[14px] font-semibold text-foreground hover:text-primary">{r.software_name || "Untitled"}</Link>
-                      <div className="mt-0.5 text-[12.5px] text-muted">{vendorName.get(r.vendor_id) || r.provider_name || ""}</div>
+                      <div className="mt-0.5 text-[12.5px] text-muted">
+                        {[vendorName.get(r.vendor_id) || r.provider_name, deptName.get(r.department_id), userName.get(r.assigned_to)].filter(Boolean).join(" · ")}
+                      </div>
+                      <div className="mt-1.5 flex gap-3 text-[12.5px] font-semibold opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                        {canEdit && (
+                          <button type="button" onClick={() => onRenew(r)} className="inline-flex items-center gap-1 text-primary hover:underline">
+                            <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Renew
+                          </button>
+                        )}
+                        {canEdit && (
+                          <Link href={amcRecordHref(r, "/edit")} className="inline-flex items-center gap-1 text-primary hover:underline">
+                            <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit
+                          </Link>
+                        )}
+                        <button type="button" onClick={() => onHistory(r.id)} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          <History className="h-3.5 w-3.5" aria-hidden /> History
+                        </button>
+                        {canDelete && (
+                          <button type="button" onClick={() => onDelete(r)} className="inline-flex items-center gap-1 text-danger-text hover:underline">
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden /> Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-3">
                       <span className={`inline-flex h-6 items-center rounded-full px-2.5 text-[12px] font-semibold ${isSub ? "bg-success-soft text-success-text" : "bg-accent-soft text-accent-soft-text"}`}>
                         {isSub ? "Subscription" : r.contract_type === "AMC" ? "AMC" : r.contract_type || "AMC"}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-[13.5px] text-subtle">
-                      {deptName.get(r.department_id) || "—"}
-                      <div className="mt-0.5 text-[12.5px] text-muted">{userName.get(r.assigned_to) || ""}</div>
-                    </td>
                     <td className="px-3 py-3 text-right text-[14px] font-semibold tabular-nums">{money(r.cost, r.currency)}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-[13.5px]">
                       {fmt(r.expiry_date)}
-                      {days !== null && (
-                        <div className={`mt-0.5 text-[12.5px] font-semibold ${days < 0 ? "text-danger-text" : days <= 30 ? "text-warning-text" : "text-muted"}`}>
-                          {days < 0 ? `${-days} days ago` : days === 0 ? "today" : `in ${days} days`}
+                      {(days !== null || total > 0) && (
+                        <div className="mt-0.5 text-[12.5px]">
+                          {days !== null && (
+                            <span className={`font-semibold ${days < 0 ? "text-danger-text" : days <= 30 ? "text-warning-text" : "text-muted"}`}>
+                              {days < 0 ? `${-days} days ago` : days === 0 ? "today" : `in ${days} days`}
+                            </span>
+                          )}
+                          {total > 0 && <span className="text-muted">{days !== null ? " · " : ""}{Math.min(Number(r.used_licenses) || 0, total)} of {total} seats</span>}
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-[13.5px] text-subtle">{total ? `${Math.min(Number(r.used_licenses) || 0, total)} of ${total}` : "—"}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-[13.5px]">
                       {pay ? (
                         <>
@@ -267,28 +286,6 @@ export function AMCRegisterTable({
                       >
                         {r.status || "—"}
                       </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="flex justify-end gap-0.5">
-                        {canEdit && (
-                          <button type="button" onClick={() => onRenew(r)} title="Renew" aria-label={`Renew ${r.software_name}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-foreground">
-                            <RotateCcw className="h-4 w-4" aria-hidden />
-                          </button>
-                        )}
-                        <button type="button" onClick={() => onHistory(r.id)} title="History" aria-label={`History of ${r.software_name}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-foreground">
-                          <History className="h-4 w-4" aria-hidden />
-                        </button>
-                        {canEdit && (
-                          <Link href={amcRecordHref(r, "/edit")} title="Edit" aria-label={`Edit ${r.software_name}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-foreground">
-                            <Pencil className="h-4 w-4" aria-hidden />
-                          </Link>
-                        )}
-                        {canDelete && (
-                          <button type="button" onClick={() => onDelete(r)} title="Delete" aria-label={`Delete ${r.software_name}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-danger-soft hover:text-danger-text">
-                            <Trash2 className="h-4 w-4" aria-hidden />
-                          </button>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 );

@@ -608,12 +608,12 @@ export function AMCContractModal({
           )}
 
           {/* STEP 1: Details & Vendor Profile */}
-          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">1. What is it</h3>}
+          {onePage && <h3 className="flex items-center gap-2 border-t border-border pt-6 text-[17px] font-bold text-heading first:border-t-0 first:pt-0">1. What is it</h3>}
           {(onePage || activeStep === "details") && (
             <div className="space-y-5 animate-in fade-in duration-150">
-              <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
+              <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4"}>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                  <h3 className={onePage ? "hidden" : "text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2"}>
                     <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />Basics
                   </h3>
                   <AppButton
@@ -652,7 +652,7 @@ export function AMCContractModal({
                       className="h-9 w-full rounded-md border border-border bg-surface px-3 text-xs text-foreground outline-none"
                       required
                     >
-                      <option value="">Select Vendor…</option>
+                      <option value="">Choose a vendor</option>
                       {vendors.map(v => (
                         <option key={v.id} value={v.id}>{v.vendor_name || v.name}</option>
                       ))}
@@ -669,7 +669,7 @@ export function AMCContractModal({
                       className="h-9 w-full rounded-md border border-border bg-surface px-3 text-xs text-foreground outline-none"
                       required
                     >
-                      <option value="">Select Department…</option>
+                      <option value="">Choose a department</option>
                       {departments.map(d => (
                         <option key={d.id} value={d.id}>{d.name || d.department_name}</option>
                       ))}
@@ -686,7 +686,7 @@ export function AMCContractModal({
                       className="h-9 w-full rounded-md border border-border bg-surface px-3 text-xs text-foreground outline-none"
                       required
                     >
-                      <option value="">Select Owner…</option>
+                      <option value="">Choose a person</option>
                       {users.map(u => (
                         <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
                       ))}
@@ -774,11 +774,11 @@ export function AMCContractModal({
           )}
 
           {/* STEP 2: Commercials & Line-Item Transactions */}
-          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">2. Term and cost</h3>}
+          {onePage && <h3 className="flex items-center gap-2 border-t border-border pt-6 text-[17px] font-bold text-heading first:border-t-0 first:pt-0">2. Term and cost</h3>}
           {(onePage || activeStep === "commercials") && (
             <div className="space-y-5 animate-in fade-in duration-150">
-              <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+              <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4"}>
+                <h3 className={onePage ? "hidden" : "text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2"}>
                   <DollarSign className="h-3.5 w-3.5 text-theme-icon" /> Term and cost
                 </h3>
 
@@ -881,10 +881,10 @@ export function AMCContractModal({
               </div>
 
               {/* Itemwise Solution Transactions */}
-              <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
+              <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4"}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                    <h3 className={onePage ? "flex items-center gap-2 text-[14px] font-semibold text-foreground" : "text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2"}>
                       <Boxes className="h-3.5 w-3.5 text-theme-icon" /> Items
                     </h3>
                     <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer ml-3 bg-surface px-2.5 py-1 rounded border border-border">
@@ -1015,7 +1015,7 @@ export function AMCContractModal({
               </div>
 
               {/* Payment Schedule Milestones */}
-              <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
+              <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4"}>
                 <CustomPaymentMilestoneManager
                   customType={paymentTermsCustomType}
                   onCustomTypeChange={setPaymentTermsCustomType}
@@ -1031,11 +1031,11 @@ export function AMCContractModal({
           )}
 
           {/* STEP 3: SLAs & Service Levels */}
-          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">3. Support and coverage</h3>}
+          {onePage && <h3 className="flex items-center gap-2 border-t border-border pt-6 text-[17px] font-bold text-heading first:border-t-0 first:pt-0">3. Support and coverage</h3>}
           {(onePage || activeStep === "sla") && (
             <div className="space-y-5 animate-in fade-in duration-150">
-              <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+              <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4"}>
+                <h3 className={onePage ? "hidden" : "text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2"}>
                   <Boxes className="h-3.5 w-3.5 text-theme-icon" /> Support level
                 </h3>
 
@@ -1102,12 +1102,12 @@ export function AMCContractModal({
           )}
 
           {/* STEP 4: Mandatory Documents & Review */}
-          {onePage && <h3 className="flex items-center gap-2 border-b border-border pb-2 pt-2 text-[16px] font-semibold text-heading">4. Documents</h3>}
+          {onePage && <h3 className="flex items-center gap-2 border-t border-border pt-6 text-[17px] font-bold text-heading first:border-t-0 first:pt-0">4. Documents</h3>}
           {(onePage || activeStep === "documents") && (
             <div className="space-y-5 animate-in fade-in duration-150">
-              <div className="space-y-4 rounded-lg border border-border bg-sunken/30 p-4">
+              <div className={onePage ? "space-y-4" : "space-y-4 rounded-lg border border-border bg-sunken/30 p-4"}>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+                  <h3 className={onePage ? "flex items-center gap-2 text-[14px] font-semibold text-foreground" : "text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2"}>
                     <Paperclip className="h-3.5 w-3.5 text-theme-icon" /> Mandatory Documents (PO & Agreement)
                   </h3>
                   <AppButton

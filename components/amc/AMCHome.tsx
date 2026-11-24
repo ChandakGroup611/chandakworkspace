@@ -13,6 +13,13 @@ const inr = (n: number) => {
   if (v >= 1e5) return `₹ ${(v / 1e5).toFixed(1)} L`;
   return `₹ ${v.toLocaleString("en-IN")}`;
 };
+const cur = (c: string, n: number) => `${c === "USD" ? "$" : c === "EUR" ? "€" : c === "GBP" ? "£" : c + " "}${Math.round(n).toLocaleString("en-IN")}`;
+const inrOnly = (rows: AMCHomeRow[]) => rows.filter((r) => !r.currency || r.currency.toUpperCase() === "INR");
+const othersNote = (rows: AMCHomeRow[]) => {
+  const m = new Map<string, number>();
+  for (const r of rows) if (r.currency && r.currency.toUpperCase() !== "INR") m.set(r.currency.toUpperCase(), (m.get(r.currency.toUpperCase()) || 0) + r.amount);
+  return Array.from(m.entries()).map(([c, n]) => `+ ${cur(c, n)}`).join(" ");
+};
 const date = (d: string | null) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "");
 const href = (r: AMCHomeRow) => (r.type === "Subscription" ? `/amc/subscriptions/${r.id}` : `/amc/contracts/${r.id}`);
 
@@ -72,9 +79,18 @@ export default function AMCHome({ data, win }: { data: AMCHomeData; win: 30 | 60
       </p>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile label="Active contracts and subscriptions" value={String(data.activeCount)} sub={`${inr(data.activeValue)} total value`} />
-        <Tile label="Renewing in 30 days" value={String(in30.length)} sub={in30.length ? `${inr(in30.reduce((s, r) => s + r.amount, 0))} at today's price` : undefined} tone={in30.length ? "warn" : undefined} />
-        <Tile label="Payments due (30 days)" value={inr(data.dueValue)} sub={data.overdueCount ? `${data.overdueCount} overdue` : `${data.payments.length} pending`} tone={data.overdueCount ? "danger" : undefined} />
+        <Tile
+          label="Active contracts and subscriptions"
+          value={String(data.activeCount)}
+          sub={`${inr(data.activeValue)} total value${data.otherCurrencies.length ? ` + ${data.otherCurrencies.map((o) => `${cur(o.currency, o.amount)} in ${o.count} ${o.currency}`).join(", ")}` : ""}`}
+        />
+        <Tile
+          label="Renewing in 30 days"
+          value={String(in30.length)}
+          sub={in30.length ? `${inr(inrOnly(in30).reduce((s, r) => s + r.amount, 0))} at today's price ${othersNote(in30)}`.trim() : undefined}
+          tone={in30.length ? "warn" : undefined}
+        />
+        <Tile label="Payments due (30 days)" value={inr(data.dueValue)} sub={`${data.overdueCount ? `${data.overdueCount} overdue` : `${data.payments.length} pending`} ${othersNote(data.payments)}`.trim()} tone={data.overdueCount ? "danger" : undefined} />
         <Tile label="Unused seats" value={String(data.unusedSeats)} sub={data.unusedSeats ? `about ${inr(data.unusedSeatsValue)} of spend` : undefined} />
       </div>
 
@@ -110,7 +126,7 @@ export default function AMCHome({ data, win }: { data: AMCHomeData; win: 30 | 60
                         {[r.vendor, r.type, r.owner && `owner ${r.owner}`, `ends ${date(r.date)}`].filter(Boolean).join(" · ")}
                       </span>
                     </span>
-                    <span className="hidden w-24 text-right text-[14px] font-semibold tabular-nums sm:block">{inr(r.amount)}</span>
+                    <span className="hidden w-24 text-right text-[14px] font-semibold tabular-nums sm:block">{!r.currency || r.currency.toUpperCase() === "INR" ? inr(r.amount) : cur(r.currency.toUpperCase(), r.amount)}</span>
                     <DaysChip days={r.days} />
                   </Link>
                 </li>
@@ -134,7 +150,7 @@ export default function AMCHome({ data, win }: { data: AMCHomeData; win: 30 | 60
                         <span className="block truncate text-[14.5px] font-semibold text-foreground">{p.name}</span>
                         <span className="block truncate text-[12.5px] text-muted">{p.invoice} · due {date(p.date)}</span>
                       </span>
-                      <span className="text-[14px] font-semibold tabular-nums">{inr(p.amount)}</span>
+                      <span className="text-[14px] font-semibold tabular-nums">{!p.currency || p.currency.toUpperCase() === "INR" ? inr(p.amount) : cur(p.currency.toUpperCase(), p.amount)}</span>
                       <DaysChip days={p.days} pay />
                     </Link>
                   </li>
@@ -165,7 +181,7 @@ export default function AMCHome({ data, win }: { data: AMCHomeData; win: 30 | 60
 
       {data.byDepartment.length > 0 && (
         <section aria-labelledby="h-dept" className="rounded-xl border border-border bg-surface p-4">
-          <h2 id="h-dept" className="mb-3 text-[16px] font-semibold text-heading">Spend by department</h2>
+          <h2 id="h-dept" className="mb-3 text-[16px] font-semibold text-heading">Spend by department <span className="text-[13px] font-normal text-muted">(rupee contracts)</span></h2>
           <ul className="space-y-2.5">
             {data.byDepartment.map((d) => (
               <li key={d.name} className="flex items-center gap-3 text-[13.5px]">
