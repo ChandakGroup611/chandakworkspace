@@ -1,5 +1,6 @@
 "use server";
 
+import { syncSessionEvent, cancelSessionEvent } from "@/lib/integrations/outlook-events";
 import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
@@ -706,7 +707,7 @@ export async function rescheduleSession(input: {
 
     const { data: session } = await supabaseAdmin
       .from("meet_sessions")
-      .select("id, meeting_id, scheduled_start, scheduled_end")
+      .select("id, meeting_id, scheduled_start, scheduled_end, room_id")
       .eq("id", input.sessionId)
       .single();
 
@@ -740,6 +741,15 @@ export async function rescheduleSession(input: {
       user_id: userId,
       channel: "web",
     });
+
+    // Move the Outlook / Teams event and ask the room again (no-op until Microsoft 365 is connected)
+    if (session.room_id) {
+      await supabaseAdmin
+        .from("meet_room_bookings")
+        .update({ start_at: newStart, end_at: newEnd, updated_at: new Date().toISOString() })
+        .eq("session_id", input.sessionId);
+    }
+    await syncSessionEvent(input.sessionId).catch(() => null);
 
     revalidatePath(`/meet/sessions/${input.sessionId}`);
     revalidatePath(`/meet/meetings/${session.meeting_id}`);
@@ -788,6 +798,9 @@ export async function cancelSession(input: {
       user_id: userId,
       channel: "web",
     });
+
+    // Cancel the Outlook / Teams event and free the room
+    await cancelSessionEvent(input.sessionId, input.reason).catch(() => null);
 
     revalidatePath(`/meet/sessions/${input.sessionId}`);
     revalidatePath(`/meet/meetings/${session.meeting_id}`);

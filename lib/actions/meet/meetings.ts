@@ -1,5 +1,6 @@
 "use server";
 
+import { syncSessionEvent } from "@/lib/integrations/outlook-events";
 import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
@@ -403,6 +404,9 @@ export async function createMeeting(input: CreateMeetingInput) {
         });
 
         void icsString; // not attached: template emails are HTML only
+        // Real Teams meeting in the organiser's Outlook (no-op until Microsoft 365 is connected)
+        const outlook = await syncSessionEvent(session.id).catch(() => null);
+
         await sendMeetEmail("Meeting created", {
           entityId: session.id,
           sessionId: session.id,
@@ -419,7 +423,7 @@ export async function createMeeting(input: CreateMeetingInput) {
             meeting_code: meeting.code,
             session_code: session.code,
             start_time: `${new Date(scheduledStart).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST`,
-            join_link: effectiveVideoLink || "",
+            join_link: outlook?.joinUrl || effectiveVideoLink || "",
             link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/join/${session.id}`,
           },
         });

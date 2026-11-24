@@ -17,6 +17,7 @@ export const MEET_EVENTS = [
   "Task assigned",
   "Point escalated",
   "Overdue",
+  "Room declined",
 ] as const;
 
 export type MeetEventName = (typeof MEET_EVENTS)[number];
@@ -41,6 +42,7 @@ export const MEET_EVENT_INFO: Record<MeetEventName, { when: string; roles: MeetR
   "Task assigned": { when: "When a task is given to someone", roles: ["Task owner", "Organiser (creator)"] },
   "Point escalated": { when: "When a point is carried forward 3 times", roles: ["Organiser (creator)", "Chair", "Point owner"] },
   Overdue: { when: "The day a point or task passes its due date", roles: ["Point owner", "Task owner", "Chair", "Organiser (creator)"] },
+  "Room declined": { when: "When a room's Outlook calendar turns down the booking", roles: ["Organiser (creator)", "Minute taker", "Chair"] },
 };
 
 /** Reminder timings offered in the editor, in minutes before the meeting starts. */

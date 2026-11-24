@@ -20,8 +20,9 @@ export default function JoinScreen({ ctx, initials }: { ctx: JoinContext; initia
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const [camOn, setCamOn] = useState(true);
+  const [camOn, setCamOn] = useState(false);
   const [micOn, setMicOn] = useState(true);
+  const [previewStarted, setPreviewStarted] = useState(false);
   const [camError, setCamError] = useState<string | null>(null);
   const [status, setStatus] = useState<JoinContext["request"] | "entered">(ctx.canEnter ? "admitted" : ctx.request);
   const [videoLink, setVideoLink] = useState<string | null>(ctx.videoLink);
@@ -36,16 +37,18 @@ export default function JoinScreen({ ctx, initials }: { ctx: JoinContext; initia
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setCamError(null);
+      setPreviewStarted(true);
+      setCamOn(true);
     } catch (e: any) {
       setCamError(e?.name === "NotAllowedError" ? "Camera and microphone are blocked for this site. Allow them in the browser's address bar." : "No camera or microphone found.");
       setCamOn(false);
     }
   }, []);
 
+  // The camera starts only when the person asks for it ("Check camera and mic").
   useEffect(() => {
-    startPreview();
     return () => streamRef.current?.getTracks().forEach((t) => t.stop());
-  }, [startPreview]);
+  }, []);
 
   useEffect(() => {
     streamRef.current?.getVideoTracks().forEach((t) => (t.enabled = camOn));
@@ -126,10 +129,23 @@ export default function JoinScreen({ ctx, initials }: { ctx: JoinContext; initia
             {(!camOn || camError) && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
                 <span className="inline-flex h-24 w-24 items-center justify-center rounded-full bg-[#E0E7FF] text-[30px] font-bold text-[#3730A3]">{initials}</span>
-                <span className="text-[14px] text-[#C9CEE0]">{camError || "Camera is off"}</span>
+                {!previewStarted && !camError ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={startPreview}
+                      className="inline-flex h-10 items-center rounded-lg bg-white px-4 text-[14px] font-semibold text-[#0F172A] hover:bg-[#F1F3F8] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      Check camera and mic
+                    </button>
+                    <span className="text-[12.5px] text-[#C9CEE0]">Optional. You can join without it.</span>
+                  </>
+                ) : (
+                  <span className="text-[14px] text-[#C9CEE0]">{camError || "Camera is off"}</span>
+                )}
               </div>
             )}
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-3">
+            <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 gap-3 ${previewStarted ? "flex" : "hidden"}`}>
               <button
                 type="button"
                 onClick={() => setMicOn((v) => !v)}

@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { todayIST } from "@/lib/utils/date-utils";
 import { sendMeetEmail } from "@/lib/utils/meet-email";
+import { outlookConfigured, syncSessionEvent, readRoomResponse } from "@/lib/integrations/outlook-events";
 import { REMINDER_EVENTS, parseReminderTrigger, reminderTrigger } from "@/lib/utils/meet-email-config";
 
 /**
@@ -26,6 +27,8 @@ export interface MeetJobsResult {
   slaOpened: number;
   slaClosed: number;
   updateRequests: number;
+  outlookCreated: number;
+  roomAnswers: number;
   minutesReminders: number;
   errors: string[];
 }
@@ -37,6 +40,8 @@ export async function runMeetJobs(now = new Date()): Promise<MeetJobsResult> {
     slaOpened: 0,
     slaClosed: 0,
     updateRequests: 0,
+    outlookCreated: 0,
+    roomAnswers: 0,
     minutesReminders: 0,
     errors: [],
   };
@@ -65,11 +70,83 @@ export async function runMeetJobs(now = new Date()): Promise<MeetJobsResult> {
   await step("owner-update-requests", async () => {
     result.updateRequests = await sendOwnerUpdateRequests(now);
   });
+  await step("outlook-sync", async () => {
+    const r = await syncOutlook(now);
+    result.outlookCreated = r.created;
+    result.roomAnswers = r.answers;
+  });
   await step("minutes-reminders", async () => {
     result.minutesReminders = await sendMinutesReminders(now);
   });
 
   return result;
+}
+
+/**
+ * Outlook / Teams (no-op until Microsoft 365 is connected):
+ *  1. sessions in the next 30 days that aren't in Outlook yet get their event (at most 10 a run,
+ *     and not again within 6 hours of a failure);
+ *  2. rooms that haven't answered are checked; a decline marks the booking and emails the
+ *     organiser through the admin's "Room declined" template.
+ */
+async function syncOutlook(now: Date): Promise<{ created: number; answers: number }> {
+  if (!outlookConfigured()) return { created: 0, answers: 0 };
+  let created = 0;
+  let answers = 0;
+
+  const { data: upcoming } = await supabaseAdmin
+    .from("meet_sessions")
+    .select("id")
+    .eq("status", "scheduled")
+    .eq("is_deleted", false)
+    .gt("scheduled_start", now.toISOString())
+    .lte("scheduled_start", new Date(now.getTime() + 30 * 24 * 3600000).toISOString())
+    .order("scheduled_start", { ascending: true })
+    .limit(200);
+  const ids = (upcoming || []).map((s: any) => s.id);
+  if (ids.length) {
+    const since = new Date(now.getTime() - 6 * 3600000).toISOString();
+    const { data: logs } = await supabaseAdmin
+      .from("meet_activity_log")
+      .select("entity_id, action, created_at")
+      .eq("entity_type", "session")
+      .in("entity_id", ids)
+      .in("action", ["outlook_event", "outlook_sync_failed"]);
+    const done = new Set((logs || []).filter((l: any) => l.action === "outlook_event").map((l: any) => l.entity_id));
+    const recentFail = new Set((logs || []).filter((l: any) => l.action === "outlook_sync_failed" && l.created_at > since).map((l: any) => l.entity_id));
+    for (const id of ids.filter((i: string) => !done.has(i) && !recentFail.has(i)).slice(0, 10)) {
+      const r = await syncSessionEvent(id);
+      if (r.ok) created++;
+    }
+  }
+
+  const { data: pending } = await supabaseAdmin
+    .from("meet_room_bookings")
+    .select("id, session_id, room:meet_rooms(name)")
+    .eq("status", "pending")
+    .not("external_event_id", "is", null)
+    .gt("end_at", now.toISOString())
+    .limit(50);
+  for (const b of pending || []) {
+    const resp = await readRoomResponse((b as any).session_id);
+    if (resp === "accepted" || resp === "declined") {
+      await supabaseAdmin
+        .from("meet_room_bookings")
+        .update({ status: resp === "accepted" ? "confirmed" : "declined", last_synced_at: now.toISOString(), updated_at: now.toISOString() })
+        .eq("id", (b as any).id);
+      answers++;
+      if (resp === "declined") {
+        const room: any = one((b as any).room);
+        await sendMeetEmail("Room declined", {
+          entityId: (b as any).session_id,
+          sessionId: (b as any).session_id,
+          link: `/meet/sessions/${(b as any).session_id}`,
+          data: { room: room?.name || "", link: `${SITE_URL}/meet/sessions/${(b as any).session_id}` },
+        });
+      }
+    }
+  }
+  return { created, answers };
 }
 
 /**

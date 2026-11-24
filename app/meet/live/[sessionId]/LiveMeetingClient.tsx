@@ -302,7 +302,7 @@ export default function LiveMeetingClient({
     }
   };
 
-  const [tab, setTab] = useState<"points" | "notes" | "decisions">("points");
+  const [tab, setTab] = useState<"points" | "notes" | "decisions" | "people">("points");
 
   // Whole-meeting clock (from when it was started)
   const [now, setNow] = useState(() => Date.now());
@@ -369,10 +369,23 @@ export default function LiveMeetingClient({
   const PointCard = ({ pt }: { pt: MeetingPoint }) => {
     const late = pt.status !== "closed" ? daysLate(pt.due_date) : 0;
     return (
-      <li className={`rounded-xl border bg-surface p-4 ${focusedPoint?.id === pt.id ? "border-primary" : "border-border"}`} onClick={() => setFocusedPointId(pt.id)}>
+      <li className={`rounded-xl border bg-surface p-4 ${focusedPoint?.id === pt.id ? "border-primary" : "border-border"}`}>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h4 className="text-[14.5px] font-semibold text-heading">{pt.title}</h4>
+            <h4 className="text-[14.5px] font-semibold text-heading">
+              <button
+                type="button"
+                onClick={() => setFocusedPointId(pt.id)}
+                aria-pressed={focusedPoint?.id === pt.id}
+                title="Pick this point for notes and tasks"
+                className="rounded text-left hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {pt.title}
+              </button>
+              {focusedPoint?.id === pt.id && (
+                <span className="ml-2 inline-flex rounded-full bg-accent-soft px-2 py-0.5 align-middle text-[11.5px] font-semibold text-accent-soft-text">Notes go here</span>
+              )}
+            </h4>
             <p className="mt-1 text-[12.5px] text-subtle">
               <span className="font-mono text-muted">{pt.code}</span> · {pt.owner?.full_name || "No owner"}
               {pt.due_date ? ` · due ${new Date(pt.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}
@@ -402,6 +415,83 @@ export default function LiveMeetingClient({
       </li>
     );
   };
+
+  // Agenda and attendance: right-hand panel on desktop, "Agenda & people" tab on smaller screens
+  const sidePanel = (
+    <>
+          <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Agenda</h2>
+          <ol className="space-y-1.5">
+            {agenda.map((item, idx) => {
+              const active = idx === activeAgendaIdx;
+              const done = idx < activeAgendaIdx;
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveAgendaIdx(idx);
+                      setElapsedSeconds(0);
+                    }}
+                    aria-current={active ? "step" : undefined}
+                    className={`flex w-full items-start gap-2 rounded-lg p-2.5 text-left text-[13px] ${
+                      active ? "bg-accent-soft font-semibold text-accent-soft-text" : done ? "text-muted line-through decoration-muted/50" : "text-foreground hover:bg-surface-hover"
+                    }`}
+                  >
+                    <span className="w-4 shrink-0 font-mono">{idx + 1}</span>
+                    <span className="min-w-0 flex-1">{item.title}</span>
+                    <span className="shrink-0 text-[12px] font-normal">
+                      {active ? `${mins} / ${item.planned_minutes}` : item.planned_minutes} min
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          <AppButton
+            variant="outline"
+            size="sm"
+            onClick={handleNextAgenda}
+            disabled={activeAgendaIdx >= agenda.length - 1}
+            rightIcon={<ChevronRight className="h-3.5 w-3.5" />}
+            className="mt-2 w-full"
+          >
+            Next item
+          </AppButton>
+
+          <h2 className="mb-2 mt-6 flex items-center justify-between text-[12px] font-semibold uppercase tracking-wide text-muted">
+            <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" aria-hidden /> People ({attendees.length})</span>
+            <span className="font-normal normal-case tracking-normal">tap to change</span>
+          </h2>
+          <ul className="space-y-1">
+            {attendees.map((a) => {
+              const name = a.user?.full_name || a.guest_name || "Guest";
+              const online = onlinePresence.some((p) => p.user_id === a.user_id);
+              return (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleAttendance(a.id, a.attendance)}
+                    className="flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-surface-hover"
+                  >
+                    <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent-soft-text">
+                      {name.split(/\s+/).map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                      {online && <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-success" aria-label="on this page" />}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[13.5px] text-foreground">{name}</span>
+                    <span
+                      className={`shrink-0 text-[12px] font-semibold ${
+                        a.attendance === "present" ? "text-success-text" : a.attendance === "late" ? "text-warning-text" : "text-danger-text"
+                      }`}
+                    >
+                      {a.attendance === "present" ? "Present" : a.attendance === "late" ? "Late" : "Absent"}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+    </>
+  );
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-background">
@@ -490,11 +580,12 @@ export default function LiveMeetingClient({
                 onPointCreated={handlePointCreated}
               />
             </div>
-            <nav role="tablist" aria-label="Meeting sections" className="flex gap-1">
+            <nav role="tablist" aria-label="Meeting sections" className="flex gap-1 overflow-x-auto">
               {([
                 { id: "points", label: `Points (${points.length})` },
                 { id: "notes", label: "Notes" },
                 { id: "decisions", label: `Decisions (${decisions.length})` },
+                { id: "people", label: "Agenda & people" },
               ] as const).map((t) => (
                 <button
                   key={t.id}
@@ -502,7 +593,7 @@ export default function LiveMeetingClient({
                   role="tab"
                   aria-selected={tab === t.id}
                   onClick={() => setTab(t.id)}
-                  className={`-mb-px border-b-2 px-3 pb-2.5 text-[13.5px] font-semibold ${
+                  className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 pb-2.5 text-[13.5px] font-semibold ${t.id === "people" ? "lg:hidden " : ""}${
                     tab === t.id ? "border-primary text-foreground" : "border-transparent text-subtle hover:text-foreground"
                   }`}
                 >
@@ -555,6 +646,8 @@ export default function LiveMeetingClient({
               />
             )}
 
+            {tab === "people" && <div className="max-w-xl lg:hidden">{sidePanel}</div>}
+
             {tab === "decisions" && (
               <div className="max-w-2xl space-y-3">
                 <form onSubmit={handleRecordQuickDecision} className="flex gap-2">
@@ -593,77 +686,7 @@ export default function LiveMeetingClient({
 
         {/* Right: agenda + attendance */}
         <aside className="hidden w-80 shrink-0 flex-col overflow-y-auto border-l border-border bg-surface p-4 lg:flex">
-          <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Agenda</h2>
-          <ol className="space-y-1.5">
-            {agenda.map((item, idx) => {
-              const active = idx === activeAgendaIdx;
-              const done = idx < activeAgendaIdx;
-              return (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveAgendaIdx(idx);
-                      setElapsedSeconds(0);
-                    }}
-                    aria-current={active ? "step" : undefined}
-                    className={`flex w-full items-start gap-2 rounded-lg p-2.5 text-left text-[13px] ${
-                      active ? "bg-accent-soft font-semibold text-accent-soft-text" : done ? "text-muted line-through decoration-muted/50" : "text-foreground hover:bg-surface-hover"
-                    }`}
-                  >
-                    <span className="w-4 shrink-0 font-mono">{idx + 1}</span>
-                    <span className="min-w-0 flex-1">{item.title}</span>
-                    <span className="shrink-0 text-[12px] font-normal">
-                      {active ? `${mins} / ${item.planned_minutes}` : item.planned_minutes} min
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-          <AppButton
-            variant="outline"
-            size="sm"
-            onClick={handleNextAgenda}
-            disabled={activeAgendaIdx >= agenda.length - 1}
-            rightIcon={<ChevronRight className="h-3.5 w-3.5" />}
-            className="mt-2 w-full"
-          >
-            Next item
-          </AppButton>
-
-          <h2 className="mb-2 mt-6 flex items-center justify-between text-[12px] font-semibold uppercase tracking-wide text-muted">
-            <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" aria-hidden /> People ({attendees.length})</span>
-            <span className="font-normal normal-case tracking-normal">tap to change</span>
-          </h2>
-          <ul className="space-y-1">
-            {attendees.map((a) => {
-              const name = a.user?.full_name || a.guest_name || "Guest";
-              const online = onlinePresence.some((p) => p.user_id === a.user_id);
-              return (
-                <li key={a.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleAttendance(a.id, a.attendance)}
-                    className="flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-surface-hover"
-                  >
-                    <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent-soft-text">
-                      {name.split(/\s+/).map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
-                      {online && <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-success" aria-label="on this page" />}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[13.5px] text-foreground">{name}</span>
-                    <span
-                      className={`shrink-0 text-[12px] font-semibold ${
-                        a.attendance === "present" ? "text-success-text" : a.attendance === "late" ? "text-warning-text" : "text-danger-text"
-                      }`}
-                    >
-                      {a.attendance === "present" ? "Present" : a.attendance === "late" ? "Late" : "Absent"}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          {sidePanel}
         </aside>
       </div>
 

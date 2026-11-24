@@ -1,4 +1,5 @@
 import React from "react";
+import OutlookStatusLine from "@/components/meet/OutlookStatusLine";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getMeetingById, getMeetingAllPoints } from "@/lib/actions/meet/meetings";
@@ -99,6 +100,11 @@ export default async function MeetingDetailPage({
               <p className="mt-0.5 text-[13px] text-muted">
                 {focus.status === "scheduled" || focus.status === "in_progress" ? "Next" : "Latest"}: {relativeDay(focus.scheduled_start)}, {timeOf(focus.scheduled_start)}
               </p>
+            )}
+            {focus && (
+              <div className="mt-2">
+                <OutlookStatusLine sessionId={focus.id} status={focus.status} editHref={`/meet/meetings/${meeting.id}/edit`} />
+              </div>
             )}
           </div>
           <div className="flex shrink-0 gap-2.5">

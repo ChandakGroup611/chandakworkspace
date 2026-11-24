@@ -28,6 +28,8 @@ export function EndSessionModal({
   const [summaryNotes, setSummaryNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openLoopsCount, setOpenLoopsCount] = useState(0);
+  // After the meeting is ended: a short checklist instead of a dialog that looks frozen
+  const [progress, setProgress] = useState<null | { carried: number; nextNo: number | null; drafting: "running" | "done" | "failed" }>(null);
 
   // Check open loops on open
   React.useEffect(() => {
@@ -50,17 +52,18 @@ export function EndSessionModal({
       const res = await endSessionAndCarryForward(sessionId, summaryNotes);
 
       if (res.success) {
-        toast.success(
-          `Meeting concluded! ${res.carriedCount} open items carried forward to Session ${res.nextSessionNo}`
-        );
-        // Redesign: draft the minutes automatically, then open the review screen
+        setProgress({ carried: res.carriedCount || 0, nextNo: res.nextSessionNo ?? null, drafting: "running" });
+        // Draft the minutes automatically, then open the review screen
+        let drafted = true;
         try {
-          toast.info("Drafting the minutes…");
           const { generateAIMinutes } = await import("@/lib/actions/meet/ai-minutes");
-          await generateAIMinutes(sessionId);
+          const g: any = await generateAIMinutes(sessionId);
+          if (g && g.success === false) drafted = false;
         } catch {
-          // The review screen has a "Draft minutes" button if this didn't work
+          drafted = false; // the review screen has a "Draft minutes" button
         }
+        setProgress((p) => (p ? { ...p, drafting: drafted ? "done" : "failed" } : p));
+        await new Promise((r) => setTimeout(r, drafted ? 500 : 1200));
         onOpenChange(false);
         router.push(`/meet/sessions/${sessionId}/review`);
       } else {
@@ -78,6 +81,35 @@ export function EndSessionModal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs animate-in fade-in-0" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-6 shadow-xl animate-in fade-in-0 zoom-in-95">
+          {progress ? (
+            <div role="status" aria-live="polite" className="space-y-4">
+              <Dialog.Title className="text-[17px] font-semibold text-heading">Ending the meeting</Dialog.Title>
+              <Dialog.Description className="sr-only">Progress after ending the meeting</Dialog.Description>
+              <ul className="space-y-3 text-[14px]">
+                <li className="flex items-center gap-2.5 text-success-text">
+                  <CheckCircle2 className="h-4 w-4" aria-hidden /> Meeting ended
+                </li>
+                <li className="flex items-center gap-2.5 text-success-text">
+                  <CheckCircle2 className="h-4 w-4" aria-hidden />
+                  {progress.carried > 0
+                    ? `${progress.carried} open point${progress.carried === 1 ? "" : "s"} carried to ${progress.nextNo ? `session ${progress.nextNo}` : "the next meeting"}`
+                    : "No open points to carry forward"}
+                </li>
+                <li className={`flex items-center gap-2.5 ${progress.drafting === "failed" ? "text-warning-text" : progress.drafting === "done" ? "text-success-text" : "font-semibold text-foreground"}`}>
+                  {progress.drafting === "running" ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />
+                  ) : progress.drafting === "done" ? (
+                    <CheckCircle2 className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4" aria-hidden />
+                  )}
+                  {progress.drafting === "running" ? "Drafting the minutes…" : progress.drafting === "done" ? "Minutes drafted" : "Couldn't draft the minutes; you can draft them on the next screen"}
+                </li>
+              </ul>
+              <p className="text-[13px] text-muted">The minutes review opens next.</p>
+            </div>
+          ) : (
+          <>
           <div className="flex items-start justify-between border-b border-border pb-3">
             <div>
               <Dialog.Title className="text-[17px] font-semibold text-heading">
@@ -167,6 +199,8 @@ export function EndSessionModal({
               {isSubmitting ? "Finalizing…" : "Confirm & Conclude"}
             </AppButton>
           </div>
+          </>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

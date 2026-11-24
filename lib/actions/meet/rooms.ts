@@ -1,5 +1,6 @@
 "use server";
 
+import { syncSessionEvent } from "@/lib/integrations/outlook-events";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { requireMeet } from "@/lib/permissions/meet";
@@ -171,6 +172,9 @@ export async function bookRoomForSession(
       .from("meet_sessions")
       .update({ room_id: roomId })
       .eq("id", sessionId);
+
+    // Add the room to the Outlook / Teams event (no-op until Microsoft 365 is connected)
+    await syncSessionEvent(sessionId).catch(() => null);
 
     revalidatePath(`/meet/sessions/${sessionId}`);
     return { success: true, booking: booking as MeetRoomBooking };

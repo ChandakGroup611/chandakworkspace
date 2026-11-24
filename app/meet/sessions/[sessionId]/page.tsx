@@ -1,4 +1,5 @@
 import React from "react";
+import OutlookStatusLine from "@/components/meet/OutlookStatusLine";
 import { notFound } from "next/navigation";
 import { getSessionById } from "@/lib/actions/meet/sessions";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
@@ -37,6 +38,7 @@ export default async function SessionWorkspacePage({
   return (
     <div className="space-y-6">
       <JoinRequestsPanel sessionId={sessionId} />
+      <OutlookStatusLine sessionId={sessionId} status={(session as any).status} editHref={(session as any).meeting_id ? `/meet/meetings/${(session as any).meeting_id}/edit` : undefined} />
       <SessionWorkspaceClient
         session={session}
         points={points}
