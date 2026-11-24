@@ -1,11 +1,9 @@
 /**
- * Runs once when the server starts. Starts the Chandak Meet job loop (see lib/server/meet-scheduler.ts)
- * on the production Node.js server only. Set MEET_INPROCESS_JOBS=false to turn it off.
+ * Runs once when the server starts. On the Node.js server it starts the Chandak Meet job loop
+ * (see instrumentation-node.ts and lib/server/meet-scheduler.ts).
  */
 export async function register() {
-  if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  if (process.env.NODE_ENV !== "production") return;
-  if (String(process.env.MEET_INPROCESS_JOBS || "true").toLowerCase() === "false") return;
-  const { startMeetScheduler } = await import("./lib/server/meet-scheduler");
-  startMeetScheduler();
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    await import("./instrumentation-node");
+  }
 }
