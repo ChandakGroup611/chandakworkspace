@@ -1,0 +1,39 @@
+name: Chandak Meet scheduled jobs
+
+# Runs the Chandak Meet jobs every 10 minutes: meeting reminders (24h / 1h), owner update
+# requests, unsent-minutes nudges, releasing unused rooms and overdue tracking.
+# The call is signed (see app/api/cron/meet-jobs/route.ts); no key is sent.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: meet-jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call /api/cron/meet-jobs
+        env:
+          SIGN_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SIGN_KEY" ]; then echo "Signing key not available"; exit 1; fi
+          TS=$(date +%s)
+          SIG=$(printf "%s" "meet-jobs:${TS}" | openssl dgst -sha256 -hmac "$SIGN_KEY" | sed 's/^.* //')
+          CODE=$(curl -sS -o resp.json -w "%{http_code}" --connect-timeout 15 --max-time 120 \
+            -X POST \
+            -H "X-Cron-Timestamp: ${TS}" \
+            -H "X-Cron-Signature: ${SIG}" \
+            "https://chandakgroup.tech/api/cron/meet-jobs" || echo "000")
+          echo "HTTP ${CODE}"
+          cat resp.json || true
+          echo
+          if [ "$CODE" != "200" ]; then exit 1; fi
