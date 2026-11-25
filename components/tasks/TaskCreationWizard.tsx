@@ -511,14 +511,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 onChange={e => {
                   const val = e.target.value;
                   setPrimaryAssignee(val);
-                  let newExecs = [...executors];
-                  if (val && !newExecs.includes(val)) {
-                    newExecs.push(val);
-                  }
-                  setExecutors(newExecs);
-                  if (val || newExecs.length > 0) {
-                    const remainingWatchers = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
-                    setWatchers(remainingWatchers);
+                  if (val) {
+                    if (!executors.includes(val)) {
+                      setExecutors([...executors, val]);
+                    }
+                    // Only remove the newly assigned Primary Assignee from watchers; never touch other watchers
+                    setWatchers(prev => prev.filter(id => id !== val));
                   }
                 }}
               >
@@ -554,13 +552,10 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   if (executors.length === stakeholders.length && stakeholders.length > 0) {
                     const newExecs = primaryAssignee ? [primaryAssignee] : [];
                     setExecutors(newExecs);
-                    const remainingWatchers = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
-                    setWatchers(remainingWatchers);
                   } else {
                     const allIds = stakeholders.map(s => s.id);
                     setExecutors(allIds);
-                    // If all are executors, no watchers remain
-                    setWatchers([]);
+                    setWatchers(prev => prev.filter(id => !allIds.includes(id)));
                   }
                 }} className="text-[11px] font-semibold text-theme-icon">
                   {executors.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
@@ -578,6 +573,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                           let newExecs: string[];
                           if (e.target.checked) {
                             newExecs = [...executors, s.id];
+                            setWatchers(prev => prev.filter(id => id !== s.id));
                           } else {
                             if (s.id === primaryAssignee) {
                               setPrimaryAssignee("");
@@ -585,8 +581,6 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                             newExecs = executors.filter(id => id !== s.id);
                           }
                           setExecutors(newExecs);
-                          const remainingWatchers = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
-                          setWatchers(remainingWatchers);
                         }} 
                       />
                       <span className="truncate font-medium">{s.full_name}</span>

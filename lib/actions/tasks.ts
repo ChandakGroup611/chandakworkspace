@@ -935,7 +935,7 @@ export async function getTaskDetails(taskId: string) {
           task.task_reviewers.push(u);
         } else if (p.participation_role === 'WATCHER') {
           // Watchers must strictly be active members of the workspace
-          if (validWsMemberUserIds.has(p.user_id)) {
+          if (validWsMemberUserIds.has(p.user_id) && u.is_active !== false) {
             task.task_watchers.push(u);
           }
         }
@@ -2876,5 +2876,27 @@ export async function assignUserToTasksBatch(userId: string, assignments: { task
   } catch (err: any) {
     console.error("Error in assignUserToTasksBatch:", err);
     return { error: err.message || "Failed to batch assign user to tasks." };
+  }
+}
+
+/**
+ * Removes an inactive/disabled user from active Watchers lists across all tasks.
+ */
+export async function cleanupInactiveUserFromWatchers(userId: string) {
+  if (!userId) return;
+  try {
+    await Promise.all([
+      supabaseAdmin
+        .from('task_participants')
+        .delete()
+        .eq('user_id', userId)
+        .eq('participation_role', 'WATCHER'),
+      supabaseAdmin
+        .from('task_watchers')
+        .delete()
+        .eq('user_id', userId)
+    ]);
+  } catch (err) {
+    console.warn("[cleanupInactiveUserFromWatchers] Cleanup error:", err);
   }
 }

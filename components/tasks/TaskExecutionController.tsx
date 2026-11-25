@@ -329,7 +329,7 @@ export default function TaskExecutionController({
     setSelectedPrimaryAssignee(pendingPrimaryAssignee || task?.assigned_to || "");
     const currentExecutorIds = pendingAssignees || (task?.task_assignees || []).map((e: any) => e.id);
     setSelectedExecutors(currentExecutorIds);
-    const currentWatcherIds = pendingWatchers || (task?.task_watchers || []).map((w: any) => w.id);
+    const currentWatcherIds = (pendingWatchers || (task?.task_watchers || []).map((w: any) => w.id));
     setSelectedWatchers(currentWatcherIds);
     setStakeholderSearch("");
     setIsAssigneeModalOpen(true);
@@ -338,28 +338,41 @@ export default function TaskExecutionController({
       try {
         const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
         const res = await fetchWorkspaceStakeholders(task.workspace_id);
-        const finalStakeholders = [...(res || [])];
+        const activeById = new Map<string, any>((res || []).map((u: any) => [u.id, { ...u, is_active: true }]));
 
-        // Ensure any user already assigned or watching this task remains visible in the selection list
+        // Scope selectable pool strictly to users assigned to this task (Primary, Executors, Watchers)
         const existingAssignees = [
-          task.assigned_to_user,
+          task.assignee || task.assigned_to_user,
           ...(task.task_assignees || []),
           ...(task.task_watchers || [])
         ].filter(Boolean);
 
+        let finalStakeholders: any[] = [];
         if (existingAssignees.length > 0) {
-          const ids = new Set(finalStakeholders.map((s: any) => s.id));
+          const seen = new Set<string>();
           for (const ea of existingAssignees) {
-            if (ea?.id && !ids.has(ea.id)) {
+            if (!ea?.id || seen.has(ea.id)) continue;
+            seen.add(ea.id);
+            const activeMatch = activeById.get(ea.id);
+            if (activeMatch) {
+              finalStakeholders.push(activeMatch);
+            } else {
+              // Inactive / removed user currently on the task: keep visible for fallback badge, but mark inactive
               finalStakeholders.push({
                 id: ea.id,
                 full_name: ea.full_name || 'Assigned User',
                 user_code: ea.user_code || '',
-                workspace_role: 'Assignee'
+                profile_photo: ea.profile_photo || null,
+                workspace_role: 'Assignee',
+                is_active: false,
               });
-              ids.add(ea.id);
             }
           }
+          // Automatically remove inactive users from active Watchers selection
+          const activeTaskIds = new Set(finalStakeholders.filter(s => s.is_active !== false).map(s => s.id));
+          setSelectedWatchers(prev => prev.filter(id => activeTaskIds.has(id)));
+        } else {
+          finalStakeholders = Array.from(activeById.values());
         }
 
         setStakeholders(finalStakeholders);
@@ -2483,15 +2496,17 @@ export default function TaskExecutionController({
                         <div className="px-1 pb-1 text-[12.5px] text-muted">
                           Choose the one person accountable for this task.
                         </div>
-                        {filteredStakeholders.map(s => {
+                        {filteredStakeholders.filter(s => s.is_active !== false || selectedPrimaryAssignee === s.id).map(s => {
                           const isSelected = selectedPrimaryAssignee === s.id;
+                          const isInactive = s.is_active === false;
                           return (
                             <button
                               type="button"
                               key={s.id}
                               aria-pressed={isSelected}
+                              disabled={isInactive && !isSelected}
                               onClick={async () => {
-                                if (checkingDependencyId) return;
+                                if (checkingDependencyId || (isInactive && !isSelected)) return;
                                 if (isSelected) {
                                   if (task?.id) {
                                     setCheckingDependencyId(s.id);
@@ -2510,18 +2525,12 @@ export default function TaskExecutionController({
                                     }
                                   }
                                   setSelectedPrimaryAssignee("");
-                                  const remaining = stakeholders.filter(st => !selectedExecutors.includes(st.id)).map(st => st.id);
-                                  setSelectedWatchers(remaining);
                                 } else {
                                   setSelectedPrimaryAssignee(s.id);
-                                  let newExecs = selectedExecutors;
-                                  if (!newExecs.includes(s.id)) {
-                                    newExecs = [...newExecs, s.id];
-                                    setSelectedExecutors(newExecs);
+                                  if (!selectedExecutors.includes(s.id)) {
+                                    setSelectedExecutors([...selectedExecutors, s.id]);
                                   }
-                                  // Auto-populate remaining workspace members into watchers
-                                  const remaining = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
-                                  setSelectedWatchers(remaining);
+                                  setSelectedWatchers(prev => prev.filter(id => id !== s.id));
                                 }
                               }}
                               className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover'} ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
@@ -2541,6 +2550,11 @@ export default function TaskExecutionController({
                                     {isSelected && (
                                       <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[11px] font-medium text-accent-soft-text">
                                         Primary
+                                      </span>
+                                    )}
+                                    {isInactive && (
+                                      <span className="shrink-0 rounded-full bg-danger-soft px-1.5 text-[11px] font-medium text-danger-text">
+                                        Inactive User
                                       </span>
                                     )}
                                   </div>
@@ -2571,9 +2585,9 @@ export default function TaskExecutionController({
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const allIds = stakeholders.map(s => s.id);
+                                const allIds = stakeholders.filter(s => s.is_active !== false).map(s => s.id);
                                 setSelectedExecutors(allIds);
-                                setSelectedWatchers([]);
+                                setSelectedWatchers(prev => prev.filter(id => !allIds.includes(id)));
                               }}
                               className="h-auto px-1 text-[12.5px] text-accent-soft-text"
                             >
@@ -2587,8 +2601,6 @@ export default function TaskExecutionController({
                               onClick={() => {
                                 const newExecs = selectedPrimaryAssignee ? [selectedPrimaryAssignee] : [];
                                 setSelectedExecutors(newExecs);
-                                const remaining = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
-                                setSelectedWatchers(remaining);
                               }}
                               className="h-auto px-1 text-[12.5px] text-muted hover:text-foreground"
                             >
@@ -2596,15 +2608,17 @@ export default function TaskExecutionController({
                             </AppButton>
                           </div>
                         </div>
-                        {filteredStakeholders.map(s => {
+                        {filteredStakeholders.filter(s => s.is_active !== false || selectedExecutors.includes(s.id)).map(s => {
                           const isSelected = selectedExecutors.includes(s.id);
+                          const isInactive = s.is_active === false;
                           return (
                             <button
                               type="button"
                               key={s.id}
                               aria-pressed={isSelected}
+                              disabled={isInactive && !isSelected}
                               onClick={async () => {
-                                if (checkingDependencyId) return;
+                                if (checkingDependencyId || (isInactive && !isSelected)) return;
                                 let newExecs: string[];
                                 if (isSelected) {
                                   if (task?.id) {
@@ -2629,10 +2643,9 @@ export default function TaskExecutionController({
                                   newExecs = selectedExecutors.filter(id => id !== s.id);
                                 } else {
                                   newExecs = [...selectedExecutors, s.id];
+                                  setSelectedWatchers(prev => prev.filter(id => id !== s.id));
                                 }
                                 setSelectedExecutors(newExecs);
-                                const remaining = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
-                                setSelectedWatchers(remaining);
                               }}
                               className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? 'border-border-active bg-selected' : 'border-border hover:bg-surface-hover'} ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                             >
@@ -2653,6 +2666,11 @@ export default function TaskExecutionController({
                                         Primary
                                       </span>
                                     )}
+                                    {isInactive && (
+                                      <span className="shrink-0 rounded-full bg-danger-soft px-1.5 text-[11px] font-medium text-danger-text">
+                                        Inactive User
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                                 </div>
@@ -2668,8 +2686,8 @@ export default function TaskExecutionController({
                     );
                   }
 
-                  // Watchers Multi-Select Tab
-                  const eligibleWatchers = filteredStakeholders.filter(s => !selectedExecutors.includes(s.id));
+                  // Watchers Multi-Select Tab (strictly active task users not assigned as executors)
+                  const eligibleWatchers = filteredStakeholders.filter(s => s.is_active !== false && !selectedExecutors.includes(s.id));
                   return (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between px-1 pb-1">
@@ -2682,7 +2700,7 @@ export default function TaskExecutionController({
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              const allEligibleIds = stakeholders.filter(s => !selectedExecutors.includes(s.id)).map(s => s.id);
+                              const allEligibleIds = stakeholders.filter(s => s.is_active !== false && !selectedExecutors.includes(s.id)).map(s => s.id);
                               setSelectedWatchers(allEligibleIds);
                             }}
                             className="h-auto px-1 text-[12.5px] text-accent-soft-text"

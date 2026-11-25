@@ -1776,12 +1776,13 @@ async function loadWorkspaceStakeholders(workspaceId: string): Promise<any[]> {
   const userIds = Array.from(userIdsSet);
   if (userIds.length === 0) return [];
 
-  // 4. Fetch user details for those members
+  // 4. Fetch active user details for those members
   const { data: users, error: userError } = await supabaseAdmin
     .from("user_master")
-    .select(`id, full_name, user_code, email`)
+    .select(`id, full_name, user_code, email, is_active`)
     .in("id", userIds)
-    .eq("is_deleted", false);
+    .eq("is_deleted", false)
+    .eq("is_active", true);
 
   if (userError || !users) {
     console.error("[Workspaces] Error fetching users for stakeholders:", userError);
