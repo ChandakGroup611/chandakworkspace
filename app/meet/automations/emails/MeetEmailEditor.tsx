@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -77,11 +78,11 @@ export default function MeetEmailEditor({ items, canEdit, smtpReady }: { items: 
     });
   };
 
-  const useSuggested = () => {
+  const useSuggested = async () => {
     if (!item) return;
     const st = MEET_EMAIL_STARTERS[item.event as MeetEventName];
     if (!st) return;
-    if ((form.subject.trim() || form.body.trim()) && !window.confirm("Replace what's written with the suggested text?")) return;
+    if ((form.subject.trim() || form.body.trim()) && !(await confirmAction({ title: "Replace what's written with the suggested text?", confirmLabel: "Replace" }))) return;
     setForm((f) => ({
       ...f,
       subject: st.subject,

@@ -63,7 +63,7 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
                 <div className="prog-bar" style={{ width: '100%', background: 'var(--accent)' }}></div>
               </div>
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)', marginTop: '4px' }}>In progress</div>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)', marginTop: '4px' }}>In progress</div>
           </>
         )}
       </div>

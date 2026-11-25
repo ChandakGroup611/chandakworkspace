@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -192,7 +193,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
   };
 
   const handleRevoke = async (decisionId: string) => {
-    if (!confirm("Are you sure you want to revoke this decision?")) return;
+    if (!(await confirmAction("Are you sure you want to revoke this decision?"))) return;
     try {
       const res = await updateDecisionStatus(decisionId, "revoked", "Revoked via Decisions Register");
       if (res.success) {

@@ -104,8 +104,8 @@ export function ResolutionVelocityWidget({ metrics = [] }: ResolutionVelocityWid
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
-            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }} dy={10} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
+            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--text-muted)" }} dy={10} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--text-muted)" }} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
             <Area type="monotone" dataKey="New" stroke="var(--chart-1)" strokeWidth={3} fillOpacity={1} fill="url(#colorNew)" />

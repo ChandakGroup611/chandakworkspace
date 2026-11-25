@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
@@ -230,8 +231,8 @@ export default function MeetAdminClient({
     });
   };
 
-  const handleResetMatrix = () => {
-    if (confirm("Reset Chandak Meet permissions to recommended enterprise defaults?")) {
+  const handleResetMatrix = async () => {
+    if (await confirmAction("Reset Chandak Meet permissions to the recommended defaults?")) {
       setRoleMatrix(DEFAULT_MEET_ROLE_MATRIX);
       toast.info("Permissions reset to defaults. Click 'Save RBAC Matrix' to persist.");
     }

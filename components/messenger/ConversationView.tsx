@@ -1,4 +1,6 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
+import { toast } from "react-toastify";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
@@ -423,7 +425,7 @@ export function ConversationView({
 
   // Delete message (WhatsApp style - Delete for everyone)
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm("Delete this message for everyone?")) return;
+    if (!(await confirmAction("Delete this message for everyone?"))) return;
     const res = await deleteMessengerMessage(messageId);
     if (res.success) {
       setMessages((prev) =>
@@ -450,7 +452,7 @@ export function ConversationView({
       setEditingMessage(null);
       return true;
     } else {
-      alert(res.error || "Failed to edit message");
+      toast.error(res.error || "Couldn't edit the message.");
       return false;
     }
   };

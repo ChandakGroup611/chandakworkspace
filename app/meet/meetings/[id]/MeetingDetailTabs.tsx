@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
@@ -218,7 +219,7 @@ export default function MeetingDetailTabs({
   };
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!confirm("Are you sure you want to remove this member from the standing roster?")) return;
+    if (!(await confirmAction("Are you sure you want to remove this member from the standing roster?"))) return;
 
     startTransition(async () => {
       try {

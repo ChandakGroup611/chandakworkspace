@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useState } from "react";
 import { X, Users, UserPlus, LogOut, Shield, ShieldCheck, Building, Loader2 } from "lucide-react";
@@ -55,7 +56,7 @@ export function GroupInfoModal({
   };
 
   const handleLeaveGroup = async () => {
-    if (!confirm("Are you sure you want to leave this group conversation?")) return;
+    if (!(await confirmAction("Are you sure you want to leave this group conversation?"))) return;
     setLeaving(true);
     try {
       const res = await leaveGroupConversation(conversation.id);

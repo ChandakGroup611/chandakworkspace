@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useState, useEffect, useRef, useTransition } from "react";
 import Link from "next/link";
@@ -130,8 +131,8 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
     }
   };
 
-  const handleCreatePersonalNote = () => {
-    const title = prompt("Enter title for new personal note:", "New note");
+  const handleCreatePersonalNote = async () => {
+    const title = await promptAction({ title: "New personal note", label: "Title", defaultValue: "New note" });
     if (!title) return;
 
     startTransition(async () => {

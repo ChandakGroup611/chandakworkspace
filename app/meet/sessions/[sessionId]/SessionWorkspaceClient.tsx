@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
@@ -263,7 +264,7 @@ export default function SessionWorkspaceClient({
   };
 
   const handleDeletePoint = async (pointId: string) => {
-    if (!confirm("Are you sure you want to delete this point?")) return;
+    if (!(await confirmAction("Are you sure you want to delete this point?"))) return;
 
     startTransition(async () => {
       try {
@@ -354,7 +355,7 @@ export default function SessionWorkspaceClient({
   };
 
   const handleDeleteAgenda = async (agendaItemId: string) => {
-    if (!confirm("Are you sure you want to remove this agenda item?")) return;
+    if (!(await confirmAction("Are you sure you want to remove this agenda item?"))) return;
 
     startTransition(async () => {
       try {

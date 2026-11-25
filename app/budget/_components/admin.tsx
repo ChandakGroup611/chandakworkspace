@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import { Fragment, useMemo, useState } from "react";
 import {
@@ -283,8 +284,8 @@ function MemberRow({
           <button
             className="btn-action danger"
             disabled={pending}
-            onClick={() => {
-              if (confirm(`Remove ${m.name} from the budget module?`)) {
+            onClick={async () => {
+              if (await confirmAction(`Remove ${m.name} from the budget module?`)) {
                 run(() => A.removeMember(m.user_id));
               }
             }}
@@ -1280,7 +1281,7 @@ export function FieldSettings({ fields, projects, permissions }: { fields: Custo
                 <div className="actions-group">
                   <button className="btn-action" onClick={() => setEditing({ ...f })}>Edit</button>
                   <button className="btn-action" disabled={pending} onClick={() => run(() => A.setFieldActive(f.id, !f.active), () => setNotice(f.active ? `${f.label} is switched off; its values are kept.` : `${f.label} is back on.`))}>{f.active ? "Switch off" : "Switch on"}</button>
-                  <button className="btn-action danger" disabled={pending} onClick={() => { if (confirm(`Delete ${f.label} and all its values? Switch it off instead to keep the values.`)) run(() => A.deleteField(f.id), () => setNotice(`${f.label} deleted.`)); }}>Delete</button>
+                  <button className="btn-action danger" disabled={pending} onClick={async () => { if (await confirmAction(`Delete ${f.label} and all its values? Switch it off instead to keep the values.`)) run(() => A.deleteField(f.id), () => setNotice(`${f.label} deleted.`)); }}>Delete</button>
                 </div>
               </td>
             </tr>

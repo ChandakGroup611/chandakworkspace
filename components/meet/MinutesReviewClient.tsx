@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
@@ -183,7 +184,7 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
   const approve = () =>
     start(async () => {
       if (!m) return;
-      if (remaining.length > 0 && !window.confirm(`${remaining.length} suggestion(s) are not reviewed yet. Send the minutes anyway?`)) return;
+      if (remaining.length > 0 && !(await confirmAction({ title: "Send the minutes anyway?", description: `${remaining.length} suggestion(s) are not reviewed yet.`, confirmLabel: "Send anyway" }))) return;
       const res = await approveAndSendMoM(review.session.id, m.id, overview);
       if (!res.success) {
         toast.error(res.error || "Couldn't send the minutes.");

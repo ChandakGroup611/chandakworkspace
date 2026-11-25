@@ -1,4 +1,5 @@
 "use client";
+import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
@@ -218,7 +219,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    if (!confirm("Are you sure you want to delete this action item?")) return;
+    if (!(await confirmAction("Are you sure you want to delete this action item?"))) return;
 
     startTransition(async () => {
       try {

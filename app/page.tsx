@@ -6,6 +6,8 @@ import { getUserAllowedModules } from "@/lib/actions/module-switcher";
 import LiveDashboardWrapper from "@/components/dashboard/LiveDashboardWrapper";
 import { PageContainer } from "@/components/layout/PageContainer";
 
+export const metadata = { title: "Home · Chandak Workspace" };
+
 export default async function Page() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);

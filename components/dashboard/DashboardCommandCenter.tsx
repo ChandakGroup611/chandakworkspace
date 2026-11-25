@@ -671,10 +671,10 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
 
           {/* FOOTER */}
           <div style={{ marginTop: '20px', padding: '14px 0', borderTop: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>ADIOS OperationsOS</div>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>Live data sync (15s)</div>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>ADIOS OperationsOS</div>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>Live data sync (15s)</div>
             <div style={{ flex: 1 }}></div>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
               Active items in scope: <span style={{ color: 'var(--amber)', fontWeight: 600 }}>{filteredMetrics.length}</span>
             </div>
           </div>
