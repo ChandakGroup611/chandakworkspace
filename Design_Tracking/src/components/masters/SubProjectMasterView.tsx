@@ -358,7 +358,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
           <button
             type="button"
             onClick={() => handleOpenAdd()}
-            className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Add sub-project / wing</span>
@@ -440,7 +440,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
           <button
             type="button"
             onClick={() => handleOpenAdd()}
-            className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+            className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Create first sub-project</span>

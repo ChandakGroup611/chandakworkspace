@@ -1,14 +1,6 @@
 import React from "react";
-import ChandakLoader from "@/components/ui/ChandakLoader";
+import { ListPageSkeleton } from "@/components/ui/AppSkeleton";
 
 export default function DesignLoading() {
-  return (
-    <div className="flex h-[80vh] w-full items-center justify-center">
-      <ChandakLoader
-        size="lg"
-        title="Chandak design tracker"
-        subtitle="Loading engineering drawings, revisions & consultant workflows…"
-      />
-    </div>
-  );
+  return <ListPageSkeleton label="Loading design and drawings" />;
 }

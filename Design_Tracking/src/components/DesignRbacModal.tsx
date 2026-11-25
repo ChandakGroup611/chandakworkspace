@@ -395,7 +395,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               onClick={() => handleTogglePermission(mod.code, "canRead")}
                               className={`h-7 w-7 rounded-lg font-semibold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canRead 
-                                  ? "bg-info text-white shadow-xs" 
+                                  ? "bg-accent-soft text-accent-soft-text font-semibold" 
                                   : "bg-muted text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
                               title="Toggle read permission"
@@ -488,7 +488,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                   type="button"
                   disabled={isSaving}
                   onClick={handleSavePolicies}
-                  className="px-5 py-2 rounded-lg bg-info hover:bg-info text-white font-semibold shadow-md inline-flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                  className="px-5 py-2 rounded-lg bg-surface border border-border-active hover:bg-surface-hover text-foreground font-semibold shadow-md inline-flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
                 >
                   <Save className="h-3.5 w-3.5" />
                   <span>{isSaving ? "Saving..." : "Save RBAC Policies"}</span>

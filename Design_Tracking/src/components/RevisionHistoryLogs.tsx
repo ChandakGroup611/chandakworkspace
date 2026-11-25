@@ -496,7 +496,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               <button
                 type="button"
                 onClick={handleExportAuditCsv}
-                className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all ml-auto"
+                className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-all ml-auto"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5" />
                 <span>Export audit CSV</span>

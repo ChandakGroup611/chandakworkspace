@@ -179,7 +179,7 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
                   </div>
                   <div className="w-full h-2 rounded-full bg-sunken overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-success to-info rounded-full transition-all duration-500" 
+                      className="h-full bg-success rounded-full transition-all duration-500" 
                       style={{ width: `${pct}%` }} 
                     />
                   </div>

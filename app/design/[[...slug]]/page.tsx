@@ -5,7 +5,7 @@ import { getUserAllowedModules } from "@/lib/actions/module-switcher";
 import DesignTrackingHost from "@/components/design/DesignTrackingHost";
 
 export const metadata = {
-  title: "Design Tracking | Chandak Workspace",
+  title: "Design & Drawing · Chandak Workspace",
   description: "Architectural drawings, CAD revisions, stage-gate reviews & site execution releases."
 };
 

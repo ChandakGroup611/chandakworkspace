@@ -371,7 +371,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
             <Building2 className="w-3.5 h-3.5" />
             DMAC · {projects.find(p => p.id === selectedProjectId)?.name || "Live Project"} · {towers.find(t => t.id === selectedTowerId)?.towerName || "All Wings"}
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground mt-1">
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mt-1">
             Building section heat matrix
           </h1>
           <p className="text-sm text-muted-foreground">

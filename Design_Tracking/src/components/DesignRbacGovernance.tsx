@@ -774,7 +774,7 @@ export const DesignRbacGovernance: React.FC = () => {
             <Key className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
               Design & tracking RBAC governance
             </h1>
           </div>

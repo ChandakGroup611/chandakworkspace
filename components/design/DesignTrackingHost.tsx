@@ -1,4 +1,5 @@
 "use client";
+import "./design-refresh.css";
 
 import React, { useState, useMemo, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -224,7 +225,8 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     if (combined.includes("building-matrix") || combined.includes("section-matrix") || combined.includes("heat-matrix") || combined.includes("floor-matrix")) return "BUILDING_MATRIX";
     if (combined.includes("sub-package") || combined.includes("subpackage") || combined.includes("/design/sub-packages")) return "SUB_PACKAGES";
     if (combined.includes("category") || combined.includes("categories") || combined.includes("discipline")) return "PACKAGES";
-    if (combined.includes("sub-project") || combined.includes("subproject") || combined.includes("wing")) return "SUB_PROJECTS";
+    // "wing" must be a whole word: "/design/drawings" contains "wing" and used to open Sub-projects
+    if (combined.includes("sub-project") || combined.includes("subproject") || /(^|[/_-])wings?($|[/_-])/.test(combined)) return "SUB_PROJECTS";
     if (combined.includes("project-master") || combined.includes("projects-master") || combined.includes("/design/projects") || combined.endsWith("/projects")) return "PROJECTS";
     if (combined.includes("authorit")) return "AUTHORITIES";
     if (combined.includes("template") || combined.includes("backup")) return "TEMPLATES";
@@ -389,7 +391,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
   const isAnyHostTransactionOpen = isDataEntryOpen || isUploadOpen || Boolean(selectedDrawingForReview);
 
   return (
-    <div className="w-full flex-1 flex flex-col space-y-5 min-w-0 animate-in fade-in duration-200">
+    <div className="design-desk w-full flex-1 flex flex-col space-y-5 min-w-0">
       {/* Quick Data Entry Transaction Canvas */}
       {isDataEntryOpen && (
         <DataEntryFormsModal
@@ -428,16 +430,16 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+                  <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
                     Design & engineering tracking
                   </h1>
                   {isRestrictedProjectScope ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-accent-soft-text border border-border-active">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-sunken text-subtle">
                       <Building2 className="h-3 w-3" />
                       <span>Scoped: {accessibleProjects.map(p => p.name).join(", ")} ({accessibleProjects.length} Project{accessibleProjects.length > 1 ? "s" : ""})</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-accent-soft-text border border-border-active">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-sunken text-subtle">
                       <ShieldCheck className="h-3 w-3" />
                       <span>Global scope ({accessibleProjects.length} Projects)</span>
                     </span>
@@ -451,10 +453,10 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
               <button
                 type="button"
                 onClick={() => handleTabChange("LEARNING")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 h-9 px-3 rounded-[var(--radius-button)] border text-[13px] font-medium transition-colors cursor-pointer ${
                   activeTab === "LEARNING"
-                    ? "bg-accent-soft border-border-active text-primary font-semibold shadow-sm"
-                    : "border-border bg-surface hover:bg-surface/80 text-foreground"
+                    ? "bg-accent-soft border-transparent text-accent-soft-text"
+                    : "border-border-active bg-surface hover:bg-surface-hover text-foreground"
                 }`}
                 title="View end-to-end workflow & lifecycle guide"
               >
@@ -465,7 +467,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
               <button
                 type="button"
                 onClick={() => setIsDataEntryOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface/80 text-foreground text-xs font-semibold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 h-9 px-3 rounded-[var(--radius-button)] border border-border-active bg-surface hover:bg-surface-hover text-foreground text-[13px] font-medium transition-colors cursor-pointer"
                 title="Open quick data entry form"
               >
                 <Plus className="h-3.5 w-3.5 text-accent-soft-text" />
@@ -475,7 +477,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
               <button
                 type="button"
                 onClick={() => setIsUploadOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-opacity cursor-pointer"
+                className="flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-button)] bg-primary hover:bg-primary-hover text-primary-foreground text-[13px] font-semibold transition-colors cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span>Upload drawing</span>

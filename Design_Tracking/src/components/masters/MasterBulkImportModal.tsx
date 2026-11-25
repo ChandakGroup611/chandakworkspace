@@ -358,7 +358,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                       onClick={() => setActiveSheetTab(key)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                         activeSheetTab === key
-                          ? "bg-info text-white shadow-xs"
+                          ? "bg-accent-soft text-accent-soft-text font-semibold"
                           : "bg-surface border border-border text-muted-foreground hover:text-foreground"
                       }`}
                     >

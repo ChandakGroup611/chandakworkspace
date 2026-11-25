@@ -724,7 +724,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={handleOpenBatchModal}
-              className="h-9 px-3.5 rounded-lg bg-info hover:bg-info text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="h-9 px-3.5 rounded-lg bg-surface border border-border-active hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
               <Zap className="h-3.5 w-3.5 text-warning-text" />
               <span>Batch fill</span>
@@ -1518,7 +1518,7 @@ export const TenderDesignMatrix: React.FC = () => {
                         if (allTwrIds.length > 0) setBatchSelectedTowers(allTwrIds);
                       }, 50);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-info hover:bg-info text-white font-semibold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
+                    className="px-2.5 py-1 rounded-lg bg-surface border border-border-active hover:bg-surface-hover text-foreground font-semibold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
                   >
                     <Zap className="h-3 w-3" />
                     <span>Load standard template</span>

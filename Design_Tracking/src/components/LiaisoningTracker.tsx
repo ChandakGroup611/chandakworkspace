@@ -373,7 +373,7 @@ export const LiaisoningTracker: React.FC = () => {
             <span className="text-xs font-semibold text-accent-soft-text dark:text-muted-foreground font-mono">{complianceStats.rate}%</span>
             <div className="w-28 h-2 rounded-full bg-sunken overflow-hidden shrink-0">
               <div
-                className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-500"
+                className="h-full bg-primary rounded-full transition-all duration-500"
                 style={{ width: `${complianceStats.rate}%` }}
               />
             </div>
@@ -551,7 +551,7 @@ export const LiaisoningTracker: React.FC = () => {
                   {/* Tower Progress Bar */}
                   <div className="w-full h-1.5 rounded-full bg-sunken overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all"
+                      className="h-full bg-primary rounded-full transition-all"
                       style={{ width: `${towerRate}%` }}
                     />
                   </div>

@@ -84,7 +84,7 @@ export function TransactionFormLayout({
               <Icon className="h-6 w-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2.5 flex-wrap">
                 <span>{title}</span>
                 {badge && (
                   <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-accent-soft text-primary border-border-active"}`}>
@@ -278,7 +278,7 @@ export function WorkingDocumentLayout({
               <Icon className="h-6 w-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2.5 flex-wrap">
                 <span>{title}</span>
                 {badge && (
                   <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-accent-soft text-primary border-border-active"}`}>

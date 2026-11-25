@@ -298,7 +298,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     onClick={() => setActiveSubTab(tab.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       isSelected
-                        ? "bg-info text-white shadow-xs"
+                        ? "bg-accent-soft text-accent-soft-text font-semibold"
                         : "text-muted hover:text-foreground hover:bg-sunken"
                     }`}
                   >
@@ -409,7 +409,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 <button
                   type="button"
                   onClick={handleOpenAddPackage}
-                  className="px-3.5 py-1.5 rounded-lg bg-info hover:bg-info text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                  className="px-3.5 py-1.5 rounded-lg bg-surface border border-border-active hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Add sub package</span>
@@ -447,7 +447,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   onClick={() => setSelectedDisciplineFilter("ALL")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                     selectedDisciplineFilter === "ALL"
-                      ? "bg-info text-white font-semibold shadow-2xs"
+                      ? "bg-accent-soft text-accent-soft-text font-semibold"
                       : "bg-muted/40 text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -462,7 +462,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                       onClick={() => setSelectedDisciplineFilter(cat.name)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                         selectedDisciplineFilter === cat.name
-                          ? "bg-info text-white font-semibold shadow-2xs"
+                          ? "bg-accent-soft text-accent-soft-text font-semibold"
                           : "bg-muted/40 text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -544,7 +544,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               <button
                 type="button"
                 onClick={() => setIsNewAuthorityModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add authority</span>
@@ -606,7 +606,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               <button
                 type="button"
                 onClick={() => setIsNewDocTypeModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-lg bg-primary hover:brightness-110 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add document type</span>
@@ -659,7 +659,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   setBulkImportTarget("ALL");
                   setIsBulkImportOpen(true);
                 }}
-                className="px-3.5 py-1.5 rounded-lg bg-info hover:bg-info text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+                className="px-3.5 py-1.5 rounded-lg bg-surface border border-border-active hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span>Bulk import & template center</span>
@@ -1019,7 +1019,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 <button
                   type="submit"
                   disabled={isCreatingDocType || !newDocTypeName.trim()}
-                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:brightness-110 text-white shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground shadow-xs disabled:opacity-50 flex items-center gap-1.5"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>{isCreatingDocType ? "Saving..." : "Create Master"}</span>

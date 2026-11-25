@@ -273,7 +273,7 @@ export function TransmittalManager() {
           <button
             type="button"
             onClick={() => openTrForm(null, "create")}
-            className="h-8 px-3.5 rounded-lg bg-info hover:bg-info text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
+            className="h-8 px-3.5 rounded-lg bg-surface border border-border-active hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Generate transmittal note</span>
@@ -880,7 +880,7 @@ export function TransmittalManager() {
             <div className="border-b-2 border-border-active pb-4 mb-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                  <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
                     Chandak group
                   </h1>
                   <p className="text-xs font-semibold text-subtle">
