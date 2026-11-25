@@ -62,7 +62,7 @@ export default async function DashboardsPage({
             </Link>
           </div>
         )}
-        <h1 className="text-2xl font-semibold text-foreground">Dashboards</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Dashboards</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Budget and expense dashboards on live IN4 data. You see the dashboards and actions your role allows.
         </p>
@@ -83,12 +83,11 @@ export default async function DashboardsPage({
             <a
               key={def.key}
               href={`/dashboards/${def.key}`}
-              className="theme-card-structural rounded-lg p-5 flex flex-col gap-4 transition-all duration-300 hover:border-border-active hover:shadow-md group"
+              className="theme-card-structural rounded-lg p-5 flex flex-col gap-4 transition-colors hover:border-border-active group"
             >
               <div className="flex items-center gap-3">
                 <span
-                  className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${def.accent}1f`, color: def.accent }}
+                  className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 bg-accent-soft text-accent-soft-text"
                 >
                   <LineChart className="h-5 w-5" />
                 </span>
@@ -107,7 +106,7 @@ export default async function DashboardsPage({
                   </span>
                 ))}
               </div>
-              <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: def.accent }}>
+              <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent-soft-text">
                 Open dashboard <ArrowRight className="h-4 w-4" />
               </span>
             </a>
@@ -116,11 +115,11 @@ export default async function DashboardsPage({
           {canAccessOrgBudget && (
             <Link
               href="/budget"
-              className="theme-card-structural rounded-lg p-5 flex flex-col gap-4 transition-all duration-300 hover:border-border-active hover:shadow-md group"
+              className="theme-card-structural rounded-lg p-5 flex flex-col gap-4 transition-colors hover:border-border-active group"
             >
               <div className="flex items-center gap-3">
                 <span
-                  className="h-11 w-11 rounded-lg flex items-center justify-center shrink-0 bg-primary/10 text-primary"
+                  className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 bg-accent-soft text-accent-soft-text"
                 >
                   <Wallet className="h-5 w-5" />
                 </span>
@@ -141,7 +140,7 @@ export default async function DashboardsPage({
                   </span>
                 ))}
               </div>
-              <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+              <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent-soft-text">
                 Open Organization Budget <ArrowRight className="h-4 w-4" />
               </span>
             </Link>

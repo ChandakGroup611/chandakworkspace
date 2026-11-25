@@ -28,7 +28,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         {d.task.parent_task_id && <Link href={`/meet/tasks/${d.task.parent_task_id}`} className="ml-3 text-[13px] font-medium text-primary hover:underline">Main task</Link>}
         <div className="flex flex-wrap items-center gap-2.5">
           <span className="text-[15px] font-semibold text-muted">{d.task.code}</span>
-          <h1 className="text-[22px] font-bold tracking-[-0.01em] text-heading">{d.task.title}</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">{d.task.title}</h1>
         </div>
         <p className="text-[13.5px] text-subtle">
           {d.point ? (

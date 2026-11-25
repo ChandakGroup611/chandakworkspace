@@ -219,7 +219,7 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
       <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
         <div className="min-w-0">
           <p className="text-[13px] font-medium text-muted">Minutes of meeting{review.session.meetingCode ? ` · ${review.session.meetingCode}` : ""}</p>
-          <h1 className="text-[22px] font-bold text-heading">{review.session.meetingTitle}</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">{review.session.meetingTitle}</h1>
         </div>
         <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${sent ? "bg-success-soft text-success-text" : m ? "bg-warning-soft text-warning-text" : "bg-sunken text-subtle"}`}>
           {sent ? "Sent" : m ? "Draft · waiting for approval" : "Not drafted yet"}

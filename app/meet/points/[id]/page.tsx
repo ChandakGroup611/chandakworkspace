@@ -94,7 +94,7 @@ export default async function PointPage({ params, searchParams }: { params: Prom
               <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[12px] font-semibold text-warning-text">Carried {p.carry_forward_count} times</span>
             )}
           </div>
-          <h1 className="mt-2 text-[22px] font-bold text-heading">{p.title}</h1>
+          <h1 className="mt-2 text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">{p.title}</h1>
           <p className="mt-1 text-[13.5px] text-subtle">
             {p.raised_by_name ? `Raised by ${p.raised_by_name}` : "Raised"}
             {d.meeting ? <> in <Link href={`/meet/meetings/${d.meeting.id}`} className="text-primary hover:underline">{d.meeting.title}</Link></> : null}

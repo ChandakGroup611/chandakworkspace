@@ -177,7 +177,7 @@ export default function JoinScreen({ ctx, initials }: { ctx: JoinContext; initia
               {ctx.meetingCode ? `${ctx.meetingCode} · ` : ""}
               {timeLabel}
             </p>
-            <h1 className="mt-1 text-[26px] font-bold tracking-[-0.01em] text-heading">{ctx.meetingTitle}</h1>
+            <h1 className="mt-1 text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">{ctx.meetingTitle}</h1>
           </div>
 
           {ctx.presentNames.length > 0 && (

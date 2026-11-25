@@ -85,7 +85,7 @@ export default async function MeetingsPage({
       <RecordHighlighter />
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
         <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Meetings</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Meetings</h1>
           <p className="mt-0.5 text-[13.5px] text-muted">Meetings you organise or attend. Recurring meetings show each date separately.</p>
         </div>
         <div className="flex gap-2">

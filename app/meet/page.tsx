@@ -59,7 +59,7 @@ export default async function MeetHomePage() {
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
         <div>
           <p className="text-[13.5px] text-muted">{d.todayLabel}</p>
-          <h1 className="mt-0.5 text-[24px] font-bold tracking-[-0.01em] text-heading">
+          <h1 className="mt-0.5 text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
             {greet}{d.userFirstName ? `, ${d.userFirstName}` : ""}
           </h1>
         </div>

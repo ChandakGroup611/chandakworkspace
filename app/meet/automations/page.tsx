@@ -59,7 +59,7 @@ export default async function AutomationsPage() {
   return (
     <div className="space-y-6 pb-6">
       <div className="border-b border-border pb-4">
-        <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Automations</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Automations</h1>
         <p className="mt-1 text-[14px] text-subtle">What Chandak Meet does on its own, so nobody has to chase.</p>
         <p className="mt-2 inline-flex items-center gap-1.5 text-[13px] text-muted">
           <Clock className="h-3.5 w-3.5" aria-hidden />

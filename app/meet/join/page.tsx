@@ -23,7 +23,7 @@ export default async function JoinByCodePage({ searchParams }: { searchParams: P
   return (
     <div className="mx-auto max-w-md space-y-5 py-10">
       <div>
-        <h1 className="text-[24px] font-bold text-heading">Join with a meeting ID</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Join with a meeting ID</h1>
         <p className="mt-1 text-[14px] text-subtle">You'll find the ID in the invite email, for example MTG-0007.</p>
       </div>
       <form className="space-y-3">

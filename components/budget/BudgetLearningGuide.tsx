@@ -61,9 +61,9 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
       name: "Project Hierarchy & Physical Baseline",
       badge: "Prerequisite Foundation",
       icon: Settings2,
-      accentColor: "text-blue-600 dark:text-blue-400",
-      accentBg: "bg-blue-50 dark:bg-blue-950/40",
-      accentBorder: "border-blue-200 dark:border-blue-800",
+      accentColor: "text-info-text",
+      accentBg: "bg-info-soft",
+      accentBorder: "border-info-border",
       route: `/budget/${projectId}/setup${q}`,
       whatToPerform: [
         "Create the Project Master container (code, location, gross land area).",
@@ -136,9 +136,9 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
       name: "Governance & Multi-Tier Sign-off Chain",
       badge: "Governance & Compliance Gate",
       icon: ShieldCheck,
-      accentColor: "text-amber-600 dark:text-amber-400",
-      accentBg: "bg-amber-50 dark:bg-amber-950/40",
-      accentBorder: "border-amber-200 dark:border-amber-800",
+      accentColor: "text-warning-text",
+      accentBg: "bg-warning-soft",
+      accentBorder: "border-warning-border",
       route: `/budget/${projectId}/setup${q}`,
       whatToPerform: [
         "Configure ordered approval tiers (Level 1: QS/Estimator → Level 2: Commercial VP → Level 3: CFO/MD).",
@@ -192,9 +192,9 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
       name: "Budget Formulation & Dynamic Line Rules",
       badge: "Baseline Formulation",
       icon: Layers,
-      accentColor: "text-blue-600 dark:text-blue-400",
-      accentBg: "bg-blue-50 dark:bg-blue-950/40",
-      accentBorder: "border-blue-200 dark:border-blue-800",
+      accentColor: "text-info-text",
+      accentBg: "bg-info-soft",
+      accentBorder: "border-info-border",
       route: `/budget/${projectId}/entry${q}`,
       whatToPerform: [
         "Enter Estimated CTC for each contractual budget line.",
@@ -257,9 +257,9 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
       name: "Supporting Cost Schedules",
       badge: "Detailed Working Schedules",
       icon: FileText,
-      accentColor: "text-purple-600 dark:text-purple-400",
-      accentBg: "bg-purple-50 dark:bg-purple-950/40",
-      accentBorder: "border-purple-200 dark:border-purple-800",
+      accentColor: "text-accent-soft-text dark:text-accent-soft-text",
+      accentBg: "bg-accent-soft dark:bg-accent-soft",
+      accentBorder: "border-border-active dark:border-border-active",
       route: `/budget/${projectId}/schedules${q}`,
       whatToPerform: [
         "In Budget Entry, switch complex non-linear lines to 'Worked out in a schedule'.",
@@ -313,9 +313,9 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
       name: "Tower Workings & Certifications",
       badge: "Site & Tower Cost Control",
       icon: Building2,
-      accentColor: "text-emerald-600 dark:text-emerald-400",
-      accentBg: "bg-emerald-50 dark:bg-emerald-950/40",
-      accentBorder: "border-emerald-200 dark:border-emerald-800",
+      accentColor: "text-success-text",
+      accentBg: "bg-success-soft",
+      accentBorder: "border-success-border",
       route: `/budget/${projectId}/workings${q}`,
       whatToPerform: [
         "Review per-tower construction cost sheets and allocated budget lines.",
@@ -369,9 +369,9 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
       name: "Cost Incurred & Vendor Bills Ledger",
       badge: "Actuals & Vendor Invoicing",
       icon: Receipt,
-      accentColor: "text-blue-600 dark:text-blue-400",
-      accentBg: "bg-blue-50 dark:bg-blue-950/40",
-      accentBorder: "border-blue-200 dark:border-blue-800",
+      accentColor: "text-info-text",
+      accentBg: "bg-info-soft",
+      accentBorder: "border-info-border",
       route: `/budget/${projectId}/incurred${q}`,
       whatToPerform: [
         "Record vendor bills: Vendor, Bill #, Date, PO Ref, Basic Amount, and GST Amount.",
@@ -434,9 +434,9 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
       name: "Revisioning, Variance & Executive Reports",
       badge: "Executive Analytics & Revisioning",
       icon: LineChart,
-      accentColor: "text-amber-600 dark:text-amber-400",
-      accentBg: "bg-amber-50 dark:bg-amber-950/40",
-      accentBorder: "border-amber-200 dark:border-amber-800",
+      accentColor: "text-warning-text",
+      accentBg: "bg-warning-soft",
+      accentBorder: "border-warning-border",
       route: `/budget/${projectId}/overview${q}`,
       whatToPerform: [
         "Review automated risk alerts (>90% CTC, >10% baseline drift, balance running out before OC).",
@@ -765,26 +765,26 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
                   </div>
 
                   {/* Pillar 2: Why To Do This (Business Purpose & Risk Mitigation) */}
-                  <div className="p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/40 space-y-3 shadow-xs">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-blue-900 dark:text-blue-200 border-b border-blue-200/60 dark:border-blue-900/40 pb-2.5">
-                      <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div className="p-4 rounded-xl bg-info-soft border border-info-border space-y-3 shadow-xs">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-info-text border-b border-info-border pb-2.5">
+                      <ShieldCheck className="h-4 w-4 text-info-text" />
                       <span>2. Why to do this (Business & Risk rationale)</span>
                     </div>
-                    <p className="text-xs text-blue-950/90 dark:text-blue-100/90 leading-relaxed">
+                    <p className="text-xs text-info-text leading-relaxed">
                       {activePhase.whyToPerform}
                     </p>
                   </div>
 
                   {/* Pillar 3: Next Impact (Downstream System Consequences) */}
-                  <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 space-y-3 shadow-xs">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200 border-b border-emerald-200/60 dark:border-emerald-900/40 pb-2.5">
-                      <ArrowRight className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <div className="p-4 rounded-xl bg-success-soft border border-success-border space-y-3 shadow-xs">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-success-text border-b border-success-border pb-2.5">
+                      <ArrowRight className="h-4 w-4 text-success-text" />
                       <span>3. Next impact & downstream consequences</span>
                     </div>
-                    <ul className="space-y-2 text-xs text-emerald-950/90 dark:text-emerald-100/90 leading-relaxed">
+                    <ul className="space-y-2 text-xs text-success-text leading-relaxed">
                       {activePhase.nextImpact.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="font-bold text-emerald-700 dark:text-emerald-400 shrink-0">•</span>
+                          <span className="font-bold text-success-text shrink-0">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
@@ -825,11 +825,11 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
 
                         <div className="space-y-1.5 pt-2 border-t border-border/60 text-xs">
                           <div>
-                            <span className="font-semibold text-blue-700 dark:text-blue-400">Why this step: </span>
+                            <span className="font-semibold text-info-text">Why this step: </span>
                             <span className="text-muted-foreground">{step.whyThisAction}</span>
                           </div>
                           <div>
-                            <span className="font-semibold text-emerald-700 dark:text-emerald-400">Next impact: </span>
+                            <span className="font-semibold text-success-text">Next impact: </span>
                             <span className="text-muted-foreground">{step.downstreamEffect}</span>
                           </div>
                         </div>
@@ -907,7 +907,7 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
                     </div>
 
                     <div className="p-4 rounded-xl border border-border space-y-2 bg-surface">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-warning-text">
                         <Lock className="h-4 w-4" />
                         <span>Safety & Cascade Rules</span>
                       </div>
@@ -972,7 +972,7 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
                       <td className="py-3 px-3 font-mono text-[11px] text-muted-foreground">{f.type}</td>
                       <td className="py-3 px-3">
                         {f.isRequired ? (
-                          <span className="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-semibold text-[10px]">Required</span>
+                          <span className="px-1.5 py-0.5 rounded bg-warning-soft text-warning-text border border-warning-border font-semibold text-[10px]">Required</span>
                         ) : (
                           <span className="text-muted-foreground text-[10px]">Optional</span>
                         )}

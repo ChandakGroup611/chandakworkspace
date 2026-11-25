@@ -403,7 +403,7 @@ export default function ScheduleMeetingForm({ masters, currentUserId, meeting, n
           <Link href="/meet/meetings" className="inline-flex items-center gap-1 text-[13.5px] font-medium text-muted hover:text-foreground">
             <ChevronLeft className="h-4 w-4" aria-hidden /> Meetings
           </Link>
-          <h1 className="mt-1 text-[24px] font-bold tracking-[-0.01em] text-heading">{isEdit ? `Edit · ${m0.title}` : "Schedule a meeting"}</h1>
+          <h1 className="mt-1 text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">{isEdit ? `Edit · ${m0.title}` : "Schedule a meeting"}</h1>
           {isEdit && <p className="mt-1 text-[13.5px] text-subtle">Changes apply to future meetings in this series{nextSession ? "; date, time and room change the next one" : ""}.</p>}
         </div>
         <div className="flex gap-2">

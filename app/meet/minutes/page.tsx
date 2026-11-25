@@ -36,7 +36,7 @@ export default async function MinutesListPage({ searchParams }: { searchParams: 
     <div className="space-y-4 pb-6">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
         <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Minutes (MoM)</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Minutes (MoM)</h1>
           <p className="mt-0.5 text-[13.5px] text-muted">The minutes of every meeting that has been held. Click a row to read them, or to finish and send a draft.</p>
         </div>
         <ExportCsvButton

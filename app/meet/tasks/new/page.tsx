@@ -14,7 +14,7 @@ export default async function NewMeetTaskPage({ searchParams }: { searchParams: 
     <div className="mx-auto max-w-5xl space-y-5 pb-6">
       <div className="space-y-2 border-b border-border pb-4">
         <BackLink href={back} label="Back" />
-        <h1 className="text-[22px] font-bold text-heading">New task</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">New task</h1>
         <p className="text-[13.5px] text-muted">
           A Chandak Meet task: an action someone has to complete, usually agreed in a meeting. It is tracked here in Chandak Meet (Tasks list, minutes, reminders), separately from Workspace tasks.
         </p>

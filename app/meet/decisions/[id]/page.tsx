@@ -50,7 +50,7 @@ export default async function DecisionPage({ params }: { params: Promise<{ id: s
           <span className={`rounded-full px-2.5 py-0.5 text-[12.5px] font-semibold ${st.cls}`}>{st.label}</span>
           {reviewDue && <span className="rounded-full bg-danger-soft px-2.5 py-0.5 text-[12.5px] font-semibold text-danger-text">Review due</span>}
         </div>
-        <h1 className="text-[21px] font-bold leading-snug text-heading">{x.d.text}</h1>
+        <h1 className="leading-snug text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">{x.d.text}</h1>
         {(meta?.category || meta?.priority) && (
           <div className="flex flex-wrap gap-2">
             {meta?.category && <span className="rounded-full bg-sunken px-2.5 py-0.5 text-[12.5px] font-semibold text-subtle">{meta.category}</span>}

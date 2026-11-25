@@ -478,19 +478,19 @@ export function AccessSettings({
       {banner}
 
       {/* SUPER ADMIN MASTER AUTHORITY BANNER */}
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 dark:border-amber-400/30 dark:bg-amber-400/10 mb-4 transition-all">
+      <div className="rounded-xl border border-warning-border bg-warning-soft p-4 dark:border-warning-border dark:bg-warning-soft mb-4 transition-all">
         <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-          <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 self-start">
+          <div className="p-2 rounded-lg bg-warning-soft text-warning-text shrink-0 self-start">
             <Crown className="h-5 w-5" />
           </div>
           <div className="space-y-1.5 flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-bold text-heading">Super Administrator Master Authority</h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-200 font-bold uppercase tracking-wider">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-warning-soft text-warning-text font-bold uppercase tracking-wider">
                 Unrestricted Bypass Active
               </span>
               {isSuperAdmin && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-success-soft text-success-text font-semibold">
                   You are signed in as Super Admin
                 </span>
               )}
@@ -698,7 +698,7 @@ export function AccessSettings({
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-[14px] text-heading">{activeRole.name}</span>
                   {activeRole.is_system ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-success-soft text-success-text">
                       <Lock className="h-3 w-3" /> System Role (Protected)
                     </span>
                   ) : (
@@ -742,7 +742,7 @@ export function AccessSettings({
                     disabled={pending}
                     title="Grant all View, Create, Update, Delete rights"
                   >
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <Check className="h-3.5 w-3.5 text-success-text" />
                     <span>Grant All</span>
                   </button>
                   <button
@@ -752,12 +752,12 @@ export function AccessSettings({
                     disabled={pending}
                     title="Revoke all rights from this role"
                   >
-                    <X className="h-3.5 w-3.5 text-rose-500" />
+                    <X className="h-3.5 w-3.5 text-danger-text" />
                     <span>Clear All</span>
                   </button>
                 </>
               ) : (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold text-[12px]">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-success-soft text-success-text font-semibold text-[12px]">
                   <Check className="h-4 w-4" />
                   <span>All CRUD Rights Permanently Active</span>
                 </div>
@@ -774,22 +774,22 @@ export function AccessSettings({
                 <tr>
                   <th style={{ minWidth: 260 }}>Functional Module / Entity</th>
                   <th className="text-center" style={{ width: 140 }}>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 font-bold text-[11px]">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-info-soft text-info-text font-bold text-[11px]">
                       View [R]
                     </span>
                   </th>
                   <th className="text-center" style={{ width: 140 }}>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-success-soft text-success-text font-bold text-[11px]">
                       Create [C]
                     </span>
                   </th>
                   <th className="text-center" style={{ width: 140 }}>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[11px]">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-warning-soft text-warning-text font-bold text-[11px]">
                       Update [U]
                     </span>
                   </th>
                   <th className="text-center" style={{ width: 140 }}>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-danger-soft text-danger-text font-bold text-[11px]">
                       Delete [D]
                     </span>
                   </th>
@@ -833,9 +833,9 @@ export function AccessSettings({
                             checked={hasView}
                             disabled={isSys || pending}
                             onChange={() => handleTogglePerm(res.viewCode)}
-                            className="h-4 w-4 rounded border-line text-sky-600 focus:ring-sky-500 accent-sky-600 cursor-pointer"
+                            className="h-4 w-4 rounded border-line text-info-text focus:ring-sky-500 accent-sky-600 cursor-pointer"
                           />
-                          <span className={`text-[11.5px] font-medium ${hasView ? "text-sky-600 dark:text-sky-400 font-semibold" : "text-muted"}`}>
+                          <span className={`text-[11.5px] font-medium ${hasView ? "text-info-text font-semibold" : "text-muted"}`}>
                             View
                           </span>
                         </label>
@@ -849,9 +849,9 @@ export function AccessSettings({
                             checked={hasCreate}
                             disabled={isSys || pending}
                             onChange={() => handleTogglePerm(res.createCode)}
-                            className="h-4 w-4 rounded border-line text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                            className="h-4 w-4 rounded border-line text-success-text focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
                           />
-                          <span className={`text-[11.5px] font-medium ${hasCreate ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-muted"}`}>
+                          <span className={`text-[11.5px] font-medium ${hasCreate ? "text-success-text font-semibold" : "text-muted"}`}>
                             Create
                           </span>
                         </label>
@@ -865,9 +865,9 @@ export function AccessSettings({
                             checked={hasUpdate}
                             disabled={isSys || pending}
                             onChange={() => handleTogglePerm(res.updateCode)}
-                            className="h-4 w-4 rounded border-line text-amber-600 focus:ring-amber-500 accent-amber-600 cursor-pointer"
+                            className="h-4 w-4 rounded border-line text-warning-text focus:ring-amber-500 accent-amber-600 cursor-pointer"
                           />
-                          <span className={`text-[11.5px] font-medium ${hasUpdate ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-muted"}`}>
+                          <span className={`text-[11.5px] font-medium ${hasUpdate ? "text-warning-text font-semibold" : "text-muted"}`}>
                             Update
                           </span>
                         </label>
@@ -881,9 +881,9 @@ export function AccessSettings({
                             checked={hasDelete}
                             disabled={isSys || pending}
                             onChange={() => handleTogglePerm(res.deleteCode)}
-                            className="h-4 w-4 rounded border-line text-rose-600 focus:ring-rose-500 accent-rose-600 cursor-pointer"
+                            className="h-4 w-4 rounded border-line text-danger-text focus:ring-rose-500 accent-rose-600 cursor-pointer"
                           />
-                          <span className={`text-[11.5px] font-medium ${hasDelete ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-muted"}`}>
+                          <span className={`text-[11.5px] font-medium ${hasDelete ? "text-danger-text font-semibold" : "text-muted"}`}>
                             Delete
                           </span>
                         </label>
@@ -902,7 +902,7 @@ export function AccessSettings({
                             {allChecked ? "Revoke All" : "Grant All"}
                           </button>
                         ) : (
-                          <span className="text-[11px] text-emerald-600 font-medium">Locked</span>
+                          <span className="text-[11px] text-success-text font-medium">Locked</span>
                         )}
                       </td>
                     </tr>
@@ -959,13 +959,13 @@ export function AccessSettings({
                         return (
                           <td key={r.id} className="text-center py-2.5">
                             <div className="inline-flex items-center gap-1 bg-row-sub px-2 py-1 rounded border border-line text-[11px] font-mono">
-                              <span className={hasV ? "text-sky-600 font-bold" : "text-muted/40"}>V</span>
+                              <span className={hasV ? "text-info-text font-bold" : "text-muted/40"}>V</span>
                               <span className="text-line-strong">·</span>
-                              <span className={hasC ? "text-emerald-600 font-bold" : "text-muted/40"}>C</span>
+                              <span className={hasC ? "text-success-text font-bold" : "text-muted/40"}>C</span>
                               <span className="text-line-strong">·</span>
-                              <span className={hasU ? "text-amber-600 font-bold" : "text-muted/40"}>U</span>
+                              <span className={hasU ? "text-warning-text font-bold" : "text-muted/40"}>U</span>
                               <span className="text-line-strong">·</span>
-                              <span className={hasD ? "text-rose-600 font-bold" : "text-muted/40"}>D</span>
+                              <span className={hasD ? "text-danger-text font-bold" : "text-muted/40"}>D</span>
                             </div>
                           </td>
                         );

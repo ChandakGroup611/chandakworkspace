@@ -62,7 +62,7 @@ export default async function MeetCalendarPage() {
   return (
     <div className="space-y-5 pb-6">
       <div className="border-b border-border pb-4">
-        <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Calendar</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Calendar</h1>
         <p className="mt-1 text-[14px] text-subtle">Meetings by month, week or as a list. Times are in IST.</p>
       </div>
       <MeetCalendarClient sessions={sessions} />

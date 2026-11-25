@@ -52,7 +52,7 @@ export default async function PointsListPage({ searchParams }: { searchParams: P
     <div className="space-y-4 pb-6">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
         <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Points</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Points</h1>
           <p className="mt-0.5 text-[13.5px] text-muted">Every point raised in your meetings. Open points come back to the next meeting until they're closed. Click a point to open it.</p>
         </div>
         <ExportCsvButton

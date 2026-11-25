@@ -91,7 +91,7 @@ export default async function MeetingDetailPage({
           <div className="min-w-0 flex-[1_1_420px]">
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="text-[15px] font-semibold text-muted">{meeting.code}</span>
-              <h1 className="text-[22px] font-bold tracking-[-0.01em] text-heading">{meeting.title}</h1>
+              <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">{meeting.title}</h1>
               {focus && <StatusChip s={focus} />}
               {meeting.project && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[12px] font-medium text-success-text">

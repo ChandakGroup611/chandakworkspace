@@ -50,7 +50,7 @@ export function MeetHeader({
           </nav>
         )}
         <div className="flex items-center gap-2.5">
-          <h1 className="text-[20px] font-semibold tracking-[-0.01em] text-heading sm:text-[22px]">{title}</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">{title}</h1>
           {badge}
         </div>
         {description && <p className="mt-1 text-[13px] text-subtle">{description}</p>}

@@ -15,7 +15,7 @@ export default async function DeleteMeetingPage({ params }: { params: Promise<{ 
     <div className="mx-auto max-w-4xl space-y-5 pb-6">
       <div className="space-y-2 border-b border-border pb-4">
         <BackLink href={`/meet/meetings/${id}`} label="Back to the meeting" />
-        <h1 className="text-[22px] font-bold text-heading">Delete "{refs.meeting.title}"</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Delete "{refs.meeting.title}"</h1>
         <p className="text-[13.5px] text-muted">{refs.meeting.code} · Check what is linked to this meeting before it goes.</p>
       </div>
       <MeetingDeleteClient refs={refs} />

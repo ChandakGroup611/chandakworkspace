@@ -31,7 +31,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
     <div className="space-y-5 pb-6">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
         <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.01em] text-heading">Rooms</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Rooms</h1>
           <p className="mt-1 text-[14px] text-subtle">
             {rooms.length} room{rooms.length === 1 ? "" : "s"} · {freeCount} free right now. Book a room while scheduling a meeting.
           </p>
