@@ -107,6 +107,13 @@ export async function getEndChecklist(sessionId: string): Promise<EndChecklist> 
   const noOwnerPts = open.filter((r) => !r.p.owner_id).length;
   const noOwnerTasks = tasks.filter((t) => !t.owner_id).length;
   if (noOwnerPts) items.push({ level: "fix", text: `${noOwnerPts} open point${noOwnerPts === 1 ? " has" : "s have"} no owner`, detail: "Give each one an owner so it's followed up." });
+  if (ownerIds.length) {
+    const { data: inactive } = await supabaseAdmin.from("user_master").select("id, full_name").in("id", ownerIds).or("is_active.eq.false,is_deleted.eq.true");
+    const gone = new Set(((inactive || []) as any[]).map((u) => u.id));
+    const goneOpen = open.filter((r) => gone.has(r.p.owner_id));
+    if (goneOpen.length)
+      items.push({ level: "fix", text: `${goneOpen.length} open point${goneOpen.length === 1 ? " is" : "s are"} owned by someone who has left`, detail: `${goneOpen.map((r) => r.p.code).join(", ")}: give ${goneOpen.length === 1 ? "it" : "them"} a new owner.` });
+  }
   if (noOwnerTasks) items.push({ level: "fix", text: `${noOwnerTasks} task${noOwnerTasks === 1 ? " has" : "s have"} no owner` });
   const skipped = open.filter((r) => !covered(r)).length;
   if (skipped) items.push({ level: "check", text: `${skipped} open point${skipped === 1 ? " wasn't" : "s weren't"} discussed`, detail: "No status change, note or task on them in this meeting. They'll come back next time." });

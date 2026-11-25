@@ -38,6 +38,7 @@ export const metadata = {
 };
 
 const needIcon: Record<MeetHomeNeed["kind"], { icon: React.ElementType; cls: string }> = {
+  still_running: { icon: AlertCircle, cls: "bg-danger-soft text-danger-text" },
   approve_minutes: { icon: FileText, cls: "bg-warning-soft text-warning-text" },
   write_minutes: { icon: FileText, cls: "bg-warning-soft text-warning-text" },
   overdue_task: { icon: AlertCircle, cls: "bg-danger-soft text-danger-text" },

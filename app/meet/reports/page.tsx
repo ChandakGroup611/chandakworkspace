@@ -7,8 +7,8 @@ import { getMoMVersions } from "@/lib/actions/meet/mom";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Reports & Analytics · Chandak Meet",
-  description: "Enterprise meeting reports, carry-forward tracking, TAT compliance, and executive performance scorecards",
+  title: "Reports · Chandak Meet",
+  description: "Chandak Meet reports",
 };
 
 export default async function MeetReportsPage() {
@@ -26,8 +26,8 @@ export default async function MeetReportsPage() {
   return (
     <div className="space-y-6">
       <MeetHeader
-        title="Reports & Analytics Hub"
-        description="Comprehensive audit registers, TAT SLAs, carry-forward ageing, and MoM distribution records"
+        title="Reports"
+        description="Minutes, meetings, open and carried points, tasks on time, owners, and who replied to and attended each meeting."
         breadcrumbs={[{ label: "Reports" }]}
       />
 

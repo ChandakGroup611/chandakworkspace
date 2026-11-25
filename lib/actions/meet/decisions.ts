@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { isMeetingHost, NOT_HOST } from "@/lib/utils/meet-host";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingDecision, DecisionStatus } from "@/types/meet";
@@ -69,6 +70,9 @@ export async function recordDecision(input: {
     const auth = await requireMeet("MEET_DECISION_MANAGE", { sessionId: input.sessionId });
     if (!auth.allowed) {
       return { success: false, error: auth.error || "Permission denied" };
+    }
+    if (!(await isMeetingHost(input.sessionId, auth.userId, auth.isSuperAdmin || auth.isMeetAdmin))) {
+      return { success: false, error: "Only the organiser, chair or minute taker can record a decision for this meeting." };
     }
 
     const { user } = await getCachedUser();

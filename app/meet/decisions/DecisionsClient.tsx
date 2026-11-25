@@ -383,7 +383,7 @@ export default function DecisionsClient({ initialDecisions, sessions }: Decision
               <tr>
                 <th className="py-3 px-4">Code</th>
                 <th className="py-3 px-4">Decision & Policy Details</th>
-                <th className="py-3 px-4">Origin / Session</th>
+                <th className="py-3 px-4">Meeting</th>
                 <th className="py-3 px-4">Decided By</th>
                 <th className="py-3 px-4">Effective Date</th>
                 <th className="py-3 px-4">Review Date</th>

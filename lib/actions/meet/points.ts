@@ -2,6 +2,7 @@
 
 import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { isMeetingHost, NOT_HOST } from "@/lib/utils/meet-host";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import type { MeetingPoint, PointPriority, PointType, PointStatus } from "@/types/meet";
@@ -171,6 +172,18 @@ export async function updatePointStatus(input: {
     const auth = await requireMeet("MEET_POINT_MANAGE", { sessionId: input.sessionId });
     if (!auth.allowed) {
       return { success: false, error: auth.error || "Permission denied" };
+    }
+    // The point's owner can update their own point; otherwise only whoever runs the meeting
+    {
+      const { data: own } = await supabaseAdmin.from("meet_points").select("owner_id, meeting_id").eq("id", input.pointId).maybeSingle();
+      const isAdmin = auth.isSuperAdmin || auth.isMeetAdmin;
+      let host = false;
+      if (input.sessionId) host = await isMeetingHost(input.sessionId, auth.userId, isAdmin);
+      else if (own?.meeting_id) {
+        const { data: m } = await supabaseAdmin.from("meet_meetings").select("organizer_id, chair_id, default_minute_taker_id").eq("id", own.meeting_id).maybeSingle();
+        host = isAdmin || [m?.organizer_id, m?.chair_id, m?.default_minute_taker_id].includes(auth.userId);
+      }
+      if (!host && own?.owner_id !== auth.userId) return { success: false, error: "Only the point's owner, or whoever runs the meeting, can change its status." };
     }
 
     const { user } = await getCachedUser();

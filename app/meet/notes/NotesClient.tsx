@@ -760,7 +760,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
               ) : summaryData ? (
                 <>
                   <div className="p-3 rounded bg-surface border border-border">
-                    <h4 className="font-bold text-foreground mb-1">Executive Overview</h4>
+                    <h4 className="font-bold text-foreground mb-1">Summary</h4>
                     <p className="text-muted leading-relaxed">{summaryData.overview}</p>
                   </div>
 

@@ -7,6 +7,7 @@ import { getSessionsForMeeting } from "@/lib/actions/meet/sessions";
 import { getMeetingMasters } from "@/lib/actions/meet/masters";
 import { getMeetingOverview } from "@/lib/actions/meet/overview";
 import MeetingDashboard from "@/components/meet/MeetingDashboard";
+import MeetingAnalysisPanel from "@/components/meet/MeetingAnalysisPanel";
 import { Building2, Check, Video } from "lucide-react";
 import BackLink from "@/components/meet/BackLink";
 import MeetingActions from "@/components/meet/MeetingActions";
@@ -178,7 +179,7 @@ export default async function MeetingDetailPage({
         masters={masters}
         initialPoints={allPoints}
         initialTab={initialTab}
-        dashboard={<MeetingDashboard overview={overview} points={allPoints} />}
+        dashboard={<div className="space-y-5"><MeetingDashboard overview={overview} points={allPoints} /><MeetingAnalysisPanel meetingId={meeting.id} /></div>}
       />
     </div>
   );

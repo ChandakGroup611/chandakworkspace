@@ -13,7 +13,7 @@ import { SESSION_ROW_SELECT, loadSessionCounts, mapSessionRow, myScopeFilter, ty
 export type MeetHomeSession = MeetSessionRow;
 
 export interface MeetHomeNeed {
-  kind: "approve_minutes" | "write_minutes" | "overdue_task" | "overdue_point";
+  kind: "still_running" | "approve_minutes" | "write_minutes" | "overdue_task" | "overdue_point";
   title: string;
   detail: string;
   href: string;
@@ -178,6 +178,25 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
 
     // Needs you
     const needs: MeetHomeNeed[] = [];
+    // Meetings left running long after their end time (someone forgot to end them)
+    if (scope) {
+      const { data: running } = await supabaseAdmin
+        .from("meet_sessions")
+        .select(sessionSelect)
+        .eq("is_deleted", false)
+        .eq("status", "in_progress")
+        .not("meeting_id", "in", notDeleted || "(00000000-0000-0000-0000-000000000000)")
+        .or(scope)
+        .limit(10);
+      for (const s of (running || []) as any[]) {
+        const m = one<any>(s.meeting);
+        const end = new Date(s.scheduled_end || new Date(new Date(s.scheduled_start).getTime() + 3600000)).getTime();
+        const runsIt = m?.organizer_id === userId || m?.chair_id === userId || s.minute_taker_id === userId;
+        if (runsIt && Date.now() - end > 2 * 3600000) {
+          needs.push({ kind: "still_running", title: "Meeting still running: end it", detail: `${m?.title || "Meeting"} was due to end ${Math.round((Date.now() - end) / 3600000)} h ago`, href: `/meet/live/${s.id}` });
+        }
+      }
+    }
     for (const s of ((momRes as any).data || []) as any[]) {
       const m = one<any>(s.meeting);
       const isOrgOrChair = m?.organizer_id === userId || m?.chair_id === userId;

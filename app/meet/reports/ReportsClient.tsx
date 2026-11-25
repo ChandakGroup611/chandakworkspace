@@ -54,13 +54,13 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
   const [selectedMoM, setSelectedMoM] = useState<any | null>(null);
 
   const reportTabs = [
-    { id: "r1" as ReportTab, code: "R1", label: "Minutes of Meeting (MoM)", icon: FileText, count: initialReportData.r1MoMs.length },
-    { id: "r2" as ReportTab, code: "R2", label: "Meeting Summary", icon: Calendar, count: initialReportData.r2Meetings.length },
-    { id: "r3" as ReportTab, code: "R3", label: "Pending Points Register", icon: Clock, count: initialReportData.r3PendingPoints.length },
-    { id: "r4" as ReportTab, code: "R4", label: "Carry-Forward Analysis", icon: AlertTriangle, count: initialReportData.r4CarryForward.length },
-    { id: "r5" as ReportTab, code: "R5", label: "TAT Compliance", icon: BarChart3, count: initialReportData.r5TatCompliance.length },
-    { id: "r6" as ReportTab, code: "R6", label: "Owner Performance", icon: UserCheck, count: initialReportData.r6OwnerPerformance.length },
-    { id: "r7" as ReportTab, code: "R7", label: "Invites & Attendance", icon: MailCheck, count: initialReportData.r7Invites.length },
+    { id: "r1" as ReportTab, code: "R1", label: "Minutes (MoM)", icon: FileText, count: initialReportData.r1MoMs.length },
+    { id: "r2" as ReportTab, code: "R2", label: "Meetings", icon: Calendar, count: initialReportData.r2Meetings.length },
+    { id: "r3" as ReportTab, code: "R3", label: "Open points", icon: Clock, count: initialReportData.r3PendingPoints.length },
+    { id: "r4" as ReportTab, code: "R4", label: "Carried forward", icon: AlertTriangle, count: initialReportData.r4CarryForward.length },
+    { id: "r5" as ReportTab, code: "R5", label: "Tasks on time (TAT)", icon: BarChart3, count: initialReportData.r5TatCompliance.length },
+    { id: "r6" as ReportTab, code: "R6", label: "By owner", icon: UserCheck, count: initialReportData.r6OwnerPerformance.length },
+    { id: "r7" as ReportTab, code: "R7", label: "Invites & attendance", icon: MailCheck, count: initialReportData.r7Invites.length },
   ];
 
   // CSV Export utility
@@ -210,7 +210,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
               </div>
               <div>
                 <p className="text-xs font-semibold leading-tight line-clamp-2">{tab.label}</p>
-                <p className="text-[11px] text-subtle mt-1 font-mono">{tab.count} records</p>
+                <p className="text-[11px] text-subtle mt-1 font-mono">{tab.count} {tab.count === 1 ? "row" : "rows"}</p>
               </div>
             </button>
           );
@@ -223,7 +223,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
           <input
             type="text"
-            placeholder="Search report records..."
+            placeholder="Search this report"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 bg-elevated border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none"
@@ -251,7 +251,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
             <table className="w-full text-left text-xs">
               <thead className="bg-elevated border-b border-border text-subtle font-medium uppercase tracking-wider">
                 <tr>
-                  <th className="py-3 px-4">Session Code</th>
+                  <th className="py-3 px-4">Meeting date</th>
                   <th className="py-3 px-4">Meeting Series</th>
                   <th className="py-3 px-4">Version</th>
                   <th className="py-3 px-4">Generated Date</th>
@@ -317,7 +317,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                   <th className="py-3 px-4">Department</th>
                   <th className="py-3 px-4">Organizer</th>
                   <th className="py-3 px-4">Cadence</th>
-                  <th className="py-3 px-4">Sessions Held</th>
+                  <th className="py-3 px-4">Times held</th>
                   <th className="py-3 px-4">Avg Score</th>
                 </tr>
               </thead>
@@ -650,7 +650,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                   <span className="font-semibold">{selectedMoM.snapshot?.meeting_title || selectedMoM.session?.meeting?.title}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-subtle block">Session #</span>
+                  <span className="text-[10px] uppercase font-semibold text-subtle block">Date #</span>
                   <span>{selectedMoM.snapshot?.session_code || selectedMoM.session?.code}</span>
                 </div>
                 <div>
@@ -691,7 +691,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
               {/* Backup Points Discussed */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-heading mb-2">
-                  2. Backup Points Carried Forward
+                  2. Open points carried forward
                 </h4>
                 {(selectedMoM.snapshot?.backup_points || []).length === 0 ? (
                   <p className="text-subtle italic">No backup points carried to this session.</p>

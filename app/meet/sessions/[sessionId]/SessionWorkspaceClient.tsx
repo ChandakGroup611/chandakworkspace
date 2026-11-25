@@ -30,10 +30,7 @@ import { StatusBadge } from "@/components/meet/StatusBadge";
 import { QuickPointCapture } from "@/components/meet/QuickPointCapture";
 import { sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 import { CreateTaskModal } from "@/components/meet/CreateTaskModal";
-import InvitationsCard from "@/components/meet/InvitationsCard";
-import AttendanceCard from "@/components/meet/AttendanceCard";
 import MeetingNotesCard from "@/components/meet/MeetingNotesCard";
-import AIMinutesCard from "@/components/meet/AIMinutesCard";
 import DraggableLiveNotesWidget from "@/components/meet/DraggableLiveNotesWidget";
 import { AppButton } from "@/components/ui/AppButton";
 import { generateMoMPDF } from "@/lib/utils/mom-pdf";
@@ -117,7 +114,7 @@ export default function SessionWorkspaceClient({
 
       await updateSessionVideoLink({ sessionId: session.id, videoLink: link });
       setCurrentVideoLink(link);
-      toast.success("Microsoft Teams meeting link generated with all parameters!");
+      toast.success("Teams link created");
     } catch (err: any) {
       toast.error(err.message || "Failed to generate Teams link");
     } finally {
@@ -295,7 +292,7 @@ export default function SessionWorkspaceClient({
         });
 
         if (res.success) {
-          toast.success("Session rescheduled");
+          toast.success("Meeting rescheduled");
           setIsRescheduleOpen(false);
           window.location.reload();
         } else {
@@ -317,7 +314,7 @@ export default function SessionWorkspaceClient({
         });
 
         if (res.success) {
-          toast.success("Session cancelled");
+          toast.success("Meeting cancelled");
           setIsCancelOpen(false);
           window.location.reload();
         } else {
@@ -384,7 +381,7 @@ export default function SessionWorkspaceClient({
       const res = await generateMoMSnapshot(session.id);
       if (res.success) {
         setMomSnapshot(res.snapshot);
-        toast.success("MoM Draft generated from session points & decisions!");
+        toast.success("Draft minutes ready");
       } else {
         toast.error(res.error || "Failed to generate MoM");
       }
@@ -400,7 +397,7 @@ export default function SessionWorkspaceClient({
       setPublishingMoM(true);
       const res = await publishMoM(session.id, 1);
       if (res.success) {
-        toast.success("Minutes of Meeting successfully published to all attendees!");
+        toast.success("Minutes sent to everyone invited");
         window.location.reload();
       } else {
         toast.error(res.error || "Failed to publish MoM");
@@ -459,7 +456,7 @@ export default function SessionWorkspaceClient({
         })),
         decisions: [],
       });
-      toast.success("Executive MoM PDF generated successfully!");
+      toast.success("Minutes PDF downloaded");
     } catch (err: any) {
       console.error("Error generating MoM PDF:", err);
       toast.error("Failed to generate PDF: " + (err.message || err));
@@ -580,7 +577,7 @@ export default function SessionWorkspaceClient({
                 onClick={handleGenerateTeamsLink}
                 disabled={generatingTeamsLink}
                 className="p-1.5 rounded-md border border-border bg-surface hover:bg-surface-hover text-muted hover:text-foreground transition-colors shrink-0 cursor-pointer"
-                title="Regenerate Microsoft Teams Link with all parameters"
+                title="Create a new Teams link"
               >
                 {generatingTeamsLink ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-primary" />}
               </button>
@@ -591,7 +588,7 @@ export default function SessionWorkspaceClient({
               onClick={handleGenerateTeamsLink}
               disabled={generatingTeamsLink}
               className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 font-semibold text-[12px] transition-colors cursor-pointer disabled:opacity-50"
-              title="Generate Microsoft Teams Meeting Link"
+              title="Create a Teams link"
             >
               {generatingTeamsLink ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
               <span>+ Generate Teams Link</span>
@@ -605,31 +602,14 @@ export default function SessionWorkspaceClient({
         </div>
       </div>
 
-      {/* Invitations & RSVP (Section E4) */}
-      {invitationsData && (
-        <InvitationsCard
-          sessionId={session.id}
-          isOrganizer={true}
-          initialData={invitationsData}
-          usersList={masters.users}
-        />
-      )}
-
-      {/* Attendance & QR Check-in (Section E5) */}
-      {session.status !== "scheduled" && (
-        <AttendanceCard
-          sessionId={session.id}
-          initialAttendees={attendees}
-          canManage={true}
-        />
-      )}
+      {/* Replies ("Who's coming") are shown below this page section; attendance is marked in the meeting room. */}
 
       {/* Agenda & Time Breakdown */}
       <div className="theme-card-structural p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-[14px] font-semibold text-heading flex items-center gap-2">
             <Clock className="h-4 w-4 text-primary" />
-            Time-Boxed Agenda Run Sheet
+            Agenda
           </h3>
           <div className="flex items-center gap-3">
             <span className="text-[12px] text-muted">
@@ -684,7 +664,7 @@ export default function SessionWorkspaceClient({
 
       {/* Quick Point Capture Bar */}
       <div>
-        <h3 className="text-[13px] font-semibold text-subtle mb-2">Capture Discussion Item / Point</h3>
+        <h3 className="text-[13px] font-semibold text-subtle mb-2">Add a point</h3>
         <QuickPointCapture
           meetingId={session.meeting_id}
           sessionId={session.id}
@@ -699,9 +679,9 @@ export default function SessionWorkspaceClient({
         <div className="flex items-center justify-between">
           <h3 className="text-[14px] font-semibold text-heading flex items-center gap-2">
             <RotateCcw className="h-4 w-4 text-warning-text" />
-            Backup Points Carried From Previous Sessions ({backupPoints.length})
+            Open points from earlier meetings ({backupPoints.length})
           </h3>
-          <span className="text-[11.5px] text-muted">Mandatory resolution order</span>
+          <span className="text-[11.5px] text-muted">Go through these first</span>
         </div>
 
         {backupPoints.length === 0 ? (
@@ -827,7 +807,7 @@ export default function SessionWorkspaceClient({
       <div className="space-y-3">
         <h3 className="text-[14px] font-semibold text-heading flex items-center gap-2">
           <FileText className="h-4 w-4 text-primary" />
-          New Points Raised in This Session ({newPoints.length})
+          New points raised in this meeting ({newPoints.length})
         </h3>
 
         {newPoints.length === 0 ? (
@@ -916,12 +896,18 @@ export default function SessionWorkspaceClient({
       {/* Meeting Notes (Section D7.3) */}
       <MeetingNotesCard sessionId={session.id} />
 
-      {/* AI Minutes & MoM Distribution Card (Section E6) */}
-      <AIMinutesCard
-        sessionId={session.id}
-        initialAIMinutes={initialAIMinutes}
-        totalAttendeesCount={attendees.length}
-      />
+      {/* Minutes: drafted, reviewed and sent on one page */}
+      {!["scheduled", "in_progress", "cancelled"].includes(session.status) && (
+        <div className="theme-card-structural flex flex-wrap items-center justify-between gap-3 p-5">
+          <div>
+            <h3 className="text-[15px] font-semibold text-heading">Minutes</h3>
+            <p className="text-[13px] text-subtle">Read, approve and send the minutes of this meeting.</p>
+          </div>
+          <Link href={`/meet/sessions/${session.id}/review`} className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-[14px] font-semibold text-primary-foreground hover:bg-primary-hover">
+            Open the minutes
+          </Link>
+        </div>
+      )}
 
       {/* Generated MoM Snapshot Preview */}
       {momSnapshot && (
@@ -956,7 +942,7 @@ export default function SessionWorkspaceClient({
               <p className="font-semibold text-foreground">{momSnapshot.attendees?.length || 0} participants</p>
             </div>
             <div>
-              <span className="text-muted block">Backup Points</span>
+              <span className="text-muted block">Open points</span>
               <p className="font-semibold text-foreground">{momSnapshot.backup_points?.length || 0} carried</p>
             </div>
             <div>
@@ -993,7 +979,7 @@ export default function SessionWorkspaceClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-[15px] font-semibold text-heading">Reschedule Session</h3>
+              <h3 className="text-[15px] font-semibold text-heading">Reschedule</h3>
               <button
                 onClick={() => setIsRescheduleOpen(false)}
                 className="text-muted hover:text-foreground"
@@ -1128,7 +1114,7 @@ export default function SessionWorkspaceClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-[15px] font-semibold text-heading">Add Agenda Item</h3>
+              <h3 className="text-[15px] font-semibold text-heading">Add agenda item</h3>
               <button
                 onClick={() => setIsAddAgendaOpen(false)}
                 className="text-muted hover:text-foreground"
@@ -1340,7 +1326,7 @@ export default function SessionWorkspaceClient({
                   onChange={(e) => setClosureRemarks(e.target.value)}
                   required
                   rows={3}
-                  placeholder="State the resolution, committee decision, or outcome..."
+                  placeholder="What was decided?"
                   className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground focus:border-primary focus:outline-none"
                 />
               </div>

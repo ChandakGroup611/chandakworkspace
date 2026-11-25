@@ -1066,7 +1066,7 @@ export default function MeetAdminClient({
 
           {/* SLA Policies Table */}
           <div className="p-4 rounded-xl border border-border bg-elevated">
-            <h3 className="text-sm font-bold text-foreground mb-1">Standard SLA Clocks & Escalation Matrix</h3>
+            <h3 className="text-sm font-bold text-foreground mb-1">When overdue items are flagged and escalated</h3>
             <p className="text-xs text-muted mb-4">Calculated strictly in working days (skipping Sundays and holidays).</p>
 
             <div className="overflow-x-auto">
@@ -1453,7 +1453,7 @@ export default function MeetAdminClient({
       {activeTab === "categories" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted">Categorize agenda points with statutory default TAT working days.</p>
+            <p className="text-xs text-muted">Categories for points, each with a default number of working days (TAT).</p>
             <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => setIsCategoryModalOpen(true)}>
               Add Category
             </AppButton>
@@ -1685,7 +1685,7 @@ export default function MeetAdminClient({
                     <option value="meet.task.due_soon">Task Due Soon (TAT approaching)</option>
                     <option value="meet.task.escalated">Task Escalated (TAT breached)</option>
                     <option value="meet.meeting.scheduled">Meeting Scheduled / Notice</option>
-                    <option value="meet.session.started">Live Session Started</option>
+                    <option value="meet.session.started">Meeting started</option>
                     <option value="meet.mom.published">Minutes of Meeting (MoM) Published</option>
                     <option value="meet.extension.requested">TAT Extension Requested</option>
                     <option value="meet.extension.approved">TAT Extension Approved</option>
@@ -1879,7 +1879,7 @@ export default function MeetAdminClient({
                       <span className="font-bold text-xs text-theme-btn-primary tracking-wide">
                         CHANDAK MEET
                       </span>
-                      <span className="text-[12.5px] text-muted">| Enterprise Governance Notice</span>
+                      <span className="text-[12.5px] text-muted">| Email preview</span>
                     </div>
                     <span className="text-[12px] font-mono px-2 py-0.5 rounded bg-surface border border-border text-muted">
                       Confidential

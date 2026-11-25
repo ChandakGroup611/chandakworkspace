@@ -380,7 +380,7 @@ export default function MeetingDetailTabs({
               <table className="w-full text-left text-[13px]">
                 <thead className="border-b border-border bg-sunken/40 text-[11.5px] uppercase font-semibold text-muted">
                   <tr>
-                    <th className="py-2.5 px-4">Session Code</th>
+                    <th className="py-2.5 px-4">Meeting date</th>
                     <th className="py-2.5 px-4">Scheduled Start</th>
                     <th className="py-2.5 px-4">Status</th>
                     <th className="py-2.5 px-4">Points Summary</th>
@@ -794,7 +794,7 @@ export default function MeetingDetailTabs({
                   <option value="chair">Chairperson</option>
                   <option value="minute_taker">Minute Taker</option>
                   <option value="required">Required Attendee</option>
-                  <option value="optional">Optional Spectator</option>
+                  <option value="optional">Optional</option>
                 </select>
               </div>
 

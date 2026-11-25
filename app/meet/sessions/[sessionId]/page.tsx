@@ -11,6 +11,9 @@ import FilesPanel from "@/components/meet/FilesPanel";
 import SessionRoomCard from "@/components/meet/SessionRoomCard";
 import MyBriefPanel from "@/components/meet/MyBriefPanel";
 import { getMyBrief } from "@/lib/actions/meet/my-brief";
+import RsvpPanel from "@/components/meet/RsvpPanel";
+import { getSessionReplies } from "@/lib/actions/meet/rsvp";
+import { requireMeet } from "@/lib/permissions/meet";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ sessionId
   const { sessionId } = await params;
   const { session } = await getSessionById(sessionId);
   return {
-    title: session ? `${session.code} · Chandak Meet Workspace` : "Session Workspace · Chandak Meet",
+    title: session ? `${(session as any).meeting?.title || session.code} · Agenda and points · Chandak Meet` : "Meeting date · Chandak Meet",
   };
 }
 
@@ -38,12 +41,17 @@ export default async function SessionWorkspacePage({
   if (!session) {
     notFound();
   }
-  const brief = ["scheduled", "in_progress"].includes((session as any).status) ? await getMyBrief(sessionId).catch(() => null) : null;
+  const upcoming = ["scheduled", "in_progress"].includes((session as any).status);
+  const [brief, replies, auth] = await Promise.all([
+    upcoming ? getMyBrief(sessionId).catch(() => null) : Promise.resolve(null),
+    getSessionReplies(sessionId).catch(() => null),
+    requireMeet("MEET_VIEW", { sessionId }),
+  ]);
+  const when = new Date((session as any).scheduled_start).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
   return (
     <div className="space-y-6">
       <JoinRequestsPanel sessionId={sessionId} />
-      {brief && <MyBriefPanel brief={brief} />}
       <OutlookStatusLine sessionId={sessionId} status={(session as any).status} editHref={(session as any).meeting_id ? `/meet/meetings/${(session as any).meeting_id}/edit` : undefined} />
       <SessionWorkspaceClient
         session={session}
@@ -54,6 +62,17 @@ export default async function SessionWorkspacePage({
         invitationsData={invitationsData}
         initialAIMinutes={aiMinutes}
       />
+      {replies && (
+        <RsvpPanel
+          sessionId={sessionId}
+          dateLabel={when}
+          people={replies.people}
+          mine={replies.mine}
+          canReply={upcoming && !!replies.mine && (session as any).meeting?.organizer_id !== auth.userId}
+          users={(masters.users || []) as any}
+        />
+      )}
+      {brief && <MyBriefPanel brief={brief} />}
       {["scheduled", "in_progress"].includes((session as any).status) && <SessionRoomCard sessionId={sessionId} />}
       <FilesPanel entityType="session" entityId={sessionId} title="Pre-reads and files" />
     </div>

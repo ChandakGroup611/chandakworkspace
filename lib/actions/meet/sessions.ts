@@ -3,6 +3,7 @@
 import { syncSessionEvent, cancelSessionEvent } from "@/lib/integrations/outlook-events";
 import { sendMeetEmail } from "@/lib/utils/meet-email";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { isMeetingHost, NOT_HOST } from "@/lib/utils/meet-host";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { revalidatePath } from "next/cache";
 import { requireMeet } from "@/lib/permissions/meet";
@@ -192,7 +193,9 @@ export async function getSessionById(sessionId: string): Promise<{
 
 export async function startSession(sessionId: string) {
   try {
-    const { userId } = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
+    const runAuth = await requireMeet("MEET_SESSION_RUN", { sessionId });
+    const userId = runAuth.userId;
+    if (!(await isMeetingHost(sessionId, userId, runAuth.isSuperAdmin || runAuth.isMeetAdmin))) throw new Error(NOT_HOST);
     const now = new Date().toISOString();
 
     const { data: session, error } = await supabaseAdmin
@@ -244,7 +247,9 @@ export async function endSessionAndCarryForward(
   opts?: { followUpStart?: string | null }
 ) {
   try {
-    const { userId } = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
+    const runAuth = await requireMeet("MEET_SESSION_RUN", { sessionId });
+    const userId = runAuth.userId;
+    if (!(await isMeetingHost(sessionId, userId, runAuth.isSuperAdmin || runAuth.isMeetAdmin))) throw new Error(NOT_HOST);
     const now = new Date().toISOString();
     // Anyone who never joined and wasn't marked by hand: Absent / Excused
     await settleUnjoined(sessionId).catch(() => null);
@@ -532,7 +537,9 @@ export async function updateSessionAttendance(
 ) {
   try {
     // Marking by hand: only the organiser, chair or minute taker. The mark is kept as manual.
-    const { userId } = await requireMeet("MEET_SESSION_RUN", { sessionId, requireOrganizerOrChair: true });
+    const runAuth = await requireMeet("MEET_SESSION_RUN", { sessionId });
+    const userId = runAuth.userId;
+    if (!(await isMeetingHost(sessionId, userId, runAuth.isSuperAdmin || runAuth.isMeetAdmin))) throw new Error(NOT_HOST);
     const allowed = ["present", "late", "absent", "excused", "left_early"];
     const now = new Date().toISOString();
     for (const item of attendeesList) {
@@ -934,7 +941,8 @@ export async function updateSessionVideoLink(input: {
   videoLink: string;
 }): Promise<{ success: boolean; session?: any; error?: string }> {
   try {
-    await requireMeet("MEET_UPDATE", { sessionId: input.sessionId, requireOrganizerOrChair: false });
+    const vAuth = await requireMeet("MEET_UPDATE", { sessionId: input.sessionId, requireOrganizerOrChair: false });
+    if (!(await isMeetingHost(input.sessionId, vAuth.userId, vAuth.isSuperAdmin || vAuth.isMeetAdmin))) return { success: false, error: NOT_HOST };
 
     const cleanLink = (input.videoLink || "").trim();
 
