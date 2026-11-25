@@ -359,7 +359,8 @@ export async function createMeeting(input: CreateMeetingInput) {
             guest_name: m.guest_name || null,
             guest_email: m.guest_email || null,
             role: m.role || "required",
-            invite_status: "invited",
+            // The organiser set the meeting up, so they're attending
+            invite_status: m.user_id && m.user_id === input.organizer_id ? "accepted" : "invited",
             attendance: "absent",
           }))
         );
