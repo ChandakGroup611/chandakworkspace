@@ -13,7 +13,7 @@ import { SidePeekDrawer } from "@/components/ui/SidePeekDrawer";
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 import TemplateManager from "@/components/tasks/TemplateManager";
 import { VoiceFieldBar } from "@/components/voice/VoiceFieldBar";
-import { matchOptionByLabel, type ParsedVoiceFields } from "@/lib/voice/field-parser";
+import { matchOptionByLabel, parseVoiceFields, type ParsedVoiceFields } from "@/lib/voice/field-parser";
 
 export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, initialDescription, initialAttachments, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, initialDescription?: string, initialAttachments?: any[], onClose: () => void, onSuccess: (data: any) => void }) {
   const { isLight: isLightMode } = useTheme();
@@ -193,7 +193,54 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       setDepartments(deptList || []);
       setStakeholders(finalStakeholders);
       setSprints(sprintList.filter((s: any) => s.status !== 'CLOSED'));
-      setDepartments(deptList || []);
+
+      // Auto-apply any staged voice command from Global Voice Fill
+      try {
+        const draft = sessionStorage.getItem("chandak_voice_draft");
+        const aiRaw = sessionStorage.getItem("chandak_voice_ai_values");
+        if (draft) {
+          sessionStorage.removeItem("chandak_voice_draft");
+          sessionStorage.removeItem("chandak_voice_ai_values");
+          const fields = parseVoiceFields(draft);
+          if (aiRaw) {
+            const v = JSON.parse(aiRaw);
+            if (v["Subject"] || v["Task title"] || v["Title"]) fields.subject = v["Subject"] || v["Task title"] || v["Title"];
+            if (v["Description"]) fields.description = v["Description"];
+            if (v["Status"]) fields.status = v["Status"];
+            if (v["Priority"]) fields.priority = v["Priority"];
+            if (v["Start Date"] || v["Start date"]) fields.startDate = v["Start Date"] || v["Start date"];
+            if (v["Due Date"] || v["End Date"] || v["Due date"]) fields.dueDate = v["Due Date"] || v["End Date"] || v["Due date"];
+            if (v["Department"]) fields.department = v["Department"];
+            if (v["Primary Assignee"] || v["Primary assignee"] || v["Assignee"]) fields.assignee = v["Primary Assignee"] || v["Primary assignee"] || v["Assignee"];
+          }
+          const filled: string[] = [];
+          if (fields.subject) { setTitle(fields.subject); filled.push("Subject"); }
+          if (fields.description) { setDescription(fields.description); filled.push("Description"); }
+          if (fields.startDate) { setStartDate(fields.startDate); filled.push("Start Date"); }
+          if (fields.dueDate) { setEndDate(fields.dueDate); filled.push("Due Date"); }
+          if (fields.status && statusList) {
+            const m = matchOptionByLabel(fields.status, statusList, ["name", "status_name"]);
+            if (m) { setStatusId(m.id); filled.push(`Status: ${m.name}`); }
+          }
+          if (fields.priority && priorityList) {
+            const m = matchOptionByLabel(fields.priority, priorityList, ["name", "priority_name"]);
+            if (m) { setPriorityId(m.id); filled.push(`Priority: ${m.name}`); }
+          }
+          if (fields.department && deptList) {
+            const m = matchOptionByLabel(fields.department, deptList, ["name"]);
+            if (m) { setDepartmentId(m.id); filled.push(`Department: ${m.name}`); }
+          }
+          if (fields.assignee && finalStakeholders.length) {
+            const m = matchOptionByLabel(fields.assignee, finalStakeholders, ["full_name", "email"]);
+            if (m) {
+              setPrimaryAssignee(m.id);
+              setExecutors([m.id]);
+              filled.push(`Assignee: ${m.full_name}`);
+            }
+          }
+          if (filled.length > 0) toast.success(`Voice filled: ${filled.join(", ")}`);
+        }
+      } catch {}
     }
     initData();
   }, [workspaceId]);

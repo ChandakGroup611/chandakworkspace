@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, Sparkles, Check } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { parseVoiceFields, type ParsedVoiceFields } from "@/lib/voice/field-parser";
+import { inspectActiveFormFields } from "@/lib/voice/dom-form-filler";
 
 interface VoiceFieldBarProps {
   entityLabel: string; // e.g. "Task", "Subtask", "Ticket", "Requirement"
@@ -26,10 +27,34 @@ export function VoiceFieldBar({ entityLabel, onApply }: VoiceFieldBarProps) {
     };
   }, []);
 
-  const applyTranscript = (text: string) => {
+  const applyTranscript = async (text: string) => {
     const clean = text.trim();
     if (!clean) return;
     const parsed = parseVoiceFields(clean);
+
+    // Enhance with AI extraction so natural/random phrasing maps accurately to form fields
+    try {
+      const formFields = inspectActiveFormFields();
+      const resp = await fetch("/api/voice/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: clean, fields: formFields }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const v = data?.values || {};
+        if (v["Subject"] || v["Task title"] || v["Title"]) parsed.subject = v["Subject"] || v["Task title"] || v["Title"];
+        if (v["Description"] || v["Remark"] || v["Details"]) parsed.description = v["Description"] || v["Remark"] || v["Details"];
+        if (v["Status"]) parsed.status = v["Status"];
+        if (v["Priority"]) parsed.priority = v["Priority"];
+        if (v["Start Date"] || v["Start date"]) parsed.startDate = v["Start Date"] || v["Start date"];
+        if (v["Due Date"] || v["End Date"] || v["Due date"]) parsed.dueDate = v["Due Date"] || v["End Date"] || v["Due date"];
+        if (v["Department"]) parsed.department = v["Department"];
+        if (v["Primary Assignee"] || v["Primary assignee"] || v["Assignee"]) parsed.assignee = v["Primary Assignee"] || v["Primary assignee"] || v["Assignee"];
+        if (v["Business Reason"]) parsed.businessReason = v["Business Reason"];
+      }
+    } catch {}
+
     const filled = onApply(parsed, clean);
     setAppliedLabels(filled);
   };

@@ -58,18 +58,29 @@ function setReactControlValue(el: HTMLInputElement | HTMLTextAreaElement | HTMLS
   el.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
+const FIELD_SYNONYMS: Record<string, string[]> = {
+  object: ["subject", "title", "task title", "name"],
+  subject: ["task title", "title", "name", "subject"],
+  "task creation description": ["description", "details", "remark"],
+  "end date": ["due date", "end date", "target date"],
+  "due date": ["end date", "due date", "target date"],
+  "task assignee": ["primary assignee", "assignee", "owner"],
+  executive: ["primary assignee", "assignee", "executor"],
+  voucher: ["watcher", "watchers"],
+};
+
 /** Splits arbitrary natural speech like "name is IT, code is IT01, status should be active" into pairs. */
 export function parseGenericFieldPairs(transcript: string): { field: string; value: string }[] {
   const text = transcript.trim();
   if (!text) return [];
 
-  // Match "<field words> (is|are|should be|as|to|:) "
-  const triggerRe = /(?:^|[,.]\s*|\band\s+)([a-zA-Z][a-zA-Z0-9\s/-]{1,35}?)\s+(?:is|are|should\s+be|as|to|:)\s+/gi;
+  // Match "<field words> (is|are|should be|as|to|:)[., ]+"
+  const triggerRe = /(?:^|[,.]\s*|\band\s+)([a-zA-Z][a-zA-Z0-9\s/-]{1,35}?)\s+(?:is|are|should\s+be|as|to|:)[.,:\s]+/gi;
   const matches: { field: string; start: number; valueStart: number }[] = [];
   let m: RegExpExecArray | null;
   while ((m = triggerRe.exec(text)) !== null) {
     const rawField = m[1]
-      .replace(/^(?:my|the|a|an|task|subtask|ticket|requirement|vehicle|meeting|budget|amc|master|setting)\s+/i, "")
+      .replace(/^(?:my|the|a|an|create\s+a|new|task|subtask|ticket|requirement|vehicle|meeting|budget|amc|master|setting)\s+/i, "")
       .trim();
     if (!rawField) continue;
     matches.push({ field: rawField, start: m.index, valueStart: m.index + m[0].length });
@@ -83,7 +94,8 @@ export function parseGenericFieldPairs(transcript: string): { field: string; val
     const nextStart = i + 1 < matches.length ? matches[i + 1].start : text.length;
     const val = text
       .slice(cur.valueStart, nextStart)
-      .replace(/^[\s,:-]+/, "")
+      .replace(/^[\s,.:-]+/, "")
+      .replace(/^also\s+/i, "")
       .replace(/[\s,.;]+$/, "")
       .trim();
     if (val) pairs.push({ field: cur.field, value: val });
@@ -117,8 +129,9 @@ export function fillActiveFormFromVoice(transcript: string): DomFillResult {
   for (const { field, value } of pairs) {
     const fq = normalize(field);
     if (!fq) continue;
+    const aliases = [fq, ...(FIELD_SYNONYMS[fq] || [])];
 
-    // Rank matching controls by label similarity
+    // Rank matching controls by label similarity (including speech-to-text synonyms)
     let best: { el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement; label: string; score: number } | null = null;
     for (const el of controls) {
       const label = getFieldLabel(el);
@@ -126,10 +139,12 @@ export function fillActiveFormFromVoice(transcript: string): DomFillResult {
       const nn = normalize(el.getAttribute("name") || "");
       const np = normalize(el.getAttribute("placeholder") || "");
       let score = 0;
-      if (nl === fq || nn === fq) score = 100;
-      else if (nl.startsWith(fq) || nn.startsWith(fq)) score = 80;
-      else if (nl.includes(fq) || fq.includes(nl) && nl.length > 2) score = 60;
-      else if (np && (np.includes(fq) || fq.includes(np))) score = 40;
+      for (const alias of aliases) {
+        if (nl === alias || nn === alias) score = Math.max(score, 100);
+        else if (nl.startsWith(alias) || nn.startsWith(alias)) score = Math.max(score, 80);
+        else if (nl.includes(alias) || (alias.includes(nl) && nl.length > 2)) score = Math.max(score, 60);
+        else if (np && (np.includes(alias) || alias.includes(np))) score = Math.max(score, 40);
+      }
       if (score > 0 && (!best || score > best.score)) {
         best = { el, label: label || field, score };
       }
@@ -176,4 +191,49 @@ export function fillActiveFormFromVoice(transcript: string): DomFillResult {
   }
 
   return { filled, unmatched };
+}
+
+function getActiveControls() {
+  const dialogs = Array.from(document.querySelectorAll('[role="dialog"]')).filter(
+    (d) => (d as HTMLElement).offsetParent !== null
+  );
+  const root: ParentNode =
+    dialogs.length > 0
+      ? dialogs[dialogs.length - 1]
+      : document.querySelector("main") || document.body;
+
+  return Array.from(
+    root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+      'input:not([type="hidden"]):not([type="file"]):not([disabled]), textarea:not([disabled]), select:not([disabled])'
+    )
+  ).filter((el) => el.offsetParent !== null);
+}
+
+/** Collects fixed field labels & options from the active modal/page for AI extraction. */
+export function inspectActiveFormFields(): { label: string; type: string; options?: string[] }[] {
+  const controls = getActiveControls();
+  const seen = new Set<string>();
+  const out: { label: string; type: string; options?: string[] }[] = [];
+  for (const el of controls) {
+    const label = getFieldLabel(el);
+    if (!label || seen.has(label)) continue;
+    seen.add(label);
+    if (el instanceof HTMLSelectElement) {
+      const opts = Array.from(el.options).map((o) => o.text.trim()).filter((t) => t && !t.startsWith("--"));
+      out.push({ label, type: "select", options: opts });
+    } else {
+      out.push({ label, type: el instanceof HTMLTextAreaElement ? "textarea" : el.type || "text" });
+    }
+  }
+  return out;
+}
+
+/** Applies a `{ fieldLabel: value }` map (from AI or parser) to the active DOM form. */
+export function applyValuesToActiveForm(values: Record<string, string>): DomFillResult {
+  const syntheticTranscript = Object.entries(values)
+    .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== "")
+    .map(([k, v]) => `${k} is ${String(v).trim()}`)
+    .join(". ");
+  if (!syntheticTranscript) return { filled: [], unmatched: [] };
+  return fillActiveFormFromVoice(syntheticTranscript);
 }

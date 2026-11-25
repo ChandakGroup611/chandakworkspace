@@ -19,15 +19,15 @@ export interface ParsedVoiceFields {
 }
 
 const FIELD_PATTERNS: { key: keyof Omit<ParsedVoiceFields, "moduleHint">; regex: RegExp }[] = [
-  { key: "subject", regex: /\b(?:my\s+)?(?:task|subtask|sub-task|ticket|requirement)?\s*(?:subject|title|name|heading)\s+(?:is|should\s+be|as|:)\s+/i },
-  { key: "description", regex: /\b(?:description|details?|summary|remark|remarks|notes?)\s+(?:is|are|should\s+be|as|:)\s+/i },
-  { key: "status", regex: /\b(?:status)\s+(?:is|should\s+be|as|to|:)\s+/i },
-  { key: "priority", regex: /\b(?:priority)\s+(?:is|should\s+be|as|to|:)\s+/i },
-  { key: "startDate", regex: /\b(?:start\s*date|from\s*date|starts?\s+on)\s+(?:is|should\s+be|as|:)?\s*/i },
-  { key: "dueDate", regex: /\b(?:due\s*date|end\s*date|target\s*date|deadline|due\s+on)\s+(?:is|should\s+be|as|:)?\s*/i },
-  { key: "department", regex: /\b(?:department|dept)\s+(?:is|should\s+be|as|:)\s+/i },
-  { key: "assignee", regex: /\b(?:primary\s*assignee|assignee|assign\s+to|assigned\s+to|owner|executor)\s+(?:is|should\s+be|as|:)?\s*/i },
-  { key: "businessReason", regex: /\b(?:business\s*reason|reason|justification)\s+(?:is|should\s+be|as|:)\s+/i },
+  { key: "subject", regex: /\b(?:my\s+)?(?:task|subtask|sub-task|ticket|requirement)?\s*(?:subject|object|topic|title|name|heading)\s+(?:is|should\s+be|as|:)[.,:\s]*/i },
+  { key: "description", regex: /\b(?:task\s+creation\s+|task\s+)?(?:description|details?|summary|remark|remarks|notes?)\s+(?:is|are|should\s+be|as|:)[.,:\s]*/i },
+  { key: "status", regex: /\b(?:status)\s+(?:is|should\s+be|as|to|:)[.,:\s]*/i },
+  { key: "priority", regex: /\b(?:priority)\s+(?:is|should\s+be|as|to|:)[.,:\s]*/i },
+  { key: "startDate", regex: /\b(?:start\s*date|from\s*date|starts?\s+on)\s+(?:is|should\s+be|as|:)?[.,:\s]*/i },
+  { key: "dueDate", regex: /\b(?:due\s*date|end\s*date|target\s*date|deadline|due\s+on)\s+(?:is|should\s+be|as|:)?[.,:\s]*/i },
+  { key: "department", regex: /\b(?:department|dept)\s+(?:is|should\s+be|as|:)[.,:\s]*/i },
+  { key: "assignee", regex: /\b(?:primary\s*assignee|task\s*assignee|assignee|assign\s+to|assigned\s+to|owner|executive|executor)\s+(?:is|should\s+be|as|:)?[.,:\s]*/i },
+  { key: "businessReason", regex: /\b(?:business\s*reason|reason|justification)\s+(?:is|should\s+be|as|:)[.,:\s]*/i },
 ];
 
 function toIsoDate(d: Date): string {
@@ -105,7 +105,8 @@ export function parseVoiceFields(transcript: string): ParsedVoiceFields {
     const nextStart = i + 1 < matches.length ? matches[i + 1].start : text.length;
     const rawVal = text
       .slice(cur.valueStart, nextStart)
-      .replace(/^[\s,:-]+/, "")
+      .replace(/^[\s,.:-]+/, "")
+      .replace(/^also\s+/i, "")
       .replace(/[\s,.;]+$/, "")
       .replace(/\s+(?:and|with|then)$/i, "")
       .trim();

@@ -5,7 +5,13 @@ import { usePathname } from "next/navigation";
 import { Mic, MicOff, X, Check, Copy, Printer, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
 import { AppButton } from "@/components/ui/AppButton";
-import { fillActiveFormFromVoice } from "@/lib/voice/dom-form-filler";
+import {
+  applyValuesToActiveForm,
+  fillActiveFormFromVoice,
+  inspectActiveFormFields,
+  parseGenericFieldPairs,
+} from "@/lib/voice/dom-form-filler";
+import { parseVoiceFields } from "@/lib/voice/field-parser";
 
 function resolveModuleName(pathname: string): string {
   if (pathname.startsWith("/vehicle")) return "Vehicle Desk";
@@ -37,16 +43,67 @@ export function GlobalVoiceAssistant() {
     };
   }, []);
 
-  const applyTranscript = (text: string) => {
+  const applyTranscript = async (text: string) => {
     const clean = text.trim();
     if (!clean) return;
-    const res = fillActiveFormFromVoice(clean);
-    setLastFilled(res.filled);
-    if (res.filled.length > 0) {
-      toast.success(`Filled ${res.filled.length} field(s): ${res.filled.map((f) => f.label).join(", ")}`);
-    } else {
-      toast.info("No matching form fields found on this screen. Open a form or say '<field name> is <value>'.");
+
+    const formFields = inspectActiveFormFields();
+    let aiValues: Record<string, string> = {};
+    try {
+      const resp = await fetch("/api/voice/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: clean, fields: formFields }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data?.values && typeof data.values === "object") aiValues = data.values;
+      }
+    } catch {}
+
+    if (formFields.length > 0) {
+      const res = Object.keys(aiValues).length > 0 ? applyValuesToActiveForm(aiValues) : fillActiveFormFromVoice(clean);
+      if (res.filled.length > 0) {
+        setLastFilled(res.filled);
+        toast.success(`Filled ${res.filled.length} field(s): ${res.filled.map((f) => f.label).join(", ")}`);
+        return;
+      }
     }
+
+    // No open form matched on screen: stage AI-extracted or parsed fields and try opening the Create button
+    const parsed = parseVoiceFields(clean);
+    const pairs = parseGenericFieldPairs(clean);
+    const aiItems = Object.entries(aiValues).filter(([, v]) => Boolean(v)).map(([k, v]) => ({ label: k, value: String(v) }));
+    const previewItems = aiItems.length > 0
+      ? aiItems
+      : Object.entries(parsed).filter(([k, v]) => k !== "moduleHint" && Boolean(v)).map(([k, v]) => ({ label: k, value: String(v) }));
+    const fallbackItems = previewItems.length > 0 ? previewItems : pairs.map((p) => ({ label: p.field, value: p.value }));
+
+    if (fallbackItems.length > 0) {
+      try {
+        sessionStorage.setItem("chandak_voice_draft", clean);
+        if (Object.keys(aiValues).length > 0) sessionStorage.setItem("chandak_voice_ai_values", JSON.stringify(aiValues));
+      } catch {}
+      setLastFilled(fallbackItems);
+
+      const createBtn = Array.from(document.querySelectorAll<HTMLElement>("main button, main a")).find((el) =>
+        el.offsetParent !== null &&
+        /^\s*(?:\+?\s*)?(?:new\s+task|create\s+task|create\s+new\s+task|new\s+ticket|create\s+ticket|new\s+meeting|add\s+vehicle|create\s+budget)\b/i.test(
+          el.textContent || ""
+        )
+      );
+      if (createBtn) {
+        setOpen(false);
+        createBtn.click();
+        toast.success(`Opening form & auto-filling ${fallbackItems.length} field(s)…`);
+        return;
+      }
+
+      toast.info(`Understood ${fallbackItems.length} field(s). Open a Create form and it will auto-fill.`);
+      return;
+    }
+
+    toast.info("Could not extract fields. Please try speaking again with clear details.");
   };
 
   const toggleListening = () => {
