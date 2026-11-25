@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { requireMeet } from "@/lib/permissions/meet";
 import { readMeetProjects, readMeetingProjectMap, setMeetingProject } from "@/lib/utils/meet-projects";
 import { generateICS } from "@/lib/utils/ics";
+import { bookRoomForSession } from "@/lib/actions/meet/rooms";
 import type { MeetingSeries, MeetingMember } from "@/types/meet";
 
 import { generateTeamsMeetingLink, sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
@@ -343,6 +344,11 @@ export async function createMeeting(input: CreateMeetingInput) {
       .single();
 
     if (session) {
+      // Hold the room picked on the Schedule page for this first date
+      if (input.room_id) {
+        await bookRoomForSession(session.id, input.room_id, scheduledStart, scheduledEnd).catch(() => null);
+      }
+
       // 4. Populate Attendees for Session 1 (Default to absent until verified)
       if (membersToInsert.length > 0) {
         await supabaseAdmin.from("meet_session_attendees").insert(

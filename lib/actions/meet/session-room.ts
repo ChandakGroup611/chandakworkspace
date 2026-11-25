@@ -35,7 +35,7 @@ export async function getSessionRoomInfo(sessionId: string): Promise<SessionRoom
       .in("status", ["confirmed", "pending", "checked_in", "tentative"])
       .lt("start_at", end)
       .gt("end_at", start),
-    supabaseAdmin.from("meet_room_bookings").select("room_id, status, room:meet_rooms(name)").eq("session_id", sessionId).maybeSingle(),
+    supabaseAdmin.from("meet_room_bookings").select("room_id, status, room:meet_rooms(name)").eq("session_id", sessionId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabaseAdmin.from("meet_session_attendees").select("id", { count: "exact", head: true }).eq("session_id", sessionId),
   ]);
   const busy = new Map<string, string>();

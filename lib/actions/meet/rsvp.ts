@@ -31,7 +31,7 @@ export async function getSessionReplies(sessionId: string): Promise<{ people: Rs
   const [attRes, invRes] = await Promise.all([
     supabaseAdmin
       .from("meet_session_attendees")
-      .select("user_id, guest_name, role, invite_status, user:user_master(full_name)")
+      .select("user_id, guest_name, role, invite_status, user:user_master!meet_session_attendees_user_id_fkey(full_name)")
       .eq("session_id", sessionId)
       .not("role", "in", '("requested","denied")'),
     supabaseAdmin

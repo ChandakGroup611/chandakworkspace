@@ -65,6 +65,7 @@ export default function PersonPicker({
         placeholder={placeholder}
         autoComplete="off"
         role="combobox"
+        aria-label={placeholder}
         aria-expanded={open}
         className="h-10 w-full rounded-md border border-border bg-surface pl-9 pr-3 text-[14px] text-foreground placeholder:text-muted focus:border-primary focus:outline-none"
       />

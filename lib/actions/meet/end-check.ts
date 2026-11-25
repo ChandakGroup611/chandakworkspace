@@ -46,7 +46,7 @@ export async function getEndChecklist(sessionId: string): Promise<EndChecklist> 
   const isOneOff = !m?.recurrence || m.recurrence === "none";
 
   const [attRes, spRes, taskRes, decRes, preRes, agendaRes, notes] = await Promise.all([
-    supabaseAdmin.from("meet_session_attendees").select("user_id, attendance, role, user:user_master(full_name)").eq("session_id", sessionId).not("role", "in", '("requested","denied")'),
+    supabaseAdmin.from("meet_session_attendees").select("user_id, attendance, role, user:user_master!meet_session_attendees_user_id_fkey(full_name)").eq("session_id", sessionId).not("role", "in", '("requested","denied")'),
     supabaseAdmin
       .from("meet_session_points")
       .select("entry_type, status_at_start, discussion_notes, point:meet_points(id, code, title, status, owner_id, carry_forward_count, updated_at, is_deleted)")

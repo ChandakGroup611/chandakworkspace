@@ -131,6 +131,7 @@ export async function bookRoomForSession(
       .lt("start_at", endAt)
       .gt("end_at", startAt)
       .neq("session_id", sessionId)
+      .limit(1)
       .maybeSingle();
 
     if (clash) {
@@ -145,25 +146,28 @@ export async function bookRoomForSession(
 
     const joinUrl = sessionData?.video_link || `https://chandakgroup.tech/meet/live/${sessionId}`;
 
-    // 2. Insert or update booking
-    const { data: booking, error } = await supabaseAdmin
+    // 2. Insert or update booking (one booking row per meeting date; no unique index to upsert on)
+    const row = {
+      session_id: sessionId,
+      room_id: roomId,
+      start_at: startAt,
+      end_at: endAt,
+      status: "confirmed",
+      booked_by: userId,
+      teams_join_url: joinUrl,
+      last_synced_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const { data: existing } = await supabaseAdmin
       .from("meet_room_bookings")
-      .upsert(
-        {
-          session_id: sessionId,
-          room_id: roomId,
-          start_at: startAt,
-          end_at: endAt,
-          status: "confirmed",
-          booked_by: userId,
-          teams_join_url: joinUrl,
-          last_synced_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "session_id" }
-      )
-      .select()
-      .single();
+      .select("id")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const { data: booking, error } = existing
+      ? await supabaseAdmin.from("meet_room_bookings").update(row).eq("id", existing.id).select().single()
+      : await supabaseAdmin.from("meet_room_bookings").insert(row).select().single();
 
     if (error) throw error;
 
