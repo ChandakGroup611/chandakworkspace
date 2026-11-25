@@ -2880,23 +2880,35 @@ export async function assignUserToTasksBatch(userId: string, assignments: { task
 }
 
 /**
- * Removes an inactive/disabled user from active Watchers lists across all tasks.
+ * Removes a disabled/inactive user from all workspaces, sub-workspaces,
+ * tasks, and subtasks (all participant roles, watchers, and primary assignee).
  */
-export async function cleanupInactiveUserFromWatchers(userId: string) {
+export async function cleanupDisabledUserAssignments(userId: string) {
   if (!userId) return;
   try {
     await Promise.all([
       supabaseAdmin
+        .from('workspace_members')
+        .delete()
+        .eq('user_id', userId),
+      supabaseAdmin
         .from('task_participants')
         .delete()
-        .eq('user_id', userId)
-        .eq('participation_role', 'WATCHER'),
+        .eq('user_id', userId),
       supabaseAdmin
         .from('task_watchers')
         .delete()
-        .eq('user_id', userId)
+        .eq('user_id', userId),
+      supabaseAdmin
+        .from('tasks')
+        .update({ assigned_to: null, updated_at: new Date().toISOString() })
+        .eq('assigned_to', userId)
     ]);
   } catch (err) {
-    console.warn("[cleanupInactiveUserFromWatchers] Cleanup error:", err);
+    console.warn("[cleanupDisabledUserAssignments] Cleanup error:", err);
   }
+}
+
+export async function cleanupInactiveUserFromWatchers(userId: string) {
+  return cleanupDisabledUserAssignments(userId);
 }

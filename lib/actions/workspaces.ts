@@ -1585,13 +1585,17 @@ export async function updateWorkspace(id: string, formData: any) {
                 .from("task_participants")
                 .delete()
                 .in("task_id", wsTaskIds)
-                .in("user_id", removedUserIds)
-                .eq("participation_role", "WATCHER"),
+                .in("user_id", removedUserIds),
               supabaseAdmin
                 .from("task_watchers")
                 .delete()
                 .in("task_id", wsTaskIds)
-                .in("user_id", removedUserIds)
+                .in("user_id", removedUserIds),
+              supabaseAdmin
+                .from("tasks")
+                .update({ assigned_to: null, updated_at: new Date().toISOString() })
+                .in("id", wsTaskIds)
+                .in("assigned_to", removedUserIds)
             ]);
           }
         } catch (cascadeErr) {

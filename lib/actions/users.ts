@@ -161,6 +161,14 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       return { success: false, error: `Database Update Failed: ${dbError.message}` };
     }
 
+    // Automatically remove disabled user from all workspaces, sub-workspaces, tasks, and subtasks
+    if (updatePayload.is_active === false) {
+      const { cleanupDisabledUserAssignments } = await import("@/lib/actions/tasks");
+      await cleanupDisabledUserAssignments(editUserId);
+      revalidatePath("/workspaces");
+      revalidatePath("/tasks");
+    }
+
     // Sync to user_roles to properly update backend RBAC permissions
     if (updatePayload.role_id) {
       await targetClient.from("user_roles").delete().eq("user_id", editUserId);
@@ -587,7 +595,12 @@ export async function deleteUserAction(userId: string) {
     return { success: false, error: `Database update failed: ${dbError.message}` };
   }
 
+  const { cleanupDisabledUserAssignments } = await import("@/lib/actions/tasks");
+  await cleanupDisabledUserAssignments(userId);
+
   revalidatePath("/users");
+  revalidatePath("/workspaces");
+  revalidatePath("/tasks");
   return { success: true };
 }
 
