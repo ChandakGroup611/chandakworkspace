@@ -29,7 +29,11 @@ export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) =
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              const sessionOptions = { ...options };
+              const sessionOptions = { 
+                ...options,
+                sameSite: "lax" as const,
+                secure: process.env.NODE_ENV === "production"
+              };
               delete sessionOptions.maxAge; // Force session cookie
               delete sessionOptions.expires; // Also delete expires
               cookieStore.set(name, value, sessionOptions);

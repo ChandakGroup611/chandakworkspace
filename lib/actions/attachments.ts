@@ -3,6 +3,7 @@
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { assertFileSecurity } from "@/lib/security/file-guard";
 
 const BLOCKED_EXTENSIONS = [
   ".exe", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", 
@@ -59,16 +60,7 @@ function resolveMimeFromExtension(fileName: string, clientMime?: string): string
  * Validates file security parameters
  */
 function validateFileSecurity(fileName: string, mimeType: string, fileSize: number) {
-  if (fileSize > MAX_FILE_SIZE) {
-    throw new Error("File exceeds maximum allowed size (100MB).");
-  }
-
-  const lowerName = fileName.toLowerCase();
-  for (const ext of BLOCKED_EXTENSIONS) {
-    if (lowerName.endsWith(ext)) {
-      throw new Error(`Executable/script files (${ext}) are strictly prohibited for security.`);
-    }
-  }
+  assertFileSecurity(fileName, fileSize);
 }
 
 /**

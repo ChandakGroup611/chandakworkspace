@@ -29,23 +29,37 @@ export async function fetchSystemEmailConfig() {
     console.error("Error fetching system email config:", error);
     return null;
   }
-  return data || null;
+  if (!data) return null;
+  return {
+    ...data,
+    hasPassword: Boolean(data.smtp_password_encrypted),
+    smtp_password_encrypted: "", // Masked: never send plaintext credentials to client
+  };
 }
 
 export async function saveSystemEmailConfig(payload: any) {
   await requireEmailAdmin();
-  const { data: existing } = await supabaseAdmin.from("system_email_config").select("id").limit(1).single();
+  const { data: existing } = await supabaseAdmin
+    .from("system_email_config")
+    .select("id, smtp_password_encrypted")
+    .limit(1)
+    .single();
+
+  const safePayload = { ...payload };
+  if (!safePayload.smtp_password_encrypted && existing?.smtp_password_encrypted) {
+    safePayload.smtp_password_encrypted = existing.smtp_password_encrypted;
+  }
 
   if (existing?.id) {
     const { error } = await supabaseAdmin
       .from("system_email_config")
-      .update(payload)
+      .update(safePayload)
       .eq("id", existing.id);
     if (error) throw new Error("Failed to update configuration.");
   } else {
     const { error } = await supabaseAdmin
       .from("system_email_config")
-      .insert([payload]);
+      .insert([safePayload]);
     if (error) throw new Error("Failed to insert configuration.");
   }
 
@@ -55,18 +69,30 @@ export async function saveSystemEmailConfig(payload: any) {
 export async function testEmailConnection(config: any) {
   await requireEmailAdmin();
   try {
+    let resolvedConfig = { ...config };
+    if (!resolvedConfig.smtp_password_encrypted) {
+      const { data: existing } = await supabaseAdmin
+        .from("system_email_config")
+        .select("smtp_password_encrypted")
+        .limit(1)
+        .single();
+      if (existing?.smtp_password_encrypted) {
+        resolvedConfig.smtp_password_encrypted = existing.smtp_password_encrypted;
+      }
+    }
+
     const nodemailerRaw = await import('nodemailer');
     const nodemailer = nodemailerRaw.default || nodemailerRaw;
     let transportConfig: any = {
-      host: config.smtp_host,
-      port: config.smtp_port,
-      secure: config.encryption_type === 'SSL/TLS',
+      host: resolvedConfig.smtp_host,
+      port: resolvedConfig.smtp_port,
+      secure: resolvedConfig.encryption_type === 'SSL/TLS',
     };
 
-    if (config.smtp_username) {
+    if (resolvedConfig.smtp_username) {
       transportConfig.auth = {
-        user: config.smtp_username,
-        pass: config.smtp_password_encrypted,
+        user: resolvedConfig.smtp_username,
+        pass: resolvedConfig.smtp_password_encrypted,
       };
     } else {
       transportConfig.tls = { rejectUnauthorized: false };
@@ -392,7 +418,19 @@ export async function fetchEmailProviders() {
     console.error("Error fetching email providers:", error);
     return [];
   }
-  return data || [];
+  return (data || []).map((prov) => {
+    const rawConfig = prov.config || {};
+    return {
+      ...prov,
+      config: {
+        ...rawConfig,
+        hasPassword: Boolean(rawConfig.password),
+        hasApiKey: Boolean(rawConfig.api_key),
+        password: "", // REDACTED: Never expose to browser
+        api_key: "",  // REDACTED: Never expose to browser
+      },
+    };
+  });
 }
 
 export async function saveEmailProvider(payload: any) {
@@ -408,7 +446,30 @@ export async function saveEmailProvider(payload: any) {
 
 export async function updateEmailProvider(id: string, payload: any) {
   await requireEmailAdmin();
-  const { data, error } = await supabaseAdmin.from("email_providers").update(payload).eq("id", id).select().single();
+
+  // If password or api_key is blank, retain the existing values from the database
+  const { data: existing } = await supabaseAdmin
+    .from("email_providers")
+    .select("config")
+    .eq("id", id)
+    .single();
+
+  const mergedConfig = { ...(payload.config || {}) };
+  if (existing?.config) {
+    if (!mergedConfig.password && existing.config.password) {
+      mergedConfig.password = existing.config.password;
+    }
+    if (!mergedConfig.api_key && existing.config.api_key) {
+      mergedConfig.api_key = existing.config.api_key;
+    }
+  }
+
+  const safePayload = {
+    ...payload,
+    config: mergedConfig,
+  };
+
+  const { data, error } = await supabaseAdmin.from("email_providers").update(safePayload).eq("id", id).select().single();
   if (error) throw new Error(error.message);
 
   // Try to clear backlog if there was any
@@ -417,19 +478,35 @@ export async function updateEmailProvider(id: string, payload: any) {
   return { success: true, data };
 }
 
-export async function testProviderConnection(providerName: string, config: any) {
+export async function testProviderConnection(providerName: string, config: any, providerId?: string) {
   await requireEmailAdmin();
   try {
+    let resolvedConfig = { ...config };
+    // If password is blank but we have an existing provider ID, load stored password from database
+    if (!resolvedConfig.password && providerId && !providerId.startsWith("temp_")) {
+      const { data: existing } = await supabaseAdmin
+        .from("email_providers")
+        .select("config")
+        .eq("id", providerId)
+        .single();
+      if (existing?.config?.password) {
+        resolvedConfig.password = existing.config.password;
+      }
+    }
+
     if (providerName === "SMTP" || providerName === "Microsoft 365") {
+      if (!resolvedConfig.password) {
+        return { success: false, message: "Password is required for SMTP connection test." };
+      }
       const nodemailerRaw = await import('nodemailer');
       const nodemailer = nodemailerRaw.default || nodemailerRaw;
       const transporter = nodemailer.createTransport({
-        host: config.host,
-        port: Number(config.port),
-        secure: Number(config.port) === 465,
+        host: resolvedConfig.host,
+        port: Number(resolvedConfig.port),
+        secure: Number(resolvedConfig.port) === 465,
         auth: {
-          user: config.username,
-          pass: config.password,
+          user: resolvedConfig.username,
+          pass: resolvedConfig.password,
         },
         connectionTimeout: 10000, // 10 seconds
       });

@@ -13,12 +13,17 @@ export const metadata: Metadata = {
 export default async function EmailSettingsPage() {
   const dbConfig = await fetchSystemEmailConfig();
   
-  const emailConfig = dbConfig || {
+  const emailConfig = dbConfig ? {
+    ...dbConfig,
+    hasPassword: Boolean(dbConfig.hasPassword),
+    smtp_password_encrypted: "", // Masked: never expose to client
+  } : {
     provider_type: process.env.SMTP_HOST?.includes("resend") ? "RESEND" : "GMAIL",
     smtp_host: process.env.SMTP_HOST || "",
     smtp_port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
     smtp_username: process.env.SMTP_USER || "",
-    smtp_password_encrypted: process.env.SMTP_PASS || "",
+    smtp_password_encrypted: "", // Masked: never expose to client
+    hasPassword: Boolean(process.env.SMTP_PASS),
     sender_name: "Enterprise Alert",
     sender_email: process.env.SMTP_FROM || "",
     encryption_type: process.env.SMTP_SECURE === 'true' ? "SSL/TLS" : "STARTTLS"

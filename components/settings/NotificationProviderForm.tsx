@@ -84,8 +84,21 @@ export default function NotificationProviderForm({ initialData }: { initialData:
           <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-subtle mb-1">{provider === 'RESEND' ? 'API Key' : 'App Password'}</label>
-          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
+          <label className="block text-xs font-semibold text-subtle mb-1">
+            {provider === 'RESEND' ? 'API Key' : 'App Password'}
+            {initialData?.hasPassword && (
+              <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400 ml-2">Stored securely</span>
+            )}
+          </label>
+          <input 
+            type="password" 
+            name="smtp_password_encrypted" 
+            value={formData.smtp_password_encrypted} 
+            onChange={handleChange} 
+            placeholder={initialData?.hasPassword ? "•••••••• (leave blank to keep current)" : "••••••••"}
+            autoComplete="new-password"
+            className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" 
+          />
         </div>
         <div>
           <label className="block text-xs font-semibold text-subtle mb-1">Sender name</label>

@@ -17,6 +17,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { NATIONAL_RTO_MAP, STATE_MAP, analyzeIndianPlate } from "@/components/vehicle/vehicleQuickPicks";
 import { hasPermission } from "@/lib/permissions";
 import { can } from "@/lib/permissions/module-access";
+import { assertFileSecurity } from "@/lib/security/file-guard";
 import crypto from "crypto";
 
 export async function getAuthenticatedUser() {
@@ -3706,6 +3707,12 @@ export async function createVehicleDocumentAction(
     }
     if (!doc.file_name || !doc.file_url) {
       return { success: false, error: "File name and file content are required" };
+    }
+
+    try {
+      assertFileSecurity(doc.file_name);
+    } catch (secErr: any) {
+      return { success: false, error: secErr.message || "File rejected by security guard." };
     }
 
     const newDocId = `vdoc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;

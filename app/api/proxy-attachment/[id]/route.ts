@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/service_role';
+import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +88,14 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params;
     if (!id) return new NextResponse('Missing ID', { status: 400 });
 
+    // 1. Enforce active user authentication
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new NextResponse('Unauthorized: Valid session required to view or download attachments', { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const isDownload = searchParams.get('download') === '1' || searchParams.get('download') === 'true' || searchParams.get('action') === 'download';
     const isRaw = searchParams.get('raw') === '1';
@@ -95,6 +105,21 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     // Direct storage URL or query param resolution
     const directStorageUrl = searchParams.get('storage_url') || (id.startsWith('storage%3A') || id.startsWith('storage:') ? decodeURIComponent(id) : null);
     if (directStorageUrl && directStorageUrl.startsWith('storage:')) {
+      const allowedBuckets = new Set([
+        'ticket-attachments',
+        'chat-attachments',
+        'resolution-files',
+        'requirement-files',
+        'vehicle-documents',
+        'dms-documents',
+        'meet-attachments',
+        'design-drawings'
+      ]);
+      const bucketName = directStorageUrl.split(':')[1];
+      if (!allowedBuckets.has(bucketName)) {
+        return new NextResponse('Forbidden: Access to requested storage bucket is restricted', { status: 403 });
+      }
+
       attachment = {
         file_name: searchParams.get('file_name') || 'engineering_document',
         file_url: directStorageUrl,

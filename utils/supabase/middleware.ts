@@ -24,7 +24,11 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            const sessionOptions = { ...options };
+            const sessionOptions = { 
+              ...options,
+              sameSite: "lax" as const,
+              secure: process.env.NODE_ENV === "production"
+            };
             delete sessionOptions.maxAge; // Force session cookie
             delete sessionOptions.expires; // Also delete expires
             request.cookies.set({ name, value, ...sessionOptions });
@@ -33,7 +37,11 @@ export async function updateSession(request: NextRequest) {
             request,
           })
           cookiesToSet.forEach(({ name, value, options }) => {
-            const sessionOptions = { ...options };
+            const sessionOptions = { 
+              ...options,
+              sameSite: "lax" as const,
+              secure: process.env.NODE_ENV === "production"
+            };
             delete sessionOptions.maxAge; // Force session cookie
             delete sessionOptions.expires; // Also delete expires
             supabaseResponse.cookies.set(name, value, sessionOptions)

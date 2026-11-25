@@ -84,11 +84,32 @@ export async function middleware(request: NextRequest) {
   const method = request.method.toUpperCase();
   const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "127.0.0.1";
 
-  // R6: Rate limit /login POST only (max 60/min per IP) to prevent brute force; /api/* unthrottled for shared office IPs
+  // Security Probe & Scanner Defense: Block malicious vulnerability scanners immediately
+  const MALICIOUS_PROBE_REGEX = /^\/(\.env|\.git|\.aws|\.ssh|\.htaccess|\.htpasswd|\.DS_Store|wp-admin|wp-login|xmlrpc|phpmyadmin|cgi-bin|setup\.php|eval-stdin\.php|actuator|remote\/login)/i;
+  if (MALICIOUS_PROBE_REGEX.test(pathname)) {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
+  // Block dangerous HTTP methods globally
+  if (["TRACE", "TRACK", "CONNECT"].includes(method)) {
+    return new NextResponse("Method Not Allowed", { status: 405 });
+  }
+
+  // Rate limit /login POST (max 15 attempts / min per IP) to stop automated password brute-force
   if (pathname === "/login" && method === "POST") {
-    if (isRateLimited(`login:${clientIp}`, 60, 60_000)) {
+    if (isRateLimited(`login:${clientIp}`, 15, 60_000)) {
       return NextResponse.json(
         { error: "Too many login attempts. Please wait 1 minute before retrying." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+  }
+
+  // Rate limit /api/session/conflict POST (max 30 requests / min per IP) to prevent user ID enumeration
+  if (pathname === "/api/session/conflict" && method === "POST") {
+    if (isRateLimited(`conflict:${clientIp}`, 30, 60_000)) {
+      return NextResponse.json(
+        { hasConflict: false, error: "Too many requests. Please slow down." },
         { status: 429, headers: { "Retry-After": "60" } }
       );
     }

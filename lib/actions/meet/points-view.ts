@@ -34,7 +34,7 @@ const one = (v: any) => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 const POINT_SELECT = `
   id, code, title, status, priority, progress_percent, due_date, carry_forward_count, owner_id, meeting_id,
   owner:user_master!meet_points_owner_id_fkey(id, full_name),
-  meeting:meet_meetings(id, title, code)
+  meeting:meet_meetings(id, title, code, is_deleted)
 `;
 
 function toRow(p: any): PointRow {
@@ -85,7 +85,7 @@ export async function getPointsTable(view: PointsView = "mine", search?: string)
 
     // Confidential meetings the viewer isn't part of never show (owner of the point still sees their own)
     const hidden = await getHiddenConfidentialMeetingIds(userId, auth.isSuperAdmin || auth.isMeetAdmin);
-    const rows = (data || []).filter((p: any) => p.owner_id === userId || !hidden.has(p.meeting_id)).map(toRow);
+    const rows = (data || []).filter((p: any) => !one(p.meeting)?.is_deleted && (p.owner_id === userId || !hidden.has(p.meeting_id))).map(toRow);
     return { rows };
   } catch (err: any) {
     console.error("[getPointsTable]", err);
@@ -113,7 +113,7 @@ export async function getPointDetail(pointId: string): Promise<PointDetail | nul
       .select(`
         *,
         owner:user_master!meet_points_owner_id_fkey(id, full_name, email),
-        meeting:meet_meetings(id, title, code, organizer_id, chair_id),
+        meeting:meet_meetings(id, title, code, organizer_id, chair_id, is_deleted),
         category:meet_point_categories(id, name)
       `)
       .eq("id", pointId)
@@ -179,7 +179,7 @@ export async function getPointDetail(pointId: string): Promise<PointDetail | nul
 
     return {
       point: { ...p, raised_by_name: (raisedByRes as any)?.data?.full_name || null },
-      meeting: meeting ? { id: meeting.id, title: meeting.title, code: meeting.code || null } : null,
+      meeting: meeting && !meeting.is_deleted ? { id: meeting.id, title: meeting.title, code: meeting.code || null } : null,
       siblings: (siblingsRes.data || []).map(toRow),
       tasks: tasksRes.data || [],
       history,

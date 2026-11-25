@@ -22,6 +22,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
+    // Verify caller has permissions on the target workspace
+    if (moduleType === 'TASK' && finalWorkspaceId) {
+      const [callerWsRes, callerUserRes] = await Promise.all([
+        supabase.from("workspace_members").select("role").eq("workspace_id", finalWorkspaceId).eq("user_id", user.id).maybeSingle(),
+        supabase.from("user_master").select("role").eq("id", user.id).maybeSingle()
+      ]);
+
+      const isSuperAdmin = callerUserRes.data?.role === "SUPER_ADMIN" || callerUserRes.data?.role === "SYSTEM_ADMIN";
+      if (!callerWsRes.data && !isSuperAdmin) {
+        return NextResponse.json({ error: "Forbidden: You do not have access to import tasks into the target workspace" }, { status: 403 });
+      }
+    }
+
     const buffer = await file.arrayBuffer();
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer);

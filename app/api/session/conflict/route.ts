@@ -1,15 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+
+    if (authErr || !user) {
+      return NextResponse.json({ hasConflict: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json().catch(() => ({}));
     const { userId, currentSessionToken } = body || {};
 
     if (!userId) {
       return NextResponse.json({ hasConflict: false, error: "Missing userId" }, { status: 400 });
+    }
+
+    // A user may only inspect their own session conflict unless they possess admin privileges
+    if (user.id !== userId) {
+      const { data: userRecord } = await supabaseAdmin
+        .from("user_master")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const isSuperAdmin = userRecord?.role === "SUPER_ADMIN" || userRecord?.role === "SYSTEM_ADMIN";
+      if (!isSuperAdmin) {
+        return NextResponse.json({ hasConflict: false, error: "Forbidden: Cannot query sessions of other users" }, { status: 403 });
+      }
     }
 
     // 1. Query active_sessions table for this user

@@ -82,7 +82,7 @@ export async function listPoints(f: PointListFilters) {
       .select(
         `id, code, title, status, priority, progress_percent, due_date, carry_forward_count, owner_id, meeting_id, point_type,
          owner:user_master!meet_points_owner_id_fkey(id, full_name),
-         meeting:meet_meetings(id, title, code)`,
+         meeting:meet_meetings(id, title, code, is_deleted)`,
         { count: "exact" }
       )
       .eq("is_deleted", false);
@@ -114,7 +114,11 @@ export async function listPoints(f: PointListFilters) {
     const { data, count, error } = await q;
     if (error) return { ...empty, error: error.message };
 
-    const visible = (data || []).filter((p: any) => p.owner_id === userId || !hidden.has(p.meeting_id));
+    const visible = (data || []).filter((p: any) => {
+      const m = one(p.meeting);
+      if (m?.is_deleted) return false;
+      return p.owner_id === userId || !hidden.has(p.meeting_id);
+    });
     const ids = visible.map((p: any) => p.id);
     const openTasks = new Map<string, number>();
     if (ids.length) {
@@ -186,7 +190,7 @@ export async function listTasks(f: TaskListFilters) {
         *,
         owner:user_master!meet_tasks_owner_id_fkey(id, full_name, email, profile_photo),
         checklist:meet_task_checklist(*),
-        point:meet_points(id, code, title, meeting_id, meeting:meet_meetings(id, code, title))
+        point:meet_points(id, code, title, is_deleted, meeting_id, meeting:meet_meetings(id, code, title, is_deleted))
       `)
       .eq("is_deleted", false);
 
@@ -218,7 +222,12 @@ export async function listTasks(f: TaskListFilters) {
     if (error) return { ...empty, error: error.message };
 
     const today = ymd(new Date());
-    let tasks = (data || []).filter((t: any) => t.owner_id === userId || !hidden.has(one(t.point)?.meeting_id));
+    let tasks = (data || []).filter((t: any) => {
+      const pt = one(t.point);
+      const m = one(pt?.meeting);
+      if (pt?.is_deleted || m?.is_deleted) return false;
+      return t.owner_id === userId || !hidden.has(pt?.meeting_id);
+    });
     const eff = (t: any) => String(t.revised_due_date || t.due_date || "");
     const open = (t: any) => t.status !== "completed" && t.status !== "cancelled";
     if (f.due === "overdue") tasks = tasks.filter((t: any) => open(t) && eff(t) && eff(t) < today);
@@ -270,7 +279,7 @@ export async function listMinutes(f: MinutesListFilters) {
   try {
     let q = supabaseAdmin
       .from("meet_sessions")
-      .select("id, code, scheduled_start, status, actual_end, updated_at, mom_published_at, meeting_id, meeting:meet_meetings(id, title, code, organizer:user_master!meet_meetings_organizer_id_fkey(full_name))")
+      .select("id, code, scheduled_start, status, actual_end, updated_at, mom_published_at, meeting_id, meeting:meet_meetings(id, title, code, is_deleted, organizer:user_master!meet_meetings_organizer_id_fkey(full_name))")
       .eq("is_deleted", false)
       .in("status", ENDED);
     if (show !== "all") {
@@ -295,7 +304,7 @@ export async function listMinutes(f: MinutesListFilters) {
     const { data, error } = await q;
     if (error) return { ...empty, error: error.message };
 
-    const sessions = (data || []).filter((x: any) => !hidden.has(x.meeting_id));
+    const sessions = (data || []).filter((x: any) => !one(x.meeting)?.is_deleted && !hidden.has(x.meeting_id));
     const ids = sessions.map((x: any) => x.id);
     const [ptsRes, tasksRes, decRes, aiRes] = ids.length
       ? await Promise.all([

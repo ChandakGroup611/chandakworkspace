@@ -90,13 +90,14 @@ export default function ProviderDashboard() {
   };
 
   const handleTestConnection = async (provider: any) => {
-    if (!provider.config.host || !provider.config.port || !provider.config.username || !provider.config.password) {
+    const hasPassword = Boolean(provider.config.password || provider.config.hasPassword);
+    if (!provider.config.host || !provider.config.port || !provider.config.username || !hasPassword) {
       triggerToast("Please fill in all SMTP details (Host, Port, Username, Password) before testing.", "warning");
       return;
     }
     setTestingId(provider.id || provider.priority_level.toString());
     try {
-      const result = await testProviderConnection(provider.provider_name, provider.config);
+      const result = await testProviderConnection(provider.provider_name, provider.config, provider.id);
       if (result.success) {
         triggerToast("Connection verified successfully! Your SMTP credentials are valid.", "success");
       } else {
@@ -193,14 +194,20 @@ export default function ProviderDashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-muted-foreground">Password / app password</label>
+                    <label className="text-sm font-semibold text-muted-foreground flex items-center justify-between">
+                      <span>Password / app password</span>
+                      {prov.config.hasPassword && (
+                        <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400">Stored securely</span>
+                      )}
+                    </label>
                     <div className="relative">
                       <input 
                         type="password" 
                         value={prov.config.password || ""}
                         onChange={(e) => updateProviderConfig(prov.priority_level, "password", e.target.value)}
                         className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-primary"
-                        placeholder="••••••••"
+                        placeholder={prov.config.hasPassword ? "•••••••• (leave blank to keep current)" : "••••••••"}
+                        autoComplete="new-password"
                       />
                       <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
                     </div>
@@ -240,19 +247,25 @@ export default function ProviderDashboard() {
 
               {(prov.provider_name === "Resend" || prov.provider_name === "SendGrid") && (
                 <div className="md:col-span-2 space-y-2">
-                  <label className="text-sm font-semibold text-muted-foreground">API key</label>
+                  <label className="text-sm font-semibold text-muted-foreground flex items-center justify-between">
+                    <span>API key</span>
+                    {prov.config.hasApiKey && (
+                      <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400">Stored securely</span>
+                    )}
+                  </label>
                   <div className="relative">
                     <input 
                       type="password" 
                       value={prov.config.api_key || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "api_key", e.target.value)}
                       className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-primary"
-                      placeholder="re_..."
+                      placeholder={prov.config.hasApiKey ? "•••••••• (leave blank to keep current)" : "re_..."}
+                      autoComplete="new-password"
                     />
                     <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3 text-warning-text" /> Keys are encrypted at rest.
+                    <ShieldAlert className="w-3 h-3 text-warning-text" /> Keys are encrypted and never exposed in the browser.
                   </p>
                 </div>
               )}

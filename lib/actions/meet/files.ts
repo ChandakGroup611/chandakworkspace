@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
+import { assertFileSecurity } from "@/lib/security/file-guard";
 
 /**
  * Files on Meet records (pre-reads on a meeting date, documents on points and tasks).
@@ -50,6 +51,11 @@ export async function uploadMeetFile(form: FormData): Promise<{ success: boolean
   if (!["session", "point", "task", "decision"].includes(entityType) || !/^[0-9a-f-]{36}$/i.test(entityId)) return { success: false, error: "Unknown record." };
   if (!file || typeof file === "string" || !file.size) return { success: false, error: "Pick a file." };
   if (file.size > MAX) return { success: false, error: "Files can be up to 20 MB." };
+  try {
+    assertFileSecurity(file.name, file.size);
+  } catch (secErr: any) {
+    return { success: false, error: secErr.message || "File rejected by security guard." };
+  }
   try {
     await ensureBucket();
     const clean = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-120);
