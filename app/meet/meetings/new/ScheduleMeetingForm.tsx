@@ -807,7 +807,7 @@ export default function ScheduleMeetingForm({ masters, currentUserId, meeting, n
                       onChange={(e) => setAgenda((list) => list.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}
                       aria-label={`Agenda item ${i + 1}`}
                       placeholder="What to discuss"
-                      className={`${input} flex-1`}
+                      className={`${input} min-w-0 flex-1 !w-auto`}
                     />
                     <input
                       type="number"
@@ -816,7 +816,7 @@ export default function ScheduleMeetingForm({ masters, currentUserId, meeting, n
                       value={a.min}
                       onChange={(e) => setAgenda((list) => list.map((x, j) => (j === i ? { ...x, min: Number(e.target.value) || 0 } : x)))}
                       aria-label={`Minutes for item ${i + 1}`}
-                      className={`${input} w-20 text-right`}
+                      className={`${input} !w-20 shrink-0 text-right`}
                     />
                     <span className="text-[13px] text-muted">min</span>
                     <button
