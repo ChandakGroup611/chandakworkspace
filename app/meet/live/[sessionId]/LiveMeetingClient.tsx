@@ -60,6 +60,8 @@ interface LiveMeetingClientProps {
   };
   /** Organiser, chair, minute taker or Meet admin: sees the controls that run the meeting */
   canRun?: boolean;
+  /** A Super / Meet admin who isn't running this meeting can choose to take it over */
+  canTakeOver?: boolean;
   /** Invite replies (accepted / can't attend + reason) per person */
   replies?: RsvpPerson[];
   /** The signed-in person's own brief for this meeting */
@@ -73,6 +75,7 @@ export default function LiveMeetingClient({
   attendees: initialAttendees,
   masters,
   canRun = false,
+  canTakeOver = false,
   replies = [],
   brief = null,
 }: LiveMeetingClientProps) {
@@ -551,6 +554,11 @@ export default function LiveMeetingClient({
             <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${canRun ? "bg-accent-soft text-accent-soft-text" : "bg-sunken text-subtle"}`}>
               {canRun ? "You run this meeting" : "You're attending"}
             </span>
+            {canTakeOver && (
+              <a href={`/meet/live/${session.id}?run=1`} className="rounded-full border border-border px-2 py-0.5 text-[11.5px] font-semibold text-primary hover:bg-surface-hover" title="Admins can run any meeting, e.g. if the organiser is absent">
+                Take over as admin
+              </a>
+            )}
           </p>
           <h1 className="truncate text-[17px] font-bold text-heading">{session.meeting?.title}</h1>
           <p className="text-[12.5px] text-subtle">

@@ -223,13 +223,15 @@ export async function markJoined(sessionId: string): Promise<{ success: boolean 
   return { success: true };
 }
 
-/** Whether the signed-in person runs this meeting (organiser, chair, minute taker or Meet admin). */
-export async function getMyMeetingRole(sessionId: string): Promise<{ isHost: boolean }> {
+/**
+ * The signed-in person's role in this meeting. isHost: organiser, chair or minute taker of this
+ * meeting. isAdmin: Super / Meet admin, who sees the attendee view unless they choose to take over.
+ */
+export async function getMyMeetingRole(sessionId: string): Promise<{ isHost: boolean; isAdmin: boolean }> {
   const auth = await requireMeet("MEET_VIEW", { sessionId });
-  const s = await loadSession(sessionId);
-  if (!s) return { isHost: false };
-  const { isHost } = await roleFor(auth.userId, s, auth.isSuperAdmin || auth.isMeetAdmin);
-  return { isHost };
+  const { isMeetingHost } = await import("@/lib/utils/meet-host");
+  const isHost = await isMeetingHost(sessionId, auth.userId, false);
+  return { isHost, isAdmin: !!(auth.isSuperAdmin || auth.isMeetAdmin) };
 }
 
 export interface JoinRequest {
