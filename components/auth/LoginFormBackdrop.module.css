@@ -420,3 +420,15 @@
   .tile { display: none; }
   .steps { --B: 110px; --h: 6px; --gap: 4px; right: 16px; bottom: 14px; }
 }
+
+/* UI refresh (Nov 2026): the floating module tiles stay, but quieter, so the sign-in form
+   is the clear focus (they were competing with the form). Hidden on small screens. */
+.tile {
+  opacity: .55;
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--a1) 16%, transparent);
+}
+@media (max-width: 1100px) {
+  .tile { display: none; }
+}
+@keyframes tileIn { from { opacity: 0; transform: translateY(14px) scale(.92); } to { opacity: .55; transform: none; } }

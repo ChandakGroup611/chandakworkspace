@@ -153,8 +153,8 @@ export default async function MeetHomePage() {
           ) : (
             <section className="theme-card-structural p-8 text-center">
               <Calendar className="mx-auto mb-2 h-8 w-8 text-muted" aria-hidden />
-              <p className="text-[14px] font-medium text-foreground">No meetings coming up</p>
-              <p className="mt-0.5 text-[13px] text-muted">Meetings you organise or are invited to will show here.</p>
+              <p className="text-[14px] font-medium text-foreground">{d.today.length ? "Nothing else coming up" : "No meetings coming up"}</p>
+              <p className="mt-0.5 text-[13px] text-muted">{d.today.length ? "Today's meetings that weren't started are listed below." : "Meetings you organise or are invited to will show here."}</p>
               <div className="mt-4">
                 <Link href="/meet/meetings/new" className={btnPrimary}>
                   <Plus className="h-4 w-4" aria-hidden /> Schedule meeting
